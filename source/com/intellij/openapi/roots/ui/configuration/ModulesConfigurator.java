@@ -44,7 +44,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private ProjectConfigurable myProjectConfigurable;
 
-  private List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
+  private final List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
 
   private final Comparator<ModuleEditor> myModuleEditorComparator = new Comparator<ModuleEditor>() {
     final ModulesAlphaComparator myModulesComparator = new ModulesAlphaComparator();
@@ -66,13 +66,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void disposeUIResources() {
-    for (final ModuleEditor moduleEditor : myModuleEditors) {
-      final ModifiableRootModel model = moduleEditor.dispose();
-      if (model != null) {
-        model.dispose();
+    synchronized (myModuleEditors) {
+      for (final ModuleEditor moduleEditor : myModuleEditors) {
+        final ModifiableRootModel model = moduleEditor.dispose();
+        if (model != null) {
+          model.dispose();
+        }
       }
+      myModuleEditors.clear();
     }
-    myModuleEditors.clear();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myModuleModel.dispose();
@@ -89,10 +91,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModuleModel.getModules();
   }
 
+  @Nullable
   public Module getModule(String name) {
     return myModuleModel.findModuleByName(name);
   }
 
+  @Nullable
   public ModuleEditor getModuleEditor(Module module) {
     for (final ModuleEditor moduleEditor : myModuleEditors) {
       if (module.equals(moduleEditor.getModule())) {
@@ -119,16 +123,18 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   public void resetModuleEditors() {
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
 
-    for (final ModuleEditor moduleEditor : myModuleEditors) {
-      moduleEditor.removeChangeListener(this);
-    }
-    myModuleEditors.clear();
-    final Module[] modules = myModuleModel.getModules();
-    if (modules.length > 0) {
-      for (Module module : modules) {
-        createModuleEditor(module, null);
+    synchronized (myModuleEditors) {
+      for (final ModuleEditor moduleEditor : myModuleEditors) {
+        moduleEditor.removeChangeListener(this);
       }
-      Collections.sort(myModuleEditors, myModuleEditorComparator);
+      myModuleEditors.clear();
+      final Module[] modules = myModuleModel.getModules();
+      if (modules.length > 0) {
+        for (Module module : modules) {
+          createModuleEditor(module, null);
+        }
+        Collections.sort(myModuleEditors, myModuleEditorComparator);
+      }
     }
     myModified = false;
   }
@@ -223,13 +229,16 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
+  @Nullable
   public Module addModule(Component parent) {
     if (myProject.isDefault()) return null;
     final ModuleBuilder builder = runModuleWizard(parent);
     if (builder != null) {
       final Module module = createModule(builder);
       if (module != null) {
-        createModuleEditor(module, builder);
+        synchronized (myModuleEditors) {
+          createModuleEditor(module, builder);
+        }
       }
       return module;
     }
@@ -256,17 +265,21 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return module;
   }
 
+  @Nullable
   Module addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
-      createModuleEditor(module, moduleBuilder);
-      Collections.sort(myModuleEditors, myModuleEditorComparator);
+      synchronized (myModuleEditors) {
+        createModuleEditor(module, moduleBuilder);
+        Collections.sort(myModuleEditors, myModuleEditorComparator);
+      }
       processModuleCountChanged(myModuleEditors.size() - 1, myModuleEditors.size());
       return module;
     }
     return null;
   }
 
+  @Nullable
   ModuleBuilder runModuleWizard(Component dialogParent) {
     AddModuleWizard wizard = new AddModuleWizard(dialogParent, myProject, this);
     wizard.show();
@@ -292,15 +305,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       return false;
     }
     // do remove
-    myModuleEditors.remove(selectedEditor);
+    synchronized (myModuleEditors) {
+      myModuleEditors.remove(selectedEditor);
+    }
     // destroyProcess removed module
     final Module moduleToRemove = selectedEditor.getModule();
     // remove all dependencies on the module that is about to be removed
     List<ModifiableRootModel> modifiableRootModels = new ArrayList<ModifiableRootModel>();
     for (final ModuleEditor moduleEditor : myModuleEditors) {
-      if (moduleToRemove.equals(moduleEditor.getModule())) {
-        continue; // skip self
-      }
       final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
       modifiableRootModels.add(modifiableRootModel);
     }
@@ -313,7 +325,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   private void processModuleCountChanged(int oldCount, int newCount) {
-    //updateTitle();
     for (ModuleEditor moduleEditor : myModuleEditors) {
       moduleEditor.moduleCountChanged(oldCount, newCount);
     }
@@ -363,6 +374,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   /**
    * @return pair of modules which become circular after adding dependency, or null if all remains OK
    */
+  @Nullable
   public static Pair<Module, Module> addingDependencyFormsCircularity(final Module currentModule, Module toDependOn) {
     assert currentModule != toDependOn;
     // whatsa lotsa of @&#^%$ codes-a!

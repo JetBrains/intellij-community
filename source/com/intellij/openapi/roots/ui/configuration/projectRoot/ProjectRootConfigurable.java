@@ -18,6 +18,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -72,7 +73,7 @@ import java.util.List;
  * User: anna
  * Date: 02-Jun-2006
  */
-public class ProjectRootConfigurable extends MasterDetailsComponent implements ProjectComponent {
+public class ProjectRootConfigurable extends MasterDetailsComponent implements ProjectComponent, SearchableConfigurable {
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
@@ -999,7 +1000,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       myLibraryDependencyCache.remove(library);
     }
     myValidityCache.remove(module);
-    myValidityCache.remove(module);
     myTree.repaint();
   }
 
@@ -1016,6 +1016,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   public void clearCaches(final Module module, final ProjectJdk oldJdk, final ProjectJdk selectedModuleJdk) {
     myJdkDependencyCache.remove(oldJdk);
     myJdkDependencyCache.remove(selectedModuleJdk);
+    myValidityCache.remove(module);
+    myTree.repaint();
+  }
+
+  public void clearCaches(final Module module) {
     myValidityCache.remove(module);
     myTree.repaint();
   }
@@ -1059,6 +1064,20 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return (Module)((MyNode)node.getParent()).getConfigurable().getEditableObject();
       }
     }
+    return null;
+  }
+
+  @NonNls
+  public String getId() {
+    return "project.structure";
+  }
+
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(String option) {
     return null;
   }
 

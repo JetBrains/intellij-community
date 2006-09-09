@@ -323,11 +323,11 @@ public class ClasspathPanel extends JPanel {
           if (orderEntry == null) {
             continue;
           }
+          final Module module = myRootModel.getModule();
+          final Project project = module.getProject();
+          final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
           if (orderEntry instanceof LibraryOrderEntry) {
             final LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;
-            final Module module = myRootModel.getModule();
-            final Project project = module.getProject();
-            final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
             if (libEntry.isValid() && moduleLibraryTable.getTableLevel().equals(libEntry.getLibraryLevel())) {
               if (modifiableModel == null) {
                 modifiableModel = moduleLibraryTable.getModifiableModel();
@@ -338,6 +338,7 @@ public class ClasspathPanel extends JPanel {
             }
             rootConfigurable.clearCaches(module, libEntry);
           }
+          rootConfigurable.clearCaches(module);
           myRootModel.removeOrderEntry(orderEntry);
         }
         if (modifiableModel != null) {
