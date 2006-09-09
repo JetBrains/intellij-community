@@ -100,28 +100,33 @@ class RunConfigurable extends BaseConfigurable {
             final ConfigurationType configurationType = (ConfigurationType)userObject;
             append(configurationType.getDisplayName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
             setIcon(configurationType.getIcon());
-          } else if (userObject instanceof SingleConfigurationConfigurable){
-            final SingleConfigurationConfigurable settings = (SingleConfigurationConfigurable)userObject;
+          } else {
             final RunManager runManager = getRunManager();
-            final RunConfiguration configuration = settings.getConfiguration();
-            append(settings.getNameText(), runManager.isTemporary(configuration) ? SimpleTextAttributes.GRAY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            setIcon(ExecutionUtil.getConfigurationIcon(getProject(), configuration, !settings.isValid()));
+            RunConfiguration configuration = null;
+            if (userObject instanceof SingleConfigurationConfigurable){
+              final SingleConfigurationConfigurable settings = ((SingleConfigurationConfigurable)userObject);
+              configuration = settings.getConfiguration();
+              setIcon(ExecutionUtil.getConfigurationIcon(getProject(), configuration, !settings.isValid()));
+            } else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+              configuration = ((RunnerAndConfigurationSettingsImpl)userObject).getConfiguration();
+              setIcon(ExecutionUtil.getConfigurationIcon(getProject(), configuration));
+            }
+            if (configuration != null) {
+              append(configuration.getName(), runManager.isTemporary(configuration) ? SimpleTextAttributes.GRAY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
           }
         }
       }
     });
     final RunManagerEx manager = getRunManager();
-    final ConfigurationType[] factories = getRunManager().getConfigurationFactories();
+    final ConfigurationType[] factories = manager.getConfigurationFactories();
     for (ConfigurationType type : factories) {
       final RunnerAndConfigurationSettingsImpl[] configurations = manager.getConfigurationSettings(type);
       if (configurations != null && configurations.length > 0){
         final DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
         myRoot.add(typeNode);
         for (RunnerAndConfigurationSettingsImpl configuration : configurations) {
-          final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable =
-            SingleConfigurationConfigurable.editSettings(configuration);
-          installUpdateListeners(configurationConfigurable);
-          typeNode.add(new DefaultMutableTreeNode(configurationConfigurable));
+          typeNode.add(new DefaultMutableTreeNode(configuration));
         }
       }
     }
@@ -132,12 +137,14 @@ class RunConfigurable extends BaseConfigurable {
         if (selectionPath != null){
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
           final Object userObject = node.getUserObject();
-          if (userObject instanceof SingleConfigurationConfigurable){
-            myRightPanel.removeAll();
-            mySelectedConfigurable = (SingleConfigurationConfigurable<RunConfiguration>)userObject;
-            myRightPanel.add(mySelectedConfigurable.createComponent(), BorderLayout.CENTER);
-            updateCompileMethodComboStatus(mySelectedConfigurable);
-            setupDialogBounds();
+          if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+            final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable =
+            SingleConfigurationConfigurable.editSettings((RunnerAndConfigurationSettingsImpl)userObject);
+            installUpdateListeners(configurationConfigurable);
+            node.setUserObject(configurationConfigurable);
+            updateRightPanel(configurationConfigurable);
+          } else if (userObject instanceof SingleConfigurationConfigurable){
+            updateRightPanel((SingleConfigurationConfigurable<RunConfiguration>)userObject);
           } else if (userObject instanceof ConfigurationType){
             drawPressAddButtonMessage(((ConfigurationType)userObject));
           }
@@ -159,12 +166,10 @@ class RunConfigurable extends BaseConfigurable {
           while (enumeration.hasMoreElements()){
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
             final Object userObject = node.getUserObject();
-            if (userObject instanceof SingleConfigurationConfigurable) {
-              final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = ((SingleConfigurationConfigurable<RunConfiguration>)userObject);
-              if (configurationConfigurable.getConfiguration().getType() == settings.getType() &&
-                  Comparing.strEqual(configurationConfigurable.getConfiguration().getName(),
-                                     settings.getName())){
-                mySelectedConfigurable = configurationConfigurable;
+            if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+              final RunnerAndConfigurationSettingsImpl runnerAndConfigurationSettings = (RunnerAndConfigurationSettingsImpl)userObject;
+              if (runnerAndConfigurationSettings.getConfiguration().getType() == settings.getType() &&
+                  Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getName(), settings.getName())){
                 TreeUtil.selectInTree(node, true, myTree);
                 return;
               }
@@ -179,6 +184,14 @@ class RunConfigurable extends BaseConfigurable {
     });
     sortTree(myRoot);
     ((DefaultTreeModel)myTree.getModel()).reload();
+  }
+
+  private void updateRightPanel(final SingleConfigurationConfigurable<RunConfiguration> userObject) {
+    myRightPanel.removeAll();
+    mySelectedConfigurable = userObject;
+    myRightPanel.add(mySelectedConfigurable.createComponent(), BorderLayout.CENTER);
+    updateCompileMethodComboStatus(mySelectedConfigurable);
+    setupDialogBounds();
   }
 
   private void updateCompileMethodComboStatus(final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable) {
@@ -382,40 +395,50 @@ class RunConfigurable extends BaseConfigurable {
   public void applyByType(ConfigurationType type) throws ConfigurationException {
     DefaultMutableTreeNode typeNode = getConfigurationTypeNode(type);
     final RunManagerImpl manager = getRunManager();
-    final ArrayList<SingleConfigurationConfigurable> stableConfigurations = new ArrayList<SingleConfigurationConfigurable>();
-    SingleConfigurationConfigurable tempConfiguration = null;
-
+    final ArrayList<RunConfigurationBean> stableConfigurations = new ArrayList<RunConfigurationBean>();
+    RunnerAndConfigurationSettingsImpl tempConfiguration = null;
     if (typeNode != null) {
       for (int i = 0; i < typeNode.getChildCount(); i++) {
-        final SingleConfigurationConfigurable configurable =
-          ((SingleConfigurationConfigurable)((DefaultMutableTreeNode)typeNode.getChildAt(i))
-            .getUserObject());
-        if (manager.isTemporary((RunnerAndConfigurationSettingsImpl)configurable.getSettings())) {
-          tempConfiguration = configurable;
-        }
-        else {
-          stableConfigurations.add(configurable);
+        final Object userObject = ((DefaultMutableTreeNode)typeNode.getChildAt(i)).getUserObject();
+        if (userObject instanceof SingleConfigurationConfigurable) {
+          final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
+          final RunnerAndConfigurationSettingsImpl settings = (RunnerAndConfigurationSettingsImpl)configurable.getSettings();
+          if (manager.isTemporary(settings)) {
+            applyConfiguration(typeNode, configurable);
+            tempConfiguration = settings;
+          } else {
+            stableConfigurations.add(new RunConfigurationBean(configurable));
+          }
+        } else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+          RunnerAndConfigurationSettingsImpl settings = ((RunnerAndConfigurationSettingsImpl)userObject);
+          if (manager.isTemporary(settings)) {
+            tempConfiguration = settings;
+          } else {
+            stableConfigurations.add(new RunConfigurationBean(settings,
+                                                              manager.isConfigurationShared(settings),
+                                                              manager.getStepsBeforeLaunch(settings.getConfiguration())));
+          }
         }
       }
     }
     // try to apply all
-    for (SingleConfigurationConfigurable configurable : stableConfigurations) {
-      applyConfiguration(typeNode, configurable);
-    }
-    if (tempConfiguration != null) {
-      applyConfiguration(typeNode, tempConfiguration);
+    for (RunConfigurationBean bean : stableConfigurations) {
+      final SingleConfigurationConfigurable configurable = bean.getConfigurable();
+      if (configurable != null) {
+        applyConfiguration(typeNode, configurable);
+      }
     }
 
     // if apply succeeded, update the list of configurations in RunManager
     manager.removeConfigurations(type);
-    for (final SingleConfigurationConfigurable<RunConfiguration> stableConfiguration : stableConfigurations) {
-      final ConfigurationSettingsEditorWrapper settingsEditorWrapper = ((ConfigurationSettingsEditorWrapper)stableConfiguration.getEditor());
+    for (final RunConfigurationBean stableConfiguration : stableConfigurations) {
       manager.addConfiguration(stableConfiguration.getSettings(),
-                               settingsEditorWrapper.isStoreProjectConfiguration(),
-                               settingsEditorWrapper.getStepsBeforeLaunch());
+                               stableConfiguration.isShared(),
+                               stableConfiguration.getStepsBeforeLaunch());
     }
+
     if (tempConfiguration != null) {
-      manager.setTemporaryConfiguration((RunnerAndConfigurationSettingsImpl)tempConfiguration.getSettings());
+      manager.setTemporaryConfiguration(tempConfiguration);
     }
   }
 
@@ -465,10 +488,15 @@ class RunConfigurable extends BaseConfigurable {
         runManager.getConfigurationSettings((ConfigurationType)typeNode.getUserObject());
       if (configurationSettings.length != typeNode.getChildCount()) return true;
       for(int j= 0; j < typeNode.getChildCount(); j++){
-        SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)((DefaultMutableTreeNode)typeNode.getChildAt(j)).getUserObject();
-        if (!Comparing.strEqual(configurationSettings[j].getConfiguration().getName(), configurable.getConfiguration().getName())) return true;
-        if (configurable.isModified()) return true;
-        currentConfigurations.add(configurable.getConfiguration());
+        final Object userObject = ((DefaultMutableTreeNode)typeNode.getChildAt(j)).getUserObject();
+        if (userObject instanceof SingleConfigurationConfigurable) {
+          SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
+          if (!Comparing.strEqual(configurationSettings[j].getConfiguration().getName(), configurable.getConfiguration().getName())) return true;
+          if (configurable.isModified()) return true;
+          currentConfigurations.add(configurable.getConfiguration());
+        } else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+          currentConfigurations.add(((RunnerAndConfigurationSettingsImpl)userObject).getConfiguration());
+        }
       }
     }
     for (RunConfiguration configuration : allConfigurations) {
@@ -521,8 +549,9 @@ class RunConfigurable extends BaseConfigurable {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null){
       final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-      if (treeNode.getUserObject() instanceof SingleConfigurationConfigurable){
-        return (SingleConfigurationConfigurable<RunConfiguration>)treeNode.getUserObject();
+      final Object userObject = treeNode.getUserObject();
+      if (userObject instanceof SingleConfigurationConfigurable){
+        return (SingleConfigurationConfigurable<RunConfiguration>)userObject;
       }
     }
     return null;
@@ -563,7 +592,12 @@ class RunConfigurable extends BaseConfigurable {
     String str = ExecutionBundle.message("run.configuration.unnamed.name.prefix");
     final ArrayList<String> currentNames = new ArrayList<String>();
     for (int i = 0; i < typeNode.getChildCount(); i++) {
-      currentNames.add(((SingleConfigurationConfigurable)((DefaultMutableTreeNode)typeNode.getChildAt(i)).getUserObject()).getNameText());
+      final Object userObject = ((DefaultMutableTreeNode)typeNode.getChildAt(i)).getUserObject();
+      if (userObject instanceof SingleConfigurationConfigurable) {
+        currentNames.add(((SingleConfigurationConfigurable)userObject).getNameText());
+      } else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+        currentNames.add(((RunnerAndConfigurationSettingsImpl)userObject).getName());
+      }
     }
     if (!currentNames.contains(str)) return str;
     int i = 1;
@@ -817,6 +851,46 @@ class RunConfigurable extends BaseConfigurable {
           }
         }
       }
+    }
+  }
+
+  private static class RunConfigurationBean {
+    private final RunnerAndConfigurationSettingsImpl mySettings;
+    private final boolean myShared;
+    private final Map<String, Boolean> myStepsBeforeLaunch;
+    private final SingleConfigurationConfigurable myConfigurable;
+
+    public RunConfigurationBean(final RunnerAndConfigurationSettingsImpl settings,
+                                final boolean shared,
+                                final Map<String, Boolean> stepsBeforeLaunch) {
+      mySettings = settings;
+      myShared = shared;
+      myStepsBeforeLaunch = stepsBeforeLaunch;
+      myConfigurable = null;
+    }
+
+    public RunConfigurationBean(final SingleConfigurationConfigurable configurable) {
+      myConfigurable = configurable;
+      mySettings = (RunnerAndConfigurationSettingsImpl)myConfigurable.getSettings();
+      final ConfigurationSettingsEditorWrapper editorWrapper = ((ConfigurationSettingsEditorWrapper)myConfigurable.getEditor());
+      myShared = editorWrapper.isStoreProjectConfiguration();
+      myStepsBeforeLaunch = editorWrapper.getStepsBeforeLaunch();
+    }
+
+    public RunnerAndConfigurationSettingsImpl getSettings() {
+      return mySettings;
+    }
+
+    public boolean isShared() {
+      return myShared;
+    }
+
+    public Map<String, Boolean> getStepsBeforeLaunch() {
+      return myStepsBeforeLaunch;
+    }
+
+    public SingleConfigurationConfigurable getConfigurable() {
+      return myConfigurable;
     }
   }
 }
