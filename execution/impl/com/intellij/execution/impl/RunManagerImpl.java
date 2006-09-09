@@ -11,6 +11,7 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -50,7 +51,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @NonNls
   private static final String TEMP_CONFIGURATION = "tempConfiguration";
   @NonNls
-  private static final String CONFIGURATION = "configuration";
+  protected static final String CONFIGURATION = "configuration";
   private ConfigurationType[] myTypes;
   private final RunManagerConfig myConfig;
   @NonNls
@@ -60,6 +61,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @NonNls private static final String METHOD = "method";
   @NonNls private static final String OPTION = "option";
   @NonNls private static final String VALUE = "value";
+
+  private List<Element> myUnloadedElements = null;
 
   public RunManagerImpl(final Project project,
                         PropertiesComponent propertiesComponent,
@@ -285,6 +288,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (mySelectedConfiguration != null){
       parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
     }
+
+    if (myUnloadedElements != null) {
+      for (Element unloadedElement : myUnloadedElements) {
+        parentNode.addContent((Element)unloadedElement.clone());
+      }
+    }
   }
 
   public void addConfigurationElement(final Element parentNode, RunnerAndConfigurationSettingsImpl template) throws WriteExternalException {
@@ -310,20 +319,26 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public void readExternal(final Element parentNode) throws InvalidDataException {
     myConfigurations.clear();
+    myUnloadedElements = null;
 
     final List children = parentNode.getChildren();
     for (final Object aChildren : children) {
       final Element element = (Element)aChildren;
-      loadConfiguration(element, false);
+      if (!loadConfiguration(element, false) && Comparing.strEqual(element.getName(), CONFIGURATION)) {
+        if (myUnloadedElements == null) myUnloadedElements = new ArrayList<Element>(2);        
+        myUnloadedElements.add(element);
+      }
     }
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
   }
 
-  public void loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {
+  public boolean loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {
     RunnerAndConfigurationSettingsImpl configuration = new RunnerAndConfigurationSettingsImpl(this);
     configuration.readExternal(element);
     ConfigurationFactory factory = configuration.getFactory();
-    if (factory == null) return;
+    if (factory == null) {
+      return false;
+    }
 
     final Element methodsElement = element.getChild(METHOD);
     if (configuration.isTemplate()) {
@@ -341,6 +356,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       final Map<String, Boolean> map = updateStepsBeforeRun(methodsElement);
       addConfiguration(configuration, isShared, map);
     }
+    return true;
   }
 
   @Nullable

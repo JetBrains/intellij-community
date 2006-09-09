@@ -12,11 +12,9 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author dyoma
@@ -35,16 +33,11 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private RunConfiguration myConfiguration;
   private boolean myIsTemplate;
 
-  private Map<JavaProgramRunner, RunnerSettings> myRunnerSettings = new TreeMap<JavaProgramRunner, RunnerSettings>(createComparator());
-  private Map<JavaProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new TreeMap<JavaProgramRunner, ConfigurationPerRunnerSettings>(createComparator());
+  private Map<JavaProgramRunner, RunnerSettings> myRunnerSettings = new HashMap<JavaProgramRunner, RunnerSettings>();
+  private List<Element> myUnloadedRunnerSettings = null;
 
-  private static Comparator<? super JavaProgramRunner> createComparator() {
-    return new Comparator<JavaProgramRunner>() {
-      public int compare(final JavaProgramRunner runner1, final JavaProgramRunner runner2) {
-        return runner1.getInfo().getId().compareTo(runner2.getInfo().getId());
-      }
-    };
-  }
+  private Map<JavaProgramRunner, ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new HashMap<JavaProgramRunner, ConfigurationPerRunnerSettings>();
+  private List<Element> myUnloadedConfigurationPerRunnerSettings = null;
 
   @NonNls
   protected static final String NAME_ATTR = "name";
@@ -61,6 +54,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myIsTemplate = isTemplate;
   }
 
+  @Nullable
   public ConfigurationFactory getFactory() {
     return myConfiguration == null ? null : myConfiguration.getFactory();
   }
@@ -111,6 +105,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     myConfiguration.readExternal(element);
     List runners = element.getChildren(RUNNER_ELEMENT);
+    myUnloadedRunnerSettings = null;
     for (final Object runner1 : runners) {
       Element runnerElement = (Element)runner1;
       String id = runnerElement.getAttributeValue(RUNNER_ID);
@@ -119,10 +114,14 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         RunnerSettings settings = createRunnerSettings(runner);
         settings.readExternal(runnerElement);
         myRunnerSettings.put(runner, settings);
+      } else {
+        if (myUnloadedRunnerSettings == null) myUnloadedRunnerSettings = new ArrayList<Element>(1);
+        myUnloadedRunnerSettings.add(runnerElement);
       }
     }
 
     List configurations = element.getChildren(CONFIGURATION_ELEMENT);
+    myUnloadedConfigurationPerRunnerSettings = null;
     for (final Object configuration : configurations) {
       Element configurationElement = (Element)configuration;
       String id = configurationElement.getAttributeValue(RUNNER_ID);
@@ -132,6 +131,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
           new ConfigurationPerRunnerSettings(runner.getInfo(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));
         settings.readExternal(configurationElement);
         myConfigurationPerRunnerSettings.put(runner, settings);
+      } else {
+        if (myUnloadedConfigurationPerRunnerSettings == null) myUnloadedConfigurationPerRunnerSettings = new ArrayList<Element>(1);
+        myUnloadedConfigurationPerRunnerSettings.add(configurationElement);
       }
     }
   }
@@ -147,21 +149,67 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
     myConfiguration.writeExternal(element);
 
-    for (JavaProgramRunner runner : myRunnerSettings.keySet()) {
-      RunnerSettings settings = myRunnerSettings.get(runner);
-      Element runnerElement = new Element(RUNNER_ELEMENT);
-      settings.writeExternal(runnerElement);
-      element.addContent(runnerElement);
-      runnerElement.setAttribute(RUNNER_ID, runner.getInfo().getId());
-    }
+    final Comparator<Element> runnerComparator = createRunnerComparator();
+    writeRunnerSettings(runnerComparator, element);
+    writeConfigurationPerRunnerSettings(runnerComparator, element);
+  }
 
+  private void writeConfigurationPerRunnerSettings(final Comparator<Element> runnerComparator, final Element element)
+    throws WriteExternalException {
+    final ArrayList<Element> configurationPerRunnerSettings = new ArrayList<Element>();
     for (JavaProgramRunner runner : myConfigurationPerRunnerSettings.keySet()) {
       ConfigurationPerRunnerSettings settings = myConfigurationPerRunnerSettings.get(runner);
       Element runnerElement = new Element(CONFIGURATION_ELEMENT);
       settings.writeExternal(runnerElement);
-      element.addContent(runnerElement);
       runnerElement.setAttribute(RUNNER_ID, runner.getInfo().getId());
+      configurationPerRunnerSettings.add(runnerElement);
     }
+    if (myUnloadedConfigurationPerRunnerSettings != null) {
+      for (Element unloadedCRunnerSetting : myUnloadedConfigurationPerRunnerSettings) {
+        configurationPerRunnerSettings.add((Element)unloadedCRunnerSetting.clone());
+      }
+    }
+    Collections.sort(configurationPerRunnerSettings, runnerComparator);
+    for (Element runnerConfigurationSetting : configurationPerRunnerSettings) {
+      element.addContent(runnerConfigurationSetting);
+    }
+  }
+
+  private void writeRunnerSettings(final Comparator<Element> runnerComparator, final Element element) throws WriteExternalException {
+    final ArrayList<Element> runnerSettings = new ArrayList<Element>();
+    for (JavaProgramRunner runner : myRunnerSettings.keySet()) {
+      RunnerSettings settings = myRunnerSettings.get(runner);
+      Element runnerElement = new Element(RUNNER_ELEMENT);
+      settings.writeExternal(runnerElement);
+      runnerElement.setAttribute(RUNNER_ID, runner.getInfo().getId());
+      runnerSettings.add(runnerElement);
+    }
+    if (myUnloadedRunnerSettings != null) {
+      for (Element unloadedRunnerSetting : myUnloadedRunnerSettings) {
+        runnerSettings.add((Element)unloadedRunnerSetting.clone());
+      }
+    }
+    Collections.sort(runnerSettings, runnerComparator);
+    for (Element runnerSetting : runnerSettings) {
+      element.addContent(runnerSetting);
+    }
+  }
+
+  private static Comparator<Element> createRunnerComparator() {
+    return new Comparator<Element>() {
+      public int compare(final Element o1, final Element o2) {
+        final String attributeValue1 = o1.getAttributeValue(RUNNER_ID);
+        if (attributeValue1 == null) {
+          return 1;
+
+        }
+        final String attributeValue2 = o2.getAttributeValue(RUNNER_ID);
+        if (attributeValue2 == null) {
+          return -1;
+        }
+        return attributeValue1.compareTo(attributeValue2);
+      }
+    };
   }
 
   public RunnerSettings getRunnerSettings(JavaProgramRunner runner) {
@@ -182,6 +230,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     return settings;
   }
 
+  @Nullable
   public ConfigurationType getType() {
     return myConfiguration == null ? null : myConfiguration.getType();
   }

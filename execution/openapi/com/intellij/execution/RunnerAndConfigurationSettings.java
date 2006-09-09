@@ -17,12 +17,14 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.JavaProgramRunner;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: Jan 25, 2005
  */
 public interface RunnerAndConfigurationSettings {
+  @Nullable
   ConfigurationFactory getFactory();
 
   boolean isTemplate();
@@ -37,5 +39,6 @@ public interface RunnerAndConfigurationSettings {
 
   ConfigurationPerRunnerSettings getConfigurationSettings(JavaProgramRunner runner);
 
+  @Nullable
   ConfigurationType getType();
 }
