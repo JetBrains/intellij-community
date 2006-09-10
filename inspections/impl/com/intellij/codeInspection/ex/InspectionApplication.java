@@ -2,14 +2,20 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
@@ -17,6 +23,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ResourceUtil;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jetbrains.annotations.NonNls;
@@ -34,6 +41,7 @@ import java.util.Set;
 /**
  * @author max
  */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class InspectionApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionApplication");
 
@@ -90,6 +98,9 @@ public class InspectionApplication {
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
       myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath);
+
+      ideaProjectPreparations();
+
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
@@ -120,7 +131,7 @@ public class InspectionApplication {
 
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
-          PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object");
+          PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object", GlobalSearchScope.allScope(myProject));
           if (psiObjectClass == null) {
             logError(InspectionsBundle.message("inspection.no.jdk.error.message"));
             System.exit(1);
@@ -174,6 +185,38 @@ public class InspectionApplication {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private void ideaProjectPreparations() { //ignore test data
+    if (myProject.getName().compareTo("idea") == 0) {
+      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      for (Module module : modules) {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final ContentEntry[] entries = model.getContentEntries();
+        for (ContentEntry entry : entries) {
+          final VirtualFile virtualFile = entry.getFile();
+          if (virtualFile == null) continue;
+          if (virtualFile.getName().equals("testData")) {
+            entry.addExcludeFolder(virtualFile);
+            break;
+          }
+          if (virtualFile.isDirectory()) {
+            final VirtualFile[] children = virtualFile.getChildren();
+            for (VirtualFile child : children) {
+              if (child.getName().equals("testData")) {
+                entry.addExcludeFolder(child);
+              }
+            }
+          }
+        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            model.commit();
+          }
+        });
+      }
+    }
+  }
+
   public void setVerboseLevel(int verboseLevel) {
     myVerboseLevel = verboseLevel;
   }
@@ -184,7 +227,7 @@ public class InspectionApplication {
     }
   }
 
-  private void logError(String message) {
+  private static void logError(String message) {
     System.err.println(message);
   }
 
