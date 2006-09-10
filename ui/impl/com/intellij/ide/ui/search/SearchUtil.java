@@ -15,6 +15,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -222,6 +223,9 @@ public class SearchUtil {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> options =
       searchableOptionsRegistrar.replaceSynonyms(searchableOptionsRegistrar.getProcessedWords(option), configurable);
+    if (options.isEmpty()) {
+      return text.indexOf(option) != -1;
+    }
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
     if (!force) {
       options.retainAll(tokens);
@@ -313,6 +317,7 @@ public class SearchUtil {
   }
 
 
+  @Nullable
   private static JBPopup createPopup(final SearchTextField searchField,
                                      final JBPopup[] activePopup,
                                      final Alarm showHintAlarm,
