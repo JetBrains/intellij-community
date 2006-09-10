@@ -78,7 +78,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       return languageFileType.getLanguage();
     }
     else if (fileType instanceof CustomFileType ||
-             fileType instanceof GuiFormFileType) {
+             fileType == StdFileTypes.GUI_DESIGNER_FORM ||
+             fileType == StdFileTypes.IDEA_MODULE ||
+             fileType == StdFileTypes.IDEA_PROJECT ||
+             fileType == StdFileTypes.IDEA_WORKSPACE) {
       return StdLanguages.TEXT;
     }
     return Language.ANY;
