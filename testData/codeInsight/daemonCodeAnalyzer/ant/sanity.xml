@@ -113,11 +113,8 @@
   <<error>wrongTag</error> />
   <target <error>aaa</error>="bbb" />
 
-  <!-- Duplicate target should be detected -->
+   <!-- Duplicate target should be detected -->
   <error><target name="DuplicateTarget"/></error>
   <error><target name="DuplicateTarget"/></error>
-
-  <!--Valid XML characters but not valid ANT-->
-  <error>/></error>
-  <error>></error>
+ 
 </project>

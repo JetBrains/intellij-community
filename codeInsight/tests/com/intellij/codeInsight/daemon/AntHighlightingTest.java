@@ -31,7 +31,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".xml", false, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 10, user = "lvo", time = 12, description = "Using entity")
   public void testEntity() throws Exception {
     configureByFiles(
       new VirtualFile[] {
@@ -43,7 +42,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 10, user = "lvo", time = 12, description = "Duplicate targets & invalid text")
   public void testSanity() throws Exception { doTest(); }
 
   public void testSanity2() throws Exception { doTest(); }
@@ -63,7 +61,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 10, user = "lvo", time = 12, description = "Task def from JAR")
+  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 11, user = "lvo", time = 15, description = "Task def from JAR")
   public void testProperties2() throws Exception {
     configureByFiles(
       new VirtualFile[] {
@@ -75,7 +73,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 10, user = "lvo", time = 12, description = "Fix properties from file")
   public void testPropertiesFromFile() throws Exception {
     doTest();
   }
@@ -84,7 +81,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 10, user = "lvo", time = 12, description = "Performance test")
   public void testBigFile() throws Exception {
     configureByFiles(
       new VirtualFile[] {

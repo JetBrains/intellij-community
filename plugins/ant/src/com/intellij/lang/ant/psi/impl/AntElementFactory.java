@@ -224,11 +224,7 @@ public class AntElementFactory {
   private static void addPropertyCreator(final String className) {
     ourAntTypeToKnownAntElementCreatorMap.put(className, new AntElementCreator() {
       public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-        return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(className), "property") {
-          public String getFileReferenceAttribute() {
-            return null;
-          }
-        };
+        return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(className), "property");
       }
     });
   }

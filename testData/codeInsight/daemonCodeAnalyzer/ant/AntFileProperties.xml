@@ -1,4 +1,4 @@
-<project default="-usage" name="common-build" basedir=".">
+<project default="<error>-usage</error>" name="common-build" basedir=".">
 <property name="lib.manifestclasspath" value="${ant.file.common-build}"/>
 <property name="lib.manifestclasspath2" value="${<error>ant.file.common-build2</error>}"/>
 </project>

@@ -1,6 +1,6 @@
 <project name="test" default="test-target">
 
-<loadfile property="p1" srcfile="source.txt"/>
+<loadfile property="p1" srcfile="<error>source.txt</error>"/>
 <loadfile property="p3" srcfile="<error>source2.txt</error>"/>
 <property name="p2" value="${p1}"/>
 

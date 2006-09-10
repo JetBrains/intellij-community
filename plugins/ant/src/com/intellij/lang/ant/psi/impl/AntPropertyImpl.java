@@ -22,6 +22,14 @@ import java.util.*;
 
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
+  @NonNls private final static Map<String, String> ourFileRefAttributes;
+
+  static {
+    ourFileRefAttributes = new HashMap<String, String>();
+    ourFileRefAttributes.put("property", "file");
+    ourFileRefAttributes.put("loadfile", "srcfile");
+  }
+
   private AntElement myPropHolder;
   private PsiElement myPropertiesFile;
 
@@ -109,7 +117,11 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   public String getFileReferenceAttribute() {
-    return "file";
+    final String attrName;
+    synchronized (ourFileRefAttributes) {
+      attrName = ourFileRefAttributes.get(getSourceElement().getName());
+    }
+    return (attrName != null) ? attrName : super.getFileReferenceAttribute();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
