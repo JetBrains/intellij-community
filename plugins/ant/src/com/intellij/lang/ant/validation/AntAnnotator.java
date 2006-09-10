@@ -19,6 +19,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.HashMap;
+
 public class AntAnnotator implements Annotator {
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
@@ -70,6 +72,9 @@ public class AntAnnotator implements Annotator {
             }
           }
         }
+        if (se instanceof AntProject) {
+          checkDuplicateTargets((AntProject)se, holder);
+        }
       }
     }
     checkReferences(element, holder);
@@ -85,7 +90,9 @@ public class AntAnnotator implements Annotator {
     }
   }
 
-  private static void checkValidAttributes(AntStructuredElement se, AntTypeDefinition def, AnnotationHolder holder) {
+  private static void checkValidAttributes(final AntStructuredElement se,
+                                           final AntTypeDefinition def,
+                                           final @NonNls AnnotationHolder holder) {
     final XmlTag sourceElement = se.getSourceElement();
     for (final XmlAttribute attr : sourceElement.getAttributes()) {
       final String name = attr.getName();
@@ -110,7 +117,32 @@ public class AntAnnotator implements Annotator {
     }
   }
 
-  private static void checkReferences(AntElement element, @NonNls AnnotationHolder holder) {
+  private static void checkDuplicateTargets(final AntProject project, final @NonNls AnnotationHolder holder) {
+    final AntTarget[] targets = project.getTargets();
+    if (targets.length > 0) {
+      final HashMap<String, AntTarget> name2Target = new HashMap<String, AntTarget>();
+      for (final AntTarget target : targets) {
+        final String name = target.getName();
+        final AntTarget t = name2Target.get(name);
+        if (t != null) {
+          final String duplicatedMessage = AntBundle.message("target.is.duplicated", name);
+          holder.createErrorAnnotation(t, duplicatedMessage);
+          holder.createErrorAnnotation(target, duplicatedMessage);
+        }
+        name2Target.put(name, target);
+      }
+      final AntTarget[] importedTargets = project.getImportedTargets();
+      for (final AntTarget target : importedTargets) {
+        final String name = target.getName();
+        final AntTarget t = name2Target.get(name);
+        if (t != null) {
+          holder.createErrorAnnotation(t, AntBundle.message("target.is.duplicated.in.imported.file", name, target.getAntFile().getName()));
+        }
+      }
+    }
+  }
+
+  private static void checkReferences(AntElement element, final @NonNls AnnotationHolder holder) {
     final PsiReference[] refs = element.getReferences();
     for (final PsiReference ref : refs) {
       if (ref instanceof AntGenericReference) {
