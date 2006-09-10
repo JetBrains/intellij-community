@@ -6,12 +6,9 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
@@ -144,10 +141,7 @@ public class LookupItemUtil{
         PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-        final String text;
-        StringBuffer buffer = new StringBuffer();
-        appendTypeString(type, buffer);
-        text = buffer.toString();
+        final String text = type.getCanonicalText();
         String typeString = text;
         if (text.indexOf('<') > 0) {
           typeString = text.substring(0, text.indexOf('<'));
@@ -191,67 +185,6 @@ public class LookupItemUtil{
     item.setLookupString(s);
     item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
     return item;
-  }
-
-  private static void appendTypeString(@NotNull final PsiType type, @NonNls StringBuffer buffer) {
-    //mostly duplicate getPresentableText() logic:(
-    final PsiType componentType = type.getDeepComponentType();
-    if (componentType instanceof PsiPrimitiveType) {
-      buffer.append(componentType.getPresentableText());
-    } else if (componentType instanceof PsiWildcardType) {
-      buffer.append("?");
-      final PsiWildcardType wildcard = (PsiWildcardType)componentType;
-      final PsiType bound = wildcard.getBound();
-      if (bound != null) {
-        buffer.append(wildcard.isExtends() ? " extends " : " super ");
-        appendTypeString(bound, buffer);
-      }
-    } else if (componentType instanceof PsiCapturedWildcardType) {
-      appendTypeString(((PsiCapturedWildcardType)componentType).getWildcard(), buffer);
-    } else if (componentType instanceof PsiClassType) {
-      final PsiClassType classType = ((PsiClassType)componentType);
-      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-      final PsiClass aClass = resolveResult.getElement();
-      if (aClass == null) {
-        buffer.append(classType.getPresentableText());
-      } else {
-        appendClass(aClass, buffer, resolveResult.getSubstitutor());
-      }
-    } else {
-      buffer.append(componentType.getPresentableText());
-    }
-
-    int dim = type.getArrayDimensions();
-    for (int i = 0; i < dim; i++) {
-      buffer.append("[]");
-    }
-  }
-
-  private static void appendClass(final PsiClass aClass, final StringBuffer buffer, PsiSubstitutor substitutor) {
-    final PsiClass containingClass = aClass.getContainingClass();
-    if (containingClass != null) {
-      appendClass(containingClass, buffer, substitutor);
-      buffer.append(".");
-    }
-    buffer.append(aClass.getName());
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(aClass.getProject());
-    if (!PsiUtil.isRawSubstitutor(aClass, substitutor)) {
-      final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
-      if (typeParameters.length > 0) {
-        buffer.append("<");
-        for (int i = 0; i < typeParameters.length; i++) {
-          PsiTypeParameter typeParameter = typeParameters[i];
-          if (i > 0) {
-            buffer.append(',');
-            if (styleSettings.SPACE_AFTER_COMMA) buffer.append(" ");
-          }
-          final PsiType substitution = substitutor.substitute(typeParameter);
-          assert substitution != null;
-          appendTypeString(substitution, buffer);
-        }
-        buffer.append(">");
-      }
-    }
   }
 
   public static int doSelectMostPreferableItem(final LookupItemPreferencePolicy itemPreferencePolicy,

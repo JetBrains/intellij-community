@@ -8,6 +8,7 @@ import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -388,15 +389,22 @@ public class ExpressionParsing extends Parsing {
 
         final CompositeElement expr = parseUnaryExpression(lexer);
         if (expr == null) {
-          lexer.restore(pos);
-          return parsePostfixExpression(lexer);
+          final TreeElement lastNode = TreeUtil.findLastLeaf(type);
+          if (lastNode.getElementType() != JavaTokenType.GT) { //cannot parse correct parenthesized expression if we already parsed correct parameterized type
+            lexer.restore(pos);
+            return parsePostfixExpression(lexer);
+          }
         }
 
         CompositeElement element = Factory.createCompositeElement(TYPE_CAST_EXPRESSION);
         TreeUtil.addChildren(element, lparenth);
         TreeUtil.addChildren(element, type);
         TreeUtil.addChildren(element, rparenth);
-        TreeUtil.addChildren(element, expr);
+        if (expr != null) {
+          TreeUtil.addChildren(element, expr);
+        } else {
+          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+        }
         return element;
       }
     }
