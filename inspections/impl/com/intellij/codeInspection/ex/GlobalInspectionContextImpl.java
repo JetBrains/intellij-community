@@ -327,9 +327,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                   isLocalTool = tool instanceof LocalInspectionToolWrapper;
                   isDescriptorProvider = true;
                 }
-                else if (tool.hasReportedProblems()) {
-                  hasProblems = true;
-                  tool.exportResults(root);
+                else {
+                  tool.updateContent();
+                  if (tool.hasReportedProblems()) {
+                    hasProblems = true;
+                    tool.exportResults(root);
+                  }
                 }
               }
             }
