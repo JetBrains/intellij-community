@@ -594,10 +594,13 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
   public void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
-    final List<EditorWithProviderComposite> composites = getEditorComposites(file);
+    EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
+    if (composite == null) {
+      final List<EditorWithProviderComposite> composites = getEditorComposites(file);
 
-    if (composites.isEmpty()) return;
-    EditorWithProviderComposite composite = composites.get(0);
+      if (composites.isEmpty()) return;
+      composite = composites.get(0);
+    }
 
     final FileEditorProvider[] editorProviders = composite.getProviders();
     final FileEditorProvider selectedProvider = composite.getSelectedEditorWithProvider().getSecond();
@@ -806,6 +809,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
 
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull final VirtualFile file) {
+    final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
+    if (composite != null) {
+      return composite.getSelectedEditorWithProvider();
+    }
+
     final List<EditorWithProviderComposite> composites = getEditorComposites(file);
     if (!composites.isEmpty()) {
       return composites.get(0).getSelectedEditorWithProvider();
@@ -817,6 +825,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull final VirtualFile file) {
     assertThread();
+
+    final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
+    if (composite != null) {
+      return Pair.create(composite.getEditors(), composite.getProviders());
+    }
 
     final List<EditorWithProviderComposite> composites = getEditorComposites(file);
     if (!composites.isEmpty()) {
@@ -830,6 +843,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public FileEditor[] getEditors(@NotNull final VirtualFile file) {
     assertThread();
 
+    final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
+    if (composite != null) {
+      return composite.getEditors();
+    }
+
     final List<EditorWithProviderComposite> composites = getEditorComposites(file);
     if (!composites.isEmpty()) {
       return composites.get(0).getEditors();
@@ -837,6 +855,15 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     else {
       return EMPTY_EDITOR_ARRAY;
     }
+  }
+
+  @Nullable
+  private EditorWithProviderComposite getCurrentEditorWithProviderComposite(@NotNull final VirtualFile virtualFile) {
+    final EditorWindow editorWindow = mySplitters.getCurrentWindow();
+    if (editorWindow != null) {
+      return editorWindow.findFileComposite(virtualFile);
+    }
+    return null;
   }
 
   @NotNull
