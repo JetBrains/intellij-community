@@ -1582,7 +1582,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       4
     );
 
-    if (IdeaTestUtil.bombExplodes(2006, Calendar.SEPTEMBER, 10, 15, 0, "maxim.mossienko", "next token after tag correctly becomes " +
+    if (IdeaTestUtil.bombExplodes(2006, Calendar.SEPTEMBER, 5, 15, 0, "maxim.mossienko", "next token after tag correctly becomes " +
                                                                                          "a tag parameter even if located on next line." +
                                                                                          "Leading asterisks should not be counted as well.")) {
       assertEquals(
