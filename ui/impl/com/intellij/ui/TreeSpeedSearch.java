@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -62,6 +63,9 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   }
 
   protected int getSelectedIndex() {
+    if (myCanExpand) {
+      return ArrayUtil.find(getAllElements(), myComponent.getSelectionPath());
+    }
     int[] selectionRows = myComponent.getSelectionRows();
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
@@ -71,7 +75,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
       final Object root = myComponent.getModel().getRoot();
       if (root instanceof DefaultMutableTreeNode) {
         final List<TreePath> paths = new ArrayList<TreePath>();
-        TreeUtil.traverse((DefaultMutableTreeNode)root, new TreeUtil.Traverse() {
+        TreeUtil.traverseDepth((DefaultMutableTreeNode)root, new TreeUtil.Traverse() {
           public boolean accept(Object node) {
             if (node instanceof DefaultMutableTreeNode){
               final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
