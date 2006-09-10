@@ -21,10 +21,10 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -34,10 +34,10 @@ import javax.swing.*;
  */
 public abstract class InspectionProfileEntry {
 
-  @Nls
+  @Nls @NotNull
   public abstract String getGroupDisplayName();
 
-  @Nls
+  @Nls @NotNull
   public abstract String getDisplayName();
 
   /**
@@ -45,7 +45,8 @@ public abstract class InspectionProfileEntry {
    *         description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
    *         inspection or export to HTML function. Should be unique among all inspections.
    */
-  @NonNls public abstract String getShortName();
+  @NonNls @NotNull
+  public abstract String getShortName();
 
   /**
    * @return highlighting level for this inspection tool that is used in default settings

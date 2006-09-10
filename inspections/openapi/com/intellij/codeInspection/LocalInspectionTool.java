@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,7 +39,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return <code>null</code> if no problems found or not applicable at method level.
    */
   @Nullable
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
@@ -51,7 +52,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return <code>null</code> if no problems found or not applicable at class level.
    */
   @Nullable
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
@@ -64,7 +65,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return <code>null</code> if no problems found or not applicable at field level.
    */
   @Nullable
-  public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
@@ -77,12 +78,12 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
      * @return <code>null</code> if no problems found or not applicable at field level.
      */
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 
   @Nullable
-  public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return null;
   }
 
@@ -90,7 +91,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return descriptive name to be used in "suppress" comments and annotations,
    *         must consist of [a-zA-Z_0-9]+
    */
-  @NonNls public String getID() {
+  @NonNls @NotNull public String getID() {
     return getShortName();
   }
 
