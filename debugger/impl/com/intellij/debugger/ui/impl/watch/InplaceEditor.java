@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -164,7 +165,11 @@ public abstract class InplaceEditor implements AWTEventListener{
       final DebuggerTree tree = myNode.getTree();
       final JLayeredPane layeredPane = tree.getRootPane().getLayeredPane();
       final Point layeredPoint = SwingUtilities.convertPoint(sourceComponent, originalPoint, layeredPane);
-      if (activeLookup.getBounds().contains(layeredPoint)) return; //mouse click inside lookup 
+      if (activeLookup.getBounds().contains(layeredPoint)){
+        return; //mouse click inside lookup
+      } else {
+        ((LookupImpl)activeLookup).hide(); //hide popup on mouse position changed
+      }
     }
 
     final Point point = SwingUtilities.convertPoint(sourceComponent, originalPoint, myInplaceEditorComponent);
