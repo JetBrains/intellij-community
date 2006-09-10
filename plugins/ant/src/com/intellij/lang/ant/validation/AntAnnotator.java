@@ -25,11 +25,11 @@ public class AntAnnotator implements Annotator {
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
     if (!(psiElement instanceof AntElement)) return;
-    AntElement element = (AntElement)psiElement;
+    final AntElement element = (AntElement)psiElement;
     if (element instanceof AntStructuredElement) {
       final AntStructuredElement se = (AntStructuredElement)element;
       AntElement parent = se.getAntParent();
-      AntTypeDefinition def = se.getTypeDefinition();
+      final AntTypeDefinition def = se.getTypeDefinition();
       final String name = se.getSourceElement().getName();
       final TextRange absoluteRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset() + 1);
       if (def == null) {
@@ -66,7 +66,7 @@ public class AntAnnotator implements Annotator {
         else if (se.isTypeDefined()) {
           final PsiElement de = def.getDefiningElement();
           if (de != null) {
-            AntTypeDef td = (AntTypeDef)de;
+            final AntTypeDef td = (AntTypeDef)de;
             if (!td.typesLoaded()) {
               holder.createWarningAnnotation(absoluteRange, AntBundle.message("using.definition.which.type.failed.to.load", name));
             }
