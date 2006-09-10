@@ -24,13 +24,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.problems.Problem;
-import com.intellij.problems.WolfTheProblemSolver;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,9 +79,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static final Key<Integer> HIGHLIGHT_VISITOR_THREADS_IN_USE = new Key<Integer>("HIGHLIGHT_VISITORS_POOL");
+
   private HighlightVisitor[] createHighlightVisitors() {
     HighlightVisitor[] highlightVisitors;
-    synchronized(myProject) {
+    synchronized (myProject) {
       Integer num = myProject.getUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE);
       highlightVisitors = myProject.getComponents(HighlightVisitor.class);
       if (num == null) {
@@ -94,17 +95,18 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
           highlightVisitors[i] = highlightVisitor.clone();
         }
       }
-      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num+1);
+      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num + 1);
     }
     for (final HighlightVisitor highlightVisitor : highlightVisitors) {
       highlightVisitor.init();
     }
     return highlightVisitors;
   }
+
   private void releaseHighlightVisitors() {
-    synchronized(myProject) {
+    synchronized (myProject) {
       int num = myProject.getUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE).intValue();
-      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num == 1 ? null : num-1);
+      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num == 1 ? null : num - 1);
     }
   }
 
@@ -133,7 +135,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
       for (Language language : relevantLanguages) {
         PsiElement psiRoot = viewProvider.getPsi(language);
-        if(!HighlightUtil.shouldHighlight(psiRoot)) continue;
+        if (!HighlightUtil.shouldHighlight(psiRoot)) continue;
         //long time = System.currentTimeMillis();
         List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
         if (elements.isEmpty()) {
@@ -181,11 +183,11 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
-                                                  myMarkers, UpdateHighlightersUtil.NORMAL_MARKERS_GROUP);
+    UpdateHighlightersUtil
+      .setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, UpdateHighlightersUtil.NORMAL_MARKERS_GROUP);
 
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
-                                                   myHighlights, UpdateHighlightersUtil.NORMAL_HIGHLIGHTERS_GROUP);
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights,
+                                                   UpdateHighlightersUtil.NORMAL_HIGHLIGHTERS_GROUP);
   }
 
   public int getPassId() {
@@ -206,7 +208,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   //for tests only
-  @NotNull public Collection<HighlightInfo> getHighlights() {
+  @NotNull
+  public Collection<HighlightInfo> getHighlights() {
     return myHighlights;
   }
 
@@ -224,6 +227,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     for (HighlightVisitor visitor : myHighlightVisitors) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
+
+    final boolean isAntFile = CodeInsightUtil.isAntFile(myFile);
 
     final HighlightInfoHolder holder = createInfoHolder();
     for (PsiElement element : elements) {
@@ -253,18 +258,18 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         HighlightInfo info = holder.get(i);
         // have to filter out already obtained highlights
         if (!gotHighlights.add(info)) continue;
-        if (info.getSeverity() == HighlightSeverity.ERROR) {
+        if (!isAntFile && info.getSeverity() == HighlightSeverity.ERROR) {
           skipParentsSet.add(element.getParent());
         }
       }
     }
 
     //if (LOG.isDebugEnabled()) {
-      //if(maxVisitElement != null){
-      //  LOG.debug("maxVisitTime = " + maxVisitTime);
-      //  LOG.debug("maxVisitElement = " + maxVisitElement+ " ");
-      //}
-      //LOG.debug("totalTime = " + (System.currentTimeMillis() - totalTime) / (double)1000 + "s for " + elements.length + " elements");
+    //if(maxVisitElement != null){
+    //  LOG.debug("maxVisitTime = " + maxVisitTime);
+    //  LOG.debug("maxVisitElement = " + maxVisitElement+ " ");
+    //}
+    //LOG.debug("totalTime = " + (System.currentTimeMillis() - totalTime) / (double)1000 + "s for " + elements.length + " elements");
     //}
 
     return gotHighlights;
@@ -283,8 +288,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     for (TodoItem todoItem : todoItems) {
       TextRange range = todoItem.getTextRange();
       String description = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.TODO, range, description,
-                                                             todoItem.getPattern().getAttributes().getTextAttributes());
+      HighlightInfo info = HighlightInfo
+        .createHighlightInfo(HighlightInfoType.TODO, range, description, todoItem.getPattern().getAttributes().getTextAttributes());
       list.add(info);
     }
     return list;
@@ -312,8 +317,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       int offset = element.getTextRange().getStartOffset();
       MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superSignature != null) {
-        boolean overrides = method.hasModifierProperty(PsiModifier.ABSTRACT) ==
-                            superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
+        boolean overrides =
+          method.hasModifierProperty(PsiModifier.ABSTRACT) == superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
 
         return new LineMarkerInfo(LineMarkerInfo.MarkerType.OVERRIDING_METHOD, method, offset,
                                   overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON);
@@ -341,7 +346,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.METHOD_SEPARATOR, element, element.getTextRange().getStartOffset(), null);
+          LineMarkerInfo info =
+            new LineMarkerInfo(LineMarkerInfo.MarkerType.METHOD_SEPARATOR, element, element.getTextRange().getStartOffset(), null);
           EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
