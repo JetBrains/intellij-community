@@ -847,7 +847,7 @@ public class KeymapPanel extends JPanel {
     public MyEditor() {
       myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         protected void textChanged(DocumentEvent e) {
-          if (myKeymap != null){
+          if (myKeymap != null && myKeymap.canModify()){
             myKeymap.setName(myTextField.getText());
           }
         }
