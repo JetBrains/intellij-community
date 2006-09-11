@@ -16,6 +16,9 @@ import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -24,12 +27,24 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
+  private static final Comparator<XmlAttributeDescriptor> COMPARATOR = new Comparator<XmlAttributeDescriptor>() {
+    public int compare(final XmlAttributeDescriptor o1, final XmlAttributeDescriptor o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
+
   public Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
     return new Object[]{item.getObject()};
   }
 
   public Object[] getParametersForDocumentation(final XmlElementDescriptor p, final ParameterInfoContext context) {
-    return p.getAttributesDescriptors();
+    return getSortedDescriptors(p);
+  }
+
+  private static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {
+    final XmlAttributeDescriptor[] xmlAttributeDescriptors = p.getAttributesDescriptors();
+    Arrays.sort(xmlAttributeDescriptors, COMPARATOR);
+    return xmlAttributeDescriptors;
   }
 
   public boolean couldShowInLookup() {
@@ -119,7 +134,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   private static void updateElementDescriptor(XmlElementDescriptor descriptor, ParameterInfoUIContext context) {
-    final XmlAttributeDescriptor[] attributes = descriptor != null ? descriptor.getAttributesDescriptors() : new XmlAttributeDescriptor[0];
+    final XmlAttributeDescriptor[] attributes = descriptor != null ? getSortedDescriptors(descriptor) : XmlAttributeDescriptor.EMPTY;
 
     StringBuffer buffer = new StringBuffer();
     int highlightStartOffset = -1;
