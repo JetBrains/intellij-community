@@ -204,7 +204,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
     for (VirtualFile vFile : vFiles) {
       PsiFile file = myManager.findFile(vFile);
-      if (file instanceof PsiJavaFile && !(PsiUtil.isInJspFile(file))) {
+      if (file instanceof PsiJavaFile && !PsiUtil.isInJspFile(file)) {
         PsiClass[] fileClasses = ((PsiJavaFile)file).getClasses();
         for (PsiClass fileClass : fileClasses) {
           classes.add(fileClass);
@@ -286,11 +286,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
-  public boolean textMatches(CharSequence text) {
+  public boolean textMatches(@NotNull CharSequence text) {
     return false;
   }
 
-  public boolean textMatches(PsiElement element) {
+  public boolean textMatches(@NotNull PsiElement element) {
     return false;
   }
 
@@ -375,7 +375,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     String ext = StdFileTypes.JAVA.getDefaultExtension();
     final PsiJavaFile file = (PsiJavaFile)factory.createFileFromText(name + "." + ext, text);
     PsiClass[] classes = file.getClasses();
-    if (classes.length != 1 || !classes[0].getName().equals(name)) {
+    if (classes.length != 1 || !name.equals(classes[0].getName())) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
     }
     if (adjustCode) {
@@ -440,8 +440,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
     try {
       VirtualFile vFile = getVirtualFile().createChildData(myManager, name);
-      final PsiFile psiFile = myManager.findFile(vFile);
-      return psiFile;
+      return myManager.findFile(vFile);
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e.toString());
@@ -487,7 +486,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   private LanguageLevel getLanguageLevelInner() {
     final VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile == null) throw new IllegalStateException("Cannot get language level for " + getName());
     final Project project = getProject();
     final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
     if (module != null) {
@@ -497,7 +495,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return PsiManager.getInstance(project).getEffectiveLanguageLevel();
   }
 
-  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     checkAdd(element);
     if (element instanceof PsiDirectory) {
       LOG.error("not implemented");
@@ -574,7 +572,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     }
   }
 
-  public void checkAdd(PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     if (element instanceof PsiDirectory) {
       String name = ((PsiDirectory)element).getName();
@@ -609,11 +607,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     }
   }
 
-  public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -652,12 +650,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   /**
    * @not_implemented
    */
-  public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     LOG.error("not implemented");
     return null;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitDirectory(this);
   }
 
@@ -670,7 +668,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public boolean canNavigate() {
-    return isValid();
+    return EditSourceUtil.canNavigate(this);
+  }
+
+  public boolean canNavigateToSource() {
+    return false;
   }
 
   public void navigate(boolean requestFocus) {
@@ -679,10 +681,5 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     projectView.getProjectViewPaneById(ProjectViewPane.ID).select(this, getVirtualFile(), requestFocus);
     ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
   }
-
-  public boolean canNavigateToSource() {
-    return EditSourceUtil.canNavigate(this);
-  }
-
 }
 

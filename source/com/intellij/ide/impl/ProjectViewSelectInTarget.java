@@ -73,18 +73,15 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   private static boolean isTopLevelClass(final PsiElement element) {
-    if (!(element instanceof PsiClass))
-    {
+    if (!(element instanceof PsiClass)) {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiFile))
-    {
+    if (!(parent instanceof PsiFile)) {
       return false;
     }
     final VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
-    if (virtualFile == null)
-    {
+    if (virtualFile == null) {
       return false;
     }
     return virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS;

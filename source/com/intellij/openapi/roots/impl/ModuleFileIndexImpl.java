@@ -59,10 +59,10 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   }
 
   public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
-    if (file.isDirectory()) return false;
-    if (myFileTypeManager.getFileTypeByFile(file) != StdFileTypes.JAVA) return false;
-    if (myFileTypeManager.isFileIgnored(file.getName())) return false;
-    return isInSourceContent(file);
+    return !file.isDirectory()
+           && myFileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA
+           && !myFileTypeManager.isFileIgnored(file.getName())
+           && isInSourceContent(file);
   }
 
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
@@ -72,8 +72,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
-      if (parent == null) return false;
-      return isInContent(parent);
+      return parent != null && isInContent(parent);
     }
   }
 
@@ -84,8 +83,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
-      if (parent == null) return false;
-      return isInSourceContent(parent);
+      return parent != null && isInSourceContent(parent);
     }
   }
 
@@ -124,8 +122,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
-      if (parent == null) return false;
-      return isInTestSourceContent(parent);
+      return parent != null && isInTestSourceContent(parent);
     }
   }
 
@@ -141,8 +138,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
-        if (info == null) return false;
-        return myModule.equals(info.module);
+        return info != null && myModule.equals(info.module);
       }
       else {
         return !myFileTypeManager.isFileIgnored(file.getName());

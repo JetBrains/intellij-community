@@ -190,14 +190,9 @@ public class PackageUtil {
   public static boolean moduleContainsFile(final Module module, VirtualFile file, boolean isLibraryElement) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     if (isLibraryElement) {
-      OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (NamedLibraryElementNode.orderEntryContainsFile(orderEntry, file)) {
-          return orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
-                 orderEntry instanceof LibraryOrderEntry;
-        }
-      }
-      return false;
+      OrderEntry orderEntry = moduleRootManager.getFileIndex().getOrderEntryForFile(file);
+      return orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
+             orderEntry instanceof LibraryOrderEntry;
     }
     else {
       return moduleRootManager.getFileIndex().isInContent(file);

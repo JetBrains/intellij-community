@@ -33,10 +33,6 @@ public class EditSourceUtil {
     }
 
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) {
-      return false;
-    }
-
-    return true;
+    return virtualFile != null;
   }
 }

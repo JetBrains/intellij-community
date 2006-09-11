@@ -63,11 +63,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return virtualFile != null ? new VirtualFile[]{virtualFile} : VirtualFile.EMPTY_ARRAY;
   }
 
-  public List<AbstractTreeNode> getOrBuildChildren(AbstractTreeNode parent) {
+  private List<AbstractTreeNode> getOrBuildChildren(AbstractTreeNode parent) {
     buildNodeForElement(parent);
 
     DefaultMutableTreeNode node = getNodeForElement(parent);
-    //expandNodeChildren(node);
 
     if (node == null) {
       return new ArrayList<AbstractTreeNode>();
@@ -75,20 +74,20 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     myTree.expandPath(new TreePath(node.getPath()));
 
-    List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (int i = 0; i < node.getChildCount(); i++) {
+    int childCount = node.getChildCount();
+    List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>(childCount);
+    for (int i = 0; i < childCount; i++) {
       TreeNode childAt = node.getChildAt(i);
       DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)childAt;
       if (defaultMutableTreeNode.getUserObject() instanceof AbstractTreeNode) {
         ProjectViewNode treeNode = (ProjectViewNode)defaultMutableTreeNode.getUserObject();
         result.add(treeNode);
-      } else if (defaultMutableTreeNode.getUserObject() instanceof FavoritesTreeNodeDescriptor){
+      }
+      else if (defaultMutableTreeNode.getUserObject() instanceof FavoritesTreeNodeDescriptor) {
         AbstractTreeNode treeNode = ((FavoritesTreeNodeDescriptor)defaultMutableTreeNode.getUserObject()).getElement();
         result.add(treeNode);
       }
-
     }
-
     return result;
   }
 
@@ -151,13 +150,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   private AbstractTreeNode select(AbstractTreeNode current, VirtualFile file, Object element, Condition<AbstractTreeNode> nonStopCondition) {
-
     if (current.canRepresent(element)) return current;
-
     if (current instanceof ProjectViewNode && file != null && !((ProjectViewNode)current).contains(file)) return null;
 
     DefaultMutableTreeNode currentNode = getNodeForElement(current);
-
     boolean expanded = currentNode != null && getTree().isExpanded(new TreePath(currentNode.getPath()));
 
     List<AbstractTreeNode> kids = getOrBuildChildren(current);

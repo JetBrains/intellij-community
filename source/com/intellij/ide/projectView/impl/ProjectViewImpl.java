@@ -1484,9 +1484,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         String compatiblePaneViewId = target.getMinorViewId();
         if (!Comparing.strEqual(compatiblePaneViewId, getCurrentViewId())) continue;
 
-        if (!target.canSelect(selectInContext)) continue;
-        target.selectIn(selectInContext, false);
-        break;
+        if (target.canSelect(selectInContext)) {
+          target.selectIn(selectInContext, false);
+          break;
+        }
       }
     }
 

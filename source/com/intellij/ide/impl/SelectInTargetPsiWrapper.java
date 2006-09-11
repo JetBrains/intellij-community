@@ -36,11 +36,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     else {
       psiFile = PsiManager.getInstance(myProject).findFile(context.getVirtualFile());
     }
-    if (psiFile != null && canSelect(psiFile)) {
-      return true;
-    }
-
-    return canWorkWithCustomObjects();
+    return psiFile != null && canSelect(psiFile) || canWorkWithCustomObjects();
   }
 
   public final void selectIn(SelectInContext context, final boolean requestFocus) {
