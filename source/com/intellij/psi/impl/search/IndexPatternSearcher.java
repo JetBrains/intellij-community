@@ -1,13 +1,17 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -119,6 +123,9 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
           if (parserDefinition != null) {
             commentTokens = TokenSet.orSet(commentTokens, parserDefinition.getCommentTokens());
           }
+
+          final LexerEditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getProject(), file.getVirtualFile());
+          lexer = new LexerEditorHighlighterLexer(highlighter);
         }
         else if (file instanceof XmlFile) {
           commentTokens = XML_COMMENT_BIT_SET;
@@ -208,4 +215,57 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     return true;
   }
 
+  private static class LexerEditorHighlighterLexer extends LexerBase {
+    HighlighterIterator iterator;
+    char[] buffer;
+    int start;
+    int end;
+    private final LexerEditorHighlighter myHighlighter;
+
+    public LexerEditorHighlighterLexer(final LexerEditorHighlighter highlighter) {
+      myHighlighter = highlighter;
+    }
+
+    public void start(char[] buffer) {
+      start(buffer, 0, buffer.length);
+    }
+
+    public void start(char[] buffer, int startOffset, int endOffset) {
+      myHighlighter.setText(new CharArrayCharSequence(this.buffer = buffer, start = startOffset, end = endOffset));
+      iterator = myHighlighter.createIterator(0);
+    }
+
+    public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+      start(buffer, startOffset, endOffset);
+    }
+
+    public int getState() {
+      return 0;
+    }
+
+    public IElementType getTokenType() {
+      if (iterator.atEnd()) return null;
+      return iterator.getTokenType();
+    }
+
+    public int getTokenStart() {
+      return iterator.getStart();
+    }
+
+    public int getTokenEnd() {
+      return iterator.getEnd();
+    }
+
+    public void advance() {
+      iterator.advance();
+    }
+
+    public char[] getBuffer() {
+      return buffer;
+    }
+
+    public int getBufferEnd() {
+      return end;
+    }
+  }
 }
