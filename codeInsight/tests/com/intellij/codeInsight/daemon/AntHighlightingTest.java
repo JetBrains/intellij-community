@@ -61,7 +61,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 11, user = "lvo", time = 15, description = "Task def from JAR")
+  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 12, user = "lvo", time = 15, description = "Task def from JAR")
   public void testProperties2() throws Exception {
     configureByFiles(
       new VirtualFile[] {
