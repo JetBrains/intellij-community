@@ -7,8 +7,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,28 +23,27 @@ import java.util.Map;
  */
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitingPassRegistrarEx {
   private boolean myNeedAdditionalIntentionsPass = false;
-  private Map<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>> myRegisteredPasses = null;
-
-  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass) {
-    Anchor anc = Anchor.FIRST;
-    switch (anchor) {
-      case FIRST : anc = Anchor.FIRST;
-        break;
-      case LAST : anc = Anchor.LAST;
-        break;
-      case BEFORE : anc = Anchor.BEFORE;
-        break;
-      case AFTER : anc = Anchor.AFTER;
-        break;
-    }
-    registerTextEditorHighlightingPass(factory, anc, anchorPass, true);
-  }
+  private Map<TextEditorHighlightingPassFactory, TextEditorPassBean> myRegisteredPasses = null;
+  private int[] myPostHighlighterPasses = UpdateHighlightersUtil.POST_HIGHLIGHT_GROUPS;
 
   public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass, boolean needAdditionalPass) {
+    registerTextEditorHighlightingPass(factory, anchor, anchorPass, needAdditionalPass, -1, false);
+  }
+
+
+  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory,
+                                                 Anchor anchor,
+                                                 int anchorPass,
+                                                 boolean needAdditionalPass,
+                                                 int selfPassNumber,
+                                                 boolean inPostHighlighterGroup) {
     if (myRegisteredPasses == null){
-      myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>>();
+      myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, TextEditorPassBean>();
     }
-    myRegisteredPasses.put(factory, Pair.create(anchor, anchorPass));
+    if (selfPassNumber != -1 && inPostHighlighterGroup) {
+      myPostHighlighterPasses = ArrayUtil.mergeArrays(myPostHighlighterPasses, new int[] {selfPassNumber} );      
+    }
+    myRegisteredPasses.put(factory, new TextEditorPassBean(anchor, anchorPass, selfPassNumber, inPostHighlighterGroup));
     if (needAdditionalPass) {
       myNeedAdditionalIntentionsPass = true;
     }
@@ -60,14 +59,14 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitin
     for (TextEditorHighlightingPassFactory factory : myRegisteredPasses.keySet()) {
       final TextEditorHighlightingPass editorHighlightingPass = factory.createHighlightingPass(psiFile, editor);
       if (editorHighlightingPass == null) continue;
-      final Pair<Anchor, Integer> location = myRegisteredPasses.get(factory);
-      final Anchor anchor = location.first;
+      final TextEditorPassBean location = myRegisteredPasses.get(factory);
+      final Anchor anchor = location.getAnchor();
       if (anchor == Anchor.FIRST){
         result.add(0, editorHighlightingPass);
       } else if (anchor == Anchor.LAST){
         result.add(editorHighlightingPass);
       } else {
-        final int passId = location.second.intValue();
+        final int passId = location.getNeighborPass();
         int anchorPassIdx = -1;
         for (int idx = 0; idx < result.size(); idx++) {
           final TextEditorHighlightingPass highlightingPass = result.get(idx);
@@ -94,6 +93,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitin
     return myNeedAdditionalIntentionsPass;
   }
 
+  public int[] getPostHighlightingPasses() {
+    return myPostHighlighterPasses;
+  }
+
   @NotNull
   @NonNls
   public String getComponentName() {
@@ -106,10 +109,41 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitin
   public void disposeComponent() {
   }
 
-  public void projectOpened() {
+  private static class TextEditorPassBean {
+    private Anchor myAnchor;
+    private int myNeighborPass;
+    private int myGroupPassNumber;
+    private boolean myInPostHighlightingGroup;
 
-  }
+    public TextEditorPassBean(final Anchor anchor, final int neibourPass, final int selfPassNumber) {
+      myAnchor = anchor;
+      myNeighborPass = neibourPass;
+      myGroupPassNumber = selfPassNumber;
+    }
 
-  public void projectClosed() {
+
+    public TextEditorPassBean(final Anchor anchor,
+                              final int neighborPass,
+                              final int selfPassNumber,
+                              final boolean inPostHighlightingGroup) {
+      this(anchor, neighborPass, selfPassNumber);
+      myInPostHighlightingGroup = inPostHighlightingGroup;
+    }
+
+    public Anchor getAnchor() {
+      return myAnchor;
+    }
+
+    public int getNeighborPass() {
+      return myNeighborPass;
+    }
+
+    public int getGroupPassNumber() {
+      return myGroupPassNumber;
+    }
+
+    public boolean isInPostHighlightingGroup() {
+      return myInPostHighlightingGroup;
+    }
   }
 }

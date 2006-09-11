@@ -39,6 +39,10 @@ public class UpdateHighlightersUtil {
   public static final int POST_HIGHLIGHTERS_GROUP = 2;
   public static final int INSPECTION_HIGHLIGHTERS_GROUP = 3;
   public static final int EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP = 4;
+
+  /**
+   * use TextEditorHighlightingPassRegistrar to obtain all list of post highlighting passes
+   */
   public static final int[] POST_HIGHLIGHT_GROUPS = new int[]{POST_HIGHLIGHTERS_GROUP, INSPECTION_HIGHLIGHTERS_GROUP, EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP};
   public static final int[] NORMAL_HIGHLIGHT_GROUPS = new int[]{NORMAL_HIGHLIGHTERS_GROUP};
 

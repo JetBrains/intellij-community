@@ -92,6 +92,25 @@ public class ArrayUtil {
     return highlights;
   }
 
+
+  public static int[] mergeArrays(int[] a1, int[] a2) {
+    if (a1.length == 0) {
+      return a2;
+    }
+    if (a2.length == 0) {
+      return a1;
+    }
+    int[] a = new int[a1.length + a2.length];
+    int idx = 0;
+    for (int i : a1) {
+      a[idx++] = i;
+    }
+    for (int i : a2) {
+      a[idx++] = i;
+    }
+    return a;
+  }
+
   /**
    * Appends <code>element</code> to the <code>src</code> array. As you can
    * imagine the appended element will be the last one in the returned result.

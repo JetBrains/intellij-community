@@ -34,7 +34,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,7 +112,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         appendPass(passes, aPassesToPerform);
       }
     }
-    final TextEditorHighlitingPassRegistrarEx passRegistrar = (TextEditorHighlitingPassRegistrarEx)TextEditorHighlightingPassRegistrar.getInstance(myProject);
+    final TextEditorHighlitingPassRegistrarEx passRegistrar = TextEditorHighlitingPassRegistrarEx.getInstanceEx();
     TextEditorHighlightingPass[] highlightingPasses =
       passRegistrar.modifyHighlightingPasses(passes, myFile, myEditor);
     if (passRegistrar.needAdditionalIntentionsPass()){
