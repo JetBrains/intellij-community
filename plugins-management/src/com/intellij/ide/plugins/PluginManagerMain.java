@@ -263,7 +263,8 @@ public class PluginManagerMain {
           modifyPluginsList(list);
         }
         else if (error != null) {
-          Messages.showErrorDialog(IdeBundle.message("error.list.of.plugins.was.not.loaded"), IdeBundle.message("title.plugins"));
+          Messages.showErrorDialog(IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
+                                   IdeBundle.message("title.plugins"));
         }
         setDownloadStatus(false);
       }
