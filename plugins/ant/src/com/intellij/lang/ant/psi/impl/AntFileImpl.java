@@ -63,7 +63,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NonNls public static final String BASEDIR_ATTR = "basedir";
   @NonNls public static final String FILE_ATTR = "file";
   @NonNls public static final String PREFIX_ATTR = "prefix";
-  
+
   private AntProject myProject;
   private AntElement myPrologElement;
   private AntElement myEpilogueElement;
@@ -282,11 +282,19 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         myProjectElements = new HashMap<AntTypeId, String>();
         final ReflectedProject reflectedProject = ReflectedProject.geProject(getClassLoader());
         if (reflectedProject.myProject != null) {
-          // first, create task definitons
-          updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
-          // second, create definitions of data types
-          updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
-          myProjectProperties = reflectedProject.myProperties;
+          final IntrospectionHelper projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
+          try {
+            // first, create task definitons
+            updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
+            // second, create definitions of data types
+            updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
+            myProjectProperties = reflectedProject.myProperties;
+          }
+          finally {
+            if (projectHelper != null) {
+              projectHelper.buildFinished(null);
+            }
+          }
         }
       }
       return myTypeDefinitions.get(className);
@@ -377,21 +385,17 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
          */
         final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
         if (helper != null) {
-          try {
-            final Enumeration nestedEnum = helper.getNestedElements();
-            while (nestedEnum.hasMoreElements()) {
-              final String nestedElement = (String)nestedEnum.nextElement();
-              final Class clazz = (Class)helper.getNestedElementMap().get(nestedElement);
-              if (myTypeDefinitions.get(clazz.getName()) == null) {
-                final AntTypeDefinition nestedDef = createTypeDefinition(new AntTypeId(nestedElement), clazz, false);
-                if (nestedDef != null) {
-                  myTypeDefinitions.put(nestedDef.getClassName(), nestedDef);
-                }
+          final Enumeration nestedEnum = helper.getNestedElements();
+          while (nestedEnum.hasMoreElements()) {
+            final String nestedElement = (String)nestedEnum.nextElement();
+            final Class clazz = (Class)helper.getNestedElementMap().get(nestedElement);
+            if (myTypeDefinitions.get(clazz.getName()) == null) {
+              final AntTypeDefinition nestedDef =
+                createTypeDefinition(new AntTypeId(AntStringInterner.intern(nestedElement)), clazz, false);
+              if (nestedDef != null) {
+                myTypeDefinitions.put(nestedDef.getClassName(), nestedDef);
               }
             }
-          }
-          finally {
-            helper.buildFinished(null);
           }
         }
       }
@@ -413,34 +417,29 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class typeClass, final boolean isTask) {
     final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
     if (helper == null) return null;
-    try {
-      final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
-      final Enumeration attrEnum = helper.getAttributes();
-      while (attrEnum.hasMoreElements()) {
-        final String attr = AntStringInterner.intern((String)attrEnum.nextElement());
-        final Class attrClass = helper.getAttributeType(attr);
-        if (int.class.equals(attrClass)) {
-          attributes.put(attr, AntAttributeType.INTEGER);
-        }
-        else if (boolean.class.equals(attrClass)) {
-          attributes.put(attr, AntAttributeType.BOOLEAN);
-        }
-        else {
-          attributes.put(attr.toLowerCase(Locale.US), AntAttributeType.STRING);
-        }
+    final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
+    final Enumeration attrEnum = helper.getAttributes();
+    while (attrEnum.hasMoreElements()) {
+      final String attr = AntStringInterner.intern(((String)attrEnum.nextElement()).toLowerCase(Locale.US));
+      final Class attrClass = helper.getAttributeType(attr);
+      if (int.class.equals(attrClass)) {
+        attributes.put(attr, AntAttributeType.INTEGER);
       }
-      final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
-      final Enumeration nestedEnum = helper.getNestedElements();
-      while (nestedEnum.hasMoreElements()) {
-        final String nestedElement = AntStringInterner.intern((String)nestedEnum.nextElement());
-        final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
-        nestedDefinitions.put(new AntTypeId(nestedElement), className);
+      else if (boolean.class.equals(attrClass)) {
+        attributes.put(attr, AntAttributeType.BOOLEAN);
       }
-      return new AntTypeDefinitionImpl(id, AntStringInterner.intern(typeClass.getName()), isTask, attributes, nestedDefinitions);
+      else {
+        attributes.put(attr, AntAttributeType.STRING);
+      }
     }
-    finally {
-      helper.buildFinished(null);
+    final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
+    final Enumeration nestedEnum = helper.getNestedElements();
+    while (nestedEnum.hasMoreElements()) {
+      final String nestedElement = AntStringInterner.intern((String)nestedEnum.nextElement());
+      final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
+      nestedDefinitions.put(new AntTypeId(nestedElement), className);
     }
+    return new AntTypeDefinitionImpl(id, AntStringInterner.intern(typeClass.getName()), isTask, attributes, nestedDefinitions);
   }
 
   @Nullable
