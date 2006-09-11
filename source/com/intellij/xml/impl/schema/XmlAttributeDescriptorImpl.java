@@ -117,6 +117,10 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   private String[] getEnumeratedValuesImpl(final XmlTag declaration) {
+    if ("boolean".equals(declaration.getAttributeValue("name"))) {
+      return new String[] {"true", "false"};
+    }
+
     final HashSet<String> variants = new HashSet<String>();
     XmlUtil.collectEnumerationValues(declaration,variants);
 
