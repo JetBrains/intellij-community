@@ -17,11 +17,8 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import gnu.trove.THashSet;
@@ -36,7 +33,6 @@ import java.util.*;
  * @author peter
  */
 public abstract class DomFileDescription<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomFileDescription");
   private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
@@ -96,22 +92,11 @@ public abstract class DomFileDescription<T> {
   }
 
   public boolean isMyFile(XmlFile file, @Nullable final Module module) {
-    if (!containsRootTagName(file)) return false;
-
-    XmlDocument doc = file.getDocument();
-    if (doc != null) {
-      XmlTag rootTag = doc.getRootTag();
-      if (rootTag != null && rootTag.getLocalName().equals(myRootTagName)) {
-        return true;
-      }
-    }
-    return false;
+    return true;
   }
 
-  protected final boolean containsRootTagName(final XmlFile file) {
-    final CharSequence contents = file.getViewProvider().getContents();
-    final String substring = contents.subSequence(0, Math.min(contents.length(), 1024)).toString();
-    return substring.contains(myRootTagName);
+  public boolean acceptsOtherRootTagNames() {
+    return false;
   }
 
   /**
@@ -132,10 +117,6 @@ public abstract class DomFileDescription<T> {
   @NotNull
   public Set<Class<? extends DomElement>> getDomModelDependencyItems() {
     return Collections.emptySet();
-  }
-
-  public Collection<XmlFile> getMyFiles() {
-    return Collections.emptyList();
   }
 
   /**

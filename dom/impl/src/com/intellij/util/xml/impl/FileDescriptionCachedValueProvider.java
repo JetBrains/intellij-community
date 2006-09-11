@@ -3,13 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
@@ -68,7 +70,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
       myFireEvents = false;
 
       myModule = ModuleUtil.findModuleForPsiElement(myXmlFile);
-      if (myOldResult != null && myFileDescription != null && myFileDescription.isMyFile(myXmlFile, myModule)) {
+      final String rootTagName = getRootTagName();
+      if (myOldResult != null && myFileDescription != null && myFileDescription.getRootTagName().equals(rootTagName) && myFileDescription.isMyFile(myXmlFile, myModule)) {
         return myOldResult;
       }
 
@@ -77,8 +80,31 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
         return saveResult(myDomManager.getOrCreateCachedValueProvider(originalFile).getFileDescription(), fireEvents);
       }
 
-      return saveResult(ContainerUtil.find(myDomManager.getFileDescriptions().keySet(), myCondition), fireEvents);
+      return saveResult(findFileDescription(rootTagName), fireEvents);
     }
+  }
+
+  @Nullable
+  private DomFileDescription findFileDescription(final String rootTagName) {
+    if (rootTagName != null) {
+      final DomFileDescription description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
+      if (description != null) {
+        return description;
+      }
+    }
+    return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(rootTagName), myCondition);
+  }
+
+  @Nullable
+  private String getRootTagName() {
+    final XmlDocument document = myXmlFile.getDocument();
+    if (document != null) {
+      final XmlTag tag = document.getRootTag();
+      if (tag != null) {
+        return tag.getLocalName();
+      }
+    }
+    return (String)null;
   }
 
   final boolean isInModel() {

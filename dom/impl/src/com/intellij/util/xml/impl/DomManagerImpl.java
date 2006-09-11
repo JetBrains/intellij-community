@@ -89,6 +89,12 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
   private final Map<DomFileDescription,Set<DomFileElementImpl>> myFileDescriptions = new THashMap<DomFileDescription,Set<DomFileElementImpl>>();
+  private final FactoryMap<String,Set<DomFileDescription>> myRootTagName2FileDescription = new FactoryMap<String, Set<DomFileDescription>>() {
+    protected Set<DomFileDescription> create(final String key) {
+      return new THashSet<DomFileDescription>();
+    }
+  };
+  private final Set<DomFileDescription> myAcceptingOtherRootTagNamesDescriptions = new THashSet<DomFileDescription>();
   private final FactoryMap<DomFileDescription,Set<DomFileDescription>> myFileDescriptionDependencies = new FactoryMap<DomFileDescription, Set<DomFileDescription>>() {
     protected Set<DomFileDescription> create(final DomFileDescription key) {
       final Class rootElementClass = key.getRootElementClass();
@@ -336,7 +342,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return result;
   }
   
-  private void dfsVisit(DomFileDescription<?> node, Map<Class, DomFileDescription> class2Descr, Set<DomFileDescription> visited, LinkedList<DomFileDescription> result) {
+  private static void dfsVisit(DomFileDescription<?> node, Map<Class, DomFileDescription> class2Descr, Set<DomFileDescription> visited, LinkedList<DomFileDescription> result) {
     visited.add(node);
     for (final Class<? extends DomElement> aClass : node.getDomModelDependencyItems()) {
       final DomFileDescription next = class2Descr.get(aClass);
@@ -345,6 +351,16 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     }
     result.add(node);
+  }
+
+  public final Set<DomFileDescription> getFileDescriptions(String rootTagName) {
+    return myRootTagName2FileDescription.get(rootTagName);
+  }
+
+  public final Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions(String rootTagName) {
+    final THashSet<DomFileDescription> set = new THashSet<DomFileDescription>(myAcceptingOtherRootTagNamesDescriptions);
+    set.removeAll(getFileDescriptions(rootTagName));
+    return set;
   }
 
   public final Map<DomFileDescription, Set<DomFileElementImpl>> getFileDescriptions() {
@@ -570,6 +586,10 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
 
     myFileDescriptions.put(description, new HashSet<DomFileElementImpl>());
+    myRootTagName2FileDescription.get(description.getRootTagName()).add(description);
+    if (description.acceptsOtherRootTagNames()) {
+      myAcceptingOtherRootTagNamesDescriptions.add(description);
+    }
 
     registerReferenceProviders(description);
   }
