@@ -527,11 +527,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
           // Save location
           Point location = getLocation();
-          DimensionService.getInstance().setLocation(myDimensionServiceKey, location);
+          DimensionService.getInstance().setLocation(myDimensionServiceKey, location, projectGuess);
           // Save size
           Dimension size = getSize();
           if (!myInitialSize.equals(size)) {
-            DimensionService.getInstance().setSize(myDimensionServiceKey, size);
+            DimensionService.getInstance().setSize(myDimensionServiceKey, size, projectGuess);
           }
           myOpened = false;
         }
