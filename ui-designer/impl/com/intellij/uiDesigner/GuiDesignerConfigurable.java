@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
@@ -66,6 +68,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     return IconLoader.getIcon("/general/uiDesigner.png");
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "project.propGUI";
   }
@@ -156,6 +159,19 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     private void vanishGeneratedSources() {
       final PsiShortNamesCache cache = PsiManager.getInstance(myProject).getShortNamesCache();
       final PsiMethod[] methods = cache.getMethodsByName(AsmCodeGenerator.SETUP_METHOD_NAME, GlobalSearchScope.projectScope(myProject));
+      final ArrayList<VirtualFile> vFiles = new ArrayList<VirtualFile>();
+
+      for(PsiMethod method: methods) {
+        PsiFile file = method.getContainingFile();
+        if (file != null) {
+          VirtualFile vFile = file.getVirtualFile();
+          if (vFile != null) {
+            vFiles.add(vFile);
+          }
+        }
+      }
+
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(vFiles.toArray(new VirtualFile[vFiles.size()]));
 
       for (int i = 0; i < methods.length; i++) {
         final PsiMethod method = methods[i];
@@ -168,7 +184,9 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
             LOG.assertTrue(vFile != null);
             myProgressWindow.setText(UIDesignerBundle.message("progress.converting", vFile.getPresentableUrl()));
             myProgressWindow.setFraction(((double)i) / ((double)methods.length));
-            FormSourceCodeGenerator.cleanup(aClass);
+            if (vFile.isWritable()) {
+              FormSourceCodeGenerator.cleanup(aClass);
+            }
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);

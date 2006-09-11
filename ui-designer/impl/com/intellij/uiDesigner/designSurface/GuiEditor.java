@@ -373,7 +373,24 @@ public final class GuiEditor extends JPanel implements DataProvider {
     if (isEditable()) {
       return true;
     }
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(myFile);
+    VirtualFile sourceFileToCheckOut = null;
+    if (!GuiDesignerConfiguration.getInstance(getProject()).INSTRUMENT_CLASSES) {
+      final String classToBind = myRootContainer.getClassToBind();
+      if (classToBind != null && classToBind.length() > 0) {
+        PsiClass psiClass = FormEditingUtil.findClassToBind(myModule, classToBind);
+        if (psiClass != null) {
+          sourceFileToCheckOut = psiClass.getContainingFile().getVirtualFile();
+        }
+      }
+    }
+
+    final ReadonlyStatusHandler.OperationStatus status;
+    if (sourceFileToCheckOut != null) {
+      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(myFile, sourceFileToCheckOut);
+    }
+    else {
+      status = ReadonlyStatusHandler.getInstance(getProject()).ensureFilesWritable(myFile);
+    }
     return !status.hasReadonlyFiles();
   }
 
