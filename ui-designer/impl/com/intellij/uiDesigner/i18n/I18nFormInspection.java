@@ -1,10 +1,9 @@
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -79,7 +78,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
       }
 
       collector.addError(getID(), prop,
-                         CodeInsightBundle.message("inspection.i18n.message.in.form", descriptor.getValue()),
+                         UIDesignerBundle.message("inspection.i18n.message.in.form", descriptor.getValue()),
                          provider);
     }
   }
