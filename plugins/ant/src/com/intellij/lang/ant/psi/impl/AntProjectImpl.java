@@ -437,7 +437,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     try {
       for (final AntFile imported : project.getImportedFiles()) {
         final AntProject importedProject = imported.getAntProject();
-        if (importedProject != null) {
+        if (importedProject != null && !elementsDepthStack.contains(importedProject)) {
           for (final AntTarget target : importedProject.getTargets()) {
             targets.add(target);
           }
