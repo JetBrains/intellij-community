@@ -90,4 +90,8 @@ public abstract class RadLayoutManager {
   public boolean isGrid() {
     return false;
   }
+
+  public boolean areChildrenExclusive() {
+    return false;
+  }
 }

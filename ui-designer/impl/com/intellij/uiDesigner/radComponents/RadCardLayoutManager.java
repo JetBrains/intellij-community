@@ -107,6 +107,11 @@ public class RadCardLayoutManager extends RadLayoutManager {
     return true;
   }
 
+  @Override
+  public boolean areChildrenExclusive() {
+    return true;
+  }
+
   @Override public void createSnapshotLayout(final SnapshotContext context,
                                              final JComponent parent,
                                              final RadContainer container,

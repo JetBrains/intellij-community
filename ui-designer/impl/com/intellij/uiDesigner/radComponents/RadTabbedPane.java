@@ -607,6 +607,11 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       RadTabbedPane.this.selectTab(child);
       return true;
     }
+
+    @Override
+    public boolean areChildrenExclusive() {
+      return true;
+    }
   }
 
   private final class InsertTabDropLocation implements DropLocation {

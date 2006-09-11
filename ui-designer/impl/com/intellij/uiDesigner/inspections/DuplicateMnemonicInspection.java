@@ -6,34 +6,36 @@ import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.lw.IProperty;
-import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author yole
  */
 public class DuplicateMnemonicInspection extends BaseFormInspection {
-  private Map<Character, IComponent> myMnemonicToComponentMap;
+  private Map<MnemonicKey, IComponent> myMnemonicToComponentMap;
 
   public DuplicateMnemonicInspection() {
     super("DuplicateMnemonic");
   }
 
-  @Override public String getDisplayName() {
+  @NotNull
+  @Override
+  public String getDisplayName() {
     return UIDesignerBundle.message("inspection.duplicate.mnemonics");
   }
 
   @Override public void startCheckForm(IRootContainer radRootContainer) {
-    myMnemonicToComponentMap = new HashMap<Character, IComponent>();
+    myMnemonicToComponentMap = new HashMap<MnemonicKey, IComponent>();
   }
 
   @Override public void doneCheckForm(IRootContainer rootContainer) {
@@ -75,9 +77,11 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
                                      final IComponent component,
                                      final SupportCode.TextWithMnemonic twm,
                                      final FormErrorCollector collector) {
-    if (myMnemonicToComponentMap.containsKey(new Character(twm.getMnemonicChar()))) {
+
+    MnemonicKey key = buildMnemonicKey(twm, component);
+    if (myMnemonicToComponentMap.containsKey(key)) {
       IProperty prop = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
-      IComponent oldComponent = myMnemonicToComponentMap.get(new Character(twm.getMnemonicChar()));
+      IComponent oldComponent = myMnemonicToComponentMap.get(key);
       collector.addError(getID(), prop,
                          UIDesignerBundle.message("inspection.duplicate.mnemonics.message",
                                                   FormInspectionUtil.getText(module, oldComponent),
@@ -90,8 +94,50 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
                          });
     }
     else {
-      myMnemonicToComponentMap.put(new Character(twm.getMnemonicChar()), component);
+      myMnemonicToComponentMap.put(key, component);
     }
   }
 
+  private static MnemonicKey buildMnemonicKey(final SupportCode.TextWithMnemonic twm, final IComponent component) {
+    List<Integer> exclusiveContainerStack = new ArrayList<Integer>();
+    IContainer parent = component.getParentContainer();
+    IComponent child = component;
+    while(parent != null) {
+      if (parent.areChildrenExclusive()) {
+        exclusiveContainerStack.add(0, parent.indexOfComponent(child));
+      }
+      child = parent;
+      parent = parent.getParentContainer();
+    }
+    return new MnemonicKey(twm.getMnemonicChar(), exclusiveContainerStack);
+  }
+
+  private static class MnemonicKey {
+    private final char myMnemonicChar;
+    private final List<Integer> myExclusiveContainerStack;
+
+    public MnemonicKey(final char mnemonicChar, final List<Integer> exclusiveContainerStack) {
+      myMnemonicChar = mnemonicChar;
+      myExclusiveContainerStack = exclusiveContainerStack;
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final MnemonicKey that = (MnemonicKey)o;
+
+      if (myMnemonicChar != that.myMnemonicChar) return false;
+      if (!myExclusiveContainerStack.equals(that.myExclusiveContainerStack)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = (int)myMnemonicChar;
+      result = 31 * result + myExclusiveContainerStack.hashCode();
+      return result;
+    }
+  }
 }

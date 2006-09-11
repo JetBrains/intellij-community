@@ -144,6 +144,10 @@ public abstract class LwComponent implements IComponent{
     return visitor.visit(this);
   }
 
+  public boolean areChildrenExclusive() {
+    return false;
+  }
+
   public final LwContainer getParent(){
     return myParent;
   }

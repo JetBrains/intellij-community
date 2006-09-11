@@ -123,7 +123,7 @@ public class LwContainer extends LwComponent implements IContainer{
     return myComponents.size();
   }
 
-  public int indexOfComponent(final LwComponent lwComponent) {
+  public int indexOfComponent(final IComponent lwComponent) {
     return myComponents.indexOf(lwComponent);
   }
 
@@ -378,5 +378,9 @@ public class LwContainer extends LwComponent implements IContainer{
     readBorder(element);
 
     readChildren(element, provider);
+  }
+
+  public boolean areChildrenExclusive() {
+    return myLayoutManager.equals(UIFormXmlConstants.LAYOUT_CARD);
   }
 }

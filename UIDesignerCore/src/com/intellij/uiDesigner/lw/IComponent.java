@@ -47,4 +47,12 @@ public interface IComponent {
   Object getCustomLayoutConstraints();
 
   boolean accept(ComponentVisitor visitor);
+
+  /**
+   * Returns true if only one of the children of the component can be visible at a time
+   * (for example, the component is a tabbed pane or a container with CardLayout).
+   *
+   * @return true if children are exclusive, false otherwise.
+   */
+  boolean areChildrenExclusive();
 }

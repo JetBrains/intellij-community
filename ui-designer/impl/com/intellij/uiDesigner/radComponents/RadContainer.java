@@ -253,7 +253,7 @@ public class RadContainer extends RadComponent implements IContainer {
     return myComponents.size();
   }
 
-  public int indexOfComponent(RadComponent component) {
+  public int indexOfComponent(IComponent component) {
     return myComponents.indexOf(component);
   }
 
@@ -470,6 +470,11 @@ public class RadContainer extends RadComponent implements IContainer {
 
   public RadComponent getActionTargetComponent(RadComponent child) {
     return child;
+  }
+
+  @Override
+  public boolean areChildrenExclusive() {
+    return myLayoutManager.areChildrenExclusive();
   }
 
   /**

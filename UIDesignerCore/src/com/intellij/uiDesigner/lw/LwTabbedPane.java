@@ -94,4 +94,8 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
     LwTabbedPane.Constraints constraints = (LwTabbedPane.Constraints) lwComponent.getCustomLayoutConstraints();
     return constraints == null ? null : constraints.myTitle;
   }
+
+  public boolean areChildrenExclusive() {
+    return true;
+  }
 }

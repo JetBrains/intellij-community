@@ -641,6 +641,10 @@ public abstract class RadComponent implements IComponent {
     return visitor.visit(this);
   }
 
+  public boolean areChildrenExclusive() {
+    return false;
+  }
+
   public void loadLwProperty(final LwComponent lwComponent,
                              final LwIntrospectedProperty lwProperty,
                              final IntrospectedProperty property) {

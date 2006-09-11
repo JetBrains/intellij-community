@@ -20,6 +20,7 @@ import com.intellij.uiDesigner.shared.BorderType;
 public interface IContainer extends IComponent {
   int getComponentCount();
   IComponent getComponent(int index);
+  int indexOfComponent(final IComponent lwComponent);
   boolean isXY();
   StringDescriptor getBorderTitle();
   BorderType getBorderType();
