@@ -111,7 +111,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
               PsiDirectory targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), directoryName);
               String targetFileName = getTargetFileName();
               targetDirectory.checkCreateFile(targetFileName);
-              final String webPath = ExtractJspIncludeFileHandler.getWebPath(targetDirectory);
+              final String webPath = ExtractJspIncludeFileHandler.getWebPath(myCurrentDirectory, targetDirectory);
               myTargetDirectory = webPath == null ? null : targetDirectory;
             }
             catch (IncorrectOperationException e) {

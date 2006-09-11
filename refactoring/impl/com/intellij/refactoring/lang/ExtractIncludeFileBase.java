@@ -51,6 +51,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
 
   protected abstract void doReplaceRange(final String includePath, final XmlTagChild first, final XmlTagChild last);
 
+  @NotNull
   protected abstract String doExtract(final PsiDirectory targetDirectory,
                                       final String targetfileName,
                                       final XmlTagChild first,
