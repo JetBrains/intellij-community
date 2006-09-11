@@ -21,9 +21,9 @@ import com.intellij.util.xml.ui.actions.DefaultAddAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.reflect.Type;
 import java.util.List;
+import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -135,7 +135,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   protected DefaultAddAction createAddingAction(final AnActionEvent e,
                                                 final String name,
                                                 final Icon icon,
-                                                final Class s,
+                                                final Type type,
                                                 final DomCollectionChildDescription description) {
 
     return new DefaultAddAction(name, name, icon) {
@@ -143,8 +143,8 @@ public class AddElementInCollectionAction extends AddDomElementAction {
       private DomElement myParent = AddElementInCollectionAction.this.getParentDomElement(e);
       private DomModelTreeView myView = getTreeView(e);
 
-      protected Class getElementClass() {
-        return s;
+      protected Type getElementType() {
+        return type;
       }
 
       protected DomCollectionChildDescription getDomCollectionChildDescription() {

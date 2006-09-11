@@ -13,13 +13,16 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.StableElement;
+import com.intellij.util.xml.TypeChooser;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.reflect.Type;
+import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -40,8 +43,8 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
   }
 
 
-  protected Class<? extends T> getElementClass() {
-    return (Class<? extends T>)DomReflectionUtil.getRawType(getDomCollectionChildDescription().getType());
+  protected Type getElementType() {
+    return getDomCollectionChildDescription().getType();
   }
 
   protected void tuneNewValue(T t) {
@@ -69,7 +72,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     final Type[] aClass = new Type[]{null};
     final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), parent.getRoot().getFile()) {
       protected void run(Result<StableElement<T>> result) throws Throwable {
-        final T t = (T)getDomCollectionChildDescription().addValue(getParentDomElement(), getElementClass());
+        final T t = (T)getDomCollectionChildDescription().addValue(getParentDomElement(), getElementType());
         tuneNewValue(t);
         aClass[0] = parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType();
         oldChoosers[0] = domManager.getTypeChooserManager().getTypeChooser(aClass[0]);
@@ -78,7 +81,7 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
         domManager.getTypeChooserManager().registerTypeChooser(aClass[0], new TypeChooser() {
           public Type chooseType(final XmlTag tag) {
             if (tag == pointer.getElement()) {
-              return getElementClass();
+              return getElementType();
             }
             return oldChoosers[0].chooseType(tag);
           }

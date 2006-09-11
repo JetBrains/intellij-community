@@ -4,10 +4,11 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -19,16 +20,17 @@ import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.ui.actions.DefaultAddAction;
 import com.intellij.util.xml.ui.actions.AddDomElementAction;
+import com.intellij.util.xml.ui.actions.DefaultAddAction;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
 
 /**
  * @author peter
@@ -66,9 +68,9 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
     protected DefaultAddAction createAddingAction(final AnActionEvent e,
                                                   final String name,
                                                   final Icon icon,
-                                                  final Class s,
+                                                  final Type type,
                                                   final DomCollectionChildDescription description) {
-      return createDefaultAction(name, icon, s);
+      return createDefaultAction(name, icon, type);
     }
 
   };
@@ -311,10 +313,10 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
     return null;
   }
 
-  protected DefaultAddAction createDefaultAction(final String name, final Icon icon, final Class s) {
+  protected DefaultAddAction createDefaultAction(final String name, final Icon icon, final Type type) {
     return new ControlAddAction(name, name, icon) {
-      protected Class getElementClass() {
-        return s;
+      protected Type getElementType() {
+        return type;
       }
     };
   }

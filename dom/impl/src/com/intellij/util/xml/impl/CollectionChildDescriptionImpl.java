@@ -75,12 +75,12 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return addChild(element, getType(), index);
   }
 
-  public DomElement addValue(DomElement parent, Class aClass) {
-    return addValue(parent, aClass, Integer.MAX_VALUE);
+  public DomElement addValue(DomElement parent, Type type) {
+    return addValue(parent, type, Integer.MAX_VALUE);
   }
 
-  public final DomElement addValue(DomElement parent, Class aClass, int index) {
-    return addChild(parent, aClass, Integer.MAX_VALUE);
+  public final DomElement addValue(DomElement parent, Type type, int index) {
+    return addChild(parent, type, Integer.MAX_VALUE);
   }
 
   public JavaMethod getGetterMethod() {

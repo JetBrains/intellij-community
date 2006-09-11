@@ -15,12 +15,12 @@ import com.intellij.util.xml.ui.DomCollectionControl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -113,7 +113,7 @@ public abstract class AddDomElementAction extends AnAction {
             icon = ElementPresentationManager.getIconForClass(rawType);
 //          }
         }
-        actions.add(createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, rawType, description));
+        actions.add(createAddingAction(e, ApplicationBundle.message("action.add") + " " + name, icon, type, description));
       }
     }
     if (actions.size() > 1 && showAsPopup()) {
@@ -137,7 +137,7 @@ public abstract class AddDomElementAction extends AnAction {
   protected abstract AnAction createAddingAction(final AnActionEvent e,
                                                  final String name,
                                                  final Icon icon,
-                                                 final Class s,
+                                                 final Type type,
                                                  final DomCollectionChildDescription description);
 
   @NotNull

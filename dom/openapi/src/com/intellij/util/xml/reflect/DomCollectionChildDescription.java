@@ -6,6 +6,8 @@ package com.intellij.util.xml.reflect;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.JavaMethod;
 
+import java.lang.reflect.Type;
+
 /**
  * @author peter
  */
@@ -19,8 +21,8 @@ public interface DomCollectionChildDescription extends DomChildrenDescription {
 
   DomElement addValue(DomElement parent);
   DomElement addValue(DomElement parent, int index);
-  DomElement addValue(DomElement parent, Class aClass);
-  DomElement addValue(DomElement parent, Class aClass, int index);
+  DomElement addValue(DomElement parent, Type type);
+  DomElement addValue(DomElement parent, Type type, int index);
 
   JavaMethod getClassAdderMethod();
 
