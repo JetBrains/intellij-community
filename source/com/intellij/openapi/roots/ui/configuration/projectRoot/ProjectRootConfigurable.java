@@ -433,9 +433,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         final MyNode moduleGroupNode = ModuleGroupUtil
           .updateModuleGroupPath(new ModuleGroup(groupPath), myModulesNode, new Function<ModuleGroup, MyNode>() {
             public MyNode fun(final ModuleGroup group) {
-              final MyNode node = findNodeByObject(myModulesNode, group);
-              LOG.assertTrue(node != null);
-              return node;
+              return findNodeByObject(myModulesNode, group);
             }
           }, new Consumer<ModuleGroupUtil.ParentChildRelation<MyNode>>() {
             public void consume(final ModuleGroupUtil.ParentChildRelation<MyNode> parentChildRelation) {
