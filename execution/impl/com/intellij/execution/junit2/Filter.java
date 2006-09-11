@@ -1,5 +1,7 @@
 package com.intellij.execution.junit2;
 
+import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.project.Project;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ public abstract class Filter {
     return new NotFilter(this);
   }
 
-  private Filter and(final Filter filter) {
+  public Filter and(final Filter filter) {
     return new AndFilter(this, filter);
   }
 
@@ -50,6 +52,14 @@ public abstract class Filter {
       return test.getState().isDefect();
     }
   };
+
+  public static Filter METHOD(final Project project) {
+    return new Filter() {
+      public boolean shouldAccept(final TestProxy test) {
+        return test.getInfo().getLocation(project) instanceof MethodLocation;
+      }
+    };
+  }
 
   public static final Filter NOT_PASSED = new Filter() {
     public boolean shouldAccept(final TestProxy test) {

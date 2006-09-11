@@ -92,7 +92,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator {
     myTreeExpander.setModel(model);
     myOccurenceNavigator.setModel(model);
     myRerunFailedTestsAction.setModel(model);
-    JUnitActions.installAutoacrollToFirstDefect(model);
+    JUnitActions.installAutoscrollToFirstDefect(model);
     model.addListener(new LvcsLabeler(model));
     model.addListener(new JUnitAdapter() {
       public void onTestSelected(final TestProxy test) {
