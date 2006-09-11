@@ -39,6 +39,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   private final FileViewProvider myViewProvider;
   private LanguageLevel myLanguageLevel = null;
   private boolean myContentsUnloaded;
+  private static final int MAX_CLASS_FILE_MAJOR_VERSION = 50;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(manager, -2);
@@ -207,10 +208,19 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     try {
       final ClassFileData classFileData = new ClassFileData(vFile);
       final BytePointer ptr = new BytePointer(classFileData.getData(), 6);
-      final int majorVersion = ClsUtil.readU2(ptr);
-      if (majorVersion < 48) return LanguageLevel.JDK_1_3;
-      if (majorVersion < 49) return LanguageLevel.JDK_1_4;
-      return LanguageLevel.JDK_1_5;
+      int majorVersion = ClsUtil.readU2(ptr);
+      if (majorVersion < MAX_CLASS_FILE_MAJOR_VERSION) {
+        /*check if the class file was processed by retroweaver, it has written an attribute of format
+          (int retroweaver build number, int original class file version, long timestamp of weaving) */
+        final int attributesOffset = classFileData.getOffsetOfAttributesSection();
+        final BytePointer attrPtr = classFileData.findAttribute(attributesOffset, "net.sourceforge.Retroweaver");
+        if (attrPtr != null) {
+          ptr.offset += 4; //skip retroweaver build number
+          majorVersion = ClsUtil.readU2(ptr);
+        }
+
+      }
+      return calcLanguageLevelBasedOnVersion(majorVersion);
     }
     catch (ClsFormatException e) {
       if (LOG.isDebugEnabled()) {
@@ -220,7 +230,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     }
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  private static LanguageLevel calcLanguageLevelBasedOnVersion(final int majorVersion) {
+    if (majorVersion < 48) return LanguageLevel.JDK_1_3;
+    if (majorVersion < 49) return LanguageLevel.JDK_1_4;
+    return LanguageLevel.JDK_1_5;
+  }
+
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
@@ -325,7 +341,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return getVirtualFile().getModificationStamp();
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitJavaFile(this);
   }
 

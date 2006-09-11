@@ -823,21 +823,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   private BytePointer readClassAttribute(@NonNls String attributeName) throws ClsFormatException {
     ClassFileData classFileData = getClassFileData();
-    BytePointer ptr = new BytePointer(classFileData.getData(), classFileData.getConstantPoolEnd() + 6);
-    int count = ClsUtil.readU2(ptr);
-    ptr.offset += count * 2; // skip interfaces
-    count = ClsUtil.readU2(ptr);
-    for (int i = 0; i < count; i++) { // skip fields
-      ptr.offset += 6;
-      ClsUtil.skipAttributes(ptr);
-    }
-    count = ClsUtil.readU2(ptr);
-    for (int i = 0; i < count; i++) { // skip methods
-      ptr.offset += 6;
-      ClsUtil.skipAttributes(ptr);
-    }
-
-    return getClassFileData().findAttribute(ptr.offset, attributeName);
+    return getClassFileData().findAttribute(classFileData.getOffsetOfAttributesSection(), attributeName);
   }
 
   public PsiDocComment getDocComment() {
