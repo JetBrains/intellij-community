@@ -43,13 +43,13 @@ public class CodeInsightUtil {
   @NonNls private static final String JAVAX_PACKAGE_PREFIX = "javax.";
 
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
-    if(!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
+    if (!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
     final PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
     if (expression instanceof PsiReferenceExpression && expression.getParent() instanceof PsiMethodCallExpression) return null;
     return expression;
   }
 
-  public static <T extends PsiElement> T findElementInRange(PsiFile file, int startOffset, int endOffset, Class<T> klass){
+  public static <T extends PsiElement> T findElementInRange(PsiFile file, int startOffset, int endOffset, Class<T> klass) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
     if (element1 instanceof PsiWhiteSpace) {
@@ -62,17 +62,16 @@ public class CodeInsightUtil {
     }
     if (element2 == null || element1 == null) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
-    final T element = klass.isAssignableFrom(commonParent.getClass()) ?
-                                     (T)commonParent :
-                                     PsiTreeUtil.getParentOfType(commonParent, klass);
-    if (element == null ||
-        element.getTextRange().getStartOffset() != startOffset ||
-        element.getTextRange().getEndOffset() != endOffset) return null;
+    final T element = klass.isAssignableFrom(commonParent.getClass()) ? (T)commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
+    if (element == null || element.getTextRange().getStartOffset() != startOffset || element.getTextRange().getEndOffset() != endOffset) {
+      return null;
+    }
     return element;
   }
 
-  @NotNull public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
-    if(!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return PsiElement.EMPTY_ARRAY;
+  @NotNull
+  public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
+    if (!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return PsiElement.EMPTY_ARRAY;
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
     if (element1 instanceof PsiWhiteSpace) {
@@ -113,9 +112,8 @@ public class CodeInsightUtil {
     }
     if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
 
-    if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement
-        && element1 == ((PsiCodeBlock)parent).getLBrace()
-        && element2 == ((PsiCodeBlock)parent).getRBrace()) {
+    if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement &&
+        element1 == ((PsiCodeBlock)parent).getLBrace() && element2 == ((PsiCodeBlock)parent).getRBrace()) {
       return new PsiElement[]{parent.getParent()};
     }
 
@@ -141,9 +139,7 @@ public class CodeInsightUtil {
     }
 
     for (PsiElement element : array) {
-      if (!(element instanceof PsiStatement
-            || element instanceof PsiWhiteSpace
-            || element instanceof PsiComment)) {
+      if (!(element instanceof PsiStatement || element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
         return PsiElement.EMPTY_ARRAY;
       }
     }
@@ -161,7 +157,10 @@ public class CodeInsightUtil {
   }
 
   @NotNull
-  public static List<PsiElement> getElementsInRange(final PsiElement root, final int startOffset, final int endOffset, boolean includeAllParents) {
+  public static List<PsiElement> getElementsInRange(final PsiElement root,
+                                                    final int startOffset,
+                                                    final int endOffset,
+                                                    boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
     if (commonParent == null) return Collections.emptyList();
     final List<PsiElement> list = new ArrayList<PsiElement>();
@@ -175,20 +174,18 @@ public class CodeInsightUtil {
       }
 
       public void visitElement(PsiElement element) {
-        if(element.getFirstChild() != null){
+        if (element.getFirstChild() != null) {
           // composite element
           PsiElement child = element.getFirstChild();
-          while(child != null){
-            if (offset > endOffset)
-              break;
+          while (child != null) {
+            if (offset > endOffset) break;
             int start = offset;
             child.accept(this);
-            if (startOffset <= start && offset <= endOffset)
-              list.add(child);
+            if (startOffset <= start && offset <= endOffset) list.add(child);
             child = child.getNextSibling();
           }
         }
-        else{
+        else {
           // leaf element
           offset += element.getTextLength();
         }
@@ -196,16 +193,17 @@ public class CodeInsightUtil {
 
 
       public void visitMethod(PsiMethod method) {
-        if(method instanceof JspHolderMethod && root != method) {
+        if (method instanceof JspHolderMethod && root != method) {
           list.addAll(getElementsInRange(method, startOffset, endOffset, false));
         }
-        else visitElement(method);
+        else {
+          visitElement(method);
+        }
       }
 
 
       public void visitImportList(PsiImportList list) {
-        if(!(list instanceof JspxImportList))
-          super.visitImportList(list);
+        if (!(list instanceof JspxImportList)) super.visitImportList(list);
       }
     };
     commonParent.accept(visitor);
@@ -214,7 +212,7 @@ public class CodeInsightUtil {
       list.add(parent);
       parent = includeAllParents ? parent.getParent() : null;
     }
-    
+
     list.add(root);
 
     return Collections.unmodifiableList(list);
@@ -223,8 +221,8 @@ public class CodeInsightUtil {
   public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
     final PsiElement left = findElementAtInRoot(root, startOffset);
     PsiElement right = findElementAtInRoot(root, endOffset);
-    if(right == null) right = findElementAtInRoot(root, endOffset - 1);
-    if(left == null || right == null) return null;
+    if (right == null) right = findElementAtInRoot(root, endOffset - 1);
+    if (left == null || right == null) return null;
 
     //ASTNode prev = leafElementAt2.getTreePrev();
     //if (prev != null && prev.getTextRange().getEndOffset() == endOffset) {
@@ -234,8 +232,7 @@ public class CodeInsightUtil {
     LOG.assertTrue(commonParent != null);
     LOG.assertTrue(commonParent.getTextRange() != null);
 
-    while(commonParent.getParent() != null &&
-          commonParent.getTextRange().equals(commonParent.getParent().getTextRange())) {
+    while (commonParent.getParent() != null && commonParent.getTextRange().equals(commonParent.getParent().getTextRange())) {
       commonParent = commonParent.getParent();
     }
     return commonParent;
@@ -243,7 +240,7 @@ public class CodeInsightUtil {
 
   private static PsiElement findElementAtInRoot(final PsiElement root, final int startOffset) {
     final PsiElement left;
-    if(root instanceof PsiFile) {
+    if (root instanceof PsiFile) {
       left = ((PsiFile)root).getViewProvider().findElementAt(startOffset, root.getLanguage());
     }
     else {
@@ -366,17 +363,16 @@ public class CodeInsightUtil {
     if (!file.isWritable()) {
       final Project project = file.getProject();
 
-      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(
-        new OpenFileDescriptor(project, file.getVirtualFile()), true);
+      final Editor editor =
+        FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file.getVirtualFile()), true);
 
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (editor != null && editor.getComponent().isDisplayable()) {
-              HintManager.getInstance().showErrorHint(
-                editor,
-                CodeInsightBundle.message("error.hint.file.is.readonly", file.getVirtualFile().getPresentableUrl()));
+              HintManager.getInstance()
+                .showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getVirtualFile().getPresentableUrl()));
             }
           }
         });
@@ -391,7 +387,7 @@ public class CodeInsightUtil {
   public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(final T element) {
     final PsiFile psiFile = element.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
-    if(document == null) return element;
+    if (document == null) return element;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
     final RangeMarker rangeMarker = document.createRangeMarker(element.getTextRange());
     documentManager.doPostponedOperationsAndUnblockDocument(document);
@@ -412,7 +408,13 @@ public class CodeInsightUtil {
           if (tag.getAttributeValue("default") != null) {
             return true;
           }
-          final VirtualFile vFile = xmlFile.getVirtualFile();
+          VirtualFile vFile = xmlFile.getVirtualFile();
+          if (vFile == null) {
+            final PsiFile origFile = xmlFile.getOriginalFile();
+            if (origFile != null) {
+              vFile = origFile.getVirtualFile();
+            }
+          }
           if (vFile != null && vFile.getUserData(ANT_FILE_SIGN) != null) {
             return true;
           }

@@ -24,8 +24,14 @@ public class AntLanguageExtension implements LanguageExtension {
           if (tag.getAttributeValue("default") != null) {
             return true;
           }
-          final VirtualFile file = xmlFile.getVirtualFile();
-          if (file != null && file.getUserData(ANT_FILE_SIGN) != null) {
+          VirtualFile vFile = xmlFile.getVirtualFile();
+          if (vFile == null) {
+            final PsiFile origFile = xmlFile.getOriginalFile();
+            if (origFile != null) {
+              vFile = origFile.getVirtualFile();
+            }
+          }
+          if (vFile != null && vFile.getUserData(ANT_FILE_SIGN) != null) {
             return true;
           }
         }
