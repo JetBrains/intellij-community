@@ -113,22 +113,27 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   }
 
   @NotNull
-  public AntTarget[] getImportedTargets() {
+  public synchronized AntTarget[] getImportedTargets() {
     if (myImportedTargets == null) {
       if (getImportedFiles().length == 0) {
         myImportedTargets = AntTarget.EMPTY_TARGETS;
       }
       else {
-        final List<AntTarget> targets = new ArrayList<AntTarget>();
-        final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
+        final Set<PsiElement> targets = PsiElementSetSpinAllocator.alloc();
         try {
-          getImportedTargets(this, targets, elementsDepthStack);
+          final Set<PsiElement> elementsDepthStack = PsiElementSetSpinAllocator.alloc();
+          try {
+            getImportedTargets(this, targets, elementsDepthStack);
+          }
+          finally {
+            PsiElementSetSpinAllocator.dispose(elementsDepthStack);
+          }
+          final int size = targets.size();
+          myImportedTargets = (size == 0) ? AntTarget.EMPTY_TARGETS : targets.toArray(new AntTarget[size]);
         }
         finally {
-          PsiElementSetSpinAllocator.dispose(elementsDepthStack);
+          PsiElementSetSpinAllocator.dispose(targets);
         }
-        final int size = targets.size();
-        myImportedTargets = (size == 0) ? AntTarget.EMPTY_TARGETS : targets.toArray(new AntTarget[size]);
       }
     }
     return myImportedTargets;
@@ -424,7 +429,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     }
   }
 
-  private static void getImportedTargets(final AntProject project, final List<AntTarget> targets, final Set<PsiElement> elementsDepthStack) {
+  private static void getImportedTargets(final AntProject project,
+                                         final Set<PsiElement> targets,
+                                         final Set<PsiElement> elementsDepthStack) {
     if (elementsDepthStack.contains(project)) return;
     elementsDepthStack.add(project);
     try {
