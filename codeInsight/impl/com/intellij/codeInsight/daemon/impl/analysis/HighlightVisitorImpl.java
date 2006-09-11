@@ -133,7 +133,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       }
       hasAnnotators = true;
     }
-    else if (element instanceof OuterLanguageElement) {
+    if (element instanceof OuterLanguageElement) {
       myXmlVisitor.visitJspElement((OuterLanguageElement)element);
     }
 
