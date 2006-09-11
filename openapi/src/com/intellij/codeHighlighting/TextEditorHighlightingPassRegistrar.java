@@ -17,31 +17,48 @@
 
 package com.intellij.codeHighlighting;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 
 /**
  * User: anna
  * Date: 20-Apr-2006
  */
-public abstract class TextEditorHighlightingPassRegistrar implements ApplicationComponent {
+public abstract class TextEditorHighlightingPassRegistrar implements ProjectComponent {
+  /**
+   * @deprecated
+   */
+  public static final int FIRST = 0;
+  /**
+   * @deprecated
+   */
+  public static final int LAST = 1;
+  /**
+   * @deprecated
+   */
+  public static final int BEFORE = 3;
+  /**
+   * @deprecated
+   */
+  public static final int AFTER = 2;
+
   public enum Anchor {
     FIRST, LAST, BEFORE, AFTER
   }
 
-  public static TextEditorHighlightingPassRegistrar getInstance(){
-    return ApplicationManager.getApplication().getComponent(TextEditorHighlightingPassRegistrar.class);
+  public static TextEditorHighlightingPassRegistrar getInstance(Project project){
+    return project.getComponent(TextEditorHighlightingPassRegistrar.class);
   }
 
-  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory,
-                                                          Anchor anchor,
-                                                          int anchorPass,
-                                                          boolean needAdditionalIntentionsPass);
+  /**
+   * @deprecated
+   */
+  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass);
 
   public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory,
                                                           Anchor anchor,
                                                           int anchorPass,
                                                           boolean needAdditionalIntentionsPass,
-                                                          int passGroupNumber,
-                                                          boolean inPostHighlighterGroup);
+                                                          boolean inPostHighlightingPass);
+
 }

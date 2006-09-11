@@ -112,7 +112,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         appendPass(passes, aPassesToPerform);
       }
     }
-    final TextEditorHighlitingPassRegistrarEx passRegistrar = TextEditorHighlitingPassRegistrarEx.getInstanceEx();
+    final TextEditorHighlitingPassRegistrarEx passRegistrar = TextEditorHighlitingPassRegistrarEx.getInstanceEx(myProject);
     TextEditorHighlightingPass[] highlightingPasses =
       passRegistrar.modifyHighlightingPasses(passes, myFile, myEditor);
     if (passRegistrar.needAdditionalIntentionsPass()){

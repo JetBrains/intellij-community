@@ -49,10 +49,6 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.SeverityRegistrar</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
@@ -125,6 +121,10 @@
       <implementation-class>com.intellij.codeInsight.problems.WolfTheProblemSolverImpl</implementation-class>
       <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
       <skipForDummyProject/>
+    </component>
+    <component>
+      <interface-class>com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar</interface-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl</implementation-class>
     </component>
   </project-components>
 </components>

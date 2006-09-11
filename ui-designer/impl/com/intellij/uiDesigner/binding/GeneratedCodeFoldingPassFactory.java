@@ -44,7 +44,7 @@ public class GeneratedCodeFoldingPassFactory implements TextEditorHighlightingPa
   }
 
   public void initComponent() {
-    myRegistrar.registerTextEditorHighlightingPass(this, TextEditorHighlightingPassRegistrar.Anchor.AFTER, Pass.UPDATE_FOLDING, false);
+    myRegistrar.registerTextEditorHighlightingPass(this, TextEditorHighlightingPassRegistrar.Anchor.AFTER, Pass.UPDATE_FOLDING, false, false);
   }
 
   public void disposeComponent() {
