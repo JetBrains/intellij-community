@@ -29,15 +29,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.jetbrains.annotations.Nullable;
+
 public class DeleteHandler {
   public static class DefaultDeleteProvider implements DeleteProvider {
     public boolean canDeleteElement(DataContext dataContext) {
       if (dataContext.getData(DataConstants.PROJECT) == null) return false;
       final PsiElement[] elements = getPsiElements(dataContext);
-      if (elements == null) return false;
-      return DeleteHandler.shouldEnableDeleteAction(elements);
+      return elements != null && DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
+    @Nullable
     private PsiElement[] getPsiElements(DataContext dataContext) {
       PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
       if (elements == null) {
@@ -62,7 +64,7 @@ public class DeleteHandler {
       if (project == null) return;
       LvcsAction action = LvcsIntegration.checkinFilesBeforeRefactoring(project, IdeBundle.message("progress.deleting"));
       try {
-        DeleteHandler.deletePsiElement(elements, project);
+        deletePsiElement(elements, project);
       }
       finally {
         LvcsIntegration.checkinFilesAfterRefactoring(project, action);
@@ -80,7 +82,7 @@ public class DeleteHandler {
     boolean safeDeleteApplicable = true;
     for (int i = 0; i < elements.length && safeDeleteApplicable; i++) {
       PsiElement element = elements[i];
-      safeDeleteApplicable = element.isWritable() && SafeDeleteProcessor.validElement(element);
+      safeDeleteApplicable = SafeDeleteProcessor.validElement(element);
     }
 
     if (safeDeleteApplicable) {
@@ -135,9 +137,9 @@ public class DeleteHandler {
     CommandProcessor.getInstance().executeCommand(
       project, new Runnable() {
         public void run() {
-          for (int i = 0; i < elements.length; i++) {
-            final PsiElement elementToDelete = elements[i];
+          CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false);
 
+          for (final PsiElement elementToDelete : elements) {
             if (elementToDelete instanceof PsiDirectory) {
               VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
               if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
@@ -146,17 +148,13 @@ public class DeleteHandler {
                 getReadOnlyVirtualFiles(virtualFile, readOnlyFiles, ftManager);
 
                 if (readOnlyFiles.size() > 0) {
-                  int _result = Messages.showOkCancelDialog(
-                    project,
-                    IdeBundle.message("prompt.directory.contains.read.only.files", virtualFile.getPresentableUrl()),
-                    IdeBundle.message("title.delete"),
-                    Messages.getQuestionIcon()
-                  );
+                  int _result = Messages.showYesNoDialog(project, IdeBundle.message("prompt.directory.contains.read.only.files",
+                                                                                       virtualFile.getPresentableUrl()),
+                                                                     IdeBundle.message("title.delete"), Messages.getQuestionIcon());
                   if (_result != 0) continue;
 
                   boolean success = true;
-                  for (int j = 0; j < readOnlyFiles.size(); j++) {
-                    VirtualFile file = readOnlyFiles.get(j);
+                  for (VirtualFile file : readOnlyFiles) {
                     success = clearReadOnlyFlag(file, project);
                     if (!success) break;
                   }
@@ -174,7 +172,7 @@ public class DeleteHandler {
                   int _result = MessagesEx.fileIsReadOnly(project, virtualFile)
                     .setTitle(IdeBundle.message("title.delete"))
                     .appendMessage(IdeBundle.message("prompt.delete.it.anyway"))
-                    .askOkCancel();
+                    .askYesNo();
                   if (_result != 0) continue;
 
                   boolean success = clearReadOnlyFlag(virtualFile, project);
@@ -198,10 +196,10 @@ public class DeleteHandler {
                 }
                 catch (final IncorrectOperationException ex) {
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                  public void run() {
-                                    Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-                                  }
-                                });
+                    public void run() {
+                      Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+                    }
+                  });
                 }
               }
             });

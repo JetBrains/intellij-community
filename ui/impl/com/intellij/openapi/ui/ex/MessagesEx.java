@@ -120,9 +120,9 @@ public class MessagesEx extends Messages {
         });
     }
 
-    public int askOkCancel() {
+    public int askYesNo() {
       setIcon(getQuestionIcon());
-      return showOkCancelDialog(getProject(), getMessage(), getTitle(), getIcon());
+      return showYesNoDialog(getProject(), getMessage(), getTitle(), getIcon());
     }
 
     public int ask(String[] options, int defaultOptionIndex) {

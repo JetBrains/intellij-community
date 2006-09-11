@@ -32,20 +32,27 @@ public class CommonRefactoringUtil {
     return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"));
   }
 
+  public static boolean checkReadOnlyStatus(Project project, PsiElement... elements) {
+    return checkReadOnlyStatus(Arrays.asList(elements), project, RefactoringBundle.message("refactoring.cannot.be.performed"), false, true);
+  }
+
   public static boolean checkReadOnlyStatus(PsiElement element, Project project, String messagePrefix) {
     return element.isWritable() ||
-           checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false);
+           checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false, true);
   }
 
   public static boolean checkReadOnlyStatusRecursively(Project project, Collection<? extends PsiElement> element) {
-    return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true);
+    return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, false);
+  }
+  public static boolean checkReadOnlyStatusRecursively(Project project, Collection<? extends PsiElement> element, boolean notifyOnFail) {
+    return checkReadOnlyStatus(element, project, RefactoringBundle.message("refactoring.cannot.be.performed"), true, notifyOnFail);
   }
 
   private static boolean checkReadOnlyStatus(Collection<? extends PsiElement> elements,
                                              Project project,
                                              final String messagePrefix,
-                                             boolean recursively
-  ) {
+                                             boolean recursively,
+                                             final boolean notifyOnFail) {
     //Not writable, but could be checked out
     final List<VirtualFile> readonly = new ArrayList<VirtualFile>();
     //Those located in jars
@@ -117,7 +124,7 @@ public class CommonRefactoringUtil {
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(readonly.toArray(new VirtualFile[readonly.size()]));
     failed.addAll(Arrays.asList(status.getReadonlyFiles()));
-    if (!failed.isEmpty()) {
+    if (notifyOnFail && !failed.isEmpty()) {
       StringBuilder message = new StringBuilder(messagePrefix);
       message.append('\n');
       for (VirtualFile virtualFile : failed) {
