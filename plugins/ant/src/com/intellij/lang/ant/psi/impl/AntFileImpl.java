@@ -8,6 +8,7 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntClassLoader;
 import com.intellij.lang.ant.config.impl.AntInstallation;
+import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
@@ -42,12 +43,34 @@ import java.util.*;
 
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
 public class AntFileImpl extends LightPsiFileBase implements AntFile {
+
+  @NonNls public static final String PROJECT_TAG = "project";
+  @NonNls public static final String TARGET_TAG = "target";
+  @NonNls public static final String IMPORT_TAG = "import";
+  @NonNls public static final String JAVACDOC2_TAG = "javadoc2";
+  @NonNls public static final String JAVADOC_TAG = "javadoc";
+  @NonNls public static final String UNWAR_TAG = "unwar";
+  @NonNls public static final String UNJAR_TAG = "unjar";
+  @NonNls public static final String PROPERTY = "property";
+
+  @NonNls public static final String UNZIP_TAG = "unzip";
+  @NonNls public static final String NAME_ATTR = "name";
+  @NonNls public static final String DEPENDS_ATTR = "depends";
+  @NonNls public static final String IF_ATTR = "if";
+  @NonNls public static final String UNLESS_ATTR = "unless";
+  @NonNls public static final String DESCRIPTION_ATTR = "description";
+  @NonNls public static final String DEFAULT_ATTR = "default";
+  @NonNls public static final String BASEDIR_ATTR = "basedir";
+  @NonNls public static final String FILE_ATTR = "file";
+  @NonNls public static final String PREFIX_ATTR = "prefix";
+  
   private AntProject myProject;
   private AntElement myPrologElement;
   private AntElement myEpilogueElement;
   private PsiElement[] myChildren;
   private AntClassLoader myClassLoader;
   private Hashtable myProjectProperties;
+
   /**
    * Map of propeties set outside.
    */
@@ -63,11 +86,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    * It's updated together with the set of custom definitons.
    */
   private HashMap<AntTypeId, String> myProjectElements;
-
-  @NonNls private static final String INIT_METHOD_NAME = "init";
-  @NonNls private static final String GET_TASK_DEFINITIONS_METHOD_NAME = "getTaskDefinitions";
-  @NonNls private static final String GET_DATA_TYPE_DEFINITIONS_METHOD_NAME = "getDataTypeDefinitions";
-  @NonNls private static final String GET_PROPERTIES_METHOD_NAME = "getProperties";
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -281,18 +299,19 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     synchronized (PsiLock.LOCK) {
       if (myTargetDefinition == null) {
         @NonNls final HashMap<String, AntAttributeType> targetAttrs = new HashMap<String, AntAttributeType>();
-        targetAttrs.put("name", AntAttributeType.STRING);
-        targetAttrs.put("depends", AntAttributeType.STRING);
-        targetAttrs.put("if", AntAttributeType.STRING);
-        targetAttrs.put("unless", AntAttributeType.STRING);
-        targetAttrs.put("description", AntAttributeType.STRING);
+        targetAttrs.put(NAME_ATTR, AntAttributeType.STRING);
+        targetAttrs.put(DEPENDS_ATTR, AntAttributeType.STRING);
+        targetAttrs.put(IF_ATTR, AntAttributeType.STRING);
+        targetAttrs.put(UNLESS_ATTR, AntAttributeType.STRING);
+        targetAttrs.put(DESCRIPTION_ATTR, AntAttributeType.STRING);
         final HashMap<AntTypeId, String> targetElements = new HashMap<AntTypeId, String>();
         for (AntTypeDefinition def : getBaseTypeDefinitions()) {
           if (def.isTask() || targetElements.get(def.getTypeId()) == null) {
             targetElements.put(def.getTypeId(), def.getClassName());
           }
         }
-        myTargetDefinition = new AntTypeDefinitionImpl(new AntTypeId("target"), Target.class.getName(), false, targetAttrs, targetElements);
+        myTargetDefinition =
+          new AntTypeDefinitionImpl(new AntTypeId(TARGET_TAG), Target.class.getName(), false, targetAttrs, targetElements);
         registerCustomType(myTargetDefinition);
       }
       return myTargetDefinition;
@@ -332,15 +351,17 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       /**
        * Hardcode for <javadoc> task (IDEADEV-6731).
        */
-      if (isTask && typeName.equals("javadoc2")) {
-        typeName = "javadoc";
+      if (isTask && typeName.equals(JAVACDOC2_TAG)) {
+        typeName = JAVADOC_TAG;
       }
       /**
        * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
        */
-      if (isTask && (typeName.equals("unwar") || typeName.equals("unjar"))) {
-        typeName = "unzip";
+      if (isTask && (typeName.equals(UNWAR_TAG) || typeName.equals(UNJAR_TAG))) {
+        typeName = UNZIP_TAG;
       }
+
+      typeName = AntStringInterner.intern(typeName);
 
       final Class typeClass = (Class)ht.get(typeName);
       final AntTypeId typeId = new AntTypeId(typeName);
@@ -380,12 +401,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private AntTypeDefinition createProjectDefinition() {
     getBaseTypeDefinition(null);
     @NonNls final HashMap<String, AntAttributeType> projectAttrs = new HashMap<String, AntAttributeType>();
-    projectAttrs.put("name", AntAttributeType.STRING);
-    projectAttrs.put("default", AntAttributeType.STRING);
-    projectAttrs.put("basedir", AntAttributeType.STRING);
+    projectAttrs.put(NAME_ATTR, AntAttributeType.STRING);
+    projectAttrs.put(DEFAULT_ATTR, AntAttributeType.STRING);
+    projectAttrs.put(BASEDIR_ATTR, AntAttributeType.STRING);
     final AntTypeDefinition def = getTargetDefinition();
     myProjectElements.put(def.getTypeId(), def.getClassName());
-    return new AntTypeDefinitionImpl(new AntTypeId("project"), Project.class.getName(), false, projectAttrs, myProjectElements);
+    return new AntTypeDefinitionImpl(new AntTypeId(PROJECT_TAG), Project.class.getName(), false, projectAttrs, myProjectElements);
   }
 
   @Nullable
@@ -396,7 +417,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
       final Enumeration attrEnum = helper.getAttributes();
       while (attrEnum.hasMoreElements()) {
-        final String attr = (String)attrEnum.nextElement();
+        final String attr = AntStringInterner.intern((String)attrEnum.nextElement());
         final Class attrClass = helper.getAttributeType(attr);
         if (int.class.equals(attrClass)) {
           attributes.put(attr, AntAttributeType.INTEGER);
@@ -411,11 +432,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
       final Enumeration nestedEnum = helper.getNestedElements();
       while (nestedEnum.hasMoreElements()) {
-        final String nestedElement = (String)nestedEnum.nextElement();
+        final String nestedElement = AntStringInterner.intern((String)nestedEnum.nextElement());
         final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
         nestedDefinitions.put(new AntTypeId(nestedElement), className);
       }
-      return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, attributes, nestedDefinitions);
+      return new AntTypeDefinitionImpl(id, AntStringInterner.intern(typeClass.getName()), isTask, attributes, nestedDefinitions);
     }
     finally {
       helper.buildFinished(null);
@@ -433,7 +454,14 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return null;
   }
 
+
   private static final class ReflectedProject {
+
+    @NonNls private static final String INIT_METHOD_NAME = "init";
+    @NonNls private static final String GET_TASK_DEFINITIONS_METHOD_NAME = "getTaskDefinitions";
+    @NonNls private static final String GET_DATA_TYPE_DEFINITIONS_METHOD_NAME = "getDataTypeDefinitions";
+    @NonNls private static final String GET_PROPERTIES_METHOD_NAME = "getProperties";
+
 
     private static final List<SoftReference<Pair<ReflectedProject, AntClassLoader>>> ourProjects =
       new ArrayList<SoftReference<Pair<ReflectedProject, AntClassLoader>>>();

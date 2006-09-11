@@ -26,7 +26,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   static {
     ourFileRefAttributes = new HashMap<String, String>();
-    ourFileRefAttributes.put("property", "file");
+    ourFileRefAttributes.put(AntFileImpl.PROPERTY, AntFileImpl.FILE_ATTR);
     ourFileRefAttributes.put("loadfile", "srcfile");
   }
 
@@ -55,7 +55,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       else {
         final XmlTag se = getSourceElement();
         if ("tstamp".equals(se.getName())) {
-          String prefix = se.getAttributeValue("prefix");
+          String prefix = se.getAttributeValue(AntFileImpl.PREFIX_ATTR);
           if (prefix == null) {
             myPropHolder.setProperty("DSTAMP", this);
             myPropHolder.setProperty("TSTAMP", this);
@@ -77,7 +77,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
-    this(parent, sourceElement, definition, "name");
+    this(parent, sourceElement, definition, AntFileImpl.NAME_ATTR);
   }
 
   public String toString() {
@@ -129,7 +129,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   public String getValue(final String propName) {
     final XmlTag se = getSourceElement();
     final String tagName = se.getName();
-    if ("property".equals(tagName) || "param".equals(tagName)) {
+    if (AntFileImpl.PROPERTY.equals(tagName) || "param".equals(tagName)) {
       return getPropertyValue();
     }
     else if ("dirname".equals(tagName)) {
@@ -143,7 +143,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   public String getFileName() {
-    return getSourceElement().getAttributeValue("file");
+    return getSourceElement().getAttributeValue(AntFileImpl.FILE_ATTR);
   }
 
   @Nullable
@@ -163,7 +163,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   public String getPrefix() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("prefix"));
+    return computeAttributeValue(getSourceElement().getAttributeValue(AntFileImpl.PREFIX_ATTR));
   }
 
   @Nullable
@@ -177,7 +177,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     if ("tstamp".equals(se.getName())) {
       final Set<String> strings = StringSetSpinAllocator.alloc();
       try {
-        String prefix = se.getAttributeValue("prefix");
+        String prefix = se.getAttributeValue(AntFileImpl.PREFIX_ATTR);
         if (prefix == null) {
           strings.add("DSTAMP");
           strings.add("TSTAMP");
@@ -255,7 +255,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   @Nullable
   private String getDirnameValue() {
     final XmlTag sourceElement = getSourceElement();
-    final String value = computeAttributeValue(sourceElement.getAttributeValue("file"));
+    final String value = computeAttributeValue(sourceElement.getAttributeValue(AntFileImpl.FILE_ATTR));
     if (value != null) {
       return new File(value).getParent();
     }
@@ -342,7 +342,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     if ("tstamp".equals(se.getName())) {
       final XmlTag formatTag = se.findFirstSubTag("format");
       if (formatTag != null) {
-        final XmlAttribute propAttr = formatTag.getAttribute("property", null);
+        final XmlAttribute propAttr = formatTag.getAttribute(AntFileImpl.PROPERTY, null);
         if (propAttr != null) {
           final XmlAttributeValue value = propAttr.getValueElement();
           if (value != null) {

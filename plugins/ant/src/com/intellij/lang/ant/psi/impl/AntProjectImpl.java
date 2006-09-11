@@ -38,7 +38,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private Map<String, AntElement> myReferencedElements;
   private String[] myRefIdsArray;
   @NonNls private List<String> myEnvPrefixes;
-  @NonNls private static final String myDefaultEnvPrefix = "env.";
+  @NonNls private static final String ourDefaultEnvPrefix = "env.";
 
   public AntProjectImpl(final AntFileImpl parent, final XmlTag tag, final AntTypeDefinition projectDefinition) {
     super(parent, tag);
@@ -79,12 +79,12 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   @Nullable
   public String getBaseDir() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("basedir"));
+    return computeAttributeValue(getSourceElement().getAttributeValue(AntFileImpl.BASEDIR_ATTR));
   }
 
   @Nullable
   public String getDescription() {
-    final XmlTag tag = getSourceElement().findFirstSubTag("description");
+    final XmlTag tag = getSourceElement().findFirstSubTag(AntFileImpl.DESCRIPTION_ATTR);
     return tag != null ? tag.getValue().getTrimmedText() : null;
   }
 
@@ -178,8 +178,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
               builder.append(' ');
             }
           }
-          else if ("import".equals(tag.getName())) {
-            final AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue("file"), this);
+          else if (AntFileImpl.IMPORT_TAG.equals(tag.getName())) {
+            final AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue(AntFileImpl.FILE_ATTR), this);
             if (imported != null) {
               imports.add(imported);
             }
@@ -249,8 +249,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       myEnvPrefixes.add(env);
       for (AntProperty element : getProperties()) {
         final String name = element.getName();
-        if (name != null && name.startsWith(myDefaultEnvPrefix)) {
-          setProperty(env + name.substring(myDefaultEnvPrefix.length()), element);
+        if (name != null && name.startsWith(ourDefaultEnvPrefix)) {
+          setProperty(env + name.substring(ourDefaultEnvPrefix.length()), element);
         }
       }
     }
@@ -369,8 +369,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
           }
 
           public PsiElement getNavigationElement() {
-            if ("basedir".equals(getName())) {
-              final XmlAttribute attr = AntProjectImpl.this.getSourceElement().getAttribute("basedir", null);
+            if (AntFileImpl.BASEDIR_ATTR.equals(getName())) {
+              final XmlAttribute attr = AntProjectImpl.this.getSourceElement().getAttribute(AntFileImpl.BASEDIR_ATTR, null);
               if (attr != null) return attr;
             }
             return super.getNavigationElement();
@@ -401,7 +401,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private synchronized void checkEnvList() {
     if (myEnvPrefixes == null) {
       myEnvPrefixes = new ArrayList<String>();
-      myEnvPrefixes.add(myDefaultEnvPrefix);
+      myEnvPrefixes.add(ourDefaultEnvPrefix);
     }
   }
 
