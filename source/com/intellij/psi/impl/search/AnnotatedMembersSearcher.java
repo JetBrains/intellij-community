@@ -56,7 +56,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
       final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
       if (ref == null) continue;
 
-      if (ref.resolve() != annClass) continue;
+      if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) continue;
       if (useScope instanceof GlobalSearchScope &&
           !((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile())) {
         continue;
