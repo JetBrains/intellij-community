@@ -58,6 +58,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     TreeUtil.installActions(myTree);
 
     myBuilder = new LazySimpleTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
+    Disposer.register(this, myBuilder);
 
     myBuilder.setNodeDescriptorComparator(null);
 
@@ -147,7 +148,6 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   }
 
   public void dispose() {
-    Disposer.dispose(myBuilder);
   }
 
   public SimpleTree getTree() {
