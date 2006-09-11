@@ -16,7 +16,9 @@ import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -26,6 +28,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Alarm;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
@@ -33,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -189,6 +193,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return this;
   }
 
+  @Nullable
   public AntProject getAntProject() {
     // the following line is necessary only to satisfy the "sync/unsync context" inspection
     synchronized (PsiLock.LOCK) {
@@ -257,7 +262,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (myTypeDefinitions == null) {
         myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
         myProjectElements = new HashMap<AntTypeId, String>();
-        final ReflectedProject reflectedProject = new ReflectedProject(getClassLoader());
+        final ReflectedProject reflectedProject = ReflectedProject.geProject(getClassLoader());
         if (reflectedProject.myProject != null) {
           // first, create task definitons
           updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
@@ -336,6 +341,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (isTask && (typeName.equals("unwar") || typeName.equals("unjar"))) {
         typeName = "unzip";
       }
+
       final Class typeClass = (Class)ht.get(typeName);
       final AntTypeId typeId = new AntTypeId(typeName);
       final AntTypeDefinition def = createTypeDefinition(typeId, typeClass, isTask);
@@ -428,12 +434,52 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   private static final class ReflectedProject {
+
+    private static final List<SoftReference<Pair<ReflectedProject, AntClassLoader>>> ourProjects =
+      new ArrayList<SoftReference<Pair<ReflectedProject, AntClassLoader>>>();
+    private static Alarm ourAlarm = new Alarm();
+
     private Object myProject;
     private Hashtable myTaskDefinitions;
     private Hashtable myDataTypeDefinitions;
     private Hashtable myProperties;
 
-    public ReflectedProject(final AntClassLoader classLoader) {
+    private static ReflectedProject geProject(final AntClassLoader classLoader) {
+      try {
+        synchronized (ourProjects) {
+          for (final SoftReference<Pair<ReflectedProject, AntClassLoader>> ref : ourProjects) {
+            final Pair<ReflectedProject, AntClassLoader> pair = ref.get();
+            if (pair != null && pair.second == classLoader) {
+              return pair.first;
+            }
+          }
+          ReflectedProject project = new ReflectedProject(classLoader);
+          final SoftReference<Pair<ReflectedProject, AntClassLoader>> ref =
+            new SoftReference<Pair<ReflectedProject, AntClassLoader>>(new Pair<ReflectedProject, AntClassLoader>(project, classLoader));
+          for (int i = 0; i < ourProjects.size(); ++i) {
+            final Pair<ReflectedProject, AntClassLoader> pair = ourProjects.get(i).get();
+            if (pair == null) {
+              ourProjects.set(i, ref);
+              return project;
+            }
+          }
+          ourProjects.add(ref);
+          return project;
+        }
+      }
+      finally {
+        ourAlarm.cancelAllRequests();
+        ourAlarm.addRequest(new Runnable() {
+          public void run() {
+            synchronized (ourProjects) {
+              ourProjects.clear();
+            }
+          }
+        }, 30000, ModalityState.NON_MODAL);
+      }
+    }
+
+    private ReflectedProject(final AntClassLoader classLoader) {
       try {
         final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");
         myProject = projectClass.newInstance();
