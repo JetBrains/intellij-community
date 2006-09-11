@@ -192,6 +192,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
     final LvcsAction lvcsAction = LvcsIntegration.checkinFilesBeforeRefactoring(myProject, getCommandName());
     try {
       doRefactoring(usages);
