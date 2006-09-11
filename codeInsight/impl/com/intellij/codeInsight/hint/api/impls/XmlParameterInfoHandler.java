@@ -34,7 +34,9 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   };
 
   public Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
-    return new Object[]{item.getObject()};
+    final Object lookupItem = item.getObject();
+    if (lookupItem instanceof XmlElementDescriptor) return new Object[]{lookupItem};
+    return null;
   }
 
   public Object[] getParametersForDocumentation(final XmlElementDescriptor p, final ParameterInfoContext context) {
