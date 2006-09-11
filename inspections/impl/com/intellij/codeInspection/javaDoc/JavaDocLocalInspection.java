@@ -329,7 +329,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
   }
   @Nullable
-  public ProblemDescriptor[] checkClass(PsiClass psiClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (psiClass instanceof PsiAnonymousClass) return null;
     if (IGNORE_DEPRECATED && psiClass.isDeprecated()) {
       return null;
@@ -398,7 +398,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkField(PsiField psiField, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkField(@NotNull PsiField psiField, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (IGNORE_DEPRECATED && (psiField.isDeprecated() || psiField.getContainingClass().isDeprecated())) {
       return null;
     }
@@ -419,7 +419,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkMethod(PsiMethod psiMethod, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (IGNORE_DEPRECATED && (psiMethod.isDeprecated() || psiMethod.getContainingClass().isDeprecated())) {
       return null;
     }
@@ -543,7 +543,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           declaredExceptions.put(classType, psiClass);
         }
       }
-      processThrowsTags(psiMethod, tags, declaredExceptions, manager, problems);
+      processThrowsTags(tags, declaredExceptions, manager, problems);
       if (!declaredExceptions.isEmpty()) {
         for (PsiClassType declaredException : declaredExceptions.keySet()) {
           problems.add(createMissingThrowsTagDescriptor(psiMethod, manager, declaredException, true));
@@ -592,8 +592,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
            : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
   }
 
-  private static void processThrowsTags(final PsiMethod method,
-                                        final PsiDocTag[] tags,
+  private static void processThrowsTags(final PsiDocTag[] tags,
                                         final Map<PsiClassType, PsiClass> declaredExceptions,
                                         final InspectionManager mananger,
                                         @NotNull final ArrayList<ProblemDescriptor> problems) {
@@ -614,7 +613,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
             final PsiClass psiClass = declaredExceptions.get(classType);
             if (InheritanceUtil.isInheritorOrSelf(exceptionClass, psiClass, true)) {
               if (extractThrowsTagDescription(tag).length() == 0) {
-                problems.add(createMissingThrowsTagDescriptor(method, mananger, classType, false));
+                problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>" + tag.getName() + "</code>"), mananger));
               }
               it.remove();
             }
@@ -901,14 +900,17 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return 5;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.javadoc.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
