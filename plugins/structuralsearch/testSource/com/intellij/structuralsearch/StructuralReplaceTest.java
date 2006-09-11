@@ -1458,6 +1458,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testReplaceReturnWithArrayInitializer() {
+    String searchIn = "return ( new String[]{CoreVars.CMUAudioPort + \"\"} );";
+    String searchFor = "return ( 'A );";
+    String replaceBy = "return $A$;";
+    String expectedResult = "return new String[]{CoreVars.CMUAudioPort + \"\"};";
+
+    actualResult = replacer.testReplace(searchIn,searchFor,replaceBy,options);
+
+    assertEquals(
+      "ReplaceReturnWithArrayInitializer",
+      expectedResult,
+      actualResult
+    );
+  }
+
 //  public void testClassReplacement10() throws IOException {
 //    String s1 = TestUtils.loadFile("before2.java");
 //    String s2 = "class '_Class {\n" +
