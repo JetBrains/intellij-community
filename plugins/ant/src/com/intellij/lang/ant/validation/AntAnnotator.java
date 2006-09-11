@@ -33,17 +33,19 @@ public class AntAnnotator implements Annotator {
       final String name = se.getSourceElement().getName();
       final TextRange absoluteRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset() + 1);
       if (def == null) {
-        final Annotation annotation = holder.createErrorAnnotation(absoluteRange, AntBundle.message("undefined.element", name));
-        boolean defined = false;
-        while (parent != null) {
-          if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
-            defined = true;
-            break;
+        if (!isChildOfInvalidTypedefinedElement(se)) {
+          boolean macroDefined = false;
+          while (parent != null) {
+            if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
+              macroDefined = true;
+              break;
+            }
+            parent = parent.getAntParent();
           }
-          parent = parent.getAntParent();
-        }
-        if (!defined) {
-          addDefinitionQuickFixes(annotation, se);
+          final Annotation annotation = holder.createErrorAnnotation(absoluteRange, AntBundle.message("undefined.element", name));
+          if (!macroDefined) {
+            addDefinitionQuickFixes(annotation, se);
+          }
         }
       }
       else {
@@ -53,7 +55,7 @@ public class AntAnnotator implements Annotator {
         if (!se.hasImportedTypeDefinition() && parent instanceof AntStructuredElement) {
           final AntStructuredElement pe = (AntStructuredElement)parent;
           final AntTypeDefinition parentDef = pe.getTypeDefinition();
-          if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null) {
+          if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null && !isChildOfInvalidTypedefinedElement(se)) {
             holder.createErrorAnnotation(absoluteRange, AntBundle.message("nested.element.is.not.allowed.here", name));
           }
         }
@@ -65,11 +67,8 @@ public class AntAnnotator implements Annotator {
         }
         else if (se.isTypeDefined()) {
           final PsiElement de = def.getDefiningElement();
-          if (de != null) {
-            final AntTypeDef td = (AntTypeDef)de;
-            if (!td.typesLoaded()) {
-              holder.createWarningAnnotation(absoluteRange, AntBundle.message("using.definition.which.type.failed.to.load", name));
-            }
+          if (de != null && !((AntTypeDef)de).typesLoaded()) {
+            holder.createWarningAnnotation(absoluteRange, AntBundle.message("using.definition.which.type.failed.to.load", name));
           }
         }
         if (se instanceof AntProject) {
@@ -78,6 +77,24 @@ public class AntAnnotator implements Annotator {
       }
     }
     checkReferences(element, holder);
+  }
+
+  private static boolean isChildOfInvalidTypedefinedElement(final AntStructuredElement se) {
+    AntElement parent = se;
+    while (!((parent = parent.getAntParent()) instanceof AntProject) && parent != null) {
+      final AntStructuredElement sp = (AntStructuredElement)parent;
+      if (sp.isTypeDefined()) {
+        final AntTypeDefinition def = sp.getTypeDefinition();
+        if (def != null) {
+          final PsiElement de = def.getDefiningElement();
+          if (de != null && !((AntTypeDef)de).typesLoaded()) {
+            return true;
+          }
+        }
+        break;
+      }
+    }
+    return false;
   }
 
   private static void addDefinitionQuickFixes(final Annotation annotation, final AntStructuredElement se) {
