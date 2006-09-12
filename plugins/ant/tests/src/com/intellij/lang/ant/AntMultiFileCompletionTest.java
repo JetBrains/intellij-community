@@ -10,12 +10,12 @@
  */
 package com.intellij.lang.ant;
 
-import junit.framework.TestCase;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import junit.framework.TestCase;
 
 /**
  * @author Maxim.Mossienko
@@ -27,7 +27,6 @@ public class AntMultiFileCompletionTest extends TestCase {
   }
 
   public void testPropertyCompletion() throws Throwable {
-    if (true) return;
     final String testName = "PropertyCompletion";
     doTestFor(
       new String [] { testName, testName + ".properties" },
@@ -36,7 +35,6 @@ public class AntMultiFileCompletionTest extends TestCase {
   }
 
   public void testPropertyCompletion2() throws Throwable {
-    if (true) return;
     final String testName = "PropertyCompletion2";
     doTestFor(
       new String [] { testName, "PropertyCompletion.properties" },
