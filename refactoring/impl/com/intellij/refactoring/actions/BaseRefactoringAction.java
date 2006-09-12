@@ -120,13 +120,13 @@ public abstract class BaseRefactoringAction extends AnAction {
       }
     }
 
+    if (psiElements == null) return PsiElement.EMPTY_ARRAY;
+
     List<PsiElement> filtered = null;
-    if (psiElements != null) {
-      for (PsiElement element : psiElements) {
-        if (isSyntheticJsp(element)) {
-          if (filtered == null) filtered = new ArrayList<PsiElement>(Arrays.asList(element));
-          filtered.remove(element);
-        }
+    for (PsiElement element : psiElements) {
+      if (isSyntheticJsp(element)) {
+        if (filtered == null) filtered = new ArrayList<PsiElement>(Arrays.asList(element));
+        filtered.remove(element);
       }
     }
     return filtered == null ? psiElements : filtered.toArray(new PsiElement[filtered.size()]);

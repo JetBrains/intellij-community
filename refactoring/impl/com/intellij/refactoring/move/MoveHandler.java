@@ -29,6 +29,8 @@ import com.intellij.util.containers.HashSet;
 import javax.swing.*;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MoveHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.MoveHandler");
 
@@ -161,10 +163,7 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * must be invoked in AtomicAction
    */
-  public static void doMove(Project project, PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
-    if (elements == null) {
-      throw new IllegalArgumentException("elements cannot be null");
-    }
+  public static void doMove(Project project, @NotNull PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
     if (elements.length == 0) return;
 
     int moveType = getMoveType(elements);
