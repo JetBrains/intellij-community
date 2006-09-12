@@ -57,6 +57,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -119,7 +120,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     }
   }
 
-  protected CheckinEnvironment getCommonEnvironmentFor(FilePath[] roots, Project project) {
+  @Nullable
+  protected static CheckinEnvironment getCommonEnvironmentFor(FilePath[] roots, Project project) {
     if (roots.length == 0) return null;
     AbstractVcs firstVcs = VcsUtil.getVcsFor(project, roots[0]);
     if (firstVcs == null) return null;
@@ -176,6 +178,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   }
 
+  @Nullable
   private static AbstractVcs getVcs(final CheckinEnvironment checkinEnvironment, final Project project) {
     final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     for (AbstractVcs vcs : abstractVcses) {
@@ -201,7 +204,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
                                               final String message,
                                               final AbstractVcs abstractVcs) {
     return new MockCheckinProjectPanel(virtualFiles, files, project, message, abstractVcs);
-  }
+  }                                  
 
   private void checkinFiles(final CheckinEnvironment checkinEnvironment,
                             final FilePath[] roots,
@@ -245,7 +248,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   }
 
-  private Collection<VirtualFile> getVirtualFiles(final FilePath[] roots) {
+  private static Collection<VirtualFile> getVirtualFiles(final FilePath[] roots) {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     for (FilePath root : roots) {
       final VirtualFile virtualFile = root.getVirtualFile();
@@ -327,9 +330,9 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   }
 
-  private void commitCompleted(final List<VcsException> allExceptions,
-                               VcsConfiguration config,
-                               final List<CheckinHandler> checkinHandlers) {
+  private static void commitCompleted(final List<VcsException> allExceptions,
+                                      VcsConfiguration config,
+                                      final List<CheckinHandler> checkinHandlers) {
 
 
     final List<VcsException> errors = collectErrors(allExceptions);
@@ -366,11 +369,11 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
         }
 
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
 
   }
 
-  private List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
+  private static List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
     final ArrayList<VcsException> result = new ArrayList<VcsException>();
     for (VcsException vcsException : vcsExceptions) {
       if (!vcsException.isWarning()) {
@@ -380,7 +383,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return result;
   }
 
-  protected int getCheckinType(FilePath[] roots) {
+  protected static int getCheckinType(FilePath[] roots) {
     if (roots.length == 0) return MIXED;
     FilePath file = roots[0];
     int firstType = getCheckinType(file);
@@ -393,11 +396,11 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return firstType;
   }
 
-  private int getCheckinType(FilePath file) {
+  private static int getCheckinType(FilePath file) {
     return file.isDirectory() ? DIRECTORIES : FILES;
   }
 
-  private Collection<String> asPathList(FilePath[] roots) {
+  private static Collection<String> asPathList(FilePath[] roots) {
     ArrayList<String> result = new ArrayList<String>();
     for (FilePath root : roots) {
       result.add(root.getPath());
@@ -409,12 +412,12 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   protected abstract FilePath[] getRoots(VcsContext project);
 
-  protected void refreshFileView(Project project) {
+  protected static void refreshFileView(Project project) {
     if (project == null) return;
     FileViewManagerImpl.getInstance(project).refreshFileView();
   }
 
-  private boolean shouldCheckin(CheckinProjectDialogImplementer d, Project project) {
+  private static boolean shouldCheckin(CheckinProjectDialogImplementer d, Project project) {
     if (!d.hasDiffs()) {
       Messages.showMessageDialog(project, VcsBundle.message("message.text.nothing.was.found.to.commit"),
                                  VcsBundle.message("message.title.nothing.was.found.to.commit"), Messages.getInformationIcon());
