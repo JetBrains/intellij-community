@@ -14,7 +14,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
@@ -45,11 +48,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitin
       myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>>();
     }
     if (inPostHighlightingPass) {
-      int idx = 5;
-      while (Arrays.binarySearch(myPostHighlightingPassGroups, idx) != -1) {
-        idx++;
-      }
-      myPostHighlightingPassGroups = ArrayUtil.mergeArrays(myPostHighlightingPassGroups, new int[] {idx});
+      myPostHighlightingPassGroups = ArrayUtil.mergeArrays(myPostHighlightingPassGroups,
+                                                           new int[] {myPostHighlightingPassGroups[myPostHighlightingPassGroups.length - 1] + 1});
     }
     myRegisteredPasses.put(factory, Pair.create(anchor, anchorPass));
     if (needAdditionalPass) {
