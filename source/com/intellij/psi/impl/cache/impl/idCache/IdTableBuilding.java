@@ -311,7 +311,7 @@ public class IdTableBuilding {
         final HighlighterIterator iterator = highlighter.createIterator(0);
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
-          if (IdCacheUtil.isInComments(token)) {
+          if (IdCacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
             BaseFilterLexer.advanceTodoItemsCount(text.subSequence(iterator.getStart(), iterator.getEnd()), todoCounts);
           }
 
