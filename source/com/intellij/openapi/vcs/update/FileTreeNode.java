@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.io.File;
@@ -24,6 +25,9 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
   }
 
   public Icon getIcon(boolean expanded) {
+    if (myFile.isDirectory()) {
+      return Icons.DIRECTORY_CLOSED_ICON;
+    }
     return FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName()).getIcon();
   }
 
