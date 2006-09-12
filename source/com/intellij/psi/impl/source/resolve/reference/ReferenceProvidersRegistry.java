@@ -506,6 +506,13 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       jsfProvider
     );
 
+    registerXmlAttributeValueReferenceProvider(
+      jsfProvider.getIdForJSFC(),
+      jsfProvider.getJSFCFilter(),
+      true,
+      jsfProvider
+    );
+
     registerReferenceProvider(
       new AndFilter(
         new OrFilter(
@@ -706,6 +713,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new XmlEncodingReferenceProvider()
     );
   }
+
+
 
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter, @NotNull Class scope, @NotNull PsiReferenceProvider provider) {
     if (scope == XmlAttributeValue.class) {

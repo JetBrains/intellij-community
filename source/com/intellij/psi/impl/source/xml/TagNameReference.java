@@ -162,6 +162,10 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       if(fromJspTree == null || fromJspTree.getName().length() == 0) return new Object[]{element.getName()};
       return new Object[]{element.getName(), fromJspTree.getName()};
     }
+    return getTagNameVariants(element, variants);
+  }
+
+  public static Object[] getTagNameVariants(final XmlTag element, final List<XmlElementDescriptor> variants) {
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
 
     {
