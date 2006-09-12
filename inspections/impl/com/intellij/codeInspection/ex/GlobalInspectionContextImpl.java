@@ -162,6 +162,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public boolean isSuppressed(PsiElement element, String id) {
+    final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
+    if (refManager.isDeclarationsFound() && element instanceof PsiModifierListOwner) {
+      final RefElement refElement = refManager.getReference(element);
+      return refElement instanceof RefElementImpl && ((RefElementImpl)refElement).isSuppressed(id);
+    }
     return element instanceof PsiDocCommentOwner && !isToCheckMember((PsiDocCommentOwner)element, id);
   }
 
@@ -812,6 +817,25 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
     final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
     initializeTools(scope, usedTools, localTools);
+    for (Set<InspectionTool> tools : usedTools.values()) {
+      for (InspectionTool tool : tools) {
+        try {
+          if (tool.isGraphNeeded()) {
+            ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
+          }
+          tool.runInspection(scope, manager);
+          if (tool.queryExternalUsagesRequests(manager)) {
+            needRepeatSearchRequest.add(tool);
+          }
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    }
     final Set<InspectionTool> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
     if (RUN_WITH_EDITOR_PROFILE || (currentProfileLocalTools != null && currentProfileLocalTools.size() > 0)) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
@@ -856,25 +880,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       }
       catch (Exception e) {
         LOG.error(e);
-      }
-    }
-    for (Set<InspectionTool> tools : usedTools.values()) {
-      for (InspectionTool tool : tools) {
-        try {
-          if (tool.isGraphNeeded()) {
-            ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
-          }
-          tool.runInspection(scope, manager);
-          if (tool.queryExternalUsagesRequests(manager)) {
-            needRepeatSearchRequest.add(tool);
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
       }
     }
   }

@@ -156,6 +156,10 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
+  public boolean isDeclarationsFound() {
+    return myDeclarationsFound;
+  }
+
   public void inspectionReadActionStarted() {
     myIsInProcess = true;
   }

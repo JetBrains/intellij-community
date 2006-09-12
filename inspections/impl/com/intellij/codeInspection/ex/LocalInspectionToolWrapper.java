@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,7 +65,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       public void visitField(PsiField field) {
         super.visitField(field);
-        if (!filterSuppressed || GlobalInspectionContextImpl.isToCheckMember(field, myTool.getID())) {
+        if (!filterSuppressed || !getContext().isSuppressed(field, myTool.getID())) {
           ProblemDescriptor[] problemDescriptions = myTool.checkField(field, manager, false);
           addProblemDescriptors(field, problemDescriptions, filterSuppressed);
         }
@@ -72,7 +73,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
-        if (!filterSuppressed || GlobalInspectionContextImpl.isToCheckMember(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
+        if (!filterSuppressed || !getContext().isSuppressed(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
           ProblemDescriptor[] problemDescriptions = myTool.checkClass(aClass, manager, false);
           addProblemDescriptors(aClass, problemDescriptions, filterSuppressed);
         }
@@ -81,7 +82,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       public void visitMethod(PsiMethod method) {
         super.visitMethod(method);
-        if (!filterSuppressed || GlobalInspectionContextImpl.isToCheckMember(method, myTool.getID())) {
+        if (!filterSuppressed || !getContext().isSuppressed(method, myTool.getID())) {
           ProblemDescriptor[] problemDescriptions = myTool.checkMethod(method, manager, false);
           addProblemDescriptors(method, problemDescriptions, filterSuppressed);
         }
@@ -106,11 +107,16 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     if (descriptors == null || descriptors.isEmpty()) return;
 
     Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<RefElement, List<ProblemDescriptor>>();
-    RefManager refManager = getContext().getRefManager();
+    final RefManagerImpl refManager = (RefManagerImpl)getContext().getRefManager();
     for (ProblemDescriptor descriptor : descriptors) {
       final PsiElement elt = descriptor.getPsiElement();
       if (elt == null) continue;
-      if (filterSuppressed && InspectionManagerEx.inspectionResultSuppressed(elt, myTool)) continue;
+      if (filterSuppressed) {
+        if (elt instanceof PsiModifierListOwner && refManager.isDeclarationsFound() && getContext().isSuppressed(elt, myTool.getID())) {
+          continue;
+        }
+        if (InspectionManagerEx.inspectionResultSuppressed(elt, myTool)) continue;
+      }
 
       final PsiNamedElement problemElement =
         PsiTreeUtil.getNonStrictParentOfType(elt, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
@@ -134,7 +140,8 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   private ProblemDescriptor[] filterUnsuppressedProblemDescriptions(ProblemDescriptor[] problemDescriptions) {
     Set<ProblemDescriptor> set = null;
     for (ProblemDescriptor description : problemDescriptions) {
-      if (InspectionManagerEx.inspectionResultSuppressed(description.getPsiElement(), myTool)) {
+      final PsiElement element = description.getPsiElement();
+      if ((element instanceof PsiModifierListOwner && getContext().isSuppressed(element, myTool.getID())) || InspectionManagerEx.inspectionResultSuppressed(element, myTool)) {
         if (set == null) set = new LinkedHashSet<ProblemDescriptor>(Arrays.asList(problemDescriptions));
         set.remove(description);
       }
@@ -173,14 +180,17 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     return false;
   }
 
+  @NotNull
   public String getDisplayName() {
     return myTool.getDisplayName();
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return myTool.getGroupDisplayName();
   }
 
+  @NotNull
   public String getShortName() {
     return myTool.getShortName();
   }
@@ -189,6 +199,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     return myTool.isEnabledByDefault();
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return myTool.getDefaultLevel();
   }
