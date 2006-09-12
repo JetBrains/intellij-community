@@ -21,15 +21,17 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.StableElement;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
+import javax.swing.*;
 
 /**
  * @author peter
@@ -60,11 +62,26 @@ public class MockDomElementsEditor {
   }
 
   protected final DomFileEditor initFileEditor(final BasicDomElementComponent component, final VirtualFile virtualFile, final String name) {
-    myContents = component;
-    final Project project = component.getProject();
+    initFileEditor(component.getProject(), virtualFile, name, new Factory<BasicDomElementComponent>() {
+      public BasicDomElementComponent create() {
+        return component;
+      }
+    });
+    Disposer.register(myFileEditor, component);
+    return myFileEditor;
+  }
+
+  protected final DomFileEditor initFileEditor(final Project project, final VirtualFile virtualFile, final String name, final Factory<? extends BasicDomElementComponent> component) {
     myFileEditor = new DomFileEditor<BasicDomElementComponent>(project, virtualFile, name, component) {
       public JComponent getPreferredFocusedComponent() {
         return null;
+      }
+
+      @NotNull
+      protected JComponent createCustomComponent() {
+        final JComponent customComponent = super.createCustomComponent();
+        myContents = getDomComponent();
+        return customComponent;
       }
 
       public void reset() {
@@ -124,7 +141,9 @@ public class MockDomElementsEditor {
     final Project project = module.getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        myContents.reset();
+        if (myFileEditor.isInitialised()) {
+          myContents.reset();
+        }
       }
     });
     final DomManager domManager = DomManager.getDomManager(project);

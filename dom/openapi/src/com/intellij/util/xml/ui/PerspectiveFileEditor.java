@@ -33,7 +33,7 @@ import javax.swing.*;
  */
 abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
   private Wrapper myWrapprer = new Wrapper();
-  private boolean myInitialise = false;
+  private boolean myInitialised = false;
 
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Project myProject;
@@ -197,9 +197,9 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void selectNotify() {
-    if (!isInitialise()) {
-      myWrapprer.setContent(getCustomComponent());
-      myInitialise = true;
+    if (!isInitialised()) {
+      myWrapprer.setContent(createCustomComponent());
+      myInitialised = true;
     }
     myUndoHelper.setShowing(true);
     reset();
@@ -256,18 +256,18 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   @NotNull
-  final public JComponent getComponent() {
-    return getWrapprer();
+  public JComponent getComponent() {
+    return getWrapper();
   }
 
   @NotNull
-  protected abstract JComponent getCustomComponent();
+  protected abstract JComponent createCustomComponent();
 
-  public Wrapper getWrapprer() {
+  public Wrapper getWrapper() {
     return myWrapprer;
   }
 
-  public boolean isInitialise() {
-    return myInitialise;
+  protected final boolean isInitialised() {
+    return myInitialised;
   }
 }

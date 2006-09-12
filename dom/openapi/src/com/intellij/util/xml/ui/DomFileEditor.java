@@ -8,25 +8,26 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomEventAdapter;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import com.intellij.ui.UserActivityWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,34 +37,27 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public abstract class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor{
+public class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor{
   private final String myName;
-  private final T myComponent;
+  private final Factory<? extends T> myComponentFactory;
+  private T myComponent;
 
-  protected DomFileEditor(final DomElement element, final String name, final T component) {
+  public DomFileEditor(final DomElement element, final String name, final T component) {
     this(element.getManager().getProject(), element.getRoot().getFile().getVirtualFile(), name, component);
   }
-  protected DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
+
+  public DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
+    this(project, file, name, new Factory<T>() {
+      public T create() {
+        return component;
+      }
+    });
+  }
+
+  public DomFileEditor(final Project project, final VirtualFile file, final String name, final Factory<? extends T> component) {
     super(project, file);
-    myComponent = component;
+    myComponentFactory = component;
     myName = name;
-    final UserActivityWatcher userActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
-    final CommitablePanelUserActivityListener userActivityListener = new CommitablePanelUserActivityListener() {
-      protected void applyChanges() {
-        commit();
-      }
-    };
-    userActivityWatcher.addUserActivityListener(userActivityListener, this);
-    userActivityWatcher.register(getComponent());
-    new MnemonicHelper().register(getComponent());
-    addWatchedElement(component.getDomElement());
-    DomManager.getDomManager(project).addDomEventListener(new DomEventAdapter() {
-      public void eventOccured(DomEvent event) {
-        checkIsValid();
-      }
-    }, this);
-    Disposer.register(this, myComponent);
-    Disposer.register(this, userActivityListener);
   }
 
   public void commit() {
@@ -81,9 +75,26 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
     return myComponent;
   }
 
-
   @NotNull
-  protected JComponent getCustomComponent() {
+  protected JComponent createCustomComponent() {
+    final UserActivityWatcher userActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
+    final CommitablePanelUserActivityListener userActivityListener = new CommitablePanelUserActivityListener() {
+      protected void applyChanges() {
+        commit();
+      }
+    };
+    userActivityWatcher.addUserActivityListener(userActivityListener, this);
+    userActivityWatcher.register(getComponent());
+    new MnemonicHelper().register(getComponent());
+    myComponent = myComponentFactory.create();
+    addWatchedElement(myComponent.getDomElement());
+    DomManager.getDomManager(myComponent.getProject()).addDomEventListener(new DomEventAdapter() {
+      public void eventOccured(DomEvent event) {
+        checkIsValid();
+      }
+    }, this);
+    Disposer.register(this, myComponent);
+    Disposer.register(this, userActivityListener);
     return myComponent.getComponent();
   }
 
@@ -157,7 +168,7 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
 
 
   public boolean isValid() {
-    return super.isValid() && myComponent.getDomElement().isValid();
+    return super.isValid() && (!isInitialised() || myComponent.getDomElement().isValid());
   }
 
   public void reset() {
@@ -170,15 +181,34 @@ public abstract class DomFileEditor<T extends BasicDomElementComponent> extends 
                                                   final DomElement element,
                                                   final CaptionComponent captionComponent,
                                                   final CommittablePanel committablePanel) {
+    final DomFileEditor editor = createDomFileEditor(name, element, captionComponent, new Factory<CommittablePanel>() {
+      public CommittablePanel create() {
+        return committablePanel;
+      }
+    });
+    Disposer.register(editor, committablePanel);
+    return editor;
+  }
+
+  public static DomFileEditor createDomFileEditor(final String name,
+                                                  final DomElement element,
+                                                  final CaptionComponent captionComponent,
+                                                  final Factory<? extends CommittablePanel> committablePanel) {
 
     final XmlFile file = element.getRoot().getFile();
-    return new DomFileEditor(file.getProject(), file.getVirtualFile(), name,
-                             createComponentWithCaption(committablePanel, captionComponent, element)) {
-      public JComponent getPreferredFocusedComponent() {
-        return null;
+    final Factory<BasicDomElementComponent> factory = new Factory<BasicDomElementComponent>() {
+      public BasicDomElementComponent create() {
+        return createComponentWithCaption(committablePanel.create(), captionComponent, element);
       }
-
     };
+    final DomFileEditor<BasicDomElementComponent> editor =
+      new DomFileEditor<BasicDomElementComponent>(file.getProject(), file.getVirtualFile(), name, factory) {
+        public JComponent getPreferredFocusedComponent() {
+          return null;
+        }
+      };
+    Disposer.register(editor, captionComponent);
+    return editor;
   }
 
   public static BasicDomElementComponent createComponentWithCaption(final CommittablePanel committablePanel,

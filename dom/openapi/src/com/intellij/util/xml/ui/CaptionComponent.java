@@ -18,9 +18,10 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.xml.DomElement;
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -107,6 +108,10 @@ public class CaptionComponent extends JPanel implements Committable {
   }
 
   public final void dispose() {
+  }
+
+  public void initErrorPanel(final DomElement... elements) {
+    DomUIFactory.getDomUIFactory().addErrorPanel(this, elements);
   }
 
   public void initErrorPanel(final CommittablePanel errorPanel) {
