@@ -480,7 +480,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         final Properties properties = Properties.getInstance();
         for (final IntrospectedProperty property: introspectedProperties) {
           if (!property.appliesTo(component)) continue;
-          if (!myShowExpertProperties && properties.isExpertProperty(component.getModule(), componentClass, property.getName())) {
+          if (!myShowExpertProperties && properties.isExpertProperty(component.getModule(), componentClass, property.getName()) &&
+            !isModifiedForSelection(property)) {
             continue;
           }
           addProperty(result, property);
