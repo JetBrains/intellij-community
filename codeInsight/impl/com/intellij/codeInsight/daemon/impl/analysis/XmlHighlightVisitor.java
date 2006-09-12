@@ -670,16 +670,18 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     checkUnboundNamespacePrefix(attribute, tag, XmlUtil.findPrefixByQualifiedName(name));
 
     if (attributeDescriptor == null) {
-      final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
-      final HighlightInfo highlightInfo = reportAttributeProblem(tag, name, attribute, localizedMessage);
-      TagFileQuickFixProvider.registerTagFileAttributeReferenceQuickFix(highlightInfo, attribute.getReference());
+      if (!XmlUtil.attributeFromTemplateFramework(name, tag)) {
+        final String localizedMessage = XmlErrorMessages.message("attribute.is.not.allowed.here", name);
+        final HighlightInfo highlightInfo = reportAttributeProblem(tag, name, attribute, localizedMessage);
+        TagFileQuickFixProvider.registerTagFileAttributeReferenceQuickFix(highlightInfo, attribute.getReference());
+      }
     }
     else {
       checkDuplicateAttribute(tag, attribute);
 
       if (tag instanceof HtmlTag &&
           attribute.getValueElement() == null &&
-          !HtmlUtil.isSingleHtmlAttribute(attribute.getName())
+          !HtmlUtil.isSingleHtmlAttribute(name)
          ) {
         final String localizedMessage = XmlErrorMessages.message("empty.attribute.is.not.allowed", name);
         reportAttributeProblem(tag, name, attribute, localizedMessage);

@@ -2,6 +2,7 @@ package com.intellij.xml.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.jsp.JspFile;
@@ -18,6 +19,7 @@ import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,8 @@ import java.util.StringTokenizer;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlUtil {
+  @NonNls private static final String JSFC = "jsfc";
+
   private HtmlUtil() {}
   @NonNls private static final String[] EMPTY_TAGS = { 
     "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col","embed" 
@@ -224,5 +228,31 @@ public class HtmlUtil {
       return inspection.getAdditionalEntries(type);
     }
     return null;
+  }
+
+  public static XmlAttributeDescriptor[] appendHtmlSpecificAttributeCompletions(final XmlTag declarationTag,
+                                                                            XmlAttributeDescriptor[] descriptors,
+                                                                            final XmlAttributeImpl context) {
+    if (declarationTag instanceof HtmlTag) {
+      descriptors = ArrayUtil.mergeArrays(
+        descriptors,
+        getCustomAttributeDescriptors(context),
+        XmlAttributeDescriptor.class
+      );
+    } else if (declarationTag.getNSDescriptor(XmlUtil.JSF_HTML_URI, true) != null && declarationTag.getNSDescriptor(XmlUtil.XHTML_URI, true) != null) {
+      descriptors = ArrayUtil.append(
+        descriptors,
+        new XmlAttributeDescriptorImpl() {
+          public String getName(PsiElement context) {
+            return JSFC;
+          }
+
+          public String getName() {
+            return JSFC;
+          }
+        }
+      );
+    }
+    return descriptors;
   }
 }

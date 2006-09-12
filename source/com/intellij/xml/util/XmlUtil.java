@@ -312,6 +312,10 @@ public class XmlUtil {
     return (char)code;
   }
 
+  public static boolean attributeFromTemplateFramework(final String name, final XmlTag tag) {
+    return "jsfc".equals(name) && tag.getNSDescriptor(JSF_HTML_URI, true) != null;
+  }
+
   private static class XmlElementProcessor {
     private PsiElementProcessor processor;
     private PsiFile targetFile;
