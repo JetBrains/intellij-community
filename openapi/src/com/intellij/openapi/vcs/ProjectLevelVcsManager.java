@@ -165,4 +165,26 @@ public abstract class ProjectLevelVcsManager {
    * @since 6.0
    */
   public abstract void removeVcsListener(VcsListener listener);
+
+  /**
+   * Marks the beginning of a background VCS operation (commit or update).
+   *
+   * @since 6.0
+   */
+  public abstract void startBackgroundVcsOperation();
+
+  /**
+   * Marks the end of a background VCS operation (commit or update).
+   *
+   * @since 6.0
+   */
+  public abstract void stopBackgroundVcsOperation();
+
+  /**
+   * Checks if a background VCS operation (commit or update) is currently in progress.
+   *
+   * @return true if a background operation is in progress, false otherwise.
+   * @since 6.0
+   */
+  public abstract boolean isBackgroundVcsOperationRunning();
 }

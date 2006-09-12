@@ -63,7 +63,18 @@ public class CommitHelper {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
     }
     else {
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, myActionName, action, null, null);
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, myActionName,
+        new Runnable() {
+          public void run() {
+            ProjectLevelVcsManager.getInstance(myProject).startBackgroundVcsOperation();
+            try {
+              action.run();
+            }
+            finally {
+              ProjectLevelVcsManager.getInstance(myProject).stopBackgroundVcsOperation();
+            }
+          }
+        }, null, null);
     }
   }
 

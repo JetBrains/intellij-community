@@ -106,6 +106,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private boolean myHaveEmptyContentRevisions = true;
   private EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
 
+  private volatile int myBackgroundOperationCounter = 0;
+
   public ProjectLevelVcsManagerImpl(Project project) {
     this(project, new AbstractVcs[0]);
   }
@@ -558,6 +560,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void removeVcsListener(VcsListener listener) {
     myEventDispatcher.removeListener(listener);
+  }
+
+  public void startBackgroundVcsOperation() {
+    myBackgroundOperationCounter++;
+  }
+
+  public void stopBackgroundVcsOperation() {
+    LOG.assertTrue(myBackgroundOperationCounter > 0, "myBackgroundOperationCounter > 0");
+    myBackgroundOperationCounter--;
+  }
+
+  public boolean isBackgroundVcsOperationRunning() {
+    return myBackgroundOperationCounter > 0;
   }
 
   public void notifyModuleVcsChanged(Module module, AbstractVcs newVcs) {

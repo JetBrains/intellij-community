@@ -41,7 +41,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -49,15 +48,13 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.fileView.impl.FileViewPanel;
+import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vcs.ui.CheckinDialog;
 import com.intellij.openapi.vcs.ui.CheckinFileDialog;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 
@@ -179,7 +176,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   }
 
-  private AbstractVcs getVcs(final CheckinEnvironment checkinEnvironment, final Project project) {
+  private static AbstractVcs getVcs(final CheckinEnvironment checkinEnvironment, final Project project) {
     final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     for (AbstractVcs vcs : abstractVcses) {
       if (vcs.getCheckinEnvironment() == checkinEnvironment) {
@@ -190,7 +187,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return null;
   }
 
-  private Collection<File> getFiles(final FilePath[] roots) {
+  private static Collection<File> getFiles(final FilePath[] roots) {
     final ArrayList<File> result = new ArrayList<File>();
     for (FilePath root : roots) {
       result.add(root.getIOFile());
@@ -469,7 +466,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     presentation.setText(actionName);
 
-    presentation.setEnabled(true);
+    presentation.setEnabled(!ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning());
     presentation.setVisible(true);
   }
 

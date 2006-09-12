@@ -101,6 +101,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         final Runnable updateProcess = new Runnable() {
           public void run() {
             ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
+            ProjectLevelVcsManager.getInstance(project).startBackgroundVcsOperation();
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             int toBeProcessed = vcsToVirtualFiles.size();
             int processed = 0;
@@ -179,6 +180,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 }
               });
             }
+            ProjectLevelVcsManager.getInstance(project).stopBackgroundVcsOperation();
           }
         };
 
@@ -347,6 +349,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           presentation.setVisible(false);
           presentation.setEnabled(false);
         }
+      }
+
+      if (presentation.isVisible() && presentation.isEnabled() &&
+          ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
+        presentation.setEnabled(false);
       }
     } else {
       presentation.setVisible(false);
