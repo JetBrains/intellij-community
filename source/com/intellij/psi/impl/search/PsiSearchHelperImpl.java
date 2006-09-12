@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,7 +24,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.lang.properties.psi.Property;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -606,7 +606,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length, searcher); index >= 0;) {
         PsiReference referenceAt = psiFile.findReferenceAt(index);
         if (referenceAt == null ||
-            originalElement != null && !PsiSearchScopeUtil.isInScope(getUseScope(originalElement).intersectWith(searchScope), psiFile)) {
+            originalElement == null ||
+            !PsiSearchScopeUtil.isInScope(getUseScope(originalElement).intersectWith(searchScope), psiFile)) {
           if (!processor.process(psiFile, index, index + searcher.getPattern().length())) break AllFilesLoop;
         }
 
