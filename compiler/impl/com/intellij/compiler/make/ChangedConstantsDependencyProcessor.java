@@ -5,6 +5,7 @@
 package com.intellij.compiler.make;
 
 import com.intellij.compiler.classParsing.FieldInfo;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -15,6 +16,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -215,10 +217,12 @@ public class ChangedConstantsDependencyProcessor {
     return null;
   }
 
-  private PsiClass getOwnerClass(PsiElement element) {
+  @Nullable
+  private static PsiClass getOwnerClass(PsiElement element) {
     while (!(element instanceof PsiFile)) {
       if (element instanceof PsiClass && element.getParent() instanceof PsiJavaFile) { // top-level class
-        return (PsiClass)element;
+        final PsiClass psiClass = (PsiClass)element;
+        return StdLanguages.JAVA.equals(psiClass.getLanguage())? psiClass : null;
       }
       element = element.getParent();
     }
