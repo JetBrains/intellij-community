@@ -151,7 +151,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
     final Map<NamedScope, String> usedProfiles = getProfilesUsedInProject();
     final HashSet<String> profilesSet = new HashSet<String>(usedProfiles.values());
     profilesSet.add(PROJECT_PROFILE);
-    final List<String> sortedProfiles = new ArrayList<String>(profilesSet);
+    final List<String> sortedProfiles = new ArrayList<String>(myProfiles.keySet());
     Collections.sort(sortedProfiles);
     if (!sortedProfiles.isEmpty()) {
       final Element assignedScopes = new Element(SCOPES);
