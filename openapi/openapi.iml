@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="ui-openapi" exported="" />
     <orderEntry type="module" module-name="graph-openapi" exported="" />
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
+    <orderEntry type="library" exported="" name="microba" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -16,17 +16,15 @@
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.util.ui.SelectDateDialog;
+import com.michaelbaranov.microba.calendar.DatePicker;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyVetoException;
 import java.text.DateFormat;
-import java.text.ParseException;
-import java.util.Date;
 
 public abstract class StandardVersionFilterComponent implements RefreshableOnComponent {
   private JPanel myPanel;
@@ -43,8 +41,6 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
     return myPanel;
   }
 
-  private TextFieldWithBrowseButton myDateBefore;
-  private TextFieldWithBrowseButton myDateAfter;
   private JCheckBox myUseDateBeforeFilter;
   private JTextField myNumBefore;
   private JCheckBox myUseDateAfterFilter;
@@ -53,42 +49,21 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
   private JTextField myNumAfter;
   private JPanel myDatePanel;
   private JPanel myVersionNumberPanel;
+  private DatePicker myDateAfter;
+  private DatePicker myDateBefore;
 
   private final Project myProject;
-  private final DateFormat myDateFormat;
 
   public StandardVersionFilterComponent(Project project, DateFormat dateformat) {
     myProject = project;
-    myDateFormat = dateformat;
+    myDateAfter.setDateFormat(dateformat);
+    myDateBefore.setDateFormat(dateformat);
   }
 
   protected void init() {
-    installBrowseDateActions();
     installCheckBoxesListeners();
     initValues();
     updateAllEnabled(null);
-  }
-
-  private void installBrowseDateActions() {
-    myDateBefore.getButton().addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final SelectDateDialog selectDateDialog = new SelectDateDialog(myProject);
-        selectDateDialog.show();
-        if (selectDateDialog.isOK()) {
-          myDateBefore.setText(format(selectDateDialog.getDate()));
-        }
-      }
-    });
-
-    myDateAfter.getButton().addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final SelectDateDialog selectDateDialog = new SelectDateDialog(myProject);
-        selectDateDialog.show();
-        if (selectDateDialog.isOK()) {
-          myDateAfter.setText(format(selectDateDialog.getDate()));
-        }
-      }
-    });
   }
 
   private void installCheckBoxesListeners() {
@@ -127,15 +102,17 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
     myUseNumBeforeFilter.setSelected(settings.USE_CHANGE_BEFORE_FILTER);
     myUseNumAfterFilter.setSelected(settings.USE_CHANGE_AFTER_FILTER);
 
-    myDateBefore.setText(format(settings.getDateBefore()));
-    myDateAfter.setText(format(settings.getDateAfter()));
+    try {
+      myDateBefore.setDate(settings.getDateBefore());
+      myDateAfter.setDate(settings.getDateAfter());
+    }
+    catch (PropertyVetoException e) {
+      // TODO: handle?
+    }
     myNumBefore.setText(settings.CHANGE_BEFORE);
     myNumAfter.setText(settings.CHANGE_AFTER);
-  }
 
-  private String format(final Date date) {
-    if (date == null) return "";
-    return myDateFormat.format(date);
+
   }
 
   public void saveValues() {
@@ -145,21 +122,11 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
     settings.USE_CHANGE_BEFORE_FILTER = myUseNumBeforeFilter.isSelected();
     settings.USE_CHANGE_AFTER_FILTER = myUseNumAfterFilter.isSelected();
 
-    settings.setDateBefore(parse(myDateBefore.getText()));
-    settings.setDateAfter(parse(myDateAfter.getText()));
+    settings.setDateBefore(myDateBefore.getDate());
+    settings.setDateAfter(myDateAfter.getDate());
     settings.CHANGE_BEFORE = myNumBefore.getText();
     settings.CHANGE_AFTER = myNumAfter.getText();
   }
-
-  private Date parse(final String text) {
-    try {
-      return myDateFormat.parse(text);
-    }
-    catch (ParseException e) {
-      return null;
-    }
-  }
-
 
   protected void installCheckBoxListener(final ActionListener filterListener) {
     myUseDateBeforeFilter.addActionListener(filterListener);
@@ -181,3 +148,4 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
 
 }
 
+  

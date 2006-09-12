@@ -1,65 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent">
-  <grid id="c8d20" binding="myPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="c8d20" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="18" y="16" width="578" height="117"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="cce22" binding="myDatePanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="cce22" binding="myDatePanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="2" width="574" height="56"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="border.changes.filter.date.filter"/>
         <children>
-          <grid id="28216" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <grid id="28216" layout-manager="FormLayout">
+            <rowspec value="center:d:grow"/>
+            <colspec value="fill:d:noGrow"/>
+            <colspec value="left:4dlu:noGrow"/>
+            <colspec value="fill:max(d;4px):grow"/>
+            <colspec value="left:4dlu:noGrow"/>
+            <colspec value="fill:d:noGrow"/>
+            <colspec value="left:6dlu:noGrow"/>
+            <colspec value="fill:max(d;4px):grow"/>
+            <colgroup>
+              <member index="3"/>
+              <member index="7"/>
+            </colgroup>
             <constraints>
-              <xy x="8" y="22" width="558" height="26"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
               <component id="970f2" class="javax.swing.JCheckBox" binding="myUseDateAfterFilter">
                 <constraints>
-                  <xy x="2" y="2" width="51" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/VcsBundle" key="checkbox.show.changes.after.date"/>
                 </properties>
               </component>
-              <component id="36ee9" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDateAfter">
-                <constraints>
-                  <xy x="63" y="3" width="208" height="20"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0">
-                    <preferred-size width="100" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties/>
-              </component>
               <component id="179e" class="javax.swing.JCheckBox" binding="myUseDateBeforeFilter">
                 <constraints>
-                  <xy x="281" y="2" width="58" height="22"/>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/VcsBundle" key="checkbox.show.changes.before.date"/>
                 </properties>
               </component>
-              <component id="e98e3" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDateBefore">
+              <component id="b62fd" class="com.michaelbaranov.microba.calendar.DatePicker" binding="myDateAfter">
                 <constraints>
-                  <xy x="349" y="3" width="207" height="20"/>
-                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0">
-                    <preferred-size width="100" height="-1"/>
-                  </grid>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="ca8e7" class="com.michaelbaranov.microba.calendar.DatePicker" binding="myDateBefore">
+                <constraints>
+                  <grid row="0" column="6" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
                 </constraints>
                 <properties/>
               </component>
@@ -67,19 +71,17 @@
           </grid>
         </children>
       </grid>
-      <grid id="2ab92" binding="myVersionNumberPanel" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="2ab92" binding="myVersionNumberPanel" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="63" width="574" height="52"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="border.changes.filter.change.number.filter"/>
         <children>
           <component id="33df6" class="javax.swing.JCheckBox" binding="myUseNumAfterFilter">
             <constraints>
-              <xy x="8" y="22" width="50" height="22"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/VcsBundle" key="checkbox.show.changes.after.num"/>
@@ -87,8 +89,7 @@
           </component>
           <component id="7a847" class="javax.swing.JTextField" binding="myNumAfter">
             <constraints>
-              <xy x="68" y="23" width="218" height="20"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="50" height="-1"/>
               </grid>
             </constraints>
@@ -96,8 +97,7 @@
           </component>
           <component id="17476" class="javax.swing.JCheckBox" binding="myUseNumBeforeFilter">
             <constraints>
-              <xy x="296" y="22" width="42" height="22"/>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/VcsBundle" key="checkbox.show.changes.before.num"/>
@@ -105,8 +105,7 @@
           </component>
           <component id="76327" class="javax.swing.JTextField" binding="myNumBefore">
             <constraints>
-              <xy x="348" y="23" width="218" height="20"/>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0">
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="50" height="-1"/>
               </grid>
             </constraints>
