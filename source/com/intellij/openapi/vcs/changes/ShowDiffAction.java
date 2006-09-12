@@ -17,9 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -50,7 +48,12 @@ public class ShowDiffAction extends AnAction {
       final Change selectedChange = changes[0];
       ChangeList changeList = ChangeListManager.getInstance(project).getChangeList(selectedChange);
       if (changeList != null) {
-        final Collection<Change> changesInList = changeList.getChanges();
+        final ArrayList<Change> changesInList = new ArrayList<Change>(changeList.getChanges());
+        Collections.sort(changesInList, new Comparator<Change>() {
+          public int compare(final Change o1, final Change o2) {
+            return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
+          }
+        });
         changes = changesInList.toArray(new Change[changesInList.size()]);
         for(int i=0; i<changes.length; i++) {
           if (changes [i] == selectedChange) { 

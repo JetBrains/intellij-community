@@ -300,7 +300,13 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   }
 
   public List<Change> getCurrentDisplayedChanges() {
-    return filterBySelectedChangeList(myAllChanges);
+    final List<Change> list = filterBySelectedChangeList(myAllChanges);
+    Collections.sort(list, new Comparator<Change>() {
+      public int compare(final Change o1, final Change o2) {
+        return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
+      }
+    });
+    return list;
   }
 
   public List<Change> getCurrentIncludedChanges() {
