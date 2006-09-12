@@ -17,12 +17,15 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.jetbrains.annotations.Nullable;
 
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
@@ -129,6 +132,17 @@ public class RedundantCastUtil {
       processPossibleTypeCast(variable.getInitializer(), variable.getType());
     }
 
+    public void visitReturnStatement(PsiReturnStatement statement) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      if (method != null) {
+        final PsiType returnType = method.getReturnType();
+        final PsiExpression returnValue = statement.getReturnValue();
+        if (returnValue != null) {
+          processPossibleTypeCast(returnValue, returnType);
+        }
+      }
+    }
+
     public void visitBinaryExpression(PsiBinaryExpression expression) {
       PsiExpression rExpr = deparenthesizeExpression(expression.getLOperand());
       PsiExpression lExpr = deparenthesizeExpression(expression.getROperand());
@@ -154,7 +168,7 @@ public class RedundantCastUtil {
       }
     }
 
-    private void processPossibleTypeCast(PsiExpression rExpr, PsiType lType) {
+    private void processPossibleTypeCast(PsiExpression rExpr, @Nullable PsiType lType) {
       rExpr = deparenthesizeExpression(rExpr);
       if (rExpr instanceof PsiTypeCastExpression) {
         PsiExpression castOperand = ((PsiTypeCastExpression)rExpr).getOperand();

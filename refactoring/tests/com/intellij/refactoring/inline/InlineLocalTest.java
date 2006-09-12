@@ -27,6 +27,10 @@ public class InlineLocalTest extends CodeInsightTestCase {
     doTest();
   }
 
+  public void testIDEADEV9404 () throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";
