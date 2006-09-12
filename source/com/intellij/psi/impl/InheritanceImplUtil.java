@@ -6,26 +6,21 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
-
-import org.jetbrains.annotations.Nullable;
 
 public class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
 
   public static boolean isInheritor(PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
-    if (baseClass instanceof PsiAnonymousClass) {
-      return false;
-    }
-    return isInheritor(candidateClass, baseClass, checkDeep, null);
+    return !(baseClass instanceof PsiAnonymousClass) && isInheritor(candidateClass, baseClass, checkDeep, null);
   }
 
   private static boolean isInheritor(PsiClass candidateClass, PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
     if (candidateClass instanceof PsiAnonymousClass) {
       final PsiClass baseCandidateClass = ((PsiAnonymousClass)candidateClass).getBaseClassType().resolve();
-      if (baseCandidateClass == null) return false;
-      return InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, checkDeep);
+      return baseCandidateClass != null && InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, checkDeep);
     }
     PsiManager manager = candidateClass.getManager();
     /* //TODO fix classhashprovider so it doesn't use class qnames only
@@ -45,7 +40,7 @@ public class InheritanceImplUtil {
     if (manager.areElementsEquivalent(baseClass, objectClass)) {
       if (manager.areElementsEquivalent(candidateClass, objectClass)) return false;
       if (checkDeep || candidateClass.isInterface()) return true;
-      return candidateClass.getExtendsListTypes().length == 0;
+      return manager.areElementsEquivalent(candidateClass.getSuperClass(), objectClass);
     }
 
     return isInheritorWithoutCaching(candidateClass, baseClass, checkDeep, checkedClasses);

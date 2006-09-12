@@ -47,7 +47,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return psiManager.getSearchHelper().processAllClasses(new PsiElementProcessor<PsiClass>() {
         public boolean execute(final PsiClass psiClass) {
           PsiReferenceList extendsList = psiClass.getExtendsList();
-          return extendsList == null || extendsList.getReferencedTypes().length != 0 || consumer.process(psiClass);
+          return consumer.process(psiClass);
         }
       }, useScope);
     }
