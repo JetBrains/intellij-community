@@ -43,8 +43,8 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myPerModuleCompilerOutput;
 
-  private FieldPanel myOutputPathPanel;
-  private FieldPanel myTestsOutputPathPanel;
+  private CommitableFieldPanel myOutputPathPanel;
+  private CommitableFieldPanel myTestsOutputPathPanel;
   private JCheckBox myCbExcludeOutput;
   private JLabel myOutputLabel;
   private JLabel myTestOutputLabel;
@@ -164,7 +164,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     updateOutputPathPresentation();
   }
 
-  private FieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
+  private CommitableFieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
     final JTextField textField = new JTextField();
     final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
     outputPathsChooserDescriptor.setHideIgnored(false);
@@ -199,16 +199,17 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       }
     });
 
-    return new FieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
+    return new CommitableFieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
         commitRunnable.run();
       }
-    }, null);
+    }, null, commitRunnable);
   }
 
   public void saveData() {
-    //do nothing
+    myOutputPathPanel.commit();
+    myTestsOutputPathPanel.commit();
   }
 
   public String getDisplayName() {
@@ -227,7 +228,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
 
   public void moduleStateChanged() {
-    //if content enties tree was changed 
+    //if content enties tree was changed
     myCbExcludeOutput.setSelected(myModel.isExcludeOutput());
   }
 
@@ -235,4 +236,21 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     void saveUrl(String url);
   }
 
+  private static class CommitableFieldPanel extends FieldPanel {
+    private Runnable myCommitRunnable;
+
+    public CommitableFieldPanel(final JTextField textField,
+                                String labelText,
+                                final String viewerDialogTitle,
+                                ActionListener browseButtonActionListener,
+                                final Runnable documentListener,
+                                final Runnable commitPathRunnable) {
+      super(textField, labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
+      myCommitRunnable = commitPathRunnable;
+    }
+
+    public void commit() {
+      myCommitRunnable.run();
+    }
+  }
 }
