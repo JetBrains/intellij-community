@@ -908,6 +908,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       catch (UnsupportedOperationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
+      catch (InternalException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
       finally {
         // important need this to ensure that no requesst have been left.
         // situation; eveluate some method in breakpoint inside it
