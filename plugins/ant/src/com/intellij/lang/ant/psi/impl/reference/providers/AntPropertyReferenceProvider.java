@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -35,10 +36,10 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
         final boolean isSet = "isset".equals(sourceElement.getName());
         for (final XmlAttribute attr : attributes) {
           @NonNls final String attName = attr.getName();
-          if (isTarget && ("if".equals(attName) || "unless".equals(attName))) {
+          if (isTarget && (AntFileImpl.IF_ATTR.equals(attName) || "unless".equals(attName))) {
             getAttributeReference(antElement, attr, refs);
           }
-          else if (isSet && "property".equals(attName)) {
+          else if (isSet && AntFileImpl.PROPERTY.equals(attName)) {
             getAttributeReference(antElement, attr, refs);
           }
           else {
@@ -99,7 +100,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
   private void getAttributeReference(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
     final AntProject project = element.getAntProject();
     final String value = attr.getValue();
-    if( value == null) return;    
+    if (value == null) return;
     final PsiElement resolvedProp = AntElementImpl.resolveProperty(element, value);
     if (project.isEnvironmentProperty(value) && resolvedProp == null) {
       return;

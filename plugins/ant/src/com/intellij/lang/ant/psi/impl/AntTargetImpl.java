@@ -61,13 +61,13 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
 
   @Nullable
   public String getDescription() {
-    return getSourceElement().getAttributeValue("description");
+    return getSourceElement().getAttributeValue(AntFileImpl.DESCRIPTION_ATTR);
   }
 
   @NotNull
   public AntTarget[] getDependsTargets() {
     if (myDependsTargets == null) {
-      final String depends = getSourceElement().getAttributeValue("depends");
+      final String depends = getSourceElement().getAttributeValue(AntFileImpl.DEPENDS_ATTR);
       if (depends == null || depends.length() == 0) {
         myDependsTargets = EMPTY_TARGETS;
       }
@@ -171,9 +171,9 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
   private void setProperties() {
     myPropElement = null;
     final XmlTag se = getSourceElement();
-    XmlAttribute propNameAttribute = se.getAttribute("if", null);
+    XmlAttribute propNameAttribute = se.getAttribute(AntFileImpl.IF_ATTR, null);
     if (propNameAttribute == null) {
-      propNameAttribute = se.getAttribute("unless", null);
+      propNameAttribute = se.getAttribute(AntFileImpl.UNLESS_ATTR, null);
     }
     if (propNameAttribute != null) {
       final XmlAttributeValue valueElement = propNameAttribute.getValueElement();

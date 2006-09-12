@@ -47,7 +47,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NonNls public static final String PROJECT_TAG = "project";
   @NonNls public static final String TARGET_TAG = "target";
   @NonNls public static final String IMPORT_TAG = "import";
-  @NonNls public static final String JAVACDOC2_TAG = "javadoc2";
+  @NonNls public static final String JAVADOC2_TAG = "javadoc2";
   @NonNls public static final String JAVADOC_TAG = "javadoc";
   @NonNls public static final String UNWAR_TAG = "unwar";
   @NonNls public static final String UNJAR_TAG = "unjar";
@@ -55,6 +55,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @NonNls public static final String UNZIP_TAG = "unzip";
   @NonNls public static final String NAME_ATTR = "name";
+  @NonNls public static final String ID_ATTR = "id";
   @NonNls public static final String DEPENDS_ATTR = "depends";
   @NonNls public static final String IF_ATTR = "if";
   @NonNls public static final String UNLESS_ATTR = "unless";
@@ -359,7 +360,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       /**
        * Hardcode for <javadoc> task (IDEADEV-6731).
        */
-      if (isTask && typeName.equals(JAVACDOC2_TAG)) {
+      if (isTask && typeName.equals(JAVADOC2_TAG)) {
         typeName = JAVADOC_TAG;
       }
       /**

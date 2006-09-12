@@ -34,12 +34,12 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
   }
 
   public String getFileReferenceAttribute() {
-    return "file";
+    return AntFileImpl.FILE_ATTR;
   }
 
   @Nullable
   public String getFileName() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("file"));
+    return computeAttributeValue(getSourceElement().getAttributeValue(AntFileImpl.FILE_ATTR));
   }
 
   public AntFile getImportedFile() {

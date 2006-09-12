@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.misc.AntPsiUtil;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -70,8 +71,8 @@ public class AntCreatePropertyAction extends BaseIntentionAction {
       final AntElement element = myRef.getElement();
       final AntElement anchor = AntPsiUtil.getSubProjectElement(element);
       final XmlTag projectTag = element.getAntProject().getSourceElement();
-      XmlTag propTag = projectTag.createChildTag("property", projectTag.getNamespace(), null, false);
-      propTag.setAttribute("name", name);
+      XmlTag propTag = projectTag.createChildTag(AntFileImpl.PROPERTY, projectTag.getNamespace(), null, false);
+      propTag.setAttribute(AntFileImpl.NAME_ATTR, name);
       result = (Navigatable)((anchor == null) ? projectTag.add(propTag) : projectTag.addBefore(propTag, anchor.getSourceElement()));
     }
     result.navigate(true);

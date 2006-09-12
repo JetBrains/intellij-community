@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -71,7 +72,7 @@ public class AntCreatePresetDefAction extends BaseIntentionAction {
 
     // create presetdef tag
     XmlTag presetDef = projectTag.createChildTag("presetdef", projectTag.getNamespace(), null, false);
-    presetDef.setAttribute("name", se.getName());
+    presetDef.setAttribute(AntFileImpl.NAME_ATTR, se.getName());
 
     // insert presetdef in file and navigate to it
     presetDef = (XmlTag)((anchor == null) ? projectTag.add(presetDef) : projectTag.addBefore(presetDef, anchor.getSourceElement()));

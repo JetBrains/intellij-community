@@ -49,7 +49,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
-    this(parent, sourceElement, "name");
+    this(parent, sourceElement, AntFileImpl.NAME_ATTR);
   }
 
   public AntStructuredElementImpl(final AntElement parent,
@@ -67,7 +67,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
-    this(parent, sourceElement, definition, "name");
+    this(parent, sourceElement, definition, AntFileImpl.NAME_ATTR);
   }
 
   @NotNull
@@ -281,7 +281,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       myIdElement = ourNull;
       final XmlTag se = getSourceElement();
       if (se.isValid()) {
-        final XmlAttribute idAttr = se.getAttribute("id", null);
+        final XmlAttribute idAttr = se.getAttribute(AntFileImpl.ID_ATTR, null);
         if (idAttr != null) {
           final XmlAttributeValue valueElement = idAttr.getValueElement();
           if (valueElement != null) {

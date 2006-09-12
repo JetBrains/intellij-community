@@ -52,8 +52,8 @@ public class AntElementFactory {
     /**
      * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
      */
-    if(typeName.equals("unwar") || typeName.equals("unjar")) {
-      typeName = "unzip"; 
+    if (typeName.equals("unwar") || typeName.equals("unjar")) {
+      typeName = "unzip";
     }
 
     final AntTypeId id = new AntTypeId(typeName);
@@ -107,7 +107,7 @@ public class AntElementFactory {
       // HACK for the <tstamp> properties
       result = (!"format".equals(tag.getName()))
                ? new AntStructuredElementImpl(parent, tag, typeDef)
-               : new AntStructuredElementImpl(parent, tag, typeDef, "property") {
+               : new AntStructuredElementImpl(parent, tag, typeDef, AntFileImpl.PROPERTY) {
                  public String getName() {
                    return super.getName();//getSourceElement().getName();
                  }
@@ -146,7 +146,7 @@ public class AntElementFactory {
           if (tag.getAttributeValue("totalproperty") != null) {
             return new AntPropertyImpl(parent, tag, checksumDef, "totalproperty");
           }
-          return new AntPropertyImpl(parent, tag, checksumDef, "property");
+          return new AntPropertyImpl(parent, tag, checksumDef, AntFileImpl.PROPERTY);
         }
       });
       ourAntTypeToKnownAntElementCreatorMap.put(ExecTask.class.getName(), new AntElementCreator() {
@@ -224,7 +224,7 @@ public class AntElementFactory {
   private static void addPropertyCreator(final String className) {
     ourAntTypeToKnownAntElementCreatorMap.put(className, new AntElementCreator() {
       public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-        return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(className), "property");
+        return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(className), AntFileImpl.PROPERTY);
       }
     });
   }

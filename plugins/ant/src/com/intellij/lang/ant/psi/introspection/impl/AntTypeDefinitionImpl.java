@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.introspection.impl;
 
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -13,6 +14,9 @@ import java.util.Locale;
 import java.util.Map;
 
 public class AntTypeDefinitionImpl implements AntTypeDefinition {
+
+  private final AntTypeId ourJavadocId = new AntTypeId(AntFileImpl.JAVADOC_TAG);
+  private final AntTypeId ourUnzipId = new AntTypeId(AntFileImpl.UNZIP_TAG);
 
   private AntTypeId myTypeId;
   private String myClassName;
@@ -34,9 +38,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
          new HashMap<AntTypeId, String>(base.myNestedClassNames));
   }
 
-  public AntTypeDefinitionImpl(final AntTypeId id,
-                               final String className,
-                               final boolean isTask){
+  public AntTypeDefinitionImpl(final AntTypeId id, final String className, final boolean isTask) {
     this(id, className, isTask, new HashMap<String, AntAttributeType>(), new HashMap<AntTypeId, String>());
   }
 
@@ -57,7 +59,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     myTypeId = id;
     myClassName = className;
     myIsTask = isTask;
-    attributes.put("id", AntAttributeType.STRING);
+    attributes.put(AntFileImpl.ID_ATTR, AntAttributeType.STRING);
     myAttributes = attributes;
     myNestedClassNames = nestedElements;
     myDefiningElement = definingElement;
@@ -118,14 +120,14 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     /**
      * Hardcode for <javadoc> task (IDEADEV-6731).
      */
-    if (name.equals("javadoc2")) {
-      return myNestedClassNames.get(new AntTypeId("javadoc"));
+    if (name.equals(AntFileImpl.JAVADOC2_TAG)) {
+      return myNestedClassNames.get(ourJavadocId);
     }
     /**
      * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
      */
-    if(name.equals("unwar") || name.equals("unjar")) {
-      return myNestedClassNames.get(new AntTypeId("unzip"));
+    if (name.equals(AntFileImpl.UNWAR_TAG) || name.equals(AntFileImpl.UNJAR_TAG)) {
+      return myNestedClassNames.get(ourUnzipId);
     }
     return myNestedClassNames.get(id);
   }

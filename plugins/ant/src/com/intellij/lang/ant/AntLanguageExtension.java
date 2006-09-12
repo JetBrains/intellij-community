@@ -2,6 +2,7 @@ package com.intellij.lang.ant;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.xml.events.XmlChange;
@@ -20,8 +21,8 @@ public class AntLanguageExtension implements LanguageExtension {
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
         final XmlTag tag = document.getRootTag();
-        if (tag != null && "project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-          if (tag.getAttributeValue("default") != null) {
+        if (tag != null && AntFileImpl.PROJECT_TAG.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+          if (tag.getAttributeValue(AntFileImpl.DEFAULT_ATTR) != null) {
             return true;
           }
           VirtualFile vFile = xmlFile.getVirtualFile();

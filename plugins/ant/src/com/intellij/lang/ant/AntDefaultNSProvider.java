@@ -1,5 +1,6 @@
 package com.intellij.lang.ant;
 
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlDocument;
@@ -23,8 +24,8 @@ public class AntDefaultNSProvider implements XmlFileNSInfoProvider, ApplicationC
     final XmlDocument document = xmlFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
-      if (tag != null && "project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-        if (tag.getAttributeValue("default") != null) {
+      if (tag != null && AntFileImpl.PROJECT_TAG.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+        if (tag.getAttributeValue(AntFileImpl.DEFAULT_ATTR) != null) {
           return myNamespaces;
         }
         final VirtualFile file = xmlFile.getVirtualFile();

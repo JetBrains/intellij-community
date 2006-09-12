@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -72,19 +73,19 @@ public class AntCreateMacroDefAction extends BaseIntentionAction {
 
     // create macrodef tag
     XmlTag macrodefTag = projectTag.createChildTag("macrodef", projectTag.getNamespace(), null, false);
-    macrodefTag.setAttribute("name", se.getName());
+    macrodefTag.setAttribute(AntFileImpl.NAME_ATTR, se.getName());
 
     // create attribute definitons
     for (XmlAttribute attr : se.getAttributes()) {
       XmlTag attrTag = macrodefTag.createChildTag("attribute", macrodefTag.getNamespace(), null, false);
-      attrTag.setAttribute("name", attr.getName());
+      attrTag.setAttribute(AntFileImpl.NAME_ATTR, attr.getName());
       macrodefTag.add(attrTag);
     }
 
     // create definitons of nested elements
     for (XmlTag subtag : se.getSubTags()) {
       XmlTag elementTag = macrodefTag.createChildTag("element", macrodefTag.getNamespace(), null, false);
-      elementTag.setAttribute("name", subtag.getName());
+      elementTag.setAttribute(AntFileImpl.NAME_ATTR, subtag.getName());
       macrodefTag.add(elementTag);
     }
 

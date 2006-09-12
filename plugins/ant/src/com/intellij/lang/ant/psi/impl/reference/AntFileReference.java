@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,8 +32,8 @@ public class AntFileReference extends AntGenericReference {
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final AntStructuredElement antElement = getElement();
     final XmlTag sourceElement = antElement.getSourceElement();
-    if (sourceElement.getAttributeValue("file") != null) {
-      sourceElement.setAttribute("file", newElementName);
+    if (sourceElement.getAttributeValue(AntFileImpl.FILE_ATTR) != null) {
+      sourceElement.setAttribute(AntFileImpl.FILE_ATTR, newElementName);
     }
     return antElement;
   }

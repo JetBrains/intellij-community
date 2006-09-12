@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -68,8 +69,8 @@ public class AntCreateTargetAction extends BaseIntentionAction {
     final AntElement anchor =
       (myFile == null) ? AntPsiUtil.getSubProjectElement(element) : PsiTreeUtil.getChildOfType(antProject, AntStructuredElement.class);
     final XmlTag projectTag = antProject.getSourceElement();
-    XmlTag targetTag = projectTag.createChildTag("target", projectTag.getNamespace(), null, false);
-    targetTag.setAttribute("name", myRef.getCanonicalRepresentationText());
+    XmlTag targetTag = projectTag.createChildTag(AntFileImpl.TARGET_TAG, projectTag.getNamespace(), null, false);
+    targetTag.setAttribute(AntFileImpl.NAME_ATTR, myRef.getCanonicalRepresentationText());
     targetTag = (XmlTag)((anchor == null) ? projectTag.add(targetTag) : projectTag.addBefore(targetTag, anchor.getSourceElement()));
     ((Navigatable)targetTag).navigate(true);
   }
