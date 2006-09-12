@@ -258,7 +258,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void setCompilerOutputUrl(String compilerOutputUrl) {
-    myCompilerOutput = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, null);
+    myCompilerOutput = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myVirtualFilePointerListener);
   }
 
   private VirtualFile[] getFilesFromAllModules(OrderRootType type) {
@@ -660,9 +660,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     private void assertPointersCorrect(VirtualFilePointer[] pointers) {
       for (VirtualFilePointer pointer : pointers) {
         final RootModelImpl rootModel = pointer.getUserData(RootModelImpl.ORIGINATING_ROOT_MODEL);
-        LOG.assertTrue(rootModel != null);
-        LOG.assertTrue(!rootModel.isDisposed());
-        LOG.assertTrue(!rootModel.isWritable());
+        if (rootModel != null) {
+          LOG.assertTrue(!rootModel.isDisposed());
+          LOG.assertTrue(!rootModel.isWritable());
+        }
       }
     }
 
