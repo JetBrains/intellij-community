@@ -33,8 +33,8 @@ import java.awt.*;
 public class CanBeFinalInspection extends FilteringInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.canBeFinal.CanBeFinalInspection");
 
-  public boolean REPORT_CLASSES = true;
-  public boolean REPORT_METHODS = true;
+  public boolean REPORT_CLASSES = false;
+  public boolean REPORT_METHODS = false;
   public boolean REPORT_FIELDS = true;
   private QuickFixAction[] myQuickFixActions;
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.can.be.final.display.name");
@@ -226,14 +226,17 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
@@ -243,7 +246,9 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       if (psiElement instanceof PsiVariable) {
         ((PsiVariable)psiElement).normalizeDeclaration();
       }
-      psiElement.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
+      final PsiModifierList modifierList = psiElement.getModifierList();
+      LOG.assertTrue(modifierList != null);
+      modifierList.setModifierProperty(PsiModifier.FINAL, true);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
