@@ -4,13 +4,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.uiDesigner.projectView.Form;
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class FormNode extends ProjectViewNode<Form>{
     return "Form:" + getValue().getName();
   }
 
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     for (final AbstractTreeNode aMyChildren : myChildren) {
       ProjectViewNode treeNode = (ProjectViewNode)aMyChildren;
       if (treeNode.contains(file)) return true;
@@ -72,6 +72,17 @@ public class FormNode extends ProjectViewNode<Form>{
 
   public String getToolTip() {
     return IdeBundle.message("tooltip.ui.designer.form");
+  }
+
+  @Override
+  public FileStatus getFileStatus() {
+    for(AbstractTreeNode child: myChildren) {
+      final FileStatus fileStatus = child.getFileStatus();
+      if (fileStatus != FileStatus.NOT_CHANGED) {
+        return fileStatus;
+      }
+    }
+    return FileStatus.NOT_CHANGED;
   }
 
   public static AbstractTreeNode constructFormNode(final PsiClass classToBind, final Project project, final ViewSettings settings) {
