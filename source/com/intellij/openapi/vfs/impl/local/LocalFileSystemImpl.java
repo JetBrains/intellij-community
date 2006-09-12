@@ -393,7 +393,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
 
-    final ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
+    final ModalityState modalityState = asynchronous ? ModalityState.NON_MMODAL : ModalityState.current();
 
     final Runnable endTask = new Runnable() {
       public void run() {
@@ -557,7 +557,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     if (files.length == 0) return;
     final Runnable runnable = new Runnable() {
       public void run() {
-        final ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
+        final ModalityState modalityState = asynchronous ? ModalityState.NON_MMODAL : ModalityState.current();
         getManager().beforeRefreshStart(asynchronous, modalityState, null);
 
         for (VirtualFile file : files) {

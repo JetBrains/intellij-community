@@ -364,7 +364,7 @@ public class VirtualFileImpl extends VirtualFile {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
 
-    final ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
+    final ModalityState modalityState = asynchronous ? ModalityState.NON_MMODAL : ModalityState.current();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("VirtualFile.refresh():" + getPresentableUrl() + ", recursive = " + recursive + ", modalityState = " + modalityState);
