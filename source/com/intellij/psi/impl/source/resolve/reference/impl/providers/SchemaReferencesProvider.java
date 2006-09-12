@@ -498,8 +498,12 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
       return result.toArray(new PsiReference[result.size()]);
     } else {
-      return new PsiReference[] { new TypeOrElementOrAttributeReference(element) };
+      return new PsiReference[] {createTypeOrElementOrAttributeReference(element)};
     }
+  }
+
+  public static PsiReference createTypeOrElementOrAttributeReference(final PsiElement element) {
+    return new TypeOrElementOrAttributeReference(element);
   }
 
   @NotNull

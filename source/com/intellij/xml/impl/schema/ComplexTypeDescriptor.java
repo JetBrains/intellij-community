@@ -1,6 +1,7 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -319,7 +320,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       XmlTag descriptorTag = tag;
 
       if (ref != null) {
-        final PsiElement psiElement = tag.getAttribute(REF_ATTR_NAME, null).getValueElement().getReferences()[0].resolve();
+        final PsiElement psiElement = SchemaReferencesProvider.createTypeOrElementOrAttributeReference(tag.getAttribute(REF_ATTR_NAME, null).getValueElement()).resolve();
         if (psiElement instanceof XmlTag) descriptorTag = (XmlTag)psiElement;
       }
 
