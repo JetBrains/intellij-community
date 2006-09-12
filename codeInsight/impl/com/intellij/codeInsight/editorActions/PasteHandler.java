@@ -189,16 +189,16 @@ public class PasteHandler extends EditorActionHandler {
 
       int length = text.length();
       final String text1 = text;
-      final int offset = editor.getCaretModel().getOffset();
 
       ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           public void run() {
-            EditorModificationUtil.insertStringAtCaret(editor, text1, false, false);
+            EditorModificationUtil.insertStringAtCaret(editor, text1, false, true);
           }
         }
       );
 
+      final int offset = editor.getCaretModel().getOffset() - length;
       final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
 
       editor.getCaretModel().moveToOffset(bounds.getEndOffset());
