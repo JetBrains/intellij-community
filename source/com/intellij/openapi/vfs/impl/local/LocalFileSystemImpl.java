@@ -562,7 +562,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
         for (VirtualFile file : files) {
           LOG.assertTrue(!file.isDirectory());
-          ((VirtualFileImpl)file).refreshInternal(false, modalityState, true, asynchronous);
+          ((VirtualFileImpl)file).refreshInternal(false, modalityState, true, asynchronous, false);
         }
 
         getManager().afterRefreshFinish(asynchronous, modalityState);
@@ -594,7 +594,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         for (int i = 0; i < myFilePathsToWatchManual.size(); i++) {
           String pathToWatchManual = myFilePathsToWatchManual.get(i);
           if (FileUtil.startsWith(filePath, pathToWatchManual)) {
-            ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
+            ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
             if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) {
               VirtualFile[] children = file.getChildren();
               for (int j = 0; j < children.length; j++) {
@@ -618,7 +618,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwise in AbstractList.iterator()
   void refreshInner(VirtualFile file, boolean recursive, ModalityState modalityState, boolean asynchronous, final boolean isRoot, final boolean noWatcher) {
     if (noWatcher || !FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
-      ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous);
+      ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
       if ((isRoot && !recursive) && ((VirtualFileImpl)file).areChildrenCached()) {  //if recursive, then we have already processed children in refreshInternal
         final VirtualFile[] children = file.getChildren();
         for (int i = 0; i < children.length; i++) {
@@ -634,12 +634,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
       if (status == DELETED_STATUS) {
         if (((VirtualFileImpl)file).getPhysicalFile().exists()) { // file was deleted but later restored - need to rescan the whole subtree
-          ((VirtualFileImpl)file).refreshInternal(true, modalityState, false, asynchronous);
+          ((VirtualFileImpl)file).refreshInternal(true, modalityState, false, asynchronous, noWatcher);
         }
       }
       else {
         if (status == DIRTY_STATUS) {
-          ((VirtualFileImpl)file).refreshInternal(false, modalityState, false, asynchronous);
+          ((VirtualFileImpl)file).refreshInternal(false, modalityState, false, asynchronous, noWatcher);
         }
         if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) { //here above refresh was not recursive, so in case of recursive we need to trigger it here
           VirtualFile[] children = file.getChildren();

@@ -436,7 +436,8 @@ public class VirtualFileImpl extends VirtualFile {
   void refreshInternal(final boolean recursive,
                        final ModalityState modalityState,
                        final boolean forceRefresh,
-                       final boolean asynchronous) {
+                       final boolean asynchronous,
+                       final boolean noWatcher) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
@@ -547,7 +548,7 @@ public class VirtualFileImpl extends VirtualFile {
             );
           }
           if (recursive) {
-            ourFileSystem.refreshInner(child, true, modalityState, asynchronous, false, false);
+            ourFileSystem.refreshInner(child, true, modalityState, asynchronous, false, noWatcher);
           }
         }
         else {
