@@ -413,6 +413,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     }
     AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
     psiFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+    if (psiFile == null) {
+      throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
+    }
     final AntBuildFileImpl buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
     myBuildFiles.add(buildFile);
     myEventDispatcher.getMulticaster().buildFileAdded(buildFile);
