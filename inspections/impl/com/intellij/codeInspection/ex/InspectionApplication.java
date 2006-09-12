@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
@@ -188,10 +190,14 @@ public class InspectionApplication {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private void ideaProjectPreparations() { //ignore test data
     if (myProject.getName().compareTo("idea") == 0) {
-      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      final ModifiableModuleModel modulesModel = ModuleManager.getInstance(myProject).getModifiableModel();
+      final Module[] modules = modulesModel.getModules();
+      final ModifiableRootModel[] models = new ModifiableRootModel[modules.length];
+      int idx = 0;
       for (Module module : modules) {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         final ContentEntry[] entries = model.getContentEntries();
+        models[idx++] = model;
         for (ContentEntry entry : entries) {
           final VirtualFile virtualFile = entry.getFile();
           if (virtualFile == null) continue;
@@ -208,12 +214,12 @@ public class InspectionApplication {
             }
           }
         }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            model.commit();
-          }
-        });
       }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          ProjectRootManagerEx.getInstanceEx(myProject).multiCommit(modulesModel, models);
+        }
+      });
     }
   }
 
