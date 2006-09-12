@@ -53,7 +53,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     checkValid();
     if (myName == null) {
       try {
-        myName = getThreadReference().name();
+        final ThreadReference threadReference = getThreadReference();
+        // when thread ref is collected, the returned reference will be null
+        myName = threadReference == null? "" : threadReference.name();
       }
       catch (ObjectCollectedException e) {
         myName = "";
