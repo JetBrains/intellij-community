@@ -668,6 +668,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   @Nullable
   public RadComponent getSelectionLead() {
+    if (mySelectionLead == null) return null;
     mySelectionLead.validate();
     return mySelectionLead.getComponent();
   }
