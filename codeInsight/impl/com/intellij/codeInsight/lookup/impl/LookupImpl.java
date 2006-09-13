@@ -200,7 +200,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
   void updateList(){
     final PatternMatcher matcher = new Perl5Matcher();
-    final Pattern pattern = CompletionUtil.createCampelHumpsMatcher(myPrefix);
+    final Pattern pattern = CompletionUtil.createCamelHumpsMatcher(myPrefix);
     Object oldSelected = myList.getSelectedValue();
     DefaultListModel model = new DefaultListModel();
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();

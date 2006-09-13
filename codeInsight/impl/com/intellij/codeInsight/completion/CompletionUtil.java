@@ -252,7 +252,7 @@ public class CompletionUtil {
   }
 
 
-  public static Pattern createCampelHumpsMatcher(String pattern) {
+  public static Pattern createCamelHumpsMatcher(String pattern) {
     Pattern pat = null;
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     int variant = settings.COMPLETION_CASE_SENSITIVE;

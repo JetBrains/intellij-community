@@ -163,7 +163,7 @@ public class CompletionContext implements Cloneable {
 
   public boolean prefixMatches(final String name) {
     if (myPattern == null) {
-      myPattern = CompletionUtil.createCampelHumpsMatcher(myPrefix);
+      myPattern = CompletionUtil.createCamelHumpsMatcher(myPrefix);
       myMatcher = new Perl5Matcher();
     }
 
