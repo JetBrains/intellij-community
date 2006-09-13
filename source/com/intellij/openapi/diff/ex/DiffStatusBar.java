@@ -9,31 +9,28 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Yura Cangea
  */
 public class DiffStatusBar extends JPanel {
-  public static final java.util.List<LegendTypeDescriptor> DEFAULT_TYPES =
+  public static final List<LegendTypeDescriptor> DEFAULT_TYPES =
     Arrays.asList(
       new LegendTypeDescriptor[]{
         (DifferenceTypeEx)DifferenceType.MODIFIED,
         (DifferenceTypeEx)DifferenceType.INSERTED,
         (DifferenceTypeEx)DifferenceType.DELETED});
 
-  private final Collection myLabels = new ArrayList();
+  private final Collection<JComponent> myLabels = new ArrayList<JComponent>();
 
   private final JLabel myTextLabel = new JLabel("", JLabel.CENTER);
   private static final int COMP_HEIGHT = 40;
   private EditorColorsScheme myColorScheme = null;
 
-  public <T extends LegendTypeDescriptor> DiffStatusBar(java.util.List<T> types) {
-    for (Iterator<T> iterator = types.iterator(); iterator.hasNext();) {
-      LegendTypeDescriptor differenceType = iterator.next();
+  public <T extends LegendTypeDescriptor> DiffStatusBar(List<T> types) {
+    for (T differenceType : types) {
       addDiffType(differenceType);
     }
     initGui();
@@ -95,12 +92,16 @@ public class DiffStatusBar extends JPanel {
     setBorder(emptyBorder);
 
     add(myTextLabel, BorderLayout.WEST);
+    Box box = Box.createHorizontalBox();
+    box.add(Box.createHorizontalGlue());
     JPanel panel = new JPanel(new GridLayout(1, myLabels.size(), 0, 0));
-    for (Iterator each = myLabels.iterator(); each.hasNext();) {
-      panel.add((JComponent) each.next());
+    for (final JComponent myLabel : myLabels) {
+      panel.add(myLabel);
     }
+    box.add(panel);
+    box.add(Box.createHorizontalGlue());
 
-    add(panel, BorderLayout.CENTER);
+    add(box, BorderLayout.CENTER);
   }
 
   public void setColorScheme(EditorColorsScheme colorScheme) {
