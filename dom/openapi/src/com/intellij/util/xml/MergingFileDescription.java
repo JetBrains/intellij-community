@@ -58,7 +58,10 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
 
     ArrayList<T> roots = new ArrayList<T>(files.size());
     for (XmlFile file: files) {
-      roots.add(element.getManager().<T>getFileElement(file).getRootElement());
+      final DomFileElement<T> fileElement = element.getManager().getFileElement(file);
+      if (fileElement != null) {
+        roots.add(fileElement.getRootElement());
+      }
     }
 
     if (roots.size() == 1) {
