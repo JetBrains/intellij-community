@@ -31,7 +31,7 @@ import java.awt.event.InputEvent;
 
 public abstract class AbstractAction extends AnAction {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.AbstractAction");
-  private LvcsAction myLvcsAction = com.intellij.openapi.localVcs.LvcsAction.EMPTY;
+  private LvcsAction myLvcsAction = LvcsAction.EMPTY;
   private final boolean myStartLvcsAction;
 
   public AbstractAction(boolean startLvcsAction) {
@@ -51,7 +51,7 @@ public abstract class AbstractAction extends AnAction {
     actionPerformed(CvsContextWrapper.createCachedInstance(e));
   }
 
-  private LocalVcs getLvcs(Project project) {
+  private static LocalVcs getLvcs(Project project) {
     if (project == null) return null;
     return LocalVcs.getInstance(project);
   }
@@ -128,7 +128,7 @@ public abstract class AbstractAction extends AnAction {
     }
   }
 
-  protected void start(VcsContext context) {
+  protected static void start(VcsContext context) {
     final Project project = context.getProject();
     if (project != null) {
 
@@ -157,18 +157,15 @@ public abstract class AbstractAction extends AnAction {
     refreshFileView(context.getProject());
   }
 
-  protected void refreshFileView(Project project) {
+  protected static void refreshFileView(Project project) {
     if (project == null) return;
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
 
-    ToolWindow fileViewToolWindow = (ToolWindow)toolWindowManager
+    ToolWindow fileViewToolWindow = toolWindowManager
       .getToolWindow(ProjectLevelVcsManager.FILE_VIEW_TOOL_WINDOW_ID);
     if (fileViewToolWindow == null) return;
     if (!fileViewToolWindow.isAvailable()) return;
     ((Refreshable)fileViewToolWindow.getComponent()).refresh();
-  }
-
-  protected void executeAfterFileSynchronization(VcsContext context, ModalityContext modalityContext) {
   }
 
   protected void endAction() {
@@ -176,7 +173,7 @@ public abstract class AbstractAction extends AnAction {
     myLvcsAction = LvcsAction.EMPTY;
   }
 
-  protected void adjustName(boolean showDialogOptions, AnActionEvent e) {
+  protected static void adjustName(boolean showDialogOptions, AnActionEvent e) {
     boolean actualShow = showDialogOptions || shiftPressed(e);
     Presentation presentation = e.getPresentation();
     String itemText = e.getPresentation().getText();
@@ -191,10 +188,9 @@ public abstract class AbstractAction extends AnAction {
     }
   }
 
-  private boolean shiftPressed(AnActionEvent e) {
+  private static boolean shiftPressed(AnActionEvent e) {
     InputEvent inputEvent = e.getInputEvent();
-    if (inputEvent == null) return false;
-    return (inputEvent.getModifiers() & Event.SHIFT_MASK) != 0;
+    return inputEvent != null && (inputEvent.getModifiers() & Event.SHIFT_MASK) != 0;
   }
 
   private class MyCvsOperationExecutorCallback implements CvsOperationExecutorCallback {
@@ -212,19 +208,11 @@ public abstract class AbstractAction extends AnAction {
       startAction(myContext);
       FileSetToBeUpdated files = myHandler.getFiles();
 
-      try {
-        files.refreshSync();
-      }
-      finally {
-        endAction();
-        final Project project = myContext.getProject();
-        executeAfterFileSynchronization(myContext, modalityContext);
-
-        if (project == null) {
-          return;
+      files.refreshFilesAsync(new Runnable() {
+        public void run() {
+          endAction();
         }
-
-      }
+      });
     }
 
     public void executionFinished(boolean successfully) {
