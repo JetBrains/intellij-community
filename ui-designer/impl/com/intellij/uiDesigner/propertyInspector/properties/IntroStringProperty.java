@@ -14,12 +14,14 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
+import java.util.Locale;
 
 /**
  * @author Anton Katilin
@@ -209,16 +211,26 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
       else {
         invokeSetter(component, resolvedValue);
       }
-      if (!component.isLoadingProperties()) {
-        updateBindingFromText(component, textWithMnemonic);
-      }
+      checkUpdateBindingFromText(component, value, textWithMnemonic);
     }
     else{
       invokeSetter(component, resolvedValue);
     }
   }
 
-  private static void updateBindingFromText(final RadComponent component, final SupportCode.TextWithMnemonic textWithMnemonic) {
+  private static void checkUpdateBindingFromText(final RadComponent component, final StringDescriptor value, final SupportCode.TextWithMnemonic textWithMnemonic) {
+    if (component.isLoadingProperties()) {
+      return;
+    }
+    // only generate binding from text if default locale is active (IDEADEV-9427)
+    if (value.getValue() == null) {
+      RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+      Locale locale = root.getStringDescriptorLocale();
+      if (locale != null && locale.getDisplayName().length() > 0) {
+        return;
+      }
+    }
+
     BindingProperty.checkCreateBindingFromText(component, textWithMnemonic.myText);
     if (component.getDelegee() instanceof JLabel) {
       for(IProperty prop: component.getModifiedProperties()) {
