@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -21,6 +22,7 @@ import com.intellij.util.xml.events.ElementUndefinedEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.LinkedHashSet;
 
 /**
  * @author peter
@@ -157,26 +159,17 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
   }
 
   private Object[] getAllDependencyItems() {
-    return myLostDependency;
-/*
-    final Set<Object> deps = new HashSet<Object>();
-    deps.add(myXmlFile);
+    //return myLostDependency;
+    final Set<Object> deps = new LinkedHashSet<Object>();
+    deps.add(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     deps.add(this);
     for (final DomFileDescription<?> fileDescription : myDomManager.getFileDescriptions().keySet()) {
       deps.addAll(fileDescription.getDependencyItems(myXmlFile));
     }
     return deps.toArray();
-*/    
   }
 
-  private final Object[] myLostDependency = new Object[] {
-    new ModificationTracker() {
-      private long myCounter;
-      public long getModificationCount() {
-        return myCounter++;
-      }
-    }
-  };
+  //private final Object[] myLostDependency = new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
 
   @Nullable
   final DomFileElementImpl getOldValue() {
