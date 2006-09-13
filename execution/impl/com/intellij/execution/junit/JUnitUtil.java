@@ -112,6 +112,7 @@ public class JUnitUtil {
   public static boolean isTestClass(final PsiClass psiClass) {
     if (!ExecutionUtil.isRunnableClass(psiClass)) return false;
     if (isTestCaseInheritor(psiClass)) return true;
+    if (psiClass.getModifierList().findAnnotation("org.junit.runner.RunWith") != null) return true;
 
     for (final PsiMethod method : psiClass.getMethods()) {
       if (isSuiteMethod(method)) return true;
@@ -123,6 +124,7 @@ public class JUnitUtil {
   public static boolean isJUnit4TestClass(final PsiClass psiClass) {
     if (!ExecutionUtil.isRunnableClass(psiClass)) return false;
 
+    if (psiClass.getModifierList().findAnnotation("org.junit.runner.RunWith") != null) return true;
     for (final PsiMethod method : psiClass.getMethods()) {
       if (isTestAnnotated(method)) return true;
     }
@@ -136,7 +138,7 @@ public class JUnitUtil {
   private static PsiClass getTestCaseClass(final Location<?> location) throws NoJUnitException {
     final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
     final PsiClass aClass = ancestorOrSelf.getPsiElement();
-    Module module = aClass == null ? null : ExecutionUtil.findModule(aClass);
+    Module module = ExecutionUtil.findModule(aClass);
     return getTestCaseClass(module);
   }
 
