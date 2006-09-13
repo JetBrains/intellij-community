@@ -120,7 +120,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     enterModality();
 
-    IdeEventQueue.getInstance().flushQueue();
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
       public boolean value(final AWTEvent object) {
         if (myShouldShowCancel &&

@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -298,7 +299,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return hasMnemonic(container, keyCode);
   }
 
-  private static Container getContainer(final Component focusOwner) {
+  @Nullable
+  private static Container getContainer(@Nullable final Component focusOwner) {
+    if (focusOwner == null) return null;
     if (focusOwner.isLightweight()) {
       Container container = focusOwner.getParent();
       while (container != null) {
