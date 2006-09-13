@@ -16,10 +16,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListListener;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -172,7 +169,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
         public void run() {
           fileStatusesChanged();
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
       return;
     }
 
@@ -244,6 +241,11 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
         FileStatus cachedStatus = getCachedStatus(file);
         if (cachedStatus == FileStatus.NOT_CHANGED) {
           fileStatusChanged(file);
+          final AbstractVcs vcs = myVcsManager.getVcsFor(file);
+          if (vcs == null) return;
+          ChangeProvider cp = vcs.getChangeProvider();
+          if (cp == null || !cp.isModifiedDocumentTrackingRequired()) return;
+          VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
         }
       }
     }

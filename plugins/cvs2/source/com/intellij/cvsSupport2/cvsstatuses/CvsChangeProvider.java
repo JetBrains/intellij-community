@@ -1,7 +1,6 @@
 package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.CvsBundle;
-import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction;
 import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
@@ -17,6 +16,9 @@ import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -26,6 +28,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -40,6 +43,8 @@ import java.util.List;
  * @author max
  */
 public class CvsChangeProvider implements ChangeProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider");
+
   private CvsVcs2 myVcs;
 
   public CvsChangeProvider(final CvsVcs2 vcs) {
@@ -157,6 +162,10 @@ public class CvsChangeProvider implements ChangeProvider {
     return Collections.emptyList();
   }
 
+  public boolean isModifiedDocumentTrackingRequired() {
+    return true;
+  }
+
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
     if (!scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir))) return;
     final DirectoryContent dirContent = CvsStatusProvider.getDirectoryContent(dir, myVcs.getProject());
@@ -201,21 +210,30 @@ public class CvsChangeProvider implements ChangeProvider {
     final Entry entry = CvsEntriesManager.getInstance().getEntryFor(dir, filePath.getName());
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
     VcsRevisionNumber number = entry != null ? new CvsRevisionNumber(entry.getRevision()) : VcsRevisionNumber.NULL;
-    processStatus(filePath, status, number, builder);
+    processStatus(filePath, dir.findChild(filePath.getName()), status, number, builder);
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
     final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir, entry.getFileName());
     final FileStatus statis = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
-    processStatus(filePath, statis, number, builder);
+    processStatus(filePath, file, statis, number, builder);
   }
 
   private void processStatus(final FilePath filePath,
+                             final VirtualFile file,
                              final FileStatus status,
                              final VcsRevisionNumber number,
                              final ChangelistBuilder builder) {
-    if (status == FileStatus.NOT_CHANGED) return;
+    if (status == FileStatus.NOT_CHANGED) {
+      if (file != null) {
+        final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+        if (document != null && FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+          builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), new CurrentContentRevision(filePath), FileStatus.MODIFIED));
+        }
+      }
+      return;
+    }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
       builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), new CurrentContentRevision(filePath), status));
     }

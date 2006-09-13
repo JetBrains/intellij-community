@@ -38,6 +38,7 @@ public class CurrentContentRevision implements ContentRevision {
     return myFile;
   }
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return VcsRevisionNumber.NULL;
   }

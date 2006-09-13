@@ -18,4 +18,12 @@ public interface ChangeProvider {
   List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);
   List<VcsException> rollbackMissingFileDeletion(List<FilePath> files);
   List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
+
+  /**
+   * Returns true if the initial unsaved modification of a document should cause dirty scope invalidation
+   * for the file corresponding to the document.
+   *
+   * @return true if document modification should mark the scope as dirty, false otherwise
+   */
+  boolean isModifiedDocumentTrackingRequired();
 }
