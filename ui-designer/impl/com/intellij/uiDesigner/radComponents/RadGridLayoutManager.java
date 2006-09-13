@@ -17,10 +17,10 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
-import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -36,31 +36,17 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
     return new GridLayoutManager(1, 1);
   }
 
-  @Override public void changeContainerLayout(RadContainer container) throws IncorrectOperationException {
-    if (container.getLayout() instanceof GridLayoutManager) {
-      GridLayoutManager oldGridLayout = (GridLayoutManager) container.getLayout();
-      container.setLayoutManager(this, new GridLayoutManager(oldGridLayout.getRowCount(), oldGridLayout.getColumnCount()));
-    }
-    else if (container.getLayout() instanceof GridBagLayout) {
-      Dimension gridSize = RadGridBagLayoutManager.getGridBagSize(container.getDelegee(), container.getLayout());
-      container.setLayoutManager(this, new GridLayoutManager(gridSize.height, gridSize.width));
-    }
-    else if (container.getLayoutManager().isIndexed()) {
-      int col = 0;
-      for(RadComponent c: container.getComponents()) {
-        c.getConstraints().setRow(0);
-        c.getConstraints().setColumn(col++);
-        c.getConstraints().setRowSpan(1);
-        c.getConstraints().setColSpan(1);
-      }
-      container.setLayoutManager(this, new GridLayoutManager(1, container.getComponentCount()));
-    }
-    else if (container.getComponentCount() == 0) {
-      container.setLayoutManager(this, new GridLayoutManager(1, 1));
-    }
-    else {
-      throw new IncorrectOperationException("Cannot change from " + container.getLayout() + " to grid layout");
-    }
+  @Override
+  protected void changeLayoutFromGrid(final RadContainer container, final List<RadComponent> contents, final List<Boolean> canRowsGrow,
+                                      final List<Boolean> canColumnsGrow) {
+    int rowCount = Math.max(1, canRowsGrow.size());
+    int columnCount = Math.max(1, canColumnsGrow.size());
+    container.setLayoutManager(this, new GridLayoutManager(rowCount, columnCount));
+  }
+
+  @Override
+  protected void changeLayoutFromIndexed(final RadContainer container, final List<RadComponent> components) {
+    container.setLayoutManager(this, new GridLayoutManager(1, components.size()));
   }
 
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
