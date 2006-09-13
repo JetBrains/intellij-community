@@ -387,6 +387,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
       myHightlighterShowRequest = null;
     }
   }
+  
 
   private static JLayeredPane getLayeredPane(Component aComponent) {
     if (aComponent == null) return null;
@@ -403,13 +404,16 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
       return ((JDialog)aComponent).getRootPane().getLayeredPane();
     }
 
-    final JFrame frame = ((JFrame)SwingUtilities.getWindowAncestor(aComponent));
+    final Window window = SwingUtilities.getWindowAncestor(aComponent);
 
-    if (frame == null) {
-      return null;
+    if (window instanceof JFrame) {
+      return ((JFrame) window).getRootPane().getLayeredPane();
+    }
+    else if (window instanceof JDialog) {
+      return ((JDialog) window).getRootPane().getLayeredPane();
     }
 
-    return frame.getLayeredPane();
+    return null;
   }
 
   private static class NullTarget implements DnDTarget {
