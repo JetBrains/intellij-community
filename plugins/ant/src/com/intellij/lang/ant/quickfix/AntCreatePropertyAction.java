@@ -63,6 +63,8 @@ public class AntCreatePropertyAction extends BaseIntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final String name = myRef.getCanonicalRepresentationText();
+    if( name == null) return;
+    
     final Navigatable result;
     if (myPropFile != null) {
       result = (Navigatable)myPropFile.addProperty(PropertiesElementFactory.createProperty(myPropFile.getProject(), name, ""));

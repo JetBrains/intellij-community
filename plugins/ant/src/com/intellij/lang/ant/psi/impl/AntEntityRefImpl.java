@@ -1,7 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
-import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntEntityReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
@@ -13,7 +13,7 @@ public class AntEntityRefImpl extends AntElementImpl {
 
   private PsiReference[] myRefs;
 
-  public AntEntityRefImpl(final AntElement parent, final XmlElement sourceElement) {
+  public AntEntityRefImpl(final AntStructuredElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
   }
 

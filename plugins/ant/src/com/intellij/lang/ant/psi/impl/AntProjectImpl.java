@@ -408,17 +408,20 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     return AntElement.EMPTY_ARRAY;
   }
 
-  private static void fixUndefinedElements(final AntElement parent, final AntElement[] elements) {
+  private static void fixUndefinedElements(final AntStructuredElement parent, final AntElement[] elements) {
     for (int i = 0; i < elements.length; i++) {
-      AntElement element = elements[i];
-      if (element instanceof AntStructuredElement && ((AntStructuredElement)element).getTypeDefinition() == null) {
-        element = AntElementFactory.createAntElement(parent, element.getSourceElement());
-        if (element != null) {
-          elements[i] = element;
+      final AntElement element = elements[i];
+      if (element instanceof AntStructuredElement) {
+        AntStructuredElement se = (AntStructuredElement)element;
+        if (se.getTypeDefinition() == null) {
+          se = (AntStructuredElement)AntElementFactory.createAntElement(parent, se.getSourceElement());
+          if (se != null) {
+            elements[i] = se;
+          }
         }
-      }
-      if (element != null) {
-        fixUndefinedElements(element, (AntElement[])element.getChildren());
+        if (se != null) {
+          fixUndefinedElements(se, (AntElement[])element.getChildren());
+        }
       }
     }
   }

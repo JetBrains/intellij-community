@@ -28,15 +28,18 @@ public class AntElementFactory {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public static AntElement createAntElement(final AntElement parent, final XmlElement element) {
+  public static AntElement createAntElement(final AntStructuredElement parent, final XmlElement element) {
     instantiate();
 
     if (element instanceof XmlComment) {
       return new AntCommentImpl(parent, element);
     }
-    if (element instanceof XmlEntityRef && parent instanceof AntStructuredElement) {
-      return new AntEntityRefImpl((AntStructuredElement)parent, element);
+    if (element instanceof XmlEntityRef) {
+      return new AntEntityRefImpl(parent, element);
     }
+    /*if ("</".equals(element.getText())) {
+      return new AntEndTagStartElement(parent, element);
+    }*/
     if (!(element instanceof XmlTag)) return null;
 
     final XmlTag tag = (XmlTag)element;
@@ -46,26 +49,24 @@ public class AntElementFactory {
     /**
      * Hardcode for <javadoc> task (IDEADEV-6731).
      */
-    if (typeName.equals("javadoc2")) {
-      typeName = "javadoc";
+    if (typeName.equals(AntFileImpl.JAVADOC2_TAG)) {
+      typeName = AntFileImpl.JAVADOC2_TAG;
     }
     /**
      * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
      */
-    if (typeName.equals("unwar") || typeName.equals("unjar")) {
-      typeName = "unzip";
+    if (typeName.equals(AntFileImpl.UNWAR_TAG) || typeName.equals(AntFileImpl.UNJAR_TAG)) {
+      typeName = AntFileImpl.UNZIP_TAG;
     }
 
     final AntTypeId id = new AntTypeId(typeName);
     final AntFile file = parent.getAntFile();
 
-    if (parent instanceof AntStructuredElement) {
-      final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
-      if (parentDef != null) {
-        final String className = parentDef.getNestedClassName(id);
-        if (className != null && file != null) {
-          typeDef = file.getBaseTypeDefinition(className);
-        }
+    final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
+    if (parentDef != null) {
+      final String className = parentDef.getNestedClassName(id);
+      if (className != null && file != null) {
+        typeDef = file.getBaseTypeDefinition(className);
       }
     }
     if (typeDef == null && file != null) {

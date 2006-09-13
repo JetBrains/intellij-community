@@ -71,6 +71,8 @@ public class AntTargetReference extends AntGenericReference {
 
   public PsiElement resolve() {
     final String name = getCanonicalRepresentationText();
+    if(name == null) return null;
+    
     final AntElement element = getElement();
     final AntProject project = element.getAntProject();
     AntTarget result = project.getTarget(name);

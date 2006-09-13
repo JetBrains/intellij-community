@@ -2,6 +2,7 @@ package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -170,7 +171,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (vFile == null) return null;
     String projectPath = vFile.getPath();
     if (!ignoreBasedir) {
-      final String baseDir = antFile.getAntProject().getBaseDir();
+      final AntProject project = antFile.getAntProject();
+      final String baseDir = (project == null) ? null : project.getBaseDir();
       if (baseDir != null && baseDir.length() > 0) {
         projectPath = new File(projectPath, baseDir).getAbsolutePath();
       }

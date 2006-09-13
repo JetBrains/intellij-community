@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AntGenericReference extends GenericReference {
 
@@ -94,6 +95,7 @@ public abstract class AntGenericReference extends GenericReference {
     return myAttribute;
   }
 
+  @Nullable
   public String getCanonicalRepresentationText() {
     final AntElement element = getElement();
     final String value = getCanonicalText();
