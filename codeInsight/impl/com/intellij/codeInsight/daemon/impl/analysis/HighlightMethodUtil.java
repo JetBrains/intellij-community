@@ -138,10 +138,6 @@ public class HighlightMethodUtil {
     if (returnType.equals(substitutedSuperReturnType)) return null;
     if (returnType.getDeepComponentType() instanceof PsiClassType &&
         substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
-      /*if (!superMethodSignature.equals(methodSignature)) { //see 8.4.5
-        superReturnType = TypeConversionUtil.erasure(superReturnType);
-      }*/
-      /*if (returnType.equals(TypeConversionUtil.erasure(superReturnType))) return null;*/
       if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(method)) <= 0 &&
           TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
         return null;
