@@ -240,6 +240,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       final PsiMember member = memberInfo.getMember();
       PsiMember newMember = null;
       if (member instanceof PsiField) {
+        ((PsiField)member).normalizeDeclaration();
         newMember = (PsiMember)targetClass.add(member);
       }
       else if (member instanceof PsiMethod) {
