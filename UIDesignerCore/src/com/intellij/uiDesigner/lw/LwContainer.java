@@ -381,6 +381,6 @@ public class LwContainer extends LwComponent implements IContainer{
   }
 
   public boolean areChildrenExclusive() {
-    return myLayoutManager.equals(UIFormXmlConstants.LAYOUT_CARD);
+    return UIFormXmlConstants.LAYOUT_CARD.equals(myLayoutManager);
   }
 }
