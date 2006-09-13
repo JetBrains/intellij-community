@@ -338,7 +338,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       presentation.setVisible(true);
       presentation.setEnabled(true);
 
-      if (updateSupportingVcsesAreEmpty(vcsContext.getProject())) {
+      if (supportingVcsesAreEmpty(vcsContext.getProject(), myActionInfo)) {
         presentation.setVisible(false);
         presentation.setEnabled(false);
       }
@@ -365,11 +365,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return true;
   }
 
-  private static boolean updateSupportingVcsesAreEmpty(final Project project) {
+  private static boolean supportingVcsesAreEmpty(final Project project, final ActionInfo actionInfo) {
     if (project == null) return true;
     final AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     for (AbstractVcs activeVcs : allActiveVcss) {
-      if (activeVcs.getUpdateEnvironment() != null) return false;
+      if (actionInfo.getEnvironment(activeVcs) != null) return false;
     }
     return true;
   }
