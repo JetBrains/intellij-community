@@ -169,14 +169,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
           // !!! a tag doesn't belong to the current file, so we decide it's resolved via an entity ref
           //
           if (!psiFile.equals(tag.getContainingFile())) {
-            //
-            // this quite strange creation of the tag text is necessary since
-            // tag.getText() takes whitespaces from source text
-            //
-            for (final PsiElement tagChild : tag.getChildren()) {
-              builder.append(tagChild.getText());
-              builder.append(' ');
-            }
+            buildTagText(tag, builder);
+
           }
           else if (AntFileImpl.IMPORT_TAG.equals(tag.getName())) {
             final AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue(AntFileImpl.FILE_ATTR), this);
@@ -447,6 +441,26 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     }
     finally {
       elementsDepthStack.remove(project);
+    }
+  }
+
+  private static void buildTagText(final XmlTag tag, final StringBuilder builder) {
+    //
+    // this quite strange creation of the tag text is necessary since
+    // tag.getText() removes whitespaces from source text
+    //
+    boolean firstChild = true;
+    for (final PsiElement tagChild : tag.getChildren()) {
+      if (!firstChild) {
+        builder.append(' ');
+      }
+      if (tagChild instanceof XmlTag) {
+        buildTagText((XmlTag)tagChild, builder);
+      }
+      else {
+        builder.append(tagChild.getText());
+      }
+      firstChild = false;
     }
   }
 }
