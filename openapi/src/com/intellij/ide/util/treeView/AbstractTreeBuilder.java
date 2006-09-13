@@ -19,13 +19,13 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.*;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.*;
+import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public abstract class AbstractTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
@@ -229,7 +229,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     Object rootElement = myTreeStructure.getRootElement();
     NodeDescriptor nodeDescriptor = myTreeStructure.createDescriptor(rootElement, null);
     myRootNode.setUserObject(nodeDescriptor);
-    updateNodeDescriptor(myRootNode, nodeDescriptor);
+    updateNodeDescriptor(nodeDescriptor);
     if (nodeDescriptor.getElement() != null) {
       createMapping(nodeDescriptor.getElement(), myRootNode);
     }
@@ -264,7 +264,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
     Object prevElement = descriptor.getElement();
     if (prevElement == null) return;
-    boolean changes = updateNodeDescriptor(node, descriptor);
+    boolean changes = updateNodeDescriptor(descriptor);
     if (descriptor.getElement() == null) {
       LOG.assertTrue(false, "element == null, updateSubtree should be invoked for parent! builder=" + this + ", prevElement = " +
                             prevElement + ", node = " + node+"; parentDescriptor="+ descriptor.getParentDescriptor());
@@ -354,7 +354,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     for (Object child : children) {
       if (child instanceof ProjectViewNode) {
         final ProjectViewNode projectViewNode = (ProjectViewNode)child;
-        projectViewNode.update();
+        updateNodeDescriptor(projectViewNode);
         if (projectViewNode.getValue() == null) continue;
       }
       elementToIndexMap.put(child, new Integer(index));
@@ -407,7 +407,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         continue;
       }
       childDescr.setIndex(index.intValue());
-      childDescr.update();
+      updateNodeDescriptor(childDescr);
       if (childDescr.getElement() == null) {
         LOG.error("childDescr.getElement() == null, child = " + child + ", builder = " + this);
         continue;
@@ -436,7 +436,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
     Runnable updateRunnable = new Runnable() {
       public void run() {
-        updateNodeDescriptor(node, descriptor);
+        updateNodeDescriptor(descriptor);
         Object element = descriptor.getElement();
         if (element == null) return;
 
@@ -445,7 +445,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     };
     Runnable postRunnable = new Runnable() {
       public void run() {
-        updateNodeDescriptor(node, descriptor);
+        updateNodeDescriptor(descriptor);
         Object element = descriptor.getElement();
         if (element != null) {
           myUnbuiltNodes.remove(node);
@@ -487,7 +487,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       LOG.error("oldElement == null, builder=" + this + ", childDescr=" + childDescr);
       return;
     }
-    boolean changes = updateNodeDescriptor(childNode, childDescr);
+    boolean changes = updateNodeDescriptor(childDescr);
     Object newElement = childDescr.getElement();
     Integer index = newElement != null ? elementToIndexMap.get(getTreeStructureElement(childDescr)) : null;
     if (index != null) {
@@ -541,7 +541,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  protected boolean updateNodeDescriptor(final DefaultMutableTreeNode node, final NodeDescriptor descriptor) {
+  protected boolean updateNodeDescriptor(final NodeDescriptor descriptor) {
     return descriptor.update();
   }
 
@@ -552,7 +552,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         final boolean[] hasNoChildren = new boolean[1];
         Runnable runnable = new Runnable() {
           public void run() {
-            updateNodeDescriptor(node, descriptor);
+            updateNodeDescriptor(descriptor);
             Object element = getTreeStructureElement(descriptor);
             if (element == null) return;
 
@@ -564,7 +564,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         Runnable postRunnable = new Runnable() {
           public void run() {
             if (hasNoChildren[0]) {
-              updateNodeDescriptor(node, descriptor);
+              updateNodeDescriptor(descriptor);
               Object element = descriptor.getElement();
               if (element != null) {
                 DefaultMutableTreeNode node = getNodeForElement(element);
