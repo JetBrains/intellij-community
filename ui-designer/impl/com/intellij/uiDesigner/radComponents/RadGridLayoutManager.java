@@ -46,7 +46,7 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
 
   @Override
   protected void changeLayoutFromIndexed(final RadContainer container, final List<RadComponent> components) {
-    container.setLayoutManager(this, new GridLayoutManager(1, components.size()));
+    container.setLayoutManager(this, new GridLayoutManager(1, Math.max(1, components.size())));
   }
 
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
