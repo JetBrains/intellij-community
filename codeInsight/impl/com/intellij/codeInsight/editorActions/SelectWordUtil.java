@@ -467,7 +467,7 @@ public class SelectWordUtil {
 
     private static boolean isStringLiteral(PsiElement element) {
       return element instanceof PsiLiteralExpression &&
-             ((PsiLiteralExpression)element).getType().equalsToText("java.lang.String");
+             ((PsiLiteralExpression)element).getType().equalsToText("java.lang.String") && element.getText().startsWith("\"") && element.getText().endsWith("\"");
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
