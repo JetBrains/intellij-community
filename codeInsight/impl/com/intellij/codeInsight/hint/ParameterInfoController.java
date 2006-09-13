@@ -31,20 +31,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParameterInfoController {
-  private Project myProject;
-  private Editor myEditor;
+  private final Project myProject;
+  private final Editor myEditor;
 
-  private String myParameterCloseChars;
-  private RangeMarker myLbraceMarker;
-  private LightweightHint myHint;
-  private ParameterInfoComponent myComponent;
+  private final String myParameterCloseChars;
+  private final RangeMarker myLbraceMarker;
+  private final LightweightHint myHint;
+  private final ParameterInfoComponent myComponent;
 
-  private CaretListener myEditorCaretListener;
-  private DocumentListener myEditorDocumentListener;
-  private PropertyChangeListener myLookupListener;
+  private final CaretListener myEditorCaretListener;
+  private final DocumentListener myEditorDocumentListener;
+  private final PropertyChangeListener myLookupListener;
   private final @NotNull ParameterInfoHandler myHandler;
 
-  private Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm = new Alarm();
   private static final int DELAY = 200;
 
   private boolean myDisposed = false;
@@ -254,7 +254,7 @@ public class ParameterInfoController {
   private void addAlarmRequest(){
     Runnable request = new Runnable(){
       public void run(){
-        updateComponent();
+        if (!myDisposed && !myProject.isDisposed()) updateComponent();
       }
     };
     myAlarm.addRequest(request, DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
