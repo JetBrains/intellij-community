@@ -22,18 +22,20 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.binding.FormReferenceProvider;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,6 +122,7 @@ public final class StringEditorDialog extends DialogWrapper{
     return manager.findPropertiesFile(myEditor.getModule(), descriptor.getDottedBundleName(), myLocale);
   }
 
+  @Nullable
   public static String saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
                                                  final Locale locale, final String editedValue, final PsiFile formFile) {
     final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
@@ -127,14 +130,7 @@ public final class StringEditorDialog extends DialogWrapper{
     if (propFile != null) {
       final Property propertyByKey = propFile.findPropertyByKey(descriptor.getKey());
       if (propertyByKey != null && !editedValue.equals(propertyByKey.getValue())) {
-        final Collection<PsiReference> references = new ArrayList<PsiReference>();
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-          new Runnable() {
-            public void run() {
-             references.addAll(ReferencesSearch.search(propertyByKey).findAll());
-            }
-          }, UIDesignerBundle.message("edit.text.searching.references"), false, module.getProject()
-        );
+        final Collection<PsiReference> references = findPropertyReferences(propertyByKey, module);
 
         String newKeyName = null;
         if (references.size() > 1) {
@@ -192,6 +188,27 @@ public final class StringEditorDialog extends DialogWrapper{
       }
     }
     return null;
+  }
+
+  private static Collection<PsiReference> findPropertyReferences(final Property pproperty, final Module module) {
+    final Collection<PsiReference> references = new ArrayList<PsiReference>();
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+          new Runnable() {
+        public void run() {
+          final Query<PsiReference> query = ReferencesSearch.search(pproperty);
+          query.forEach(new Processor<PsiReference>() {
+            public boolean process(final PsiReference psiReference) {
+              PsiMethod method = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethod.class);
+              if (method == null || !AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {
+                references.add(psiReference);
+              }
+              return true;
+            }
+          });
+        }
+      }, UIDesignerBundle.message("edit.text.searching.references"), false, module.getProject()
+    );
+    return references;
   }
 
   private static String promptNewKeyName(final Project project, final PropertiesFile propFile, final String key) {
