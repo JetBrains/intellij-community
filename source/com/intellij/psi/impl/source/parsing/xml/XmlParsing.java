@@ -712,6 +712,10 @@ public class XmlParsing implements ElementType {
           lastPosition = -1;
         }
       }
+      else if (lexer.getTokenType() == XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+        lastPosition = lexer.getTokenEnd();
+        addToken(parent, lexer);
+      }
       else {
         lastPosition = -1;
       }
