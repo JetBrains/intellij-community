@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacParserAction;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacParserAction;
 import junit.framework.TestCase;
 
 import java.util.ResourceBundle;
@@ -87,7 +87,7 @@ LIne read: #[wrote C:\temp\rmiTest\classes\mycompany\TTT.class]#
       return this;
     }
 
-    protected void doExecute(final String dta, final OutputParser.Callback callback) {
+    protected void doExecute(final String line, final String dta, final OutputParser.Callback callback) {
       assertTrue("Expected: #" + myExpected + "#, but was: #" + dta + "#", myExpected.equals(dta));
     }
   }
