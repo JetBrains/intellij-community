@@ -168,13 +168,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   protected void handleInitComponentError(final BaseComponent component, final Class componentClass, final Throwable ex) {
     if (PluginManager.isPluginClass(componentClass.getName())) {
+      LOG.error(ex);
       PluginId pluginId = PluginManager.getPluginByClassName(componentClass.getName());
-      final String errorMessage = "Plugin " + pluginId.getIdString() + " failed to initialize:\n" + ex.getMessage() +
-                                  "\nPlease remove the plugin and restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
+      @NonNls final String errorMessage = "Plugin " + pluginId.getIdString() + " failed to initialize:\n" + ex.getMessage() +
+                                          "\nPlease remove the plugin and restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
       if (!myHeadlessMode) {
         JOptionPane.showMessageDialog(null, errorMessage);
       }
       else {
+        //noinspection UseOfSystemOutOrSystemErr
         System.out.println(errorMessage);
       }
       System.exit(1);
