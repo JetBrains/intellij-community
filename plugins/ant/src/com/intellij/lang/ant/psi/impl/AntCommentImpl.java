@@ -1,7 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntComment;
-import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlComment;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AntCommentImpl extends AntElementImpl implements AntComment {
 
-  public AntCommentImpl(AntElement parent, XmlElement sourceElement) {
+  public AntCommentImpl(final AntStructuredElement parent, final XmlElement sourceElement) {
     super(parent, sourceElement);
   }
 
