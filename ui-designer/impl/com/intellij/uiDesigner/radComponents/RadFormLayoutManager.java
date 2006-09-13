@@ -65,8 +65,10 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
                                       final List<Boolean> canColumnsGrow) {
     int rowCount = canRowsGrow.size();
     int columnCount = canColumnsGrow.size();
-    RowSpec[] rowSpecs = new RowSpec [rowCount * 2 - 1];
-    ColumnSpec[] colSpecs = new ColumnSpec [columnCount * 2 - 1];
+    int rowCountWithGaps = (rowCount == 0) ? 0 : rowCount * 2 - 1;
+    int columnCountWithGaps = (columnCount == 0) ? 0 : columnCount * 2 - 1;
+    RowSpec[] rowSpecs = new RowSpec [rowCountWithGaps];
+    ColumnSpec[] colSpecs = new ColumnSpec [columnCountWithGaps];
 
     for(int i=0; i<rowCount; i++) {
       rowSpecs [i*2] = canRowsGrow.get(i).booleanValue() ? new RowSpec(ENCODED_FORMSPEC_GROW) : new RowSpec(DEFAULT_NOGROW_SIZE);
