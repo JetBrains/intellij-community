@@ -90,6 +90,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private VirtualFilePointer myCompilerOutput;
   private boolean myStartupActivityPerformed = false;
+  private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
 
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -259,6 +260,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void setCompilerOutputUrl(String compilerOutputUrl) {
     myCompilerOutput = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myVirtualFilePointerListener);
+    final LocalFileSystem.WatchRequest watchRequest =
+      LocalFileSystem.getInstance().addRootToWatch(VfsUtil.urlToPath(compilerOutputUrl), true);
+    if (myCompilerOutputWatchRequest != null) {
+      LocalFileSystem.getInstance().removeWatchedRoot(myCompilerOutputWatchRequest);
+    }
+    myCompilerOutputWatchRequest = watchRequest;
   }
 
   private VirtualFile[] getFilesFromAllModules(OrderRootType type) {

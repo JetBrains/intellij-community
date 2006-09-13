@@ -98,6 +98,14 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     @NotNull public String getFileSystemRootPath() { return myFSRootPath; }
 
     public boolean isToWatchRecursively() { return myToWatchRecursively; }
+
+    public boolean dominates(WatchRequest other) {
+      if (myToWatchRecursively) {
+        return myRootPath.startsWith(other.getRootPath());
+      }
+
+      return myRootPath.equals(other.getRootPath());
+    }
   }
 
   public LocalFileSystemImpl() {
@@ -287,6 +295,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                   root.refresh(false, false);
                   child = root.findChild(name);
                   if (child == null) return null;
+                  //need to fire event here since refresh did not fire, because children are not cached
+                  fireFileCreated(null, child);
                   root = child;
                 } else {
                   return null;
@@ -874,46 +884,47 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return "LocalFileSystem";
   }
 
-  public WatchRequest addRootToWatch(String rootPath, boolean toWatchRecursively) {
-    LOG.assertTrue(rootPath != null);
-    Set<String> oldPaths = new HashSet<String>();
-    for (WatchRequest request : myRootsToWatch) {
-      oldPaths.add(request.getRootPath());
-    }
+  public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
     synchronized (LOCK) {
       final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
-      myRootsToWatch.add(result);
-      if (!oldPaths.contains(result.getRootPath())) {
-        final VirtualFile existingFile = findFileByPath(result.getRootPath(), false, false);
-        if (existingFile != null) synchronizeFiles(toWatchRecursively, existingFile);
+      final VirtualFile existingFile = findFileByPath(rootPath, false, false);
+      if (existingFile != null) {
+        if (!isAlreadyWatched(result)) {
+          synchronizeFiles(toWatchRecursively, existingFile);
+        }
       }
+      myRootsToWatch.add(result); //add in any case
       setUpFileWatcher();
       return result;
     }
   }
 
+  private boolean isAlreadyWatched(final WatchRequest request) {
+    for (final WatchRequest current : normalizeRootsForRefresh()) {
+      if (current.dominates(request)) return true;
+    }
+    return false;
+  }
+
   @NotNull
-  public Set<WatchRequest> addRootsToWatch(final Collection<String> rootPaths, final boolean toWatchRecursively) {
-    LOG.assertTrue(rootPaths != null);
+  public Set<WatchRequest> addRootsToWatch(final @NotNull Collection<String> rootPaths, final boolean toWatchRecursively) {
     Set<WatchRequest> result = new HashSet<WatchRequest>();
     Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
-    Set<String> oldPaths = new HashSet<String>();
-    for (WatchRequest request : myRootsToWatch) {
-      oldPaths.add(request.getRootPath());
-    }
 
     synchronized (LOCK) {
       for (String rootPath : rootPaths) {
         LOG.assertTrue(rootPath != null);
         final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
-        if (!oldPaths.contains(request.getRootPath())) {
-          final VirtualFile existingFile = findFileByPath(request.getRootPath(), false, false);
-          if (existingFile != null) filesToSynchronize.add(existingFile);
+        final VirtualFile existingFile = findFileByPath(rootPath, false, false);
+        if (existingFile != null) {
+          if (!isAlreadyWatched(request)) {
+            filesToSynchronize.add(existingFile);
+          }
         }
         result.add(request);
+        myRootsToWatch.add(request); //add in any case, safe to add inplace without copying myRootsToWatch before the loop
       }
 
-      myRootsToWatch.addAll(result);
       setUpFileWatcher();
       if (!filesToSynchronize.isEmpty()) {
         synchronizeFiles(toWatchRecursively, filesToSynchronize.toArray(new VirtualFile[filesToSynchronize.size()]));

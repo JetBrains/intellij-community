@@ -63,6 +63,8 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
     @NotNull String getFileSystemRootPath();
 
     boolean isToWatchRecursively();
+
+    boolean dominates (WatchRequest other);
   }
 
   /**
