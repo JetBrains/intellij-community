@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -28,12 +29,14 @@ public class SynchronizeAction extends AnAction {
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     final Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
     //This is yet another hack with modality states
-    if (ModalityState.current() == ModalityState.NON_MMODAL) {
+    if (ModalityState.current() == ModalityState.NON_MODAL) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
-          final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-          pi.setText(IdeBundle.message("progress.synchronizing.files"));
-          pi.setIndeterminate(true);
+          final @Nullable ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+          if (pi != null) {
+            pi.setText(IdeBundle.message("progress.synchronizing.files"));
+            pi.setIndeterminate(true);
+          }
           final Semaphore refreshSemaphore = new Semaphore();
           refreshSemaphore.down();
           application.runReadAction(new Runnable() {
@@ -48,7 +51,9 @@ public class SynchronizeAction extends AnAction {
           final Timer updateTimer = new Timer(true);
           updateTimer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
-              pi.setFraction(1.0);
+              if (pi != null) {
+                pi.setFraction(1.0);
+              }
             }
           }, 0L, PROGRESS_REPAINT_INTERVAL);
 
