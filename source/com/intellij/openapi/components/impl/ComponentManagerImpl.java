@@ -66,6 +66,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NonNls private static final String OPTION_ELEMENT = "option";
   @NonNls private static final String VALUE_ATTR = "value";
   private boolean myDisposed = false;
+  private boolean myDisposeCompleted = false;
 
   protected void initComponents() {
     createComponents();
@@ -133,6 +134,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected void disposeComponents() {
     final Object[] components = getComponents(false);
+    myDisposed = true;
 
     for (Object component : components) {
       if (component instanceof BaseComponent) {
@@ -203,7 +205,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   public <T> T getComponent(Class<T> interfaceClass) {
-    assert !myDisposed : "Already disposed";
+    assert !myDisposeCompleted : "Already disposed";
     return getComponent(interfaceClass, null);
   }
 
@@ -630,7 +632,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
 
   public void dispose() {
-    myDisposed = true;
+    myDisposeCompleted = true;
     myComponentInterfaces = null;
     myInitializedComponents = null;
     myInitializingComponents = null;
@@ -648,3 +650,4 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposed;
   }
 }
+  
