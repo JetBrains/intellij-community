@@ -579,7 +579,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         if ("return".equals(tag.getName())) {
           if (extractTagDescription(tag).length() == 0) {
             String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@return</code>");
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(tag, message, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(tag.getNameElement(), message, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
             problems.add(descriptor);
           }
         }
