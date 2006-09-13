@@ -11,11 +11,9 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -61,7 +59,6 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
-  @Bombed(year = 2006, month = Calendar.SEPTEMBER, day = 13, user = "lvo", time = 15, description = "Task def from JAR")
   public void testProperties2() throws Exception {
     configureByFiles(
       new VirtualFile[] {

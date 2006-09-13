@@ -6,15 +6,15 @@
   <property name="project.path2" value="." />
 
   <target name="copy_files">
-  <taskdef name="obfuscate2"
+  <<error>taskdef</error> name="obfuscate2"
     classname="com.yworks.yguard.ObfuscatorTask"
-    classpath="<error>${project.path}/build/libs/yguard.jar</error>"/>
+    classpath="${project.path}/build/libs/yguard.jar"/>
 
-  <taskdef name="obfuscate"
+  <<error>taskdef</error> name="obfuscate"
     classname="com.yworks.yguard.ObfuscatorTask"
     classpath="${project.path2}/yguard.jar"/>
 
-    <obfuscate>
+    <<warning>obfuscate</warning>>
       <property name="naming-scheme" value="mix"/>
       <property name="language-conformity" value="legal"/>
       <inoutpair in="${idea.path}/WS.zip" out="${idea.path}/WebServices.jar"/>
