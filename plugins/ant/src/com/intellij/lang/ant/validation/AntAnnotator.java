@@ -92,6 +92,8 @@ public class AntAnnotator implements Annotator {
   }
 
   private static void addDefinitionQuickFixes(final Annotation annotation, final AntStructuredElement se) {
+    if(se.getSourceElement().getName().length() == 0) return;
+
     final AntProject project = se.getAntProject();
     annotation.registerFix(new AntCreateMacroDefAction(se));
     annotation.registerFix(new AntCreatePresetDefAction(se));

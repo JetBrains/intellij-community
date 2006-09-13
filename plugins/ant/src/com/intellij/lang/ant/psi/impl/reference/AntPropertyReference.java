@@ -124,7 +124,10 @@ public class AntPropertyReference extends AntGenericReference {
 
   @NotNull
   public IntentionAction[] getFixes() {
-    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    final String name = getCanonicalRepresentationText();
+    if(name == null || name.length() == 0) return ourEmptyIntentions;
+
+    final List<IntentionAction> result = new ArrayList<IntentionAction>();
     final AntProject project = getElement().getAntProject();
     result.add(new AntCreatePropertyAction(this));
     final Set<String> files = StringSetSpinAllocator.alloc();
