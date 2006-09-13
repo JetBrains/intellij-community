@@ -72,6 +72,7 @@ import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -969,6 +970,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     protected JComponent createCenterPanel() {
       return myFilterUI.getComponent();
+    }
+
+    @Override @NonNls
+    protected String getDimensionServiceKey() {
+      return "AbstractVcsHelper.FilterDialog";
     }
   }
 }
