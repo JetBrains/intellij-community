@@ -113,7 +113,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   }
 
   public boolean someChildContainsFile(final VirtualFile file) {
-    Collection<AbstractTreeNode> kids = getChildren();
+    Collection<? extends AbstractTreeNode> kids = getChildren();
     for (final AbstractTreeNode kid : kids) {
       ProjectViewNode node = (ProjectViewNode)kid;
       if (node.contains(file)) return true;

@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -13,13 +14,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
 
 public class FormNode extends ProjectViewNode<Form>{
-  private final Collection<AbstractTreeNode> myChildren;
+  private final Collection<BasePsiNode<? extends PsiElement>> myChildren;
 
   public FormNode(Project project, Object value, ViewSettings viewSettings) {
     super(project, (Form) value,  viewSettings);
@@ -27,13 +29,13 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   public FormNode(Project project, Form value, ViewSettings viewSettings,
-                  Collection<AbstractTreeNode> children) {
+                  Collection<BasePsiNode<? extends PsiElement>> children) {
     super(project, value, viewSettings);
     myChildren = children;
   }
 
   @NotNull
-  public Collection<AbstractTreeNode> getChildren() {
+  public Collection<BasePsiNode<? extends PsiElement>> getChildren() {
     return myChildren;
   }
 
@@ -76,7 +78,8 @@ public class FormNode extends ProjectViewNode<Form>{
 
   @Override
   public FileStatus getFileStatus() {
-    for(AbstractTreeNode child: myChildren) {
+    for(BasePsiNode<? extends PsiElement> child: myChildren) {
+      if (!child.getValue().isValid()) continue;
       final FileStatus fileStatus = child.getFileStatus();
       if (fileStatus != FileStatus.NOT_CHANGED) {
         return fileStatus;
@@ -87,12 +90,12 @@ public class FormNode extends ProjectViewNode<Form>{
 
   public static AbstractTreeNode constructFormNode(final PsiClass classToBind, final Project project, final ViewSettings settings) {
     final Form form = new Form(classToBind);
-    final Collection<AbstractTreeNode> children = getChildren(project, form, settings);
+    final Collection<BasePsiNode<? extends PsiElement>> children = getChildren(project, form, settings);
     return new FormNode(project, form, settings, children);
   }
 
-  private static Collection<AbstractTreeNode> getChildren(final Project project, final Form form, final ViewSettings settings) {
-    final HashSet<AbstractTreeNode> children = new HashSet<AbstractTreeNode>();
+  private static Collection<BasePsiNode<? extends PsiElement>> getChildren(final Project project, final Form form, final ViewSettings settings) {
+    final HashSet<BasePsiNode<? extends PsiElement>> children = new HashSet<BasePsiNode<? extends PsiElement>>();
     for (PsiFile formBoundToClass : form.getFormFiles()) {
       children.add(new PsiFileNode(project, formBoundToClass, settings));
     }

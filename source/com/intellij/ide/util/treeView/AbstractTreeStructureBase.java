@@ -24,7 +24,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   public Object[] getChildElements(Object element) {
     LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
-    Collection<AbstractTreeNode> elements = treeNode.getChildren();
+    Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
     List<TreeStructureProvider> providers = getProviders();
     ArrayList<AbstractTreeNode> modified = new ArrayList<AbstractTreeNode>(elements);
     if (providers != null) {

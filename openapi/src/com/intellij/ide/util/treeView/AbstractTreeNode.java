@@ -45,7 +45,7 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
   }
 
   @NotNull
-  public abstract Collection<AbstractTreeNode> getChildren();
+  public abstract Collection<? extends AbstractTreeNode> getChildren();
 
   public final boolean update() {
     PresentationData presentation = getUpdatedData();
@@ -135,7 +135,7 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
 
   public final AbstractTreeNode setParentDescriptor(NodeDescriptor parentDescriptor) {
     myParentDescriptor = parentDescriptor;
-    return this;
+    return this;                        
   }
 
   public final NodeDescriptor getParentDescriptor() {
