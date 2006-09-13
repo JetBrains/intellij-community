@@ -43,7 +43,16 @@ public class FileReferenceQuickFixProvider {
 
     if (index < 0) return;
     final String newFileName = reference.getCanonicalText();
-    if (newFileName.length() == 0 || newFileName.indexOf('\\') != -1 || SystemInfo.isWindows && newFileName.indexOf(':') != -1) return;
+
+    // check if we could create file
+    if (newFileName.length() == 0 ||
+        newFileName.indexOf('\\') != -1 ||
+        newFileName.indexOf('*') != -1 ||
+        newFileName.indexOf('?') != -1 ||
+        SystemInfo.isWindows && newFileName.indexOf(':') != -1) {
+      return;
+    }
+
     final PsiDirectory directory;
 
     if(index > 0) {
