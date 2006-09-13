@@ -7,7 +7,9 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.CommonBundle;
 
 import javax.swing.*;
@@ -19,11 +21,15 @@ import java.util.List;
 public class ChangesBrowserDialog extends DialogWrapper {
   private final Project myProject;
   private final List<CommittedChangeList> myChanges;
+  private final VersionsProvider myVersionsProvider;
+  private final boolean myShowSearchAgain;
 
-  public ChangesBrowserDialog(Project project, List<CommittedChangeList> changes) {
+  public ChangesBrowserDialog(Project project, List<CommittedChangeList> changes, final VersionsProvider provider, final boolean showSearchAgain) {
     super(project, true);
     myProject = project;
     myChanges = changes;
+    myVersionsProvider = provider;
+    myShowSearchAgain = showSearchAgain;
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     setModal(false);
@@ -40,7 +46,22 @@ public class ChangesBrowserDialog extends DialogWrapper {
   }
 
   @Override
+  protected void createDefaultActions() {
+    super.createDefaultActions();
+    getOKAction().putValue(Action.NAME, VcsBundle.message("button.search.again"));
+  }
+
+  @Override
   protected Action[] createActions() {
-    return new Action[] { getCancelAction() };
+    if (!myShowSearchAgain) {
+      return new Action[] { getCancelAction() };
+    }
+    return super.createActions();
+  }
+
+  @Override
+  protected void doOKAction() {
+    super.doOKAction();
+    AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVersionsProvider, getTitle());
   }
 }

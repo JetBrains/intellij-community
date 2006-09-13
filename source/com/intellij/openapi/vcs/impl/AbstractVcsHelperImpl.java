@@ -622,11 +622,15 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists) {
-    new ChangesBrowserDialog(myProject, changelists).show();
+    new ChangesBrowserDialog(myProject, changelists, null, false).show();
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists);
+    showChangesBrowser(changelists, null, title, false);
+  }
+
+  private void showChangesBrowser(List<CommittedChangeList> changelists, VersionsProvider provider, String title, boolean showSearchAgain) {
+    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, provider, showSearchAgain);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -653,11 +657,62 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(VersionsProvider versionsProvider) {
-    showChangeBrowser(myProject, versionsProvider, null);
+    showChangesBrowser(versionsProvider, null);
   }
 
-  public void showChangesBrowser(VersionsProvider versionsProvider, String browserTitle) {
-    showChangeBrowser(myProject, versionsProvider, browserTitle);
+  public void showChangesBrowser(final VersionsProvider provider, String title) {
+    try {
+      final RefreshableOnComponent filterUI = provider.createFilterUI();
+      boolean ok = true;
+      if (filterUI != null) {
+        final FilterDialog dlg = new FilterDialog(myProject, filterUI);
+        dlg.show();
+        ok = dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE;
+      }
+      else {
+        ok = true;
+      }
+
+      if (ok) {
+        final List<RepositoryVersion> versions = new ArrayList<RepositoryVersion>();
+        final List<VcsException> exceptions = new ArrayList<VcsException>();
+        final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            try {
+              versions.addAll(provider.getFilteredVersions());
+            }
+            catch (VcsException e) {
+              exceptions.add(e);
+            }
+          }
+        }, VcsBundle.message("browse.changes.progress.title"), true, myProject);
+
+        if (!done) return;
+
+        if (!exceptions.isEmpty()) {
+          Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
+                                   VcsBundle.message("browse.changes.error.title"));
+          return;
+        }
+
+        if (versions.isEmpty()) {
+          Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
+                                   VcsBundle.message("browse.changes.nothing.found.title"));
+          return;
+        }
+
+        final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
+        for (RepositoryVersion version : versions) {
+          lists.add(createFromRepositoryVersion(version));
+        }
+
+        showChangesBrowser(lists, provider, title, filterUI != null);
+      }
+    }
+    catch (VcsException e) {
+      Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", e.getMessage()),
+                               VcsBundle.message("browse.changes.error.title"));
+    }
   }
 
   public void showRevisions(List<AbstractRevisions> revisions, final String title) {
@@ -868,64 +923,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     }
   }
 
-
-  private void showChangeBrowser(Project project, final VersionsProvider provider, @Nls String title) {
-    try {
-      final RefreshableOnComponent filterUI = provider.createFilterUI();
-      final boolean ok;
-      if (filterUI != null) {
-        final FilterDialog dlg = new FilterDialog(project, filterUI);
-        dlg.show();
-        ok = dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE;
-      }
-      else {
-        ok = true;
-      }
-
-      if (ok) {
-        final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
-        final List<RepositoryVersion> versions = new ArrayList<RepositoryVersion>();
-        final List<VcsException> exceptions = new ArrayList<VcsException>();
-        final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            try {
-              versions.addAll(provider.getFilteredVersions());
-            }
-            catch (VcsException e) {
-              exceptions.add(e);
-            }
-          }
-        }, VcsBundle.message("browse.changes.progress.title"), true, project);
-
-        if (!done) return;
-
-        if (!exceptions.isEmpty()) {
-          Messages.showErrorDialog(project, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
-                                   VcsBundle.message("browse.changes.error.title"));
-          return;
-        }
-
-        if (versions.isEmpty()) {
-          Messages.showInfoMessage(project, VcsBundle.message("browse.changes.nothing.found"),
-                                   VcsBundle.message("browse.changes.nothing.found.title"));
-          return;
-        }
-
-        final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
-        for (RepositoryVersion version : versions) {
-          lists.add(createFromRepositoryVersion(version));
-        }
-
-        helper.showChangesBrowser(lists, title);
-      }
-    }
-    catch (VcsException e) {
-      Messages.showErrorDialog(project, VcsBundle.message("browse.changes.error.message", e.getMessage()),
-                               VcsBundle.message("browse.changes.error.title"));
-    }
-  }
-
-  private CommittedChangeList createFromRepositoryVersion(final RepositoryVersion version) throws VcsException {
+  private static CommittedChangeList createFromRepositoryVersion(final RepositoryVersion version) throws VcsException {
     final List<Change> changes = createChangeFromAbstractRevisions(version.getFileRevisions());
 
     return new CommittedChangeList() {
@@ -959,7 +957,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       myFilterUI = filterUI;
 
       myFilterUI.restoreState();
-      setTitle("Change Search Criteria");
+      setTitle(VcsBundle.message("browse.changes.filter.title"));
       init();
     }
 
