@@ -187,15 +187,32 @@ public class JavacOutputParser extends OutputParser {
     }
     else if (JavacResourcesReader.MSG_CHECKING.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
-        protected void doExecute(String parsedData, final Callback callback) {
+        protected void doExecute(final String line, String parsedData, final Callback callback) {
           callback.setProgressText(CompilerBundle.message("progress.compiling.class", parsedData));
         }
       });
     }
     else if (JavacResourcesReader.MSG_LOADING.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
-        protected void doExecute(@Nullable String parsedData, final Callback callback) {
+        protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
           callback.setProgressText(CompilerBundle.message("progress.loading.classes"));
+        }
+      });
+    }
+    else if (JavacResourcesReader.MSG_NOTE.equals(category)) {
+      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
+        protected void doExecute(final String line, @Nullable final String filePath, final Callback callback) {
+          final boolean fileExists = filePath != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+            public Boolean compute(){
+              return LocalFileSystem.getInstance().findFileByPath(filePath) != null? Boolean.TRUE : Boolean.FALSE;
+            }
+          });
+          if (fileExists) {
+            addMessage(callback, CompilerMessageCategory.WARNING, line, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), -1, -1);
+          }
+          else {
+            addMessage(callback, CompilerMessageCategory.WARNING, line);
+          }
         }
       });
     }
@@ -204,7 +221,7 @@ public class JavacOutputParser extends OutputParser {
     }
     else if (JavacResourcesReader.MSG_STATISTICS.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
-        protected void doExecute(@Nullable String parsedData, final Callback callback) {
+        protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
           // empty
         }
       });

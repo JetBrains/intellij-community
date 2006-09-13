@@ -39,7 +39,9 @@ public abstract class OutputParser {
   }
 
   protected static void addMessage(Callback callback, CompilerMessageCategory type, String message) {
-    if(message == null || message.trim().length() == 0) return;
+    if(message == null || message.trim().length() == 0) {
+      return;
+    }
     addMessage(callback, type, message, null, -1, -1);
   }
 

@@ -15,13 +15,12 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
+import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.ParserAction;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.regex.Matcher;
-
-import com.intellij.compiler.ParserAction;
-import com.intellij.compiler.OutputParser;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,10 +39,10 @@ public abstract class JavacParserAction extends ParserAction {
       return false;
     }
     final String parsed = myMatcher.groupCount() >= 1 ? myMatcher.group(1).replace(File.separatorChar, '/') : null;
-    doExecute(parsed, callback);
+    doExecute(line, parsed, callback);
     return true;
   }
 
-  protected abstract void doExecute(@Nullable String parsedData, final OutputParser.Callback callback);
+  protected abstract void doExecute(final String line, @Nullable String parsedData, final OutputParser.Callback callback);
 
 }

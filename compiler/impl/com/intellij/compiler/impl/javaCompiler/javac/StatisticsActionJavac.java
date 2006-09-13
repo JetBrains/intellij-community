@@ -15,9 +15,8 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacParserAction;
 import com.intellij.compiler.OutputParser;
+import com.intellij.openapi.compiler.CompilerBundle;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
@@ -34,7 +33,7 @@ public class StatisticsActionJavac extends JavacParserAction {
     myProgressMessageResourceKey = progressMessageResourceKey;
   }
 
-  protected void doExecute(@Nullable String parsedData, final OutputParser.Callback callback) {
+  protected void doExecute(final String line, @Nullable String parsedData, final OutputParser.Callback callback) {
     callback.setProgressText(CompilerBundle.message(myProgressMessageResourceKey));
   }
 }

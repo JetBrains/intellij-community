@@ -32,6 +32,7 @@ public class JavacResourcesReader {
   public static final String MSG_CHECKING = "MSG_CHECKING";
   public static final String MSG_WROTE = "MSG_WROTE";
   public static final String MSG_WARNING = "MSG_WARNING";
+  public static final String MSG_NOTE = "MSG_WARNING";
   public static final String MSG_STATISTICS = "MSG_STATISTICS";
 
   private static final String[] BUNDLE_NAMES = new String[] {
@@ -50,6 +51,12 @@ public class JavacResourcesReader {
     new BundleKey(MSG_WROTE,"compiler.misc.verbose.wrote.file"),
     new BundleKey(MSG_WROTE,"main.wrote"), // jdk 1.1-1.2
     new BundleKey(MSG_WARNING,"compiler.warn.warning"),
+    new BundleKey(MSG_NOTE,new String[] {"compiler.note.note", "compiler.note.deprecated.filename"}),  // jdk 1.5
+    new BundleKey(MSG_NOTE,new String[] {"compiler.note.note", "compiler.note.deprecated.plural"}),  // jdk 1.5
+    new BundleKey(MSG_NOTE,new String[] {"compiler.note.note", "compiler.note.deprecated.recompile"}),  // jdk 1.5
+    new BundleKey(MSG_NOTE,new String[] {"compiler.note.note", "compiler.note.unchecked.filename"}),  // jdk 1.5
+    new BundleKey(MSG_NOTE,new String[] {"compiler.note.note", "compiler.note.unchecked.plural"}),  // jdk 1.5
+    new BundleKey(MSG_NOTE,new String[] {"compiler.note.note", "compiler.note.unchecked.recompile"}),  // jdk 1.5
     new BundleKey(MSG_STATISTICS,"compiler.misc.count.error"),
     new BundleKey(MSG_STATISTICS,"compiler.misc.count.error.plural"),
     new BundleKey(MSG_STATISTICS,"compiler.misc.count.warn"),
@@ -75,7 +82,7 @@ public class JavacResourcesReader {
     for (int idx = 0; idx < MSG_NAME_KEY_PAIRS.length; idx++) {
       BundleKey bundleKey = MSG_NAME_KEY_PAIRS[idx];
       try {
-        System.err.println(bundleKey.category + CATEGORY_VALUE_DIVIDER + messagesBundle.getString(bundleKey.key));
+        System.err.println(bundleKey.category + CATEGORY_VALUE_DIVIDER + bundleKey.getCategoryValue(messagesBundle));
       }
       catch (MissingResourceException ignored) {
       }
@@ -98,11 +105,27 @@ public class JavacResourcesReader {
 
   private static final class BundleKey {
     public final String category;
-    public final String key;
+    private final String[] keys;
 
     public BundleKey(final String category, final String key) {
+      this(category, new String[] {key});
+    }
+
+    public BundleKey(final String category, final String[] composite) {
       this.category = category;
-      this.key = key;
+      this.keys = composite;
+    }
+
+    public String getCategoryValue(ResourceBundle messagesBundle) {
+      if (keys.length == 1) {
+        return messagesBundle.getString(keys[0]);
+      }
+      final StringBuffer buf = new StringBuffer();
+      for (int idx = 0; idx < keys.length; idx++) {
+        buf.append(messagesBundle.getString(keys[idx]));
+      }
+      return buf.toString();
     }
   }
+
 }
