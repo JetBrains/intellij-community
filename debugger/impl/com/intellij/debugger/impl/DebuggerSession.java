@@ -430,9 +430,10 @@ public class DebuggerSession {
     resumeAction(myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters), EVENT_STEP);
   }
 
-  public void runToCursor(Document document, int line) {
+  public void runToCursor(Document document, int line, final boolean ignoreBreakpoints) {
     try {
-      SuspendContextCommandImpl runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), document, line);
+      SuspendContextCommandImpl runToCursorCommand = myDebugProcess.createRunToCursorCommand(getSuspendContext(), document, line,
+                                                                                             ignoreBreakpoints);
       mySteppingThroughThreads.add(getSuspendContext().getThread());
       resumeAction(runToCursorCommand, EVENT_STEP);
     }

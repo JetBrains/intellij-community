@@ -52,7 +52,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.StringInterner;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NonNls;
@@ -64,7 +63,7 @@ public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
 
   private final Project myProject;
-  private final Map<Compiler,Object> myCompilerToCacheMap = new THashMap<Compiler, Object>();
+  private final Map<Compiler,Object> myCompilerToCacheMap = new HashMap<Compiler, Object>();
   private Map<Pair<Compiler, Module>, VirtualFile> myGenerationCompilerModuleToOutputDirMap;
   private final StringInterner myStringInterner = new StringInterner();
   private String myCachesDirectoryPath;
@@ -606,7 +605,7 @@ public class CompileDriver {
 
   private static Map<Module, Set<GeneratingCompiler.GenerationItem>> buildModuleToGenerationItemMap(
     GeneratingCompiler.GenerationItem[] items) {
-    final Map<Module, Set<GeneratingCompiler.GenerationItem>> map = new THashMap<Module, Set<GeneratingCompiler.GenerationItem>>();
+    final Map<Module, Set<GeneratingCompiler.GenerationItem>> map = new HashMap<Module, Set<GeneratingCompiler.GenerationItem>>();
     for (GeneratingCompiler.GenerationItem item : items) {
       Module module = item.getModule();
       LOG.assertTrue(module != null);
@@ -788,7 +787,7 @@ public class CompileDriver {
     final StateCache<ValidityState> cache = getGeneratingCompilerCache(compiler);
     final Set<String> pathsToRemove = new HashSet<String>(Arrays.asList(cache.getUrls()));
 
-    final Map<GeneratingCompiler.GenerationItem, String> itemToOutputPathMap = new THashMap<GeneratingCompiler.GenerationItem, String>();
+    final Map<GeneratingCompiler.GenerationItem, String> itemToOutputPathMap = new HashMap<GeneratingCompiler.GenerationItem, String>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (final GeneratingCompiler.GenerationItem item : allItems) {

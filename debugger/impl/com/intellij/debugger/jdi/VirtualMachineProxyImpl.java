@@ -3,19 +3,18 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.tools.jdi.VoidValueImpl;
-import gnu.trove.THashMap;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -36,7 +35,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<ThreadGroupReference, ThreadGroupReferenceProxyImpl>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
-  private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new THashMap<ReferenceType, List<ReferenceType>>();
+  private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>();
 
   public Throwable mySuspendLogger = new Throwable();
 
@@ -426,7 +425,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
     myAllClasses = null;
     if (myNestedClassesCache.size() > 0) {
-      myNestedClassesCache = new THashMap<ReferenceType, List<ReferenceType>>(myNestedClassesCache.size());
+      myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>(myNestedClassesCache.size());
     }
     myAllThreadsDirty = true;
     myTimeStamp++;

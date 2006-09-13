@@ -5,10 +5,10 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.util.containers.StringInterner;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Stack;
 
@@ -30,7 +30,7 @@ public class TreeBasedMap<T> {
   private class Node<T> {
     private boolean myMappingExists = false;
     private T myValue = null;
-    private @Nullable THashMap<String, Node<T>> myChildren = null;
+    private @Nullable HashMap<String, Node<T>> myChildren = null;
 
     public void setValue(T value) {
       myValue = value;
@@ -85,7 +85,7 @@ public class TreeBasedMap<T> {
     @NotNull
     private Node<T> addChild(final StringInterner table, final String text, final int nameStartIndex, final int nameEndIndex) {
       if (myChildren == null) {
-        myChildren = new THashMap<String, Node<T>>(3, 0.95f);
+        myChildren = new HashMap<String, Node<T>>(3, 0.95f);
       }
 
       Node<T> newChild = new Node<T>();
@@ -168,7 +168,7 @@ public class TreeBasedMap<T> {
     }
 
     private boolean pushNode(final @NotNull String name, @NotNull Node<T> node) {
-      final THashMap<String, Node<T>> childrenMap = node.myChildren;
+      final HashMap<String, Node<T>> childrenMap = node.myChildren;
       final boolean hasChildren = childrenMap != null && childrenMap.size() > 0;
       if (hasChildren || node.mappingExists()) {
         myCurrentNodePath.push(new PathElement<T>(node, hasChildren? childrenMap.keySet().iterator() : EMPTY_ITERATOR));

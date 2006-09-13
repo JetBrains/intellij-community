@@ -758,6 +758,9 @@
     <action id="RunToCursor">
       <keyboard-shortcut first-keystroke="alt F9"/>
     </action>
+    <action id="ForceRunToCursor">
+      <keyboard-shortcut first-keystroke="control alt F9"/>
+    </action>
     <action id="RenameElement">
       <keyboard-shortcut first-keystroke="shift F6"/>
     </action>

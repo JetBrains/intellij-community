@@ -24,7 +24,7 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.DebuggerSmoothManager;
 import com.intellij.debugger.ui.DescriptorHistoryManagerImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
 import com.intellij.debugger.ui.impl.watch.DescriptorHistoryManager;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
@@ -699,13 +699,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
     DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().updateBreakpoints(this);
   }
 
-  private LineBreakpoint myRunToCursorBreakpoint;
+  private RunToCursorBreakpoint myRunToCursorBreakpoint;
 
   public void cancelRunToCursorBreakpoint() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myRunToCursorBreakpoint != null) {
       getRequestsManager().deleteRequest(myRunToCursorBreakpoint);
       myRunToCursorBreakpoint.delete();
+      if (myRunToCursorBreakpoint.isRestoreBreakpoints()) {
+        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
+        breakpointManager.enableBreakpoints(this);
+      }
       myRunToCursorBreakpoint = null;
     }
   }
@@ -1369,11 +1373,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   private class RunToCursorCommand extends ResumeCommand {
-    private final LineBreakpoint myRunToCursorBreakpoint;
+    private final RunToCursorBreakpoint myRunToCursorBreakpoint;
+    private final boolean myIgnoreBreakpoints;
 
-    private RunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex) {
+    private RunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex, final boolean ignoreBreakpoints) {
       super(suspendContext);
-      myRunToCursorBreakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addRunToCursorBreakpoint(document, lineIndex);
+      myIgnoreBreakpoints = ignoreBreakpoints;
+      final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+      myRunToCursorBreakpoint = breakpointManager.addRunToCursorBreakpoint(document, lineIndex, ignoreBreakpoints);
     }
 
     public void contextAction() {
@@ -1381,6 +1388,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
       cancelRunToCursorBreakpoint();
       if (myRunToCursorBreakpoint == null) {
         return;
+      }
+      if (myIgnoreBreakpoints) {
+        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+        breakpointManager.disableBreakpoints(DebugProcessImpl.this);
       }
       myRunToCursorBreakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
       myRunToCursorBreakpoint.LOG_ENABLED = false;
@@ -1710,9 +1721,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return new StepIntoCommand(suspendContext, ignoreFilters);
   }
 
-  public SuspendContextCommandImpl createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex)
+  public SuspendContextCommandImpl createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex,
+                                                            final boolean ignoreBreakpoints)
     throws EvaluateException {
-    RunToCursorCommand runToCursorCommand = new RunToCursorCommand(suspendContext, document, lineIndex);
+    RunToCursorCommand runToCursorCommand = new RunToCursorCommand(suspendContext, document, lineIndex, ignoreBreakpoints);
     if(runToCursorCommand.myRunToCursorBreakpoint == null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
       throw new EvaluateException(DebuggerBundle.message("error.running.to.cursor.no.executable.code", psiFile.getName(), lineIndex), null);

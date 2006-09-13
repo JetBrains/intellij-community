@@ -19,19 +19,32 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
 public class RunToCursorAction extends AnAction {
+  private final boolean myIgnoreBreakpoints;
+
   public RunToCursorAction() {
+    this(false);
+  }
+
+  protected RunToCursorAction(boolean ignoreBreakpoints) {
+    myIgnoreBreakpoints = ignoreBreakpoints;
   }
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    if (project == null) return;
+    if (project == null) {
+      return;
+    }
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    if (editor == null) return;
+    if (editor == null) {
+      return;
+    }
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    if (debugProcess == null) return;
-    context.getDebuggerSession().runToCursor(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line);
+    if (debugProcess == null) {
+      return;
+    }
+    context.getDebuggerSession().runToCursor(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line, myIgnoreBreakpoints);
   }
 
   public void update(AnActionEvent event){
@@ -44,12 +57,14 @@ public class RunToCursorAction extends AnAction {
 
     if (project == null || editor == null) {
       enabled = false;
-    } else {
+    }
+    else {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       if (file == null) {
         enabled = false;
-      } else {
+      }
+      else {
         final VirtualFile virtualFile = file.getVirtualFile();
         FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
         if (DebuggerUtils.supportsJVMDebugging(fileType)) {
@@ -63,7 +78,8 @@ public class RunToCursorAction extends AnAction {
     }
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace())) {
       presentation.setVisible(enabled);
-    } else {
+    }
+    else {
       presentation.setEnabled(enabled);
     }
   }

@@ -18,7 +18,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
-import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectIterator;
@@ -57,9 +56,9 @@ public class DependencyProcessor {
     myBackDependencies = cache.getBackDependencies(qName);
 
     final TIntObjectHashMap<FieldInfo> oldFields = getFieldInfos(cache, qName);
-    final THashMap<String, MethodInfoContainer> oldMethods = getMethodInfos(cache, qName);
+    final Map<String, MethodInfoContainer> oldMethods = getMethodInfos(cache, qName);
     final TIntObjectHashMap<FieldInfo> newFields = getFieldInfos(newClassesCache, qName);
-    final THashMap<String, MethodInfoContainer> newMethods = getMethodInfos(newClassesCache, qName);
+    final Map<String, MethodInfoContainer> newMethods = getMethodInfos(newClassesCache, qName);
     addAddedMembers(oldFields, oldMethods, newFields, newMethods, myAddedMembers);
     addRemovedMembers(oldFields, oldMethods, newFields, newMethods, myRemovedMembers);
     addChangedMembers(oldFields, oldMethods, newFields, newMethods, myChangedMembers);
@@ -852,8 +851,8 @@ public class DependencyProcessor {
   }
 
   /** @return a map [methodSignature->MethodInfo]*/
-  private THashMap<String, MethodInfoContainer> getMethodInfos(Cache cache, int qName) throws CacheCorruptedException {
-    final THashMap<String, MethodInfoContainer> map = new THashMap<String, MethodInfoContainer>();
+  private Map<String, MethodInfoContainer> getMethodInfos(Cache cache, int qName) throws CacheCorruptedException {
+    final Map<String, MethodInfoContainer> map = new HashMap<String, MethodInfoContainer>();
     final int[] methods = cache.getMethodIds(cache.getClassDeclarationId(qName));
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
     for (int methodId : methods) {
@@ -871,8 +870,8 @@ public class DependencyProcessor {
     return map;
   }
 
-  private static void addAddedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
-                               TIntObjectHashMap<FieldInfo> newFields, THashMap<String, MethodInfoContainer> newMethods,
+  private static void addAddedMembers(TIntObjectHashMap<FieldInfo> oldFields, Map<String, MethodInfoContainer> oldMethods,
+                               TIntObjectHashMap<FieldInfo> newFields, Map<String, MethodInfoContainer> newMethods,
                                Collection<MemberInfo> members) throws CacheCorruptedException {
 
     for (final TIntObjectIterator<FieldInfo> it = newFields.iterator(); it.hasNext();) {
@@ -890,14 +889,14 @@ public class DependencyProcessor {
     }
   }
 
-  private static void addRemovedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
-                               TIntObjectHashMap<FieldInfo> newFields, THashMap<String, MethodInfoContainer> newMethods,
+  private static void addRemovedMembers(TIntObjectHashMap<FieldInfo> oldFields, Map<String, MethodInfoContainer> oldMethods,
+                               TIntObjectHashMap<FieldInfo> newFields, Map<String, MethodInfoContainer> newMethods,
                                Collection<MemberInfo> members) throws CacheCorruptedException {
     addAddedMembers(newFields, newMethods, oldFields, oldMethods, members);
   }
 
-  private void addChangedMembers(TIntObjectHashMap<FieldInfo> oldFields, THashMap<String, MethodInfoContainer> oldMethods,
-                               TIntObjectHashMap<FieldInfo> newFields, THashMap<String, MethodInfoContainer> newMethods,
+  private void addChangedMembers(TIntObjectHashMap<FieldInfo> oldFields, Map<String, MethodInfoContainer> oldMethods,
+                               TIntObjectHashMap<FieldInfo> newFields, Map<String, MethodInfoContainer> newMethods,
                                Collection<MemberInfo> members) throws CacheCorruptedException {
     for (final TIntObjectIterator<FieldInfo> it = oldFields.iterator(); it.hasNext();) {
       it.advance();

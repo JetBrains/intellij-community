@@ -329,15 +329,19 @@ public class BreakpointManager implements JDOMExternalizable {
     return myBreakpointsConfigurable.createDialog(initialBreakpoint, selectComponent);
   }
 
-  public LineBreakpoint addRunToCursorBreakpoint(Document document, int lineIndex) {
-    return LineBreakpoint.create(myProject, document, lineIndex, false);
+  @Nullable
+  public RunToCursorBreakpoint addRunToCursorBreakpoint(Document document, int lineIndex, final boolean ignoreBreakpoints) {
+    return RunToCursorBreakpoint.create(myProject, document, lineIndex, ignoreBreakpoints);
   }
 
+  @Nullable
   public LineBreakpoint addLineBreakpoint(Document document, int lineIndex) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    if (!LineBreakpoint.canAddLineBreakpoint(myProject, document, lineIndex)) return null;
+    if (!LineBreakpoint.canAddLineBreakpoint(myProject, document, lineIndex)) {
+      return null;
+    }
 
-    LineBreakpoint breakpoint = LineBreakpoint.create(myProject, document, lineIndex, true);
+    LineBreakpoint breakpoint = LineBreakpoint.create(myProject, document, lineIndex);
     if (breakpoint == null) {
       return null;
     }

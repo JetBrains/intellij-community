@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsFormatException;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -769,7 +768,7 @@ public class BackendCompilerWrapper {
   }
 
   private static Map<Module, Set<VirtualFile>> buildModuleToFilesMap(final CompileContext context, final VirtualFile[] files) {
-    final Map<Module, Set<VirtualFile>> map = new THashMap<Module, Set<VirtualFile>>();
+    final Map<Module, Set<VirtualFile>> map = new HashMap<Module, Set<VirtualFile>>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (VirtualFile file : files) {

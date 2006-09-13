@@ -4,7 +4,6 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
@@ -25,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
@@ -51,7 +51,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     super(project);
   }
 
-  private LineBreakpoint(Project project, RangeHighlighter highlighter) {
+  protected LineBreakpoint(Project project, RangeHighlighter highlighter) {
     super(project, highlighter);
   }
 
@@ -223,18 +223,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return PositionUtil.getContextElement(getSourcePosition());
   }
 
-  protected static LineBreakpoint create(Project project, Document document, int lineIndex, boolean isVisible) {
+  protected static LineBreakpoint create(Project project, Document document, int lineIndex) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null) return null;
 
     LineBreakpoint breakpoint = new LineBreakpoint(project, createHighlighter(project, document, lineIndex));
-
-    if(!isVisible) {
-      document.getMarkupModel(project).removeHighlighter(breakpoint.getHighlighter());
-    }
-
-    breakpoint.setVisible(isVisible);
-
     return (LineBreakpoint)breakpoint.init();
   }
 

@@ -560,6 +560,7 @@
         <action id="ForceStepOver" class="com.intellij.debugger.actions.ForceStepOverAction" icon="/actions/traceOver.png"/>
         <action id="ForceStepInto" class="com.intellij.debugger.actions.ForceStepIntoAction" icon="/actions/forceStepInto.png"/>
         <action id="RunToCursor" class="com.intellij.debugger.actions.RunToCursorAction" icon="/actions/runToCursor.png"/>
+        <action id="ForceRunToCursor" class="com.intellij.debugger.actions.ForceRunToCursorAction"/>
         <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="/actions/popFrame.png"/>
         <action id="Pause" class="com.intellij.debugger.actions.PauseAction" icon="/actions/pause.png"/>
         <action id="Resume" class="com.intellij.debugger.actions.ResumeAction" icon="/actions/resume.png"/>
@@ -816,6 +817,7 @@
       <separator/>
       <reference ref="EvaluateExpression"/>
       <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
       <reference ref="Debugger.AddToWatch"/>
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
