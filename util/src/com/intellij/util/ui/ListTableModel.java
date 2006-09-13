@@ -37,6 +37,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     myItems = tests;
     mySortByColumn = selectedColumn;
     setSortable(true);
+    resort();
   }
 
   public boolean isCellEditable(int rowIndex, int columnIndex) {
