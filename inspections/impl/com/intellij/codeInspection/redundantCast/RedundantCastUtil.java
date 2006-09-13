@@ -15,17 +15,16 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.jetbrains.annotations.Nullable;
 
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
@@ -52,6 +51,7 @@ public class RedundantCastUtil {
     return visitor.isRedundant();
   }
 
+  @Nullable
   private static PsiExpression deparenthesizeExpression(PsiExpression arg) {
     while (arg instanceof PsiParenthesizedExpression) arg = ((PsiParenthesizedExpression) arg).getExpression();
     return arg;
@@ -126,10 +126,12 @@ public class RedundantCastUtil {
 
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       processPossibleTypeCast(expression.getRExpression(), expression.getLExpression().getType());
+      super.visitAssignmentExpression(expression);
     }
 
     public void visitVariable(PsiVariable variable) {
       processPossibleTypeCast(variable.getInitializer(), variable.getType());
+      super.visitVariable(variable);
     }
 
     public void visitReturnStatement(PsiReturnStatement statement) {
@@ -141,6 +143,7 @@ public class RedundantCastUtil {
           processPossibleTypeCast(returnValue, returnType);
         }
       }
+      super.visitReturnStatement(statement);
     }
 
     public void visitBinaryExpression(PsiBinaryExpression expression) {
@@ -152,6 +155,7 @@ public class RedundantCastUtil {
         processBinaryExpressionOperand(lExpr, rExpr, binaryToken);
         processBinaryExpressionOperand(rExpr, lExpr, binaryToken);
       }
+      super.visitBinaryExpression(expression);
     }
 
     private void processBinaryExpressionOperand(final PsiExpression operand,
@@ -187,6 +191,7 @@ public class RedundantCastUtil {
       processCall(expression);
 
       checkForVirtual(expression);
+      super.visitMethodCallExpression(expression);
     }
 
     private void checkForVirtual(PsiMethodCallExpression methodCall) {
@@ -245,6 +250,7 @@ public class RedundantCastUtil {
 
     public void visitNewExpression(PsiNewExpression expression) {
       processCall(expression);
+      super.visitNewExpression(expression);
     }
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {
