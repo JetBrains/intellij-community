@@ -45,7 +45,7 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.IOException;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /*
  * @author: MYakovlev
@@ -65,7 +65,7 @@ public class FileTemplateConfigurable implements Configurable {
   private JPanel myTopPanel;
   private JEditorPane myDescriptionComponent;
   private boolean myModified = false;
-  private Vector<ChangeListener> myChangeListeners = new Vector<ChangeListener>();
+  private ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
   private VirtualFile myDefaultDescription;
   @NonNls private static final String CONTENT_TYPE_HTML = "text/html";
   @NonNls private static final String EMPTY_HTML = "<html></html>";
@@ -182,6 +182,7 @@ public class FileTemplateConfigurable implements Configurable {
         onNameChanged();
       }
     });
+    myMainPanel.setPreferredSize(new Dimension(400, 300));
     return myMainPanel;
   }
 
@@ -218,8 +219,7 @@ public class FileTemplateConfigurable implements Configurable {
 
   private void onNameChanged() {
     ChangeEvent event = new ChangeEvent(this);
-    for (int i = 0; i < myChangeListeners.size(); i++) {
-      ChangeListener changeListener = myChangeListeners.elementAt(i);
+    for (ChangeListener changeListener : myChangeListeners) {
       changeListener.stateChanged(event);
     }
   }
@@ -261,7 +261,7 @@ public class FileTemplateConfigurable implements Configurable {
       String extension = myExtensionField.getText();
       int lastDotIndex = extension.lastIndexOf(".");
       if (lastDotIndex >= 0) {
-        name = name + extension.substring(0, lastDotIndex + 1);
+        name += extension.substring(0, lastDotIndex + 1);
         extension = extension.substring(lastDotIndex + 1);
       }
       myTemplate.setName(name);
@@ -353,7 +353,7 @@ public class FileTemplateConfigurable implements Configurable {
     ((EditorEx)myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
   }
 
-  private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{FileTemplateTokenType.TEXT});
+  private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(FileTemplateTokenType.TEXT);
 
   private static class TemplateHighlighter extends SyntaxHighlighterBase {
     private Lexer myLexer;
