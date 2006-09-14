@@ -238,6 +238,9 @@ public class SmartEnterProcessor {
 
   private void commit() {
     PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+
+    //some psi operations may block the document, unblock here
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
   }
 
   private void plainEnter() {
