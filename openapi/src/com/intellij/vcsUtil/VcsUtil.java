@@ -87,6 +87,14 @@ public class VcsUtil
     markAsUpToDate(project, true, canonicalPath);
   }
 
+  /**
+   * Call "fileDirty" in the read action.
+   */
+  public static void markFileAsDirty( final Project project, final FilePath path )
+  {
+    final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance( project );
+    ApplicationManager.getApplication().runReadAction( new Runnable() { public void run() { mgr.fileDirty( path ); } } );
+  }
   public static String getCanonicalPath(File file) {
     if (SystemInfo.isFileSystemCaseSensitive) {
       return file.getAbsolutePath().replace(File.separatorChar, '/');
