@@ -310,7 +310,7 @@ public interface PsiClass
    *                  searched in the entire inheritance chain
    * @return true if the class is an inheritor, false otherwise
    */
-  boolean isInheritor(PsiClass baseClass, boolean checkDeep);
+  boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep);
 
   /**
    * Checks if this class is a deep inheritor of the specified base class possibly bypassing a class
