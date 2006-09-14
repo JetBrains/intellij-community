@@ -12,6 +12,7 @@ import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -36,7 +37,7 @@ public class DomUtil {
   }
 
   @Nullable
-  public static <T extends DomElement> T findByName(@NotNull Collection<T> list, @NotNull String name) {
+  public static <T extends DomElement> T findByName(@NotNull Collection<T> list, @NonNls @NotNull String name) {
     for (T element: list) {
       String elementName = element.getGenericInfo().getElementName(element);
       if (elementName != null && elementName.equals(name)) {
