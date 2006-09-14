@@ -230,6 +230,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
   }
 
+  @Nullable
   private ComponentItem getComponentToInsert() {
     return (myComponentToInsert != null)
            ? myComponentToInsert
@@ -267,7 +268,11 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
 
     myInsertedComponent = createInsertedComponent(myEditor, item);
+    setCursor(Cursor.getDefaultCursor());
     if (myInsertedComponent == null) {
+      if (!mySticky) {
+        PaletteManager.getInstance(myEditor.getProject()).clearActiveItem();
+      }
       return;
     }
 
@@ -493,6 +498,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     return result;
   }
 
+  @Nullable
   public static RadComponentFactory getRadComponentFactory(Project project, final String className) {
     ClassLoader loader = LoaderFactory.getInstance(project).getProjectClassLoader();
     Class componentClass;
@@ -505,6 +511,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     return getRadComponentFactory(componentClass);
   }
 
+  @Nullable
   public static RadComponentFactory getRadComponentFactory(Class componentClass) {
     while(componentClass != null) {
       RadComponentFactory c = myComponentClassMap.get(componentClass.getName());
