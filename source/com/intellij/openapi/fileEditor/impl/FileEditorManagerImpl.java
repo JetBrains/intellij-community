@@ -1364,7 +1364,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
 
     private void updateFile(final VirtualFile file) {
-      myQueue.queue(new Update("ProblemUpdate") {
+      myQueue.queue(new Update(file) {
         public void run() {
           if (isFileOpen(file)) {
             updateFileIcon(file);

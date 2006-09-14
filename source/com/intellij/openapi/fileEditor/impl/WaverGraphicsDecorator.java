@@ -23,8 +23,8 @@ import java.util.Map;
  */
 public class WaverGraphicsDecorator extends Graphics2D {
   public static int WAVE_ALPHA_KEY = 0xFE;
-  private Graphics2D myOriginal;
-  private Color myWaveColor;
+  private final Graphics2D myOriginal;
+  private final Color myWaveColor;
 
   public WaverGraphicsDecorator(final Graphics2D original, final Color waveColor) {
     myOriginal = original;
