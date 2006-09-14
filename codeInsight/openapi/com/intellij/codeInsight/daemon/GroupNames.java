@@ -68,6 +68,7 @@ public interface GroupNames {
 
   String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
   String HTML_INSPECTIONS = XmlBundle.message("html.inspections.group.name");
+  String JSP_INSPECTIONS = XmlBundle.message("jsp.inspections.group.name");
 
   String JAVAEE_GROUP_NAME = InspectionsBundle.message("group.names.javaee.issues");
 

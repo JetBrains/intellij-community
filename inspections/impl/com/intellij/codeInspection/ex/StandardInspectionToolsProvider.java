@@ -50,6 +50,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.xml.util.CheckEmptyScriptTagInspection;
 import com.intellij.xml.util.CheckImageSizeInspection;
 import com.intellij.xml.util.CheckValidXmlInScriptBodyInspection;
+import com.intellij.jsp.inspections.CheckJsfComponentUnderViewTagInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -106,6 +107,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       DuplicatePropertyInspection.class,
       UnusedMessageFormatParameterInspection.class,
       CheckImageSizeInspection.class,
+      CheckJsfComponentUnderViewTagInspection.class,
       CheckEmptyScriptTagInspection.class,
       CheckValidXmlInScriptBodyInspection.class,
       WrongPackageStatementInspection.class,
