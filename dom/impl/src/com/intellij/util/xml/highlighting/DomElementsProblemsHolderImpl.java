@@ -181,7 +181,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     if (element != null) {
       final List<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       for (final PsiReference reference : ResolveUtil.getReferencesFromProviders(element, aClass)) {
-        if (!reference.isSoft() && reference.resolve() == null) {
+        if (!reference.isSoft() && XmlHighlightVisitor.hasBadResolve(reference)) {
           list.add(new DomElementProblemDescriptorImpl(value, XmlHighlightVisitor.getErrorDescription(reference), HighlightSeverity.ERROR));
         }
       }
