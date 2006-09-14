@@ -37,7 +37,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -89,10 +88,9 @@ public class AddAction extends BasicAction {
     throws VcsException {
     log.debug("enter: batchPerform");
 
-    Collection exceptions = new ArrayList();
+    Collection<String> exceptions = new ArrayList<String>();
     SvnVcs vcs = SvnVcs.getInstance(project);
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    for (VirtualFile file : files) {
       try {
         SVNWCClient wcClient = vcs.createWCClient();
         wcClient.setEventHandler(new AddEventListener(project));
