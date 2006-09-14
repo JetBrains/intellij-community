@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
 
 public class FieldElement extends RepositoryTreeElement{
@@ -34,15 +35,7 @@ public class FieldElement extends RepositoryTreeElement{
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT){
-          return getFirstChildNode();
-        }
-        else if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT){
-          return getFirstChildNode();
-        }
-        else{
-          return null;
-        }
+        return PsiImplUtil.findDocComment(this);
 
       case ChildRole.MODIFIER_LIST:
         return TreeUtil.findChild(this, JavaElementType.MODIFIER_LIST);

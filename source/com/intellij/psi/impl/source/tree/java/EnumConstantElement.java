@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.lang.ASTNode;
 
 /**
@@ -26,15 +27,7 @@ public class EnumConstantElement extends RepositoryTreeElement {
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT){
-          return getFirstChildNode();
-        }
-        else if(getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT){
-          return getFirstChildNode();
-        }
-        else{
-          return null;
-        }
+        return PsiImplUtil.findDocComment(this);
 
       case ChildRole.NAME:
         return TreeUtil.findChild(this, JavaTokenType.IDENTIFIER);

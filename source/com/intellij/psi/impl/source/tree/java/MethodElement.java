@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.lang.ASTNode;
@@ -48,13 +49,7 @@ public class MethodElement extends RepositoryTreeElement{
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT
-            || getFirstChildNode().getElementType() == JavaTokenType.DOC_COMMENT){
-          return getFirstChildNode();
-        }
-        else{
-          return null;
-        }
+        return PsiImplUtil.findDocComment(this);
 
       case ChildRole.MODIFIER_LIST:
         return TreeUtil.findChild(this, MODIFIER_LIST);

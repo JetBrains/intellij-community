@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
@@ -199,12 +200,7 @@ public class ClassElement extends RepositoryTreeElement {
         return null;
 
       case ChildRole.DOC_COMMENT:
-        if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_COMMENT) {
-          return getFirstChildNode();
-        }
-        else {
-          return null;
-        }
+        return PsiImplUtil.findDocComment(this);
 
       case ChildRole.ENUM_CONSTANT_LIST_DELIMITER:
         if (!isEnum()) {

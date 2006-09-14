@@ -7,6 +7,10 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
@@ -15,7 +19,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -217,4 +223,21 @@ public static PsiType normalizeWildcardTypeByPosition(final PsiType type, final 
     return type;
   }
 }
+
+  @Nullable
+  public static ASTNode findDocComment(final CompositeElement element) {
+    TreeElement node = element.getFirstChildNode();
+    while(node != null && (ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) ||
+                           node.getElementType() == JavaTokenType.C_STYLE_COMMENT ||
+                           node.getElementType() == JavaTokenType.END_OF_LINE_COMMENT)) {
+      node = node.getTreeNext();
+    }
+
+    if (node != null && node.getElementType() == JavaDocElementType.DOC_COMMENT) {
+      return node;
+    }
+    else {
+      return null;
+    }
+  }
 }
