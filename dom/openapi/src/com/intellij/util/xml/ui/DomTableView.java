@@ -276,6 +276,7 @@ public class DomTableView extends JPanel implements DataProvider{
 
     public MyListTableModel() {
       super(ColumnInfo.EMPTY_ARRAY);
+      setSortable(false);
     }
 
     public Object getValueAt(final int rowIndex, final int columnIndex) {
