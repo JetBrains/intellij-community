@@ -6,6 +6,6 @@
 
 <target name="init">
     <property file="PropertyCompletion.properties"/>
-    <property name="single" value ="${my.property<caret>}"/>
+    <property name="single" value ="${my.property}<caret>"/>
 </target>
 </project>

@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -175,8 +176,8 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
       editorManager.closeFile(openFile);
     }
     myEditor = null;
-    myTempDirFixture.tearDown();
     myProjectFixture.tearDown();
+    myTempDirFixture.tearDown();
   }
 
   protected void configureByFiles(@NonNls String... filePaths) {
@@ -197,8 +198,24 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
   protected void configureByFile(VirtualFile file) {
     VirtualFile copy = myTempDirFixture.copyFile(file);
+    SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(copy.getPath());
+    try {
+      final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
+      outputStream.write(loader.newFileText.getBytes());
+      outputStream.close();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     if (myFile == null) myFile = myPsiManager.findFile(copy);
-    if (myEditor == null) myEditor = createEditor(copy);
+    if (myEditor == null) {
+      myEditor = createEditor(copy);
+      if (loader.caretMarker != null) myEditor.getCaretModel().moveToOffset(loader.caretMarker.getStartOffset());
+      if (loader.selStartMarker != null && loader.selEndMarker != null) {
+        myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
+      }
+    }
   }
 
   @Nullable
@@ -295,6 +312,46 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     return myFile;
   }
 
+  class SelectionAndCaretMarkupLoader {
+    final String newFileText;
+    final RangeMarker caretMarker;
+    final RangeMarker selStartMarker;
+    final RangeMarker selEndMarker;
+
+    SelectionAndCaretMarkupLoader(String fullPath) {
+      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+      TestCase.assertNotNull("Cannot find file " + fullPath, vFile);
+      String fileText = null;
+      try {
+        fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
+      }
+      catch (IOException e) {
+        TestCase.fail("Cannot load " + vFile);
+      }
+      Document document = EditorFactory.getInstance().createDocument(fileText);
+
+      int caretIndex = fileText.indexOf(CARET_MARKER);
+      int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
+      int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
+
+      caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
+      selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
+      selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
+
+      if (caretMarker != null) {
+        document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+      }
+      if (selStartMarker != null) {
+        document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
+      }
+      if (selEndMarker != null) {
+        document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
+      }
+
+      newFileText = document.getText();
+    }
+
+  }
   protected void checkResultByFile(@NonNls String filePath, boolean stripTrailingSpaces) {
 
     Project project = myProjectFixture.getProject();
@@ -306,41 +363,10 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    String fullPath = getTestDataPath() + filePath;
-
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    TestCase.assertNotNull("Cannot find file " + fullPath, vFile);
-    String fileText = null;
-    try {
-      fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
-    }
-    catch (IOException e) {
-      TestCase.fail("Cannot load " + vFile);
-    }
-    Document document = EditorFactory.getInstance().createDocument(fileText);
-
-    int caretIndex = fileText.indexOf(CARET_MARKER);
-    int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
-    int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
-
-    final RangeMarker caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-    final RangeMarker selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
-    final RangeMarker selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
-
-    if (caretMarker != null) {
-      document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
-    }
-    if (selStartMarker != null) {
-      document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
-    }
-    if (selEndMarker != null) {
-      document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
-    }
-
-    String newFileText = document.getText();
-    String newFileText1 = newFileText;
+    SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(getTestDataPath() + filePath);
+    String newFileText1 = loader.newFileText;
     if (stripTrailingSpaces) {
-      Document document1 = EditorFactory.getInstance().createDocument(newFileText);
+      Document document1 = EditorFactory.getInstance().createDocument(loader.newFileText);
       ((DocumentEx)document1).stripTrailingSpaces(false);
       newFileText1 = document1.getText();
     }
@@ -350,32 +376,32 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
     TestCase.assertEquals("Text mismatch in file " + filePath, newFileText1, text);
 
-    if (caretMarker != null) {
-      int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
-      int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
+    if (loader.caretMarker != null) {
+      int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());
+      int caretCol = loader.caretMarker.getStartOffset() - StringUtil.lineColToOffset(loader.newFileText, caretLine, 0);
 
       TestCase.assertEquals("caretLine", caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
       TestCase.assertEquals("caretColumn", caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
     }
 
-    if (selStartMarker != null && selEndMarker != null) {
-      int selStartLine = StringUtil.offsetToLineNumber(newFileText, selStartMarker.getStartOffset());
-      int selStartCol = selStartMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, selStartLine, 0);
+    if (loader.selStartMarker != null && loader.selEndMarker != null) {
+      int selStartLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.selStartMarker.getStartOffset());
+      int selStartCol = loader.selStartMarker.getStartOffset() - StringUtil.lineColToOffset(loader.newFileText, selStartLine, 0);
 
-      int selEndLine = StringUtil.offsetToLineNumber(newFileText, selEndMarker.getEndOffset());
-      int selEndCol = selEndMarker.getEndOffset() - StringUtil.lineColToOffset(newFileText, selEndLine, 0);
+      int selEndLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.selEndMarker.getEndOffset());
+      int selEndCol = loader.selEndMarker.getEndOffset() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
 
       TestCase.assertEquals("selectionStartLine", selStartLine + 1,
-                            StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
+                            StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
 
       TestCase.assertEquals("selectionStartCol", selStartCol + 1, myEditor.getSelectionModel().getSelectionStart() -
-                                                                  StringUtil.lineColToOffset(newFileText, selStartLine, 0) + 1);
+                                                                  StringUtil.lineColToOffset(loader.newFileText, selStartLine, 0) + 1);
 
       TestCase.assertEquals("selectionEndLine", selEndLine + 1,
-                            StringUtil.offsetToLineNumber(newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
+                            StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
 
       TestCase.assertEquals("selectionEndCol", selEndCol + 1,
-                            myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(newFileText, selEndLine, 0) + 1);
+                            myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0) + 1);
     }
     else {
       TestCase.assertTrue("has no selection", !myEditor.getSelectionModel().hasSelection());
