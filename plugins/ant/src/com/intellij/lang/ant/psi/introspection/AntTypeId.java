@@ -22,7 +22,7 @@ public class AntTypeId {
     final AntTypeId antTypeId = (AntTypeId)o;
 
     if (!myName.equals(antTypeId.myName)) return false;
-    if (myNamespace != null ? !myNamespace.equals(antTypeId.myNamespace) : antTypeId.myNamespace != null) return false;
+    if(myNamespace != null && antTypeId.myNamespace != null && !myNamespace.equals(antTypeId.myNamespace)) return false;
 
     return true;
   }

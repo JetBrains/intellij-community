@@ -44,7 +44,8 @@ public class AntElementFactory {
 
     final XmlTag tag = (XmlTag)element;
     AntTypeDefinition typeDef = null;
-    String typeName = tag.getName();
+    String typeNamespace = tag.getNamespacePrefix();
+    String typeName = tag.getLocalName();
 
     /**
      * Hardcode for <javadoc> task (IDEADEV-6731).
@@ -59,7 +60,7 @@ public class AntElementFactory {
       typeName = AntFileImpl.UNZIP_TAG;
     }
 
-    final AntTypeId id = new AntTypeId(typeName);
+    final AntTypeId id = new AntTypeId(typeName, typeNamespace);
     final AntFile file = parent.getAntFile();
 
     final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
