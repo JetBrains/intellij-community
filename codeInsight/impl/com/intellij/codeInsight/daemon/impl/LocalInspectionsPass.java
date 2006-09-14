@@ -294,19 +294,21 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     HighlightUtil.addErrorsToWolf(infos, myFile, false);
   }
 
-  private void addHighlightsFromDescriptors(final List<HighlightInfo> infos) {
+  private void addHighlightsFromDescriptors(final List<HighlightInfo> toInfos) {
+    Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
     for (int i = 0; i < myDescriptors.size(); i++) {
       ProblemDescriptor descriptor = myDescriptors.get(i);
       LocalInspectionTool tool = myTools.get(i);
       final HighlightInfoType level = myLevels.get(i);
-      HighlightInfo highlightInfo = createHighlightInfo(descriptor, tool, level);
+      HighlightInfo highlightInfo = createHighlightInfo(descriptor, tool, level, emptyActionRegistered);
       if (highlightInfo != null) {
-        infos.add(highlightInfo);
+        toInfos.add(highlightInfo);
       }
     }
   }
 
   private void addHighlightsFromInjectedPsiProblems(final List<HighlightInfo> infos) {
+    Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     //noinspection ForLoopReplaceableByForEach
@@ -323,13 +325,13 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         ProblemDescriptor descriptor = result.foundProblems.get(j);
         if (InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), tool)) continue;
         HighlightInfoType level = highlightTypeFromDescriptor(descriptor, tool, severity);
-        HighlightInfo info = createHighlightInfo(descriptor, tool, level);
+        HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered);
         if (info == null) continue;
         TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
         if (editable == null) continue;
         HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()), info.description, info.toolTip);
         if (patched != null) {
-          registerQuickFixes(tool, injectedPsi, descriptor, patched);
+          registerQuickFixes(tool, injectedPsi, descriptor, patched,emptyActionRegistered);
           infos.add(patched);
         }
       }
@@ -337,7 +339,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo createHighlightInfo(final ProblemDescriptor descriptor, final LocalInspectionTool tool, final HighlightInfoType level) {
+  private HighlightInfo createHighlightInfo(final ProblemDescriptor descriptor, final LocalInspectionTool tool, final HighlightInfoType level,
+                                            final Set<TextRange> emptyActionRegistered) {
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return null;
     @NonNls String message = renderDescriptionMessage(descriptor);
@@ -350,20 +353,22 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     String plainMessage = message.startsWith("<html>") ? XmlUtil.unescape(message.replaceAll("<[^>]*>", "")) : message;
     @NonNls String tooltip = message.startsWith("<html>") ? message : "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
-    registerQuickFixes(tool, psiElement, descriptor, highlightInfo);
+    registerQuickFixes(tool, psiElement, descriptor, highlightInfo, emptyActionRegistered);
     return highlightInfo;
   }
 
   private static void registerQuickFixes(final LocalInspectionTool tool, final PsiElement psiElement, final ProblemDescriptor descriptor,
-                                  final HighlightInfo highlightInfo) {
+                                         final HighlightInfo highlightInfo, final Set<TextRange> emptyActionRegistered) {
     List<IntentionAction> options = getStandardIntentionOptions(tool, descriptor, psiElement);
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {
       for (int k = 0; k < fixes.length; k++) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options, tool.getDisplayName());
       }
-    } else {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options, tool.getDisplayName());
+    }
+    else if (emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
+      EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName(), options);
+      QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, options, tool.getDisplayName());
     }
   }
 

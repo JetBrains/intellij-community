@@ -22,10 +22,12 @@ public class EmptyIntentionAction implements IntentionAction{
     myOptions = options;
   }
 
+  @NotNull
   public String getText() {
     return InspectionsBundle.message("inspection.options.action.text", myName);
   }
 
+  @NotNull
   public String getFamilyName() {
     return myName;
   }
