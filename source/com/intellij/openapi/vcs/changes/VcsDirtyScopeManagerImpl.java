@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,6 +105,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   public void fileDirty(FilePath file) {
     if (!myIsInitialized || myIsDisposed) return;
 
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     VirtualFile root = VcsDirtyScope.getRootFor(myIndex, file);
     if (root != null) {
       getScope(root).addDirtyFile(file);
