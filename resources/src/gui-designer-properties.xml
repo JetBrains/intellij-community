@@ -162,6 +162,7 @@
       <property name="actionCommand"/>
       <property name="maximumRowCount"/>
     </expert-properties>
+    <inplace-property name="model"/>
   </class>
 
   <class name="javax.swing.JSplitPane">
