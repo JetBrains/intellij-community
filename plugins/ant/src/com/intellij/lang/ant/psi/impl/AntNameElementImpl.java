@@ -7,7 +7,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class AntNameElementImpl extends AntElementImpl {
 
@@ -18,11 +17,6 @@ class AntNameElementImpl extends AntElementImpl {
   @NotNull
   public XmlAttributeValue getSourceElement() {
     return (XmlAttributeValue)super.getSourceElement();
-  }
-
-  @Nullable
-  public String getText() {
-    return getName();
   }
 
   public String getName() {

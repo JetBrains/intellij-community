@@ -352,7 +352,8 @@ public class TypedHandler implements TypedActionHandler {
       autoPopupController.autoPopupJavadocLookup(editor);
     }
 
-    if (charTyped == '<' && file instanceof XmlFile) {
+    final boolean isXmlLikeFile = file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
+    if ((charTyped == '<' || charTyped == '{' || charTyped == '/') && isXmlLikeFile) {
       autoPopupController.autoPopupXmlLookup(editor);
     }
 
@@ -457,7 +458,7 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   //need custom handler, since brace matcher cannot be used
-  private boolean handleJavaGT(final Editor editor) {
+  private static boolean handleJavaGT(final Editor editor) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -498,7 +499,7 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   //need custom handler, since brace matcher cannot be used
-  private void handleAfterJavaLT(final Editor editor) {
+  private static void handleAfterJavaLT(final Editor editor) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return;
 
     int offset = editor.getCaretModel().getOffset();
@@ -530,7 +531,7 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private boolean handleELOpeningBrace(final Editor editor, final PsiFile file, final Project project) {
+  private static boolean handleELOpeningBrace(final Editor editor, final PsiFile file, final Project project) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement elementAt = file.findElementAt(offset-1);
@@ -548,7 +549,7 @@ public class TypedHandler implements TypedActionHandler {
     return false;
   }
 
-  private boolean handleELClosingBrace(final Editor editor, final PsiFile file, final Project project) {
+  private static boolean handleELClosingBrace(final Editor editor, final PsiFile file, final Project project) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final int offset = editor.getCaretModel().getOffset();
     PsiElement elementAt = file.findElementAt(offset);
@@ -566,7 +567,7 @@ public class TypedHandler implements TypedActionHandler {
     return false;
   }
 
-  private void handleJspEqual(Project project, Editor editor) {
+  private static void handleJspEqual(Project project, Editor editor) {
     final CharSequence chars = editor.getDocument().getCharsSequence();
     int current = editor.getCaretModel().getOffset();
 
@@ -592,7 +593,7 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private boolean handleSemicolon(Editor editor, FileType fileType) {
+  private static boolean handleSemicolon(Editor editor, FileType fileType) {
     if (fileType != StdFileTypes.JAVA) return false;
     int offset = editor.getCaretModel().getOffset();
     if (offset == editor.getDocument().getTextLength()) return false;
@@ -605,7 +606,7 @@ public class TypedHandler implements TypedActionHandler {
     return true;
   }
 
-  private boolean handleXmlSlashInEmptyEnd(Project project, Editor editor){
+  private static boolean handleXmlSlashInEmptyEnd(Project project, Editor editor){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -637,7 +638,7 @@ public class TypedHandler implements TypedActionHandler {
     return false;
   }
 
-  private void handleXmlSlash(Project project, Editor editor){
+  private static void handleXmlSlash(Project project, Editor editor){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -671,7 +672,7 @@ public class TypedHandler implements TypedActionHandler {
     EditorModificationUtil.insertStringAtCaret(editor, ">");
   }
 
-  private boolean handleXmlGreater(Project project, Editor editor, FileType fileType){
+  private static boolean handleXmlGreater(Project project, Editor editor, FileType fileType){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -761,7 +762,7 @@ public class TypedHandler implements TypedActionHandler {
     return false;
   }
 
-  private void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
+  private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
     int offset = editor.getCaretModel().getOffset();
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
 
@@ -812,7 +813,7 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private boolean handleRParen(Editor editor, FileType fileType, char rightParen, char leftParen){
+  private static boolean handleRParen(Editor editor, FileType fileType, char rightParen, char leftParen){
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -888,13 +889,13 @@ public class TypedHandler implements TypedActionHandler {
 
     if (isOpeningQuote(editor, quoteHandler, offset - 1) &&
         hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
-      editor.getDocument().insertString(offset, "" + quote);
+      editor.getDocument().insertString(offset, String.valueOf(quote));
     }
 
     return true;
   }
 
-  private boolean isClosingQuote(Editor editor, QuoteHandler quoteHandler, int offset) {
+  private static boolean isClosingQuote(Editor editor, QuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
     if (iterator.atEnd()){
       LOG.assertTrue(false);
@@ -904,7 +905,7 @@ public class TypedHandler implements TypedActionHandler {
     return quoteHandler.isClosingQuote(iterator,offset);
   }
 
-  private boolean isOpeningQuote(Editor editor, QuoteHandler quoteHandler, int offset) {
+  private static boolean isOpeningQuote(Editor editor, QuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
     if (iterator.atEnd()){
       LOG.assertTrue(false);
@@ -914,7 +915,7 @@ public class TypedHandler implements TypedActionHandler {
     return quoteHandler.isOpeningQuote(iterator, offset);
   }
 
-  private boolean hasNonClosedLiterals(Editor editor, QuoteHandler quoteHandler, int offset) {
+  private static boolean hasNonClosedLiterals(Editor editor, QuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     if (iterator.atEnd()) {
       LOG.assertTrue(false);
@@ -924,16 +925,15 @@ public class TypedHandler implements TypedActionHandler {
     return quoteHandler.hasNonClosedLiteral(editor, iterator, offset);
   }
 
-  private boolean isTypingEscapeQuote(Editor editor, QuoteHandler quoteHandler, int offset){
+  private static boolean isTypingEscapeQuote(Editor editor, QuoteHandler quoteHandler, int offset){
     if (offset == 0) return false;
     CharSequence chars = editor.getDocument().getCharsSequence();
     int offset1 = CharArrayUtil.shiftBackward(chars, offset - 1, "\\");
     int slashCount = (offset - 1) - offset1;
-    if ((slashCount % 2) == 0) return false;
-    return isInsideLiteral(editor, quoteHandler, offset);
+    return (slashCount % 2) != 0 && isInsideLiteral(editor, quoteHandler, offset);
   }
 
-  private boolean isInsideLiteral(Editor editor, QuoteHandler quoteHandler, int offset){
+  private static boolean isInsideLiteral(Editor editor, QuoteHandler quoteHandler, int offset){
     if (offset == 0) return false;
 
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset - 1);
@@ -945,7 +945,7 @@ public class TypedHandler implements TypedActionHandler {
     return quoteHandler.isInsideLiteral(iterator);
   }
 
-  private void indentClosingBrace(final Project project, final Editor editor){
+  private static void indentClosingBrace(final Project project, final Editor editor){
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.AUTOINDENT_CLOSING_BRACE) return;
 
@@ -979,7 +979,7 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  private void indentOpenedBrace(final Project project, final Editor editor){
+  private static void indentOpenedBrace(final Project project, final Editor editor){
     final int offset = editor.getCaretModel().getOffset() - 1;
     final Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
