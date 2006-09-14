@@ -1,18 +1,23 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.psi.AntImport;
-import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.Set;
 
 public class AntFileReference extends AntGenericReference {
 
@@ -38,6 +43,7 @@ public class AntFileReference extends AntGenericReference {
     return antElement;
   }
 
+  @Nullable
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiFile) {
       final PsiFile psiFile = (PsiFile)element;
@@ -67,8 +73,34 @@ public class AntFileReference extends AntGenericReference {
     return AntBundle.message("file.doesnt.exist", getCanonicalRepresentationText());
   }
 
-  @NotNull
-  public IntentionAction[] getFixes() {
-    return super.getFixes();
+  public Object[] getVariants() {
+    final AntStructuredElement se = getElement();
+    if (!(se instanceof AntProperty)) return ourEmptyIntentions;
+    final Set<PsiElement> propFiles = PsiElementSetSpinAllocator.alloc();
+    try {
+      final AntFile antFile = se.getAntFile();
+      VirtualFile path = antFile.getContainingPath();
+      if (path != null) {
+        final AntProject project = antFile.getAntProject();
+        final String baseDir = (project == null) ? null : project.getBaseDir();
+        if (baseDir != null && baseDir.length() > 0) {
+          path = LocalFileSystem.getInstance()
+            .findFileByPath(new File(path.getPath(), baseDir).getAbsolutePath().replace(File.separatorChar, '/'));
+        }
+        if (path != null) {
+          for (final VirtualFile file : path.getChildren()) {
+            final PsiFile psiFile = se.getManager().findFile(file);
+            if (psiFile instanceof PropertiesFile) {
+              propFiles.add(psiFile);
+            }
+          }
+        }
+      }
+      final int size = propFiles.size();
+      return (size == 0) ? ourEmptyIntentions : propFiles.toArray(new PropertiesFile[size]);
+    }
+    finally {
+      PsiElementSetSpinAllocator.dispose(propFiles);
+    }
   }
 }
