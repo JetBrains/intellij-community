@@ -140,7 +140,7 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   }
 
   private void resort() {
-    if (myIsSortable) {
+    if (myIsSortable && mySortByColumn >= 0 && mySortByColumn < myColumnInfos.length) {
       final ColumnInfo columnInfo = myColumnInfos[mySortByColumn];
       if (columnInfo.isSortable()) {
         columnInfo.sort(myItems);
