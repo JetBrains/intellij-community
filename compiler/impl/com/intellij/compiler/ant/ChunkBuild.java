@@ -3,6 +3,7 @@ package com.intellij.compiler.ant;
 import com.intellij.compiler.ant.j2ee.J2EEBuildTarget;
 import com.intellij.compiler.ant.j2ee.J2EEExplodedBuildTarget;
 import com.intellij.compiler.ant.j2ee.J2EEJarBuildTarget;
+import com.intellij.compiler.ant.j2ee.J2EEBuildUtil;
 import com.intellij.compiler.ant.taskdefs.Path;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -10,6 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Pair;
+import com.intellij.javaee.make.ModuleBuildProperties;
+import com.intellij.javaee.make.BuildRecipe;
+import com.intellij.javaee.make.BuildInstructionVisitor;
+import com.intellij.javaee.make.J2EEModuleBuildInstruction;
 
 import java.io.File;
 
@@ -66,12 +74,50 @@ public class ChunkBuild extends CompositeGenerator{
 
     if (chunk.isJ2EE()) {
       add(new J2EEBuildTarget(chunk, chunkBaseDir, genOptions));
-      add(new J2EEExplodedBuildTarget(chunk, chunkBaseDir, genOptions));
-      add(new J2EEJarBuildTarget(chunk, chunkBaseDir, genOptions));
+      final Pair<Boolean, Boolean> explodedAndJarEnabled = isExplodedAndJarEnabled(project, chunk);
+      if (explodedAndJarEnabled.getFirst()) {
+        add(new J2EEExplodedBuildTarget(chunk, chunkBaseDir, genOptions));
+      }
+      if (explodedAndJarEnabled.getSecond()) {
+        add(new J2EEJarBuildTarget(chunk, chunkBaseDir, genOptions));
+      }
     }
   }
 
-  private Generator createBootclasspath(ModuleChunk chunk) {
+  private static Pair<Boolean, Boolean> isExplodedAndJarEnabled(final Project project, final ModuleChunk chunk) {
+    final Module module = chunk.getModules()[0];
+    final ModuleBuildProperties buildProperties = ModuleBuildProperties.getInstance(module);
+    boolean explodedEnabled = buildProperties.isExplodedEnabled();
+    boolean jarEnabled = buildProperties.isJarEnabled();
+
+    if (!explodedEnabled || !jarEnabled) {
+      final Module[] modules = ModuleManager.getInstance(project).getModules();
+      for (final Module parentModule : modules) {
+        if (parentModule.getModuleType().isJ2EE() && isModuleIncludedInBuild(module, parentModule)) {
+          final ModuleBuildProperties parentBuildProperties = ModuleBuildProperties.getInstance(parentModule);
+          if (parentBuildProperties.isJarEnabled()) {
+            jarEnabled = true;
+          }
+          if (parentBuildProperties.isExplodedEnabled()) {
+            explodedEnabled = true;
+          }
+        }
+      }
+    }
+
+    return Pair.create(explodedEnabled, jarEnabled);
+  }
+
+  private static boolean isModuleIncludedInBuild(final Module includedModule, final Module parentModule) {
+    final BuildRecipe instructions = J2EEBuildUtil.getBuildInstructions(parentModule);
+    return !instructions.visitInstructions(new BuildInstructionVisitor() {
+      public boolean visitJ2EEModuleBuildInstruction(J2EEModuleBuildInstruction instruction) throws Exception {
+        return instruction.isExternalDependencyInstruction() || instruction.getBuildProperties().getModule() != includedModule;
+      }
+    }, false);
+  }
+
+  private static Generator createBootclasspath(ModuleChunk chunk) {
     final Path bootclasspath = new Path(BuildProperties.getBootClasspathProperty(chunk.getName()));
     bootclasspath.add(new Comment(CompilerBundle.message("generated.ant.build.bootclasspath.comment")));
     return bootclasspath;
