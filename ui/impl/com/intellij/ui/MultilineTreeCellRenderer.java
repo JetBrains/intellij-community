@@ -1,6 +1,5 @@
 package com.intellij.ui;
 
-import com.intellij.ui.plaf.beg.BegTreeHandleUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -120,7 +119,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
     // draw border
     if (mySelected) {
       g.setColor(UIUtil.getTreeSelectionBorderColor());
-      BegTreeHandleUtil.drawDottedRectangle(g, borderX, borderY, borderX + borderW - 1, borderY + borderH - 1);
+      UIUtil.drawDottedRectangle(g, borderX, borderY, borderX + borderW - 1, borderY + borderH - 1);
     }
 
     // paint text

@@ -127,7 +127,7 @@ public class BegComboBoxButton extends MetalComboBoxButton {
       if (hasFocus()){
         g.setColor(MetalLookAndFeel.getFocusColor());
 //            g.drawRect( left - 1, top - 1, width + 3, height + 1 );
-        BegTreeHandleUtil.drawDottedRectangle(g, left - 1, top - 1, left + width, top + height);
+        UIUtil.drawDottedRectangle(g, left - 1, top - 1, left + width, top + height);
       }
     }
 

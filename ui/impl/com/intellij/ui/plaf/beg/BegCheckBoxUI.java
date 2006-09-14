@@ -1,5 +1,7 @@
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.util.ui.UIUtil;
+
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -14,6 +16,6 @@ public class BegCheckBoxUI extends MetalCheckBoxUI {
 
   protected void paintFocus(Graphics g, Rectangle t, Dimension d) {
     g.setColor(getFocusColor());
-    BegTreeHandleUtil.drawDottedRectangle(g, t.x - 2, t.y - 1, t.x + t.width + 1, t.y + t.height);
+    UIUtil.drawDottedRectangle(g, t.x - 2, t.y - 1, t.x + t.width + 1, t.y + t.height);
   }
 }

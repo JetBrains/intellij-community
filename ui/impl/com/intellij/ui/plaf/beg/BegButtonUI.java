@@ -1,5 +1,7 @@
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalButtonUI;
@@ -93,6 +95,6 @@ public class BegButtonUI extends MetalButtonUI {
 
     g.setColor(getFocusColor());
 //    g.drawRect(focusRect.x - 1, focusRect.y - 1, focusRect.width + 1, focusRect.height + 1);
-    BegTreeHandleUtil.drawDottedRectangle(g, viewRect.x, viewRect.y, viewRect.x + viewRect.width, viewRect.y + viewRect.height);
+    UIUtil.drawDottedRectangle(g, viewRect.x, viewRect.y, viewRect.x + viewRect.width, viewRect.y + viewRect.height);
   }
 }

@@ -53,11 +53,11 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentFactoryImpl;
 import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.ui.errorView.impl.ErrorViewFactoryImpl;
-import com.intellij.ui.plaf.beg.BegTreeHandleUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +181,7 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
     }
 
     public void drawDottedRectangle(Graphics g, int x, int y, int i, int i1) {
-      BegTreeHandleUtil.drawDottedRectangle(g,x,y,i,i1);
+      UIUtil.drawDottedRectangle(g,x,y,i,i1);
     }
 
     public void installSmartExpander(JTree tree) {

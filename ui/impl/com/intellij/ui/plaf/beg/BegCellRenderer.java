@@ -1,6 +1,8 @@
 
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.TreeCellRenderer;
@@ -189,7 +191,7 @@ public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCel
         g.setColor(color);
         int j1 = getWidth() - 1;
         int k1 = getHeight() - 1;
-        BegTreeHandleUtil.drawDottedRectangle(g, i1 > 0 ? i1 - 1 : i1, 0, j1, k1);
+        UIUtil.drawDottedRectangle(g, i1 > 0 ? i1 - 1 : i1, 0, j1, k1);
       }
     }
   }

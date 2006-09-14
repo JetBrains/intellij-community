@@ -2,7 +2,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.ui.plaf.beg.BegTreeHandleUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 
@@ -309,7 +308,7 @@ public class HighlightableComponent extends JComponent {
 
     if (myIsSelected){
       g.setColor(UIUtil.getTreeSelectionBorderColor());
-      BegTreeHandleUtil.drawDottedRectangle(g, textOffset - 2, 0, getWidth() - 1, getHeight() - 1);
+      UIUtil.drawDottedRectangle(g, textOffset - 2, 0, getWidth() - 1, getHeight() - 1);
     }
 
     super.paintComponent(g);
