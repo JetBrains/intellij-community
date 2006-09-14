@@ -74,9 +74,7 @@ public final class LoadTextUtil {
       result = buffer;
     }
     else {
-      char[] chars = new char[dst];
-      System.arraycopy(buffer.array(), 0, chars, 0, dst);
-      result = new CharArrayCharSequence(chars);
+      result = buffer.subSequence(0, dst);
     }
     return Pair.create(result, detectedLineSeparator);
   }

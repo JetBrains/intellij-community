@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -14,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 /**
  * @author max
@@ -27,6 +27,7 @@ public class FileSystemSynchronizer {
   private Collection/*<VirtualFile>*/[] myUpdateSets;
 
   private boolean myIsCancelable = false;
+  @NonNls private static final String LOAD_FILES_THREAD_NAME = "File Content Loading Thread";
 
   public void registerCacheUpdater(@NotNull CacheUpdater cacheUpdater) {
     myUpdaters.add(cacheUpdater);
@@ -123,20 +124,13 @@ public class FileSystemSynchronizer {
 
     int totalFiles = myFilesToUpdate.size();
     int count = 0;
-    final BlockingQueue<FileContent> contentQueue = new ArrayBlockingQueue<FileContent>(16);
+    final MyContentQueue contentQueue = new MyContentQueue();
 
     final Thread contentLoadingThread = new Thread(new Runnable() {
       public void run() {
         try {
           for (VirtualFile file : myFilesToUpdate) {
-            FileContent content = new FileContent(file);
-            try {
-              content.getPhysicalBytes();
-            }
-            catch (IOException e) {
-              content.setEmptyContent();
-            }
-            contentQueue.put(content);
+            contentQueue.put(file);
           }
           contentQueue.put(new FileContent(null));
         }
@@ -144,7 +138,7 @@ public class FileSystemSynchronizer {
           LOG.error(e);
         }
       }
-    }, "File Content Loading Thread");
+    }, LOAD_FILES_THREAD_NAME);
     contentLoadingThread.setPriority(Thread.currentThread().getPriority());
     contentLoadingThread.start();
 
@@ -218,5 +212,56 @@ public class FileSystemSynchronizer {
     myUpdaters.clear();
     myFilesToUpdate.clear();
     myUpdateSets = null;
+  }
+
+  @SuppressWarnings({"SynchronizeOnThis"})
+  private static class MyContentQueue extends ArrayBlockingQueue<FileContent> {
+    private long totalSize;
+    private static final long SIZE_THRESHOLD = 1024*1024;
+
+    public MyContentQueue() {
+      super(256);
+      totalSize = 0;
+    }
+
+    @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
+    public void put(VirtualFile file) throws InterruptedException {
+      FileContent content;
+      synchronized (this) {
+        content = new FileContent(file);
+        try {
+          while (totalSize > SIZE_THRESHOLD) {
+            wait();
+          }
+
+          totalSize += content.getPhysicalBytes().length;
+        }
+        catch (IOException e) {
+          content.setEmptyContent();
+        }
+      }
+      
+      put(content);
+    }
+
+
+    public FileContent take() throws InterruptedException {
+      final FileContent result = super.take();
+
+      synchronized (this) {
+        try {
+          if (result.getVirtualFile() == null) return result;
+          totalSize -= result.getPhysicalBytes().length;
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+        finally {
+          notifyAll();
+        }
+      }
+
+      return result;
+    }
   }
 }
