@@ -112,10 +112,12 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     ArrayList<BasePsiNode<? extends PsiElement>> result = new ArrayList<BasePsiNode<? extends PsiElement>>();
     HashSet<PsiFile> psiFiles = new HashSet<PsiFile>(Arrays.asList(forms));
     for (final AbstractTreeNode child : children) {
-      //noinspection unchecked
-      BasePsiNode<? extends PsiElement> treeNode = (BasePsiNode<? extends PsiElement>)child;
-      //noinspection SuspiciousMethodCalls
-      if (psiFiles.contains(treeNode.getValue())) result.add(treeNode);
+      if (child instanceof BasePsiNode) {
+        //noinspection unchecked
+        BasePsiNode<? extends PsiElement> treeNode = (BasePsiNode<? extends PsiElement>)child;
+        //noinspection SuspiciousMethodCalls
+        if (psiFiles.contains(treeNode.getValue())) result.add(treeNode);
+      }
     }
     return result;
   }
