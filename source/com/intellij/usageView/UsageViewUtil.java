@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
@@ -16,11 +17,10 @@ import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import gnu.trove.THashSet;
 
 import java.util.Arrays;
-import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  *
@@ -36,14 +36,14 @@ public class UsageViewUtil {
       final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)element;
       final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
       if (metaData instanceof PsiPresentableMetaData) {
-        return ((PsiPresentableMetaData)metaData).getTypeName() + " " + metaData.getName();
+        return ((PsiPresentableMetaData)metaData).getTypeName() + " " + getMetaDataName(metaData);
       }
     }
 
     if (element instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)element;
       final PsiMetaDataBase metaData = xmlTag.getMetaData();
-      final String name = metaData != null ? metaData.getName() : xmlTag.getName();
+      final String name = metaData != null ? getMetaDataName(metaData) : xmlTag.getName();
       return UsageViewBundle.message("usage.target.xml.tag.of.file", ((metaData == null) ? "<" + name + ">" : name), xmlTag.getContainingFile().getName());
     }
     else if (element instanceof XmlAttributeValue) {
@@ -55,6 +55,11 @@ public class UsageViewUtil {
     }
 
     return "";
+  }
+
+  private static String getMetaDataName(final PsiMetaDataBase metaData) {                    
+    final String name = metaData.getName();
+    return StringUtil.isEmpty(name) ? "''" : name;
   }
 
   public static String getPackageName(PsiDirectory directory, boolean includeRootDir) {
@@ -122,7 +127,7 @@ public class UsageViewUtil {
     String ret = "";
     if (psiElement instanceof PsiMetaBaseOwner) {
       PsiMetaDataBase metaData = ((PsiMetaBaseOwner)psiElement).getMetaData();
-      if (metaData!=null) return metaData.getName();
+      if (metaData!=null) return getMetaDataName(metaData);
     }
 
     if (psiElement instanceof PsiNamedElement) {
@@ -222,7 +227,7 @@ public class UsageViewUtil {
     if (psiElement instanceof PsiMetaBaseOwner) {
       final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)psiElement;
       final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
-      if (metaData != null) return metaData.getName();
+      if (metaData != null) return getMetaDataName(metaData);
     }
 
     if (psiElement instanceof XmlTag) {

@@ -11,6 +11,7 @@ import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -42,8 +43,7 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
 
   @NonNls
   public final String getName() {
-    final String name = myNameElement.getStringValue();
-    return name != null? name : "<unnamed>";
+    return StringUtil.notNullize(myNameElement.getStringValue());
   }
 
   public void init(PsiElement element) {
