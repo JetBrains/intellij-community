@@ -83,6 +83,12 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   @Override
+  protected void dispose() {
+    super.dispose();
+    myBrowser.dispose();
+  }
+
+  @Override
   protected void doOKAction() {
     super.doOKAction();
     doRollback();

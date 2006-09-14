@@ -103,6 +103,10 @@ public class CommittedChangesBrowser extends JPanel {
     updateBySelectionChange();
   }
 
+  public void dispose() {
+    myChangesView.dispose();
+  }
+
   private void updateBySelectionChange() {
     final int idx = myChangeListsView.getSelectionModel().getLeadSelectionIndex();
     CommittedChangeList list = idx >= 0 ? myTableModel.getItems().get(idx) : null;

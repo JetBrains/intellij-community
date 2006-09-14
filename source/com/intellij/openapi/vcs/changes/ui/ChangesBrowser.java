@@ -37,6 +37,9 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private final JPanel myHeaderPanel;
   private boolean myReadOnly;
   private DefaultActionGroup myToolBarGroup;
+  private ChangeListListener myChangeListListener = new MyChangeListListener();
+  private ChangesBrowser.ChangeListChooser myChangeListChooser;
+  private boolean myShowingAllChangeLists;
 
   public void setChangesToDisplay(final List<Change> changes) {
     myViewer.setChangesToDisplay(changes);
@@ -65,6 +68,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     myAllChanges = new ArrayList<Change>();
     myReadOnly = !showChangelistChooser;
 
+    myShowingAllChangeLists = changeLists.equals(ChangeListManager.getInstance(project).getChangeLists());
     for (ChangeList list : changeLists) {
       myAllChanges.addAll(list.getChanges());
       if (list instanceof LocalChangeList && initialListSelection == null) {
@@ -105,7 +109,8 @@ public class ChangesBrowser extends JPanel implements DataProvider {
 
     myHeaderPanel = new JPanel(new BorderLayout());
     if (showChangelistChooser) {
-      myHeaderPanel.add(new ChangeListChooser(changeLists), BorderLayout.EAST);
+      myChangeListChooser = new ChangeListChooser(changeLists);
+      myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
     }
     myHeaderPanel.add(createToolbar(), BorderLayout.WEST);
     add(myHeaderPanel, BorderLayout.NORTH);
@@ -113,6 +118,11 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     myViewer.installPopupHandler(myToolBarGroup);
 
     myViewer.setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
+    ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+  }
+
+  public void dispose() {
+    ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
   }
 
   public void addRollbackAction() {
@@ -227,10 +237,12 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   }
 
   private class ChangeListChooser extends JPanel {
+    private JComboBox myChooser;
+
     public ChangeListChooser(List<? extends ChangeList> lists) {
       super(new BorderLayout());
-      final JComboBox chooser = new JComboBox(lists.toArray());
-      chooser.setRenderer(new ColoredListCellRenderer() {
+      myChooser = new JComboBox();
+      myChooser.setRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           final LocalChangeList l = ((LocalChangeList)value);
           append(l.getName(),
@@ -238,23 +250,28 @@ public class ChangesBrowser extends JPanel implements DataProvider {
         }
       });
 
-      chooser.addItemListener(new ItemListener() {
+      myChooser.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED) {
-            setSelectedList((LocalChangeList)chooser.getSelectedItem());
+            setSelectedList((LocalChangeList)myChooser.getSelectedItem());
           }
         }
       });
 
-      chooser.setSelectedItem(mySelectedChangeList);
-      chooser.setEditable(false);
-      chooser.setEnabled(lists.size() > 1);
-      add(chooser, BorderLayout.EAST);
+      updateLists(lists);
+      myChooser.setEditable(false);
+      add(myChooser, BorderLayout.EAST);
 
       JLabel label = new JLabel(VcsBundle.message("commit.dialog.changelist.label"));
       label.setDisplayedMnemonic('l');
-      label.setLabelFor(chooser);
+      label.setLabelFor(myChooser);
       add(label, BorderLayout.CENTER);
+    }
+
+    public void updateLists(List<? extends ChangeList> lists) {
+      myChooser.setModel(new DefaultComboBoxModel(lists.toArray()));
+      myChooser.setEnabled(lists.size() > 1);
+      myChooser.setSelectedItem(mySelectedChangeList);
     }
   }
 
@@ -307,7 +324,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     final List<Change> list = filterBySelectedChangeList(myAllChanges);
     Collections.sort(list, new Comparator<Change>() {
       public int compare(final Change o1, final Change o2) {
-        return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
+        return ChangesUtil.getFilePath(o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath(o2).getName());
       }
     });
     return list;
@@ -391,6 +408,32 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     public void update(AnActionEvent e) {
       Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
       e.getPresentation().setEnabled(changes != null);
+    }
+  }
+
+  private class MyChangeListListener implements ChangeListListener {
+    public void changeListAdded(ChangeList list) {
+      if (myChangeListChooser != null && myShowingAllChangeLists) {
+        myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeLists());
+      }
+    }
+
+    public void changeListRemoved(ChangeList list) {
+    }
+
+    public void changeListChanged(ChangeList list) {
+    }
+
+    public void changeListRenamed(ChangeList list, String oldName) {
+    }
+
+    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+    }
+
+    public void defaultListChanged(ChangeList newDefaultList) {
+    }
+
+    public void changeListUpdateDone() {
     }
   }
 }

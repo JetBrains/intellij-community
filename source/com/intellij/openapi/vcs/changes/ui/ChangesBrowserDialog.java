@@ -23,6 +23,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
   private final List<CommittedChangeList> myChanges;
   private final VersionsProvider myVersionsProvider;
   private final boolean myShowSearchAgain;
+  private CommittedChangesBrowser myCommittedChangesBrowser;
 
   public ChangesBrowserDialog(Project project, List<CommittedChangeList> changes, final VersionsProvider provider, final boolean showSearchAgain) {
     super(project, true);
@@ -42,7 +43,14 @@ public class ChangesBrowserDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return new CommittedChangesBrowser(myProject, myChanges);
+    myCommittedChangesBrowser = new CommittedChangesBrowser(myProject, myChanges);
+    return myCommittedChangesBrowser;
+  }
+
+  @Override
+  protected void dispose() {
+    super.dispose();
+    myCommittedChangesBrowser.dispose();
   }
 
   @Override

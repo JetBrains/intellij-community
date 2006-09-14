@@ -27,6 +27,7 @@ import java.util.Collections;
 public class ChangeListViewerDialog extends DialogWrapper {
   private final Project myProject;
   private final CommittedChangeList myChangeList;
+  private ChangesBrowser myChangesBrowser;
 
   public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
     super(project, true);
@@ -44,8 +45,16 @@ public class ChangeListViewerDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return new ChangesBrowser(myProject, Collections.singletonList(myChangeList), new ArrayList<Change>(myChangeList.getChanges()),
-                              myChangeList, false, false);
+    myChangesBrowser = new ChangesBrowser(myProject, Collections.singletonList(myChangeList),
+                                          new ArrayList<Change>(myChangeList.getChanges()),
+                                          myChangeList, false, false);
+    return myChangesBrowser;
+  }
+
+  @Override
+  protected void dispose() {
+    myChangesBrowser.dispose();
+    super.dispose();
   }
 
   @Override

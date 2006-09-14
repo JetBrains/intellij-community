@@ -61,9 +61,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
   private final Action[] myExecutorActions;
 
-  private static void commit(Project project, List<LocalChangeList> list, final List<Change> changes, final ChangeList initialSelection,
+  private static void commit(Project project, final List<Change> changes, final ChangeList initialSelection,
                              final List<CommitExecutor> executors) {
-    new CommitChangeListDialog(project, list, changes, initialSelection, executors).show();
+    new CommitChangeListDialog(project, changes, initialSelection, executors).show();
   }
 
   public static void commitPaths(final Project project, Collection<FilePath> paths) {
@@ -97,19 +97,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public static void commitChanges(final Project project, final Collection<Change> changes, final ChangeList initialSelection,
                                    final List<CommitExecutor> executors) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
-
     if (changes.isEmpty()) {
       Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
                                  VcsBundle.message("commit.dialog.no.changes.detected.title"));
       return;
     }
 
-    commit(project, new ArrayList<LocalChangeList>(manager.getChangeLists()), new ArrayList<Change>(changes), initialSelection, executors);
+    commit(project, new ArrayList<Change>(changes), initialSelection, executors);
   }
 
   private CommitChangeListDialog(final Project project,
-                                 List<LocalChangeList> changeLists,
                                  final List<Change> changes,
                                  final ChangeList initialSelection,
                                  final List<CommitExecutor> executors) {
@@ -117,8 +114,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myProject = project;
     myExecutors = executors;
 
-
-    LocalChangeList defaultList = ChangeListManager.getInstance(project).getDefaultChangeList();
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    LocalChangeList defaultList = manager.getDefaultChangeList();
+    ArrayList<LocalChangeList> changeLists = new ArrayList<LocalChangeList>(manager.getChangeLists());
     myAllOfDefaultChangeListChangesIncluded = changes.containsAll(defaultList.getChanges());
 
     myBrowser = new ChangesBrowser(project, changeLists, changes, initialSelection, true, true);
@@ -307,6 +305,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public void dispose() {
+    myBrowser.dispose();
     super.dispose();
     myOKButtonUpdateAlarm.cancelAllRequests();
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));
