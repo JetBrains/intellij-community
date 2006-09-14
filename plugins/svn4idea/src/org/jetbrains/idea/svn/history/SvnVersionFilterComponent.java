@@ -17,13 +17,13 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 
 public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
   private JCheckBox myUseAuthorFilter;
@@ -31,10 +31,9 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
   private JPanel myPanel;
   private JPanel myStandardPanel;
   private final Project myProject;
-  @NonNls public static final String FORMAT = "yyyy/MM/dd HH:mm:ss";
 
   public SvnVersionFilterComponent(Project project) {
-    super(project, new SimpleDateFormat(FORMAT));
+    super(project, DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(getStandardPanel(), BorderLayout.CENTER);
     myProject = project;
@@ -70,6 +69,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
     return myPanel;
   }
 
+  @Nullable
   public String getAuthorFilter() {
     if (myUseAuthorFilter.isSelected() && myAuthorField.getText().length() > 0) {
       return myAuthorField.getText();
