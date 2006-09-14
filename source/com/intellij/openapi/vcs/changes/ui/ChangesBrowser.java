@@ -4,8 +4,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -295,6 +295,10 @@ public class ChangesBrowser extends JPanel implements DataProvider {
       myViewer);
 
     myToolBarGroup.add(directoriesAction);
+
+    for(AnAction action: myViewer.getTreeActions()) {
+      myToolBarGroup.add(action);
+    }
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myToolBarGroup, true).getComponent();
   }

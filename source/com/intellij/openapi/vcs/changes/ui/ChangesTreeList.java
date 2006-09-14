@@ -5,12 +5,14 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -346,9 +348,30 @@ public class ChangesTreeList extends JPanel {
     return myIncludedChanges.contains(change);
   }
 
-
   public Collection<Change> getIncludedChanges() {
     return myIncludedChanges;
+  }
+
+  public AnAction[] getTreeActions() {
+    final AnAction[] actions = new AnAction[]{
+      new ExpandAllAction(myTree) {
+        public void update(AnActionEvent e) {
+          e.getPresentation().setVisible(!myShowFlatten);
+        }
+      },
+      new CollapseAllAction(myTree) {
+        public void update(AnActionEvent e) {
+          e.getPresentation().setVisible(!myShowFlatten);
+        }
+      }
+    };
+    actions [0].registerCustomShortcutSet(
+      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
+      myTree);
+    actions [1].registerCustomShortcutSet(
+      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
+      myTree);
+    return actions;
   }
 
   private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
