@@ -17,6 +17,7 @@ package com.siyeh.ig.imports;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,11 +32,13 @@ import java.util.Set;
 
 public class RedundantImportInspection extends ClassInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "redundant.import.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.IMPORTS_GROUP_NAME;
     }
@@ -56,25 +59,65 @@ public class RedundantImportInspection extends ClassInspection {
 
     private static class RedundantImportVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
+        public void visitFile(PsiFile file) {
+            super.visitFile(file);
+            if (!(file instanceof PsiJavaFile)) {
                 return;
             }
-            if (!(aClass.getParent() instanceof PsiJavaFile)) {
+            final PsiJavaFile javaFile = (PsiJavaFile)file;
+            if (PsiUtil.isInJspFile(file)) {
                 return;
             }
-            final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
-            if(file == null) {
+            final PsiImportList importList = javaFile.getImportList();
+            if (importList == null) {
                 return;
             }
-            if (!file.getClasses()[0].equals(aClass)) {
-                return;
+            checkNonStaticImports(importList, javaFile);
+            checkStaticImports(importList, javaFile);
+        }
+
+        private void checkStaticImports(PsiImportList importList,
+                                        PsiJavaFile javaFile) {
+            final PsiImportStaticStatement[] importStaticStatements =
+                    importList.getImportStaticStatements();
+            final Set<String> staticImports =
+                    new HashSet<String>(importStaticStatements.length);
+            for (PsiImportStaticStatement importStaticStatement :
+                    importStaticStatements) {
+                final String referenceName =
+                        importStaticStatement.getReferenceName();
+                final PsiClass targetClass =
+                        importStaticStatement.resolveTargetClass();
+                if (targetClass == null) {
+                    continue;
+                }
+                final String qualifiedName = targetClass.getQualifiedName();
+                if (referenceName == null) {
+                    if (staticImports.contains(qualifiedName)) {
+                        registerError(importStaticStatement);
+                        continue;
+                    }
+                    staticImports.add(qualifiedName);
+                } else {
+                    final String qualifiedReferenceName =
+                            qualifiedName + '.' + referenceName;
+                    if (staticImports.contains(qualifiedReferenceName)) {
+                        registerError(importStaticStatement);
+                        continue;
+                    }
+                    if (staticImports.contains(qualifiedName)) {
+                        if (!ImportUtils.hasOnDemandImportConflict(
+                                qualifiedReferenceName, javaFile)) {
+                            registerError(importStaticStatement);
+                        }
+                    }
+                    staticImports.add(qualifiedReferenceName);
+                }
             }
-            final PsiImportList importList = file.getImportList();
-            if(importList == null) {
-                return;
-            }
+        }
+
+        private void checkNonStaticImports(PsiImportList importList,
+                                           PsiJavaFile javaFile) {
             final PsiImportStatement[] importStatements =
                     importList.getImportStatements();
             final Set<String> imports =
@@ -82,19 +125,28 @@ public class RedundantImportInspection extends ClassInspection {
             for(final PsiImportStatement importStatement : importStatements) {
                 final String text = importStatement.getQualifiedName();
                 if(text == null) {
-                    return;
+                    continue;
                 }
                 if(imports.contains(text)) {
                     registerError(importStatement);
+                    continue;
                 }
                 if(!importStatement.isOnDemand()) {
-                    final int classNameIndex = text.lastIndexOf((int) '.');
-                    if(classNameIndex < 0) {
-                        return;
+                    final PsiElement element = importStatement.resolve();
+                    if (!(element instanceof PsiClass)) {
+                        continue;
                     }
-                    final String parentName = text.substring(0, classNameIndex);
+                    final PsiClass targetClass = (PsiClass)element;
+                    final PsiJavaFile targetFile =
+                            PsiTreeUtil.getParentOfType(targetClass,
+                                    PsiJavaFile.class);
+                    if (targetFile == null) {
+                        continue;
+                    }
+                    final String parentName = targetFile.getPackageName();
                     if(imports.contains(parentName)) {
-                        if(!ImportUtils.hasOnDemandImportConflict(text, file)) {
+                        if(!ImportUtils.hasOnDemandImportConflict(text,
+                                javaFile)) {
                             registerError(importStatement);
                         }
                     }

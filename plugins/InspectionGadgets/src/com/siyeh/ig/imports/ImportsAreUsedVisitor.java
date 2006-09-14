@@ -76,24 +76,22 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
                     final String packageName = qualifiedName.substring(0,
                             lastComponentIndex);
                     if (importName.equals(packageName)) {
-                        removeAll(importName);
+                        removeAll(importStatement);
                         break;
                     }
                 }
-            } else {
-                if (importName.equals(qualifiedName)) {
-                    removeAll(importName);
-                    break;
-                }
+            } else if (importName.equals(qualifiedName)) {
+                removeAll(importStatement);
+                break;
             }
         }
     }
 
-    private void removeAll(String importName) {
+    private void removeAll(@NotNull PsiImportStatement importStatement) {
         for (int i = importStatements.size() - 1; i >= 0; i--) {
             final PsiImportStatement statement = importStatements.get(i);
-            final String qualifiedName = statement.getQualifiedName();
-            if (importName.equals(qualifiedName)) {
+            final String text = statement.getText();
+            if (importStatement.getText().equals(text)) {
                 importStatements.remove(i);
             }
         }
