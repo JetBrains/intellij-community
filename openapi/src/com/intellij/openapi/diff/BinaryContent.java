@@ -20,10 +20,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.IllegalCharsetNameException;
 
 /**
  * Represents bytes as content. May has text representaion.
@@ -49,16 +52,31 @@ public class BinaryContent extends DiffContent {
     else myCharset = charset;
   }
 
+  @SuppressWarnings({"EmptyCatchBlock"})
+  @Nullable
   public Document getDocument() {
-    if (myDocument != null) return myDocument;
-    if (isBinary()) return null;
-    try {
-      String text = LineTokenizer.correctLineSeparators(new String(myBytes, myCharset));
-      myDocument = EditorFactory.getInstance().createDocument(text);
-      myDocument.setReadOnly(true);
-    }
-    catch (UnsupportedEncodingException e) {
-      LOG.error(e);
+    if( myDocument == null )
+    {
+      if( isBinary() ) return null;
+
+      String text = null;
+      try {
+        if( CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME.equals( myCharset ))
+          text = new String(myBytes);
+        else
+          text = new String( myBytes, myCharset );
+      }
+      catch( UnsupportedEncodingException e ) {}
+      catch( IllegalCharsetNameException e )  {}
+
+      //  Still NULL? only if not supported or an exception was thrown.
+      //  Decode a string using the truly default encoding.
+      if( text == null )
+          text = new String( myBytes );
+      text = LineTokenizer.correctLineSeparators( text );
+
+      myDocument = EditorFactory.getInstance().createDocument( text );
+      myDocument.setReadOnly( true );
     }
     return myDocument;
   }
