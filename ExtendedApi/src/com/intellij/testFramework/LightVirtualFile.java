@@ -25,8 +25,6 @@ public class LightVirtualFile extends VirtualFile {
   protected CharSequence myContent = "";
   protected String myName = "";
   public long myModStamp = LocalTimeCounter.currentTime();
-  protected long myTimeStamp = System.currentTimeMillis();
-  protected long myActualTimeStamp = myTimeStamp;
   private boolean myIsWritable = true;
   private VirtualFileListener myListener = null;
   @NonNls private static final Charset CHARSET = Charset.forName("UTF-8");
@@ -175,15 +173,7 @@ public class LightVirtualFile extends VirtualFile {
   }
 
   public long getTimeStamp() {
-    return myTimeStamp;
-  }
-
-  public void setActualTimeStamp(long actualTimeStamp) {
-    myActualTimeStamp = actualTimeStamp;
-  }
-
-  public long getActualTimeStamp() {
-    return myActualTimeStamp;
+    return 0; // todo[max] : Add UnsupporedOperationException at better times.
   }
 
   public long getLength() {

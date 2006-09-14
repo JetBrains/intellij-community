@@ -279,8 +279,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private static boolean needsRefresh(final VirtualFile file) {
-    return file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp() ||
-           file instanceof LightVirtualFile && file.getTimeStamp() != ((LightVirtualFile)file).getActualTimeStamp();
+    return file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp();
   }
 
   public static String getLineSeparator(Document document, VirtualFile file) {
