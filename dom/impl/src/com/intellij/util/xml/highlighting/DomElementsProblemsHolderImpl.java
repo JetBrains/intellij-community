@@ -4,47 +4,49 @@
 
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.*;
-import com.intellij.openapi.util.Ref;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder {
-  private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedErrors = new THashMap<DomElement, List<DomElementProblemDescriptor>>();
-  private final Map<DomElement, DomElementProblemDescriptor> myCachedXmlErrors = new THashMap<DomElement, DomElementProblemDescriptor>();
+  private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedErrors = new ConcurrentHashMap<DomElement, List<DomElementProblemDescriptor>>();
+  private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedXmlErrors = new ConcurrentHashMap<DomElement, List<DomElementProblemDescriptor>>();
 
   private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedChildrenErrors =
-    new HashMap<DomElement, List<DomElementProblemDescriptor>>();
+    new ConcurrentHashMap<DomElement, List<DomElementProblemDescriptor>>();
 
   private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedChildrenXmlErrors =
-    new HashMap<DomElement, List<DomElementProblemDescriptor>>();
+    new ConcurrentHashMap<DomElement, List<DomElementProblemDescriptor>>();
 
   private final Function<DomElement, Collection<DomElementProblemDescriptor>> myDomProblemsGetter =
     new Function<DomElement, Collection<DomElementProblemDescriptor>>() {
       public Collection<DomElementProblemDescriptor> fun(final DomElement s) {
-        final List<DomElementProblemDescriptor> list = myCachedErrors.get(s);
-        return list == null ? Collections.<DomElementProblemDescriptor>emptyList() : list;
+        return notNullize(myCachedErrors.get(s));
       }
     };
 
   private final Function<DomElement, Collection<DomElementProblemDescriptor>> myXmlProblemsGetter =
     new Function<DomElement, Collection<DomElementProblemDescriptor>>() {
       public Collection<DomElementProblemDescriptor> fun(final DomElement s) {
-        final DomElementProblemDescriptor descriptor = myCachedXmlErrors.get(s);
-        return descriptor == null ? Collections.<DomElementProblemDescriptor>emptyList() : Arrays.asList(descriptor);
+        return notNullize(myCachedXmlErrors.get(s));
       }
     };
 
   private final DomFileElement myElement;
+
   private final Class<?> myRootType;
 
   public DomElementsProblemsHolderImpl(final DomFileElement element) {
@@ -87,6 +89,10 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     }
   }
 
+  private static List<DomElementProblemDescriptor> notNullize(final List<DomElementProblemDescriptor> list) {
+    return list == null ? Collections.<DomElementProblemDescriptor>emptyList() : list;
+  }
+
   public final void calculateAllProblems() {
     final Ref<Boolean> ref = new Ref<Boolean>(Boolean.FALSE);
     myElement.accept(new DomElementVisitor() {
@@ -111,9 +117,9 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
     List<DomElementProblemDescriptor> problems = getProblems(domElement);
     if (includeXmlProblems) {
-      final DomElementProblemDescriptor o = myCachedXmlErrors.get(domElement);
-      if (o != null) {
-        problems.add(o);
+      final List<DomElementProblemDescriptor> list = myCachedXmlErrors.get(domElement);
+      if (list != null) {
+        problems.addAll(list);
       }
     }
     return problems;
@@ -168,22 +174,20 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   }
 
 
-  @Nullable
-  private static DomElementProblemDescriptor getResolveProblem(final GenericDomValue value) {
-    if (value.getXmlElement() != null && value.getValue() == null) {
-      final String description = value.getConverter().getErrorMessage(value.getStringValue(), new AbstractConvertContext() {
-        @NotNull
-        public DomElement getInvocationElement() {
-          return value;
+  @NotNull
+  private static List<DomElementProblemDescriptor> getResolveProblem(final GenericDomValue value) {
+    final XmlElement element = value instanceof GenericAttributeValue ? ((GenericAttributeValue)value).getXmlAttributeValue() : value.getXmlTag();
+    final Class aClass = value instanceof GenericAttributeValue ? XmlAttributeValue.class : XmlTag.class;
+    if (element != null) {
+      final List<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
+      for (final PsiReference reference : ResolveUtil.getReferencesFromProviders(element, aClass)) {
+        if (!reference.isSoft() && reference.resolve() == null) {
+          list.add(new DomElementProblemDescriptorImpl(value, XmlHighlightVisitor.getErrorDescription(reference), HighlightSeverity.ERROR));
         }
-
-        public PsiManager getPsiManager() {
-          return PsiManager.getInstance(value.getManager().getProject());
-        }
-      });
-      return new DomElementProblemDescriptorImpl(value, description, HighlightSeverity.ERROR);
+      }
+      return list;
     }
-    return null;
+    return Collections.emptyList();
   }
 
   public List<DomElementProblemDescriptor> getAllProblems() {
