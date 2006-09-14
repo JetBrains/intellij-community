@@ -19,7 +19,7 @@ public class CvsException extends VcsException{
     myCvsRoot = cvsRoot;
   }
 
-  public CvsException(Collection messages, String cvsRoot) {
+  public CvsException(Collection<String> messages, String cvsRoot) {
     super(messages);
     myCvsRoot = cvsRoot;
   }
