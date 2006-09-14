@@ -24,9 +24,10 @@ import java.util.Collections;
 public class VcsException extends Exception {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsException");
+  public static final VcsException[] EMPTY_ARRAY = new VcsException[0];
 
   private VirtualFile myVirtualFile;
-  private Collection myMessages;
+  private Collection<String> myMessages;
   private boolean isWarning = false;
 
   public VcsException(String message) {
@@ -40,7 +41,7 @@ public class VcsException extends Exception {
     LOG.info(throwable);
   }
 
-  public VcsException(Collection messages) {
+  public VcsException(Collection<String> messages) {
     myMessages = messages;
   }
 
@@ -54,7 +55,7 @@ public class VcsException extends Exception {
   }
 
   public String[] getMessages() {
-    return (String[])myMessages.toArray(new String[myMessages.size()]);
+    return myMessages.toArray(new String[myMessages.size()]);
   }
 
   public VcsException setIsWarning(boolean warning) {
