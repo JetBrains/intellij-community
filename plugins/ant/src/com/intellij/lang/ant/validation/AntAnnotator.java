@@ -81,7 +81,7 @@ public class AntAnnotator implements Annotator {
 
   private static boolean isLegateeOfUndefinedElement(final AntStructuredElement se) {
     AntElement parent = se;
-    while (!((parent = parent.getAntParent()) instanceof AntProject) && parent != null) {
+    while ((parent = parent.getAntParent()) instanceof AntStructuredElement) {
       final AntStructuredElement sp = (AntStructuredElement)parent;
       final AntTypeDefinition def = sp.getTypeDefinition();
       if (def != null) {
@@ -92,7 +92,7 @@ public class AntAnnotator implements Annotator {
   }
 
   private static void addDefinitionQuickFixes(final Annotation annotation, final AntStructuredElement se) {
-    if(se.getSourceElement().getName().length() == 0) return;
+    if (se.getSourceElement().getName().length() == 0) return;
 
     final AntProject project = se.getAntProject();
     annotation.registerFix(new AntCreateMacroDefAction(se));
