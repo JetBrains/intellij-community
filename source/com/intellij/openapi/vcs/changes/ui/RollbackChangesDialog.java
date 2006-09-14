@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.awt.*;
 
 /**
  * @author max
@@ -26,6 +28,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private Project myProject;
   private final boolean myRefreshSynchronously;
   private ChangesBrowser myBrowser;
+  @Nullable private JCheckBox myDeleteLocallyAddedFiles;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
     rollbackChanges(project, changes, false);
@@ -69,6 +72,13 @@ public class RollbackChangesDialog extends DialogWrapper {
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
     setTitle(VcsBundle.message("changes.action.rollback.title"));
 
+    for(Change c: changes) {
+      if (c.getType() == Change.Type.NEW) {
+        myDeleteLocallyAddedFiles = new JCheckBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"));
+        break;
+      }
+    }
+
     init();
   }
 
@@ -80,6 +90,12 @@ public class RollbackChangesDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
+    if (myDeleteLocallyAddedFiles != null) {
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myBrowser, BorderLayout.CENTER);
+      panel.add(myDeleteLocallyAddedFiles, BorderLayout.SOUTH);
+      return panel;
+    }
     return myBrowser;
   }
 
@@ -93,7 +109,7 @@ public class RollbackChangesDialog extends DialogWrapper {
 
   private void doRollback() {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
-final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
+    final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
 
     Runnable rollbackAction = new Runnable() {
       public void run() {
@@ -106,6 +122,15 @@ final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
               final List<VcsException> exceptions = environment.rollbackChanges(changes);
               if (exceptions.size() > 0) {
                 vcsExceptions.addAll(exceptions);
+              }
+              else if (myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected()) {
+                for(Change c: changes) {
+                  if (c.getType() == Change.Type.NEW) {
+                    ContentRevision rev = c.getAfterRevision();
+                    assert rev != null;
+                    FileUtil.delete(rev.getFile().getIOFile());
+                  }
+                }
               }
             }
           }
