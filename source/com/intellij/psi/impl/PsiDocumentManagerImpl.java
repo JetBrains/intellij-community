@@ -389,7 +389,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       }
     }
     if (mySmartPointerManager != null) { // can be false in "mock" tests
-      mySmartPointerManager.fastenBelts(file);
+      if (file.isPhysical()) {
+        mySmartPointerManager.fastenBelts(file);
+      }
     }
   }
 
