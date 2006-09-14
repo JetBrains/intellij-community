@@ -77,7 +77,7 @@ public class CharArrayUtil {
 
   public static int shiftForward(CharSequence buffer, int offset, String chars) {
     while (true) {
-      if (offset + 1 >= buffer.length()) break;
+      if (offset >= buffer.length()) break;
       char c = buffer.charAt(offset);
       int i;
       for (i = 0; i < chars.length(); i++) {
