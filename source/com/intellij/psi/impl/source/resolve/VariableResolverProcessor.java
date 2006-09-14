@@ -79,7 +79,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-    if (!(element instanceof PsiField)) {
+    if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName))) {
       super.execute(element, substitutor);
       return myResults.size() == 0;
     }
