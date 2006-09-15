@@ -185,9 +185,11 @@ public class IdeRootPane extends JRootPane{
   }
 
   public void deinstallNavigationBar(){
-    myNavigationBar.uninstallListeners();
-    myNorthPanel.remove(myNavigationBar);
-    myNavigationBar = null;
+    if (myNavigationBar != null) {
+      myNavigationBar.uninstallListeners();
+      myNorthPanel.remove(myNavigationBar);
+      myNavigationBar = null;
+    }
   }
 
   private final class MyUISettingsListenerImpl implements UISettingsListener{
