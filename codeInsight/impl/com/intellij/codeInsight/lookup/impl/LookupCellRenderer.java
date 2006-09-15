@@ -269,7 +269,7 @@ class LookupCellRenderer implements ListCellRenderer {
       PropertiesFile propertiesFile = property.getContainingFile();
       PropertiesFile defaultPropertiesFile = propertiesFile.getResourceBundle().getDefaultPropertiesFile(propertiesFile.getProject());
       Property defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getKey());
-      String value = defaultProperty.getValue();
+      String value = defaultProperty == null ? property.getValue() : defaultProperty.getValue();
       if (trim && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
       text = "="+ value;
     }
