@@ -49,16 +49,16 @@ public class CharArrayUtil {
 
     if (seq instanceof CharBuffer) {
       final CharBuffer buffer = (CharBuffer)seq;
-      if (buffer.hasArray() && buffer.arrayOffset() == 0 && buffer.length() == seq.length()) {
-        return buffer.array();
+      if (buffer.hasArray() && buffer.arrayOffset() == 0 && !buffer.isReadOnly()) {
+        final char[] bufArray = buffer.array();
+        if (bufArray.length == seq.length()) return bufArray;
       }
-      else {
-        char[] chars = new char[seq.length()];
-        buffer.position(0);
-        buffer.get(chars);
-        buffer.position(0);
-        return chars;
-      }
+
+      char[] chars = new char[seq.length()];
+      buffer.position(0);
+      buffer.get(chars);
+      buffer.position(0);
+      return chars;
     }
 
     if (seq instanceof StringBuffer) {
