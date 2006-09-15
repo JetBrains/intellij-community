@@ -48,7 +48,9 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -73,14 +75,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   private PomModel myModel = null;
 
   private final boolean myOptimiseTestLoadSpeed;
-  @NonNls private static final String USED_MACROS_ELEMENT_NAME = "UsedPathMacros";
-  private static final Comparator<String> ourStringComparator = new Comparator<String>() {
-    public int compare(String o1, String o2) {
-      return o1.compareTo(o2);
-    }
-  };
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
-  @NonNls private static final String ELEMENT_MACRO = "macro";
   private GlobalSearchScope myAllScope;
   private GlobalSearchScope myProjectScope;
   @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
@@ -507,33 +502,12 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     return ReadonlyStatusHandler.getInstance(this).ensureFilesWritable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
   }
 
-  public Element saveToXml(Element targetRoot, VirtualFile configFile) {
-    final Element root = super.saveToXml(targetRoot, configFile);
-    if (!isMacroLoggingEnabled()) {
-      return root;
-    }
-    VirtualFile projectFile = getProjectFile();
-    if (projectFile != null && projectFile.equals(configFile)) {
-      final String[] usedMacros = getUsedMacroNames();
-      // need this in order to keep file looking the same for vcs if macro set is not changed
-      Arrays.sort(usedMacros, ourStringComparator);
-      final Element allMacrosElement = new Element(USED_MACROS_ELEMENT_NAME);
-      root.addContent(allMacrosElement);
-      for (final String usedMacro : usedMacros) {
-        final Element macroElem = new Element(ELEMENT_MACRO);
-        allMacrosElement.addContent(macroElem);
-        macroElem.setAttribute(ATTRIBUTE_NAME, usedMacro);
-      }
-    }
-    return root;
-  }
-
   public static String[] readUsedMacros(Element root) {
-    Element child = root.getChild(USED_MACROS_ELEMENT_NAME);
+    Element child = root.getChild(ConfigurationFile.USED_MACROS_ELEMENT_NAME);
     if (child == null) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    final List children = child.getChildren(ELEMENT_MACRO);
+    final List children = child.getChildren(ConfigurationFile.ELEMENT_MACRO);
     final List<String> macroNames = new ArrayList<String>(children.size());
     for (final Object aChildren : children) {
       final Element macro = (Element)aChildren;

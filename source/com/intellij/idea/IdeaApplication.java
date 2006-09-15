@@ -34,7 +34,7 @@ public class IdeaApplication {
   private static IdeaApplication ourInstance;
   private ApplicationStarter myStarter;
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
-  @NonNls private static final String IPR_SUFFIX = ".ipr";
+  @NonNls public static final String IPR_SUFFIX = ".ipr";
 
   protected IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
