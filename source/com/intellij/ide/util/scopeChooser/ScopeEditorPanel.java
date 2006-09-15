@@ -243,18 +243,18 @@ public class ScopeEditorPanel {
         pattern += recursively ? "..*" : ".*";
       }
       else {
-        pattern = recursively ? "*..*" : "*";
+        pattern = recursively ? "*..*" : ".*";
       }
 
       return getPatternSet(node, pattern);
     }
     else if (node instanceof DirectoryNode){
-      String pattern = node.toString();
+      String pattern = ((DirectoryNode)node).getFQName();
       if (pattern != null) {
         if (pattern.length() > 0) {
-          pattern += recursively ? "/*" : "/**";
+          pattern += recursively ? "/*" : "*";
         } else {
-          pattern += recursively ? "*" : "**";
+          pattern += recursively ? "*/" : "*";
         }
       }
       return getPatternSet(node, pattern);

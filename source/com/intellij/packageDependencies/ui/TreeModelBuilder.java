@@ -148,6 +148,10 @@ public class TreeModelBuilder {
     return new TreeModelBuilder(project, true, marker, settings).build(files, showProgress);
   }
 
+  public static synchronized TreeModel createTreeModel(Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
+    return new TreeModelBuilder(project, true, marker, settings).build(project, false);
+  }
+
   public static synchronized TreeModel createTreeModel(Project project,
                                                        boolean showProgress,
                                                        boolean showIndividualLibs,
@@ -557,6 +561,7 @@ public class TreeModelBuilder {
           for (int i = parentWrapper.getChildCount() - 1; i >= 0; i--) {
             nestedNode.add((MutableTreeNode)parentWrapper.getChildAt(i));
           }
+          nestedNode.removeUpReference();
           ((DirectoryNode)directoryNode).setCompactedDirNode(null);
           if (parentWrapper.getCompactedDirNode() != null) {
             parentWrapper.add(nestedNode);
@@ -579,7 +584,7 @@ public class TreeModelBuilder {
       return directoryNode;
     }
 
-    directoryNode = new DirectoryNode(psiDirectory, myCompactEmptyMiddlePackages, myFlattenPackages);
+    directoryNode = new DirectoryNode(psiDirectory, myShowModules, myCompactEmptyMiddlePackages, myFlattenPackages);
     ((DirectoryNode)directoryNode).setCompactedDirNode(childNode); //compact
     getMap(myModuleDirNodes, scopeType).put(psiDirectory, (DirectoryNode)directoryNode);
 

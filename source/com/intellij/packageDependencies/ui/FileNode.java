@@ -22,8 +22,7 @@ public class FileNode extends PackageDependenciesNode {
 
   public FileNode(PsiFile file, boolean marked) {
     myFile = file;
-    myMarked = marked;
-    setUserObject(toString());
+    myMarked = marked;    
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {

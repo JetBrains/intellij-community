@@ -106,6 +106,9 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
         } else if (myLexer.getTokenType() == TokenTypeEx.WHITE_SPACE){
           wasIdentifier = false;
           pattern.append(" ");
+        } else if (myLexer.getTokenType() == TokenTypeEx.MINUS) {
+          wasIdentifier = false;
+          pattern.append("-");
         }
         else {
           break;

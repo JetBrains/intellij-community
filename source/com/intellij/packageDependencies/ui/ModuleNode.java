@@ -14,8 +14,7 @@ public class ModuleNode extends PackageDependenciesNode {
   private Module myModule;
 
   public ModuleNode(Module module) {
-    myModule = module;
-    setUserObject(toString());
+    myModule = module;    
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {

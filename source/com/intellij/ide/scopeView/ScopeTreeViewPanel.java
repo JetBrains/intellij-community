@@ -34,6 +34,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
@@ -73,6 +76,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
   private IdeView myIdeView = new  MyIdeView();
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
+  private MyVirtualFileListener myVirtualFileListener;
   private ModuleRootListener myModuleRootListener = new MyModuleRootListener();
 
   private Tree myTree = new Tree();
@@ -100,6 +104,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   public void initListeners(){
     myInitialized = true;
+    myVirtualFileListener = new MyVirtualFileListener();
+    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
     ProjectRootManager.getInstance(myProject).addModuleRootListener(myModuleRootListener);
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
@@ -107,6 +113,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   public void dispose(){
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
+    VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
@@ -115,6 +122,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     return myInitialized;
   }
 
+  @Nullable
   public PackageDependenciesNode findNode(PsiFile file) {
     return myBuilder.findNode(file);
   }
@@ -127,8 +135,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   }
 
   public void selectCurrentScope() {
-    final NamedScope scope = getCurrentScope();
-    refreshScope(scope, myDependencyValidationManager, true);
+    refreshScope(getCurrentScope(), myDependencyValidationManager, true);
   }
 
   public JPanel getPanel() {
@@ -168,7 +175,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     return PsiElement.EMPTY_ARRAY;
   }
 
-  private void refreshScope(NamedScope scope, final NamedScopesHolder holder, boolean showProgress) {
+  private void refreshScope(@Nullable NamedScope scope, final NamedScopesHolder holder, boolean showProgress) {
     myTreeExpansionMonitor.freeze();
     if (scope == null || scope.getValue() == null) { //was deleted
       scope = DependencyValidationManager.getInstance(myProject).getProjectScope();
@@ -267,6 +274,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     return null;
   }
 
+  @Nullable
   private Module[] getSelectedModules(){
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null){
@@ -286,6 +294,21 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     return null;
   }
 
+
+  private void processFileAddition(final PsiFile psiFile) {
+    final DefaultMutableTreeNode rootToReload = myBuilder.addFileNode(psiFile);
+    final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
+    if (rootToReload != null) {
+      TreeUtil.sort(rootToReload, new DependencyNodeComparator());
+      treeModel.reload(rootToReload);
+      collapseExpand(rootToReload);
+    }
+    else {
+      TreeUtil.sort(treeModel, new DependencyNodeComparator());
+      treeModel.reload();
+      selectCurrentScope();
+    }
+  }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -325,17 +348,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           if (element instanceof PsiDirectory || element instanceof PsiPackage) {
             final PsiElement child = event.getChild();
             if (child instanceof PsiFile) {
-              final DefaultMutableTreeNode rootToReload = myBuilder.addFileNode((PsiFile)child);
-              final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
-              if (rootToReload != null) {
-                TreeUtil.sort(rootToReload, new DependencyNodeComparator());
-                treeModel.reload(rootToReload);
-                collapseExpand(rootToReload);
-              } else {
-                TreeUtil.sort(treeModel, new DependencyNodeComparator());
-                treeModel.reload();
-                selectCurrentScope();
-              }
+              processFileAddition((PsiFile)child);
             }
           }
           myTreeExpansionMonitor.restore();
@@ -409,6 +422,68 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     }
   }
 
+  private class MyVirtualFileListener extends VirtualFileAdapter {
+    private PsiManager myPsiManager;
+
+    public MyVirtualFileListener() {
+      myPsiManager = PsiManager.getInstance(myProject);
+    }
+
+    public void fileCreated(final VirtualFileEvent event) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
+          final VirtualFile virtualFile = event.getFile();
+          if (!virtualFile.isDirectory()) return;  //already have PSI events
+          myTreeExpansionMonitor.freeze();
+          processDirectoryCreation(virtualFile);
+          myTreeExpansionMonitor.restore();
+        }
+      }, ModalityState.NON_MODAL);
+    }
+
+    private void processDirectoryCreation(final VirtualFile virtualFile) {
+      if (!virtualFile.isDirectory()) {
+        final PsiFile psiFile = myPsiManager.findFile(virtualFile);
+        LOG.assertTrue(psiFile != null);
+        processFileAddition(psiFile);
+        return;
+      }
+      final VirtualFile[] files = virtualFile.getChildren();
+      for (VirtualFile file : files) {
+        processDirectoryCreation(file);
+      }
+    }
+
+    public void beforeFileDeletion(final VirtualFileEvent event) {
+      if (myProject.isDisposed()) return;
+      final VirtualFile virtualFile = event.getFile();
+      if (!virtualFile.isDirectory()) return; //already have PSI events
+      myTreeExpansionMonitor.freeze();
+      final VirtualFile parent = event.getParent();
+      if (parent != null) {
+        processDirectoryDeletion(virtualFile, myPsiManager.findDirectory(parent));
+      }
+      myTreeExpansionMonitor.restore();
+    }
+
+    private void processDirectoryDeletion(final VirtualFile file, final PsiDirectory parent) {
+      if (!file.isDirectory()) {
+        final PsiFile psiFile = myPsiManager.findFile(file);
+        final DefaultMutableTreeNode node = myBuilder.removeNode(psiFile, parent);
+        if (node != null) {
+          ((DefaultTreeModel)myTree.getModel()).reload(node);
+        }
+        collapseExpand(node);
+        return;
+      }
+      final VirtualFile[] files = file.getChildren();
+      for (VirtualFile virtualFile : files) {
+        processDirectoryDeletion(virtualFile, myPsiManager.findDirectory(file));
+      }
+    }
+  }
+
 
   private class MyModuleRootListener implements ModuleRootListener {
     public void beforeRootsChange(ModuleRootEvent event) {
@@ -433,6 +508,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       }
     }
 
+    @Nullable
     private PsiDirectory getDirectory() {
       final TreePath[] selectedPaths = myTree.getSelectionPaths();
       if (selectedPaths != null) {

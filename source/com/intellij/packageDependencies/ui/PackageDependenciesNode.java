@@ -150,4 +150,8 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     if (virtualFile == null || !virtualFile.isValid()) return null;
     return new OpenFileDescriptor(getProject(), virtualFile);
   }
+
+  public Object getUserObject() {
+    return toString();
+  }
 }

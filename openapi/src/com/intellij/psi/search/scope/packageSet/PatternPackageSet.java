@@ -100,9 +100,7 @@ public class PatternPackageSet implements PackageSet {
 
   private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex){
     if (myModulePattern != null) {
-      final VirtualFile contentRoot = fileIndex.isInSource(virtualFile)
-                                      ? fileIndex.getSourceRootForFile(virtualFile)
-                                      : fileIndex.getContentRootForFile(virtualFile);
+      final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
       return myFilePattern.matcher(VfsUtil.getRelativePath(virtualFile, contentRoot, '/')).matches();
     } else {
       return myFilePattern.matcher(getRelativePath(virtualFile, fileIndex, true)).matches();
@@ -135,7 +133,8 @@ public class PatternPackageSet implements PackageSet {
     return aPackage == null ? file.getName() : aPackage.getQualifiedName() + "." + file.getVirtualFile().getNameWithoutExtension();
   }
 
-  private static String convertToRegexp(String aspectsntx, char separator) {
+  //public for tests only
+  public static String convertToRegexp(String aspectsntx, char separator) {
     StringBuffer buf = new StringBuffer(aspectsntx.length());
     int cur = 0;
     boolean isAfterSeparator = false;
@@ -175,7 +174,7 @@ public class PatternPackageSet implements PackageSet {
       cur++;
     }
     if (isAfterAsterix){
-      buf.append(".*");
+      buf.append("[^\\" + separator + "]*");      
     }
 
     return buf.toString();

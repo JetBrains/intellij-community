@@ -17,8 +17,7 @@ public class ModuleGroupNode extends PackageDependenciesNode {
   private ModuleGroup myModuleGroup;
 
   public ModuleGroupNode(ModuleGroup moduleGroup) {
-    myModuleGroup = moduleGroup;
-    setUserObject(toString());
+    myModuleGroup = moduleGroup;    
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
