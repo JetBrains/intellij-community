@@ -66,13 +66,11 @@ public class TemplateState implements Disposable {
   private DocumentAdapter myEditorDocumentListener;
   private Map myProperties = new HashMap();
   private boolean myTemplateIndented = false;
-  private CodeStyleManager myCodeStyleManager;
   private Document myDocument;
 
   public TemplateState(Project project, final Editor editor) {
     myProject = project;
     myEditor = editor;
-    myCodeStyleManager = CodeStyleManager.getInstance(project);
     myDocument = myEditor.getDocument();
   }
 
@@ -121,7 +119,6 @@ public class TemplateState implements Disposable {
   }
 
   private void setCurrentVariableNumber(int variableNumber) {
-    int prevSegmentNumber = getCurrentSegmentNumber();
     myCurrentVariableNumber = variableNumber;
     ((DocumentEx)myDocument).setStripTrailingSpacesEnabled(variableNumber < 0);
     if (variableNumber < 0) {
@@ -131,10 +128,7 @@ public class TemplateState implements Disposable {
     else {
       myCurrentSegmentNumber = getCurrentSegmentNumber();
       if (myCurrentSegmentNumber >= 0) {
-        mySegments.setSegmentGreedy(myCurrentSegmentNumber, true);
-      }
-      if (prevSegmentNumber >= 0) {
-        mySegments.setSegmentGreedy(prevSegmentNumber, false);
+        mySegments.setCurrentSegment(myCurrentSegmentNumber);
       }
     }
   }
@@ -321,9 +315,6 @@ public class TemplateState implements Disposable {
   private void afterChangedUpdate() {
     if (isFinished()) return;
     LOG.assertTrue(myTemplate != null);
-    UndoManager undoManager = UndoManager.getInstance(myProject);
-    if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
-
     if (myDocumentChanged) {
       if (myDocumentChangesTerminateTemplate || mySegments.isInvalid()) {
         setCurrentVariableNumber(-1);

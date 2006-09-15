@@ -38,10 +38,15 @@ public class TemplateSegments {
     mySegments.add(rangeMarker);
   }
 
-  public void setSegmentGreedy (int i, boolean state) {
-    RangeMarker marker = mySegments.get(i);
-    marker.setGreedyToLeft(state);
-    marker.setGreedyToRight(state);
+  public void setCurrentSegment(int segment) {
+    RangeMarker current = mySegments.get(segment);
+    current.setGreedyToLeft(true);
+    current.setGreedyToRight(true);
+    for (final RangeMarker other : mySegments) {
+      if (other == current) continue;
+      other.setGreedyToRight(other.getEndOffset() != current.getStartOffset());
+      other.setGreedyToLeft(other.getStartOffset() != current.getEndOffset());
+    }
   }
 
   public boolean isInvalid() {
@@ -58,6 +63,8 @@ public class TemplateSegments {
     ((RangeMarkerImpl)rangeMarker).invalidate();
     Document doc = myEditor.getDocument();
     rangeMarker = doc.createRangeMarker(start, end);
+    rangeMarker.setGreedyToLeft(true);
+    rangeMarker.setGreedyToRight(true);
     mySegments.set(index, rangeMarker);
   }
 }
