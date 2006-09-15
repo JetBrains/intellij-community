@@ -66,7 +66,9 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
     for (LibraryEditor libraryEditor : myLibrary2EditorMap.values()) {
       libraryEditor.commit();
     }
-    myLibrariesModifiableModel.commit();
+    if (!(myLibrary2EditorMap.isEmpty() && myRemovedLibraries.isEmpty())) {
+      myLibrariesModifiableModel.commit();
+    }
     myLibrary2EditorMap.clear();
     myRemovedLibraries.clear();
   }
