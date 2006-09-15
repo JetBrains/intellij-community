@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -8,8 +9,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,11 +212,8 @@ public class SvnChangeProvider implements ChangeProvider {
       }
       else if (fStatus == FileStatus.NOT_CHANGED) {
         VirtualFile file = filePath.getVirtualFile();
-        if (file != null) {
-          final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-          if (document != null && FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-            builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), new CurrentContentRevision(filePath), FileStatus.MODIFIED));
-          }
+        if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
+          builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), new CurrentContentRevision(filePath), FileStatus.MODIFIED));
         }
       }
     }
