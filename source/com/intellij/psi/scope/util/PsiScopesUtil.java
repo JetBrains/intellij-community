@@ -61,11 +61,8 @@ public class PsiScopesUtil {
       }
 
       final PsiMetaData data = owner.getMetaData();
-      if (data != null && !data.processDeclarations(scope, processor, substitutor, lastParent, place)) {
-        return false;
-      }
+      return data == null || data.processDeclarations(scope, processor, substitutor, lastParent, place);
 
-      return true;
     }
     return scope.processDeclarations(processor, substitutor, lastParent, place);
   }
@@ -233,7 +230,7 @@ public class PsiScopesUtil {
           processor.setIsConstructor(false);
           processor.setName(referenceNameElement.getText());
           processor.setAccessClass(null);
-          PsiScopesUtil.resolveAndWalk(processor, ref, null);
+          resolveAndWalk(processor, ref, null);
         }
         else{
           LOG.assertTrue(false, "Unknown name element " + referenceNameElement + " in reference " + ref.getText() + "(" + ref + ")");
