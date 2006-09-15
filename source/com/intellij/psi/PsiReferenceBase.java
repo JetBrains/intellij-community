@@ -95,7 +95,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   public static <T extends PsiElement> PsiReferenceBase<T> createSelfReference(T element, final PsiElement resolveTo) {
 
-    return new PsiReferenceBase<T>(element) {
+    return new PsiReferenceBase<T>(element,true) {
 
       @Nullable
       public PsiElement resolve() {
