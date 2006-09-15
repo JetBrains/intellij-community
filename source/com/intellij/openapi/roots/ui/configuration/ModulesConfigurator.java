@@ -96,7 +96,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModuleModel.findModuleByName(name);
   }
 
-  @Nullable
   public ModuleEditor getModuleEditor(Module module) {
     for (final ModuleEditor moduleEditor : myModuleEditors) {
       if (module.equals(moduleEditor.getModule())) {

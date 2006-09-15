@@ -197,6 +197,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
+  public Runnable getReloadProjectRequest() {
+    return myReloadProjectRequest;
+  }
+
   private final static HashMap<ProjectRootType, OrderRootType> ourProjectRootTypeToOrderRootType = new HashMap<ProjectRootType, OrderRootType>();
 
   static {

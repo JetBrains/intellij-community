@@ -13,6 +13,7 @@ import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -114,6 +115,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
 
   private Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+
+  private Alarm myReloadProjectAlarm = new Alarm();
 
   @NonNls private static final String DELETED_LIBRARIES = "lib";
   private static final String NO_JDK = ProjectBundle.message("project.roots.module.jdk.problem.message");
@@ -578,7 +581,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply(this);
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
-    if (isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified()) myProjectConfigurable.apply();
+    if (isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified()) myProjectConfigurable.apply(); //do not reorder 
     if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -1077,6 +1080,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  public void addReloadProjectRequest(final Runnable runnable) {
+    myReloadProjectAlarm.cancelAllRequests();
+    myReloadProjectAlarm.addRequest(runnable, 300, ModalityState.NON_MODAL);
   }
 
   /*public void initDependantsPanel(final OrderPanel<ModifiableRootModel> dependantsPanel) {
