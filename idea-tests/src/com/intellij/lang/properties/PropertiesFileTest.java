@@ -4,6 +4,7 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
 
@@ -53,5 +54,11 @@ public class PropertiesFileTest extends LightIdeaTestCase {
     List<Property> propertiesAfter = propertiesFile.getProperties();
     assertEquals(1, propertiesAfter.size());
     assertPropertyEquals(propertiesAfter.get(0), "xxx", "yyy");
+  }
+  public void testAddToEnd() throws IncorrectOperationException {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nccc");
+    assertEquals(1,propertiesFile.getProperties().size());
+    propertiesFile.addProperty(myPropertyToAdd);
+    assertEquals("a=b\\nccc"+"\nkkk=vvv", propertiesFile.getText());
   }
 }

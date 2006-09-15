@@ -126,7 +126,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   private boolean haveToAddNewLine() {
     ASTNode lastChild = getPropertiesList().getLastChildNode();
-    return lastChild != null && lastChild.getText().indexOf('\n') == -1;
+    return lastChild != null && !lastChild.getText().endsWith("\n");
   }
 
   @NotNull
