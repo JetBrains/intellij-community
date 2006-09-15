@@ -47,6 +47,7 @@ public class RunContentBuilder implements LogConsoleManager {
   private ConfigurationPerRunnerSettings myConfigurationSettings;
 
   private final LogFilesManager myManager;
+  private JPanel myContentPanel;
 
   public RunContentBuilder(final Project project, final JavaProgramRunner runner) {
     myProject = project;
@@ -88,11 +89,18 @@ public class RunContentBuilder implements LogConsoleManager {
       throw new IllegalStateException("Missing RunProfile");
     }
 
-    final JPanel panel = new JPanel(new BorderLayout(2, 0));
-    panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+    myContentPanel = new JPanel(new BorderLayout(2, 0));
+    myContentPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
+    final Disposable disposable = new Disposable() {
+      public void dispose() {
+        for (Disposable disposable : myDisposeables) {
+          disposable.dispose();
+        }
+      }
+    };
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
+      return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited, myContentPanel, disposable);
     }
     if (myComponent == null) {
       final ExecutionConsole console = myExecutionResult.getExecutionConsole();
@@ -109,11 +117,11 @@ public class RunContentBuilder implements LogConsoleManager {
         }
       }
     }
-    MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
+    MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited, myContentPanel, disposable);
     if (myComponent != null) {
-      panel.add(myComponent, BorderLayout.CENTER);
+      myContentPanel.add(myComponent, BorderLayout.CENTER);
     }
-    panel.add(createActionToolbar(contentDescriptor, panel), BorderLayout.WEST);
+    myContentPanel.add(createActionToolbar(contentDescriptor, myContentPanel), BorderLayout.WEST);
     return contentDescriptor;
   }
 
@@ -201,6 +209,10 @@ public class RunContentBuilder implements LogConsoleManager {
     if (! (myComponent instanceof JTabbedPane)) {
       JComponent component = myComponent;
       myComponent = new JTabbedPane();
+      if (myContentPanel != null) {
+        myContentPanel.remove(component);
+        myContentPanel.add(myComponent, BorderLayout.CENTER);
+      }
       ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.console.tab"), component);
     }
     ((JTabbedPane)myComponent).addTab(tabComponent.getTabTitle(), tabComponent.getComponent());
@@ -219,7 +231,7 @@ public class RunContentBuilder implements LogConsoleManager {
     private final boolean myReuseProhibited;
     private final Disposable[] myAdditionalDisposables;
 
-    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final boolean reuseProhibited, final JComponent component, final Disposable[] additionalDisposables) {
+    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final boolean reuseProhibited, final JComponent component, final Disposable... additionalDisposables) {
       super(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName());
       myReuseProhibited = reuseProhibited;
       myAdditionalDisposables = additionalDisposables;
