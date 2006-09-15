@@ -24,6 +24,7 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -150,16 +151,31 @@ public class CompletionUtil {
     }
   }
 
+  private static boolean hasNonSoftReference(CompletionContext context) {
+    return isNonSoftReference(context.file.findReferenceAt(context.startOffset));
+  }
+
+  private static boolean isNonSoftReference(final PsiReference reference) {
+    if (reference instanceof PsiMultiReference) {
+      for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
+        if (isNonSoftReference(psiReference)) return true;
+      }
+    }
+    return reference != null && !reference.isSoft();
+  }
+
   public static CompletionData getCompletionDataByElement(PsiElement element, CompletionContext context) {
     CompletionData wordCompletionData = null;
-    ASTNode textContainer = element != null ? element.getNode() : null;
-    while (textContainer != null) {
-      final IElementType elementType = textContainer.getElementType();
-      final TokenSet readableTextContainerElements = elementType.getLanguage().getReadableTextContainerElements();
-      if (readableTextContainerElements.contains(elementType) || elementType == ElementType.PLAIN_TEXT) {
-        wordCompletionData = ourWordCompletionData;
+    if (!hasNonSoftReference(context)) {
+      ASTNode textContainer = element != null ? element.getNode() : null;
+      while (textContainer != null) {
+        final IElementType elementType = textContainer.getElementType();
+        final TokenSet readableTextContainerElements = elementType.getLanguage().getReadableTextContainerElements();
+        if (readableTextContainerElements.contains(elementType) || elementType == ElementType.PLAIN_TEXT) {
+          wordCompletionData = ourWordCompletionData;
+        }
+        textContainer = textContainer.getTreeParent();
       }
-      textContainer = textContainer.getTreeParent();
     }
     final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, context);
     if (wordCompletionData != null) return new CompositeCompletionData(completionDataByElementInner, wordCompletionData);

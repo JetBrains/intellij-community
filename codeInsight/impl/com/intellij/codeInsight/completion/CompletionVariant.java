@@ -13,6 +13,8 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -305,12 +307,14 @@ public class CompletionVariant {
       if (reference instanceof PsiMultiReference) {
         int javaReferenceStart = -1;
 
-        for (PsiReference ref : ((PsiMultiReference)reference).getReferences()) {
+        PsiReference[] references = getReferences((PsiMultiReference)reference);
+
+        for (PsiReference ref : references) {
           if (ref instanceof PsiJavaReference) {
+            int newStart = ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset();
             if (javaReferenceStart == -1) {
-              javaReferenceStart = ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset();
+              javaReferenceStart = newStart;
             } else {
-              int newStart = ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset();
               if (newStart == javaReferenceStart) continue;
             }
           }
@@ -353,6 +357,19 @@ public class CompletionVariant {
         }
       }
     }
+  }
+
+  private static PsiReference[] getReferences(final PsiMultiReference multiReference) {
+    final PsiReference[] references = multiReference.getReferences();
+    final List<PsiReference> hard = ContainerUtil.findAll(references, new Condition<PsiReference>() {
+      public boolean value(final PsiReference object) {
+        return !object.isSoft();
+      }
+    });
+    if (!hard.isEmpty()) {
+      return hard.toArray(new PsiReference[hard.size()]);
+    }
+    return references;
   }
 
 
