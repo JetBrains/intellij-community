@@ -37,9 +37,6 @@ public class AntElementFactory {
     if (element instanceof XmlEntityRef) {
       return new AntEntityRefImpl(parent, element);
     }
-    /*if ("</".equals(element.getText())) {
-      return new AntEndTagStartElement(parent, element);
-    }*/
     if (!(element instanceof XmlTag)) return null;
 
     final XmlTag tag = (XmlTag)element;
@@ -63,7 +60,7 @@ public class AntElementFactory {
     final AntTypeId id = new AntTypeId(typeName, typeNamespace);
     final AntFile file = parent.getAntFile();
 
-    final AntTypeDefinition parentDef = ((AntStructuredElement)parent).getTypeDefinition();
+    final AntTypeDefinition parentDef = parent.getTypeDefinition();
     if (parentDef != null) {
       final String className = parentDef.getNestedClassName(id);
       if (className != null && file != null) {
