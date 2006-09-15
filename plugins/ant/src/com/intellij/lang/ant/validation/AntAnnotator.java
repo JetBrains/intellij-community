@@ -60,8 +60,7 @@ public class AntAnnotator implements Annotator {
           }
         }
         if (se instanceof AntTypeDef) {
-          final AntTypeDef td = (AntTypeDef)se;
-          if (!td.typesLoaded()) {
+          if (!((AntTypeDef)se).typesLoaded()) {
             holder.createErrorAnnotation(absoluteRange, AntBundle.message("failed.to.load.types", name));
           }
         }
@@ -82,9 +81,12 @@ public class AntAnnotator implements Annotator {
   private static boolean isLegateeOfUndefinedElement(final AntStructuredElement se) {
     AntElement parent = se;
     while ((parent = parent.getAntParent()) instanceof AntStructuredElement) {
-      final AntStructuredElement sp = (AntStructuredElement)parent;
-      final AntTypeDefinition def = sp.getTypeDefinition();
+      final AntTypeDefinition def = ((AntStructuredElement)parent).getTypeDefinition();
       if (def == null) {
+        return true;
+      }
+      final PsiElement de = def.getDefiningElement();
+      if (de != null && de instanceof AntTypeDef && !((AntTypeDef)de).typesLoaded()) {
         return true;
       }
     }
