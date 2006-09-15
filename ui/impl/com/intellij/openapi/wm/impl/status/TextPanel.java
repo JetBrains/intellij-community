@@ -46,6 +46,15 @@ public class TextPanel extends JLabel {
     myText = text;
   }
 
+  public void setDisplayedMnemonic(int key) {
+    // status bar may not have mnemonics
+  }
+
+  public void setDisplayedMnemonicIndex(int index) throws IllegalArgumentException {
+    // status bar may not have mnemonics
+    super.setDisplayedMnemonicIndex(-1);
+  }
+
   public final Dimension getPreferredSize(){
     int max = 0;
     for (String possibleString : myPossibleStrings) {
