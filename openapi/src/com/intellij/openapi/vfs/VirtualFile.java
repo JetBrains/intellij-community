@@ -399,6 +399,19 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   }
 
   /**
+   * Gets the <code>OutputStream</code> for this file.
+   *
+   * @param requestor any object to control who called this method. Note that
+   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   * See {@link VirtualFileEvent#getRequestor}
+   * @return <code>OutputStream</code>
+   * @throws IOException if an I/O error occurs
+   */
+  public final OutputStream getOutputStream(Object requestor) throws IOException{
+    return getOutputStream(requestor, -1, -1);
+  }
+
+  /**
    * Gets the <code>OutputStream</code> for this file and sets modification stamp and time stamp to the specified values
    * after closing the stream.<p>
    *
