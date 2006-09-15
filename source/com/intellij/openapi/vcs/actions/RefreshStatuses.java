@@ -19,24 +19,22 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 
 public class RefreshStatuses extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     if (project != null) {
-      FileStatusManager.getInstance(project).fileStatusesChanged();
+      VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
     }
   }
 
   public void update(AnActionEvent e) {
-    super.update(e);
-    final Object project = e.getDataContext().getData(DataConstants.PROJECT);
-    if (!(project instanceof Project) ||
-        ProjectLevelVcsManager.getInstance((Project) project).getAllActiveVcss().length == 0) {
-      e.getPresentation().setEnabled(false);
-      e.getPresentation().setVisible(false);
-    }
+    final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    boolean isEnabled = project != null &&
+        ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0;
+    e.getPresentation().setEnabled(isEnabled);
+    e.getPresentation().setVisible(isEnabled);
   }
 }
