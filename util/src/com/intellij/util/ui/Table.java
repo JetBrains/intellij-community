@@ -59,7 +59,7 @@ public class Table extends JTable {
       public void columnRemoved(TableColumnModelEvent e) {}
     });
     getTableHeader().setDefaultRenderer(new MyTableHeaderRenderer());
-    //noinspection UNUSED_SYMBOL
+    //noinspection UnusedDeclaration
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
   }
 
