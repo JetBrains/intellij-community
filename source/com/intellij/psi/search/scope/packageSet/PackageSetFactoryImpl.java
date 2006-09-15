@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 public class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl");
 
-  public PackageSetFactoryImpl() {}
-
   public PackageSet compile(String text) throws ParsingException {
     Lexer lexer = new ScopesLexer();
     lexer.start(text.toCharArray());
@@ -206,6 +204,8 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
         } else if (myLexer.getTokenType() == JavaTokenType.IDENTIFIER ||
                    myLexer.getTokenType() == JavaTokenType.WHITE_SPACE){
           pattern.append(getTokenText());
+        } else if (myLexer.getTokenType() == JavaTokenType.DOT){
+          pattern.append(".");
         } else {
           error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
           break;
