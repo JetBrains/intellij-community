@@ -1050,10 +1050,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       final TreePath selectionPath = myTree.getSelectionPath();
       MyNode parent = null;
       if (selectionPath != null) {
-        parent = (MyNode)selectionPath.getLastPathComponent();
-        final Object o = parent.getConfigurable().getEditableObject();
+        MyNode selected = (MyNode)selectionPath.getLastPathComponent();
+        final Object o = selected.getConfigurable().getEditableObject();
         if (o instanceof ModuleGroup) {
           myModulesConfigurator.getModuleModel().setModuleGroupPath(module, ((ModuleGroup)o).getGroupPath());
+          parent = selected;
+        } else if (o instanceof Module) { //create near selected
+          final ModifiableModuleModel modifiableModuleModel = myModulesConfigurator.getModuleModel();
+          final String[] groupPath = modifiableModuleModel.getModuleGroupPath((Module)o);
+          modifiableModuleModel.setModuleGroupPath(module, groupPath);
+          parent = findNodeByObject(myModulesNode, new ModuleGroup(groupPath));
         }
       }
       if (parent == null) parent = myModulesNode;
