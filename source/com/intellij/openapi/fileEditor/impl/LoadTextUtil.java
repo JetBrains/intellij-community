@@ -74,6 +74,7 @@ public final class LoadTextUtil {
       result = buffer;
     }
     else {
+      buffer.reset();
       result = buffer.subSequence(0, dst);
     }
     return Pair.create(result, detectedLineSeparator);
