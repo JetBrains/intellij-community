@@ -114,19 +114,22 @@ public abstract class PsiNameHelper {
   }
 
   public static String getPresentableText(PsiJavaCodeReferenceElement ref) {
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(ref.getReferenceName());
+    final String referenceName = ref.getReferenceName();
+
     PsiType[] typeParameters = ref.getTypeParameters();
     if (typeParameters.length > 0) {
+      StringBuilder buffer = new StringBuilder();
+      buffer.append(referenceName);
       buffer.append("<");
       for (int i = 0; i < typeParameters.length; i++) {
         buffer.append(typeParameters[i].getPresentableText());
         if (i < typeParameters.length - 1) buffer.append(", ");
       }
       buffer.append(">");
+      return buffer.toString();
     }
-
-    return buffer.toString();
+    
+    return referenceName;
   }
 
   public static String getQualifiedClassName(String referenceText, boolean removeWhitespace) {
