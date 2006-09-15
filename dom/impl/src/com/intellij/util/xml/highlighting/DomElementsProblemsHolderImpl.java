@@ -129,7 +129,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren) {
 
-    final List<DomElementProblemDescriptor> list = getProblems(domElement);
+    final List<DomElementProblemDescriptor> list = getProblems(domElement, includeXmlProblems);
     if (!withChildren || domElement == null || !domElement.isValid()) {
       return list;
     }
