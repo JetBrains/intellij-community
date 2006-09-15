@@ -1,10 +1,7 @@
 package com.intellij.util.xml.tree;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -18,6 +15,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,6 +170,18 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     if (DOM_MODEL_TREE_VIEW_KEY.equals(dataId)) {
       return this;
     }
+    final SimpleNode simpleNode = getTree().getSelectedNode();
+    if (simpleNode instanceof AbstractDomElementNode) {
+      final DomElement domElement = ((AbstractDomElementNode)simpleNode).getDomElement();
+      if (domElement != null) {
+        if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+          final XmlElement tag = domElement.getXmlElement();
+          if (tag instanceof Navigatable) {
+            return new Navigatable[] { (Navigatable)tag };
+          }
+        }
+      }
+    }
     return null;
   }
 
@@ -181,7 +192,8 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
 
     if (parentsNodes.size() > 0) {
-      getTree().setSelectedNode(getBuilder(), parentsNodes.get(parentsNodes.size() - 1), true);
+      final SimpleNode parent = parentsNodes.get(parentsNodes.size() - 1);
+      getTree().setSelectedNode(getBuilder(), parent, true);
     }
   }
 
@@ -191,10 +203,13 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     myBuilder.setWaiting(false);
     myTree.accept(myBuilder, new SimpleNodeVisitor() {
       public boolean accept(SimpleNode simpleNode) {
-        if (simpleNode instanceof BaseDomElementNode) {
+        if (simpleNode instanceof AbstractDomElementNode) {
           final DomElement nodeElement = ((AbstractDomElementNode)simpleNode).getDomElement();
           if (isParent(nodeElement, domElement)) {
             parentsNodes.add(simpleNode);
+          }
+          if (nodeElement != null && nodeElement.equals(domElement)) {
+            return true;
           }
         }
         return false;

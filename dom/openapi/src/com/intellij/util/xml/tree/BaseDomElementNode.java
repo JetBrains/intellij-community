@@ -91,7 +91,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     for (DomCollectionChildDescription description : element.getGenericInfo().getCollectionChildrenDescriptions()) {
       if (shouldBeShown(description.getType())) {
-        DomElementsGroupNode groupNode = new DomElementsGroupNode(element, description);
+        DomElementsGroupNode groupNode = new DomElementsGroupNode(element, description, this);
         if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
           Collections.addAll(children, groupNode.getChildren());
         }
