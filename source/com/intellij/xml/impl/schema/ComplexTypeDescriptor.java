@@ -312,7 +312,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-          if (complexTypeDescriptor.canContainTag(localName, namespace)) return true;
+          if (complexTypeDescriptor._canContainTag(localName, namespace, complexTypeDescriptor.myTag, visited)) return true;
         }
       }
     } else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, ELEMENT_TAG_NAME)) {
