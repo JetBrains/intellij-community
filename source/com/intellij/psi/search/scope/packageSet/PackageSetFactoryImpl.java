@@ -199,13 +199,15 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
             myLexer.getTokenType() == null) {
           myLexer.advance();
           break;
-        } else if (myLexer.getTokenType() == TokenTypeEx.ASTERISK){
+        } else if (myLexer.getTokenType() == TokenTypeEx.ASTERISK) {
           pattern.append("*");
         } else if (myLexer.getTokenType() == JavaTokenType.IDENTIFIER ||
-                   myLexer.getTokenType() == JavaTokenType.WHITE_SPACE){
+                   myLexer.getTokenType() == JavaTokenType.WHITE_SPACE) {
           pattern.append(getTokenText());
-        } else if (myLexer.getTokenType() == JavaTokenType.DOT){
+        } else if (myLexer.getTokenType() == JavaTokenType.DOT) {
           pattern.append(".");
+        } else if (myLexer.getTokenType() == JavaTokenType.MINUS) {
+          pattern.append("-");
         } else {
           error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
           break;
