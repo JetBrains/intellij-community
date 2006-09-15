@@ -84,7 +84,7 @@ public class AntAnnotator implements Annotator {
     while ((parent = parent.getAntParent()) instanceof AntStructuredElement) {
       final AntStructuredElement sp = (AntStructuredElement)parent;
       final AntTypeDefinition def = sp.getTypeDefinition();
-      if (def != null) {
+      if (def == null) {
         return true;
       }
     }
@@ -108,7 +108,8 @@ public class AntAnnotator implements Annotator {
                                            final @NonNls AnnotationHolder holder) {
     final XmlTag sourceElement = se.getSourceElement();
     for (final XmlAttribute attr : sourceElement.getAttributes()) {
-      final String name = attr.getName();
+      @NonNls final String name = attr.getName();
+      if (name.startsWith("xmlns")) continue;
       final AntAttributeType type = def.getAttributeType(name);
       final PsiElement attrName = attr.getFirstChild();
       if (attrName != null) {
