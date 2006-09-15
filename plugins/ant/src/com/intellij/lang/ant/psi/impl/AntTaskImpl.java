@@ -5,19 +5,19 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class AntTaskImpl extends AntStructuredElementImpl implements AntTask {
 
-  public AntTaskImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntTaskImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
   }
 
   public AntTaskImpl(final AntElement parent,
-                     final XmlElement sourceElement,
+                     final XmlTag sourceElement,
                      final AntTypeDefinition definition,
                      @NonNls final String nameElementAttribute) {
     super(parent, sourceElement, definition, nameElementAttribute);

@@ -6,7 +6,7 @@ import com.intellij.lang.ant.psi.AntTypeDef;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ObjectCache;
 import org.apache.tools.ant.Task;
@@ -28,7 +28,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   private AntTypeDefinitionImpl myNewDefinition;
   private boolean myClassesLoaded;
 
-  public AntTypeDefImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntTypeDefImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
     getDefinition();
   }

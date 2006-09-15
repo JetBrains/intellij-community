@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.introspection.impl;
 
+import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -57,7 +58,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
                                final Map<AntTypeId, String> nestedElements,
                                final PsiElement definingElement) {
     myTypeId = id;
-    myClassName = className;
+    myClassName = AntStringInterner.intern(className);
     myIsTask = isTask;
     attributes.put(AntFileImpl.ID_ATTR, AntAttributeType.STRING);
     myAttributes = attributes;

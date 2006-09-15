@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.StringSetSpinAllocator;
@@ -34,7 +33,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   private PsiElement myPropertiesFile;
 
   public AntPropertyImpl(final AntElement parent,
-                         final XmlElement sourceElement,
+                         final XmlTag sourceElement,
                          final AntTypeDefinition definition,
                          @NonNls final String nameElementAttribute) {
     super(parent, sourceElement, definition, nameElementAttribute);
@@ -76,7 +75,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     }
   }
 
-  public AntPropertyImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntPropertyImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, AntFileImpl.NAME_ATTR);
   }
 

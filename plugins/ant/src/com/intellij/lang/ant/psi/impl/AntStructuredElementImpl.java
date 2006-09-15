@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
+import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProject;
@@ -42,24 +43,24 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private boolean myIsImported;
   protected boolean myInGettingChildren;
 
-  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, @NonNls final String nameElementAttribute) {
+  public AntStructuredElementImpl(final AntElement parent, final XmlTag sourceElement, @NonNls final String nameElementAttribute) {
     super(parent, sourceElement);
-    myNameElementAttribute = nameElementAttribute;
+    myNameElementAttribute = AntStringInterner.intern(nameElementAttribute);
     getIdElement();
     getNameElement();
   }
 
-  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement) {
+  public AntStructuredElementImpl(final AntElement parent, final XmlTag sourceElement) {
     this(parent, sourceElement, AntFileImpl.NAME_ATTR);
   }
 
   public AntStructuredElementImpl(final AntElement parent,
-                                  final XmlElement sourceElement,
+                                  final XmlTag sourceElement,
                                   final AntTypeDefinition definition,
                                   @NonNls final String nameElementAttribute) {
     this(parent, sourceElement, nameElementAttribute);
     myDefinition = definition;
-    final AntTypeId id = new AntTypeId(getSourceElement().getName());
+    final AntTypeId id = new AntTypeId(sourceElement.getName());
     if (definition != null && !definition.getTypeId().equals(id)) {
       myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
       myDefinition.setTypeId(id);
@@ -67,7 +68,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     }
   }
 
-  public AntStructuredElementImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntStructuredElementImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     this(parent, sourceElement, definition, AntFileImpl.NAME_ATTR);
   }
 

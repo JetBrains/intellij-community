@@ -3,13 +3,13 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.psi.AntAllTasksContainer;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
 public class AntAllTasksContainerImpl extends AntTaskImpl implements AntAllTasksContainer {
 
-  public AntAllTasksContainerImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntAllTasksContainerImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
     if (myDefinition.getNestedElements().length == 0) {
       // allow all tasks as nested elements

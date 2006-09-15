@@ -370,8 +370,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         typeName = UNZIP_TAG;
       }
 
-      typeName = AntStringInterner.intern(typeName);
-
       final Class typeClass = (Class)ht.get(typeName);
       final AntTypeId typeId = new AntTypeId(typeName);
       final AntTypeDefinition def = createTypeDefinition(typeId, typeClass, isTask);
@@ -391,8 +389,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
             final String nestedElement = (String)nestedEnum.nextElement();
             final Class clazz = (Class)helper.getNestedElementMap().get(nestedElement);
             if (myTypeDefinitions.get(clazz.getName()) == null) {
-              final AntTypeDefinition nestedDef =
-                createTypeDefinition(new AntTypeId(AntStringInterner.intern(nestedElement)), clazz, false);
+              final AntTypeDefinition nestedDef = createTypeDefinition(new AntTypeId(nestedElement), clazz, false);
               if (nestedDef != null) {
                 myTypeDefinitions.put(nestedDef.getClassName(), nestedDef);
               }
@@ -436,11 +433,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     final HashMap<AntTypeId, String> nestedDefinitions = new HashMap<AntTypeId, String>();
     final Enumeration nestedEnum = helper.getNestedElements();
     while (nestedEnum.hasMoreElements()) {
-      final String nestedElement = AntStringInterner.intern((String)nestedEnum.nextElement());
-      final String className = ((Class)helper.getNestedElementMap().get(nestedElement)).getName();
+      final String nestedElement = (String)nestedEnum.nextElement();
+      final String className = AntStringInterner.intern(((Class)helper.getNestedElementMap().get(nestedElement)).getName());
       nestedDefinitions.put(new AntTypeId(nestedElement), className);
     }
-    return new AntTypeDefinitionImpl(id, AntStringInterner.intern(typeClass.getName()), isTask, attributes, nestedDefinitions);
+    return new AntTypeDefinitionImpl(id, typeClass.getName(), isTask, attributes, nestedDefinitions);
   }
 
   @Nullable
@@ -508,17 +505,20 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
 
     private ReflectedProject(final AntClassLoader classLoader) {
+      myProject = null;
       try {
         final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");
-        myProject = projectClass.newInstance();
-        Method method = projectClass.getMethod(INIT_METHOD_NAME);
-        method.invoke(myProject);
-        method = getMethod(projectClass, GET_TASK_DEFINITIONS_METHOD_NAME);
-        myTaskDefinitions = (Hashtable)method.invoke(myProject);
-        method = getMethod(projectClass, GET_DATA_TYPE_DEFINITIONS_METHOD_NAME);
-        myDataTypeDefinitions = (Hashtable)method.invoke(myProject);
-        method = getMethod(projectClass, GET_PROPERTIES_METHOD_NAME);
-        myProperties = (Hashtable)method.invoke(myProject);
+        if (projectClass != null) {
+          myProject = projectClass.newInstance();
+          Method method = projectClass.getMethod(INIT_METHOD_NAME);
+          method.invoke(myProject);
+          method = getMethod(projectClass, GET_TASK_DEFINITIONS_METHOD_NAME);
+          myTaskDefinitions = (Hashtable)method.invoke(myProject);
+          method = getMethod(projectClass, GET_DATA_TYPE_DEFINITIONS_METHOD_NAME);
+          myDataTypeDefinitions = (Hashtable)method.invoke(myProject);
+          method = getMethod(projectClass, GET_PROPERTIES_METHOD_NAME);
+          myProperties = (Hashtable)method.invoke(myProject);
+        }
       }
       catch (Exception e) {
         myProject = null;

@@ -5,7 +5,7 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
 
   @NonNls private static final String DEFAULT_ANTFILE = "build.xml";
 
-  public AntAntImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntAntImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
   }
 

@@ -5,7 +5,7 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
   private AntTarget[] myDependsTargets = null;
   private AntProperty[] myParams = null;
 
-  public AntCallImpl(final AntElement parent, final XmlElement sourceElement, final AntTypeDefinition definition) {
+  public AntCallImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
   }
 
