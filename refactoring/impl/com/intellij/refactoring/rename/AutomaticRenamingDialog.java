@@ -53,8 +53,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     final Map<PsiNamedElement, String> renames = myRenamer.getRenames();
 
     List<PsiNamedElement> temp = new ArrayList<PsiNamedElement>();
-    for (Iterator<PsiNamedElement> iterator = renames.keySet().iterator(); iterator.hasNext();) {
-      final PsiNamedElement namedElement = iterator.next();
+    for (final PsiNamedElement namedElement : renames.keySet()) {
       final String newName = renames.get(namedElement);
       if (newName != null) temp.add(namedElement);
     }
@@ -72,6 +71,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     }
 
     myShouldRename = new boolean[myRenames.length];
+    if (myRenamer.isSelectedByDefault()) {
+      for(int i=0; i<myShouldRename.length; i++) {
+        myShouldRename [i] = true;
+      }
+    }
   }
 
   @Override
@@ -248,8 +252,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       }
 
       protected void applyValue(int[] rows, boolean valueToBeSet) {
-        for (int i = 0; i < rows.length; i++) {
-          final int row = rows[i];
+        for (final int row : rows) {
           myShouldRename[row] = valueToBeSet;
         }
         fireTableDataChanged();

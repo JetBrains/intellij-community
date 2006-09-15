@@ -21,8 +21,7 @@ public class FormsRenamer extends AutomaticRenamer {
   public FormsRenamer(PsiClass aClass, String newClassName) {
     if (aClass.getQualifiedName() != null) {
       PsiFile[] forms = aClass.getManager().getSearchHelper().findFormsBoundToClass(aClass.getQualifiedName());
-      for (int i = 0; i < forms.length; i++) {
-        final PsiFile form = forms[i];
+      for (final PsiFile form : forms) {
         if (form.getName() != null) {
           myElements.add(form);
         }
@@ -30,6 +29,11 @@ public class FormsRenamer extends AutomaticRenamer {
 
       suggestAllNames(aClass.getName(), newClassName);
     }
+  }
+
+  @Override
+  public boolean isSelectedByDefault() {
+    return true;
   }
 
   public String getDialogTitle() {

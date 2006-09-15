@@ -5,10 +5,9 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -114,6 +113,10 @@ public abstract class AutomaticRenamer {
 
   protected String nameToCanonicalName(@NonNls String name, PsiNamedElement element) {
     return name;
+  }
+
+  public boolean isSelectedByDefault() {
+    return false;
   }
 
   public abstract String getDialogTitle();
