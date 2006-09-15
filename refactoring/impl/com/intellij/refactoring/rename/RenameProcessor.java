@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -446,7 +447,15 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
+  protected boolean markCommandAsComplex() {
+    return false;
+  }
+
   public void performRefactoring(UsageInfo[] usages) {
+    if (markCommandAsComplex()) {
+      CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
+    }
+
     List<Pair<String, RefactoringElementListener>> listenersForPackages = new ArrayList<Pair<String,RefactoringElementListener>>();
 
     for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
