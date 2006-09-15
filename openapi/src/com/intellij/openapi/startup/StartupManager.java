@@ -50,6 +50,15 @@ public abstract class StartupManager {
   public abstract void registerPostStartupActivity(Runnable runnable);
 
   /**
+   * Executes the specified runnable immediately if startup of the current project
+   * is complete, otherwise registers it as a post-startup activity.
+   * You may access the PSI structures from the activity.
+   * 
+   * @param runnable the activity to execute.
+   */
+  public abstract void runPostStartup(Runnable runnable);
+
+  /**
    * Executes the specified runnable immediately if the initialization of the current project
    * is complete, or registers it as a post-startup activity if the project is being initalized.
    *

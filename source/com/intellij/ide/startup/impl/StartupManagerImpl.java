@@ -25,6 +25,7 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
   private FileSystemSynchronizer myFileSystemSynchronizer = new FileSystemSynchronizer();
   private boolean myStartupActivityRunning = false;
   private boolean myStartupActivityPassed = false;
+  private boolean myPostStartupActivityPassed = false;
 
   private Project myProject;
 
@@ -52,8 +53,16 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
     myActivities.add(runnable);
   }
 
-  public void registerPostStartupActivity(Runnable runnable) {
+  public synchronized void registerPostStartupActivity(Runnable runnable) {
     myPostStartupActivities.add(runnable);
+  }
+
+  public synchronized void runPostStartup(Runnable runnable) {
+    if (myPostStartupActivityPassed) {
+      runnable.run();
+    } else {
+      registerPostStartupActivity(runnable);
+    }
   }
 
   public boolean startupActivityRunning() {
@@ -89,12 +98,13 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
     );
   }
 
-  public void runPostStartupActivities() {
+  public synchronized void runPostStartupActivities() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     runActivities(myPostStartupActivities);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       VirtualFileManager.getInstance().refresh(true);
     }
+    myPostStartupActivityPassed = true;
   }
 
   private static void runActivities(final List<Runnable> activities) {
