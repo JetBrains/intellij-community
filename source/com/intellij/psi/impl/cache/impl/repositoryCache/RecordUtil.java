@@ -12,6 +12,7 @@ import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -20,6 +21,7 @@ import com.intellij.util.io.RecordDataOutput;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.File;
@@ -632,5 +634,29 @@ public class RecordUtil {
     }
 
     return names;
+  }
+
+  static PsiType getNonDetachedVariableType(final PsiVariable variable) {
+    if (variable instanceof PsiCompiledElement || variable instanceof PsiEnumConstant) {
+      return variable.getType();
+    }
+
+    PsiTypeElement typeElement = variable.getTypeElement();
+    if (typeElement == null) return variable.getType();
+    
+    PsiIdentifier nameIdentifier = variable.getNameIdentifier();
+    return SharedImplUtil.getType(typeElement, nameIdentifier, null);
+  }
+
+  @Nullable
+  static PsiType getNonDetachedMethodReturnType(final PsiMethod method) {
+    if (method instanceof PsiCompiledElement) {
+      return method.getReturnType();
+    }
+    
+    PsiTypeElement typeElement = method.getReturnTypeElement();
+    if (typeElement == null) return null;
+    PsiParameterList parameterList = method.getParameterList();
+    return SharedImplUtil.getType(typeElement, parameterList, null);
   }
 }
