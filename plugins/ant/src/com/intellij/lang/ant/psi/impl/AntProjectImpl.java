@@ -347,9 +347,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         }
       }
       builder.append("</project>");
-      final PsiElementFactory elementFactory = getManager().getElementFactory();
-      final XmlFile xmlFile =
-        (XmlFile)elementFactory.createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
+      final XmlFile xmlFile = (XmlFile)getManager().getElementFactory()
+        .createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
       final XmlDocument document = xmlFile.getDocument();
       if (document == null) return;
       final XmlTag rootTag = document.getRootTag();

@@ -41,7 +41,7 @@ public class AntElementFactory {
 
     final XmlTag tag = (XmlTag)element;
     AntTypeDefinition typeDef = null;
-    String typeNamespace = tag.getNamespacePrefix();
+    final String typeNamespace = tag.getNamespacePrefix();
     String typeName = tag.getLocalName();
 
     /**
