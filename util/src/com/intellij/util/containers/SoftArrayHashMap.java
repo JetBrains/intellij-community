@@ -17,10 +17,12 @@ package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
 
+import java.util.Map;
+
 /**
  * @author peter
  */
-public class SoftArrayHashMap<T,V> {
+public class SoftArrayHashMap<T,V> implements Cloneable {
   private SoftHashMap<T, SoftArrayHashMap<T,V>> myContinuationMap;
   private SoftHashMap<T,V> myValuesMap;
   private V myEmptyValue;
@@ -92,5 +94,21 @@ public class SoftArrayHashMap<T,V> {
 
   public final boolean containsKey(final T[] path) {
     return get(path) != null;
+  }
+
+  public final SoftArrayHashMap<T,V> clone() {
+    final SoftArrayHashMap<T, V> copy = new SoftArrayHashMap<T, V>(myStrategy);
+    copy.myContinuationMap = copyMap(myContinuationMap);
+    copy.myValuesMap = copyMap(myValuesMap);
+    copy.myEmptyValue = myEmptyValue;
+    return copy;
+  }
+
+  private <X> SoftHashMap<T, X> copyMap(final SoftHashMap<T, X> map) {
+    final SoftHashMap<T, X> copy = new SoftHashMap<T, X>();
+    for (final Map.Entry<T, X> entry : map.entrySet()) {
+      copy.put(entry.getKey(), entry.getValue());
+    }
+    return copy;
   }
 }

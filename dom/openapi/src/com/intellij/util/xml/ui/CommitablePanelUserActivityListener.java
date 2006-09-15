@@ -50,7 +50,7 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
           myApplying = false;
         }
       }
-    }, 239);
+    }, 717);
   }
 
   protected void applyChanges() {
