@@ -123,8 +123,9 @@ public class HorizontalList extends JPanel {
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        if (mySelectedIndex != -1) {
-          getCtrlClickHandler(mySelectedIndex).run();
+        final Runnable clickHandler = getCtrlClickHandler(mySelectedIndex);
+        if (mySelectedIndex != -1 && clickHandler != null) {
+          clickHandler.run();
         }
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
@@ -205,10 +206,12 @@ public class HorizontalList extends JPanel {
     return mySelectedIndex;
   }
 
+  @Nullable
   public Object getSelectedValue(){
     return getElement(mySelectedIndex);
   }
 
+  @Nullable
   public MyCompositeLabel getItem(int index){
     if (index != -1 && index < myModel.size()){
       return myList.get(index);
@@ -216,6 +219,7 @@ public class HorizontalList extends JPanel {
     return null;
   }
 
+  @Nullable
   public Object getElement(int index){
     if (index != -1 && index < myModel.size()){
       return myModel.get(index);
@@ -268,7 +272,10 @@ public class HorizontalList extends JPanel {
               return;
             }
             if (isInsideIcon(e.getPoint(), object)) {
-              getCtrlClickHandler(selectedIndex).run();
+              final Runnable clickHandler = getCtrlClickHandler(selectedIndex);
+              if (clickHandler != null) {
+                clickHandler.run();
+              }
               clearBorder();
               mySelectedIndex = selectedIndex;
               paintBorder();
@@ -486,10 +493,11 @@ public class HorizontalList extends JPanel {
 
   private int getIndexByMode(int index){
     if (index < 0) return myModel.size() + index;
-    if (index >= myModel.size()) return index % myModel.size();
+    if (index >= myModel.size() && myModel.size() > 0) return index % myModel.size();
     return index;
   }
 
+  @Nullable
   private Icon wrapIcon(final Object object, final Color color){
     final Icon icon = getIcon(object);
     if (icon == null || !hasChildren(object)) return icon;
@@ -568,10 +576,12 @@ public class HorizontalList extends JPanel {
     return null;
   }
 
+  @Nullable
   protected Runnable getCtrlClickHandler(int index){
     return null;
   }
 
+  @Nullable
   protected Runnable getRightClickHandler(int index){
     return null;
   }
@@ -580,6 +590,7 @@ public class HorizontalList extends JPanel {
     return false;
   }
 
+  @Nullable
   protected ListPopup getPopup() {
     return null;
   }
