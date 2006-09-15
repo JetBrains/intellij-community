@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.impl.FileStatusManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 
@@ -47,16 +48,17 @@ class EditorChangeAction implements UndoableAction {
   public void undo() {
     exchangeStrings(myNewString, myOldString);
     getDocument().setModificationStamp(myTimeStamp);
-    fileFileStatusChanged();
+    fireFileStatusChanged();
   }
 
-  private void fileFileStatusChanged() {
+  private void fireFileStatusChanged() {
     VirtualFile file = myDocumentFile != null ? myDocumentFile : FileDocumentManager.getInstance().getFile(getDocument());
     if (file == null || file instanceof LightVirtualFile) return;
 
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      FileStatusManager.getInstance(project).fileStatusChanged(file);
+      final FileStatusManagerImpl fileStatusManager = (FileStatusManagerImpl)FileStatusManager.getInstance (project);
+      fileStatusManager.refreshFileStatusFromDocument(file, getDocument());
     }
   }
 

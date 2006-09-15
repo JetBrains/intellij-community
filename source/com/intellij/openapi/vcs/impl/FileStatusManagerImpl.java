@@ -234,19 +234,26 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     myListeners.remove(listener);
   }
 
+  public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + file.getModificationStamp() + ", document.getModificationStamp()=" + doc.getModificationStamp());
+    }
+    FileStatus cachedStatus = getCachedStatus(file);
+    if (cachedStatus == FileStatus.NOT_CHANGED || file.getModificationStamp() == doc.getModificationStamp()) {
+      fileStatusChanged(file);
+      final AbstractVcs vcs = myVcsManager.getVcsFor(file);
+      if (vcs == null) return;
+      ChangeProvider cp = vcs.getChangeProvider();
+      if (cp == null || !cp.isModifiedDocumentTrackingRequired()) return;
+      VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+    }
+  }
+
   private class MyDocumentAdapter extends DocumentAdapter {
     public void documentChanged(DocumentEvent event) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
       if (file != null) {
-        FileStatus cachedStatus = getCachedStatus(file);
-        if (cachedStatus == FileStatus.NOT_CHANGED) {
-          fileStatusChanged(file);
-          final AbstractVcs vcs = myVcsManager.getVcsFor(file);
-          if (vcs == null) return;
-          ChangeProvider cp = vcs.getChangeProvider();
-          if (cp == null || !cp.isModifiedDocumentTrackingRequired()) return;
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
-        }
+        refreshFileStatusFromDocument(file, event.getDocument());
       }
     }
   }

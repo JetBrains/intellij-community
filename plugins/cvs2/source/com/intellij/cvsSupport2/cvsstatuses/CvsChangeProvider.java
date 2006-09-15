@@ -17,7 +17,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -226,11 +225,8 @@ public class CvsChangeProvider implements ChangeProvider {
                              final VcsRevisionNumber number,
                              final ChangelistBuilder builder) {
     if (status == FileStatus.NOT_CHANGED) {
-      if (file != null) {
-        final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-        if (document != null && FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-          builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), new CurrentContentRevision(filePath), FileStatus.MODIFIED));
-        }
+      if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
+        builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), new CurrentContentRevision(filePath), FileStatus.MODIFIED));
       }
       return;
     }
