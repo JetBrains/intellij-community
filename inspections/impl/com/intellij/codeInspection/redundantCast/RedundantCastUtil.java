@@ -85,31 +85,6 @@ public class RedundantCastUtil {
         myProcessor.execute(typeCast);
       }
     }
-
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-      super.visitAssignmentExpression(expression);
-      expression.acceptChildren(this);
-    }
-
-    public void visitVariable(PsiVariable variable) {
-      super.visitVariable(variable);
-      variable.acceptChildren(this);
-    }
-
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-      expression.acceptChildren(this);
-    }
-
-    public void visitNewExpression(PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      expression.acceptChildren(this);
-    }
-
-    public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
-      super.visitTypeCastExpression(typeCast);
-      typeCast.acceptChildren(this);
-    }
   }
 
   private static class MyIsRedundantVisitor extends PsiElementVisitor {
