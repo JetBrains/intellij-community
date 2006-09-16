@@ -1,19 +1,17 @@
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import org.apache.log4j.lf5.viewer.categoryexplorer.TreeModelAdapter;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -34,8 +32,9 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
   protected boolean isExpandable(DebuggerTreeNodeImpl node) {
     NodeDescriptorImpl descriptor = node.getDescriptor();
-    if(descriptor instanceof StackFrameDescriptorImpl) return false;
-
+    if(descriptor instanceof StackFrameDescriptorImpl) {
+      return false;
+    }
     return descriptor.isExpandable();
   }
 
@@ -52,6 +51,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       super.threadAction();
       final DebuggerTreeNodeImpl root = getNodeFactory().getDefaultNode();
 
+      final boolean showGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
       try {
         DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
         if(debugProcess == null || !debugProcess.isAttached()) return;
@@ -61,7 +61,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
         EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
 
-        if (ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS) {
+        if (showGroups) {
           ThreadGroupReferenceProxyImpl topCurrentGroup = null;
 
           if (currentThread != null) {
@@ -118,13 +118,17 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       }
 
       final ThreadReferenceProxyImpl thread = getSuspendContext().getThread();
-      final boolean hasThreadToSelect = thread != null && ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS; // thread can be null if pause was pressed
-      final List<ThreadGroupReferenceProxyImpl> groups = hasThreadToSelect? new ArrayList<ThreadGroupReferenceProxyImpl>() : Collections.<ThreadGroupReferenceProxyImpl>emptyList();
-      if (hasThreadToSelect) {
+      final boolean hasThreadToSelect = thread != null; // thread can be null if pause was pressed
+      final List<ThreadGroupReferenceProxyImpl> groups;
+      if (hasThreadToSelect && showGroups) {
+        groups = new ArrayList<ThreadGroupReferenceProxyImpl>();
         for(ThreadGroupReferenceProxyImpl group = thread.threadGroupProxy(); group != null; group = group.parent()) {
           groups.add(group);
         }
         Collections.reverse(groups);
+      }
+      else {
+        groups = Collections.emptyList();
       }
 
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
@@ -132,13 +136,13 @@ public class ThreadsDebuggerTree extends DebuggerTree {
           getMutableModel().setRoot(root);
           treeChanged();
           if (hasThreadToSelect) {
-            selectThread(groups, thread);
+            selectThread(groups, thread, true);
           }
         }
       });
     }
 
-    private void selectThread(final List<ThreadGroupReferenceProxyImpl> pathToThread, final ThreadReferenceProxyImpl thread) {
+    private void selectThread(final List<ThreadGroupReferenceProxyImpl> pathToThread, final ThreadReferenceProxyImpl thread, final boolean expand) {
       LOG.assertTrue(SwingUtilities.isEventDispatchThread());
 
 
@@ -153,8 +157,12 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         private void nodeChanged(DebuggerTreeNodeImpl debuggerTreeNode) {
           if(pathToThread.size() == 0) {
             if(debuggerTreeNode.getDescriptor() instanceof ThreadDescriptorImpl && ((ThreadDescriptorImpl) debuggerTreeNode.getDescriptor()).getThreadReference() == thread) {
-              setSelectionPath(new TreePath(debuggerTreeNode.getPath()));
               removeListener();
+              final TreePath treePath = new TreePath(debuggerTreeNode.getPath());
+              setSelectionPath(treePath);
+              if (expand && !isExpanded(treePath)) {
+                expandPath(treePath);
+              }
             }
           }
           else {
@@ -181,7 +189,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
           }
           structureChanged((DebuggerTreeNodeImpl)event.getTreePath().getLastPathComponent());
         }
-      };
+      }
 
       MyTreeModelAdapter listener = new MyTreeModelAdapter();
       listener.structureChanged((DebuggerTreeNodeImpl)getModel().getRoot());
