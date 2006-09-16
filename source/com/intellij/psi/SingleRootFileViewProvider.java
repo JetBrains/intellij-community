@@ -3,7 +3,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.ide.highlighter.GuiFormFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;

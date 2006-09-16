@@ -143,13 +143,16 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     }
     final FileViewProvider viewProvider = getViewProvider();
     // load document outside lock for better performance
-    final Document document = viewProvider.getDocument();
+    final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;
     synchronized (PsiLock.LOCK) {
       treeElement = createFileElement(viewProvider.getContents());
-      treeElement.putUserData(new Key<Document>("HARD_REFERENCE_TO_DOCUMENT"), document);
+      if (document != null) {
+        treeElement.putUserData(new Key<Document>("HARD_REFERENCE_TO_DOCUMENT"), document);
+      }
       setTreeElement(treeElement);
       treeElement.setPsiElement(this);
     }
+
     if (getViewProvider().isEventSystemEnabled()) {
       ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myManager.getProject())).contentsLoaded(this);
     }

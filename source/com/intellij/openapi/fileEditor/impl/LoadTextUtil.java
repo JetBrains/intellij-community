@@ -216,6 +216,10 @@ public final class LoadTextUtil {
   }
 
   public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile) {
+    return getTextByBinaryPresentation(bytes, virtualFile, true);
+  }
+
+  public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
     int offset = detectCharsetAndSkipBOM(virtualFile, bytes);
     ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset);
 
@@ -229,7 +233,9 @@ public final class LoadTextUtil {
     }
     CharBuffer charBuffer = charset.decode(byteBuffer);
     Pair<CharSequence, String> result = convertLineSeparators(charBuffer);
-    virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
+    if (rememberDetectedSeparators) {
+      virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
+    }
     return result.getFirst();
   }
 }

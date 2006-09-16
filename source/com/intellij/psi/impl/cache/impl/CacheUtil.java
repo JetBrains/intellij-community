@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
@@ -14,13 +15,14 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 
 import java.io.IOException;
 
 public class CacheUtil {
   public static final int CACHE_THRESHOLD = 1024 * 1024 * 2; // Two megabytes
+
+  private CacheUtil() {
+  }
 
   public static PsiFile createFileCopy(PsiFile psiFile) {
     return createFileCopy(null, psiFile);
@@ -53,12 +55,7 @@ public class CacheUtil {
           text = document.getCharsSequence();
         }
         else {
-          try {
-            text = LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), vFile);
-          }
-          catch (IOException e) {
-            text = new CharArrayCharSequence(ArrayUtil.EMPTY_CHAR_ARRAY);
-          }
+          text = getContentText(content);
         }
 
         FileType fileType = psiFile.getFileType();
@@ -68,7 +65,9 @@ public class CacheUtil {
         }
         */
         PsiElementFactoryImpl factory = (PsiElementFactoryImpl)psiFile.getManager().getElementFactory();
-        fileCopy = factory.createFileFromText(psiFile.getName(), fileType, text, psiFile.getModificationStamp(), false, false);
+        final String name = psiFile.getName();
+        assert name != null;
+        fileCopy = factory.createFileFromText(name, fileType, text, psiFile.getModificationStamp(), false, false);
         ((PsiFileImpl)fileCopy).setOriginalFile(psiFile);
       }
     }
@@ -77,6 +76,24 @@ public class CacheUtil {
     }
 
     return fileCopy;
+  }
+
+  private static final Key<CharSequence> CONTENT_KEY = new Key<CharSequence>("CONTENT_KEY");
+
+  public static CharSequence getContentText(final FileContent content) {
+    CharSequence cached = content.getUserData(CONTENT_KEY);
+    if (cached != null) return cached;
+    try {
+      final Document doc = FileDocumentManager.getInstance().getCachedDocument(content.getVirtualFile());
+      if (doc != null) return doc.getCharsSequence();
+
+      cached = LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), content.getVirtualFile(), false);
+      content.putUserData(CONTENT_KEY, cached);
+      return cached;
+    }
+    catch (IOException e) {
+      return "";
+    }
   }
 
   public static IndexPatternProvider[] getIndexPatternProviders() {

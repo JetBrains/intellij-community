@@ -12,20 +12,18 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
+import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
@@ -34,6 +32,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -352,20 +351,8 @@ public class IdTableBuilding {
       todoCounts = null;
     }
 
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile); // TODO[wtf]: Performs unnecessary document load plus line separator detection
-    final char[] chars;
-    final int textLength;
-    if (virtualFile.getModificationStamp() != document.getModificationStamp()) {
-      final PsiFile psiFile = manager.getFile(fileContent);
-      if (psiFile == null) return null;
-
-      chars = psiFile.textToCharArray();
-      textLength = psiFile.getTextLength();
-    }
-    else {
-      chars = document.getChars();
-      textLength = document.getTextLength();
-    }
+    final CharSequence text = CacheUtil.getContentText(fileContent);
+    final char[] chars = CharArrayUtil.fromSequence(text);
 
     final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType, manager.getProject(), virtualFile);
 
@@ -374,7 +361,7 @@ public class IdTableBuilding {
     Runnable runnable = new Runnable() {
       public void run() {
         synchronized (PsiLock.LOCK) {
-          cacheBuilder.build(chars, textLength, wordsTable, todoPatterns, todoCounts, manager);
+          cacheBuilder.build(chars, text.length(), wordsTable, todoPatterns, todoCounts, manager);
         }
       }
     };
