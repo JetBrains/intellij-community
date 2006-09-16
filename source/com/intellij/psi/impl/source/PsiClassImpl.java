@@ -36,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import gnu.trove.THashMap;
+
 public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiClass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
@@ -438,7 +440,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       Map<String, PsiField> cachedFields = myCachedFieldsMap;
       if(cachedFields == null){
         final PsiField[] fields = getFields();
-        cachedFields = new HashMap<String, PsiField>();
+        cachedFields = new THashMap<String, PsiField>();
         for (final PsiField field : fields) {
           cachedFields.put(field.getName(), field);
         }
@@ -463,9 +465,9 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     if(!checkBases){
       Map<String, PsiMethod[]> cachedMethods = myCachedMethodsMap;
       if(cachedMethods == null){
-        cachedMethods = new HashMap<String,PsiMethod[]>();
+        cachedMethods = new THashMap<String,PsiMethod[]>();
 
-        Map<String, List<PsiMethod>> cachedMethodsMap = new HashMap<String,List<PsiMethod>>();
+        Map<String, List<PsiMethod>> cachedMethodsMap = new THashMap<String,List<PsiMethod>>();
         final PsiMethod[] methods = getMethods();
         for (final PsiMethod method : methods) {
           List<PsiMethod> list = cachedMethodsMap.get(method.getName());
@@ -503,7 +505,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       Map<String, PsiClass> inners = myCachedInnersMap;
       if(inners == null){
         final PsiClass[] classes = getInnerClasses();
-        inners = new HashMap<String,PsiClass>();
+        inners = new THashMap<String,PsiClass>();
         for (final PsiClass psiClass : classes) {
           inners.put(psiClass.getName(), psiClass);
         }
