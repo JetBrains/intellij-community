@@ -119,7 +119,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
     myProjectJdkConfigurable.reset();
     final String compilerOutput = ProjectRootManagerEx.getInstance(myProject).getCompilerOutputUrl();
     if (compilerOutput != null) {
-      myProjectCompilerOutput.setText(VfsUtil.urlToPath(compilerOutput));
+      myProjectCompilerOutput.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutput)));
     }
     myLanguageLevelCombo.reset(myProject);
     updateCircularDependencyWarning();
