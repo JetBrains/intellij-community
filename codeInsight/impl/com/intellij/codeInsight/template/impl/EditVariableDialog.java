@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  *
@@ -39,9 +40,9 @@ class EditVariableDialog extends DialogWrapper {
   private JTable myTable;
   private Editor myEditor;
   private boolean hasMoveVars;
-  private java.util.List<Macro> additionalMacros;
+  private List<Macro> additionalMacros;
 
-  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, boolean _hasMoveVars, java.util.List<Macro> _additionalMacros) {
+  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, boolean _hasMoveVars, List<Macro> _additionalMacros) {
     super(parent, true);
 
     hasMoveVars = _hasMoveVars;
@@ -78,11 +79,10 @@ class EditVariableDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("templates.dialog.edit.variables.border.title")));
-    JPanel tablePanel = panel;
-    tablePanel.setLayout(new BorderLayout());
-    tablePanel.add(createVariablesTable(), BorderLayout.CENTER);
-    if (hasMoveVars) tablePanel.add(createTableButtonPanel(), BorderLayout.EAST);
-    return tablePanel;
+    panel.setLayout(new BorderLayout());
+    panel.add(createVariablesTable(), BorderLayout.CENTER);
+    if (hasMoveVars) panel.add(createTableButtonPanel(), BorderLayout.EAST);
+    return panel;
   }
 
   private JPanel createTableButtonPanel() {
@@ -214,7 +214,7 @@ class EditVariableDialog extends DialogWrapper {
       ArrayList<Macro> list = new ArrayList<Macro>(macros.length + additionalMacros.size());
       list.addAll( Arrays.asList(macros) );
       list.addAll( additionalMacros );
-      macros = (Macro[])list.toArray(new Macro[0]);
+      macros = list.toArray(new Macro[0]);
     }
 
     Arrays.sort(macros, new Comparator<Macro> () {
@@ -252,8 +252,7 @@ class EditVariableDialog extends DialogWrapper {
         }
       }
     );
-    JScrollPane scrollpane = ScrollPaneFactory.createScrollPane(myTable);
-    return scrollpane;
+    return ScrollPaneFactory.createScrollPane(myTable);
   }
 
   private void updateButtons() {
