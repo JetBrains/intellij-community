@@ -78,21 +78,19 @@ public abstract class JSR45PositionManager implements PositionManager {
     try {
       String sourcePath = getRelativeSourcePathByLocation(location);
       PsiFile file = mySourcesFinder.findSourceFile(sourcePath, myDebugProcess.getProject(), myScope);
-      if(file == null) {
-        throw new NoDataException();
+      if(file != null) {
+        int lineNumber = getLineNumber(location);
+        sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
       }
-      int lineNumber = getLineNumber(location);
-      sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
     }
-    catch (AbsentInformationException e) {
-      // ignored
+    catch (AbsentInformationException ignored) { // ignored
     }
     catch (Throwable e) {
       LOG.info(e);
     }
-
-    if(sourcePosition == null) throw new NoDataException();
-
+    if(sourcePosition == null) {
+      throw new NoDataException();
+    }
     return sourcePosition;
   }
 
