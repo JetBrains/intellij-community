@@ -3,6 +3,7 @@
   <id>AntSupport</id>
   <version>1.0</version>
   <idea-version min="6.0"/>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
 
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
 
