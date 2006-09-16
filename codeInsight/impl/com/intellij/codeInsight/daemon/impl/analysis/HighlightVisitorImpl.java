@@ -207,10 +207,16 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitAnnotation(PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
-    myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
-    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
-    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
-    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
+    if (PsiUtil.getLanguageLevel(annotation).compareTo(LanguageLevel.JDK_1_5) >= 0) {
+      myHolder.add(AnnotationsHighlightUtil.checkApplicability(annotation));
+      if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
+      if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
+      if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
+    }
+    else {
+      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation.getFirstChild(),
+                                                     JavaErrorMessages.message("annotations.prior.15")));
+    }
   }
 
   public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
@@ -274,6 +280,13 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitClass(PsiClass aClass) {
     super.visitClass(aClass);
     if (aClass instanceof JspClass) return;
+    if (aClass.isAnnotationType()) {
+      if (PsiUtil.getLanguageLevel(aClass).compareTo(LanguageLevel.JDK_1_5) < 0) {
+        myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, aClass.getNameIdentifier(),
+                                                       JavaErrorMessages.message("annotations.prior.15")));
+
+      }
+    }
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateTopLevelClass(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumMustNotBeLocal(aClass));

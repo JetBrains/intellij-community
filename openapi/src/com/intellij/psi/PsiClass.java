@@ -285,7 +285,7 @@ public interface PsiClass
   /**
    * Returns the name identifier of the class.
    *
-   * @return the name identifier, or null if the class is incomplete and the name identifier is missing.
+   * @return the name identifier, or null if the class is anonymous or synthetic jsp class
    */
   @Nullable
   PsiIdentifier getNameIdentifier();
