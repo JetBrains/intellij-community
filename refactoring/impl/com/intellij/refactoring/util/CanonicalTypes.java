@@ -202,6 +202,9 @@ public class CanonicalTypes {
     public Type visitClassType(PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
+      if (aClass instanceof PsiAnonymousClass) {
+        return visitClassType(((PsiAnonymousClass)aClass).getBaseClassType());
+      }
       final String originalText = classType.getPresentableText();
       if (aClass == null) {
         return new WrongType(originalText);
