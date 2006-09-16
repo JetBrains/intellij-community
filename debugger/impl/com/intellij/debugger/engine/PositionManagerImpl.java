@@ -16,6 +16,8 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -211,7 +213,7 @@ public class PositionManagerImpl implements PositionManager {
           if (result.size() == 0) {
             // no executable code found at this line in any class
             for (ReferenceType refType : outer) {
-              final ReferenceType closest = findClosestClassAt(refType, classPosition);
+              final ReferenceType closest = findClosestClassAt(refType, classPosition, psiClass);
               if (closest != null) {
                 result.add(closest);
               }
@@ -251,11 +253,12 @@ public class PositionManagerImpl implements PositionManager {
     }
   }
 
-  private ReferenceType findClosestClassAt(final ReferenceType from, final SourcePosition classPosition) {
+  @Nullable
+  private ReferenceType findClosestClassAt(final ReferenceType from, final SourcePosition classPosition, @NotNull final PsiClass psiClass) {
     if(from.isPrepared()) {
       final List<ReferenceType> nested = myDebugProcess.getVirtualMachineProxy().nestedTypes(from);
       for (ReferenceType nestedType : nested) {
-        final ReferenceType foundType = findClosestClassAt(nestedType, classPosition);
+        final ReferenceType foundType = findClosestClassAt(nestedType, classPosition, psiClass);
         if (foundType != null) {
           return foundType;
         }
@@ -270,7 +273,8 @@ public class PositionManagerImpl implements PositionManager {
           isGreater |= location.lineNumber() <= lineNumber;
           isLess |=  lineNumber <= location.lineNumber();
           if (isGreater && isLess) {
-            return from;
+            final SourcePosition position = SourcePosition.createFromLine(psiClass.getContainingFile(), location.lineNumber() - 1);
+            return psiClass.equals(JVMNameUtil.getClassAt(position))? from : null;
           }
         }
       }
