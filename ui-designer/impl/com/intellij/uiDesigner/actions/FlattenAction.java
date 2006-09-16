@@ -71,14 +71,19 @@ public class FlattenAction extends AbstractGuiEditorAction {
   private static void flattenSimple(final RadContainer container) {
     RadContainer parent = container.getParent();
     RadComponent child = null;
+    Object childLayoutConstraints = null;
     if (container.getComponentCount() == 1) {
       child = container.getComponent(0);
-      child.setCustomLayoutConstraints(container.getCustomLayoutConstraints());
+      childLayoutConstraints = container.getCustomLayoutConstraints();
       child.getConstraints().restore(container.getConstraints());
+      container.removeComponent(child);
     }
     int childIndex = parent.indexOfComponent(container);
     FormEditingUtil.deleteComponents(Collections.singletonList(container), false);
     if (child != null) {
+      if (childLayoutConstraints != null) {
+        child.setCustomLayoutConstraints(childLayoutConstraints);
+      }
       parent.addComponent(child, childIndex);
       child.revalidate();
     }
