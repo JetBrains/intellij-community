@@ -111,7 +111,7 @@ public class ImportHelper{
     try {
       final String text = buildImportListText(names, classesOrPackagesToImportOnDemand, classesToUseSingle, namesToImportStaticly);
       String ext = StdFileTypes.JAVA.getDefaultExtension();
-      final PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, text);
+      final PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, StdFileTypes.JAVA, text);
       codeStyleManager.reformat(dummyFile);
 
       PsiImportList resultList = dummyFile.getImportList();
