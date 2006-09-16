@@ -38,6 +38,9 @@ import java.nio.charset.Charset;
  * <code>VirtualFile</code> instance for the entire lifetime of the IntelliJ IDEA process, unless the file
  * is deleted, in which case {@link #isValid()} for the instance will return <code>false</code>.
  *
+ * If an in-memory implementation of VirtualFile is required, LightVirtualFile from the com.intellij.testFramework
+ * package (Extended API) can be used.
+ *
  * @see VirtualFileSystem
  * @see VirtualFileManager
  */
