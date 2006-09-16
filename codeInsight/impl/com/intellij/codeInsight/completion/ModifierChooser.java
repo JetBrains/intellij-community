@@ -2,10 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.FilterUtil;
-import com.intellij.psi.filters.NotFilter;
+import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.InterfaceFilter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.containers.HashMap;
@@ -52,7 +49,7 @@ public class ModifierChooser
       new String[]{"final", "abstract"}
     });
 
-    myMap.put(new ClassFilter(PsiCodeBlock.class), new String[][]{
+    myMap.put(new OrFilter(new ClassFilter(PsiStatement.class), new ClassFilter(PsiCodeBlock.class)), new String[][]{
       new String[]{"final", "synchronized"}
     });
 
