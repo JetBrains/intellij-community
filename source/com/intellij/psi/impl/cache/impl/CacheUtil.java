@@ -19,7 +19,7 @@ import com.intellij.psi.search.IndexPatternProvider;
 import java.io.IOException;
 
 public class CacheUtil {
-  public static final int CACHE_THRESHOLD = 1024 * 1024 * 2; // Two megabytes
+  public static Key<Boolean> CACHE_COPY_KEY = new Key<Boolean>("CACHE_COPY_KEY");
 
   private CacheUtil() {
   }
@@ -68,6 +68,7 @@ public class CacheUtil {
         final String name = psiFile.getName();
         assert name != null;
         fileCopy = factory.createFileFromText(name, fileType, text, psiFile.getModificationStamp(), false, false);
+        fileCopy.putUserData(CACHE_COPY_KEY, Boolean.TRUE);
         ((PsiFileImpl)fileCopy).setOriginalFile(psiFile);
       }
     }
@@ -81,12 +82,12 @@ public class CacheUtil {
   private static final Key<CharSequence> CONTENT_KEY = new Key<CharSequence>("CONTENT_KEY");
 
   public static CharSequence getContentText(final FileContent content) {
+    final Document doc = FileDocumentManager.getInstance().getCachedDocument(content.getVirtualFile());
+    if (doc != null) return doc.getCharsSequence();
+
     CharSequence cached = content.getUserData(CONTENT_KEY);
     if (cached != null) return cached;
     try {
-      final Document doc = FileDocumentManager.getInstance().getCachedDocument(content.getVirtualFile());
-      if (doc != null) return doc.getCharsSequence();
-
       cached = LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), content.getVirtualFile(), false);
       content.putUserData(CONTENT_KEY, cached);
       return cached;

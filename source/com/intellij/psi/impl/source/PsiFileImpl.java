@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -164,6 +165,10 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   protected FileElement createFileElement(final CharSequence docText) {
     final FileElement treeElement = (FileElement)Factory.createCompositeElement(myElementType);
+    if (getUserData(CacheUtil.CACHE_COPY_KEY) == Boolean.TRUE) {
+      treeElement.setCharTable(new IdentityCharTable());
+    }
+    
     char[] chars = CharArrayUtil.fromSequence(docText);
     TreeElement contentElement = createContentLeafElement(chars, 0, docText.length(), treeElement.getCharTable());
     TreeUtil.addChildren(treeElement, contentElement);
@@ -264,7 +269,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public boolean isWritable() {
-    return getViewProvider().getVirtualFile().isWritable();
+    return getViewProvider().getVirtualFile().isWritable() && getUserData(CacheUtil.CACHE_COPY_KEY) != Boolean.TRUE;
   }
 
   public PsiElement getParent() {
