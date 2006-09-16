@@ -1,7 +1,6 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcess;
@@ -37,6 +36,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xml.util.XmlUtil;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
@@ -181,72 +182,77 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   public String getDescription() {
-    StringBuffer buf = new StringBuffer(64);
-    //noinspection HardCodedStringLiteral
-    buf.append("<html><body>");
-    buf.append(getDisplayName());
-    if(!"".equals(myInvalidMessage)) {
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
       //noinspection HardCodedStringLiteral
-      buf.append("<br><font color='red'>");
-      buf.append(DebuggerBundle.message("error.invalid.breakpoint", myInvalidMessage));
-      //noinspection HardCodedStringLiteral
-      buf.append("</font>");
-    }
-    //noinspection HardCodedStringLiteral
-    buf.append("&nbsp;<br>&nbsp;");
-    buf.append(DebuggerBundle.message("breakpoint.property.name.suspend.policy")).append(" : ");
-    if(DebuggerSettings.SUSPEND_ALL.equals(SUSPEND_POLICY)) {
-      buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.all"));
-    }
-    else if(DebuggerSettings.SUSPEND_THREAD.equals(SUSPEND_POLICY)) {
-      buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.thread"));
-    }
-    else if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) {
-      buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.none"));
-    }
-    //noinspection HardCodedStringLiteral
-    buf.append("&nbsp;<br>&nbsp;");
-    buf.append(DebuggerBundle.message("breakpoint.property.name.log.message")).append(": ");
-    buf.append(LOG_ENABLED ? CommonBundle.getYesButtonText() : CommonBundle.getNoButtonText());
-    if (LOG_EXPRESSION_ENABLED) {
-      //noinspection HardCodedStringLiteral
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.log.expression")).append(": ");
-      buf.append(XmlUtil.escapeString(getLogMessage().getText()));
-    }
-    if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
-      //noinspection HardCodedStringLiteral
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.condition")).append(": ");
-      buf.append(XmlUtil.escapeString(getCondition().getText()));
-    }
-    if (COUNT_FILTER_ENABLED) {
-      //noinspection HardCodedStringLiteral
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
-      buf.append(COUNT_FILTER);
-    }
-    if (CLASS_FILTERS_ENABLED) {
-      //noinspection HardCodedStringLiteral
-      buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
-      ClassFilter[] classFilters = getClassFilters();
-      for (ClassFilter classFilter : classFilters) {
-        buf.append(classFilter.getPattern()).append(" ");
+      buf.append("<html><body>");
+      buf.append(getDisplayName());
+      if(myInvalidMessage != null && !"".equals(myInvalidMessage)) {
+        //noinspection HardCodedStringLiteral
+        buf.append("<br><font color='red'>");
+        buf.append(DebuggerBundle.message("error.invalid.breakpoint", myInvalidMessage));
+        //noinspection HardCodedStringLiteral
+        buf.append("</font>");
       }
-    }
-    if (INSTANCE_FILTERS_ENABLED) {
       //noinspection HardCodedStringLiteral
       buf.append("&nbsp;<br>&nbsp;");
-      buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
-      InstanceFilter[] instanceFilters = getInstanceFilters();
-      for (InstanceFilter instanceFilter : instanceFilters) {
-        buf.append(Long.toString(instanceFilter.getId())).append(" ");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.suspend.policy")).append(" : ");
+      if(DebuggerSettings.SUSPEND_ALL.equals(SUSPEND_POLICY)) {
+        buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.all"));
       }
+      else if(DebuggerSettings.SUSPEND_THREAD.equals(SUSPEND_POLICY)) {
+        buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.thread"));
+      }
+      else if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) {
+        buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.none"));
+      }
+      //noinspection HardCodedStringLiteral
+      buf.append("&nbsp;<br>&nbsp;");
+      buf.append(DebuggerBundle.message("breakpoint.property.name.log.message")).append(": ");
+      buf.append(LOG_ENABLED ? CommonBundle.getYesButtonText() : CommonBundle.getNoButtonText());
+      if (LOG_EXPRESSION_ENABLED) {
+        //noinspection HardCodedStringLiteral
+        buf.append("&nbsp;<br>&nbsp;");
+        buf.append(DebuggerBundle.message("breakpoint.property.name.log.expression")).append(": ");
+        buf.append(XmlUtil.escapeString(getLogMessage().getText()));
+      }
+      if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
+        //noinspection HardCodedStringLiteral
+        buf.append("&nbsp;<br>&nbsp;");
+        buf.append(DebuggerBundle.message("breakpoint.property.name.condition")).append(": ");
+        buf.append(XmlUtil.escapeString(getCondition().getText()));
+      }
+      if (COUNT_FILTER_ENABLED) {
+        //noinspection HardCodedStringLiteral
+        buf.append("&nbsp;<br>&nbsp;");
+        buf.append(DebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
+        buf.append(COUNT_FILTER);
+      }
+      if (CLASS_FILTERS_ENABLED) {
+        //noinspection HardCodedStringLiteral
+        buf.append("&nbsp;<br>&nbsp;");
+        buf.append(DebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
+        ClassFilter[] classFilters = getClassFilters();
+        for (ClassFilter classFilter : classFilters) {
+          buf.append(classFilter.getPattern()).append(" ");
+        }
+      }
+      if (INSTANCE_FILTERS_ENABLED) {
+        //noinspection HardCodedStringLiteral
+        buf.append("&nbsp;<br>&nbsp;");
+        buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
+        InstanceFilter[] instanceFilters = getInstanceFilters();
+        for (InstanceFilter instanceFilter : instanceFilters) {
+          buf.append(Long.toString(instanceFilter.getId())).append(" ");
+        }
+      }
+      //noinspection HardCodedStringLiteral
+      buf.append("</body></html>");
+      return buf.toString();
     }
-    //noinspection HardCodedStringLiteral
-    buf.append("</body></html>");
-    return buf.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
   }
 
   public final void reload() {
