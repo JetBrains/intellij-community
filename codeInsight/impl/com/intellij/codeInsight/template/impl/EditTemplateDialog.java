@@ -26,10 +26,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class EditTemplateDialog extends DialogWrapper {
   private TemplateImpl[] myTemplates;
@@ -523,14 +520,14 @@ public class EditTemplateDialog extends DialogWrapper {
     ArrayList<Variable> parsedVariables = new ArrayList<Variable>();
     parseVariables(myTemplateEditor.getDocument().getCharsSequence(), parsedVariables);
 
-    Hashtable<String,String> oldVariableNames = new Hashtable<String, String>();
+    Map<String,String> oldVariableNames = new HashMap<String, String>();
     for (Object myVariable : myVariables) {
       Variable oldVariable = (Variable)myVariable;
       String name = oldVariable.getName();
       oldVariableNames.put(name, name);
     }
 
-    Hashtable<String,String> newVariableNames = new Hashtable<String, String>();
+    Map<String,String> newVariableNames = new HashMap<String, String>();
     for (Object parsedVariable : parsedVariables) {
       Variable newVariable = (Variable)parsedVariable;
       String name = newVariable.getName();
@@ -605,7 +602,7 @@ public class EditTemplateDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private boolean isAllowedTemplateAbbreviation(final String key) {
+  private static boolean isAllowedTemplateAbbreviation(final String key) {
     for (int i = 0; i < key.length(); i++) {
       final char c = key.charAt(i);
       if (c != '.' && !Character.isJavaIdentifierPart(c)) return false;
