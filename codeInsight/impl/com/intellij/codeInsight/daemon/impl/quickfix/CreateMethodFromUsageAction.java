@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -30,7 +31,9 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isAvailableImpl(int offset) {
-    PsiReferenceExpression ref = getMethodCall().getMethodExpression();
+    final PsiMethodCallExpression call = getMethodCall();
+    if (call == null) return false;
+    PsiReferenceExpression ref = call.getMethodExpression();
     String name = ref.getReferenceName();
 
     if (name == null || !ref.getManager().getNameHelper().isIdentifier(name)) return false;
@@ -40,8 +43,9 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected PsiElement getElement() {
-    if (!getMethodCall().isValid() || !getMethodCall().getManager().isInProject(getMethodCall())) return null;
-    return getMethodCall();
+    final PsiMethodCallExpression call = getMethodCall();
+    if (call == null || !call.getManager().isInProject(call)) return null;
+    return call;
   }
 
   protected void invokeImpl(PsiClass targetClass) {
@@ -168,6 +172,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
 
+  @Nullable
   public PsiMethodCallExpression getMethodCall() {
     return (PsiMethodCallExpression)myMethodCall.getElement();
   }
