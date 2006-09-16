@@ -25,9 +25,6 @@ import java.util.Comparator;
  * @author mike
  */
 public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
-  public SurroundWithTemplateHandler() {
-  }
-
   public void invoke(final Project project, final Editor editor, PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
@@ -82,7 +79,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     private Project myProject;
 
     public InvokeTemplateAction(final TemplateImpl template, final Editor editor, final Project project) {
-      super("" + UIUtil.MNEMONIC + template.getKey() + " " + template.getDescription());
+      super(String.valueOf(UIUtil.MNEMONIC) + template.getKey() + " " + template.getDescription());
       myTemplate = template;
       myProject = project;
       myEditor = editor;
