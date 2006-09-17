@@ -38,7 +38,7 @@ import java.util.List;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener {
   private JTextPane myDetailsPane;
-  private List myFatalErrors;
+  private List<AbstractMessage> myFatalErrors;
   private List<ArrayList<AbstractMessage>> myModel = new ArrayList<ArrayList<AbstractMessage>>();
   private final MessagePool myMessagePool;
   private JLabel myCountLabel;
@@ -257,8 +257,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     blameGroup.add(blameAction);
     blameAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), getRootPane());
 
-    final ActionToolbar blameToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, blameGroup, true);
-    return blameToolbar;
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, blameGroup, true);
   }
 
   private AbstractMessage getMessageAt(int idx) {
@@ -285,18 +284,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     Map<String, ArrayList<AbstractMessage>> hash2Messages = buildHashcode2MessageListMap(myFatalErrors);
 
-    final Iterator<ArrayList<AbstractMessage>> messageLists = hash2Messages.values().iterator();
-    while (messageLists.hasNext()) {
-      myModel.add(messageLists.next());
+    for (final ArrayList<AbstractMessage> abstractMessages : hash2Messages.values()) {
+      myModel.add(abstractMessages);
     }
 
     updateControls();
   }
 
-  private Map<String, ArrayList<AbstractMessage>> buildHashcode2MessageListMap(List aErrors) {
+  private static Map<String, ArrayList<AbstractMessage>> buildHashcode2MessageListMap(List<AbstractMessage> aErrors) {
     Map<String, ArrayList<AbstractMessage>> hash2Messages = new LinkedHashMap<String, ArrayList<AbstractMessage>>();
-    for (int i = 0; i < aErrors.size(); i++) {
-      final AbstractMessage each = (AbstractMessage)aErrors.get(i);
+    for (final AbstractMessage each : aErrors) {
       final String hashcode = ScrData.getThrowableHashCode(each.getThrowable());
       ArrayList<AbstractMessage> list;
       if (hash2Messages.containsKey(hashcode)) {
@@ -443,7 +440,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
+  private static ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
     final PluginId pluginId = findPluginId(logMessage.getThrowable());
     final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER).getExtensions();
     ErrorReportSubmitter submitter = null;
@@ -465,8 +462,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void markAllAsRead() {
-    for (int i = 0; i < myFatalErrors.size(); i++) {
-      AbstractMessage each = (AbstractMessage)myFatalErrors.get(i);
+    for (AbstractMessage each : myFatalErrors) {
       each.setRead(true);
     }
   }
