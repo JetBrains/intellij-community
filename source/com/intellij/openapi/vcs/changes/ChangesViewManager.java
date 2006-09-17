@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -357,7 +358,12 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      FileDocumentManager.getInstance().saveAllDocuments();
+      VirtualFileManager.getInstance().refresh(true, new Runnable() {
+        public void run() {
+          VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+        }
+      });
     }
   }
 
