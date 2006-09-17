@@ -196,8 +196,13 @@ public class CommitHelper {
         handler.checkinFailed(errors);
       }
 
-      moveToFailedList(changeList, commitMessage, failedChanges, VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()),
-                       myProject);
+      int index = 1;
+      String failedListName = VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName());
+      while(ChangeListManager.getInstance(myProject).findChangeList(failedListName) != null) {
+        index++;
+        failedListName = VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()) + " (" + index + ")";
+      }
+      moveToFailedList(changeList, commitMessage, failedChanges, failedListName, myProject);
     }
 
     if (errorsSize == 0 || warningsSize == 0) {
