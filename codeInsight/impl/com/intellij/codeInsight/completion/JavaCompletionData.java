@@ -234,7 +234,8 @@ public class JavaCompletionData extends CompletionData{
           END_OF_BLOCK,
           new LeftNeighbour(new OrFilter(
             new SuperParentFilter(new ClassFilter(PsiModifierList.class)),
-            new TokenTypeFilter(JavaTokenType.GT)))
+            new AndFilter (new TokenTypeFilter(JavaTokenType.GT),
+                           new SuperParentFilter(new ClassFilter(PsiTypeParameterList.class)))))
         )));
 
 // completion
