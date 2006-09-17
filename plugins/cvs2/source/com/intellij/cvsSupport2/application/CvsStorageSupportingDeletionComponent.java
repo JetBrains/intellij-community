@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ModuleLevelVcsManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.CvsBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,13 +84,11 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     file.putUserData(FILE_MODULE, VfsUtil.getModuleForFile(myProject, file));
     if (!CvsUtil.fileIsUnderCvs(file)) return;
     if (!shouldProcessEvent(event, false)) return;
-    LOG.assertTrue(myCommandLevel > 0);
     LOG.info("Preserving CVS info from " + file);
     try {
       if (event.getRequestor() != myDeletedStorage) {
         if (myDeleteHandler == null) {
-          myDeleteHandler =
-          myDeletedStorage.createDeleteHandler(myProject, this);
+          myDeleteHandler = myDeletedStorage.createDeleteHandler(myProject, this);
         }
         myDeleteHandler.addDeletedRoot(file);
         myDeletedStorage.saveCVSInfo(VfsUtil.virtualToIoFile(file));
@@ -98,8 +97,8 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     catch (final IOException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          Messages.showMessageDialog(com.intellij.CvsBundle.message("message.error.cannot.restore.cvs.admin.directories", e.getLocalizedMessage()),
-                                     com.intellij.CvsBundle.message("message.error.cannot.restore.cvs.admin.directories.title"), Messages.getErrorIcon());
+          Messages.showMessageDialog(CvsBundle.message("message.error.cannot.restore.cvs.admin.directories", e.getLocalizedMessage()),
+                                     CvsBundle.message("message.error.cannot.restore.cvs.admin.directories.title"), Messages.getErrorIcon());
         }
       });
     }
@@ -119,17 +118,17 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     if (myAnotherProjectCommand) return false;
     VirtualFile file = event.getFile();
     if (disabled(file)) return false;
-    if (externalChange(event)) return false;
+    if (event.isFromRefresh()) return false;
     if (isStorageEvent(event)) return false;
     if (!isUnderCvsManagedModuleRoot(file)) return false;
     return !(parentShouldBeUnderCvs && !parentIsUnderCvs(file));
   }
 
-  private boolean isStorageEvent(VirtualFileEvent event) {
+  private static boolean isStorageEvent(VirtualFileEvent event) {
     return event.getRequestor() instanceof DeletedCVSDirectoryStorage;
   }
 
-  private boolean parentIsUnderCvs(VirtualFile file) {
+  private static boolean parentIsUnderCvs(VirtualFile file) {
     return CvsUtil.fileIsUnderCvs(file.getParent());
   }
 
@@ -169,10 +168,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     }
   }
 
-  private boolean externalChange(VirtualFileEvent event) {
-    return event.isFromRefresh();
-  }
-
   public void purge() {
     try {
       myDeletedStorage.purgeDirsWithNoEntries();
@@ -189,7 +184,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
 
   public void beforePropertyChange(VirtualFilePropertyEvent event) {
     if (!event.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
-    LOG.assertTrue(myCommandLevel > 0);
     if (!CvsUtil.fileIsUnderCvs(event.getFile())) return;
     beforeFileDeletion(event);
   }
@@ -203,7 +197,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
 
   public void fileCreated(final VirtualFileEvent event) {
     if (!shouldProcessEvent(event, false)) return;
-    LOG.assertTrue(myCommandLevel > 0, "All VFS operations should be invoked inside a command");
     final VirtualFile file = event.getFile();
     myDeletedStorage.checkNeedForPurge(VfsUtil.virtualToIoFile(file));
     deleteIfAdminDirCreated(file);
@@ -230,7 +223,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     myDeletedStorage = new DeletedCVSDirectoryStorage(storageRoot);
   }
 
-  private File getStorageRoot() {
+  private static File getStorageRoot() {
     //noinspection HardCodedStringLiteral
     return new File(PathManager.getSystemPath(), "CVS-TO-DELETE");
   }
