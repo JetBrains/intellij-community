@@ -146,7 +146,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void updateBlameLabel() {
     final AbstractMessage message = getMessageAt(myIndex);
-    if (message != null) {
+    if (message != null && !(message.getThrowable() instanceof MessagePool.TooManyErrorsException)) {
       final PluginId pluginId = findPluginId(message.getThrowable());
       if (pluginId == null) {
         myBlameLabel.setText(DiagnosticBundle.message("error.list.message.blame.core",
@@ -440,7 +440,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
+  @Nullable
   private static ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
+    if (logMessage.getThrowable() instanceof MessagePool.TooManyErrorsException) {
+      return null;
+    }
     final PluginId pluginId = findPluginId(logMessage.getThrowable());
     final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER).getExtensions();
     ErrorReportSubmitter submitter = null;

@@ -14,7 +14,7 @@ import java.util.*;
 
 public class MessagePool {
 
-  private static int MAX_POOL_SIZE_FOR_FATALS = 100;
+  private static int MAX_POOL_SIZE_FOR_FATALS = 2;
 
   private static MessagePool ourInstance;
 
@@ -49,7 +49,8 @@ public class MessagePool {
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
       myFatalsGrouper.add(message);
     } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {
-      myFatalsGrouper.add(new LogMessage(new LoggingEvent(DiagnosticBundle.message("error.monitor.too.many.errors"), Category.getRoot(), Priority.ERROR, null, new Exception())));
+      myFatalsGrouper.add(new LogMessage(new LoggingEvent(DiagnosticBundle.message("error.monitor.too.many.errors"),
+                                                          Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException())));
     }
   }
 
@@ -166,6 +167,12 @@ public class MessagePool {
           post();
         }
       }
+    }
+  }
+
+  static class TooManyErrorsException extends Exception {
+    TooManyErrorsException() {
+      super(DiagnosticBundle.message("error.monitor.too.many.errors"));
     }
   }
 }
