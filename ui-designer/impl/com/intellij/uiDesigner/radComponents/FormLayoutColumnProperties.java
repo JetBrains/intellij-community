@@ -220,6 +220,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       myMaximumCheckBox.setEnabled(true);
       if (minimumSize instanceof ConstantSize) {
         myMinimumCheckBox.setSelected(true);
+        myMaximumCheckBox.setEnabled(false);       // TODO: remove this code when IDEADEV-9678 is implemented
         showConstantSize((ConstantSize) minimumSize, myMinSizeUnitsCombo, myMinSizeSpinner);
       }
       else {
@@ -227,6 +228,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       }
       if (maximumSize instanceof ConstantSize) {
         myMaximumCheckBox.setSelected(true);
+        myMinimumCheckBox.setEnabled(false);       // TODO: remove this code when IDEADEV-9678 is implemented 
         showConstantSize((ConstantSize) maximumSize, myMaxSizeUnitsCombo, myMaxSizeSpinner);
       }
       else {
@@ -253,6 +255,16 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
     final boolean canSetBounds = !myConstantRadioButton.isSelected();
     myMinimumCheckBox.setEnabled(canSetBounds);
     myMaximumCheckBox.setEnabled(canSetBounds);
+
+    // TODO: remove this code when IDEADEV-9678 is implemented
+    if (myMinimumCheckBox.isSelected()) {
+      myMaximumCheckBox.setEnabled(false);
+      myMaximumCheckBox.setSelected(false);
+    }
+    else if (myMaximumCheckBox.isSelected()) {
+      myMinimumCheckBox.setEnabled(false);
+    }
+
     if (!canSetBounds) {
       myMinimumCheckBox.setSelected(false);
       myMaximumCheckBox.setSelected(false);
@@ -262,7 +274,6 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
 
   private void updateSpec() {
     if (myLayout == null || myShowing) return;
-
     mySaving = true;
     try {
       Size size = getSelectedSize();
@@ -339,6 +350,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   }
 
   private class MyCheckboxListener implements ChangeListener {
+    private boolean myWasSelected;
     private final AbstractButton myButton;
     private final JComboBox myUnitsCombo;
     private final JSpinner mySpinner;
@@ -347,15 +359,19 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       myButton = button;
       myUnitsCombo = unitsCombo;
       mySpinner = spinner;
+      myWasSelected = myButton.isSelected();
     }
 
     public void stateChanged(ChangeEvent e) {
-      myUnitsCombo.setEnabled(myButton.isSelected());
-      mySpinner.setEnabled(myButton.isSelected());
-      if (myButton.isSelected() && mySpinner.getValue().equals(new Integer(0))) {
-        mySpinner.setValue(100);
+      if (myWasSelected != myButton.isSelected()) {
+        myWasSelected = myButton.isSelected();
+        myUnitsCombo.setEnabled(myButton.isSelected());
+        mySpinner.setEnabled(myButton.isSelected());
+        if (myButton.isSelected() && mySpinner.getValue().equals(new Integer(0))) {
+          mySpinner.setValue(100);
+        }
+        updateOnRadioChange();
       }
-      updateSpec();
     }
   }
 
