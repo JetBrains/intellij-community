@@ -45,6 +45,13 @@ public class Javac2 extends Javac{
     // compile java
     super.compile();
 
+    instrumentForms();
+
+    //NotNull instrumentation
+    instrumentNotNull(getDestdir());
+  }
+
+  private void instrumentForms() {
     // we instrument every file, because we cannot find which files should not be instrumented without dependency storage
     final ArrayList formsToInstrument = myFormFiles;
 
@@ -52,7 +59,6 @@ public class Javac2 extends Javac{
       log("No forms to instrument found", Project.MSG_VERBOSE);
       return;
     }
-
 
     final StringBuffer classPathBuffer = new StringBuffer();
 
@@ -164,9 +170,7 @@ public class Javac2 extends Javac{
         fireError(message.toString());
       }
     }
-
-    //NotNull instrumentation
-    instrumentNotNull(getDestdir());
+    return;
   }
 
   private void instrumentNotNull(File dir) {
