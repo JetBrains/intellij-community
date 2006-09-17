@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -53,4 +55,10 @@ public interface VcsContext {
   FilePath[] getSelectedFilePaths();
   
   FilePath getSelectedFilePath();
+
+  @Nullable
+  ChangeList[] getSelectedChangeLists();
+
+  @Nullable
+  Change[] getSelectedChanges();
 }

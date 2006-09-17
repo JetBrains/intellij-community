@@ -66,14 +66,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     new CommitChangeListDialog(project, changes, initialSelection, executors).show();
   }
 
-  public static void commitPaths(final Project project, Collection<FilePath> paths) {
+  public static void commitPaths(final Project project, Collection<FilePath> paths, final ChangeList initialSelection) {
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     final Collection<Change> changes = new HashSet<Change>();
     for (FilePath path : paths) {
       changes.addAll(manager.getChangesIn(path));
     }
 
-    commitChanges(project, changes, null, manager.getRegisteredExecutors());
+    commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors());
   }
 
   /*

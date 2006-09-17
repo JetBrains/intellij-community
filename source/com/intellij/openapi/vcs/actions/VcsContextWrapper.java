@@ -40,6 +40,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataConstants;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.fileView.impl.FileViewPanel;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -47,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -217,5 +220,15 @@ public class VcsContextWrapper implements VcsContext {
     else {
       return selectedFilePaths[0];
     }
+  }
+
+  @Nullable
+  public ChangeList[] getSelectedChangeLists() {
+    return (ChangeList[]) myContext.getData(DataConstants.CHANGE_LISTS);
+  }
+
+  @Nullable
+  public Change[] getSelectedChanges() {
+    return (Change[]) myContext.getData(DataConstants.CHANGES);
   }
 }

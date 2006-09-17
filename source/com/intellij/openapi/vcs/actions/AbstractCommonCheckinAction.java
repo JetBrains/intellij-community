@@ -42,6 +42,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
@@ -93,7 +95,23 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     }
     else {
       if (ChangeListManager.getInstance(project).ensureUpToDate(true)) {
-        CommitChangeListDialog.commitPaths(project, Arrays.asList(roots));
+        ChangeList initialSelection;
+        ChangeList[] selectedChangeLists = context.getSelectedChangeLists();
+        if (selectedChangeLists != null && selectedChangeLists.length > 0) {
+          // convert copy to real
+          initialSelection = ChangeListManager.getInstance(project).findChangeList(selectedChangeLists [0].getName());
+        }
+        else {
+          Change[] selectedChanges = context.getSelectedChanges();
+          if (selectedChanges != null && selectedChanges.length > 0) {
+            initialSelection = ChangeListManager.getInstance(project).getChangeList(selectedChanges [0]);
+          }
+          else {
+            initialSelection = ChangeListManager.getInstance(project).getDefaultChangeList();
+          }
+        }
+
+        CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection);
       }
     }
   }
@@ -198,11 +216,11 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return result;
   }
 
-  private CheckinProjectPanel createMockPanel(final Collection<VirtualFile> virtualFiles,
-                                              final Collection<File> files,
-                                              final Project project,
-                                              final String message,
-                                              final AbstractVcs abstractVcs) {
+  private static CheckinProjectPanel createMockPanel(final Collection<VirtualFile> virtualFiles,
+                                                     final Collection<File> files,
+                                                     final Project project,
+                                                     final String message,
+                                                     final AbstractVcs abstractVcs) {
     return new MockCheckinProjectPanel(virtualFiles, files, project, message, abstractVcs);
   }                                  
 

@@ -8,13 +8,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -144,5 +147,15 @@ public class CvsContextWrapper implements CvsContext {
 
   public FilePath getSelectedFilePath() {
     return myVcsContext.getSelectedFilePath();
+  }
+
+  @Nullable
+  public ChangeList[] getSelectedChangeLists() {
+    return myVcsContext.getSelectedChangeLists();
+  }
+
+  @Nullable
+  public Change[] getSelectedChanges() {
+    return myVcsContext.getSelectedChanges();
   }
 }

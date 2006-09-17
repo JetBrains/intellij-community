@@ -31,15 +31,18 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.ui.Refreshable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.io.File;
+import java.util.Collection;
 
 public class CachedVcsContext implements VcsContext {
   private final Project myProject;
@@ -55,6 +58,8 @@ public class CachedVcsContext implements VcsContext {
   private final File mySelectedIOFile;
   private final FilePath[] mySelectedFilePaths;
   private final FilePath mySelectedFilePath;
+  private final ChangeList[] mySelectedChangeLists;
+  private final Change[] mySelectedChanges;
 
   public CachedVcsContext(VcsContext baseContext) {
     myProject = baseContext.getProject();
@@ -70,6 +75,8 @@ public class CachedVcsContext implements VcsContext {
     mySelectedIOFile = baseContext.getSelectedIOFile();
     mySelectedFilePaths = baseContext.getSelectedFilePaths();
     mySelectedFilePath = baseContext.getSelectedFilePath();
+    mySelectedChangeLists = baseContext.getSelectedChangeLists();
+    mySelectedChanges = baseContext.getSelectedChanges();
   }
 
   public String getPlace() {
@@ -122,5 +129,15 @@ public class CachedVcsContext implements VcsContext {
 
   public FilePath getSelectedFilePath() {
     return mySelectedFilePath;
+  }
+
+  @Nullable
+  public ChangeList[] getSelectedChangeLists() {
+    return mySelectedChangeLists;
+  }
+
+  @Nullable
+  public Change[] getSelectedChanges() {
+    return mySelectedChanges;
   }
 }

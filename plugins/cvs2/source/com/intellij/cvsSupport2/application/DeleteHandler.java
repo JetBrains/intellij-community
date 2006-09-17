@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.application;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
@@ -14,14 +15,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 
 /**
  * author: lesya
@@ -48,8 +47,8 @@ class DeleteHandler {
   public void execute() {
     try {
       boolean restored = false;
-      for (Iterator iterator = myDeletedFilesPaths.iterator(); iterator.hasNext();) {
-        restored |= myDeletedStorage.restore((String)iterator.next());
+      for (final String myDeletedFilesPath : myDeletedFilesPaths) {
+        restored |= myDeletedStorage.restore((String)myDeletedFilesPath);
       }
       myDeletedStorage.purgeDirsWithNoEntries();
       final boolean showWarning = restored;
@@ -60,13 +59,13 @@ class DeleteHandler {
             if (!myCvsStorageComponent.getIsActive()) return;
             removeFiles();
           }
-        }, ModalityState.NON_MMODAL);
+        }, ModalityState.NON_MODAL);
 
       }
 
       final int[] myRefreshedParents = new int[]{myDeletedFilesParents.size()};
-      for (Iterator iterator = myDeletedFilesParents.iterator(); iterator.hasNext();) {
-        ((VirtualFile)iterator.next()).refresh(true, true, new Runnable() {
+      for (final VirtualFile myDeletedFilesParent : myDeletedFilesParents) {
+        myDeletedFilesParent.refresh(true, true, new Runnable() {
           public void run() {
             myRefreshedParents[0]++;
             if (myRefreshedParents[0] == myDeletedFilesParents.size()) {
@@ -100,16 +99,14 @@ class DeleteHandler {
 
   public void removeFiles() {
 
-    for (Iterator<File> iterator = myFilesToDeleteEntry.iterator(); iterator.hasNext();) {
-      File file = iterator.next();
-      if (!file.exists()){
+    for (File file : myFilesToDeleteEntry) {
+      if (!file.exists()) {
         CvsUtil.removeEntryFor(file);
       }
     }
 
     final ArrayList<String> reallyDeletedFiles = new ArrayList<String>();
-    for (Iterator<String> iterator = myDeletedFiles.iterator(); iterator.hasNext();) {
-      String s = iterator.next();
+    for (String s : myDeletedFiles) {
       if (!new File(s).exists()) {
         reallyDeletedFiles.add(s);
       }
@@ -138,8 +135,7 @@ class DeleteHandler {
 
     if (children == null) return;
 
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       if (!child.isDirectory() && CvsUtil.fileIsUnderCvs(child)) {
         addFile(child);
       }
