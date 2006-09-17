@@ -24,7 +24,7 @@ public class FilePathImpl implements FilePath {
   @NotNull private final File myFile;
   private boolean myIsDirectory;
 
-  public FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory) {
+  private FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory, VirtualFile child) {
     myVirtualParent = virtualParent;
     myName = name;
     myIsDirectory = isDirectory;
@@ -35,7 +35,16 @@ public class FilePathImpl implements FilePath {
       myFile = new File(new File(myVirtualParent.getPath()), myName);
     }
 
-    refresh();
+    if (child == null) {
+      refresh();
+    }
+    else {
+      myVirtualFile = child;
+    }
+  }
+
+  public FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory) {
+    this(virtualParent, name, isDirectory, null);
   }
 
   public FilePathImpl(final File file, final boolean isDirectory) {
@@ -58,7 +67,7 @@ public class FilePathImpl implements FilePath {
   }
 
   public FilePathImpl(@NotNull VirtualFile virtualFile) {
-    this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory());
+    this(virtualFile.getParent(), virtualFile.getName(), virtualFile.isDirectory(), virtualFile);
   }
 
   public void refresh() {
