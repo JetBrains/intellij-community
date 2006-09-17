@@ -170,7 +170,6 @@ public class Javac2 extends Javac{
         fireError(message.toString());
       }
     }
-    return;
   }
 
   private void instrumentNotNull(File dir) {
@@ -183,13 +182,24 @@ public class Javac2 extends Javac{
         log("Adding @NotNull assertions to " + path, Project.MSG_VERBOSE);
         try {
           final FileInputStream inputStream = new FileInputStream(file);
-          ClassReader reader = new ClassReader(inputStream);
-          ClassWriter writer = new ClassWriter(true);
+          try {
+            ClassReader reader = new ClassReader(inputStream);
+            ClassWriter writer = new ClassWriter(true);
 
-          final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-          reader.accept(instrumenter, false);
-          if (instrumenter.isModification()) {
-            new FileOutputStream(path).write(writer.toByteArray());
+            final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
+            reader.accept(instrumenter, false);
+            if (instrumenter.isModification()) {
+              final FileOutputStream fileOutputStream = new FileOutputStream(path);
+              try {
+                fileOutputStream.write(writer.toByteArray());
+              }
+              finally {
+                fileOutputStream.close();
+              }
+            }
+          }
+          finally {
+            inputStream.close();
           }
         }
         catch (IOException e) {
@@ -201,7 +211,7 @@ public class Javac2 extends Javac{
     }
   }
 
-  private String getInternalClassPath() {
+  private static String getInternalClassPath() {
     String class_path = System.getProperty("java.class.path");
     String boot_path  = System.getProperty("sun.boot.class.path");
     String ext_path   = System.getProperty("java.ext.dirs");
