@@ -141,8 +141,11 @@ public class JavaDocLexer extends MergingLexerAdapter {
         }
 
         final int state = myFlex.yystate();
-        if (state == _JavaDocLexer.COMMENT_DATA
-            || myTokenEndOffset < myBufferEndOffset && (myBuffer[myTokenEndOffset] == '@' || myBuffer[myTokenEndOffset] == '{')) {
+        if (state == _JavaDocLexer.COMMENT_DATA ||
+            myTokenEndOffset < myBufferEndOffset && (myBuffer[myTokenEndOffset] == '@' ||
+                                                     myBuffer[myTokenEndOffset] == '{' ||
+                                                     myBuffer[myTokenEndOffset] == '\"' ||
+                                                     myBuffer[myTokenEndOffset] == '<')) {
           myFlex.yybegin(_JavaDocLexer.COMMENT_DATA_START);
         }
 
