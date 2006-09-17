@@ -14,14 +14,15 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class OwnBufferLeafPsiElement extends OwnBufferLeafElementImpl implements PsiElement {
+public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl implements PsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
 
-  public OwnBufferLeafPsiElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState) {
-    super(type, buffer, startOffset, endOffset);
+  public OwnBufferLeafPsiElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+    super(type, buffer, startOffset, endOffset, table);
     setState(lexerState);
   }
 

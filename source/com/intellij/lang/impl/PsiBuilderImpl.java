@@ -428,7 +428,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return new PsiCommentImpl(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
     else if (type instanceof IChameleonElementType) {
-      return new ChameleonElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState);
+      return new ChameleonElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
     return new LeafPsiElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
   }

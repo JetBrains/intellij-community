@@ -70,13 +70,13 @@ public class Factory implements Constants {
   public static LeafElement createLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     LeafElement element = null;
     if (type instanceof IChameleonElementType) {
-      element = new ChameleonElement(type, buffer, startOffset, endOffset, lexerState);
+      element = new ChameleonElement(type, buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type instanceof IXmlLeafElementType) {
       element = new XmlTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == PLAIN_TEXT) {
-      element = new PsiPlainTextImpl(buffer, startOffset, endOffset, lexerState);
+      element = new PsiPlainTextImpl(buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == WHITE_SPACE) {
       element = new PsiWhiteSpaceImpl(buffer, startOffset, endOffset, lexerState, table);

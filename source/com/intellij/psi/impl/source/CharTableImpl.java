@@ -8,6 +8,7 @@ import gnu.trove.THashSet;
  * @author max
  */
 public class CharTableImpl extends THashSet<CharSequence> implements CharTable {
+  private final static int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
   private final static CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
 
   //private char[] myCurrentPage = null;
@@ -20,6 +21,8 @@ public class CharTableImpl extends THashSet<CharSequence> implements CharTable {
   }
 
   public synchronized CharSequence intern(final CharSequence text) {
+    if (text.length() > INTERN_THRESHOLD) return text.toString();
+
     int idx = index(text);
     if (idx >= 0) {
       //noinspection NonPrivateFieldAccessedInSynchronizedContext

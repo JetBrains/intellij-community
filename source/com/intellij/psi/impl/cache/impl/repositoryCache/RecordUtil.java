@@ -5,6 +5,7 @@ import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -42,10 +43,10 @@ public class RecordUtil {
   private static final String[][] ourEmptyStringStringArray = new String[0][];
   private static final TypeInfo[] ourEmptyTypeArray = new TypeInfo[0];
 
-  public static List<PsiClass> getInnerClasses(PsiElement psiElement) {
+  public static List<PsiClass> getInnerClasses(PsiElement psiElement, final char[] fileBuffer) {
     ourList.set(null);
 
-    if (psiElement != null && mayContainClassesInside(psiElement)) {
+    if (psiElement != null && mayContainClassesInside(psiElement, fileBuffer)) {
       psiElement.accept(new PsiRecursiveElementVisitor() {
         public void visitClass(PsiClass aClass) {
           if (ourList.isNull()) ourList.set(new ArrayList<PsiClass>());
@@ -61,15 +62,16 @@ public class RecordUtil {
     return ourList.get();
   }
 
-  private static boolean mayContainClassesInside(PsiElement psiElement) {
+  private static boolean mayContainClassesInside(PsiElement psiElement, final char[] fileBuffer) {
     PsiFile psiFile = psiElement.getContainingFile();
+
     boolean mayHaveClassesInside = false;
     if (psiFile instanceof PsiJavaFileImpl) {
       PsiJavaFileImpl impl = (PsiJavaFileImpl)psiFile;
       Lexer originalLexer = impl.createLexer();
       FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      final char[] buffer = psiElement.textToCharArray();
-      lexer.start(buffer, 0, buffer.length);
+      final TextRange range = psiElement.getTextRange();
+      lexer.start(fileBuffer, range.getStartOffset(), range.getEndOffset());
       boolean isInNewExpression = false;
       boolean isRightAfterNewExpression = false;
       int angleLevel = 0;

@@ -310,6 +310,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     calcPhysical();
   }
 
+  @Nullable
   private Document getCachedDocument() {
     final Document document = myDocument != null ? myDocument.get() : null;
     if (document != null) return document;
@@ -426,9 +427,16 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private class VirtualFileContent implements Content {
     public CharSequence getText() {
+      final VirtualFile virtualFile = getVirtualFile();
+      if (virtualFile instanceof LightVirtualFile) {
+        Document doc = getCachedDocument();
+        if (doc != null) return doc.getCharsSequence();
+        return ((LightVirtualFile)virtualFile).getContent();
+      }
+
       final Document document = getDocument();
       if (document == null) {
-        return LoadTextUtil.loadText(getVirtualFile());
+        return LoadTextUtil.loadText(virtualFile);
       }
       else {
         return document.getCharsSequence();

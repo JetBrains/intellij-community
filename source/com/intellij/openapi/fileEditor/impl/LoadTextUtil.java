@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.xml.util.XmlUtil;
@@ -174,6 +175,10 @@ public final class LoadTextUtil {
   }
 
   public static CharSequence loadText(VirtualFile file) {
+    if (file instanceof LightVirtualFile) {
+      return ((LightVirtualFile)file).getContent();
+    }
+
     assert !file.isDirectory() : file.getPresentableUrl() + "is directory";
     final FileType fileType = file.getFileType();
 

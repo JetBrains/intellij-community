@@ -22,5 +22,4 @@ public interface FileView extends RepositoryItemView {
 
   String getSourceFileName(long classId);
 
-  int getLength(long fileId);
 }

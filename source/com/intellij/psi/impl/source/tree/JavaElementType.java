@@ -102,41 +102,44 @@ public interface JavaElementType {
 
   IFileElementType JAVA_FILE = new IFileElementType("JAVA_FILE", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence seq = ((LeafElement)chameleon).getInternedText();
+      final char[] chars = CharArrayUtil.fromSequence(seq);
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final JavaLexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi()));
       return FileTextParsing.parseFileText(manager, lexer,
-                                           chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon));
+                                           chars, 0, seq.length(), SharedImplUtil.findCharTableByTree(chameleon));
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
   IElementType IMPORT_LIST = new IChameleonElementType("IMPORT_LIST_TEXT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence seq = ((LeafElement)chameleon).getInternedText();
+      final char[] chars = CharArrayUtil.fromSequence(seq);
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), languageLevel);
       return context.getImportsTextParsing().parseImportsText(manager, new JavaLexer(languageLevel),
-                                                              chars, 0, chars.length, ((LeafElement)chameleon).getState());
+                                                              chars, 0, seq.length(), ((LeafElement)chameleon).getState());
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
 
   IElementType CODE_BLOCK = new IErrorCounterChameleonElementType("CODE_BLOCK", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence seq = ((LeafElement)chameleon).getInternedText();
+      final char[] chars = CharArrayUtil.fromSequence(seq);
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       JavaParsingContext context = new JavaParsingContext(table, languageLevel);
       return context.getStatementParsing().parseCodeBlockText(manager, new JavaLexer(languageLevel),
-                                                              chars, 0, chars.length, ((LeafElement)chameleon).getState()).getFirstChildNode();
+                                                              chars, 0, seq.length(), ((LeafElement)chameleon).getState()).getFirstChildNode();
     }
     public int getErrorsCount(CharSequence seq, Project project) {
       final Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
       final char[] chars = CharArrayUtil.fromSequence(seq);
-      lexer.start(chars, 0, chars.length);
+      lexer.start(chars, 0, seq.length());
       if(lexer.getTokenType() != JavaTokenType.LBRACE) return FATAL_ERROR;
       lexer.advance();
       int balance = 1;
