@@ -91,7 +91,7 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
           Runnable runnable = new Runnable() {
             public void run() {
               AuthenticationDialog dlg = new AuthenticationDialog(getRequestingHost(), getRequestingPrompt());
-              dlg.setVisible(true);
+              dlg.show();
             }
           };
           if (SwingUtilities.isEventDispatchThread()) {

@@ -15,8 +15,10 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,11 +31,12 @@ import java.awt.event.ActionEvent;
  * Time: 3:56:25 PM
  * To change this template use Options | File Templates.
  */
-public class AuthenticationDialog extends JDialog {
+public class AuthenticationDialog extends DialogWrapper {
   private AuthenticationPanel panel;
 
   public AuthenticationDialog(String title, String description) {
-    super(JOptionPane.getRootFrame(), title, true);
+    super(JOptionPane.getRootFrame(), true);
+    setTitle(title);
 
     new MnemonicHelper().register(getContentPane());
 
@@ -42,24 +45,17 @@ public class AuthenticationDialog extends JDialog {
                                     HttpConfigurable.getInstance().getPlainProxyPassword(),
                                     HttpConfigurable.getInstance().KEEP_PROXY_PASSWORD);
 
-    getContentPane().setLayout(new BorderLayout ());
-    getContentPane().add(panel, BorderLayout.CENTER);
-
-    JPanel buttonPanel = new JPanel ();
-    buttonPanel.setLayout(new GridLayout (1, 2));
-    for (int i = 0; i < createActions().length; i++) {
-      Action action = createActions()[i];
-      buttonPanel.add(new JButton (action), i);
+    final Window window = getWindow();
+    if (window instanceof JDialog) {
+      ((JDialog) window).setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    init();
+  }
 
-    Dimension parentSize = Toolkit.getDefaultToolkit().getScreenSize();
-    Dimension ownSize = getPreferredSize();
-
-    setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
-
-    pack();
+  @Nullable
+  protected JComponent createCenterPanel() {
+    return panel;
   }
 
   protected Action[] createActions() {
