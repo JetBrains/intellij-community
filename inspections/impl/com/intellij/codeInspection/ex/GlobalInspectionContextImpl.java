@@ -987,9 +987,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     myProgressIndicator.setFraction(totalProgress);
     myProgressIndicator.setText(job.getDisplayName() + " " + message);
-    if (InspectionTool.ourOutputPath != null) {
-      LOG.info(job.getDisplayName());
-    }
   }
 
 
