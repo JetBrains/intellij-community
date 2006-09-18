@@ -9,7 +9,6 @@ import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -64,7 +63,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
 
   private ProjectConfigurable.MyJPanel myPanel;
 
-  private Alarm myUpdateWarningAlarm = new Alarm();
+  private Alarm myUpdateWarningAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private JLabel myWarningLabel = new JLabel("");
   private ModulesConfigurator myModulesConfigurator;
@@ -146,13 +145,18 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
         }
         @NonNls final String leftBrace = "<html>";
         @NonNls final String rightBrace = "</html>";
-        String warningMessage =
+        final String warningMessage =
           leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
-        myWarningLabel.setIcon(count > 0 ? Messages.getWarningIcon() : null);
-        myWarningLabel.setText(warningMessage);
-        myWarningLabel.repaint();
+        final int count1=count;
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            myWarningLabel.setIcon(count1 > 0 ? Messages.getWarningIcon() : null);
+            myWarningLabel.setText(warningMessage);
+            myWarningLabel.repaint();}
+          }
+        );
       }
-    }, 300, ModalityState.current());
+    }, 300);
   }
 
 
@@ -223,7 +227,8 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
       return true;
     }
     final String compilerOutput = projectRootManagerEx.getCompilerOutputUrl();
-    if (!Comparing.strEqual(VfsUtil.urlToPath(compilerOutput), myProjectCompilerOutput.getText())) return true;
+    if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtil.urlToPath(compilerOutput)),
+                            FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;
     return (((ProjectEx)myProject).isSavePathsRelative() != myRbRelativePaths.isSelected());
   }
