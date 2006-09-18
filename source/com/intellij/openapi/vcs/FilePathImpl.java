@@ -191,6 +191,12 @@ public class FilePathImpl implements FilePath {
       return new FilePathImpl(virtualFile);
     }
 
+    return createForDeletedFile(selectedFile, isDirectory);
+  }
+
+  public static FilePathImpl createForDeletedFile(final File selectedFile, final boolean isDirectory) {
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+
     File parentFile = selectedFile.getParentFile();
     if (parentFile == null) {
       return new FilePathImpl(selectedFile, isDirectory);

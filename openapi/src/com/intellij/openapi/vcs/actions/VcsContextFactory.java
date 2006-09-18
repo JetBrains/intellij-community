@@ -30,6 +30,8 @@ public interface VcsContextFactory {
 
   FilePath createFilePathOn(File file);
 
+  FilePath createFilePathOnDeleted(File file, boolean isDirectory);
+
   FilePath createFilePathOn(File file, boolean isDirectory);
 
   FilePath createFilePathOn(VirtualFile parent, String name);

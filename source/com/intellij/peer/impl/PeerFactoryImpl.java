@@ -280,6 +280,14 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
         });
       }
 
+      public FilePath createFilePathOnDeleted(final File file, final boolean isDirectory) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
+          public FilePath compute() {
+            return FilePathImpl.createForDeletedFile(file, isDirectory);
+          }
+        });
+      }
+
       public FilePath createFilePathOn(final VirtualFile parent, final String name) {
         return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
           public FilePath compute() {

@@ -300,6 +300,10 @@ public class VcsUtil
     return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
   }
 
+  public static FilePath getFilePathForDeletedFile(String path, boolean isDirectory) {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOnDeleted(new File(path), isDirectory);
+  }
+
   public static FilePath getFilePath(File file) {
     return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
   }
