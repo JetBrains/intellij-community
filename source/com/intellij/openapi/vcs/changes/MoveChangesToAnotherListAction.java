@@ -56,16 +56,15 @@ public class MoveChangesToAnotherListAction extends AnAction {
     if (virtualFiles != null) {
       List<Change> changesInFiles = new ArrayList<Change>();
       for(VirtualFile vFile: virtualFiles) {
-        if (ChangeListManager.getInstance(project).getStatus(vFile).equals(FileStatus.UNKNOWN)) {
+        Change change = ChangeListManager.getInstance(project).getChange(vFile);
+        if (change == null) continue;
+        if (change.getFileStatus().equals(FileStatus.UNKNOWN)) {
           unversionedFiles.add(vFile);
           if (changedFiles != null) changedFiles.add(vFile);
         }
         else {
-          Change change = ChangeListManager.getInstance(project).getChange(vFile);
-          if (change != null) {
-            changesInFiles.add(change);
-            if (changedFiles != null) changedFiles.add(vFile);
-          }
+          changesInFiles.add(change);
+          if (changedFiles != null) changedFiles.add(vFile);
         }
       }
       if (changesInFiles.size() > 0 || unversionedFiles.size() > 0) {
