@@ -41,23 +41,24 @@ public class AntElementFactory {
 
     final XmlTag tag = (XmlTag)element;
     AntTypeDefinition typeDef = null;
-    final String typeNamespace = tag.getNamespacePrefix();
     String typeName = tag.getLocalName();
-
-    /**
-     * Hardcode for <javadoc> task (IDEADEV-6731).
-     */
-    if (typeName.equals(AntFileImpl.JAVADOC2_TAG)) {
-      typeName = AntFileImpl.JAVADOC2_TAG;
+    final String nsPrefix = tag.getNamespacePrefix();
+    if (nsPrefix.length() == 0 ) {
+      /**
+       * Hardcode for <javadoc> task (IDEADEV-6731).
+       */
+      if (typeName.equals(AntFileImpl.JAVADOC2_TAG)) {
+        typeName = AntFileImpl.JAVADOC2_TAG;
+      }
+      /**
+       * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
+       */
+      if (typeName.equals(AntFileImpl.UNWAR_TAG) || typeName.equals(AntFileImpl.UNJAR_TAG)) {
+        typeName = AntFileImpl.UNZIP_TAG;
+      }
     }
-    /**
-     * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
-     */
-    if (typeName.equals(AntFileImpl.UNWAR_TAG) || typeName.equals(AntFileImpl.UNJAR_TAG)) {
-      typeName = AntFileImpl.UNZIP_TAG;
-    }
 
-    final AntTypeId id = new AntTypeId(typeName, typeNamespace);
+    final AntTypeId id = new AntTypeId(typeName, nsPrefix);
     final AntFile file = parent.getAntFile();
 
     final AntTypeDefinition parentDef = parent.getTypeDefinition();

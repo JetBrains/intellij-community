@@ -130,7 +130,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     AntTypeDefinition def = myDefinition;
     if (def != null) {
       final PsiNamedElement definingElement = (PsiNamedElement)def.getDefiningElement();
-      if (definingElement != null && !getSourceElement().getName().equals(definingElement.getName())) {
+      if (definingElement != null && !getSourceElement().getLocalName().equals(definingElement.getName())) {
         myDefinition = def = null;
         super.clearCaches();
       }

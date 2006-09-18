@@ -158,7 +158,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     final String name = getDefinedName();
     final String uri = getUri();
-    final AntTypeId id = (uri == null) ? new AntTypeId(name) : new AntTypeId(name, uri);
+    final String nsPrefix = (uri == null) ? null : getSourceElement().getPrefixByNamespace(uri);
+    final AntTypeId id = (nsPrefix == null) ? new AntTypeId(name) : new AntTypeId(name, nsPrefix);
     if (clazz == null) {
       myNewDefinition = new AntTypeDefinitionImpl(id, classname, isTask());
     }

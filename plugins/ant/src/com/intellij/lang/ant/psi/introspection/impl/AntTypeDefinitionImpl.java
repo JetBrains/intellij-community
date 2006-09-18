@@ -16,8 +16,8 @@ import java.util.Map;
 
 public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
-  private final AntTypeId ourJavadocId = new AntTypeId(AntFileImpl.JAVADOC_TAG);
-  private final AntTypeId ourUnzipId = new AntTypeId(AntFileImpl.UNZIP_TAG);
+  private static final AntTypeId ourJavadocId = new AntTypeId(AntFileImpl.JAVADOC_TAG);
+  private static final AntTypeId ourUnzipId = new AntTypeId(AntFileImpl.UNZIP_TAG);
 
   private AntTypeId myTypeId;
   private String myClassName;
@@ -58,7 +58,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
                                final Map<AntTypeId, String> nestedElements,
                                final PsiElement definingElement) {
     myTypeId = id;
-    myClassName = AntStringInterner.intern(className);
+    setClassName(className);
     myIsTask = isTask;
     attributes.put(AntFileImpl.ID_ATTR, AntAttributeType.STRING);
     myAttributes = attributes;
@@ -66,30 +66,30 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     myDefiningElement = definingElement;
   }
 
-  public AntTypeId getTypeId() {
+  public final AntTypeId getTypeId() {
     return myTypeId;
   }
 
-  public void setTypeId(final AntTypeId id) {
+  public final void setTypeId(final AntTypeId id) {
     myTypeId = id;
   }
 
-  public String getClassName() {
+  public final String getClassName() {
     return myClassName;
   }
 
-  public boolean isTask() {
+  public final boolean isTask() {
     return myIsTask;
   }
 
-  public String[] getAttributes() {
+  public final String[] getAttributes() {
     if (myAttributesArray == null || myAttributesArray.length != myAttributes.size()) {
       myAttributesArray = myAttributes.keySet().toArray(new String[myAttributes.size()]);
     }
     return myAttributesArray;
   }
 
-  public AntAttributeType getAttributeType(final String attr) {
+  public final AntAttributeType getAttributeType(final String attr) {
     for (int i = 0; i < attr.length(); ++i) {
       if (!Character.isLowerCase(attr.charAt(i))) {
         return myAttributes.get(attr.toLowerCase(Locale.US));
@@ -98,62 +98,64 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
     return myAttributes.get(attr);
   }
 
-  public Map<String, AntAttributeType> getAttributesMap() {
+  public final Map<String, AntAttributeType> getAttributesMap() {
     return myAttributes;
   }
 
   @SuppressWarnings({"unchecked"})
-  public AntTypeId[] getNestedElements() {
+  public final AntTypeId[] getNestedElements() {
     if (myNestedElementsArray == null || myNestedElementsArray.length != myNestedClassNames.size()) {
       myNestedElementsArray = myNestedClassNames.keySet().toArray(new AntTypeId[myNestedClassNames.size()]);
     }
     return myNestedElementsArray;
   }
 
-  public Map<AntTypeId, String> getNestedElementsMap() {
+  public final Map<AntTypeId, String> getNestedElementsMap() {
     return myNestedClassNames;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
-  public String getNestedClassName(final AntTypeId id) {
-    final String name = id.getName();
-    /**
-     * Hardcode for <javadoc> task (IDEADEV-6731).
-     */
-    if (name.equals(AntFileImpl.JAVADOC2_TAG)) {
-      return myNestedClassNames.get(ourJavadocId);
-    }
-    /**
-     * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
-     */
-    if (name.equals(AntFileImpl.UNWAR_TAG) || name.equals(AntFileImpl.UNJAR_TAG)) {
-      return myNestedClassNames.get(ourUnzipId);
+  public final String getNestedClassName(final AntTypeId id) {
+    final String nsPrefix = id.getNamespacePrefix();
+    if (nsPrefix == null) {
+      final String name = id.getName();
+      /**
+       * Hardcode for <javadoc> task (IDEADEV-6731).
+       */
+      if (name.equals(AntFileImpl.JAVADOC2_TAG)) {
+        return myNestedClassNames.get(ourJavadocId);
+      }
+      /**
+       * Hardcode for <unwar> and <unjar> tasks (IDEADEV-6830).
+       */
+      if (name.equals(AntFileImpl.UNWAR_TAG) || name.equals(AntFileImpl.UNJAR_TAG)) {
+        return myNestedClassNames.get(ourUnzipId);
+      }
     }
     return myNestedClassNames.get(id);
   }
 
-  public void registerNestedType(final AntTypeId id, String taskClassName) {
+  public final void registerNestedType(final AntTypeId id, String taskClassName) {
     myNestedClassNames.put(id, taskClassName);
   }
 
-  public void unregisterNestedType(final AntTypeId typeId) {
+  public final void unregisterNestedType(final AntTypeId typeId) {
     myNestedClassNames.remove(typeId);
   }
 
-  public PsiElement getDefiningElement() {
+  public final PsiElement getDefiningElement() {
     return myDefiningElement;
   }
 
-  public void setDefiningElement(final PsiElement element) {
+  public final void setDefiningElement(final PsiElement element) {
     myDefiningElement = element;
   }
 
-  public void setIsTask(final boolean isTask) {
+  public final void setIsTask(final boolean isTask) {
     myIsTask = isTask;
   }
 
-  public void setClassName(final String className) {
-    myClassName = className;
+  public final void setClassName(final String className) {
+    myClassName = AntStringInterner.intern(className);
   }
 }

@@ -6,10 +6,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class AntTypeId {
   private String myName;
-  private String myNamespace;
+  private String myNsPrefix;
 
-  public AntTypeId(@NonNls final String name, @Nullable final String namespace) {
-    init(name, namespace);
+  public AntTypeId(@NonNls final String name, @Nullable final String nsPrefix) {
+    init(name, nsPrefix);
   }
 
   public AntTypeId(@NonNls final String name) {
@@ -29,13 +29,13 @@ public class AntTypeId {
     final AntTypeId antTypeId = (AntTypeId)o;
 
     if (!myName.equals(antTypeId.myName)) return false;
-    if (myNamespace != null && antTypeId.myNamespace != null && !myNamespace.equals(antTypeId.myNamespace)) return false;
+    if (myNsPrefix != null && antTypeId.myNsPrefix != null && !myNsPrefix.equals(antTypeId.myNsPrefix)) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return 31 * myName.hashCode() + (myNamespace != null ? myNamespace.hashCode() : 0);
+    return 31 * myName.hashCode() + (myNsPrefix != null ? myNsPrefix.hashCode() : 0);
   }
 
   @NonNls
@@ -44,15 +44,15 @@ public class AntTypeId {
   }
 
   @Nullable
-  public String getNamespace() {
-    return myNamespace;
+  public String getNamespacePrefix() {
+    return myNsPrefix;
   }
 
-  private void init(@NonNls final String name, @Nullable final String namespace) {
+  private void init(@NonNls final String name, @Nullable final String nsPrefix) {
     myName = AntStringInterner.intern(name);
-    myNamespace = namespace;
-    if (namespace != null) {
-      myNamespace = (namespace.length() > 0) ? AntStringInterner.intern(namespace) : null;
+    myNsPrefix = nsPrefix;
+    if (nsPrefix != null) {
+      myNsPrefix = (nsPrefix.length() > 0) ? AntStringInterner.intern(nsPrefix) : null;
     }
   }
 }
