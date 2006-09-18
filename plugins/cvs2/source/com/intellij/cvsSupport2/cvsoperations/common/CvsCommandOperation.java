@@ -318,7 +318,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   protected ILocalFileWriter createLocalFileWriter(String cvsRoot,
                                                    UpdatedFilesManager mergedFilesCollector,
                                                    CvsExecutionEnvironment cvsExecutionEnvironment) {
-    return new StoringLineSeparatorsLocalFileWriter(new ReceiveTextFilePreprocessor(createRecievedFileProcessor(mergedFilesCollector,
+    return new StoringLineSeparatorsLocalFileWriter(new ReceiveTextFilePreprocessor(createReceivedFileProcessor(mergedFilesCollector,
                                                                                                                 cvsExecutionEnvironment.getPostCvsActivity(),
                                                                                                                 cvsExecutionEnvironment.getExecutor())),
                                                     cvsExecutionEnvironment.getErrorProcessor(),
@@ -327,7 +327,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                                                     this);
   }
 
-  protected ReceivedFileProcessor createRecievedFileProcessor(UpdatedFilesManager mergedFilesCollector,
+  protected ReceivedFileProcessor createReceivedFileProcessor(UpdatedFilesManager mergedFilesCollector,
                                                               PostCvsActivity postCvsActivity,
                                                               ModalityContext modalityContext) {
     return ReceivedFileProcessor.DEFAULT;

@@ -118,7 +118,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
     };
   }
 
-  protected ReceivedFileProcessor createRecievedFileProcessor(UpdatedFilesManager mergedFilesCollector,
+  protected ReceivedFileProcessor createReceivedFileProcessor(UpdatedFilesManager mergedFilesCollector,
                                                               PostCvsActivity postCvsActivity, ModalityContext modalityContext) {
     return new UpdateReceivedFileProcessor(mergedFilesCollector,
                                            postCvsActivity);
