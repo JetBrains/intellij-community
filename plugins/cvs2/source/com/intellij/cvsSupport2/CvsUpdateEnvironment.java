@@ -40,9 +40,11 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsUpdatePolicy;
 import com.intellij.cvsSupport2.cvshandlers.UpdateHandler;
+import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -116,12 +118,31 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
   private static void invokeManualMerging(FileGroup mergedWithConflict, Project project) {
     Collection<String> paths = mergedWithConflict.getFiles();
     Map<VirtualFile, List<String>> fileToRevisions = new LinkedHashMap<VirtualFile, List<String>>();
+    final List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
     for (final String path : paths) {
       VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File(path));
       if (virtualFile != null) {
         final List<String> allRevisionsForFile = CvsUtil.getAllRevisionsForFile(virtualFile);
-        if (!allRevisionsForFile.isEmpty()) fileToRevisions.put(virtualFile, allRevisionsForFile);
+        if (!allRevisionsForFile.isEmpty()) {
+          fileToRevisions.put(virtualFile, allRevisionsForFile);
+          if (!virtualFile.isWritable()) {
+            readOnlyFiles.add(virtualFile);
+          }
+        }
       }
+    }
+
+    if (readOnlyFiles.size() > 0) {
+      final CvsHandler editHandler = CommandCvsHandler.createEditHandler(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]),
+                                                                         CvsConfiguration.getInstance(project).RESERVED_EDIT);
+      new CvsOperationExecutor(true, project, ModalityState.current()).performActionSync(editHandler, CvsOperationExecutorCallback.EMPTY);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          for(VirtualFile file: readOnlyFiles) {
+            file.refresh(false, false);
+          }
+        }
+      });
     }
 
     if (!fileToRevisions.isEmpty()) {
