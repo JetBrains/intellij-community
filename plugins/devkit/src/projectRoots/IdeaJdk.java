@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.projectRoots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -175,6 +176,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return idea + (buildNumber != null ? buildNumber : "");
   }
 
+  @Nullable
   private static String getBuildNumber(String ideaHome) {
     try {
       @NonNls final String buildTxt = "/build.txt";
@@ -249,12 +251,16 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
-  public static void addDocs(File file, SdkModificator sdkModificator) {
+  public static void addDocs(File file, final SdkModificator sdkModificator) {
     @NonNls final String help = "help";
     @NonNls final String openapi = "openapi";
-    File docFile = new File(new File(file, help), openapi);
+    final File docFile = new File(new File(file, help), openapi);
     if (docFile.exists() && docFile.isDirectory()) {
-      sdkModificator.addRoot(LocalFileSystem.getInstance().findFileByIoFile(docFile), ProjectRootType.JAVADOC);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(docFile), ProjectRootType.JAVADOC);}
+        }
+      );
       return;
     }
     @NonNls final String openapiHelpJar = "openapihelp.jar";
