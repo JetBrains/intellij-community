@@ -325,7 +325,6 @@ public class EditorDelegate implements EditorEx {
   }
 
   public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
-    assert isValid();
     EditorMouseListener wrapper = myEditorMouseListeners.removeWrapper(listener);
     // HintManager might have an old editor instance
     if (wrapper != null) {
@@ -350,7 +349,6 @@ public class EditorDelegate implements EditorEx {
   }
 
   public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
-    assert isValid();
     EditorMouseMotionListener wrapper = myEditorMouseMotionListeners.removeWrapper(listener);
     if (wrapper != null) {
       myDelegate.removeEditorMouseMotionListener(wrapper);
