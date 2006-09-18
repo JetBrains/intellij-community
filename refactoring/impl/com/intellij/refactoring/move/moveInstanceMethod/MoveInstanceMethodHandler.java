@@ -38,7 +38,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
     if (!(element instanceof PsiMethod)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
       return;
     }
     if (LOG.isDebugEnabled()) {
@@ -112,7 +112,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     if (message != null) {
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME,
                                               RefactoringBundle.getCannotRefactorMessage(message),
-                                              HelpID.CONVERT_TO_INSTANCE_METHOD, project);
+                                              HelpID.MOVE_INSTANCE_METHOD, project);
       return;
     }
 
