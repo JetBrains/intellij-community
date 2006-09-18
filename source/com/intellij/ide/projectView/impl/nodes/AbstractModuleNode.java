@@ -64,8 +64,8 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
 
   public boolean contains(@NotNull VirtualFile file) {
     Module module = getValue();
-    return module != null && (PackageUtil.moduleContainsFile(module, file, false) ||
-           PackageUtil.moduleContainsFile(module, file, true));
+    return module != null && !module.isDisposed() &&
+           (PackageUtil.moduleContainsFile(module, file, false) || PackageUtil.moduleContainsFile(module, file, true));
   }
 
   public String getToolTip() {
