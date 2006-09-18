@@ -772,6 +772,9 @@ public class XmlUtil {
         variants.clear();
         return;
       }
+      else if (localName.equals("annotation")) {
+        return; // don't go into annotation
+      }
       else {
         collectEnumerationValues(tag, variants);
       }
