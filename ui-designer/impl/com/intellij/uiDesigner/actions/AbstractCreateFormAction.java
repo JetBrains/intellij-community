@@ -81,7 +81,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
 
     s = StringUtil.replace(s, "$LAYOUT$", layoutManager);
 
-    return s;
+    return StringUtil.convertLineSeparators(s);
   }
 
   protected String getActionName(final PsiDirectory directory, final String newName) {
