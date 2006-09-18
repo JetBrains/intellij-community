@@ -774,7 +774,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
             List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
             runTools(needRepeatSearchRequest, scope, manager);
-            performPostRunFindUsages(needRepeatSearchRequest, manager);
           }
           catch (ProcessCanceledException e) {
             cleanup();
@@ -836,51 +835,44 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         }
       }
     }
+    performPostRunFindUsages(needRepeatSearchRequest, manager);
     final Set<InspectionTool> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
     if (RUN_WITH_EDITOR_PROFILE || (currentProfileLocalTools != null && currentProfileLocalTools.size() > 0)) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
-      try {
-        scope.accept(new PsiRecursiveElementVisitor() {
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
-          }
+      scope.accept(new PsiRecursiveElementVisitor() {
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        }
 
-          @Override
-          public void visitFile(PsiFile file) {
-            final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
-            InspectionProfile profile;
-            if (RUN_WITH_EDITOR_PROFILE) {
-              profile = profileManager.getInspectionProfile(file);
-            }
-            else {
-              profile = getCurrentProfile();
-            }
-            final VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile != null) {
-              incrementJobDoneAmount(LOCAL_ANALYSIS, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
-            }
-            final Set<InspectionTool> tools = localTools.get(profile.getName());
-            for (InspectionTool tool : tools) {
-              try {
-                ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
-              }
-              catch (ProcessCanceledException e) {
-                throw e;
-              }
-              catch (Exception e) {
-                //LOG.error("Problem file: " + file.getVirtualFile().getPresentableUrl());
-                LOG.error(e);
-              }
-              psiManager.dropResolveCaches();
-            }
+        @Override
+        public void visitFile(PsiFile file) {
+          final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
+          InspectionProfile profile;
+          if (RUN_WITH_EDITOR_PROFILE) {
+            profile = profileManager.getInspectionProfile(file);
           }
-        });
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+          else {
+            profile = getCurrentProfile();
+          }
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null) {
+            incrementJobDoneAmount(LOCAL_ANALYSIS, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
+          }
+          final Set<InspectionTool> tools = localTools.get(profile.getName());
+          for (InspectionTool tool : tools) {
+            try {
+              ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Exception e) {
+              //LOG.error("Problem file: " + file.getVirtualFile().getPresentableUrl());
+              LOG.error(e);
+            }
+            psiManager.dropResolveCaches();
+          }
+        }
+      });
     }
   }
 
@@ -995,6 +987,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     myProgressIndicator.setFraction(totalProgress);
     myProgressIndicator.setText(job.getDisplayName() + " " + message);
+    if (InspectionTool.ourOutputPath != null) {
+      LOG.info(job.getDisplayName());
+    }
   }
 
 
