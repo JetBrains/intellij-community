@@ -16,7 +16,7 @@ public interface UpdateSettings {
   boolean getCleanCopy();
   RevisionOrDate getRevisionOrDate();
   KeywordSubstitution getKeywordSubstitution();
-  boolean getMakeNewFielsreadOnly();
+  boolean getMakeNewFilesReadOnly();
 
   UpdateSettings DONT_MAKE_ANY_CHANGES = new UpdateSettings(){
     public boolean getPruneEmptyDirectories() {
@@ -51,7 +51,7 @@ public interface UpdateSettings {
       return null;
     }
 
-    public boolean getMakeNewFielsreadOnly() {
+    public boolean getMakeNewFilesReadOnly() {
       return false;
     }
 

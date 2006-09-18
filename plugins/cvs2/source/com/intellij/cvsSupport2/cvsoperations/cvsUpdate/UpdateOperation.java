@@ -88,7 +88,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
     options.setDoNoChanges(myUpdateSettings.getDontMakeAnyChanges());
-    options.setCheckedOutFilesReadOnly(myUpdateSettings.getMakeNewFielsreadOnly());
+    options.setCheckedOutFilesReadOnly(myUpdateSettings.getMakeNewFilesReadOnly());
   }
 
   public int getFilesToProcessCount() {

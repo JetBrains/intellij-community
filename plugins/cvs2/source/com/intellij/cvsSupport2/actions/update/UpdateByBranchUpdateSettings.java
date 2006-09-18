@@ -2,7 +2,6 @@ package com.intellij.cvsSupport2.actions.update;
 
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 /**
@@ -53,7 +52,7 @@ public class UpdateByBranchUpdateSettings implements UpdateSettings{
     return new SimpleRevision(myBranchName);
   }
 
-  public boolean getMakeNewFielsreadOnly() {
+  public boolean getMakeNewFilesReadOnly() {
     return myMakeNewFilesReadOnly;
   }
 }

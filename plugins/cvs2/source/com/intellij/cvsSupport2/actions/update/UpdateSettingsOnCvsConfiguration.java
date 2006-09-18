@@ -61,7 +61,7 @@ public class UpdateSettingsOnCvsConfiguration implements UpdateSettings{
     return RevisionOrDateImpl.createOn(myConfiguration.UPDATE_DATE_OR_REVISION_SETTINGS);
   }
 
-  public boolean getMakeNewFielsreadOnly() {
+  public boolean getMakeNewFilesReadOnly() {
     return myConfiguration.MAKE_NEW_FILES_READONLY;
   }
 }
