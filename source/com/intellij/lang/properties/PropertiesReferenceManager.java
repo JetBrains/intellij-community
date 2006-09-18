@@ -218,6 +218,11 @@ public class PropertiesReferenceManager implements ProjectComponent {
       }
     }
 
+    // fallback to any file
+    if (propFiles.size() > 0) {
+      return propFiles.get(0);
+    }
+
     return null;
   }
 
