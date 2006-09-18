@@ -245,7 +245,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         if (descriptor instanceof IdeaPluginDescriptorImpl) {
           final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
           if (ideaPluginDescriptor.isDeleted()) {
-            setIcon(null);
+            setIcon(IconLoader.getIcon("/actions/clean.png"));
           }
           else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
             setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
@@ -265,11 +265,9 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         }
         if (descriptor instanceof IdeaPluginDescriptorImpl) {
           final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
-          setEnabled(!ideaPluginDescriptor.isDeleted());
           if (ideaPluginDescriptor.isDeleted()) {
             setForeground(Color.lightGray);
-          }
-          if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
+          } else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
             setForeground(Color.blue);
           }
         } else if (descriptor instanceof PluginNode) {

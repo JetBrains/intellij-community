@@ -25,16 +25,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   public void addData(ArrayList<IdeaPluginDescriptor> list) {
-    //  For each downloadable plugin we need to know whether its counterpart
-    //  is already installed, and if yes compare the difference in versions:
-    //  availability of newer versions will be indicated separately.
-    for (IdeaPluginDescriptor descr : list) {
-      IdeaPluginDescriptor existing = PluginManager.getPlugin(descr.getPluginId());
-      if (existing != null) {
-        updateExistingPluginInfo((PluginNode)descr, existing);
-      }
-    }
-    safeSort();
+    modifyData(list);
   }
 
   public void modifyData(ArrayList<IdeaPluginDescriptor> list) {
@@ -44,7 +35,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     for (IdeaPluginDescriptor descr : list) {
       PluginId descrId = descr.getPluginId();
       IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
-      if (existing == null) {
+      if (existing != null) {
         updateExistingPluginInfo((PluginNode)descr, existing);
       }
     }

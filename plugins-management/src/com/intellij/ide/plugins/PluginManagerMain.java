@@ -96,11 +96,6 @@ public class PluginManagerMain {
     installTableActions(installedPluginTable);
     installTableActions(availablePluginsTable);
 
-    myToolbarPanel.setLayout(new BorderLayout());
-    myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
-    myToolbarPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
-    myActionToolbar.updateActionsImmediately();
-
     myHttpProxySettingsButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog();
@@ -123,6 +118,11 @@ public class PluginManagerMain {
       }
     });
     GuiUtils.replaceJSplitPaneWithIDEASplitter(main);
+
+    myToolbarPanel.setLayout(new BorderLayout());
+    myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManaer", getActionGroup(), true);
+    myToolbarPanel.add(myActionToolbar.getComponent(), BorderLayout.WEST);
+    myActionToolbar.updateActionsImmediately();
   }
 
   public void reset() {
@@ -134,7 +134,7 @@ public class PluginManagerMain {
     });
   }
 
-  private PluginTable getPluginTable() {
+  PluginTable getPluginTable() {
     return myTabbedPane.getSelectedIndex() == 0 ? installedPluginTable : availablePluginsTable;
   }
 
@@ -227,9 +227,11 @@ public class PluginManagerMain {
     IdeaPluginDescriptor[] selected = availablePluginsTable.getSelectedObjects();
     if (pluginsList == null) {
       availablePluginsModel.addData(list);
+      installedPluginsModel.addData(list);
     }
     else {
       availablePluginsModel.modifyData(list);
+      installedPluginsModel.modifyData(list);
     }
     pluginsList = list;
     if (selected != null) {
@@ -282,7 +284,7 @@ public class PluginManagerMain {
   private ActionGroup getActionGroup() {
     if (actionGroup == null) {
       actionGroup = new DefaultActionGroup();
-      actionGroup.add(new ActionInstallPlugin(this, availablePluginsTable));
+      actionGroup.add(new ActionInstallPlugin(this));
       actionGroup.add(new ActionUninstallPlugin(this, installedPluginTable));
     }
     return actionGroup;

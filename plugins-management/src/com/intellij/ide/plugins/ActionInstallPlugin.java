@@ -23,23 +23,16 @@ import java.util.Arrays;
 public class ActionInstallPlugin extends AnAction {
   final private static String updateMessage = IdeBundle.message("action.update.plugin");
 
-  private PluginTable pluginTable;
   private PluginManagerMain host;
 
-  public ActionInstallPlugin(PluginManagerMain mgr, PluginTable table) {
+  public ActionInstallPlugin(PluginManagerMain mgr) {
     super(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("action.download.and.install.plugin"), IconLoader.getIcon("/actions/install.png"));
-
-    pluginTable = table;
     host = mgr;
   }
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    if (!pluginTable.isShowing()) {
-      presentation.setEnabled(false);
-      return;
-    }
-    IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
+    IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
     boolean enabled = (selection != null);
 
     if (enabled) {
@@ -61,7 +54,7 @@ public class ActionInstallPlugin extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
+    IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
     if (userConfirm(selection)) {
       ArrayList<PluginNode> list = new ArrayList<PluginNode>();
@@ -90,11 +83,15 @@ public class ActionInstallPlugin extends AnAction {
         PluginManagerMain.LOG.error(e1);
         IOExceptionDialog.showErrorDialog(e1, IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
       }
-      pluginTable.updateUI();
+      getPluginTable().updateUI();
     }
   }
 
-  //---------------------------------------------------------------------------
+
+
+  public PluginTable getPluginTable() {
+    return host.getPluginTable();
+  }//---------------------------------------------------------------------------
   //  Show confirmation message depending on the amount and type of the
   //  selected plugin descriptors: already downloaded plugins need "update"
   //  while non-installed yet need "install".
