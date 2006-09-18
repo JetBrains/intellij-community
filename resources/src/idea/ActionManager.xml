@@ -233,7 +233,7 @@
       <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction"/>
     </group>
 
-    <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" popup="true">
+    <group id="VcsGroups" popup="true">
       <reference ref="LocalVcsGroup"/>
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control">
