@@ -219,7 +219,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
       if (myDisposed) throw new DisposedException();
 
-      final List<VcsDirtyScope> scopes = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject)).retreiveScopes();
+      final VcsDirtyScopeManagerImpl dirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject));
+      final boolean wasEverythingDirty = dirtyScopeManager.isEverythingDirty();
+      final List<VcsDirtyScope> scopes = dirtyScopeManager.retreiveScopes();
       for (final VcsDirtyScope scope : scopes) {
         final AbstractVcs vcs = scope.getVcs();
         if (vcs == null) continue;
@@ -243,10 +245,16 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
         if (updateUnversionedFiles) {
           unversionedHolder = myUnversionedFilesHolder.copy();
-          unversionedHolder.cleanScope(scope);
-
           deletedHolder = myDeletedFilesHolder.copy();
-          deletedHolder.cleanScope(scope);
+
+          if (wasEverythingDirty) {
+            unversionedHolder.cleanAll();
+            deletedHolder.cleanAll();
+          }
+          else {
+            unversionedHolder.cleanScope(scope);
+            deletedHolder.cleanScope(scope);
+          }
         }
         else {
           unversionedHolder = myUnversionedFilesHolder;

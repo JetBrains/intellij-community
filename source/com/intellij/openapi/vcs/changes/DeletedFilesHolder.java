@@ -13,6 +13,10 @@ import java.util.List;
 public class DeletedFilesHolder {
   private List<FilePath> myFiles = new ArrayList<FilePath>();
 
+  public synchronized void cleanAll() {
+    myFiles.clear();
+  }
+
   public synchronized void cleanScope(final VcsDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {

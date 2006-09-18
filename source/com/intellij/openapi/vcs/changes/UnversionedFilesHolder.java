@@ -22,6 +22,10 @@ public class UnversionedFilesHolder {
     myProject = project;
   }
 
+  public synchronized void cleanAll() {
+    myFiles.clear();
+  }
+
   public synchronized void cleanScope(final VcsDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {

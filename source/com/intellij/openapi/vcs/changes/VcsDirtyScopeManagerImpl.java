@@ -33,6 +33,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final ProjectLevelVcsManager myVcsManager;
   private boolean myIsDisposed = false;
   private boolean myIsInitialized = false;
+  private boolean myEverythingDirty = false;
   private ModuleRootListener myRootModelListener;
 
   public VcsDirtyScopeManagerImpl(Project project,
@@ -78,6 +79,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       for (VirtualFile root : roots) {
         dirDirtyRecursively(root, true);
       }
+    }
+    synchronized(myScopes) {
+      myEverythingDirty = true;
     }
   }
 
@@ -137,8 +141,15 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  public boolean isEverythingDirty() {
+    synchronized(myScopes) {
+      return myEverythingDirty;
+    }
+  }
+
   public List<VcsDirtyScope> retreiveScopes() {
     synchronized (myScopes) {
+      myEverythingDirty = false;
       final ArrayList<VcsDirtyScope> result = new ArrayList<VcsDirtyScope>(myScopes.values());
       myScopes.clear();
       return result;
