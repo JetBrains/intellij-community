@@ -106,6 +106,8 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     }
     catch (TooComplexPSIModificationException rollback) {
       failed = true;
+    } catch (UnsupportedOperationException operation) {
+      failed = true;
     }
     catch (Throwable e) {
       if (e instanceof Error) throw (Error)e;
