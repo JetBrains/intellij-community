@@ -309,7 +309,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void showMessageDetails(AbstractMessage aMessage) {
-    myDetailsPane.setText(new StringBuffer().append(aMessage.getMessage()).append("\n").append(aMessage.getThrowableText()).toString());
+    if (aMessage.getThrowable() instanceof MessagePool.TooManyErrorsException) {
+      myDetailsPane.setText(aMessage.getThrowable().getMessage());
+    }
+    else {
+      myDetailsPane.setText(new StringBuffer().append(aMessage.getMessage()).append("\n").append(aMessage.getThrowableText()).toString());
+    }
     if (myDetailsPane.getCaret() != null) { // Upon some strange circumstances caret may be missing from the text component making the following line fail with NPE.
       myDetailsPane.setCaretPosition(0);
     }
