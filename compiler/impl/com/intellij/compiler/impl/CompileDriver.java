@@ -49,6 +49,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.StringInterner;
@@ -256,6 +257,7 @@ public class CompileDriver {
       compileContext.addMessage(message);
     }
 
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();   
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final Thread compileThread = new Thread("Compile Thread") {
