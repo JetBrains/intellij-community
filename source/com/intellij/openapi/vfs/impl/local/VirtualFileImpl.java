@@ -668,7 +668,7 @@ public class VirtualFileImpl extends VirtualFile {
   public Charset getCharset() {
     if (!isCharsetSet()) {
       try {
-        LoadTextUtil.detectCharsetAndSkipBOM(this, contentsToByteArray());
+        LoadTextUtil.detectCharset(this, contentsToByteArray());
       }
       catch (IOException e) {
         LOG.error(e);

@@ -80,7 +80,7 @@ public final class LoadTextUtil {
     return Pair.create(result, detectedLineSeparator);
   }
 
-  public static int detectCharsetAndSkipBOM(final VirtualFile virtualFile, final byte[] content) {
+  public static void detectCharset(final VirtualFile virtualFile, final byte[] content) {
     FileType fileType = virtualFile.getFileType();
     String charsetName = fileType.getCharset(virtualFile);
     if (charsetName != null) {
@@ -93,7 +93,6 @@ public final class LoadTextUtil {
       catch(UnsupportedCharsetException e){
       }
       virtualFile.setCharset(charset);
-      return skipBOM(virtualFile, content);
     }
 
     CharsetSettings settings = CharsetSettings.getInstance();
@@ -103,11 +102,9 @@ public final class LoadTextUtil {
       Charset charset = toolkit.guessEncoding(SmartEncodingInputStream.BUFFER_LENGTH_4KB);
 
       virtualFile.setCharset(charset);
-      return skipBOM(virtualFile, content);
     }
     else {
       virtualFile.setCharset(CharsetToolkit.getIDEOptionsCharset());
-      return skipBOM(virtualFile, content);
     }
   }
 
@@ -223,7 +220,8 @@ public final class LoadTextUtil {
   }
 
   public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
-    int offset = detectCharsetAndSkipBOM(virtualFile, bytes);
+    detectCharset(virtualFile, bytes);
+    int offset = skipBOM(virtualFile, bytes);
     ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset);
 
     Charset charset = virtualFile.getCharset();
