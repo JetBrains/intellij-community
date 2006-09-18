@@ -432,10 +432,11 @@ public class LibraryTableEditor implements Disposable {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           if (myEditingModuleLibraries) {
+            final Module module=contextModule != null ? contextModule : (Module)DataManager.getInstance().getDataContext().getData(DataConstants.MODULE_CONTEXT);
             for (VirtualFile file : files) {
               final Library library = myTableModifiableModel.createLibrary(null);
               getLibraryEditor(library).addRoot(file, OrderRootType.CLASSES);
-              commitLibrary(library, file.getName());
+              commitLibrary(library, file.getName(), module);
             }
           }
           else {
@@ -444,14 +445,14 @@ public class LibraryTableEditor implements Disposable {
             for (VirtualFile file : files) {
               libraryEditor.addRoot(file, OrderRootType.CLASSES);
             }
-            commitLibrary(library, null);
+            commitLibrary(library, null, null);
           }
         }
       });
       librariesChanged(true);
     }
 
-    private void commitLibrary(final Library libraryToSelect, final String libraryPresentableName) {
+    private void commitLibrary(final Library libraryToSelect, final String libraryPresentableName, final Module module) {
       if (libraryToSelect != null) {
         selectLibrary(libraryToSelect, false);
         if (myProject != null){
@@ -464,7 +465,7 @@ public class LibraryTableEditor implements Disposable {
               }
             });
           }
-          final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect, libraryPresentableName);
+          final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(libraryToSelect, libraryPresentableName, module);
           if (myNeedToSelect){
             rootConfigurable.selectNodeInTree(libraryNode);
             if (!myEditingModuleLibraries) {

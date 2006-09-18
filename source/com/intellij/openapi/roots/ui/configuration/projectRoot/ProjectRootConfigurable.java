@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelPr
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectConfigurable;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -754,7 +755,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     selectNodeInTree(node);
   }
 
-  public MyNode createLibraryNode(Library library, String presentableName) {
+  public MyNode createLibraryNode(Library library, String presentableName, Module module) {
     final LibraryTable table = library.getTable();
     if (table != null){
       final String level = table.getTableLevel();
@@ -777,11 +778,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         return node;
       }
     } else { //module library
-      Module module = getSelectedModule();
+      LOG.assertTrue(module != null);
       final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(module), library, presentableName, myProject, TREE_UPDATER);
       final MyNode node = new MyNode(configurable);
-      MyNode parent = (MyNode)myTree.getSelectionPath().getLastPathComponent();
-      addNode(node, parent.getConfigurable().getEditableObject() instanceof Module ? parent : (MyNode)parent.getParent());
+      addNode(node, findNodeByObject(myModulesNode, module));
       return node;
     }
   }
@@ -1033,6 +1033,18 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   public void addLibraryOrderEntry(final Module module, final Library library) {
     final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
     final ModifiableRootModel modelProxy = moduleEditor.getModifiableRootModelProxy();
+    final OrderEntry[] entries = modelProxy.getOrderEntries();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), library.getName())) {
+        if (Messages.showYesNoDialog(myWholePanel,
+                                     ProjectBundle.message("project.roots.replace.library.entry.message", entry.getPresentableName()),
+                                     ProjectBundle.message("project.roots.replace.library.entry.title"),
+                                     Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
+          modelProxy.removeOrderEntry(entry);
+          break;
+        }
+      }
+    }
     modelProxy.addLibraryEntry(library);
     Set<String> modules = myLibraryDependencyCache.get(library);
     if (modules == null) {
@@ -1123,6 +1135,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         if (o instanceof Module){
           return new Module[]{(Module)o};
         }
+      }
+      if (DataConstants.MODULE_CONTEXT.equals(dataId)){
+        return getSelectedModule();
       }
       if (DataConstantsEx.MODIFIABLE_MODULE_MODEL.equals(dataId)){
         return myModulesConfigurator.getModuleModel();
