@@ -195,6 +195,9 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private String getSerializedComponents() {
     try {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+      if (!clipboard.isDataFlavorAvailable(ourDataFlavor)) {
+        return null;
+      }
       final Transferable content = clipboard.getContents(this);
       final Object transferData;
       try {
