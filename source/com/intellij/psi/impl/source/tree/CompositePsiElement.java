@@ -281,6 +281,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return getElementType().getLanguage();
   }
 
+  @NotNull
   public ASTNode getNode() {
     return this;
   }
