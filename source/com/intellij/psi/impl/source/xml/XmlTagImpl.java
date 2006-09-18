@@ -533,7 +533,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     Map<String, String> namespaces = new HashMap<String, String>();
     for (final XmlAttribute attribute : getAttributes()) {
       if (!attribute.isNamespaceDeclaration() || attribute.getValue() == null) continue;
-      namespaces.put(attribute.getLocalName(), attribute.getValue());
+      // xmlns -> "", xmlns:a -> a
+      final String localName = attribute.getLocalName();
+      namespaces.put(localName.equals(attribute.getName()) ? "":localName, attribute.getValue());
     }
     return namespaces;
   }
