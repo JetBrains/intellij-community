@@ -389,6 +389,14 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
     return myCharset;
   }
 
+  public void setCharset(final Charset charset) {
+    myCharset = charset;
+  }
+
+  protected boolean isCharsetSet() {
+    return myCharset != null;
+  }
+
   public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp) throws IOException{
     OutputStream outputStream = null;
     try{
@@ -546,10 +554,6 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @see #contentsToByteArray
    */
   public abstract InputStream getInputStream() throws IOException;
-
-  public void setCharset(final Charset charset) {
-    myCharset = charset;
-  }
 
   public byte[] getBOM() {
     return myBOM;

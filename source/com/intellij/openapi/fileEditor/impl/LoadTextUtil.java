@@ -80,7 +80,7 @@ public final class LoadTextUtil {
     return Pair.create(result, detectedLineSeparator);
   }
 
-  private static int detectCharsetAndSkipBOM(final VirtualFile virtualFile, final byte[] content) {
+  public static int detectCharsetAndSkipBOM(final VirtualFile virtualFile, final byte[] content) {
     FileType fileType = virtualFile.getFileType();
     String charsetName = fileType.getCharset(virtualFile);
     if (charsetName != null) {
@@ -114,7 +114,7 @@ public final class LoadTextUtil {
   private static int skipBOM(final VirtualFile virtualFile, byte[] content) {
     if (Patches.SUN_BUG_ID_4508058) {
       //noinspection HardCodedStringLiteral
-      if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains("UTF-8") && CharsetToolkit.hasUTF8Bom(content)) {
+      if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains(CharsetToolkit.UTF8) && CharsetToolkit.hasUTF8Bom(content)) {
         virtualFile.setBOM(CharsetToolkit.UTF8_BOM);
         return CharsetToolkit.UTF8_BOM.length;
       }
@@ -155,8 +155,9 @@ public final class LoadTextUtil {
 
   private static Charset getCharsetForWriting(final VirtualFile virtualFile, final String text) {
     FileType fileType = virtualFile.getFileType();
-    Charset charset = null;
+    Charset charset = virtualFile.getCharset();
     if (fileType instanceof XmlLikeFileType) {
+      charset = Charset.forName(CharsetToolkit.UTF8);
       String name = XmlUtil.extractXmlEncodingFromProlog(text);
       if (name != null) {
         try {
@@ -167,9 +168,6 @@ public final class LoadTextUtil {
         catch(UnsupportedCharsetException e){
         }
       }
-    }
-    if (charset == null) {
-      charset = virtualFile.getCharset();
     }
     return charset;
   }

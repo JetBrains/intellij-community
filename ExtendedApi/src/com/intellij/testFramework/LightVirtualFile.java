@@ -4,10 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.LocalTimeCounter;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +24,7 @@ public class LightVirtualFile extends VirtualFile {
   public long myModStamp = LocalTimeCounter.currentTime();
   private boolean myIsWritable = true;
   private VirtualFileListener myListener = null;
-  @NonNls private static final Charset CHARSET = Charset.forName("UTF-8");
+  @NonNls private static final Charset CHARSET = Charset.forName(CharsetToolkit.UTF8);
 
   public LightVirtualFile() {
   }

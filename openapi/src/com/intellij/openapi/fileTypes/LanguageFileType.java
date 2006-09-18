@@ -82,7 +82,7 @@ public abstract class LanguageFileType implements FileType{
     return false;
   }
 
-  public String getCharset(VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file) {
     return null;
   }
 

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -17,8 +18,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.*;
+import java.nio.charset.Charset;
 
 public class VirtualFileImpl extends VirtualFile {
 
@@ -662,5 +663,17 @@ public class VirtualFileImpl extends VirtualFile {
 
   void setName(String name) {
     myName = new String(name);
+  }
+
+  public Charset getCharset() {
+    if (!isCharsetSet()) {
+      try {
+        LoadTextUtil.detectCharsetAndSkipBOM(this, contentsToByteArray());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    return super.getCharset();
   }
 }
