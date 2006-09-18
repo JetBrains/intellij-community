@@ -1657,5 +1657,17 @@
       <reference ref="DomElementsTreeView.DeleteElement"/>
     </group>
 
+    <group id="InspectorActions" text="InspectorActions">
+      <group id="PropertyInspector.CommonActions">
+        <action id="PropertyInspector.AddProperty" class="com.intellij.designer.inspector.impl.actions.AddPropertyAction" text="Add Property" use-shortcut-of="Generate"/>
+        <action id="PropertyInspector.RemoveProperty" class="com.intellij.designer.inspector.impl.actions.RemovePropertyAction" text="Remove Property" use-shortcut-of="EditorDelete"/>
+      </group>
+
+      <action id="PropertyInspector.EditValue" class="com.intellij.designer.inspector.impl.actions.EditPropertyAction" text="Edit Property">
+        <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+      </action>
+    </group>
+
+    
   </actions>
 </component>
