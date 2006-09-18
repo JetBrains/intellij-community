@@ -94,7 +94,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
             }
           }
 
-          if (vFile != null) {
+          if (vFile != null && !vFile.isDirectory()) {
             baseFile = PsiManager.getInstance(myProject).findFile(vFile);
           }
         }
