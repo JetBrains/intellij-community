@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -256,7 +257,7 @@ public class RefManagerImpl extends RefManager {
     public void visitFile(PsiFile file) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        myContext.incrementJobDoneAmount(GlobalInspectionContextImpl.BUILD_GRAPH, virtualFile.getPresentableUrl());
+        myContext.incrementJobDoneAmount(GlobalInspectionContextImpl.BUILD_GRAPH, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
       }
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
