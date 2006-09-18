@@ -221,7 +221,7 @@ public class XmlUtil {
       result = PsiUtil.findRelativeFile(uri, base);
     }
 
-    if (( result == null || !(result instanceof XmlFile) )) {
+    if (result == null || !(result instanceof XmlFile)) {
       if (jspFile != null) {
         result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, jspFile);
       } else {
@@ -232,7 +232,7 @@ public class XmlUtil {
             final XmlDocument document = ((XmlFile)base).getDocument();
             final XmlTag rootTag = document != null ? document.getRootTag():null;
 
-            if (rootTag != null && rootTag.getPrefixByNamespace(XmlUtil.FACELETS_URI) != null) {
+            if (rootTag != null && rootTag.getPrefixByNamespace(FACELETS_URI) != null) {
               result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
             }
           }
@@ -974,7 +974,7 @@ public class XmlUtil {
       }
     }
 
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     for (final String tagName : tags.keySet()) {
       buffer.append(generateElementDTD(tagName, tags.get(tagName), attributes.get(tagName)));
     }
@@ -1261,22 +1261,17 @@ public class XmlUtil {
         return null;
       }
     }
-    StringBuilder encoding = StringBuilderSpinAllocator.alloc();
-    try {
-      while (true) {
-        if (start + i >= bytes.length) return null;
-        byte b = bytes[start + i];
-        if (b == '\"') {
-          break;
-        }
-        encoding.append((char)b);
-        i++;
+    StringBuilder encoding = new StringBuilder();
+    while (true) {
+      if (start + i >= bytes.length) return null;
+      byte b = bytes[start + i];
+      if (b == '\"') {
+        break;
       }
-      return encoding.toString();
+      encoding.append((char)b);
+      i++;
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(encoding);
-    }
+    return encoding.toString();
   }
 
   @Nullable
