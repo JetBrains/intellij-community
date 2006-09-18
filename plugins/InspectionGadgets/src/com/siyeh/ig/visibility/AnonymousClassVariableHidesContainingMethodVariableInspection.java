@@ -19,8 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AnonymousClassVariableHidesContainingMethodVariableInspection
-        extends FieldInspection {
+        extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
@@ -75,13 +75,13 @@ public class AnonymousClassVariableHidesContainingMethodVariableInspection
 
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
             super.visitAnonymousClass(aClass);
-            final VariableCollector collector = new VariableCollector();
-            aClass.accept(collector);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(aClass, PsiCodeBlock.class);
             if (codeBlock == null) {
                 return;
             }
+            final VariableCollector collector = new VariableCollector();
+            aClass.acceptChildren(collector);
             final PsiStatement[] statements = codeBlock.getStatements();
             final int offset = aClass.getTextOffset();
             for (PsiStatement statement : statements) {
@@ -144,6 +144,10 @@ public class AnonymousClassVariableHidesContainingMethodVariableInspection
             } else {
                 variableList.add(variable);
             }
+        }
+
+        public void visitClass(PsiClass aClass) {
+            // don't drill down in classes
         }
 
         public PsiVariable[] getVariables(String name) {

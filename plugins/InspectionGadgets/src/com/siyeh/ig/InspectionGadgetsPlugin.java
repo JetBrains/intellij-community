@@ -71,6 +71,7 @@ import com.siyeh.ig.packaging.*;
 import com.siyeh.ig.dependency.*;
 import com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection;
 import com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection;
+import com.siyeh.ig.global.MethodReturnAlwaysConstantInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -296,11 +297,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             registerThreadingInspections();
             registerVerboseInspections();
             registerVisibilityInspections();
-    //        m_inspectionClasses.add(MethodReturnAlwaysConstantInspection.class);
+            //m_inspectionClasses.add(MethodReturnAlwaysConstantInspection.class);
             m_inspectionClasses.add(BooleanMethodIsAlwaysInvertedInspection.class);
-     //       registerPackagingInspections();
-    //        registerModularizationInspections();
-    //        registerDependencyInspections();
+            //registerPackagingInspections();
+            //registerModularizationInspections();
+            //registerDependencyInspections();
         }
         final int numInspections = m_inspectionClasses.size();
         final Class<? extends InspectionProfileEntry>[] classArray =
@@ -512,25 +513,26 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerAbstractionInspections() {
+        m_inspectionClasses.add(CastToConcreteClassInspection.class);
+        m_inspectionClasses.add(ClassReferencesSubclassInspection.class);
+        m_inspectionClasses.add(DeclareCollectionAsInterfaceInspection.class);
         m_inspectionClasses.add(FeatureEnvyInspection.class);
         m_inspectionClasses.add(InstanceofChainInspection.class);
-        m_inspectionClasses.add(LocalVariableOfConcreteClassInspection.class);
-        m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
-        m_inspectionClasses.add(InstanceVariableOfConcreteClassInspection.class);
-        m_inspectionClasses.add(StaticVariableOfConcreteClassInspection.class);
-        m_inspectionClasses.add(ParameterOfConcreteClassInspection.class);
-        m_inspectionClasses.add(MethodReturnOfConcreteClassInspection.class);
         m_inspectionClasses.add(InstanceofInterfacesInspection.class);
-        m_inspectionClasses.add(CastToConcreteClassInspection.class);
-        m_inspectionClasses.add(OverlyStrongTypeCastInspection.class);
-        m_inspectionClasses.add(DeclareCollectionAsInterfaceInspection.class);
-        m_inspectionClasses.add(MagicNumberInspection.class);
-        m_inspectionClasses.add(ClassReferencesSubclassInspection.class);
-        m_inspectionClasses.add(SwitchStatementInspection.class);
-        m_inspectionClasses.add(PublicMethodNotExposedInInterfaceInspection.class);
         m_inspectionClasses.add(InstanceofThisInspection.class);
+        m_inspectionClasses.add(InstanceVariableOfConcreteClassInspection.class);
+        m_inspectionClasses.add(LocalVariableOfConcreteClassInspection.class);
+        m_inspectionClasses.add(MagicNumberInspection.class);
         m_inspectionClasses.add(MethodOnlyUsedFromInnerClassInspection.class);
+        m_inspectionClasses.add(MethodReturnOfConcreteClassInspection.class);
+        m_inspectionClasses.add(OverlyStrongTypeCastInspection.class);
+        m_inspectionClasses.add(ParameterOfConcreteClassInspection.class);
+        m_inspectionClasses.add(PublicMethodNotExposedInInterfaceInspection.class);
+        m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
         m_inspectionClasses.add(StaticMethodOnlyUsedInOneClassInspection.class);
+        m_inspectionClasses.add(StaticVariableOfConcreteClassInspection.class);
+        m_inspectionClasses.add(SwitchStatementInspection.class);
+        //m_inspectionClasses.add(TypeMayBeWeakenedInspection.class);
     }
 
     private void registerClassLayoutInspections() {
@@ -587,15 +589,16 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerVisibilityInspections() {
+        m_inspectionClasses.add(AnonymousClassVariableHidesContainingMethodVariableInspection.class);
         m_inspectionClasses.add(FieldHidesSuperclassFieldInspection.class);
         m_inspectionClasses.add(InnerClassVariableHidesOuterClassVariableInspection.class);
-        m_inspectionClasses.add(ParameterHidingMemberVariableInspection.class);
         m_inspectionClasses.add(LocalVariableHidingMemberVariableInspection.class);
-        m_inspectionClasses.add(MethodOverridesPrivateMethodInspection.class);
         m_inspectionClasses.add(MethodOverridesPackageLocalMethodInspection.class);
-        m_inspectionClasses.add(MethodOverridesStaticMethodInspection.class);
         m_inspectionClasses.add(MethodOverloadsParentMethodInspection.class);
+        m_inspectionClasses.add(MethodOverridesPrivateMethodInspection.class);
+        m_inspectionClasses.add(MethodOverridesStaticMethodInspection.class);
         m_inspectionClasses.add(TypeParameterHidesVisibleTypeInspection.class);
+        m_inspectionClasses.add(ParameterHidingMemberVariableInspection.class);
     }
 
     private void registerEncapsulationInspections() {

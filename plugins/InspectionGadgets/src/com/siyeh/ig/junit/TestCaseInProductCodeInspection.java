@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestCaseInProductCodeInspection extends ClassInspection {
 
-    private final MoveClassFix fix = new MoveClassFix();
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "test.case.in.product.code.display.name");
+    }
 
+    @NotNull
     public String getID() {
         return "JUnitTestCaseInProductSource";
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.JUNIT_GROUP_NAME;
     }
@@ -46,7 +52,7 @@ public class TestCaseInProductCodeInspection extends ClassInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new MoveClassFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -57,7 +63,8 @@ public class TestCaseInProductCodeInspection extends ClassInspection {
         return new TestCaseInProductCodeVisitor();
     }
 
-    private static class TestCaseInProductCodeVisitor extends BaseInspectionVisitor {
+    private static class TestCaseInProductCodeVisitor
+            extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             if (TestUtils.isTest(aClass)) {

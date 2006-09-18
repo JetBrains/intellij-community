@@ -35,16 +35,18 @@ public class TestUtils {
         final PsiManager manager = aClass.getManager();
         final PsiFile file = aClass.getContainingFile();
         final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null) {
+            return true;
+        }
         final Project project = manager.getProject();
-        final ProjectRootManager rootManager = ProjectRootManager.getInstance(
-                project);
+        final ProjectRootManager rootManager =
+                ProjectRootManager.getInstance(project);
         final ProjectFileIndex fileIndex = rootManager.getFileIndex();
         return fileIndex.isInTestSourceContent(virtualFile);
     }
 
     public static boolean isJUnitTestMethod(@NotNull PsiMethod method) {
-        if(AnnotationUtil.isAnnotated(method, "org.junit.Test", true))
-        {
+        if(AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
             return true;
         }
         final String methodName = method.getName();
@@ -65,9 +67,6 @@ public class TestUtils {
         }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters == null) {
-            return false;
-        }
         if (parameters.length != 0) {
             return false;
         }
@@ -76,7 +75,7 @@ public class TestUtils {
     }
 
     public static boolean isJUnitTestClass(@Nullable PsiClass targetClass){
-        return targetClass != null && ClassUtils.isSubclass(targetClass,
-                                                            "junit.framework.TestCase");
+        return targetClass != null &&
+                ClassUtils.isSubclass(targetClass, "junit.framework.TestCase");
     }
 }
