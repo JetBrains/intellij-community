@@ -38,15 +38,18 @@ public class InnerClassVariableHidesOuterClassVariableInspection
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
 
+    @NotNull
     public String getID(){
         return "InnerClassFieldHidesOuterClassField";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "inner.class.field.hides.outer.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.VISIBILITY_GROUP_NAME;
     }
@@ -88,8 +91,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection
                 return;    //special case
             }
             boolean reportStaticsOnly = false;
-            if(aClass.hasModifierProperty(PsiModifier.STATIC))
-            {
+            if(aClass.hasModifierProperty(PsiModifier.STATIC)) {
                 reportStaticsOnly = true;
             }
             PsiClass ancestorClass =
