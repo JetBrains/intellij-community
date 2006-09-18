@@ -478,8 +478,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public void projectOpened() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        final Module[] modules = myModuleModel.getModules();
-        for (Module module : modules) {
+        for (Module module : myModuleModel.myPathToModule.values()) {
           ((ModuleImpl)module).moduleAdded();
           fireModuleAdded(module);
         }
@@ -639,8 +638,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       final String name = moduleFile.getName();
       if (name.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
         final String moduleName = name.substring(0, name.length() - 4);
-        final Module[] modules = getModules();
-        for (Module module : modules) {
+        for (Module module : myPathToModule.values()) {
           if (module.getName().equals(moduleName)) {
             throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", moduleName), moduleName);
           }
@@ -686,8 +684,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public Module findModuleByName(@NotNull String name) {
-      final Module[] allModules = getModules();
-      for (Module module : allModules) {
+      for (Module module : myPathToModule.values()) {
         if (module.getName().equals(name)) {
           return module;
         }
@@ -703,7 +700,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     private Graph<Module> moduleGraph() {
       return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
         public Collection<Module> getNodes() {
-          return Arrays.asList(getModules());
+          return myPathToModule.values();
         }
 
         public Iterator<Module> getIn(Module m) {
@@ -715,8 +712,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     @NotNull private List<Module> getModuleDependentModules(Module module) {
       List<Module> result = new ArrayList<Module>();
-      Module[] modules = getModules();
-      for (Module aModule : modules) {
+      for (Module aModule : myPathToModule.values()) {
         if (isModuleDependent(aModule, module)) {
           result.add(aModule);
         }
@@ -756,8 +752,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      final List<Module> list = Arrays.asList(ModuleManagerImpl.this.myModuleModel.getModules());
-      final Module[] thisModules = getModules();
+      final Collection<Module> list = ModuleManagerImpl.this.myModuleModel.myPathToModule.values();
+      final Collection<Module> thisModules = myPathToModule.values();
       for (Module thisModule1 : thisModules) {
         ModuleImpl thisModule = (ModuleImpl)thisModule1;
         if (!list.contains(thisModule)) {
