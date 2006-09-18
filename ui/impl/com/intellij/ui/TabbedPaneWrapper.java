@@ -121,7 +121,8 @@ public class TabbedPaneWrapper {
    * @see javax.swing.JTabbedPane#getSelectedComponent()
    */
   public final synchronized JComponent getSelectedComponent() {
-    final TabWrapper tabWrapper = (TabWrapper)myTabbedPane.getSelectedComponent();
+    // Workaround for JDK 6 bug
+    final TabWrapper tabWrapper = myTabbedPane.getTabCount() > 0 ? (TabWrapper)myTabbedPane.getSelectedComponent():null;
     return tabWrapper != null ? tabWrapper.getComponent() : null;
   }
 
