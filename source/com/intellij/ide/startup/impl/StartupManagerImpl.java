@@ -11,14 +11,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * @author mike
  */
 public class StartupManagerImpl extends StartupManagerEx implements ProjectComponent {
   private List<Runnable> myActivities = new ArrayList<Runnable>();
-  private List<Runnable> myPostStartupActivities = new ArrayList<Runnable>();
-  private List<Runnable> myPreStartupActivities = new ArrayList<Runnable>();
+  private List<Runnable> myPostStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
+  private List<Runnable> myPreStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
 
@@ -109,7 +110,10 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
 
   private static void runActivities(final List<Runnable> activities) {
     try {
-      for (Runnable runnable : activities) {
+
+      while (!activities.isEmpty()) {
+        final Runnable runnable = activities.remove(0);
+
         try {
           runnable.run();
         }
