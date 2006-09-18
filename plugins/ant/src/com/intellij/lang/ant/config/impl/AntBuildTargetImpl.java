@@ -25,6 +25,14 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     myModel = buildModel;
   }
 
+  public int hashCode() {
+    return myTarget.hashCode();
+  }
+
+  public boolean equals(Object obj) {
+    return obj instanceof AntBuildTargetImpl && myTarget == ((AntBuildTargetImpl)obj).myTarget;
+  }
+
   @Nullable
   public String getName() {
     final String name = myTarget.getName();
