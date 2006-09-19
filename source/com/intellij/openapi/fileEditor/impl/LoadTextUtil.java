@@ -93,6 +93,7 @@ public final class LoadTextUtil {
       catch(UnsupportedCharsetException e){
       }
       virtualFile.setCharset(charset);
+      return;
     }
 
     CharsetSettings settings = CharsetSettings.getInstance();
