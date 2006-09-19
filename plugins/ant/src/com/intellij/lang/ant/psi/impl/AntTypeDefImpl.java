@@ -157,24 +157,26 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       }
     }
     final String name = getDefinedName();
-    final String uri = getUri();
-    final String nsPrefix = (uri == null) ? null : getSourceElement().getPrefixByNamespace(uri);
-    final AntTypeId id = (nsPrefix == null) ? new AntTypeId(name) : new AntTypeId(name, nsPrefix);
-    if (clazz == null) {
-      myNewDefinition = new AntTypeDefinitionImpl(id, classname, isTask());
-    }
-    else {
-      myClassesLoaded = true;
-      myNewDefinition = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
-    }
-    if (myNewDefinition != null) {
-      myNewDefinition.setDefiningElement(this);
-      final AntStructuredElement parent = getAntParent();
-      if (parent != null) {
-        parent.registerCustomType(myNewDefinition);
+    if (name != null && name.length() > 0) {
+      final String uri = getUri();
+      final String nsPrefix = (uri == null) ? null : getSourceElement().getPrefixByNamespace(uri);
+      final AntTypeId id = (nsPrefix == null) ? new AntTypeId(name) : new AntTypeId(name, nsPrefix);
+      if (clazz == null) {
+        myNewDefinition = new AntTypeDefinitionImpl(id, classname, isTask());
       }
-      if (newlyLoaded && clazz != null) {
-        CLASS_CACHE.setClass(urls, classname, clazz);
+      else {
+        myClassesLoaded = true;
+        myNewDefinition = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
+      }
+      if (myNewDefinition != null) {
+        myNewDefinition.setDefiningElement(this);
+        final AntStructuredElement parent = getAntParent();
+        if (parent != null) {
+          parent.registerCustomType(myNewDefinition);
+        }
+        if (newlyLoaded && clazz != null) {
+          CLASS_CACHE.setClass(urls, classname, clazz);
+        }
       }
     }
   }
