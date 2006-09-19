@@ -479,6 +479,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myRootsChangeCounter--;
     if (myRootsChangeCounter > 0) return;
 
+    if (myProject.isDisposed()) return;
+
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();
