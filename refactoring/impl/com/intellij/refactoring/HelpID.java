@@ -56,7 +56,7 @@ public class HelpID {
   public static final String CONVERT_TO_INSTANCE_METHOD = "refactoring.convertToInstanceMethod";
   public static final String METHOD_DUPLICATES          = "refactoring.replaceMethodCodeDuplicates";
   public static final String CHANGE_CLASS_SIGNATURE     = "refactoring.changeClassSignature";
-  public static final String MOVE_INSTANCE_METHOD       = "refactoring.moveInstanceMethod";
+  public static final String MOVE_INSTANCE_METHOD       = "refactoring.moveInstMethod";
   public static final String INVERT_BOOLEAN             = "refactoring.invert.boolean";
 
   public static String getRenameHelpID(PsiElement element) {
