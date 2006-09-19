@@ -100,7 +100,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
         final Boolean old = ref.get();
         ref.set(Boolean.FALSE);
         element.acceptChildren(this);
-        ref.set(ref.get() ? old : calculateProblems(element));
+        ref.set(ref.get().booleanValue() ? old : calculateProblems(element));
       }
     });
   }
@@ -129,9 +129,8 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren) {
 
-    final List<DomElementProblemDescriptor> list = getProblems(domElement, includeXmlProblems);
     if (!withChildren || domElement == null || !domElement.isValid()) {
-      return list;
+      return getProblems(domElement, includeXmlProblems);
     }
 
     final List<DomElementProblemDescriptor> collection = getProblems(domElement, myCachedChildrenErrors, myDomProblemsGetter);

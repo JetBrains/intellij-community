@@ -15,6 +15,8 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NonNls;
@@ -91,19 +93,15 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
         }
       }
     }, this);
-    WolfTheProblemSolver.getInstance(myDomManager.getProject()).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
-      public void problemsAppeared(VirtualFile file) {
-        queueUpdate(file);
-      }
 
-      public void problemsChanged(VirtualFile file) {
-        queueUpdate(file);
-      }
 
-      public void problemsDisappeared(VirtualFile file) {
-        queueUpdate(file);
+    final Project project = myDomManager.getProject();
+    DomElementAnnotationsManager.getInstance(project).addHighlightingListener(new DomElementAnnotationsManager.DomHighlightingListener() {
+      public void highlightingFinished(DomFileElement element) {
+        if (element.isValid()) {
+          queueUpdate(element.getRoot().getFile().getVirtualFile());
+        }
       }
-
     }, this);
 
     myTree.setPopupGroup(getPopupActions(), DOM_MODEL_TREE_VIEW_POPUP);

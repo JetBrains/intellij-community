@@ -10,6 +10,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
@@ -18,12 +19,15 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ProjectComponent {
+  private EventDispatcher<DomHighlightingListener> myDispatcher = EventDispatcher.create(DomHighlightingListener.class);
+
   private Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
 
   private Map<DomFileElement, CachedValue<Boolean>> myCachedValues = new SoftHashMap<DomFileElement, CachedValue<Boolean>>();
@@ -88,6 +92,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         myCachedValues.put(fileElement, cachedValue);
         cachedValue.getValue();
       }
+      myDispatcher.getMulticaster().highlightingFinished(fileElement);
       return holder;
     } finally {
       synchronized (PsiLock.LOCK) {
@@ -157,6 +162,11 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
     return true;
   }
+
+  public void addHighlightingListener(DomHighlightingListener listener, Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
+  }
+
 
   @NotNull
   @NonNls
