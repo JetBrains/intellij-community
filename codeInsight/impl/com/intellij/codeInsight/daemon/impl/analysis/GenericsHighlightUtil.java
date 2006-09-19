@@ -964,8 +964,10 @@ public class GenericsHighlightUtil {
       final PsiExpression expression = expressions[i];
       final PsiType parameterType = substitutor.substitute(parameter.getType());
       final PsiType expressionType = substitutor.substitute(expression.getType());
-      final HighlightInfo highlightInfo = checkRawToGenericAssignment(parameterType, expressionType, expression);
-      if (highlightInfo != null) return highlightInfo;
+      if (expressionType != null) {
+        final HighlightInfo highlightInfo = checkRawToGenericAssignment(parameterType, expressionType, expression);
+        if (highlightInfo != null) return highlightInfo;
+      }
     }
     return null;
   }
