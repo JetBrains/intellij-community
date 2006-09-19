@@ -33,6 +33,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
   private Runnable myPostRunnable;
   private boolean myFireEvents;
   private boolean myInModel;
+  private boolean myComputing;
   private Result<DomFileElementImpl<T>> myOldResult;
   private long myModCount;
   private final Condition<DomFileDescription> myCondition = new Condition<DomFileDescription>() {
@@ -67,22 +68,28 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Cached
 
   public Result<DomFileElementImpl<T>> compute() {
     synchronized (PsiLock.LOCK) {
-      if (myDomManager.getProject().isDisposed()) return new Result<DomFileElementImpl<T>>(null);
-      final boolean fireEvents = myFireEvents;
-      myFireEvents = false;
+      if (myComputing || myDomManager.getProject().isDisposed()) return new Result<DomFileElementImpl<T>>(null);
+      myComputing = true;
+      try {
+        final boolean fireEvents = myFireEvents;
+        myFireEvents = false;
 
-      myModule = ModuleUtil.findModuleForPsiElement(myXmlFile);
-      final String rootTagName = getRootTagName();
-      if (myOldResult != null && myFileDescription != null && myFileDescription.getRootTagName().equals(rootTagName) && myFileDescription.isMyFile(myXmlFile, myModule)) {
-        return myOldResult;
+        myModule = ModuleUtil.findModuleForPsiElement(myXmlFile);
+        final String rootTagName = getRootTagName();
+        if (myOldResult != null && myFileDescription != null && myFileDescription.getRootTagName().equals(rootTagName) && myFileDescription.isMyFile(myXmlFile, myModule)) {
+          return myOldResult;
+        }
+
+        final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
+        if (originalFile != null) {
+          return saveResult(myDomManager.getOrCreateCachedValueProvider(originalFile).getFileDescription(), fireEvents);
+        }
+
+        return saveResult(findFileDescription(rootTagName), fireEvents);
       }
-
-      final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
-      if (originalFile != null) {
-        return saveResult(myDomManager.getOrCreateCachedValueProvider(originalFile).getFileDescription(), fireEvents);
+      finally {
+        myComputing = false;
       }
-
-      return saveResult(findFileDescription(rootTagName), fireEvents);
     }
   }
 
