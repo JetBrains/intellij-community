@@ -118,11 +118,11 @@ public class RepositoryHelper {
       }
 
       if (pluginNode.getSize().equals("-1")) {
-        if (connection.getContentLength() == -1)
-          pi.setIndeterminate(true);
-        else
+        if (connection.getContentLength() != -1){
           pluginNode.setSize(Integer.toString(connection.getContentLength()));
+        }
       }
+      pi.setIndeterminate(pluginNode.getSize().equals("-1"));
 
       boolean cleanFile = true;
 

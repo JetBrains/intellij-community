@@ -4,14 +4,13 @@
 
 package com.intellij.util.io;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
-
-import java.io.InputStream;
-import java.io.IOException;
-import java.net.URLConnection;
-
+import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLConnection;
 
 /**
  * @author nik
@@ -43,7 +42,8 @@ public class UrlConnectionUtil {
       pi.checkCanceled();
       try {
         thread.join(50);
-        pi.setFraction(System.currentTimeMillis());
+        pi.setIndeterminate(true);
+        pi.setText(pi.getText());
         if (!thread.isAlive()) break;
       }
       catch (InterruptedException e) {

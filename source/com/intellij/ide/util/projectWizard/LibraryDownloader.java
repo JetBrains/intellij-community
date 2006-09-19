@@ -217,7 +217,6 @@ public class LibraryDownloader {
         return false;
       }
 
-      indicator.setIndeterminate(true);
       tempFile = FileUtil.createTempFile("downloaded", "jar");
       input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
       output = new BufferedOutputStream(new FileOutputStream(tempFile));
