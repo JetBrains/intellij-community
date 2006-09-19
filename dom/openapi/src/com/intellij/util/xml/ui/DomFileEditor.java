@@ -41,6 +41,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   private final String myName;
   private final Factory<? extends T> myComponentFactory;
   private T myComponent;
+  private CommitablePanelUserActivityListener myUserActivityListener;
 
   public DomFileEditor(final DomElement element, final String name, final T component) {
     this(element.getManager().getProject(), element.getRoot().getFile().getVirtualFile(), name, component);
@@ -78,12 +79,12 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   @NotNull
   protected JComponent createCustomComponent() {
     final UserActivityWatcher userActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
-    final CommitablePanelUserActivityListener userActivityListener = new CommitablePanelUserActivityListener() {
+    myUserActivityListener = new CommitablePanelUserActivityListener() {
       protected void applyChanges() {
         commit();
       }
     };
-    userActivityWatcher.addUserActivityListener(userActivityListener, this);
+    userActivityWatcher.addUserActivityListener(myUserActivityListener, this);
     userActivityWatcher.register(getComponent());
     new MnemonicHelper().register(getComponent());
     myComponent = myComponentFactory.create();
@@ -94,7 +95,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
       }
     }, this);
     Disposer.register(this, myComponent);
-    Disposer.register(this, userActivityListener);
+    Disposer.register(this, myUserActivityListener);
     return myComponent.getComponent();
   }
 
@@ -104,9 +105,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
   protected DomElement getSelectedDomElement() {
-    final DomElement domElement = DomUINavigationProvider.findDomElement(myComponent);
-    return domElement;
-    //return domElement != null && domElement.getParent() instanceof DomFileElement ? null : domElement;
+    return DomUINavigationProvider.findDomElement(myComponent);
   }
 
   protected void setSelectedDomElement(DomElement domElement) {
@@ -127,6 +126,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
           public HighlightingPass fun(final Document document) {
             return new TextEditorHighlightingPass(getProject(), document) {
               public void doCollectInformation(ProgressIndicator progress) {
+                if (myUserActivityListener != null && myUserActivityListener.isWaiting()) return;
                 final PsiFile file = getDocumentManager().getPsiFile(document);
                 if (file instanceof XmlFile) {
                   final XmlFile xmlFile = (XmlFile)file;
@@ -138,6 +138,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
               }
 
               public void doApplyInformationToEditor() {
+                if (myUserActivityListener != null && myUserActivityListener.isWaiting()) return;
                 final PsiFile file = getDocumentManager().getPsiFile(document);
                 if (file instanceof XmlFile) {
                   final DomFileElement<DomElement> element = domManager.getFileElement((XmlFile)file);

@@ -20,6 +20,8 @@ package com.intellij.util.xml.ui;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.util.Alarm;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 
 /**
  * User: Sergey.Vasiliev
@@ -39,10 +41,12 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
 
   final public void stateChanged() {
     if (myApplying) return;
+    cancel();
     cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
         myApplying = true;
+        cancel();
         try {
           applyChanges();
         }
@@ -53,10 +57,21 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
     }, 717);
   }
 
+  private static void cancel() {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.cancel();
+    }
+  }
+
   protected void applyChanges() {
     if (myPanel != null) {
       myPanel.commit();
     }
+  }
+
+  public final boolean isWaiting() {
+    return myAlarm.getActiveRequestCount() > 0;
   }
 
   public final void cancelAllRequests() {
