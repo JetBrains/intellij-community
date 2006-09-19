@@ -20,6 +20,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericValue;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.List;
 
@@ -62,7 +63,7 @@ public class DomElementsHighlightingUtil {
     final DomElement domElement = problemDescriptor.getDomElement();
 
     final PsiElement psiElement = getPsiElement(domElement);
-    if (psiElement != null) {
+    if (psiElement != null && StringUtil.isNotEmpty(psiElement.getText())) {
       final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
       if (tag != null && tag.getSubTags().length > 0) {
         addDescriptionsToTagEnds(tag, descritors, creator);
