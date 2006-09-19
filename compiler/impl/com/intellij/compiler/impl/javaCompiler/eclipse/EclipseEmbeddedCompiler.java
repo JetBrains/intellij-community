@@ -6,7 +6,7 @@ import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -20,8 +20,6 @@ import java.util.ArrayList;
 
 
 public class EclipseEmbeddedCompiler implements BackendCompiler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler");
-
   private Project myProject;
   private final EclipseCompiler myEclipseExternalCompiler;
   private int myExitCode;
@@ -90,8 +88,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
       throw ex[0];
     }
 
-
-    Process process = new Process() {
+    return new Process() {
       public OutputStream getOutputStream() {
         throw new UnsupportedOperationException();
       }
@@ -116,7 +113,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
           return myExitCode;
         }
         catch (Exception e) {
-          LOG.error(e);
+          compileContext.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
           myExitCode = -1;
           return -1;
         }
@@ -126,7 +123,6 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
         return myExitCode;
       }
     };
-    return process;
   }
 
   private void createCompileDriver() {
