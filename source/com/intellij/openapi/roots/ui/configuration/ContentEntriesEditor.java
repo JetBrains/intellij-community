@@ -77,6 +77,8 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     myModulesProvider = modulesProvider;
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       public void afterRefreshFinish(boolean asynchonous) {
+        final Module module = getModule();
+        if (module == null || module.isDisposed() || module.getProject().isDisposed()) return;
         for (final ContentEntry contentEntry : myEntryToEditorMap.keySet()) {
           final ContentEntryEditor editor = myEntryToEditorMap.get(contentEntry);
           if (editor != null) {
