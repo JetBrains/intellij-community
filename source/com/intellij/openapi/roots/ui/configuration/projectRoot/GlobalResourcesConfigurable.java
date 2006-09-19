@@ -37,7 +37,7 @@ public class GlobalResourcesConfigurable extends NamedConfigurable {
   }
 
   public JComponent createOptionsPanel() {
-    return new PanelWithText();
+    return new PanelWithText(ProjectBundle.message("project.roots.global.resources.description"));
   }
 
   public String getDisplayName() {

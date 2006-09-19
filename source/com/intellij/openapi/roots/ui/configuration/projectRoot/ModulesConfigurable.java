@@ -43,7 +43,7 @@ public class ModulesConfigurable extends NamedConfigurable<ModuleManager> {
   }
 
   public JComponent createOptionsPanel() {
-    return new PanelWithText();
+    return new PanelWithText(ProjectBundle.message("project.roots.modules.description"));
   }
 
   public String getDisplayName() {
