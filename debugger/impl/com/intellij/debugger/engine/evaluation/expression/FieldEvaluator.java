@@ -4,61 +4,62 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
 public class FieldEvaluator implements Evaluator {
   private Evaluator myObjectEvaluator;
-  private String myClassName;
+  private JVMName myClassName;
   private String myFieldName;
   private Object myEvaluatedQualifier;
   private Field myEvaluatedField;
 
-  public FieldEvaluator(Evaluator objectEvaluator, String contextClass, String fieldName) {
+  public FieldEvaluator(Evaluator objectEvaluator, JVMName contextClass, String fieldName) {
     myObjectEvaluator = objectEvaluator;
     myClassName = contextClass;
     myFieldName = fieldName;
   }
 
-  private Field findField(Type t) {
+  @Nullable
+  private Field findField(Type t, final EvaluationContextImpl context) throws EvaluateException {
     if(t instanceof ClassType) {
       ClassType cls = (ClassType) t;
-      if(cls.name().equals(myClassName)) {
+      if(cls.name().equals(getClassName(context))) {
         return cls.fieldByName(myFieldName);
-      } else {
-        Field field;
-        for (Iterator iterator = cls.interfaces().iterator(); iterator.hasNext();) {
-          InterfaceType interfaceType = (InterfaceType) iterator.next();
-          field = findField(interfaceType);
-          if(field != null) return field;
-        }
-        return findField(cls.superclass());
       }
-    } else if(t instanceof InterfaceType) {
-      InterfaceType iface = (InterfaceType) t;
-      if(iface.name().equals(myClassName)) {
-        return iface.fieldByName(myFieldName);
-      } else {
-        Field field;
-        for (Iterator iterator = iface.superinterfaces().iterator(); iterator.hasNext();) {
-          InterfaceType interfaceType = (InterfaceType) iterator.next();
-          field = findField(interfaceType);
-          if(field != null) return field;
+      for (Iterator iterator = cls.interfaces().iterator(); iterator.hasNext();) {
+        InterfaceType interfaceType = (InterfaceType) iterator.next();
+        Field field = findField(interfaceType, context);
+        if(field != null) {
+          return field;
         }
       }
-    } else if(t instanceof ObjectReference) {
-      return findField(((ObjectReference) t).referenceType());
+      return findField(cls.superclass(), context);
     }
-
+    else if(t instanceof InterfaceType) {
+      InterfaceType iface = (InterfaceType) t;
+      if(iface.name().equals(getClassName(context))) {
+        return iface.fieldByName(myFieldName);
+      }
+      for (Iterator iterator = iface.superinterfaces().iterator(); iterator.hasNext();) {
+        InterfaceType interfaceType = (InterfaceType) iterator.next();
+        Field field = findField(interfaceType, context);
+        if(field != null) {
+          return field;
+        }
+      }
+    }
     return null;
   }
 
@@ -74,7 +75,7 @@ public class FieldEvaluator implements Evaluator {
   private Object evaluateField(Object object, EvaluationContextImpl context) throws EvaluateException {
     if (object instanceof ReferenceType) {
       ReferenceType refType = (ReferenceType)object;
-      Field field = findField(refType);
+      Field field = findField(refType, context);
       if (field == null || !field.isStatic()) {
         field = refType.fieldByName(myFieldName);
       }
@@ -104,7 +105,7 @@ public class FieldEvaluator implements Evaluator {
         );
       }
 
-      Field field = findField(refType);
+      Field field = findField(refType, context);
       if (field == null) {
         field = refType.fieldByName(myFieldName);
       }
@@ -160,5 +161,13 @@ public class FieldEvaluator implements Evaluator {
       };
     }
     return modifier;
+  }
+
+  private String myClassNameCached = null;
+  private String getClassName(final EvaluationContextImpl context) throws EvaluateException {
+    if (myClassNameCached == null) {
+      myClassNameCached = myClassName.getName(context.getDebugProcess());
+    }
+    return myClassNameCached;
   }
 }

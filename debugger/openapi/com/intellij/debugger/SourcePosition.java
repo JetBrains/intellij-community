@@ -28,6 +28,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 
 /**
  * User: lex
@@ -164,10 +165,17 @@ public abstract class SourcePosition implements Navigatable{
       }
     };
   }
-
+     
   public static SourcePosition createFromElement(PsiElement element) {
     PsiElement navigationElement = element.getNavigationElement();
-    return createFromOffset(navigationElement.getContainingFile(), navigationElement.getTextOffset());
+    final PsiFile psiFile;
+    if (PsiUtil.isInJspFile(navigationElement)) {
+      psiFile = PsiUtil.getJspFile(navigationElement);
+    }
+    else {
+      psiFile = navigationElement.getContainingFile();
+    }
+    return createFromOffset(psiFile, navigationElement.getTextOffset());
   }
 
   public boolean equals(Object o) {

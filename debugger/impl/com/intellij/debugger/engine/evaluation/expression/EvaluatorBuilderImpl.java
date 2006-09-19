@@ -392,7 +392,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           Evaluator objectEvaluator = new ThisEvaluator(iterationCount);
           //noinspection HardCodedStringLiteral
-          myResult = new FieldEvaluator(objectEvaluator, getContextPsiClass().getQualifiedName(), "val$" + localName);
+          myResult = new FieldEvaluator(objectEvaluator, JVMNameUtil.getJVMQualifiedName(getContextPsiClass()), "val$" + localName);
           return;
         }
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
@@ -430,7 +430,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           objectEvaluator = new ThisEvaluator(iterationCount);
         }
-        myResult = new FieldEvaluator(objectEvaluator, fieldClass.getQualifiedName(), psiField.getName());
+        myResult = new FieldEvaluator(objectEvaluator, JVMNameUtil.getJVMQualifiedName(fieldClass), psiField.getName());
       } else {
         //let's guess what this could be
         PsiElement nameElement = expression.getReferenceNameElement(); // get "b" part
@@ -450,7 +450,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           if (qualifierTarget instanceof PsiClass) {
             // this is a call to a 'static' field
             PsiClass psiClass = (PsiClass)qualifierTarget;
-            myResult = new FieldEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(psiClass)), psiClass.getQualifiedName(), name);
+            final JVMName typeName = JVMNameUtil.getJVMQualifiedName(psiClass);
+            myResult = new FieldEvaluator(new TypeEvaluator(typeName), typeName, name);
           }
           else {
             PsiType type = qualifier.getType();
@@ -466,7 +467,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
               );
             }
 
-            myResult = new FieldEvaluator(myResult, type.getCanonicalText(), name);
+            myResult = new FieldEvaluator(myResult, JVMNameUtil.getJVMQualifiedName(type), name);
           }
         }
         else {

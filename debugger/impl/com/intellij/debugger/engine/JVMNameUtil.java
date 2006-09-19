@@ -218,25 +218,28 @@ public class JVMNameUtil {
       return getJVMQualifiedName(psiClass);
     }
   }
-
+                               
   public static JVMName getJVMQualifiedName(PsiClass psiClass) {
-    if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-      return new JVMClassAt(SourcePosition.createFromElement(psiClass));
-    }
-    else {
+    if (!PsiUtil.isLocalOrAnonymousClass(psiClass)) {
       final String name = getNonAnonymousClassName(psiClass);
-      return getJVMRawText(name != null? name : "");
+      if (name != null) {
+        return getJVMRawText(name);
+      }
     }
+    return new JVMClassAt(SourcePosition.createFromElement(psiClass));
   }
 
+  @Nullable
   public static String getNonAnonymousClassName(PsiClass aClass) {
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     if(parentClass != null) {
-      return getNonAnonymousClassName(parentClass) + "$" + aClass.getName();
+      final String parentName = getNonAnonymousClassName(parentClass);
+      if (parentName == null) {
+        return null;
+      }
+      return parentName + "$" + aClass.getName();
     }
-    else {
-      return aClass.getQualifiedName();
-    }
+    return aClass.getQualifiedName();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

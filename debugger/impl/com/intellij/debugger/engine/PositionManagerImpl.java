@@ -74,7 +74,11 @@ public class PositionManagerImpl implements PositionManager {
         return null;
       }
 
-      waitPrepareFor = JVMNameUtil.getNonAnonymousClassName(parent) + "$*";
+      final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
+      if (parentQName == null) {
+        return null;
+      }
+      waitPrepareFor = parentQName + "$*";
       waitRequestor = new ClassPrepareRequestor() {
         public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
           final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
@@ -203,10 +207,14 @@ public class PositionManagerImpl implements PositionManager {
         if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
           final PsiClass parentNonLocal = JVMNameUtil.getTopLevelParentClass(psiClass);
           if(parentNonLocal == null) {
-            LOG.assertTrue(false, "Local class has no non-local parent");
+            LOG.assertTrue(false, "Local or anonymous class has no non-local parent");
             return Collections.emptyList();
           }
           final String parentClassName = JVMNameUtil.getNonAnonymousClassName(parentNonLocal);
+          if(parentClassName == null) {
+            LOG.assertTrue(false, "The name of a parent of a local (anonymous) class is null");
+            return Collections.emptyList();
+          }
           final List<ReferenceType> outer = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);
           final List<ReferenceType> result = new ArrayList<ReferenceType>();
           findNested(outer, classPosition, result);
