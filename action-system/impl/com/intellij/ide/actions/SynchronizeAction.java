@@ -25,10 +25,11 @@ public class SynchronizeAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    final VirtualFileManager manager = VirtualFileManager.getInstance();
-    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    final Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT);
+    VirtualFileManager.getInstance().refresh(true);
+
     //This is yet another hack with modality states
+    /*
+    final Project project = (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT)
     if (ModalityState.current() == ModalityState.NON_MODAL) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
@@ -72,5 +73,6 @@ public class SynchronizeAction extends AnAction {
         }
       });
     }
+    */
   }
 }
