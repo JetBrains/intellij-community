@@ -33,7 +33,7 @@ public class EditScopesDialog extends SingleConfigurableEditor {
       mySelectedScope = (NamedScope)selectedObject;
     }
     super.doOKAction();
-    if (myCheckShared) {
+    if (myCheckShared && mySelectedScope != null) {
       final Project project = getProject();
       final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
       NamedScope scope = manager.getScope(mySelectedScope.getName());
