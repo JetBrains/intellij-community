@@ -158,8 +158,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     if (myFileTypeManager.isFileIgnored(file.getName())) return false;
     VirtualFile parent = file.getParent();
     DirectoryInfo parentInfo = myDirectoryIndex.getInfoForDirectory(parent);
-    if (parentInfo == null) return false;
-    return parentInfo.libraryClassRoot != null;
+    return parentInfo != null && parentInfo.libraryClassRoot != null;
   }
 
   public boolean isInSource(@NotNull VirtualFile fileOrDir) {
@@ -177,8 +176,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      if (info == null) return false;
-      return info.libraryClassRoot != null;
+      return info != null && info.libraryClassRoot != null;
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -189,8 +187,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      if (info == null) return false;
-      return info.isInLibrarySource;
+      return info != null && info.isInLibrarySource;
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -235,8 +232,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
-        if (info == null) return false;
-        return info.module != null;
+        return info != null && info.module != null;
       }
       else {
         return !myFileTypeManager.isFileIgnored(file.getName());

@@ -55,10 +55,10 @@ abstract class Mover {
       range2.setGreedyToRight(true);
     }
     else {
-      range2.setGreedyToLeft(true);
-      range2.setGreedyToRight(false);
       range1.setGreedyToLeft(true);
       range1.setGreedyToRight(true);
+      range2.setGreedyToLeft(true);
+      range2.setGreedyToRight(false);
     }
 
     final CaretModel caretModel = editor.getCaretModel();
