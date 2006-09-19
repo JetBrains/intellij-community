@@ -141,6 +141,7 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
   /**
    * Navigation to a property (if, unless)
    */
+  @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public AntElement getFormatElement() {
     return myPropElement;

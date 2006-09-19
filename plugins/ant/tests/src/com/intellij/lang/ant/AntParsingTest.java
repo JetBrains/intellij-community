@@ -140,4 +140,8 @@ public class AntParsingTest extends ParsingTestCase {
   public void testJava() throws Exception {
     doTest(true);
   }
+
+   public void testBuildNumber() throws Exception {
+    doTest(true);
+  }
 }

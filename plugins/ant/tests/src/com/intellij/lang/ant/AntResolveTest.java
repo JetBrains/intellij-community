@@ -185,6 +185,10 @@ public class AntResolveTest extends ResolveTestCase {
     assertTrue(property instanceof AntElement);
   }
 
+  public void testBuildNumber() throws Exception {
+    doPropertyTest();
+  }
+
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ref.resolve();

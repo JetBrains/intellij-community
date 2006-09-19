@@ -219,6 +219,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   /**
    * @return <format> element for the <tstamp> property
    */
+  @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public AntElement getFormatElement() {
     if (getTstampPropertyAttributeValue() != null) {

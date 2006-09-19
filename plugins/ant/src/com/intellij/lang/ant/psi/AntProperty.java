@@ -31,5 +31,6 @@ public interface AntProperty extends AntTask {
   @Nullable
   String[] getNames();
 
+  @Nullable
   AntElement getFormatElement();
 }
