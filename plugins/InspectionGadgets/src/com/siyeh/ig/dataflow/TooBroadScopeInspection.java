@@ -56,17 +56,20 @@ public class TooBroadScopeInspection extends StatementInspection
     /** @noinspection PublicField for externalization*/
     public boolean m_onlyLookAtBlocks = false;
 
+    @NotNull
     public String getDisplayName()
     {
         return InspectionGadgetsBundle.message("too.broad.scope.display.name");
     }
 
+    @NotNull
     public String getID()
     {
         return "TooBroadScope";
     }
 
 
+    @NotNull
     public String getGroupDisplayName()
     {
         return GroupNames.DATA_FLOW_ISSUES;
@@ -213,13 +216,16 @@ public class TooBroadScopeInspection extends StatementInspection
             final PsiModifierList newModifierList =
                     newVariable.getModifierList();
             final PsiModifierList modifierList = variable.getModifierList();
-            // remove final when PsiDeclarationFactory adds one by mistake
-            newModifierList.setModifierProperty(PsiModifier.FINAL,
-                    variable.hasModifierProperty(PsiModifier.FINAL));
-            final PsiAnnotation[] annotations = modifierList.getAnnotations();
-            for (PsiAnnotation annotation : annotations)
+            if (newModifierList != null && modifierList != null)
             {
-                newModifierList.add(annotation);
+                // remove final when PsiDeclarationFactory adds one by mistake
+                newModifierList.setModifierProperty(PsiModifier.FINAL,
+                        variable.hasModifierProperty(PsiModifier.FINAL));
+                final PsiAnnotation[] annotations = modifierList.getAnnotations();
+                for (PsiAnnotation annotation : annotations)
+                {
+                    newModifierList.add(annotation);
+                }
             }
             return newDeclaration;
         }
@@ -234,6 +240,10 @@ public class TooBroadScopeInspection extends StatementInspection
             final EditorColorsManager editorColorsManager =
                     EditorColorsManager.getInstance();
             final Editor editor = editorManager.getSelectedTextEditor();
+            if (editor == null)
+            {
+                return;
+            }
             final EditorColorsScheme globalScheme =
                     editorColorsManager.getGlobalScheme();
             final TextAttributes textattributes =
@@ -241,7 +251,7 @@ public class TooBroadScopeInspection extends StatementInspection
                             EditorColors.SEARCH_RESULT_ATTRIBUTES);
             final PsiElement[] elements = new PsiElement[]{element};
             highlightManager.addOccurrenceHighlights(
-                    editor, elements, textattributes, true, null);
+                    editor, elements, textattributes, false, null);
             final WindowManager windowManager = WindowManager.getInstance();
             final StatusBar statusBar = windowManager.getStatusBar(project);
             statusBar.setInfo(InspectionGadgetsBundle.message(
@@ -261,9 +271,8 @@ public class TooBroadScopeInspection extends StatementInspection
                 @NotNull PsiVariable variable, @NotNull PsiElement location)
         throws IncorrectOperationException
         {
-            PsiStatement statement =
-                    PsiTreeUtil.getParentOfType(location,
-                            PsiStatement.class, false);
+            PsiStatement statement = PsiTreeUtil.getParentOfType(location,
+                    PsiStatement.class, false);
             assert statement != null;
             PsiElement statementParent = statement.getParent();
             while (statementParent instanceof PsiStatement &&
@@ -372,8 +381,8 @@ public class TooBroadScopeInspection extends StatementInspection
             }
             if (initializer != null)
             {
-                commonParent = ScopeUtils.moveOutOfLoops(
-                        commonParent, variableScope);
+                commonParent =
+                        ScopeUtils.moveOutOfLoops(commonParent, variableScope);
                 if (commonParent == null)
                 {
                     return;

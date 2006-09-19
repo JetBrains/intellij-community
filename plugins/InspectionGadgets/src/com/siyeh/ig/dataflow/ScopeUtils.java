@@ -56,7 +56,8 @@ class ScopeUtils
         {
             child = parent;
             parent = child.getParent();
-            if (parent == null) {
+            if (parent == null)
+            {
                 return null;
             }
         }
@@ -72,13 +73,15 @@ class ScopeUtils
             final PsiElement referenceElement = reference.getElement();
             final PsiElement parent = PsiTreeUtil.getParentOfType(
                     referenceElement, PsiCodeBlock.class, PsiForStatement.class);
-            if (parent != null && commonParent != null &&
-                !commonParent.equals(parent))
+            if (parent != null && commonParent != null)
             {
-                commonParent =
-                PsiTreeUtil.findCommonParent(commonParent, parent);
-                commonParent = PsiTreeUtil.getParentOfType(commonParent,
-                        PsiCodeBlock.class, PsiForStatement.class);
+                if (!commonParent.equals(parent))
+                {
+                    commonParent =
+                            PsiTreeUtil.findCommonParent(commonParent, parent);
+                    commonParent = getNonStrictParentOfType(commonParent,
+                            PsiCodeBlock.class, PsiForStatement.class);
+                }
             }
             else
             {
@@ -144,8 +147,9 @@ class ScopeUtils
     }
 
     @Nullable
-    public static PsiElement getParentOfTypes(@Nullable PsiElement element,
-                                              @NotNull Class<PsiElement>[] classes)
+    public static PsiElement getNonStrictParentOfType(
+            @Nullable PsiElement element,
+            @NotNull Class<? extends PsiElement>... classes)
     {
         if (element == null)
         {
@@ -154,7 +158,7 @@ class ScopeUtils
 
         while (element != null)
         {
-            for (Class<PsiElement> clazz : classes)
+            for (Class<? extends PsiElement> clazz : classes)
             {
                 if (clazz.isInstance(element))
                 {
