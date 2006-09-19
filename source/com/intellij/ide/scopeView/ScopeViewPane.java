@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -95,7 +96,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   public void dispose() {
-    myViewPanel.dispose();
+    Disposer.dispose(myViewPanel);
     myViewPanel = null;
     super.dispose();
   }
