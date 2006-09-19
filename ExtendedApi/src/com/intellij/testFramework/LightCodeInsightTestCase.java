@@ -222,7 +222,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     assertTrue(getMessage("Cannot find file " + fullPath, message), ioFile.exists());
     String fileText = null;
     try {
-      fileText = new String(FileUtil.loadFileText(ioFile));
+      fileText = new String(FileUtil.loadFileText(ioFile, "UTF-8"));
     } catch (IOException e) {
       LOG.error(e);
     }
