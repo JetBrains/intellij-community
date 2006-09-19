@@ -12,9 +12,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -52,6 +50,17 @@ public class LayoutManagerRegistry {
     final String[] layoutManagerNames = ourLayoutManagerRegistry.keySet().toArray(new String[0]);
     Arrays.sort(layoutManagerNames);
     return layoutManagerNames;
+  }
+
+  public static String[] getNonDeprecatedLayoutManagerNames() {
+    ArrayList<String> layoutManagerNames = new ArrayList<String>();
+    for(String name: ourLayoutManagerRegistry.keySet()) {
+      if (!name.equals(UIFormXmlConstants.LAYOUT_XY)) {
+        layoutManagerNames.add(name);
+      }
+    }
+    Collections.sort(layoutManagerNames);
+    return layoutManagerNames.toArray(new String[layoutManagerNames.size()]);
   }
 
   public static String getLayoutManagerDisplayName(String name) {

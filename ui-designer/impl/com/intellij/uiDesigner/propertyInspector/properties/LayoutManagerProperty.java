@@ -29,7 +29,6 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
 
   private static class LayoutManagerEditor extends ComboBoxPropertyEditor<String> {
     public LayoutManagerEditor() {
-      myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
       myCbx.setRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           append(LayoutManagerRegistry.getLayoutManagerDisplayName((String) value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -38,6 +37,12 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     }
 
     public JComponent getComponent(RadComponent component, String value, boolean inplace) {
+      if (UIFormXmlConstants.LAYOUT_XY.equals(value)) {
+        myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
+      }
+      else {
+        myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
+      }
       myCbx.setSelectedItem(value);
       return myCbx;
     }
