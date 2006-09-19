@@ -353,7 +353,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
                                      LibrariesModifiableModel provider,
                                      final LibraryTableModifiableModelProvider modelProvider) {
     provider = new LibrariesModifiableModel(table.getModifiableModel());
-    LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table.getTableLevel(), provider);
+    LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table.getTableLevel() );
     MyNode node = new MyNode(librariesConfigurable, true);
     final Library[] libraries = provider.getLibraries();
     for (Library library : libraries) {
@@ -407,7 +407,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     myProjectLibrariesProvider = new LibrariesModifiableModel(table.getModifiableModel());
-    final LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table.getTableLevel(), myProjectLibrariesProvider);
+    final LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table.getTableLevel() );
 
     myProjectLibrariesNode = new MyNode(librariesConfigurable, true);
     final Library[] libraries = myProjectLibrariesProvider.getLibraries();
@@ -436,6 +436,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       } else {
         final MyNode moduleGroupNode = ModuleGroupUtil
           .updateModuleGroupPath(new ModuleGroup(groupPath), myModulesNode, new Function<ModuleGroup, MyNode>() {
+            @Nullable
             public MyNode fun(final ModuleGroup group) {
               return findNodeByObject(myModulesNode, group);
             }
@@ -603,7 +604,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       public void run() {
         SwingUtilities.invokeLater(new Runnable(){
           public void run() {
-            ProjectRootConfigurable.super.disposeUIResources();
             dispose();
             reset();
           }
@@ -635,7 +635,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void disposeUIResources() {
-    ProjectRootConfigurable.super.disposeUIResources();
+    myAutoScrollHandler.cancelAllRequests();
     myUpdateDependenciesAlarm.cancelAllRequests();
     myUpdateDependenciesAlarm.addRequest(new Runnable(){
       public void run() {
@@ -661,6 +661,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myValidityCache.clear();
     myLibraryPathValidityCache.clear();
     myModulesDependencyCache.clear();
+    ProjectRootConfigurable.super.disposeUIResources();
   }
 
 
@@ -806,6 +807,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     }
     final Computable<Set<String>> dependencies = new Computable<Set<String>>(){
+      @Nullable
       public Set<String> compute() {
         final Set<String> dependencies = getDependencies(selectedObject, selectedNode);
         if (selectedObject instanceof Library){
@@ -1336,7 +1338,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         }
 
         public Icon getIconFor(String selection) {
-          return myModulesConfigurator.getModule(selection).getModuleType().getNodeIcon(false);
+          final Module module = myModulesConfigurator.getModule(selection);
+          LOG.assertTrue(module != null, selection + " was not found");
+          return module.getModuleType().getNodeIcon(false);
         }
 
       }).show(new RelativePoint(myTree, location));

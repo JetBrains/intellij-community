@@ -5,8 +5,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -123,15 +121,5 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
   @NonNls
   public String getHelpTopic() {
     return "preferences.jdkGlobalLibs";  //todo
-  }
-
-  public AnAction createAddAction() {
-    return new AnAction() {
-      public void actionPerformed(AnActionEvent e) {
-        final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(myModel, myProject);
-        editor.createAddLibraryAction(true, myLibraryEditor.getComponent()).actionPerformed(null);
-        Disposer.dispose(editor);
-      }
-    };
   }
 }

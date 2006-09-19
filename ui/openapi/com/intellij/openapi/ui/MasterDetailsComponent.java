@@ -76,7 +76,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
   public String myLastEditedConfigurable = null;
   private boolean myHasDeletedItems;
-  private AutoScrollToSourceHandler myAutoScrollHandler;
+  protected AutoScrollToSourceHandler myAutoScrollHandler;
 
   protected MasterDetailsComponent() {
     myOptionsPanel.setLayout(new BorderLayout());
