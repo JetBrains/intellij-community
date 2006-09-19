@@ -19,18 +19,18 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
   @NonNls private static TIntObjectHashMap<String> myAnchorMap = new TIntObjectHashMap<String>();
 
   static {
-    myFillMap.put(GridBagConstraints.HORIZONTAL, "GridBagConstraints.HORIZONTAL");
-    myFillMap.put(GridBagConstraints.VERTICAL, "GridBagConstraints.VERTICAL");
-    myFillMap.put(GridBagConstraints.BOTH, "GridBagConstraints.BOTH");
+    myFillMap.put(GridBagConstraints.HORIZONTAL, "java.awt.GridBagConstraints.HORIZONTAL");
+    myFillMap.put(GridBagConstraints.VERTICAL, "java.awt.GridBagConstraints.VERTICAL");
+    myFillMap.put(GridBagConstraints.BOTH, "java.awt.GridBagConstraints.BOTH");
 
-    myAnchorMap.put(GridBagConstraints.NORTHWEST, "GridBagConstraints.NORTHWEST");
-    myAnchorMap.put(GridBagConstraints.NORTH, "GridBagConstraints.NORTH");
-    myAnchorMap.put(GridBagConstraints.NORTHEAST, "GridBagConstraints.NORTHEAST");
-    myAnchorMap.put(GridBagConstraints.EAST, "GridBagConstraints.EAST");
-    myAnchorMap.put(GridBagConstraints.SOUTHEAST, "GridBagConstraints.SOUTHEAST");
-    myAnchorMap.put(GridBagConstraints.SOUTH, "GridBagConstraints.SOUTH");
-    myAnchorMap.put(GridBagConstraints.SOUTHWEST, "GridBagConstraints.SOUTHWEST");
-    myAnchorMap.put(GridBagConstraints.WEST, "GridBagConstraints.WEST");
+    myAnchorMap.put(GridBagConstraints.NORTHWEST, "java.awt.GridBagConstraints.NORTHWEST");
+    myAnchorMap.put(GridBagConstraints.NORTH, "java.awt.GridBagConstraints.NORTH");
+    myAnchorMap.put(GridBagConstraints.NORTHEAST, "java.awt.GridBagConstraints.NORTHEAST");
+    myAnchorMap.put(GridBagConstraints.EAST, "java.awt.GridBagConstraints.EAST");
+    myAnchorMap.put(GridBagConstraints.SOUTHEAST, "java.awt.GridBagConstraints.SOUTHEAST");
+    myAnchorMap.put(GridBagConstraints.SOUTH, "java.awt.GridBagConstraints.SOUTH");
+    myAnchorMap.put(GridBagConstraints.SOUTHWEST, "java.awt.GridBagConstraints.SOUTHWEST");
+    myAnchorMap.put(GridBagConstraints.WEST, "java.awt.GridBagConstraints.WEST");
   }
 
   @Override
@@ -78,10 +78,10 @@ public class GridBagLayoutSourceGenerator extends LayoutSourceGenerator {
                                           final String variable,
                                           final String parentVariable) {
     if (!myHaveGbc) {
-      generator.append("GridBagConstraints gbc;\n");
+      generator.append("java.awt.GridBagConstraints gbc;\n");
       myHaveGbc = true;
     }
-    generator.append("gbc = new GridBagConstraints();\n");
+    generator.append("gbc = new java.awt.GridBagConstraints();\n");
 
     GridBagConstraints defaults = new GridBagConstraints();
     if (defaults.gridx != constraints.gridx) {
