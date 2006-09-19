@@ -73,15 +73,17 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
         if(element instanceof PsiLocalVariable){
           final PsiLocalVariable variable = (PsiLocalVariable)element;
           final String name = variable.getName();
-          if(myVariablesSet == null)
-            myVariablesSet = new HashSet<String>();
-          if(myVariablesSet.contains(name)){
+          Set<String> set = myVariablesSet;
+          if(set != null && set.contains(name)){
             myConflict = true;
             myVariablesSet = null;
             myClassesSet = null;
           }
-          else
-            myVariablesSet.add(name);
+          else {
+            if (set == null) set = new HashSet<String>();
+            set.add(name);
+            myVariablesSet = set;
+          }
         }
         else if(element instanceof PsiClass){
           final PsiClass psiClass = (PsiClass)element;
