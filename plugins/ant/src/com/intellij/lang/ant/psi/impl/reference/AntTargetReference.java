@@ -71,21 +71,13 @@ public class AntTargetReference extends AntGenericReference {
 
   public PsiElement resolve() {
     final String name = getCanonicalRepresentationText();
-    if(name == null) return null;
-    
+    if (name == null) return null;
+
     final AntElement element = getElement();
-    final AntProject project = element.getAntProject();
-    AntTarget result = project.getTarget(name);
-    if (result == null) {
-      for (final AntTarget target : project.getImportedTargets()) {
-        if (name.equals(target.getName())) {
-          return target;
-        }
-      }
-    }
-    if (result == null && element instanceof AntAntImpl) {
-      AntAntImpl ant = (AntAntImpl)element;
-      final PsiFile psiFile = ant.getCalledAntFile();
+    AntTarget result = null;
+
+    if (element instanceof AntAntImpl) {
+      final PsiFile psiFile = ((AntAntImpl)element).getCalledAntFile();
       if (psiFile != null) {
         AntFile antFile;
         if (psiFile instanceof AntFile) {
@@ -102,6 +94,18 @@ public class AntTargetReference extends AntGenericReference {
         }
       }
     }
+    if (result == null) {
+      final AntProject project = element.getAntProject();
+      result = project.getTarget(name);
+      if (result == null) {
+        for (final AntTarget target : project.getImportedTargets()) {
+          if (name.equals(target.getName())) {
+            return target;
+          }
+        }
+      }
+    }
+
     return result;
   }
 
@@ -129,11 +133,32 @@ public class AntTargetReference extends AntGenericReference {
     myShouldBeSkippedByAnnotator = value;
   }
 
+  public Object[] getVariants() {
+    final AntElement element = getElement();
+    if (element instanceof AntAntImpl) {
+      final PsiFile psiFile = ((AntAntImpl)element).getCalledAntFile();
+      if (psiFile != null) {
+        AntFile antFile;
+        if (psiFile instanceof AntFile) {
+          antFile = (AntFile)psiFile;
+        }
+        else {
+          antFile = (AntFile)psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+        }
+        final AntProject project = (antFile == null) ? null : antFile.getAntProject();
+        if (project != null) {
+          return project.getTargets();
+        }
+      }
+    }
+    return super.getVariants();
+  }
+
   @NotNull
   public IntentionAction[] getFixes() {
     final String name = getCanonicalRepresentationText();
-    if(name == null || name.length() == 0) return ourEmptyIntentions;
-    
+    if (name == null || name.length() == 0) return ourEmptyIntentions;
+
     final AntProject project = getElement().getAntProject();
     final AntFile[] importedFiles = project.getImportedFiles();
     IntentionAction[] result = new IntentionAction[importedFiles.length + 1];
