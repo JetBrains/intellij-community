@@ -394,7 +394,7 @@ public class SystemBuilder {
             system.addSubtypeConstraint(argumentType, parmType);
           }
           else {
-            parmType = qualifierSubstitutor.substitute(parameters[i].getType());
+            parmType = parameters[i].getType();
             if (qualifierSubstitutor != null) {
               parmType = qualifierSubstitutor.substitute(parmType);
             }
