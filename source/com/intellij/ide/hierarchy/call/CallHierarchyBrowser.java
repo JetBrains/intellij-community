@@ -436,6 +436,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
     JTree tree = getCurrentTree();
     if (tree == null) return EMPTY_DESCRIPTORS;
     TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null || paths.length == 0) return EMPTY_DESCRIPTORS;
     final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<CallHierarchyNodeDescriptor>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
