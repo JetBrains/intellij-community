@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.containers.HashMap;
 
@@ -201,7 +202,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   private void refreshInfo(final JarFileInfo info, boolean asynchronous, final boolean forceRefresh) {
-    ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
+    ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
 
     getManager().beforeRefreshStart(asynchronous, modalityState, null);
 

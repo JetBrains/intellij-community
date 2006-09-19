@@ -18,7 +18,6 @@ import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -91,14 +90,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public void refresh(boolean asynchronous, final Runnable postAction) {
-    final ModalityState modalityState;
-    if (EventQueue.isDispatchThread()) {
-      modalityState = ModalityState.current();
-    }
-    else {
-      final ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
-      modalityState = progressIndicator != null ? progressIndicator.getModalityState() : ModalityState.NON_MMODAL;
-    }
+    final ModalityState modalityState = calcModalityStateForRefreshEventsPosting(asynchronous);
 
     beforeRefreshStart(asynchronous, modalityState, postAction);
 
@@ -350,6 +342,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
 
     return null;
+  }
+
+  public static ModalityState calcModalityStateForRefreshEventsPosting(final boolean asynchronous) {
+    return asynchronous ? ModalityState.NON_MMODAL : ModalityState.current();
   }
 
   private static class LoggingListener implements VirtualFileListener {

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.BidirectionalMap;
@@ -20,7 +21,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -362,7 +362,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void refreshIoFiles(Iterable<File> files) {
-    final ModalityState modalityState = ModalityState.current();
+    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(false);
     myManager.beforeRefreshStart(false, modalityState, null);
     for (File file : files) {
       final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
@@ -372,7 +372,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void refreshFiles(Iterable<VirtualFile> files) {
-    final ModalityState modalityState = ModalityState.current();
+    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(false);
     myManager.beforeRefreshStart(false, modalityState, null);
     for (VirtualFile file : files) {
       file.refresh(false, false);
@@ -403,7 +403,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
 
-    final ModalityState modalityState = asynchronous ? ModalityState.NON_MMODAL : ModalityState.current();
+    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
 
     final Runnable endTask = new Runnable() {
       public void run() {
@@ -567,7 +567,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     if (files.length == 0) return;
     final Runnable runnable = new Runnable() {
       public void run() {
-        final ModalityState modalityState = asynchronous ? ModalityState.NON_MMODAL : ModalityState.current();
+        final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
         getManager().beforeRefreshStart(asynchronous, modalityState, null);
 
         for (VirtualFile file : files) {

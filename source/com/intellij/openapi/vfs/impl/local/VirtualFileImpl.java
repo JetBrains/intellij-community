@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
@@ -365,7 +366,7 @@ public class VirtualFileImpl extends VirtualFile {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
 
-    final ModalityState modalityState = asynchronous ? ModalityState.NON_MMODAL : ModalityState.current();
+    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("VirtualFile.refresh():" + getPresentableUrl() + ", recursive = " + recursive + ", modalityState = " + modalityState);
