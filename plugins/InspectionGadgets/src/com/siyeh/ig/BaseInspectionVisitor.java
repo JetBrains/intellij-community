@@ -36,8 +36,12 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         this.inspection = inspection;
     }
 
-    public void setOnTheFly(boolean onTheFly){
+    protected void setOnTheFly(boolean onTheFly){
         this.onTheFly = onTheFly;
+    }
+
+    public boolean isOnTheFly() {
+        return onTheFly;
     }
 
     protected void registerMethodCallError(PsiMethodCallExpression expression,

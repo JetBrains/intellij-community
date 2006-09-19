@@ -20,6 +20,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -33,11 +36,13 @@ public class InstanceMethodNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 4;
     private static final int DEFAULT_MAX_LENGTH = 32;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instance.method.naming.convention.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
@@ -98,6 +103,17 @@ public class InstanceMethodNamingConventionInspection
             final String name = method.getName();
             if (isValid(name)) {
                 return;
+            }
+            if (!isOnTheFly()) {
+                final Query<MethodSignatureBackedByPsiMethod> search =
+                        SuperMethodsSearch.search(method,
+                                method.getContainingClass(),
+                                true, false);
+                final MethodSignatureBackedByPsiMethod signature =
+                        search.findFirst();
+                if (signature != null) {
+                    return;
+                }
             }
             if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
                 return;
