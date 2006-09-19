@@ -114,6 +114,10 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     return this;
   }
 
+  public boolean canRename() {
+    return super.canRename() && (hasNameElement() || hasIdElement());
+  }
+
   public PsiElement findElementAt(int offset) {
     if (offset == myLastFoundElementOffset) {
       return myLastFoundElement;

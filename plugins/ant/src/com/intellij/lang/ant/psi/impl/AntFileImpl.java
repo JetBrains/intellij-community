@@ -105,6 +105,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return AntElementRole.NULL_ROLE;
   }
 
+  public boolean canRename() {
+    return isPhysical();
+  }
+
   public void setProperty(@NotNull final String name, @NotNull final String value) {
     synchronized (PsiLock.LOCK) {
       if (myExternalProperties == null) {

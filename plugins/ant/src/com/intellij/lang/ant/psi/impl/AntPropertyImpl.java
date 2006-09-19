@@ -21,7 +21,9 @@ import java.util.*;
 
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
-  @NonNls private final static Map<String, String> ourFileRefAttributes;
+  @NonNls private static final String TSTAMP_TAG = "tstamp";
+
+  @NonNls private static final Map<String, String> ourFileRefAttributes;
 
   static {
     ourFileRefAttributes = new HashMap<String, String>();
@@ -52,9 +54,8 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
         project.addEnvironmentPropertyPrefix(environment);
       }
       else {
-        final XmlTag se = getSourceElement();
-        if ("tstamp".equals(se.getName())) {
-          String prefix = se.getAttributeValue(AntFileImpl.PREFIX_ATTR);
+        if (isTstamp()) {
+          String prefix = getSourceElement().getAttributeValue(AntFileImpl.PREFIX_ATTR);
           if (prefix == null) {
             myPropHolder.setProperty("DSTAMP", this);
             myPropHolder.setProperty("TSTAMP", this);
@@ -115,6 +116,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     return AntElementRole.PROPERTY_ROLE;
   }
 
+  public boolean canRename() {
+    return super.canRename() && (!isTstamp() || getTstampPropertyAttributeValue() != null);
+  }
+
   public String getFileReferenceAttribute() {
     final String attrName;
     synchronized (ourFileRefAttributes) {
@@ -134,7 +139,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     else if ("dirname".equals(tagName)) {
       return getDirnameValue();
     }
-    else if ("tstamp".equals(tagName)) {
+    else if (isTstamp()) {
       return getTstampValue(propName);
     }
     return null;
@@ -172,11 +177,10 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   public String[] getNames() {
-    final XmlTag se = getSourceElement();
-    if ("tstamp".equals(se.getName())) {
+    if (isTstamp()) {
       final Set<String> strings = StringSetSpinAllocator.alloc();
       try {
-        String prefix = se.getAttributeValue(AntFileImpl.PREFIX_ATTR);
+        String prefix = getSourceElement().getAttributeValue(AntFileImpl.PREFIX_ATTR);
         if (prefix == null) {
           strings.add("DSTAMP");
           strings.add("TSTAMP");
@@ -338,9 +342,8 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   private XmlAttributeValue getTstampPropertyAttributeValue() {
-    final XmlTag se = getSourceElement();
-    if ("tstamp".equals(se.getName())) {
-      final XmlTag formatTag = se.findFirstSubTag("format");
+    if (isTstamp()) {
+      final XmlTag formatTag = getSourceElement().findFirstSubTag("format");
       if (formatTag != null) {
         final XmlAttribute propAttr = formatTag.getAttribute(AntFileImpl.PROPERTY, null);
         if (propAttr != null) {
@@ -352,5 +355,9 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       }
     }
     return null;
+  }
+
+  private boolean isTstamp() {
+    return TSTAMP_TAG.equals(getSourceElement().getName());
   }
 }

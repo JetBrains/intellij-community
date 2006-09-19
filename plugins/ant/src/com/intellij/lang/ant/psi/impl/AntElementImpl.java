@@ -249,6 +249,10 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     return AntElementRole.NULL_ROLE;
   }
 
+  public boolean canRename() {
+    return isPhysical();
+  }
+
   public boolean isPhysical() {
     return getSourceElement().isPhysical();
   }
