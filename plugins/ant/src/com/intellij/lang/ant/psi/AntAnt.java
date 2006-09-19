@@ -1,13 +1,10 @@
 package com.intellij.lang.ant.psi;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntAnt extends AntTask {
 
-  @NotNull
-  String getFileName();
-
   @Nullable
-  String getTargetName();
+  PsiFile getCalledAntFile();
 }

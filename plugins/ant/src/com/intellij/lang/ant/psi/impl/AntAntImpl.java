@@ -4,6 +4,7 @@ import com.intellij.lang.ant.psi.AntAnt;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -36,8 +37,24 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
     return "antfile";
   }
 
+  @Nullable
+  public PsiFile getCalledAntFile() {
+    return findFileByName(getFileName(), getDir());
+  }
+
   @NotNull
-  public String getFileName() {
+  public PsiReference[] getReferences() {
+    final PsiReference[] result = super.getReferences();
+    for (final PsiReference reference : result) {
+      if (reference instanceof AntTargetReference) {
+        ((AntTargetReference)reference).setShouldBeSkippedByAnnotator(getCalledAntFile() == null);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private String getFileName() {
     final String result = getSourceElement().getAttributeValue(getFileReferenceAttribute());
     if (result == null) {
       return DEFAULT_ANTFILE;
@@ -46,18 +63,7 @@ public class AntAntImpl extends AntTaskImpl implements AntAnt {
   }
 
   @Nullable
-  public String getTargetName() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("target"));
-  }
-
-  @NotNull
-  public PsiReference[] getReferences() {
-    final PsiReference[] result = super.getReferences();
-    for (final PsiReference reference : result) {
-      if (reference instanceof AntTargetReference) {
-        ((AntTargetReference)reference).setShouldBeSkippedByAnnotator(findFileByName(getFileName(), false) == null);
-      }
-    }
-    return result;
+  private String getDir() {
+    return getSourceElement().getAttributeValue("dir");
   }
 }

@@ -66,7 +66,13 @@ public class AntFileReference extends AntGenericReference {
 
   public PsiElement resolve() {
     final AntStructuredElement se = getElement();
-    return se.findFileByName(getCanonicalText(), se instanceof AntImport);
+    if (se instanceof AntAnt) {
+      final AntAnt ant = (AntAnt)se;
+      return ant.getCalledAntFile();
+    }
+    final String name = getCanonicalText();
+    if (se instanceof AntImport) return se.findFileByName(name);
+    return se.findFileByName(name, null);
   }
 
   public String getUnresolvedMessagePattern() {

@@ -85,7 +85,7 @@ public class AntTargetReference extends AntGenericReference {
     }
     if (result == null && element instanceof AntAntImpl) {
       AntAntImpl ant = (AntAntImpl)element;
-      final PsiFile psiFile = ant.findFileByName(ant.getFileName(), false);
+      final PsiFile psiFile = ant.getCalledAntFile();
       if (psiFile != null) {
         AntFile antFile;
         if (psiFile instanceof AntFile) {

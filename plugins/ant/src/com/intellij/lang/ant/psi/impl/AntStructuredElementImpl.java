@@ -165,19 +165,25 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   @Nullable
-  public PsiFile findFileByName(final String name, final boolean ignoreBasedir) {
+  public PsiFile findFileByName(final String name) {
+    return findFileByName(name, "");
+  }
+
+  @Nullable
+  public PsiFile findFileByName(final String name, @Nullable final String baseDir) {
     if (name == null) return null;
     final AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
     if (antFile == null) return null;
     VirtualFile vFile = antFile.getContainingPath();
     if (vFile == null) return null;
     String projectPath = vFile.getPath();
-    if (!ignoreBasedir) {
+    String dir = baseDir;
+    if (dir == null) {
       final AntProject project = antFile.getAntProject();
-      final String baseDir = (project == null) ? null : project.getBaseDir();
-      if (baseDir != null && baseDir.length() > 0) {
-        projectPath = new File(projectPath, baseDir).getAbsolutePath();
-      }
+      dir = (project == null) ? null : project.getBaseDir();
+    }
+    if (dir != null && dir.length() > 0) {
+      projectPath = new File(projectPath, dir).getAbsolutePath();
     }
     final String fileName = computeAttributeValue(name);
     File file = new File(fileName);
