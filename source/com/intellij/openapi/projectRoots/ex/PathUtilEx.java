@@ -49,7 +49,7 @@ public class PathUtilEx {
       pathsList.addTail(ideaRtJarPath);
     }
   }
-  public static void addJunit4Jar(PathsList pathsList) {
+  public static void addJunit4RtJar(PathsList pathsList) {
     final String path = PathUtil.getJarPathForClass(JUnit4Util.class);
     if (Boolean.getBoolean(IDEA_PREPEND_RTJAR)) {
       pathsList.addFirst(path);
