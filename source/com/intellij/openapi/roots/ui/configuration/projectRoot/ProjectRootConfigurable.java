@@ -603,8 +603,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       public void run() {
         SwingUtilities.invokeLater(new Runnable(){
           public void run() {
-             dispose();
-             reset();
+            ProjectRootConfigurable.super.disposeUIResources();
+            dispose();
+            reset();
           }
         });
       }
@@ -634,6 +635,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void disposeUIResources() {
+    ProjectRootConfigurable.super.disposeUIResources();
     myUpdateDependenciesAlarm.cancelAllRequests();
     myUpdateDependenciesAlarm.addRequest(new Runnable(){
       public void run() {
@@ -659,7 +661,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myValidityCache.clear();
     myLibraryPathValidityCache.clear();
     myModulesDependencyCache.clear();
-    ProjectRootConfigurable.super.disposeUIResources();
   }
 
 
