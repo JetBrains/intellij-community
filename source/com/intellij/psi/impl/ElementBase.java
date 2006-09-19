@@ -119,14 +119,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   private static boolean isExcluded(final VirtualFile vFile, final Project project) {
-    if (vFile != null) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInSource(vFile)
-          && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile)) {
-        return true;
-      }
-    }
-    return false;
+    return vFile != null
+           && ProjectRootManager.getInstance(project).getFileIndex().isInSource(vFile)
+           && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile);
   }
+
   public static int getFlags(PsiModifierListOwner element, final boolean isLocked) {
     final PsiFile containingFile = element.getContainingFile();
     final VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();

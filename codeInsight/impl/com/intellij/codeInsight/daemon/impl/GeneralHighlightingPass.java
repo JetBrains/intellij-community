@@ -24,6 +24,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -382,6 +383,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     Project project = psiFile.getProject();
     if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
     VirtualFile file = psiFile.getVirtualFile();
+    if (CompilerManager.getInstance(project).isExcludedFromCompilation(file)) return;
 
     List<Problem> problems = HighlightUtil.convertToProblems(infos, file, hasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);

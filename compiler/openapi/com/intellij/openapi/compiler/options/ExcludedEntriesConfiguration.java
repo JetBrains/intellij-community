@@ -99,19 +99,17 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
           return true;
         }
       }
-      else {
-        if (entryDescription.isIncludeSubdirectories()) {
-          if (VfsUtil.isAncestor(descriptionFile, virtualFile, false)) {
-            return true;
-          }
+      else if (entryDescription.isIncludeSubdirectories()) {
+        if (VfsUtil.isAncestor(descriptionFile, virtualFile, false)) {
+          return true;
         }
-        else {
-          if (virtualFile.isDirectory()) {
-            continue;
-          }
-          if (descriptionFile.equals(virtualFile.getParent())) {
-            return true;
-          }
+      }
+      else {
+        if (virtualFile.isDirectory()) {
+          continue;
+        }
+        if (descriptionFile.equals(virtualFile.getParent())) {
+          return true;
         }
       }
     }
