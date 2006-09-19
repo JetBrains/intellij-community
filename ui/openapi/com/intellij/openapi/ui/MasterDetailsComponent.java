@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.*;
+import com.intellij.peer.PeerFactory;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -57,6 +58,8 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
       }
     }
   };
+
+  private SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
   protected MyNode myRoot = new MyRootNode();
   protected Tree myTree;
@@ -224,18 +227,22 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
     myScrollPane.setPreferredSize(preferredSize);
     myScrollPane.setMaximumSize(new Dimension(150, -1));
+    mySplitterProportionsData.restoreSplitterProportions(myWholePanel);
   }
 
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    mySplitterProportionsData.readExternal(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+    mySplitterProportionsData.writeExternal(element);
   }
 
   public void disposeUIResources() {
+    mySplitterProportionsData.saveSplitterProportions(myWholePanel);
     myAutoScrollHandler.cancelAllRequests();
     myOptionsPanel.removeAll();
     myInitializedConfigurables.clear();

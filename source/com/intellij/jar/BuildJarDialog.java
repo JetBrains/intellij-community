@@ -1,9 +1,9 @@
 package com.intellij.jar;
 
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.ui.SplitterProportionsData;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -20,38 +20,39 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.io.FileTypeFilter;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.DocumentEvent;
 import javax.swing.filechooser.FileView;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
 import java.text.MessageFormat;
+import java.util.*;
 
 /**
  * @author cdr
@@ -73,7 +74,7 @@ public class BuildJarDialog extends DialogWrapper {
   private LabeledComponent<TextFieldWithBrowseButton> myJarFilePathComponent;
   private JCheckBox myBuildJarsOnMake;
   private JLabel myWarningLabel;
-  private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsData();
+  private final SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
   protected BuildJarDialog(Project project) {
     super(true);

@@ -4,7 +4,11 @@
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -13,7 +17,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SplitterProportionsData implements JDOMExternalizable{
+public class SplitterProportionsDataImpl implements SplitterProportionsData {
   private List<Float> proportions = new ArrayList<Float>();
   private static final String DATA_VERSION = "1";
   @NonNls private static final String ATTRIBUTE_PROPORTIONS = "proportions";
@@ -26,7 +30,7 @@ public class SplitterProportionsData implements JDOMExternalizable{
 
   private void doSaveSplitterProportions(Component root) {
     if (root instanceof Splitter) {
-      Float prop = Float.valueOf(((Splitter)root).getProportion());
+      Float prop = ((Splitter)root).getProportion();
       proportions.add(prop);
     }
     if (root instanceof Container) {

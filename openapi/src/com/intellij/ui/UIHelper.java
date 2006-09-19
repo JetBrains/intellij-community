@@ -19,8 +19,9 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
-import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.PackageChooser;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -48,6 +49,8 @@ public interface UIHelper {
   void installListSpeedSearch(JList list);
 
   void installEditSourceOnEnterKeyHandler(JTree tree);
+
+  SplitterProportionsData createSplitterProportionsData();
 
   TableCellRenderer createPsiElementRenderer(PsiElement psiElement, Project project);
 
