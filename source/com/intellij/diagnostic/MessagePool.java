@@ -14,7 +14,7 @@ import java.util.*;
 
 public class MessagePool {
 
-  private static int MAX_POOL_SIZE_FOR_FATALS = 2;
+  private static int MAX_POOL_SIZE_FOR_FATALS = 100;
 
   private static MessagePool ourInstance;
 
