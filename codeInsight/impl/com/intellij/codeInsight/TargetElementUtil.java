@@ -5,11 +5,13 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
+import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 
@@ -102,7 +104,7 @@ public class TargetElementUtil {
       }
       else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
         if (parent.getTextOffset() == element.getTextOffset() &&
-            Comparing.equal(((PsiNamedElement)parent).getName(), element.getText()) &&
+            isParentNameEqualToChildText(parent, element) &&
             !(parent instanceof XmlAttribute)) {
           return parent;
         }
@@ -253,5 +255,13 @@ public class TargetElementUtil {
     if (file == null) return false;
     if (file.getOriginalFile() != null) file = file.getOriginalFile();
     return file != null && file.getVirtualFile() != null;
+  }
+
+  private static boolean isParentNameEqualToChildText(final PsiElement parent, final PsiElement element) {
+    String text = element.getText();
+    if (element instanceof PsiAntElement) {
+      text = StringUtil.stripQuotesAroundValue(text);
+    }
+    return Comparing.equal(((PsiNamedElement)parent).getName(), text);
   }
 }
