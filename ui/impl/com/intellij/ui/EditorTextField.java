@@ -342,6 +342,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     }
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
+    editor.getContentComponent().setFocusCycleRoot(false);
 
     return editor;
   }
