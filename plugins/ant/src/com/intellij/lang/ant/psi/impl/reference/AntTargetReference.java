@@ -35,7 +35,7 @@ public class AntTargetReference extends AntGenericReference {
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final AntElement element = getElement();
-    if (element instanceof AntProject || element instanceof AntCall) {
+    if (element instanceof AntProject || element instanceof AntCall || element instanceof AntAnt) {
       getAttribute().setValue(newElementName);
     }
     else if (element instanceof AntTarget) {
