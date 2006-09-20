@@ -493,12 +493,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (myProject.isDisposed()) return;
 
     clearScopesCaches();
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-
-
-    for (Module module : modules) {
-      ((ModuleImpl)module).clearScopesCache();
-    }
 
     myModificationCount++;
     
