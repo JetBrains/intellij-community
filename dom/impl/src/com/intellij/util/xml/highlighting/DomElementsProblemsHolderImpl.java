@@ -7,6 +7,7 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -15,6 +16,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,10 +67,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
         for (final DomElementProblemDescriptor descriptor : holder) {
           final DomElement errorElement = descriptor.getDomElement();
           if (mainElement.equals(errorElement.getParent())) {
-            if (!myCachedErrors.containsKey(errorElement)) {
-              myCachedErrors.put(errorElement, new SmartList<DomElementProblemDescriptor>());
-            }
-            myCachedErrors.get(errorElement).add(descriptor);
+            addProblem(errorElement, descriptor);
             childrenHaveErrors = true;
             result.clear();
           }
@@ -87,6 +86,13 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       }
       return !myCachedErrors.get(mainElement).isEmpty();
     }
+  }
+
+  public final void addProblem(final DomElement errorElement, final DomElementProblemDescriptor descriptor) {
+    if (!myCachedErrors.containsKey(errorElement)) {
+      myCachedErrors.put(errorElement, new SmartList<DomElementProblemDescriptor>());
+    }
+    myCachedErrors.get(errorElement).add(descriptor);
   }
 
   private static List<DomElementProblemDescriptor> notNullize(final List<DomElementProblemDescriptor> list) {
@@ -143,15 +149,12 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
                                                        final boolean includeXmlProblems,
                                                        final boolean withChildren,
-                                                       HighlightSeverity minSeverity) {
-    List<DomElementProblemDescriptor> severityProblem = new ArrayList<DomElementProblemDescriptor>();
-    for (DomElementProblemDescriptor problemDescriptor : getProblems(domElement, includeXmlProblems, withChildren)) {
-      if (problemDescriptor.getHighlightSeverity().equals(minSeverity)) {
-        severityProblem.add(problemDescriptor);
+                                                       final HighlightSeverity minSeverity) {
+    return ContainerUtil.findAll(getProblems(domElement, includeXmlProblems, withChildren), new Condition<DomElementProblemDescriptor>() {
+      public boolean value(final DomElementProblemDescriptor object) {
+        return object.getHighlightSeverity().compareTo(minSeverity) >= 0;
       }
-    }
-
-    return severityProblem;
+    });
   }
 
   private static List<DomElementProblemDescriptor> getProblems(final DomElement domElement,

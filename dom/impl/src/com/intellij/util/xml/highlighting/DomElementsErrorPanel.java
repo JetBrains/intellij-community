@@ -19,8 +19,8 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ui.CommittablePanel;
 
-import java.awt.*;
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -131,7 +131,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
       for (DomElement element : myDomElements) {
         final Project project = getProject();
         final DomElementsProblemsHolder holder = DomElementAnnotationsManager.getInstance(project).getCachedProblemHolder(element);
-        if (minSeverity.equals(HighlightSeverity.WARNING)) {
+        if (minSeverity.compareTo(HighlightSeverity.WARNING) >= 0) {
           sum += holder.getProblems(element, true, true).size();
         } else {
           sum += holder.getProblems(element, true, true, minSeverity).size();
