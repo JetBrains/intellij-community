@@ -81,10 +81,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   private final boolean USE_CYCLIC_BUFFER = GeneralSettings.getInstance().isUseCyclicBuffer();
 
   private static class TokenInfo{
-    final ConsoleViewContentType contentType;
-    int startOffset;
-    int endOffset;
-    final TextAttributes attributes;
+    private final ConsoleViewContentType contentType;
+    private int startOffset;
+    private int endOffset;
+    private final TextAttributes attributes;
 
     public TokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset) {
       this.contentType = contentType;
@@ -115,8 +115,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private final Runnable myFlushDeferredRunnable = new Runnable() {
     public void run() {
-      if (myProject.isDisposed()) return;
-      flushDeferredText();
+      if (!myProject.isDisposed()) {
+        flushDeferredText();
+      }
     }
   };
 
@@ -586,15 +587,15 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         private int myIndex = startIndex;
 
         public TextAttributes getTextAttributes() {
-          return getTokenInfo().attributes;
+          return getTokenInfo() == null ? null : getTokenInfo().attributes;
         }
 
         public int getStart() {
-          return getTokenInfo().startOffset;
+          return getTokenInfo() == null ? 0 : getTokenInfo().startOffset;
         }
 
         public int getEnd() {
-          return getTokenInfo().endOffset;
+          return getTokenInfo() == null ? 0 : getTokenInfo().endOffset;
         }
 
         public IElementType getTokenType() {

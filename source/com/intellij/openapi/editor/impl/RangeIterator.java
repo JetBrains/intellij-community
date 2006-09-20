@@ -18,7 +18,7 @@ class RangeIterator {
   }
 
   private final HighlighterIterator mySource;
-  private final Equality myEquality;
+  private final Equality<TextAttributes> myEquality;
   private final Gaps myGaps;
   private final Condition<TextAttributes> myFilter;
   private boolean mySourceOutOfRange = false;
@@ -28,7 +28,7 @@ class RangeIterator {
   private TextAttributes myTextAttributes;
   private int myNextExpanded;
 
-  public RangeIterator(Gaps foldingModel, Equality equality,
+  public RangeIterator(Gaps foldingModel, Equality<TextAttributes> equality,
                        HighlighterIterator source, Condition<TextAttributes> filter) {
     mySource = source;
     myGaps = foldingModel;
@@ -59,8 +59,7 @@ class RangeIterator {
   private boolean checkOutOfRange() {
     if (mySourceOutOfRange) return true;
     mySourceOutOfRange = mySource.getStart() > myRangeEnd;
-    boolean sourceOutOfRange = mySourceOutOfRange;
-    return sourceOutOfRange;
+    return mySourceOutOfRange;
   }
 
   private void doAdvanceFrom(int start) {

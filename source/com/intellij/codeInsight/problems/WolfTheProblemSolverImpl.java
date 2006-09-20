@@ -230,11 +230,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       // it's no use anyway to try clean the file with syntax errors, only changing the file itself can help
       return;
     }
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (!myProject.isOpen()) return;
     if (willBeHighlightedAnyway(file)) return;
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return;
-    if (!myProject.isOpen()) return;
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     String oldInfo = null;

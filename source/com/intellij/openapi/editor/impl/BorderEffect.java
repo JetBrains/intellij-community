@@ -18,16 +18,16 @@ public class BorderEffect {
   private final int myEndOffset;
   private final TextRange myRange;
   private final EditorImpl myEditor;
-  private static final Equality SAME_COLOR_BOXES = new Equality() {
-        public boolean equals(Object object1, Object object2) {
-          TextAttributes attributes1 = (TextAttributes)object1;
-          TextAttributes attributes2 = (TextAttributes)object2;
-          Color effectColor = attributes1.getEffectColor();
-          EffectType effectType = attributes1.getEffectType();
-          return effectColor != null && effectColor.equals(attributes2.getEffectColor()) &&
-                 EffectType.BOXED == effectType && effectType == attributes2.getEffectType();
-        }
-      };
+  private static final Equality<TextAttributes> SAME_COLOR_BOXES = new Equality<TextAttributes>() {
+    public boolean equals(final TextAttributes attributes1, final TextAttributes attributes2) {
+      Color effectColor = attributes1.getEffectColor();
+      EffectType effectType = attributes1.getEffectType();
+      return effectColor != null
+             && effectColor.equals(attributes2.getEffectColor())
+             && EffectType.BOXED == effectType &&
+             effectType == attributes2.getEffectType();
+    }
+  };
   private static final Condition<TextAttributes> BOX_FILTER = new Condition<TextAttributes>() {
                               public boolean value(TextAttributes attributes) {
                                 return attributes.getEffectColor() != null && attributes.getEffectType() == EffectType.BOXED;
@@ -43,26 +43,23 @@ public class BorderEffect {
     myRange = new TextRange(myStartOffset, myEndOffset);
   }
 
-  private int yToLineStartOffset(EditorImpl editor, int y) {
+  private static int yToLineStartOffset(EditorImpl editor, int y) {
     Point point = new Point(0, y);
     LogicalPosition logicalStart = editor.xyToLogicalPosition(point);
-    int offset = editor.logicalPositionToOffset(logicalStart);
-    return offset;
+    return editor.logicalPositionToOffset(logicalStart);
   }
 
   public void paintHighlighters(RangeHighlighter[] highlighterList) {
-    for (int i = 0; i < highlighterList.length; i++) {
-      RangeHighlighterImpl rangeHighlighter = (RangeHighlighterImpl)highlighterList[i];
+    for (RangeHighlighter aHighlighterList : highlighterList) {
+      RangeHighlighterImpl rangeHighlighter = (RangeHighlighterImpl)aHighlighterList;
       if (rangeHighlighter.isValid()) {
         TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
-        if (isBorder(textAttributes) &&
-            intersectsRange(rangeHighlighter))
-          paintBorder(rangeHighlighter);
+        if (isBorder(textAttributes) && intersectsRange(rangeHighlighter)) paintBorder(rangeHighlighter);
       }
     }
   }
 
-  private boolean isBorder(TextAttributes textAttributes) {
+  private static boolean isBorder(TextAttributes textAttributes) {
     return textAttributes != null &&
            textAttributes.getEffectColor() != null &&
            EffectType.BOXED == textAttributes.getEffectType();
