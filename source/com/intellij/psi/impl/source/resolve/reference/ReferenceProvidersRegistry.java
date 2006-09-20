@@ -662,7 +662,22 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         new ParentElementFilter(
           new AndFilter(
             new ClassFilter(XmlTag.class),
-            new NamespaceFilter(XmlUtil.JSTL_CORE_URIS)
+            new ElementFilter() {
+              public boolean isAcceptable(Object element, PsiElement context) {
+                final XmlTag tag = (XmlTag)element;
+
+                if(tag.getNamespacePrefix().length() > 0) {
+                  final PsiFile containingFile = tag.getContainingFile();
+                  return containingFile.getFileType() == StdFileTypes.JSP ||
+                         containingFile.getFileType() == StdFileTypes.JSPX;
+                }
+                return false;
+              }
+
+              public boolean isClassAcceptable(Class hintClass) {
+                return true;
+              }
+            }
           ), 2
         )
       ),
