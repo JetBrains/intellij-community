@@ -29,6 +29,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -119,7 +121,7 @@ public class TooBroadScopeInspection extends StatementInspection
                     "too.broad.scope.narrow.quickfix", m_name);
         }
 
-        protected void doFix(Project project, ProblemDescriptor descriptor)
+        protected void doFix(@NotNull Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException
         {
             final PsiElement variableIdentifier =
@@ -230,41 +232,49 @@ public class TooBroadScopeInspection extends StatementInspection
             return newDeclaration;
         }
 
-        private static void highlightElement(@NotNull PsiElement element)
+        private static void highlightElement(@NotNull final PsiElement element)
         {
-            final Project project = element.getProject();
-            final FileEditorManager editorManager =
-                    FileEditorManager.getInstance(project);
-            final HighlightManager highlightManager =
-                    HighlightManager.getInstance(project);
-            final EditorColorsManager editorColorsManager =
-                    EditorColorsManager.getInstance();
-            final Editor editor = editorManager.getSelectedTextEditor();
-            if (editor == null)
-            {
-                return;
-            }
-            final EditorColorsScheme globalScheme =
-                    editorColorsManager.getGlobalScheme();
-            final TextAttributes textattributes =
-                    globalScheme.getAttributes(
-                            EditorColors.SEARCH_RESULT_ATTRIBUTES);
-            final PsiElement[] elements = new PsiElement[]{element};
-            highlightManager.addOccurrenceHighlights(
-                    editor, elements, textattributes, false, null);
-            final WindowManager windowManager = WindowManager.getInstance();
-            final StatusBar statusBar = windowManager.getStatusBar(project);
-            statusBar.setInfo(InspectionGadgetsBundle.message(
-                    "too.broad.scope.status.bar.remove.highlighting.message"));
-            final FindManager findmanager = FindManager.getInstance(project);
-            FindModel findmodel = findmanager.getFindNextModel();
-            if(findmodel == null)
-            {
-                findmodel = findmanager.getFindInFileModel();
-            }
-            findmodel.setSearchHighlighters(true);
-            findmanager.setFindWasPerformed();
-            findmanager.setFindNextModel(findmodel);
+            final Application application = ApplicationManager.getApplication();
+            application.invokeLater(new Runnable() {
+                public void run() {
+                    final Project project = element.getProject();
+                    final FileEditorManager editorManager =
+                            FileEditorManager.getInstance(project);
+                    final HighlightManager highlightManager =
+                            HighlightManager.getInstance(project);
+                    final EditorColorsManager editorColorsManager =
+                            EditorColorsManager.getInstance();
+                    final Editor editor = editorManager.getSelectedTextEditor();
+                    if (editor == null)
+                    {
+                        return;
+                    }
+                    final EditorColorsScheme globalScheme =
+                            editorColorsManager.getGlobalScheme();
+                    final TextAttributes textattributes =
+                            globalScheme.getAttributes(
+                                    EditorColors.SEARCH_RESULT_ATTRIBUTES);
+                    final PsiElement[] elements = new PsiElement[]{element};
+                    highlightManager.addOccurrenceHighlights(
+                            editor, elements, textattributes, true, null);
+                    final WindowManager windowManager =
+                            WindowManager.getInstance();
+                    final StatusBar statusBar =
+                            windowManager.getStatusBar(project);
+                    statusBar.setInfo(InspectionGadgetsBundle.message(
+                            "too.broad.scope.status.bar.remove.highlighting.message"));
+                    final FindManager findmanager =
+                            FindManager.getInstance(project);
+                    FindModel findmodel = findmanager.getFindNextModel();
+                    if(findmodel == null)
+                    {
+                        findmodel = findmanager.getFindInFileModel();
+                    }
+                    findmodel.setSearchHighlighters(true);
+                    findmanager.setFindWasPerformed();
+                    findmanager.setFindNextModel(findmodel);
+                }
+            });
         }
 
         private static PsiDeclarationStatement moveDeclarationToLocation(
