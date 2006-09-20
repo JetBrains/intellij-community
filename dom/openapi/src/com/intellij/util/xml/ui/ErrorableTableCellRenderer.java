@@ -29,6 +29,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.List;
+import java.util.ArrayList;
 
 public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTableCellRenderer {
   private final TableCellRenderer myRenderer;
@@ -48,8 +49,8 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(myRowDomElement.getManager().getProject());
     final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(myCellValueDomElement);
     final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(myCellValueDomElement, true);
-    final List<DomElementProblemDescriptor> warningProblems = holder.getProblems(myCellValueDomElement, true, true, HighlightSeverity.WARNING);
-
+    final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(myCellValueDomElement, true, true, HighlightSeverity.WARNING));
+    warningProblems.removeAll(errorProblems);
 
     final boolean hasErrors = errorProblems.size() > 0;
     if (hasErrors) {
