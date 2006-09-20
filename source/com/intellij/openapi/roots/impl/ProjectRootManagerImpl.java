@@ -474,13 +474,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myRootsChangeCounter++;
   }
 
-  private void rootsChanged(boolean filetypes, boolean synchronize) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myRootsChangeCounter--;
-    if (myRootsChangeCounter > 0) return;
-
-    if (myProject.isDisposed()) return;
-
+  private void clearScopesCaches () {
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();
@@ -489,18 +483,30 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myJdkScopes.clear();
     myLibraryScopes.clear();
+  }
 
-    myModuleRootEventDispatcher.getMulticaster().rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+  public void rootsChanged(boolean filetypes) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    myRootsChangeCounter--;
+    if (myRootsChangeCounter > 0) return;
+
+    if (myProject.isDisposed()) return;
+
+    clearScopesCaches();
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+
 
     for (Module module : modules) {
       ((ModuleImpl)module).clearScopesCache();
     }
 
-    if (synchronize) doSynchronize();
+    myModificationCount++;
+    
+    myModuleRootEventDispatcher.getMulticaster().rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+
+    doSynchronize();
 
     addRootsToWatch();
-
-    myModificationCount++;
   }
 
   private static class LibrariesOnlyScope extends GlobalSearchScope {
@@ -571,10 +577,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     else {
       synchronizer.execute();
     }
-  }
-
-  public void rootsChanged(boolean filetypes) {
-    rootsChanged(filetypes, true);
   }
 
   private void addRootsToWatch() {
@@ -682,13 +684,19 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     public void beforeValidityChanged(VirtualFilePointer[] pointers) {
       assertPointersCorrect(pointers);
-      beforeRootsChange(false);
+      if (!myInsideRefresh) {
+        beforeRootsChange(false);
+      }
     }
 
     public void validityChanged(VirtualFilePointer[] pointers) {
       assertPointersCorrect(pointers);
-      rootsChanged(false, !myInsideRefresh);
-      if (myInsideRefresh) myChangesDetected = true;
+      if (myInsideRefresh) {
+        myChangesDetected = true;
+        clearScopesCaches();
+      } else {
+        rootsChanged(false);
+      }
     }
   }
 
@@ -703,7 +711,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     public void afterRefreshFinish(boolean asynchonous) {
       myInsideRefresh = false;
       if (myChangesDetected) {
+        final ModuleRootEventImpl event = new ModuleRootEventImpl(myProject, false);
+        myModuleRootEventDispatcher.getMulticaster().beforeRootsChange(event);
+        myModuleRootEventDispatcher.getMulticaster().rootsChanged(event);
+
         doSynchronize();
+
+        addRootsToWatch();
         myChangesDetected = false;
       }
     }
