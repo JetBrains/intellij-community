@@ -20,13 +20,12 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
-import javax.swing.*;
-import javax.swing.text.JTextComponent;
 
 /**
  * @author peter
@@ -193,7 +192,11 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   }
 
   protected JComboBox createMainComponent(final JComboBox boundedComponent) {
-    return tuneUpComboBox(boundedComponent == null ? new JComboBox() : boundedComponent, myDataFactory);
+    return initComboBox(boundedComponent == null ? new JComboBox() : boundedComponent, new Condition<String>() {
+      public boolean value(final String object) {
+        return isValidValue(object);
+      }
+    });
   }
 
   public boolean isValidValue(final String object) {
