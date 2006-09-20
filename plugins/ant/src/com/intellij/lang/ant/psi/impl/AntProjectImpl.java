@@ -71,6 +71,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   public synchronized void clearCaches() {
     super.clearCaches();
     myTargets = null;
+    myImportedTargets = null;
     myImports = null;
     myReferencedElements = null;
     myRefIdsArray = null;
