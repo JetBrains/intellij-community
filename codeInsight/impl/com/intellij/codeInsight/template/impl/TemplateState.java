@@ -318,9 +318,15 @@ public class TemplateState implements Disposable {
           CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
           if (myTemplate.isToShortenLongNames()) {
             try {
+              IntArrayList indices = initEmptyVariables();
+              mySegments.setSegmentsGreedy(false);
+
               PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
               codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
               PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
+
+              mySegments.setSegmentsGreedy(true);
+              restoreEmptyVariables(indices);
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
