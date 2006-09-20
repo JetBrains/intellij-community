@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
@@ -172,6 +173,16 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
 
     if (template == null) return false;
+
+    if (StdLanguages.JSPX.equals(file.getLanguage())) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          Messages.showInfoMessage(myProject, "Live templates are not supported in JSPX files", "Live Templates");
+        }
+      });
+
+      return false;
+    }
 
     if (shortcutChar != 0 && getShortcutChar(template) != shortcutChar) {
       return false;
