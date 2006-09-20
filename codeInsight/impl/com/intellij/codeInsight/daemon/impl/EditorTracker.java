@@ -32,6 +32,7 @@ public class EditorTracker {
    * @fabrique *
    */
   protected Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
+  protected Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
   private Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
   private static final Editor[] EMPTY_EDITOR_ARRAY = new Editor[0];
   private Editor[] myActiveEditors = EMPTY_EDITOR_ARRAY;
@@ -143,7 +144,7 @@ public class EditorTracker {
       myWindowToEditorsMap.put(window, list);
 
       if (!(window instanceof IdeFrame)) {
-        window.addWindowFocusListener(new WindowFocusListener() {
+        WindowFocusListener listener =  new WindowFocusListener() {
           public void windowGainedFocus(WindowEvent e) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("windowGainedFocus:" + window);
@@ -159,7 +160,9 @@ public class EditorTracker {
 
             setActiveWindow(null);
           }
-        });
+        };
+        myWindowToWindowFocusListenerMap.put(window, listener);
+        window.addWindowFocusListener(listener);
       }
     }
     list.add(editor);
@@ -179,8 +182,11 @@ public class EditorTracker {
       List<Editor> editorsList = myWindowToEditorsMap.get(oldWindow);
       boolean removed = editorsList.remove(editor);
       LOG.assertTrue(removed);
+      
       if (editorsList.isEmpty()) {
         myWindowToEditorsMap.remove(oldWindow);
+        final WindowFocusListener listener = myWindowToWindowFocusListenerMap.remove(oldWindow);
+        if (listener != null) oldWindow.removeWindowFocusListener(listener);
       }
     }
   }

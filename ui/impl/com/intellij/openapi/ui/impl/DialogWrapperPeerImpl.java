@@ -26,6 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
@@ -497,6 +498,22 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     public void dispose() {
       super.dispose();
+
+      if (rootPane != null) { // Workaround for bug in native code to hold rootPane
+        try {
+          Field field = rootPane.getClass().getDeclaredField("glassPane");
+          field.setAccessible(true);
+          field.set(rootPane, null);
+
+          field = rootPane.getClass().getDeclaredField("contentPane");
+          field.setAccessible(true);
+          field.set(rootPane, null);
+          rootPane = null;
+        }
+        catch (Exception e) {
+          int a = 1;
+        }
+      }
     }
 
     @Override

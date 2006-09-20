@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
@@ -258,8 +259,9 @@ public class PsiViewerDialog extends DialogWrapper {
   }
 
   public void dispose() {
-    super.dispose();
-
+    Disposer.dispose(myTreeBuilder);
     EditorFactory.getInstance().releaseEditor(myEditor);
+
+    super.dispose();
   }
 }
