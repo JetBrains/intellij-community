@@ -153,12 +153,24 @@ public class SvnChangeProvider implements ChangeProvider {
     return true;
   }
 
-  private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, boolean recursively) {
+  private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, final boolean recursively) {
     try {
       if (path.isDirectory()) {
         stClient.doStatus(path.getIOFile(), recursively, false, false, false, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
-            processStatus(VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR)), status, builder);
+            FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
+            processStatus(path, status, builder);
+            if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED && path.isDirectory()) {
+              // process children of this file with another client.
+              SVNStatusClient client = new SVNStatusClient(null, null);
+              if (recursively && path.isDirectory()) {
+                VirtualFile[] children = path.getVirtualFile().getChildren();
+                for (VirtualFile aChildren : children) {
+                  FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
+                  processFile(filePath, client, builder, recursively);
+                }
+              }
+            }
           }
         });
       } else {
