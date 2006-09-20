@@ -17,6 +17,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
@@ -94,10 +95,15 @@ public class UsageInfoToUsageConverter {
 
   private static Usage _convert(final TargetElementsDescriptor descriptor, final UsageInfo usageInfo) {
     final PsiElement[] primaryElements = descriptor.getPrimaryElements();
+
     if (isReadWriteAccessibleElements(primaryElements)) {
       final PsiElement usageElement = usageInfo.getElement();
+
       if (usageElement instanceof PsiReferenceExpression) {
         final Access access = isAccessedForReading((PsiReferenceExpression)usageElement);
+        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo, access.read, access.write);
+      } else if (usageElement instanceof XmlAttributeValue) {
+        final Access access = new Access(false, true);
         return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo, access.read, access.write);
       }
     }
@@ -117,7 +123,9 @@ public class UsageInfoToUsageConverter {
       return false;
     }
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiVariable)) {
+      if (!(element instanceof PsiVariable) &&
+          !(element instanceof XmlAttributeValue)
+        ) {
         return false;
       }
     }
