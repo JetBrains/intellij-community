@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 
@@ -24,18 +25,7 @@ public class XmlTagValueManipulator extends AbstractElementManipulator<XmlTag> {
     return tag;
   }
 
-  public TextRange getRangeInElement(final XmlTag element) {
-    TextRange valueRange = element.getValue().getTextRange();
-    String url = element.getText();
-    int start = valueRange.getStartOffset() - element.getTextOffset();
-    int end = valueRange.getEndOffset() - element.getTextOffset();
-    while (start < end && url.charAt(start) <= ' ') {
-      start++;
-    }
-    while (end > start && url.charAt(end - 1) <= ' ') {
-      end--;
-    }
-
-    return new TextRange(start, end);
+  public TextRange getRangeInElement(final XmlTag tag) {
+    return XmlUtil.getTextRangeInTagValue(tag);
   }
 }
