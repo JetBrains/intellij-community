@@ -11,7 +11,9 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestUtil;
+import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
@@ -30,43 +32,37 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testEntity() throws Exception {
-    configureByFiles(
-      new VirtualFile[] {
-        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
-        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".ent")
-      },
-      null
-    );
+    configureByFiles(new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
+      getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".ent")}, null);
     doDoTest(true, false);
   }
 
-  public void testSanity() throws Exception { doTest(); }
+  public void testSanity() throws Exception {
+    doTest();
+  }
 
-  public void testSanity2() throws Exception { doTest(); }
+  public void testSanity2() throws Exception {
+    doTest();
+  }
 
-  public void testRefid() throws Exception { doTest(); }
+  public void testRefid() throws Exception {
+    doTest();
+  }
 
-  public void testExternalValidator() throws Exception { doTest(); }
+  public void testExternalValidator() throws Exception {
+    doTest();
+  }
 
   public void testProperties() throws Exception {
-    configureByFiles(
-      new VirtualFile[] {
-        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
-        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".properties")
-      },
-      null
-    );
+    configureByFiles(new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
+      getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".properties")}, null);
     doDoTest(true, false);
   }
 
   public void testProperties2() throws Exception {
     configureByFiles(
-      new VirtualFile[] {
-        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
-        getVirtualFile(BASE_PATH + "/" + "yguard.jar")
-      },
-      null
-    );
+      new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"), getVirtualFile(BASE_PATH + "/" + "yguard.jar")},
+      null);
     doDoTest(true, false);
   }
 
@@ -79,26 +75,16 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigFile() throws Exception {
-    configureByFiles(
-      new VirtualFile[] {
-        getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
-        getVirtualFile(BASE_PATH + "/" + "buildserver.xml"),
-        getVirtualFile(BASE_PATH + "/" + "buildserver.properties")
-      },
-      null
-    );
+    configureByFiles(new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
+      getVirtualFile(BASE_PATH + "/" + "buildserver.xml"), getVirtualFile(BASE_PATH + "/" + "buildserver.properties")}, null);
 
     try {
       myIgnoreInfos = true;
-      IdeaTestUtil.assertTiming(
-      "Should be quite performant !",
-        3500,
-        new Runnable() {
-          public void run() {
-            doDoTest(true, false);
-          }
+      IdeaTestUtil.assertTiming("Should be quite performant !", 3500, new Runnable() {
+        public void run() {
+          doDoTest(true, false);
         }
-      );
+      });
     }
     finally {
       myIgnoreInfos = false;
@@ -112,5 +98,9 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
       return infos;
     }
     return Collections.emptyList();
+  }
+
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{new AntDuplicateTargetsInspection()};
   }
 }

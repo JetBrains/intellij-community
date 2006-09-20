@@ -1,8 +1,10 @@
 package com.intellij.lang.ant;
 
+import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
+import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -11,7 +13,7 @@ import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AntSupport implements ApplicationComponent {
+public class AntSupport implements ApplicationComponent, InspectionToolProvider {
 
   private static LanguageFileType ourFileType = null;
   private static AntLanguage ourLanguage = null;
@@ -60,5 +62,9 @@ public class AntSupport implements ApplicationComponent {
       file.putUserData(AntLanguageExtension.ANT_FILE_SIGN, (isAntFile) ? true : null);
       viewProvider.contentsSynchronized();
     }
+  }
+
+  public Class[] getInspectionClasses() {
+    return new Class[]{AntDuplicateTargetsInspection.class};
   }
 }

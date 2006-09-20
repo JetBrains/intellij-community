@@ -19,8 +19,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.HashMap;
-
 public class AntAnnotator implements Annotator {
 
   public void annotate(PsiElement psiElement, AnnotationHolder holder) {
@@ -69,9 +67,6 @@ public class AntAnnotator implements Annotator {
           if (de != null && !((AntTypeDef)de).typesLoaded()) {
             holder.createWarningAnnotation(absoluteRange, AntBundle.message("using.definition.which.type.failed.to.load", name));
           }
-        }
-        if (se instanceof AntProject) {
-          checkDuplicateTargets((AntProject)se, holder);
         }
       }
     }
@@ -129,31 +124,6 @@ public class AntAnnotator implements Annotator {
               holder.createErrorAnnotation(attrName, AntBundle.message("integer.attribute.has.invalid.value", name));
             }
           }
-        }
-      }
-    }
-  }
-
-  private static void checkDuplicateTargets(final AntProject project, final @NonNls AnnotationHolder holder) {
-    final AntTarget[] targets = project.getTargets();
-    if (targets.length > 0) {
-      final HashMap<String, AntTarget> name2Target = new HashMap<String, AntTarget>();
-      for (final AntTarget target : targets) {
-        final String name = target.getName();
-        final AntTarget t = name2Target.get(name);
-        if (t != null) {
-          final String duplicatedMessage = AntBundle.message("target.is.duplicated", name);
-          holder.createErrorAnnotation(t, duplicatedMessage);
-          holder.createErrorAnnotation(target, duplicatedMessage);
-        }
-        name2Target.put(name, target);
-      }
-      final AntTarget[] importedTargets = project.getImportedTargets();
-      for (final AntTarget target : importedTargets) {
-        final String name = target.getName();
-        final AntTarget t = name2Target.get(name);
-        if (t != null) {
-          holder.createErrorAnnotation(t, AntBundle.message("target.is.duplicated.in.imported.file", name, target.getAntFile().getName()));
         }
       }
     }
