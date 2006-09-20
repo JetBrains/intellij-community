@@ -50,13 +50,17 @@ public class PathUtilEx {
     }
   }
   public static void addJunit4RtJar(PathsList pathsList) {
-    final String path = PathUtil.getJarPathForClass(JUnit4Util.class);
+    final String path = getIdeaJunit4RtJarPath();
     if (Boolean.getBoolean(IDEA_PREPEND_RTJAR)) {
       pathsList.addFirst(path);
     }
     else {
       pathsList.addTail(path);
     }
+  }
+
+  public static String getIdeaJunit4RtJarPath() {
+    return PathUtil.getJarPathForClass(JUnit4Util.class);
   }
 
   public static String getIdeaRtJarPath() {

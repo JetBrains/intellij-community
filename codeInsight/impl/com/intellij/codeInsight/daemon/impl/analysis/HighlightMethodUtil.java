@@ -272,8 +272,7 @@ public class HighlightMethodUtil {
   }
 
   //@top
-  public static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall,
-                                              PsiResolveHelper resolveHelper) {
+  public static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall, PsiResolveHelper resolveHelper) {
     PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
     JavaResolveResult resolveResult = referenceToMethod.advancedResolve(true);
