@@ -130,4 +130,8 @@ public abstract class ColumnInfo <Item, Aspect> {
   public int hashCode() {
     return (myName != null ? myName.hashCode() : 0);
   }
+
+  public boolean hasError() {
+    return false;
+  }
 }

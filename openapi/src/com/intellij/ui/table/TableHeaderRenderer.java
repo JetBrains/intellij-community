@@ -86,10 +86,13 @@ public class TableHeaderRenderer extends JPanel implements TableCellRenderer{
     setIcon(icon);
 
 
+    final boolean hasError = columnInfo.hasError();
     JTableHeader header = table.getTableHeader();
-    setForeground(header.getForeground());
+    final Color foreground = hasError ? Color.RED : header.getForeground();
+    setForeground(foreground);
+    myLabel.setForeground(foreground);
     setBackground(header.getBackground());
-     myLabel.setFont(header.getFont());
+    myLabel.setFont(header.getFont());
 
     setBorder(myBorder);
 
