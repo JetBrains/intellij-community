@@ -66,7 +66,7 @@ public class ControlFlowUtil {
       queue.add(new SSAInstructionState(0, from));
       Set<SSAInstructionState> processedStates = new THashSet<SSAInstructionState>();
 
-      while (queue.size() > 0) {
+      while (!queue.isEmpty()) {
         final SSAInstructionState state = queue.remove(0);
         if (state.getWriteCount() > 1) continue variables;
         if (!processedStates.contains(state)) {
@@ -823,8 +823,7 @@ public class ControlFlowUtil {
 
       public void visitWriteVariableInstruction(WriteVariableInstruction instruction, int offset, int nextOffset) {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
-        boolean assigned;
-        assigned = instruction.variable == variable || maybeAssigned[nextOffset];
+        boolean assigned = instruction.variable == variable || maybeAssigned[nextOffset];
         maybeAssigned[offset] |= assigned;
       }
 
@@ -993,7 +992,7 @@ public class ControlFlowUtil {
           newOffsets.add(-1);
         }
       };
-      while (oldOffsets.size() != 0) {
+      while (!oldOffsets.isEmpty()) {
         offset = oldOffsets.remove(oldOffsets.size() - 1);
         int newOffset = newOffsets.remove(newOffsets.size() - 1);
 
@@ -1007,12 +1006,12 @@ public class ControlFlowUtil {
             instruction.accept(clientVisitor, offset, newOffset);
           }
           // when traversing call instruction, we have traversed all procedure control flows, so pop return address
-          if (currentProcedureReturnOffsets.size() != 0 && currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1) - 1 == offset) {
+          if (!currentProcedureReturnOffsets.isEmpty() && currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1) - 1 == offset) {
             currentProcedureReturnOffsets.remove(currentProcedureReturnOffsets.size() - 1);
           }
           continue;
         }
-        if (currentProcedureReturnOffsets.size() != 0) {
+        if (!currentProcedureReturnOffsets.isEmpty()) {
           int returnOffset = currentProcedureReturnOffsets.get(currentProcedureReturnOffsets.size() - 1);
           CallInstruction callInstruction = (CallInstruction) instructions.get(returnOffset - 1);
           // check if we inside procedure but 'return offset' stack is empty, so

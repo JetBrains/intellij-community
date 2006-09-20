@@ -383,12 +383,9 @@ public class ExceptionUtil {
       return isHandledByMethodThrowsClause(method, exceptionType);
     }
     else if (parent instanceof PsiClass) {
-      if (parent instanceof PsiAnonymousClass /*&& element instanceof PsiExpressionList*/) {
-        // arguments to anon class constructor should be handled higher
-        // like in void f() throws XXX { new AA(methodThrowingXXX()) { ... }; }
-        return isHandled(parent, exceptionType, topElement);
-      }
-      return false;
+      // arguments to anon class constructor should be handled higher
+      // like in void f() throws XXX { new AA(methodThrowingXXX()) { ... }; }
+      return parent instanceof PsiAnonymousClass && isHandled(parent, exceptionType, topElement);
     }
     else if (parent instanceof PsiClassInitializer) {
       if (((PsiClassInitializer)parent).hasModifierProperty(PsiModifier.STATIC)) return false;
@@ -405,14 +402,16 @@ public class ExceptionUtil {
       if (tryStatement.getTryBlock() == element && isCatched(tryStatement, exceptionType)) {
         return true;
       }
-      else {
-        return isHandled(parent, exceptionType, topElement);
+      PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+      if (element instanceof PsiCatchSection && finallyBlock != null && blockCompletesAbruptly(finallyBlock)) {
+        // exception swallowed
+        return true;
       }
     }
     else if (parent instanceof PsiCodeFragment) {
       PsiCodeFragment codeFragment = (PsiCodeFragment)parent;
-      if (codeFragment.getExceptionHandler() == null) return false;
-      return codeFragment.getExceptionHandler().isHandledException(exceptionType);
+      PsiCodeFragment.ExceptionHandler exceptionHandler = codeFragment.getExceptionHandler();
+      return exceptionHandler != null && exceptionHandler.isHandledException(exceptionType);
     }
     else if (PsiUtil.isInJspFile(parent) && parent instanceof PsiFile) {
       return true;
@@ -451,15 +450,7 @@ public class ExceptionUtil {
       if (unhandledFinallyExceptions.contains(exceptionType)) return false;
       // if finally block completes normally, exception not catched
       // if finally block completes abruptly, exception gets lost
-      try {
-        ControlFlow flow = ControlFlowFactory.getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
-                                                             false);
-        int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
-        if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) return true;
-      }
-      catch (AnalysisCanceledException e) {
-        return true;
-      }
+      if (blockCompletesAbruptly(finallyBlock)) return true;
     }
 
     final PsiParameter[] catchBlockParameters = tryStatement.getCatchBlockParameters();
@@ -468,6 +459,18 @@ public class ExceptionUtil {
       if (paramType.isAssignableFrom(exceptionType)) return true;
     }
 
+    return false;
+  }
+
+  private static boolean blockCompletesAbruptly(final PsiCodeBlock finallyBlock) {
+    try {
+      ControlFlow flow = ControlFlowFactory.getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+      int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
+      if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) return true;
+    }
+    catch (AnalysisCanceledException e) {
+      return true;
+    }
     return false;
   }
 
