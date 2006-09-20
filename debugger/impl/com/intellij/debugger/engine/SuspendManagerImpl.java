@@ -6,7 +6,10 @@ import com.sun.jdi.InternalException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -102,7 +105,11 @@ public class SuspendManagerImpl implements SuspendManager {
         }
         myDebugProcess.logThreads();
         final ThreadReferenceProxyImpl thread = getThread();
-        LOG.assertTrue(thread != null ? thread.isSuspended() : true);
+
+        if (thread != null && !thread.isCollected()) {
+          LOG.assertTrue(thread.isSuspended(), "Context thread must be suspended");
+        }
+
         int attempts = 5;
         while (--attempts > 0) {
           try {
