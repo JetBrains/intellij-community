@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.lang.ant.psi.AntElement;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.AntTypeDef;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -139,21 +140,24 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     boolean newlyLoaded = false;
     Class clazz = CLASS_CACHE.getClass(urls, classname);
     if (clazz == null) {
-      ClassLoader loader = getAntFile().getClassLoader().getClassloader();
-      if (urls.length > 0) {
-        loader = new URLClassLoader(urls, loader);
-      }
-      try {
-        if (loader == null) {
-          clazz = Class.forName(classname);
+      final AntFile file = getAntFile();
+      if (file != null) {
+        ClassLoader loader = file.getClassLoader().getClassloader();
+        if (urls.length > 0) {
+          loader = new URLClassLoader(urls, loader);
         }
-        else {
-          clazz = loader.loadClass(classname);
+        try {
+          if (loader == null) {
+            clazz = Class.forName(classname);
+          }
+          else {
+            clazz = loader.loadClass(classname);
+          }
+          newlyLoaded = true;
         }
-        newlyLoaded = true;
-      }
-      catch (Exception e) {
-        clazz = null;
+        catch (Exception e) {
+          clazz = null;
+        }
       }
     }
     final String name = getDefinedName();
