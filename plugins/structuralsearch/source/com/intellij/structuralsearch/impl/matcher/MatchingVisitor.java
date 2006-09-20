@@ -300,12 +300,12 @@ public class MatchingVisitor extends PsiElementVisitor {
     if (allRemainingClassContentElement!=null) {
       Handler.setUnmatchedElementsListener(
         mylistener = new Handler.UnmatchedElementsListener() {
-          List<PsiElement> l;
+          private List<PsiElement> myUnmatchedList;
 
           public void matchedElements(List<PsiElement> elementList) {
             if (elementList!=null) {
-              if (l==null) l = new LinkedList<PsiElement>(elementList);
-              else l.addAll(elementList);
+              if (myUnmatchedList ==null) myUnmatchedList = new LinkedList<PsiElement>(elementList);
+              else myUnmatchedList.addAll(elementList);
             }
           }
 
@@ -313,7 +313,7 @@ public class MatchingVisitor extends PsiElementVisitor {
             final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(allRemainingClassContentElement);
 
             for(PsiElement el = clazz2.getFirstChild();el!=null;el = el.getNextSibling()) {
-              if (el instanceof PsiMember && (l==null || l.indexOf(el)==-1)) {
+              if (el instanceof PsiMember && (myUnmatchedList ==null || myUnmatchedList.indexOf(el)==-1)) {
                 handler.handle(el,matchContext);
               }
             }
@@ -491,7 +491,7 @@ public class MatchingVisitor extends PsiElementVisitor {
 
         final SubstitutionHandler handler = (SubstitutionHandler) matchContext.getPattern().getHandler(nameElement);
         if (handler.isSubtype() || handler.isStrictSubtype()) {
-          result = checkMatchWithingHierarchy(element,handler);
+          result = checkMatchWithingHierarchy(element,handler, reference);
         } else {
           result = handler.handle(element,matchContext);
         }
@@ -1316,7 +1316,7 @@ public class MatchingVisitor extends PsiElementVisitor {
 
       try {
         if (handler.isSubtype() || handler.isStrictSubtype()) {
-          return checkMatchWithingHierarchy(el2, handler);
+          return checkMatchWithingHierarchy(el2, handler, el);
         } else {
           return handler.handle(el2, matchContext);
         }
@@ -1344,15 +1344,35 @@ public class MatchingVisitor extends PsiElementVisitor {
     }
   }
 
-  private boolean checkMatchWithingHierarchy(PsiElement el2, SubstitutionHandler handler) {
+  private boolean checkMatchWithingHierarchy(PsiElement el2, SubstitutionHandler handler, PsiElement context) {
+    boolean includeInterfaces = true;
+    boolean includeClasses = true;
+    final PsiElement contextParent = context.getParent();
+
+    if (contextParent instanceof PsiReferenceList) {
+      final PsiElement grandParentContext = contextParent.getParent();
+
+      if (grandParentContext instanceof PsiClass) {
+        final PsiClass psiClass = ((PsiClass)grandParentContext);
+
+        if (contextParent == psiClass.getExtendsList()) {
+          includeInterfaces = psiClass.isInterface();
+        } else if (contextParent == psiClass.getImplementsList()) {
+          includeClasses = false;
+        }
+      }
+    }
+
     // is type2 is (strict) subtype of type
-    final NodeIterator node = new HierarchyNodeIterator(el2, true, true);
+    final NodeIterator node = new HierarchyNodeIterator(el2, includeClasses, includeInterfaces);
 
     if (handler.isStrictSubtype()) {
       node.advance();
     }
 
+    final boolean notPredicate = handler.getPredicate() instanceof NotPredicate;
     while (node.hasNext() && !handler.validate(node.current(), 0, -1, matchContext)) {
+      if (notPredicate) return false;
       node.advance();
     }
 
@@ -1569,7 +1589,7 @@ public class MatchingVisitor extends PsiElementVisitor {
     matchContext.pushResult();
 
     try {
-        if (method.getTypeParameters().length > 0) {
+      if (method.getTypeParameters().length > 0) {
         result = match(
           method.getTypeParameterList(),
           ((PsiMethod)element).getTypeParameterList()

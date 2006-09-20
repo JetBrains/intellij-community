@@ -35,9 +35,10 @@ public class HierarchyNodeIterator extends NodeIterator {
 
       if (element instanceof PsiClass) {
         if (visited.contains(element)) return;
-        visited.add(element);
-
         final PsiClass clazz = (PsiClass)element;
+
+        if (acceptInterfaces || !clazz.isInterface() ) visited.add(element);
+
         if (!firstElementTaken && acceptFirstElement || firstElementTaken) remaining.add(clazz);
         firstElementTaken = true;
 
@@ -47,19 +48,12 @@ public class HierarchyNodeIterator extends NodeIterator {
         }
 
         if (acceptClasses) {
-          final PsiReferenceList clazzExtendsList = clazz.getExtendsList();
-          final PsiElement[] extendsList = (clazzExtendsList != null)?clazzExtendsList.getReferenceElements():null;
+          processClasses(clazz, visited);
 
-          if (extendsList != null) {
-            for (PsiElement anExtendsList : extendsList) {
-              build(anExtendsList,visited);
-            }
-
-            if (!objectTaken) {
-              final Project project = clazz.getProject();
-              final PsiClassType javaLangObject = PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
-              build( javaLangObject.resolve(), visited);
-            }
+          if (!objectTaken) {
+            final Project project = clazz.getProject();
+            final PsiClassType javaLangObject = PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
+            build( javaLangObject.resolve(), visited);
           }
         }
 
@@ -73,9 +67,22 @@ public class HierarchyNodeIterator extends NodeIterator {
               build(anImplementsList,visited);
             }
           }
+
+          if (!acceptClasses) processClasses(clazz, visited);
         }
       } else {
         remaining.add(current);
+      }
+    }
+  }
+
+  private void processClasses(final PsiClass clazz, final Set<PsiElement> visited) {
+    final PsiReferenceList clazzExtendsList = clazz.getExtendsList();
+    final PsiElement[] extendsList = (clazzExtendsList != null)?clazzExtendsList.getReferenceElements():null;
+
+    if (extendsList != null) {
+      for (PsiElement anExtendsList : extendsList) {
+        build(anExtendsList,visited);
       }
     }
   }

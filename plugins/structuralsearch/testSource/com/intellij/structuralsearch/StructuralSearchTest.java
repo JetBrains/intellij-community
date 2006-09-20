@@ -1582,7 +1582,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       4
     );
 
-    if (IdeaTestUtil.bombExplodes(2006, Calendar.SEPTEMBER, 20, 15, 0, "maxim.mossienko", "next token after tag correctly becomes " +
+    if (IdeaTestUtil.bombExplodes(2006, Calendar.SEPTEMBER, 25, 15, 0, "maxim.mossienko", "next token after tag correctly becomes " +
                                                                                          "a tag parameter even if located on next line." +
                                                                                          "Leading asterisks should not be counted as well.")) {
       assertEquals(
@@ -1725,7 +1725,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
 
     final String s107 = "interface IA {} interface IB extends IA { } interface IC extends IB {} interface ID extends IC {}" +
-                        "class A implemenents IA {} class B extends A { } class C extends B implements IC {} class D extends C {}";
+                        "class A implements IA {} class B extends A { } class C extends B implements IC {} class D extends C {}";
     final String s108 = "class '_ extends 'Type:+A {}";
     final String s108_2 = "class '_ implements 'Type:+IA {}";
 
@@ -1737,7 +1737,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "implements navigation match",
-      2,
+      3,
       findMatchesCount(s107,s108_2)
     );
 
@@ -2388,5 +2388,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "C.foo();";
     String s2 = "'_Instance:[regex( *A )].'_Method:[regex( foo )] ( '_Params* )";
     assertEquals("Find static methods within expr type hierarchy", 3, findMatchesCount(s1,s2));
+  }
+
+  public void testFindClassesWithinHierarchy() {
+    String s1 = "class A implements I {}\n" +
+                "interface I {}\n" + 
+                "class B extends A implements I { }\n" +
+                "class B2 implements I  { }\n" +
+                "class B3 extends A { }\n" +
+                "class C extends B2 { static void foo(); }\n";
+    String s2 = "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( I )] {}";
+    String s2_2 = "class '_ extends '_Extends:[!regex( *A )]{}";
+    assertEquals("Find class within type hierarchy with not", 1, findMatchesCount(s1,s2));
+    assertEquals("Find class within type hierarchy with not, 2", 1, findMatchesCount(s1,s2_2));
   }
 }
