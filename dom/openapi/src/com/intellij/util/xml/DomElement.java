@@ -26,6 +26,7 @@ public interface DomElement extends AnnotatedElement{
   @NotNull
   <T extends DomElement> DomFileElement<T> getRoot();
 
+  @Nullable
   DomElement getParent();
 
   XmlTag ensureTagExists();
