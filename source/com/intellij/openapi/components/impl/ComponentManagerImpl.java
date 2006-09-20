@@ -224,11 +224,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       component.initComponent();
     }
     catch (Throwable ex) {
-      handleInitComponentError(component, componentClass, ex);
+      handleInitComponentError(componentClass, ex, false);
     }
   }
 
-  protected void handleInitComponentError(final BaseComponent component, final Class componentClass, final Throwable ex) {
+  protected void handleInitComponentError(final Class componentClass, final Throwable ex, final boolean fatal) {
     LOG.error(ex);
   }
 
@@ -618,9 +618,19 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       DecoratingComponentAdapter initializingAdapter =
         new DecoratingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true)) {
           public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
-            Object componentInstance = super.getComponentInstance(picoContainer);
-            if (componentInstance instanceof BaseComponent) {
-              initComponent((BaseComponent)componentInstance, (Class)componentKey);
+            Object componentInstance = null;
+            try {
+              componentInstance = super.getComponentInstance(picoContainer);
+              if (componentInstance instanceof BaseComponent) {
+                initComponent((BaseComponent)componentInstance, (Class)componentKey);
+              }
+            }
+            catch(Throwable t) {
+              handleInitComponentError((Class)componentKey, t, componentInstance == null);
+              if (componentInstance == null) {
+                System.exit(1);
+              }
+
             }
             return componentInstance;
           }

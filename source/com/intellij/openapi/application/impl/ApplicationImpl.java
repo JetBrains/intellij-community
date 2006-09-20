@@ -44,9 +44,7 @@ import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -166,7 +164,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
 
   @Override
-  protected void handleInitComponentError(final BaseComponent component, final Class componentClass, final Throwable ex) {
+  protected void handleInitComponentError(final Class componentClass, final Throwable ex, final boolean fatal) {
     if (PluginManager.isPluginClass(componentClass.getName())) {
       LOG.error(ex);
       PluginId pluginId = PluginManager.getPluginByClassName(componentClass.getName());
@@ -181,7 +179,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
       System.exit(1);
     }
-    super.handleInitComponentError(component, componentClass, ex);
+    else if (fatal) {
+      LOG.error(ex);
+      @NonNls final String errorMessage = "Fatal error initializing class " + componentClass.getName() + ":\n" +
+                                          ex.toString() +
+                                          "\nComplete error stacktrace was written to idea.log";
+      if (!myHeadlessMode) {
+        JOptionPane.showMessageDialog(null, errorMessage);
+      }
+      else {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println(errorMessage);
+      }
+    }
+    super.handleInitComponentError(componentClass, ex, fatal);
   }
 
   private void loadApplicationComponents() {
