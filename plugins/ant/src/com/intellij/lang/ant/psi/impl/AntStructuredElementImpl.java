@@ -391,6 +391,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private void invalidateAntlibNamespace() {
     final AntFile file = getAntFile();
     if (file == null) return;
+    final ClassLoader loader = file.getClassLoader().getClassloader();
+    if (loader == null) return;
     final String ns = getNamespace();
     if (!ns.startsWith(ANTLIB_NS_PREFIX)) return;
     if (!(this instanceof AntProject)) {
@@ -406,7 +408,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       InputStream antlibStream = null;
       try {
         try {
-          antlibStream = file.getClassLoader().getClassloader().getResourceAsStream(builder.toString());
+          antlibStream = loader.getResourceAsStream(builder.toString());
           if (antlibStream != null) {
             builder.setLength(0);
             int nextByte;
