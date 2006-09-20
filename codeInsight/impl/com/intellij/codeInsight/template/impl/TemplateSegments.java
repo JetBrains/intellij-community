@@ -38,14 +38,10 @@ public class TemplateSegments {
     mySegments.add(rangeMarker);
   }
 
-  public void setCurrentSegment(int segment) {
-    RangeMarker current = mySegments.get(segment);
-    current.setGreedyToLeft(true);
-    current.setGreedyToRight(true);
-    for (final RangeMarker other : mySegments) {
-      if (other == current) continue;
-      other.setGreedyToRight(other.getEndOffset() != current.getStartOffset());
-      other.setGreedyToLeft(other.getStartOffset() != current.getEndOffset());
+  public void setSegmentsGreedy(boolean greedy) {
+    for (final RangeMarker segment : mySegments) {
+      segment.setGreedyToRight(greedy);
+      segment.setGreedyToLeft(greedy);
     }
   }
 

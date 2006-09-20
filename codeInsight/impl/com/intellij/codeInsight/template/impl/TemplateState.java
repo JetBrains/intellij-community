@@ -124,12 +124,8 @@ public class TemplateState implements Disposable {
     if (variableNumber < 0) {
       myCurrentSegmentNumber = -1;
       releaseAll();
-    }
-    else {
+    } else {
       myCurrentSegmentNumber = getCurrentSegmentNumber();
-      if (myCurrentSegmentNumber >= 0) {
-        mySegments.setCurrentSegment(myCurrentSegmentNumber);
-      }
     }
   }
 
@@ -305,11 +301,34 @@ public class TemplateState implements Disposable {
     final Runnable action = new Runnable() {
       public void run() {
         IntArrayList indices = initEmptyVariables();
+        mySegments.setSegmentsGreedy(false);
         reformat();
+        mySegments.setSegmentsGreedy(true);
         restoreEmptyVariables(indices);
       }
     };
     ApplicationManager.getApplication().runWriteAction(action);
+  }
+
+  private void shortenReferences() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+        if (file != null) {
+          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+          if (myTemplate.isToShortenLongNames()) {
+            try {
+              PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+              codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+              PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+    });
   }
 
   private void afterChangedUpdate() {
@@ -575,7 +594,7 @@ public class TemplateState implements Disposable {
     replaceString(newValue, start, end, segmentNumber);
 
     if (result instanceof PsiTypeResult) {
-      doReformat();
+      shortenReferences();
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, context);
     }
