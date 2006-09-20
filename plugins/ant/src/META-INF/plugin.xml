@@ -3,6 +3,7 @@
   <id>AntSupport</id>
   <version>1.0</version>
   <idea-version min="6.0"/>
+  <description>Editing, maintaining and running ANT build scripts inside IntelliJ IDEA.</description>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
 
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
