@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -264,7 +265,7 @@ public class DebugUtil {
     return stringBuffer.toString();
   }
 
-  public static String psiToString(PsiElement root,
+  public static String psiToString(@NotNull PsiElement root,
                                  boolean skipWhiteSpaces,
                                  boolean showRanges) {
     final StringBuffer result = new StringBuffer();
@@ -288,6 +289,7 @@ public class DebugUtil {
     PsiElement child = root.getFirstChild();
     if (child == null) {
       String text = root.getText();
+      assert text != null : "text is null for <" + root + ">";
       text = StringUtil.replace(text, "\n", "\\n");
       text = StringUtil.replace(text, "\r", "\\r");
       text = StringUtil.replace(text, "\t", "\\t");
