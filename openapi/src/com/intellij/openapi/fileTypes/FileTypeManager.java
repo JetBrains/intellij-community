@@ -147,6 +147,23 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
   public abstract @Nullable FileType getKnownFileTypeOrAssociate(VirtualFile file);
 
   /**
+   * Returns the semicolon-delimited list of patterns for files and folders
+   * which are excluded from the project structure though they may be present
+   * physically on the HD.
+   *
+   * @return Semicolon-delimited list of patterns.
+   */
+  public abstract String getIgnoredFilesList();
+
+  /**
+   * Sets new list of semicolon-delimited patterns for files and folders which
+   * are excluded from the project structure.
+   *
+   * @param list List of semicolon-delimited patterns.
+   */
+  public abstract void setIgnoredFilesList(String list);
+
+  /**
    * Adds an extension to the list of extensions associated with a file type.
    *
    * @param type      the file type to associate the extension with.
