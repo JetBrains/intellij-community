@@ -1,11 +1,14 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -105,10 +108,12 @@ public class LocalChangeList implements Cloneable, ChangeList {
     createReadChangesCache();
     myChangesBeforeUpdate = new ChangeHashSet(myChanges);
     myOutdatedChanges = new ArrayList<Change>();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(scope.getProject()).getFileIndex();
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
-      if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())) {
+      if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
+        || isIgnoredChange(oldBoy, fileIndex)) {
         myIsInUpdate = true;
         removeChange(oldBoy);
         myOutdatedChanges.add(oldBoy);
@@ -117,6 +122,17 @@ public class LocalChangeList implements Cloneable, ChangeList {
     if (isDefault()) {
       myIsInUpdate = true;
     }
+  }
+
+  private static boolean isIgnoredChange(final Change change, final ProjectFileIndex fileIndex) {
+    boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), fileIndex);
+    boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), fileIndex);
+    return beforeRevIgnored && afterRevIgnored;
+  }
+
+  private static boolean isIgnoredRevision(final ContentRevision revision, final ProjectFileIndex fileIndex) {
+    VirtualFile vFile = revision.getFile().getVirtualFile();
+    return vFile != null && fileIndex.isIgnored(vFile);
   }
 
   synchronized boolean processChange(Change change) {

@@ -48,6 +48,10 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return myAffectedContentRoots;
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public AbstractVcs getVcs() {
     return myVcs;
   }
