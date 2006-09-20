@@ -191,7 +191,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
         }
 
         final Grammar grammarByFileType = GrammarUtil.getGrammarByFileType(fileType);
-        if (grammarByFileType != null && file.getLanguage() != StdLanguages.JSP) {
+        if (grammarByFileType != null && file.getLanguage() != StdLanguages.JSP && file.getLanguage() != StdLanguages.JSPX) {
           ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset,
                               lengthShift, file.getViewProvider());
         }
