@@ -88,6 +88,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                 return url.startsWith(HTTP_PROTOCOL) ? url:uri;
               }
 
+              if (!tokenizer.hasMoreElements()) return uri;
               tokenizer.nextToken(); // skip file location
             }
           }
