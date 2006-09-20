@@ -47,6 +47,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NonNls public static final String PROJECT_TAG = "project";
   @NonNls public static final String TARGET_TAG = "target";
   @NonNls public static final String IMPORT_TAG = "import";
+  @NonNls public static final String FORMAT_TAG = "format";
   @NonNls public static final String JAVADOC2_TAG = "javadoc2";
   @NonNls public static final String JAVADOC_TAG = "javadoc";
   @NonNls public static final String UNWAR_TAG = "unwar";

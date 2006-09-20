@@ -15,15 +15,6 @@ public interface AntTypeDef extends AntTask {
   String getClassPath();
 
   @Nullable
-  String getClassPathRef();
-
-  @Nullable
-  String getLoaderRef();
-
-  @Nullable
-  String getFormat();
-
-  @Nullable
   String getUri();
 
   AntTypeDefinition getDefinition();

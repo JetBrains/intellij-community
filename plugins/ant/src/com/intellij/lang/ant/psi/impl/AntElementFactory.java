@@ -16,10 +16,14 @@ import org.apache.tools.ant.taskdefs.*;
 import org.apache.tools.ant.taskdefs.optional.extension.JarLibResolveTask;
 import org.apache.tools.ant.taskdefs.optional.perforce.P4Counter;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
 public class AntElementFactory {
+
+  @NonNls private static final String RESULT_PROPERTY = "resultproperty";
+  @NonNls private static final String TOTAL_PROPERTY = "totalproperty";
 
   private static Map<String, AntElementCreator> ourAntTypeToKnownAntElementCreatorMap = null;
 
@@ -104,7 +108,7 @@ public class AntElementFactory {
     }
     if (result == null) {
       // HACK for the <tstamp> properties
-      result = (!"format".equals(tag.getName()))
+      result = (!AntFileImpl.FORMAT_TAG.equals(tag.getName()))
                ? new AntStructuredElementImpl(parent, tag, typeDef)
                : new AntStructuredElementImpl(parent, tag, typeDef, AntFileImpl.PROPERTY) {
                  public String getName() {
@@ -142,8 +146,8 @@ public class AntElementFactory {
       ourAntTypeToKnownAntElementCreatorMap.put(Checksum.class.getName(), new AntElementCreator() {
         public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
           final AntTypeDefinition checksumDef = parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName());
-          if (tag.getAttributeValue("totalproperty") != null) {
-            return new AntPropertyImpl(parent, tag, checksumDef, "totalproperty");
+          if (tag.getAttributeValue(TOTAL_PROPERTY) != null) {
+            return new AntPropertyImpl(parent, tag, checksumDef, TOTAL_PROPERTY);
           }
           return new AntPropertyImpl(parent, tag, checksumDef, AntFileImpl.PROPERTY);
         }
@@ -151,8 +155,8 @@ public class AntElementFactory {
       ourAntTypeToKnownAntElementCreatorMap.put(ExecTask.class.getName(), new AntElementCreator() {
         public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
           final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(ExecTask.class.getName());
-          if (tag.getAttributeValue("resultproperty") != null) {
-            return new AntPropertyImpl(parent, tag, execDef, "resultproperty");
+          if (tag.getAttributeValue(RESULT_PROPERTY) != null) {
+            return new AntPropertyImpl(parent, tag, execDef, RESULT_PROPERTY);
           }
           return new AntPropertyImpl(parent, tag, execDef, "outputproperty");
         }
@@ -160,16 +164,22 @@ public class AntElementFactory {
       ourAntTypeToKnownAntElementCreatorMap.put(Java.class.getName(), new AntElementCreator() {
         public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
           final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(Java.class.getName());
-          return new AntPropertyImpl(parent, tag, execDef, "resultproperty");
+          return new AntPropertyImpl(parent, tag, execDef, RESULT_PROPERTY);
+        }
+      });
+      ourAntTypeToKnownAntElementCreatorMap.put(Input.class.getName(), new AntElementCreator() {
+        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+          final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(Input.class.getName());
+          return new AntPropertyImpl(parent, tag, execDef, "addproperty");
         }
       });
       ourAntTypeToKnownAntElementCreatorMap.put(Exit.class.getName(), new AntElementCreator() {
         public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
           final AntTypeDefinition failTaskDefinition = parent.getAntFile().getBaseTypeDefinition(Exit.class.getName());
-          if (tag.getAttributeValue("if") != null) {
-            return new AntPropertyImpl(parent, tag, failTaskDefinition, "if");
+          if (tag.getAttributeValue(AntFileImpl.IF_ATTR) != null) {
+            return new AntPropertyImpl(parent, tag, failTaskDefinition, AntFileImpl.IF_ATTR);
           }
-          return new AntPropertyImpl(parent, tag, failTaskDefinition, "unless");
+          return new AntPropertyImpl(parent, tag, failTaskDefinition, AntFileImpl.UNLESS_ATTR);
         }
       });
       for (final String clazz : PROPERTY_CLASSES) {

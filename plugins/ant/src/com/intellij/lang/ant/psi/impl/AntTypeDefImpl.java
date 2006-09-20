@@ -67,21 +67,6 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   @Nullable
-  public String getClassPathRef() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("classpathref"));
-  }
-
-  @Nullable
-  public String getLoaderRef() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("loaderref"));
-  }
-
-  @Nullable
-  public String getFormat() {
-    return computeAttributeValue(getSourceElement().getAttributeValue("format"));
-  }
-
-  @Nullable
   public String getUri() {
     return computeAttributeValue(getSourceElement().getAttributeValue("uri"));
   }

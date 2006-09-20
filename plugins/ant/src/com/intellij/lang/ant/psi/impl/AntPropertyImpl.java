@@ -230,7 +230,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
       for (final AntElement child : getChildren()) {
         if (child instanceof AntStructuredElement) {
           final AntStructuredElement se = (AntStructuredElement)child;
-          if (se.getSourceElement().getName().equals("format")) {
+          if (AntFileImpl.FORMAT_TAG.equals(se.getSourceElement().getName())) {
             return child;
           }
         }
@@ -270,7 +270,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   private String getTstampValue(final String propName) {
     final XmlTag se = getSourceElement();
     Date d = new Date();
-    final XmlTag formatTag = se.findFirstSubTag("format");
+    final XmlTag formatTag = se.findFirstSubTag(AntFileImpl.FORMAT_TAG);
     if (formatTag != null) {
       final String offsetStr = formatTag.getAttributeValue("offset");
       int offset;
@@ -343,7 +343,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   @Nullable
   private XmlAttributeValue getTstampPropertyAttributeValue() {
     if (isTstamp()) {
-      final XmlTag formatTag = getSourceElement().findFirstSubTag("format");
+      final XmlTag formatTag = getSourceElement().findFirstSubTag(AntFileImpl.FORMAT_TAG);
       if (formatTag != null) {
         final XmlAttribute propAttr = formatTag.getAttribute(AntFileImpl.PROPERTY, null);
         if (propAttr != null) {
