@@ -178,7 +178,6 @@ public class AntBuildFileImpl implements AntBuildFileBase {
       GlobalAntConfiguration.getInstance().getProperties(getProject())});
 
     myClassloaderHolder = new AntClassLoaderHolder(myAllOptions, ALL_CLASS_PATH_ENTRIES);
-    updateProperties();
   }
 
   @Nullable
@@ -301,6 +300,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myProjectOptions.readExternal(parentNode);
     basicUpdateConfig();
     readWorkspaceProperties(parentNode); // Compatibility with old Idea
+    updateProperties();
   }
 
   public void writeProperties(final Element parentNode) throws WriteExternalException {
@@ -311,6 +311,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     registerPropertiesInPsi();
     bindAnt();
     myClassloaderHolder.updateClasspath();
+    myFile.clearCaches();
   }
 
   private void registerPropertiesInPsi() {
@@ -329,7 +330,6 @@ public class AntBuildFileImpl implements AntBuildFileBase {
         LOG.debug(e);
       }
     }
-    myFile.clearCaches();
   }
 
   private void bindAnt() {

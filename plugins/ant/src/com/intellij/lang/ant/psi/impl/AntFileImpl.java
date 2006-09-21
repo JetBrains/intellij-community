@@ -175,6 +175,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myProject = null;
       myEpilogueElement = null;
       myTargetDefinition = null;
+      myClassLoader = null;
     }
   }
 
@@ -319,9 +320,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         targetAttrs.put(UNLESS_ATTR, AntAttributeType.STRING);
         targetAttrs.put(DESCRIPTION_ATTR, AntAttributeType.STRING);
         final HashMap<AntTypeId, String> targetElements = new HashMap<AntTypeId, String>();
-        for (AntTypeDefinition def : getBaseTypeDefinitions()) {
-          if (def.isTask() || targetElements.get(def.getTypeId()) == null) {
-            targetElements.put(def.getTypeId(), def.getClassName());
+        for (final AntTypeDefinition def : getBaseTypeDefinitions()) {
+          final AntTypeId id = def.getTypeId();
+          if (def.isTask() || targetElements.get(id) == null) {
+            targetElements.put(id, def.getClassName());
           }
         }
         myTargetDefinition =

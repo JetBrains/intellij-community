@@ -62,10 +62,26 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     this(parent, sourceElement, nameElementAttribute);
     myDefinition = definition;
     final AntTypeId id = new AntTypeId(sourceElement.getName());
-    if (definition != null && !definition.getTypeId().equals(id)) {
-      myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
-      myDefinition.setTypeId(id);
-      myDefinitionCloned = true;
+    if (definition != null) {
+      if (!definition.getTypeId().equals(id)) {
+        myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
+        myDefinition.setTypeId(id);
+        myDefinitionCloned = true;
+      }
+    }
+    else {
+      /**
+       * This branch reloads of type definition in case if it could be
+       * registered during invalidation of the "antlib:..." namespace
+       */
+      final AntFile file = getAntFile();
+      if (file != null) {
+        final AntTypeDefinition targetDef = file.getTargetDefinition();
+        final String className = targetDef.getNestedClassName(id);
+        if (className != null) {
+          myDefinition = file.getBaseTypeDefinition(className);
+        }
+      }
     }
   }
 
@@ -395,8 +411,8 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     if (loader == null) return;
     final String ns = getNamespace();
     if (!ns.startsWith(ANTLIB_NS_PREFIX)) return;
+    final AntElement parent = getAntParent();
     if (!(this instanceof AntProject)) {
-      final AntElement parent = getAntParent();
       if (parent instanceof AntStructuredElementImpl && ns.equals(((AntStructuredElementImpl)parent).getNamespace())) return;
     }
 
@@ -438,7 +454,12 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
           if (element instanceof AntTypeDef) {
             final AntTypeDefinition def = ((AntTypeDef)element).getDefinition();
             if (def != null) {
-              registerCustomType(def);
+              if (parent instanceof AntStructuredElementImpl) {
+                ((AntStructuredElementImpl)parent).registerCustomType(def);
+              }
+              else {
+                file.registerCustomType(def);
+              }
             }
           }
         }
