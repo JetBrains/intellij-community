@@ -6,7 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -14,24 +15,20 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
+import java.awt.*;
 
 public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
 
@@ -186,35 +183,46 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   public void setSelectedDomElement(final DomElement domElement) {
     if (domElement == null) return;
 
-    final List<SimpleNode> parentsNodes = getNodesFor(domElement);
+    final SimpleNode node = getNodeFor(domElement);
 
-
-    if (parentsNodes.size() > 0) {
-      final SimpleNode parent = parentsNodes.get(parentsNodes.size() - 1);
-      getTree().setSelectedNode(getBuilder(), parent, true);
+    if (node != null) {
+      getTree().setSelectedNode(getBuilder(), node, true);
     }
   }
 
-  private List<SimpleNode> getNodesFor(final DomElement domElement) {
-    final List<SimpleNode> parentsNodes = new ArrayList<SimpleNode>();
-
+  @Nullable
+  private SimpleNode getNodeFor(final DomElement domElement) {
     myBuilder.setWaiting(false);
-    myTree.accept(myBuilder, new SimpleNodeVisitor() {
-      public boolean accept(SimpleNode simpleNode) {
-        if (simpleNode instanceof AbstractDomElementNode) {
-          final DomElement nodeElement = ((AbstractDomElementNode)simpleNode).getDomElement();
-          if (isParent(nodeElement, domElement)) {
-            parentsNodes.add(simpleNode);
-          }
-          if (nodeElement != null && nodeElement.equals(domElement)) {
-            return true;
-          }
-        }
-        return false;
-      }
-    });
 
-    return parentsNodes;
+    return visit((SimpleNode)myBuilder.getTreeStructure().getRootElement(), domElement);
+  }
+
+  @Nullable
+  private SimpleNode visit(SimpleNode simpleNode, DomElement domElement) {
+    boolean validCandidate = false;
+    if (simpleNode instanceof AbstractDomElementNode) {
+      final DomElement nodeElement = ((AbstractDomElementNode)simpleNode).getDomElement();
+      if (nodeElement != null) {
+        validCandidate = !(simpleNode instanceof DomElementsGroupNode);
+        if (validCandidate && nodeElement.equals(domElement)) {
+          return simpleNode;
+        }
+        if (!isParent(nodeElement, domElement)) {
+          return null;
+        }
+      }
+    }
+    final Object[] childElements = myBuilder.getTreeStructure().getChildElements(simpleNode);
+    if (childElements.length == 0 && validCandidate) { // leaf
+      return simpleNode;
+    }
+    for (Object child: childElements) {
+      SimpleNode result = visit((SimpleNode)child, domElement);
+      if (result != null) {
+        return result;
+      }
+    }
+    return validCandidate ? simpleNode : null;
   }
 
   private static boolean isParent(final DomElement potentialParent, final DomElement domElement) {
