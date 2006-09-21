@@ -244,10 +244,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     element = element.getParent();
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
 
-    if (info.type == HighlightInfoType.WRONG_REF) {
+    final HighlightInfoType infoType = info.type;
+    if (infoType == HighlightInfoType.WRONG_REF) {
       return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
     }
-    else if (info.type == HighlightInfoType.JAVADOC_WRONG_REF) {
+    else if (isWrongJavadocRef(infoType)) {
       HighlightDisplayKey javadocKey = HighlightDisplayKey.find(JavaDocReferenceInspection.SHORT_NAME);
       LOG.assertTrue(javadocKey != null);
       if (InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile).getErrorLevel(javadocKey) ==
@@ -257,6 +258,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     return false;
+  }
+
+  private static boolean isWrongJavadocRef(final HighlightInfoType infoType) {
+    return infoType.getAttributesKey() == HighlightInfoType.JAVADOC_WRONG_REF.getAttributesKey();
   }
 
   private static boolean showAddImportHint(Editor editor, PsiJavaCodeReferenceElement ref) {
@@ -391,6 +396,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private static boolean canBeHint(HighlightInfoType type) {
-    return type == HighlightInfoType.WRONG_REF || type.getAttributesKey() == HighlightInfoType.JAVADOC_WRONG_REF.getAttributesKey();
+    return type == HighlightInfoType.WRONG_REF || isWrongJavadocRef(type);
   }
 }
