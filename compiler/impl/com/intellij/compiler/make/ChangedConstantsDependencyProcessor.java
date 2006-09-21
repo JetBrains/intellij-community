@@ -222,7 +222,14 @@ public class ChangedConstantsDependencyProcessor {
     while (!(element instanceof PsiFile)) {
       if (element instanceof PsiClass && element.getParent() instanceof PsiJavaFile) { // top-level class
         final PsiClass psiClass = (PsiClass)element;
-        return StdLanguages.JAVA.equals(psiClass.getLanguage())? psiClass : null;
+        if (PsiUtil.isInJspFile(psiClass)) {
+          return null;
+        }
+        final PsiFile containingFile = psiClass.getContainingFile();
+        if (containingFile == null) {
+          return null;
+        }
+        return StdLanguages.JAVA.equals(containingFile.getLanguage())? psiClass : null;
       }
       element = element.getParent();
     }
