@@ -427,7 +427,7 @@ public class VirtualFileImpl extends VirtualFile {
     refresh(asynchronous, recursive, false, postRunnable);
   }
 
-  public boolean nameEquals(String name) {
+  public boolean nameEquals(@NotNull String name) {
     return SystemInfo.isFileSystemCaseSensitive ? getName().equals(name) : getName().equalsIgnoreCase(name);
   }
 
