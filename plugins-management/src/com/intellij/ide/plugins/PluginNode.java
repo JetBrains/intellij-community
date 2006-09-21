@@ -2,6 +2,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import java.util.List;
  */
 public class PluginNode implements IdeaPluginDescriptor {
   public static final int STATUS_UNKNOWN = 0;
-  public static final int STATUS_OUT_OF_DATE = 1;
+  public static final int STATUS_INSTALLED = 1;
   public static final int STATUS_MISSING = 2;
   public static final int STATUS_CURRENT = 3;
   public static final int STATUS_NEWEST = 4;
@@ -223,46 +224,57 @@ public class PluginNode implements IdeaPluginDescriptor {
     return id;
   }
 
+  @Nullable
   public ClassLoader getPluginClassLoader() {
     return null;
   }
 
+  @Nullable
   public File getPath() {
     return null;
   }
 
+  @Nullable
   public PluginId[] getDependentPluginIds() {
     return null;
   }
 
+  @Nullable
   public PluginId[] getOptionalDependentPluginIds() {
     return null;
   }
 
+  @Nullable
   public String getResourceBundleBaseName() {
     return null;
   }
 
+  @Nullable
   public Element getActionsDescriptionElement() {
     return null;
   }
 
+  @Nullable
   public Element getAppComponents() {
     return null;
   }
 
+  @Nullable
   public Element getProjectComponents() {
     return null;
   }
 
+  @Nullable
   public Element getModuleComponents() {
     return null;
   }
 
+  @Nullable
   public HelpSetPath[] getHelpSets() {
     return null;
   }
 
+  @Nullable
   public String getVendorLogoPath() {
     return null;
   }

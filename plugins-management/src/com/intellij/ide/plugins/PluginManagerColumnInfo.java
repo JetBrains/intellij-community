@@ -2,6 +2,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
@@ -266,14 +267,16 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         if (descriptor instanceof IdeaPluginDescriptorImpl) {
           final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
           if (ideaPluginDescriptor.isDeleted()) {
-            setForeground(Color.lightGray);
+            setForeground(FileStatus.COLOR_MISSING);
           } else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
-            setForeground(Color.blue);
+            setForeground(FileStatus.COLOR_MODIFIED);
           }
         } else if (descriptor instanceof PluginNode) {
           final PluginNode pluginNode = (PluginNode)descriptor;
           if (pluginNode.getStatus() == PluginNode.STATUS_DOWNLOADED){
-            setForeground(Color.blue);
+            setForeground(FileStatus.COLOR_ADDED);
+          } else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
+            setForeground(FileStatus.COLOR_MODIFIED);
           }
         }
       }
