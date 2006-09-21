@@ -98,7 +98,10 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
   };
 
   private final static ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[]{
-    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND)
+    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.full.coverage"), CodeInsightColors.LINE_FULL_COVERAGE, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"), CodeInsightColors.LINE_PARTIAL_COVERAGE, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE, ColorDescriptor.Kind.FOREGROUND)
   };
 
   @NonNls private final static Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
@@ -148,7 +151,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.error"), CodeInsightColors.ERRORS_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.info"), CodeInsightColors.INFO_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));  
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
     final Collection<HighlightInfoType.HighlightInfoTypeImpl> infoTypes = SeverityRegistrar.getRegisteredHighlightingInfoTypes();
     for (HighlightInfoType type : infoTypes) {
       descriptors.add(new AttributesDescriptor(type.getSeverity(null).toString(), type.getAttributesKey()));

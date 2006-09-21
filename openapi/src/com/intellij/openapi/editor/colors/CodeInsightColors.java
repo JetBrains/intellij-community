@@ -56,4 +56,7 @@ public interface CodeInsightColors {
 
 // Colors
   ColorKey METHOD_SEPARATORS_COLOR = ColorKey.createColorKey("METHOD_SEPARATORS_COLOR");
+  ColorKey LINE_FULL_COVERAGE = ColorKey.createColorKey("LINE_FULL_COVERAGE");
+  ColorKey LINE_PARTIAL_COVERAGE = ColorKey.createColorKey("LINE_PARTIAL_COVERAGE");
+  ColorKey LINE_NONE_COVERAGE = ColorKey.createColorKey("LINE_NONE_COVERAGE");
 }

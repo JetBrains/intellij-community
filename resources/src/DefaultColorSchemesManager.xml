@@ -21,6 +21,10 @@
 
       <option name="ADDED_LINES_COLOR" value="edfced"/>
       <option name="MODIFIED_LINES_COLOR" value="fcf2f2"/>
+
+      <option name="LINE_FULL_COVERAGE" value="ccffcc"/>
+      <option name="LINE_PARTIAL_COVERAGE" value="ffffcc"/>
+      <option name="LINE_NONE_COVERAGE" value="ffcccc"/>
     </colors>
 
     <attributes>
