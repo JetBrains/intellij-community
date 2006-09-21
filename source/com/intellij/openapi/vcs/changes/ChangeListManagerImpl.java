@@ -222,6 +222,24 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final VcsDirtyScopeManagerImpl dirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject));
       final boolean wasEverythingDirty = dirtyScopeManager.isEverythingDirty();
       final List<VcsDirtyScope> scopes = dirtyScopeManager.retreiveScopes();
+
+      final UnversionedFilesHolder unversionedHolder;
+      final DeletedFilesHolder deletedHolder;
+
+      if (updateUnversionedFiles) {
+        unversionedHolder = myUnversionedFilesHolder.copy();
+        deletedHolder = myDeletedFilesHolder.copy();
+
+        if (wasEverythingDirty) {
+          unversionedHolder.cleanAll();
+          deletedHolder.cleanAll();
+        }
+      }
+      else {
+        unversionedHolder = myUnversionedFilesHolder;
+        deletedHolder = myDeletedFilesHolder;
+      }
+
       for (final VcsDirtyScope scope : scopes) {
         final AbstractVcs vcs = scope.getVcs();
         if (vcs == null) continue;
@@ -239,26 +257,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           }
         });
 
-
-        final UnversionedFilesHolder unversionedHolder;
-        final DeletedFilesHolder deletedHolder;
-
-        if (updateUnversionedFiles) {
-          unversionedHolder = myUnversionedFilesHolder.copy();
-          deletedHolder = myDeletedFilesHolder.copy();
-
-          if (wasEverythingDirty) {
-            unversionedHolder.cleanAll();
-            deletedHolder.cleanAll();
-          }
-          else {
-            unversionedHolder.cleanScope(scope);
-            deletedHolder.cleanScope(scope);
-          }
-        }
-        else {
-          unversionedHolder = myUnversionedFilesHolder;
-          deletedHolder = myDeletedFilesHolder;
+        if (updateUnversionedFiles && !wasEverythingDirty) {
+          unversionedHolder.cleanScope(scope);
+          deletedHolder.cleanScope(scope);
         }
 
         try {
