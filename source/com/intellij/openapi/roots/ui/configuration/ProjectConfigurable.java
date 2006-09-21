@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
@@ -22,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -56,12 +58,11 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   private ProjectJdkConfigurable myProjectJdkConfigurable;
   private JRadioButton myRbRelativePaths;
 
-  @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myRbAbsolutePaths;
 
   private FieldPanel myProjectCompilerOutput;
 
-  private ProjectConfigurable.MyJPanel myPanel;
+  private MyJPanel myPanel;
 
   private Alarm myUpdateWarningAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
@@ -82,7 +83,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   }
 
   private void init(final ProjectJdksModel model) {
-    myPanel = new ProjectConfigurable.MyJPanel();
+    myPanel = new MyJPanel();
     myPanel.setPreferredSize(new Dimension(700, 500));
 
     myRbRelativePaths.setText(ProjectBundle.message("module.paths.outside.module.dir.relative.radio"));
@@ -109,6 +110,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   }
 
   public void disposeUIResources() {
+    myUpdateWarningAlarm.cancelAllRequests();
     if (myProjectJdkConfigurable != null) {
       myProjectJdkConfigurable.disposeUIResources();
     }
@@ -116,7 +118,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
 
   public void reset() {
     myProjectJdkConfigurable.reset();
-    final String compilerOutput = ProjectRootManagerEx.getInstance(myProject).getCompilerOutputUrl();
+    final String compilerOutput = ProjectRootManager.getInstance(myProject).getCompilerOutputUrl();
     if (compilerOutput != null) {
       myProjectCompilerOutput.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutput)));
     }
@@ -128,33 +130,37 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
     myUpdateWarningAlarm.cancelAllRequests();
     myUpdateWarningAlarm.addRequest(new Runnable() {
       public void run() {
-        final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myModulesConfigurator.createGraphGenerator());
-        final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
-        String cycles = "";
-        int count = 0;
-        for (Chunk<ModifiableRootModel> chunk : chunks) {
-          final Set<ModifiableRootModel> modules = chunk.getNodes();
-          String cycle = "";
-          for (ModifiableRootModel model : modules) {
-            cycle += ", " + model.getModule().getName();
-          }
-          if (modules.size() > 1) {
-            @NonNls final String br = "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
-            cycles += br + (++count) + ". " + cycle.substring(2);            
-          }
-        }
-        @NonNls final String leftBrace = "<html>";
-        @NonNls final String rightBrace = "</html>";
-        final String warningMessage =
-          leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
-        final int count1=count;
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().runReadAction(new Runnable(){
           public void run() {
-            myWarningLabel.setIcon(count1 > 0 ? Messages.getWarningIcon() : null);
-            myWarningLabel.setText(warningMessage);
-            myWarningLabel.repaint();}
+            final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myModulesConfigurator.createGraphGenerator());
+            final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
+            String cycles = "";
+            int count = 0;
+            for (Chunk<ModifiableRootModel> chunk : chunks) {
+              final Set<ModifiableRootModel> modules = chunk.getNodes();
+              String cycle = "";
+              for (ModifiableRootModel model : modules) {
+                cycle += ", " + model.getModule().getName();
+              }
+              if (modules.size() > 1) {
+                @NonNls final String br = "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
+                cycles += br + (++count) + ". " + cycle.substring(2);
+              }
+            }
+            @NonNls final String leftBrace = "<html>";
+            @NonNls final String rightBrace = "</html>";
+            final String warningMessage =
+              leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
+            final int count1=count;
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                myWarningLabel.setIcon(count1 > 0 ? Messages.getWarningIcon() : null);
+                myWarningLabel.setText(warningMessage);
+                myWarningLabel.repaint();}
+              }
+            );
           }
-        );
+        });
       }
     }, 300);
   }
@@ -230,7 +236,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
     if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtil.urlToPath(compilerOutput)),
                             FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;
-    return (((ProjectEx)myProject).isSavePathsRelative() != myRbRelativePaths.isSelected());
+    return ((ProjectEx)myProject).isSavePathsRelative() != myRbRelativePaths.isSelected();
   }
 
   private void createUIComponents() {
@@ -239,17 +245,8 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
     final FileChooserDescriptor outputPathsChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     outputPathsChooserDescriptor.setHideIgnored(false);
-    myProjectCompilerOutput = new FieldPanel(textField, null,
-                                             null,
-                                             new BrowseFilesListener(textField,
-                                                                     "",
-                                                                     ProjectBundle.message("project.compiler.output"),
-                                                                     outputPathsChooserDescriptor),
-                                             new Runnable() {
-                                                public void run() {
-                                                  //do nothing
-                                                }
-                                              });
+    BrowseFilesListener listener = new BrowseFilesListener(textField, "", ProjectBundle.message("project.compiler.output"), outputPathsChooserDescriptor);
+    myProjectCompilerOutput = new FieldPanel(textField, null, null, listener, EmptyRunnable.getInstance());
   }
 
   public void setStartModuleWizardOnShow(final boolean show) {
