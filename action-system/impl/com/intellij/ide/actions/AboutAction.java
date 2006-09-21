@@ -24,6 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 import java.text.DateFormat;
 
 public class AboutAction extends AnAction {
@@ -111,17 +112,49 @@ public class AboutAction extends AnAction {
     dialog.setVisible(true);
   }
 
+  private static class AboutBoxLine {
+    private String myText;
+    private boolean myBold;
+    private boolean myLink;
+
+    public AboutBoxLine(final String text, final boolean bold, final boolean link) {
+      myLink = link;
+      myText = text;
+      myBold = bold;
+    }
+
+    public AboutBoxLine(final String text) {
+      myText = text;
+      myBold = false;
+      myLink = false;
+    }
+
+
+    public String getText() {
+      return myText;
+    }
+
+    public boolean isBold() {
+      return myBold;
+    }
+
+    public boolean isLink() {
+      return myLink;
+    }
+  }
+
   private static class InfoSurface extends AnimatingSurface {
-    final Color col = new Color(69, 86, 156, 200);
-    final Color linkCol = new Color(255, 255, 128, 200);
-    final int UP = 0;
-    final int DOWN = 1;
+    final Color col;
+    final Color linkCol;
+    static final int UP = 0;
+    static final int DOWN = 1;
     private Image myImage;
     private float myAlpha;
     private int myAlphaDirection = UP;
     private Font myFont;
     private Font myBoldFont;
-    private String q[] = new String[12];
+    private List<AboutBoxLine> myLines = new ArrayList<AboutBoxLine>();
+    private int linkX;
     private int linkY;
     private int linkWidth;
     private boolean inLink = false;
@@ -132,28 +165,33 @@ public class AboutAction extends AnAction {
 
       myAlpha = 0f;
       setOpaque(true);
+      //col = new Color(0xfa, 0xfa, 0xfa, 200);
+      col = Color.white;
+      linkCol = Color.blue;
       setBackground(col);
       ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       Calendar cal = ideInfo.getBuildDate();
-      q[0] = ideInfo.getFullApplicationName();
-      q[1] = IdeBundle.message("aboutbox.build.number", ideInfo.getBuildNumber());
-      q[2] = IdeBundle.message("aboutbox.build.date", DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime()));
-      q[3] = LicenseManager.getInstance().licensedToMessage();
-      q[4] = LicenseManager.getInstance().licensedRestrictionsMessage();
-      q[5] = "";
+      myLines.add(new AboutBoxLine(ideInfo.getFullApplicationName(), true, false));
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.number", ideInfo.getBuildNumber())));
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime()))));
+      myLines.add(new AboutBoxLine(""));
+      myLines.add(new AboutBoxLine(LicenseManager.getInstance().licensedToMessage(), true, false));
+      myLines.add(new AboutBoxLine(LicenseManager.getInstance().licensedRestrictionsMessage()));
+      myLines.add(new AboutBoxLine(""));
+
       {
         final Properties properties = System.getProperties();
         //noinspection HardCodedStringLiteral
-        q[6] = IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown"));
+        myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown")), true, false));
         //noinspection HardCodedStringLiteral
-        q[7] = IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"));
+        myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"))));
         //noinspection HardCodedStringLiteral
-        q[8] = IdeBundle.message("aboutbox.vendor", properties.getProperty("java.vendor", "unknown"));
+        myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vendor", properties.getProperty("java.vendor", "unknown"))));
       }
-      q[9] = "";
+      myLines.add(new AboutBoxLine(""));
       //noinspection HardCodedStringLiteral
-      q[10] = "JetBrains s.r.o.";
-      q[11] = LicenseUrls.getCompanyUrl();
+      myLines.add(new AboutBoxLine("JetBrains s.r.o.", true, false));
+      myLines.add(new AboutBoxLine(LicenseUrls.getCompanyUrl(), true, true));
       addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent event) {
           if (inLink) {
@@ -165,8 +203,8 @@ public class AboutAction extends AnAction {
       addMouseMotionListener(new MouseMotionAdapter() {
         public void mouseMoved(MouseEvent event) {
           if (
-            event.getPoint().x > 20 && event.getPoint().y >= linkY &&
-            event.getPoint().x < 20 + linkWidth && event.getPoint().y < linkY + 10
+            event.getPoint().x > linkX && event.getPoint().y >= linkY &&
+            event.getPoint().x < linkX + linkWidth && event.getPoint().y < linkY + 10
           ) {
             if (!inLink) {
               setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -183,120 +221,27 @@ public class AboutAction extends AnAction {
       });
     }
 
-    public class TextRenderer {
-      private final int xBase;
-      private final int yBase;
-      private final int w;
-      private final int h;
-      private final Graphics2D g2;
-
-      private int x = 0, y = 0;
-      private FontMetrics fontmetrics;
-      private int fontAscent;
-      private int fontHeight;
-      private Font font;
-
-      public class Overflow extends Exception { }
-
-      public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
-        this.xBase = xBase;
-        this.yBase = yBase;
-        this.w = w;
-        this.h = h;
-        this.g2 = g2;
-        g2.fillRect(xBase, yBase, w, h);
-        g2.draw3DRect(xBase, yBase, w, h, true);
-      }
-
-
-
-      public void render(int indentX, int indentY, String[] q) throws Overflow {
-        x = indentX;
-        y = indentY;
-        g2.setColor(Color.white);
-        for (int i = 0; i < q.length; i++) {
-          final String s = q[i];
-          setFont (i == 0 || i >= q.length - 2 ? myBoldFont : myFont);
-          if (i == q.length - 1) {
-             g2.setColor(linkCol);
-             linkY = yBase + y - fontAscent;
-             FontMetrics metrics = g2.getFontMetrics(font);
-             linkWidth = metrics.stringWidth (s);
-          }
-          renderString(s, indentX);
-          lineFeed (indentX);
-        }
-      }
-
-      private void renderString(final String s, final int indentX) throws Overflow {
-        final java.util.List<String> words = StringUtil.split(s, " ");
-        for (String word : words) {
-          int wordWidth = fontmetrics.stringWidth(word);
-          if (x + wordWidth >= w) {
-            lineFeed(indentX);
-          }
-          else {
-            char c = ' ';
-            final int cW = fontmetrics.charWidth(c);
-            if (x + cW < w) {
-              g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
-              x += cW;
-            }
-          }
-          renderWord(word, indentX);
-        }
-      }
-
-      private void renderWord(final String s, final int indentX) throws Overflow {
-        for (int j = 0; j != s.length(); ++ j) {
-          final char c = s.charAt(j);
-          final int cW = fontmetrics.charWidth(c);
-          if (x + cW >= w) {
-            lineFeed(indentX);
-          }
-          g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
-          x += cW;
-        }
-      }
-
-      private void lineFeed(int indent) throws Overflow {
-        x = indent;
-        y += fontHeight;
-        if (y + fontHeight >= h)
-          throw new Overflow();
-      }
-
-      private void setFont(Font font) {
-        this.font = font;
-        fontmetrics =  g2.getFontMetrics(font);
-        g2.setFont (font);
-        fontAscent = fontmetrics.getAscent();
-        fontHeight = fontmetrics.getHeight();
-      }
-    }
-
     public void render(int w, int h, Graphics2D g2) {
       AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha);
       g2.setComposite(ac);
 
       //noinspection HardCodedStringLiteral
       Font labelFont = UIUtil.getLabelFont();
-      Loop:
       for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
         g2.setPaint(col);
         g2.drawImage(myImage, 0, 0, this);
         g2.setColor(col);
-        int startY = (int)(-250 * (1.0f - myAlpha) + 20);
-        TextRenderer renderer = new TextRenderer(15, startY, 190, 250, g2);
+        int startX = (int)(-300 * (1.0f - myAlpha) + 1);
+        TextRenderer renderer = new TextRenderer(startX, 145, 398, 135, g2);
         g2.setComposite(AlphaComposite.Src);
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize+1);
         try {
-          renderer.render (20, 25, q);
+          renderer.render (75, 0, myLines);
           break;
         }
-        catch (TextRenderer.Overflow _) {
-          continue Loop;
+        catch (TextRenderer.OverflowException _) {
+          // ignore
         }
       }
     }
@@ -312,6 +257,113 @@ public class AboutAction extends AnAction {
       }
       else if (myAlphaDirection == DOWN) {
         stop();
+      }
+    }
+
+    public class TextRenderer {
+      private final int xBase;
+      private final int yBase;
+      private final int w;
+      private final int h;
+      private final Graphics2D g2;
+
+      private int x = 0;
+      private int y = 0;
+      private FontMetrics fontmetrics;
+      private int fontAscent;
+      private int fontHeight;
+      private Font font;
+
+      public class OverflowException extends Exception { }
+
+      public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
+        this.xBase = xBase;
+        this.yBase = yBase;
+        this.w = w;
+        this.h = h;
+        this.g2 = g2;
+        g2.fillRect(xBase, yBase, w, h);
+        if (SystemInfo.isWindows) {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF); 
+        }
+      }
+
+
+
+      public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
+        x = indentX;
+        y = indentY;
+        g2.setColor(Color.black);
+        for (int i = 0; i < lines.size(); i++) {
+          AboutBoxLine line = lines.get(i);
+          final String s = line.getText();
+          setFont (line.isBold() ? myBoldFont : myFont);
+          if (line.isLink()) {
+            g2.setColor(linkCol);
+            linkX = x;
+            linkY = yBase + y - fontAscent;
+            FontMetrics metrics = g2.getFontMetrics(font);
+            linkWidth = metrics.stringWidth (s);
+          }
+          renderString(s, indentX);
+          if (i == lines.size()-2) {
+            x += 50;
+          }
+          else if (i < lines.size()-1) {
+            lineFeed (indentX, s);
+          }
+        }
+      }
+
+      private void renderString(final String s, final int indentX) throws OverflowException {
+        final List<String> words = StringUtil.split(s, " ");
+        for (String word : words) {
+          int wordWidth = fontmetrics.stringWidth(word);
+          if (x + wordWidth >= w) {
+            lineFeed(indentX, word);
+          }
+          else {
+            char c = ' ';
+            final int cW = fontmetrics.charWidth(c);
+            if (x + cW < w) {
+              g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
+              x += cW;
+            }
+          }
+          renderWord(word, indentX);
+        }
+      }
+
+      private void renderWord(final String s, final int indentX) throws OverflowException {
+        for (int j = 0; j != s.length(); ++ j) {
+          final char c = s.charAt(j);
+          final int cW = fontmetrics.charWidth(c);
+          if (x + cW >= w) {
+            lineFeed(indentX, s);
+          }
+          g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
+          x += cW;
+        }
+      }
+
+      private void lineFeed(int indent, final String s) throws OverflowException {
+        x = indent;
+        if (s.length() == 0) {
+          y += fontHeight/2;
+        }
+        else {
+          y += fontHeight;
+        }
+        if (y >= h)
+          throw new OverflowException();
+      }
+
+      private void setFont(Font font) {
+        this.font = font;
+        fontmetrics =  g2.getFontMetrics(font);
+        g2.setFont (font);
+        fontAscent = fontmetrics.getAscent();
+        fontHeight = fontmetrics.getHeight();
       }
     }
   }
