@@ -344,11 +344,14 @@ public abstract class DialogWrapper {
   protected void dispose() {
     synchronized (ourLock) {
       final JRootPane rootPane = getRootPane();
-      final KeyStroke[] strokes = rootPane.getRegisteredKeyStrokes();
-      for (KeyStroke keyStroke : strokes) {
-        rootPane.unregisterKeyboardAction(keyStroke);
+      // if rootPane = null, dialog has already been disposed
+      if (rootPane != null) {
+        final KeyStroke[] strokes = rootPane.getRegisteredKeyStrokes();
+        for (KeyStroke keyStroke : strokes) {
+          rootPane.unregisterKeyboardAction(keyStroke);
+        }
+        myPeer.dispose();
       }
-      myPeer.dispose();
     }
   }
 
