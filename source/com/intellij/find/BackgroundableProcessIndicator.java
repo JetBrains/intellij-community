@@ -6,13 +6,14 @@
  */
 package com.intellij.find;
 
-import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,22 +24,34 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private volatile boolean myIsBackground;
   protected final String myBackgroundStopButtonTooltip;
+  private PerformInBackgroundOption myOption;
 
   public BackgroundableProcessIndicator(Project project,
                                         @Nls String progressTitle,
+                                        @NotNull PerformInBackgroundOption option,
                                         @Nls String cancelButtonText,
                                         @Nls String backgroundStopTooltip) {
     super (true, true, project, cancelButtonText);
+    myOption = option;
     setTitle(progressTitle);
     myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
-    if (GeneralSettings.getInstance().isSearchInBackground()) {
+    if (option.shouldStartInBackground()) {
       doBackground();
     }
 
     myBackgroundStopButtonTooltip = backgroundStopTooltip;
   }
 
+  protected void showDialog() {
+    if (myOption.shouldStartInBackground()) {
+      return;
+    }
+
+    super.showDialog();
+  }
+
   public void background() {
+    myOption.processSentToBackground();
     doBackground();
     super.background();
   }

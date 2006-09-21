@@ -7,16 +7,14 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressFunComponentProvider;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,9 +184,18 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
                                                    @NotNull final Runnable process,
                                                    @Nullable final Runnable successRunnable,
                                                    @Nullable final Runnable canceledRunnable) {
+    runProcessWithProgressAsynchronously(project, progressTitle, process, successRunnable, canceledRunnable, PerformInBackgroundOption.DEAF);
+  }
 
+  public void runProcessWithProgressAsynchronously(final @NotNull Project project,
+                                                   final @NotNull @Nls String progressTitle,
+                                                   final @NotNull Runnable process,
+                                                   final @Nullable Runnable successRunnable,
+                                                   final @Nullable Runnable canceledRunnable,
+                                                   final @NotNull PerformInBackgroundOption option) {
     final ProgressIndicator progressIndicator = new BackgroundableProcessIndicator(project,
                                                                                    progressTitle,
+                                                                                   option,
                                                                                    "Cancel",
                                                                                    "Stop " + progressTitle);
 
@@ -207,7 +214,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
           ApplicationManager.getApplication().invokeLater(canceledRunnable, ModalityState.NON_MODAL);
         }
         else if (!canceled && successRunnable != null) {
-          ApplicationManager.getApplication().invokeLater(successRunnable, ModalityState.NON_MODAL);          
+          ApplicationManager.getApplication().invokeLater(successRunnable, ModalityState.NON_MODAL);
         }
       }
     };

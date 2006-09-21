@@ -6,19 +6,19 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Computable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,7 +74,7 @@ public class CommitHelper {
               ProjectLevelVcsManager.getInstance(myProject).stopBackgroundVcsOperation();
             }
           }
-        }, null, null);
+        }, null, null, VcsConfiguration.getInstance(myProject).getCommitOption());
     }
   }
 

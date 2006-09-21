@@ -1,6 +1,5 @@
 package com.intellij.openapi.progress.util;
 
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -144,10 +143,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
     if (!isRunning() || isCanceled()) {
       return;
     }
-    
-    if (myShouldShowBackground && GeneralSettings.getInstance().isSearchInBackground()) {
-      return;
-    }
 
     final JComponent cmp = ProgressManager.getInstance().getProvidedFunComponent(myProject, "<unknown>");
     if (cmp != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -193,7 +188,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
   public void background() {
     if (myDialog != null) {
-      GeneralSettings.getInstance().setSearchInBackground(true);
       myBackgrounded = true;
       myDialog.background();
       myDialog = null;

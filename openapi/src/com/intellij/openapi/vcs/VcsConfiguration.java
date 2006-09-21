@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -36,6 +37,8 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
+  public boolean PERFORM_UPDATE_IN_BACKGROUND = false;
+  public boolean PERFORM_COMMIT_IN_BACKGROUND = false;
 
   public enum StandardOption {
     CHECKIN(VcsBundle.message("vcs.command.name.checkin")),
@@ -97,6 +100,9 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public float FILE_HISTORY_SPLITTER_PROPORTION = 0.6f;
   private static final int MAX_STORED_MESSAGES = 10;
   @NonNls private static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
+
+  private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
+  private final PerformInBackgroundOption myCommitOption = new CommitInBackgroundOption();
 
   public static VcsConfiguration createEmptyConfiguration(Project project) {
     return new VcsConfiguration(project);
@@ -197,5 +203,32 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
   public void removeMessage(final String content) {
     myLastCommitMessages.remove(content);
+  }
+
+
+  public PerformInBackgroundOption getUpdateOption() {
+    return myUpdateOption;
+  }
+
+  public PerformInBackgroundOption getCommitOption() {
+    return myCommitOption;
+  }
+
+  private class UpdateInBackgroundOption implements PerformInBackgroundOption {
+    public boolean shouldStartInBackground() {
+      return PERFORM_UPDATE_IN_BACKGROUND;
+    }
+
+    public void processSentToBackground() {}
+    public void processRestoredToForeground() {}
+  }
+
+  private class CommitInBackgroundOption implements PerformInBackgroundOption {
+    public boolean shouldStartInBackground() {
+      return PERFORM_COMMIT_IN_BACKGROUND;
+    }
+
+    public void processSentToBackground() {}
+    public void processRestoredToForeground() {}
   }
 }

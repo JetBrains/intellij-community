@@ -43,6 +43,8 @@ public class VcsGeneralConfigurationPanel {
   private JPanel myRemoveConfirmationPanel;
   private JPanel myAddConfirmationPanel;
   private JCheckBox myCbOfferToMoveChanges;
+  private JCheckBox myCbUpdateInBackground;
+  private JCheckBox myCbCommitInBackground;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -95,6 +97,8 @@ public class VcsGeneralConfigurationPanel {
     settings.SAVE_LAST_COMMIT_MESSAGE = myReuseLastComment.isSelected();
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
+    settings.PERFORM_COMMIT_IN_BACKGROUND = myCbCommitInBackground.isSelected();
+    settings.PERFORM_UPDATE_IN_BACKGROUND = myCbUpdateInBackground.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -145,6 +149,14 @@ public class VcsGeneralConfigurationPanel {
       return true;
     }
 
+    if (settings.PERFORM_COMMIT_IN_BACKGROUND != myCbCommitInBackground.isSelected()) {
+      return true;
+    }
+
+    if (settings.PERFORM_UPDATE_IN_BACKGROUND != myCbUpdateInBackground.isSelected()) {
+      return true;
+    }
+
     if (getReadOnlyStatusHandler().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
     }
@@ -166,6 +178,8 @@ public class VcsGeneralConfigurationPanel {
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().SHOW_DIALOG);
+    myCbCommitInBackground.setSelected(settings.PERFORM_COMMIT_IN_BACKGROUND);
+    myCbUpdateInBackground.setSelected(settings.PERFORM_UPDATE_IN_BACKGROUND);
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());

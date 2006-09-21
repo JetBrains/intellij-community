@@ -184,7 +184,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           }
         };
 
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, getCompleteActionName(context), updateProcess, finishRunnable, finishRunnable);
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, getCompleteActionName(context), updateProcess,
+                                                                           finishRunnable, finishRunnable,
+                                                                           VcsConfiguration.getInstance(project).getUpdateOption());
       }
       catch (ProcessCanceledException e1) {
         //ignore

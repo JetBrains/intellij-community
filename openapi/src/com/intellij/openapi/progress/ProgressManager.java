@@ -81,4 +81,23 @@ public abstract class ProgressManager {
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
+  /**
+   * Runs a scpecified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing
+   * background button. Upon successfull termination of the process a <code>successRunnable</code> will be called in Swing UI thread and
+   * <code>canceledRunnable</code> will be called if terminated on behalf of the user by pressing either cancel button, while running in
+   * a modal state or stop button if running in background.
+   *
+   * @param project          the project in the context of which the operation is executed.
+   * @param progressTitle    the title of the progress window.
+   * @param process          the operation to execute.
+   * @param successRunnable  a callback to be called in Swing UI thread upon normal termination of the process.
+   * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
+   * @param option           progress indicator behavior controller.
+   */
+  public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
+                                                            @NotNull @Nls String progressTitle,
+                                                            @NotNull Runnable process,
+                                                            @Nullable Runnable successRunnable,
+                                                            @Nullable Runnable canceledRunnable,
+                                                            @NotNull PerformInBackgroundOption option);
 }
