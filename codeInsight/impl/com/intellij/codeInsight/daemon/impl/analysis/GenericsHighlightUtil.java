@@ -551,7 +551,7 @@ public class GenericsHighlightUtil {
       final PsiClass castClass = castResult.getElement();
 
       if (operandClass == null || castClass == null) return false;
-      if (operandClass instanceof PsiTypeParameter || castClass instanceof PsiTypeParameter) return true;
+      if (castClass instanceof PsiTypeParameter) return true;
 
       if (castClassType.hasNonTrivialParameters()) {
         if (operandClassType.isRaw()) return true;
