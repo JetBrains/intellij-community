@@ -19,10 +19,10 @@ import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.idea.svn.SvnEntriesListener;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,7 +31,7 @@ import java.util.List;
 public class SvnFileAnnotation implements FileAnnotation {
   private final StringBuffer myContentBuffer = new StringBuffer();
   private final List<LineInfo> myLineInfos = new ArrayList<LineInfo>();
-  private static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT);
+  private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT));
 
   private final SvnVcs myVcs;
 

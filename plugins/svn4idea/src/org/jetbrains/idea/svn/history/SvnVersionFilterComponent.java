@@ -23,7 +23,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DateFormat;
 
 public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
   private JCheckBox myUseAuthorFilter;
@@ -33,7 +32,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
   private final Project myProject;
 
   public SvnVersionFilterComponent(Project project) {
-    super(project, DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
+    super(project);
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(getStandardPanel(), BorderLayout.CENTER);
     myProject = project;
