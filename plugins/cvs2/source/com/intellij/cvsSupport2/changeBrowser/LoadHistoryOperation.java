@@ -6,19 +6,21 @@ import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
+import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
-  @NonNls private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+  @NonNls private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US));
 
   private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<String>();
 

@@ -1,14 +1,13 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsEdit;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.text.SyncDateFormat;
+import org.jetbrains.annotations.NonNls;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -18,9 +17,9 @@ public class EditorInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorInfo");
 
   @NonNls private static final String FORMAT = "EEE MMM dd HH:mm:ss yyyy zzz";
-  public final static DateFormat DATE_FORMAT = new SimpleDateFormat(FORMAT, Locale.US);
+  public final static SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(FORMAT, Locale.US));
   @NonNls private static final String FORMAT1 = "dd MMM yyyy HH:mm:ss zzz";
-  public final static DateFormat DATE_FORMAT1 = new SimpleDateFormat(FORMAT1, Locale.US);
+  public final static SyncDateFormat DATE_FORMAT1 = new SyncDateFormat(new SimpleDateFormat(FORMAT1, Locale.US));
 
   private final String myFilePath;
   private final String myUserName;

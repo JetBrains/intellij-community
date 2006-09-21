@@ -12,6 +12,7 @@
  */
 package org.netbeans.lib.cvsclient.command.log;
 
+import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
@@ -24,6 +25,7 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
@@ -56,7 +58,7 @@ final public class LogMessageParser extends AbstractMessageParser {
   @NonNls private static final String FINAL_SPLIT = "=============";
   @NonNls private static final String FINAL_SPLIT_WITH_TAB = "\t=============";
 
-  private static final SimpleDateFormat[] EXPECTED_DATE_FORMATS = new SimpleDateFormat[3];
+  private static final SyncDateFormat[] EXPECTED_DATE_FORMATS = new SyncDateFormat[3];
   @NonNls private static final String NO_FILE_MESSAGE = "no file";
 
   static {
@@ -65,10 +67,10 @@ final public class LogMessageParser extends AbstractMessageParser {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initDateFormats() {
-    EXPECTED_DATE_FORMATS[0] = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    EXPECTED_DATE_FORMATS[0] = new SyncDateFormat(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US));
     EXPECTED_DATE_FORMATS[0].setTimeZone(TimeZone.getTimeZone("GMT"));
 
-    EXPECTED_DATE_FORMATS[1] = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    EXPECTED_DATE_FORMATS[1] = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US));
     EXPECTED_DATE_FORMATS[1].setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
@@ -318,7 +320,7 @@ final public class LogMessageParser extends AbstractMessageParser {
       final String date = token.nextToken();
       final String dateString = date.substring(DATE.length());
       Date parsedDate = null;
-      for (SimpleDateFormat expectedDateFormat : EXPECTED_DATE_FORMATS) {
+      for (SyncDateFormat expectedDateFormat : EXPECTED_DATE_FORMATS) {
         try {
           parsedDate = expectedDateFormat.parse(dateString);
         }

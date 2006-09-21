@@ -14,6 +14,7 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.admin;
 
+import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.ParseException;
@@ -51,9 +52,9 @@ public final class Entry implements Cloneable {
   // Static =================================================================
 
   @NonNls private static final String DATE_FORMAT_STR = "yyyy.MM.dd.hh.mm.ss";
-  private static final SimpleDateFormat STICKY_DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STR);
+  private static final SyncDateFormat STICKY_DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(DATE_FORMAT_STR));
 
-  private static SimpleDateFormat lastModifiedDateFormatter;
+  private static SyncDateFormat lastModifiedDateFormatter;
   private boolean isAddedFile = false;
   private boolean isRemoved = false;
   private boolean isResultOfMerge = false;
@@ -61,19 +62,16 @@ public final class Entry implements Cloneable {
   @NonNls private static final String TIME_ZONE_FORMAT_STR = "GMT+0000";
   @NonNls private static final String INITIAL_PREFIX = "Initial ";
 
-  public static SimpleDateFormat getLastModifiedDateFormatter() {
+  public static SyncDateFormat getLastModifiedDateFormatter() {
     if (lastModifiedDateFormatter == null) {
-      lastModifiedDateFormatter = new SimpleDateFormat(LAST_MODIFIED_DATE_FORMAT_ATR, Locale.US);
+      lastModifiedDateFormatter = new SyncDateFormat(new SimpleDateFormat(LAST_MODIFIED_DATE_FORMAT_ATR, Locale.US));
       lastModifiedDateFormatter.setTimeZone(TimeZone.getTimeZone(TIME_ZONE_FORMAT_STR));
     }
     return lastModifiedDateFormatter;
   }
 
   public static String formatLastModifiedDate(Date date) {
-    final SimpleDateFormat formatter = getLastModifiedDateFormatter();
-    synchronized (formatter) {
-      return formatter.format(date);
-    }
+    return getLastModifiedDateFormatter().format(date);
   }
 
   public static Entry createDirectoryEntry(String directoryName) {

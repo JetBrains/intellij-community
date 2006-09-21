@@ -12,12 +12,12 @@
  */
 package org.netbeans.lib.cvsclient.request;
 
+import com.intellij.util.text.SyncDateFormat;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.net.InetAddress;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -32,24 +32,24 @@ public final class NotifyRequest extends AbstractRequest {
 
 	// Constants ==============================================================
 
-	private static final DateFormat DATE_FORMAT;
+	private static final SyncDateFormat DATE_FORMAT;
 	private static final String HOST_NAME;
 
         @NonNls private static final String DATE_FORMAT_STR = "EEE MMM dd hh:mm:ss yyyy z";
 
         static {
-          DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STR, Locale.US);
+          DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(DATE_FORMAT_STR, Locale.US));
 
           // detect host name
           String hostName = "";
           try {
-                  hostName = InetAddress.getLocalHost().getHostName();
+            hostName = InetAddress.getLocalHost().getHostName();
           }
           catch (Exception ex) {
-                  ex.printStackTrace();
+            ex.printStackTrace();
           }
           HOST_NAME = hostName;
-  }
+        }
 
 	// Fields =================================================================
 

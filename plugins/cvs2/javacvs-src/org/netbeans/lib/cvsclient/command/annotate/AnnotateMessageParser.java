@@ -12,14 +12,14 @@
  */
 package org.netbeans.lib.cvsclient.command.annotate;
 
+import com.intellij.util.text.SyncDateFormat;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,7 +39,7 @@ final class AnnotateMessageParser extends AbstractMessageParser {
 	private static final String SEPARATOR1 = " (";
 	private static final String SEPARATOR2 = "): ";
         @NonNls private static final String ANNOTATIONS_DATE_FORMAT_STR = "dd-MMM-yy";
-        private static final DateFormat DATE_FORMAT = new SimpleDateFormat(ANNOTATIONS_DATE_FORMAT_STR, Locale.US);
+        private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(ANNOTATIONS_DATE_FORMAT_STR, Locale.US));
 
 
 	// Fields =================================================================

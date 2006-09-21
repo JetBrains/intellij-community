@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
@@ -34,7 +35,7 @@ import java.util.*;
  */
 public class CvsUtil {
 
-  private final static SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(Entry.getLastModifiedDateFormatter().toPattern(), Locale.US);
+  private final static SyncDateFormat DATE_FORMATTER = new SyncDateFormat(new SimpleDateFormat(Entry.getLastModifiedDateFormatter().toPattern(), Locale.US));
 
   static {
     //noinspection HardCodedStringLiteral

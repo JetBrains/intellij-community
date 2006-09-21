@@ -12,6 +12,8 @@
  */
 package org.netbeans.lib.cvsclient.command.reservedcheckout;
 
+import com.intellij.util.text.SyncDateFormat;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
@@ -20,10 +22,8 @@ import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.DirectoryObject;
 import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -36,7 +36,7 @@ final class EditorsMessageParser extends AbstractMessageParser {
 	// Constants ==============================================================
 
   @NonNls private static final String DATE_FORMAT_STR = "MMM dd hh:mm:ss yyyy";
-  private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STR, Locale.US);
+  private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(DATE_FORMAT_STR, Locale.US));
 
 	// Fields =================================================================
 

@@ -5,18 +5,17 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.util.text.SyncDateFormat;
 import com.intellij.util.ui.SelectDateDialog;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -24,11 +23,10 @@ import org.jetbrains.annotations.NonNls;
 public class DateOrRevisionOrTagSettings {
 
   @NonNls private static final String FORMAT = "EEE MMM dd HH:mm:ss yyyy";
-  private static final DateFormat CVS_FORMAT =
-    new SimpleDateFormat(FORMAT, Locale.US);
-  private static final DateFormat PRESENTABLE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT,
-                                                                                            SimpleDateFormat.SHORT,
-                                                                                            Locale.getDefault());
+  private static final SyncDateFormat CVS_FORMAT = new SyncDateFormat(new SimpleDateFormat(FORMAT, Locale.US));
+  private static final SyncDateFormat PRESENTABLE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT,
+                                                                                                                   SimpleDateFormat.SHORT,
+                                                                                                                   Locale.getDefault()));
 
   private JRadioButton myUseBranch;
   private JRadioButton myUseDate;

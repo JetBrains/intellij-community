@@ -25,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 public abstract class StandardVersionFilterComponent implements RefreshableOnComponent {
   private JPanel myPanel;
@@ -54,10 +55,20 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
 
   private final Project myProject;
 
+  /**
+   * @deprecated no dateformat parameter should be externally passed.
+   * @param project
+   * @param dateformat
+   */
   public StandardVersionFilterComponent(Project project, DateFormat dateformat) {
+    this(project);
+  }
+
+  public StandardVersionFilterComponent(Project project) {
     myProject = project;
-    myDateAfter.setDateFormat(dateformat);
-    myDateBefore.setDateFormat(dateformat);
+
+    myDateAfter.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
+    myDateBefore.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
   }
 
   protected void init() {

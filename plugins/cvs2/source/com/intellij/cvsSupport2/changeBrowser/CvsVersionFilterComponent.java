@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DateFormat;
 
 public class CvsVersionFilterComponent extends StandardVersionFilterComponent {
   private JTextField myUserField;
@@ -18,8 +17,8 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent {
   private final Project myProject;
   private JPanel myStandardPanel;
 
-  public CvsVersionFilterComponent(final Project project, final DateFormat dateformat) {
-    super(project, dateformat);
+  public CvsVersionFilterComponent(final Project project) {
+    super(project);
     myProject = project;
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(super.getDatePanel(), BorderLayout.CENTER);

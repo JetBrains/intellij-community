@@ -1,8 +1,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsAnnotate;
 
+import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -16,9 +16,11 @@ public class Annotation {
   private final String myUser;
   private final Date myDate;
 
-  public static final DateFormat PRESENTABELE_DATE_FORMAT = SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT);
+  public static final SyncDateFormat PRESENTABELE_DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT,
+                                                                                                                    Locale.getDefault()));
+
   @NonNls private static final String DATE_FORMAT_STRING = "dd-MMM-yy";
-  private final static DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
+  private final static SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US));
   public static final String CONTENT_SEPARATOR = ": ";
 
   public static Annotation createOnMessage(String message) throws ParseException {
