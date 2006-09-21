@@ -475,7 +475,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     if(LOG.isDebugEnabled()) {
       for (Iterator iterator = allThreads().iterator(); iterator.hasNext();) {
         ThreadReferenceProxyImpl thread = (ThreadReferenceProxyImpl)iterator.next();
-        LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());
+        if (!thread.isCollected()) {
+          LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());
+        }
       }
     }
   }

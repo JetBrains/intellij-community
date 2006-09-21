@@ -80,7 +80,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   }
 
   public @NonNls String toString() {
-    return "ThreadReferenceProxyImpl: " + getThreadReference().toString() + " " + super.toString();
+    final ThreadReference threadRef = getThreadReference();
+    //noinspection HardCodedStringLiteral
+    final String threadRefString = threadRef != null? threadRef.toString() : "[thread collected]";
+    return "ThreadReferenceProxyImpl: " + threadRefString + " " + super.toString();
   }
 
   public void resume() {
@@ -122,12 +125,12 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
     if (myFrameCount == -1) {
+      final ThreadReference threadReference = getThreadReference();
       try {
-        final ThreadReference threadReference = getThreadReference();
         myFrameCount = threadReference != null? threadReference.frameCount() : 0;
       }
       catch (IncompatibleThreadStateException e) {
-        if (!isSuspended()) {
+        if (!threadReference.isSuspended()) {
           // give up because it seems to be really resumed
           throw EvaluateExceptionUtil.createEvaluateException(e);
         }

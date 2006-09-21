@@ -958,16 +958,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
                 final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
                 virtualMachineProxy.logThreads();
                 LOG.debug("Invoke in " + thread.name());
-                LOG.assertTrue(thread.isSuspended(), thread.toString());
-                LOG.assertTrue(context.isEvaluating());
+                assertThreadSuspended(thread, context);
               }
               result[0] = invokeMethod(invokePolicy, myArgs);
             }
             finally {
-              if (!thread.isSuspended()) {
-                LOG.assertTrue(false, thread.toString());
-              }
-              LOG.assertTrue(context.isEvaluating());
+              assertThreadSuspended(thread, context);
             }
           }
           catch (Exception e) {
@@ -998,6 +994,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
 
       return (E)result[0];
+    }
+
+    private void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
+      final boolean isSuspended = thread.isSuspended();
+      if (!thread.isCollected()) {
+        LOG.assertTrue(isSuspended, thread.toString());
+      }
+      LOG.assertTrue(context.isEvaluating());
     }
   }
 

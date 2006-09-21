@@ -200,6 +200,9 @@ public class DebuggerSession {
               }
               catch (InterruptedException e) {
               }
+              if (currentThread.isCollected()) {
+                break;
+              }
             }
 
             try {

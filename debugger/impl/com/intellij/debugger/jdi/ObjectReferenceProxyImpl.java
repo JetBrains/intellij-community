@@ -53,7 +53,10 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
   public @NonNls String toString() {
-    return "ObjectReferenceProxyImpl: " + getObjectReference().toString() + " " + super.toString();
+    final ObjectReference objectReference = getObjectReference();
+    //noinspection HardCodedStringLiteral
+    final String objRefString = objectReference != null? objectReference.toString() : "[referenced object collected]";
+    return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
   }
 
   public Map getValues(List list) {
