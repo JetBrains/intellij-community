@@ -11,6 +11,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public class OutputEditor extends ModuleElementsEditor {
   }
 
   public String getDisplayName() {
-    return myCompilerOutputEditor.getDisplayName();
+    return ProjectBundle.message("project.roots.output.and.javadoc.tab.title");
   }
 
   public Icon getIcon() {

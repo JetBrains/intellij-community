@@ -359,11 +359,25 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
             final PsiElement child = event.getChild();
             if (child instanceof PsiFile) {
               processFileAddition((PsiFile)child);
-            }
+            } 
           }
           myTreeExpansionMonitor.restore();
         }
       });
+    }
+
+    private void processDirectoryCreation(final PsiDirectory virtualFile) {
+      if (!virtualFile.isDirectory()) {
+        final PsiFile psiFile = myPsiManager.findFile(virtualFile);
+        if (psiFile != null) {
+          processFileAddition(psiFile);
+        }
+        return;
+      }
+      final VirtualFile[] files = virtualFile.getChildren();
+      for (VirtualFile file : files) {
+        processDirectoryCreation(file);
+      }
     }
 
     public void beforeChildRemoval(final PsiTreeChangeEvent event) {
