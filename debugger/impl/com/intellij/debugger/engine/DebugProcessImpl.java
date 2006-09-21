@@ -1509,8 +1509,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
       try {
         thread.popFrames(myStackFrame);
       }
-      catch (EvaluateException e) {
-        LOG.error(e);
+      catch (final EvaluateException e) {
+        DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+          public void run() {
+            Messages.showMessageDialog(myProject, DebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()), ActionsBundle.actionText(DebuggerActions.POP_FRAME), Messages.getErrorIcon());
+          }
+        });
+        LOG.info(e);
       }
       finally {
         getSuspendManager().popFrame(suspendContext);

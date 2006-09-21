@@ -200,6 +200,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     try {
       getThreadReference().popFrames(stackFrame.getStackFrame());
     }
+    catch (InternalException e) {
+      throw EvaluateExceptionUtil.createEvaluateException(e);
+    }
     catch (IncompatibleThreadStateException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
