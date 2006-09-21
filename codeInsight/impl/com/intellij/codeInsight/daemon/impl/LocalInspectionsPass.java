@@ -120,7 +120,10 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     final List<Pair<LocalInspectionTool, PsiElementVisitor>> visitors = new ArrayList<Pair<LocalInspectionTool, PsiElementVisitor>>();
     for (LocalInspectionTool tool : tools) {
       final PsiElementVisitor visitor = tool.buildVisitor(holder, true);
-      if (visitor != null) visitors.add(new Pair<LocalInspectionTool, PsiElementVisitor>(tool, visitor));
+      if (visitor != null) {
+        LOG.assertTrue(!(visitor instanceof PsiRecursiveElementVisitor), "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive");
+        visitors.add(new Pair<LocalInspectionTool, PsiElementVisitor>(tool, visitor));
+      }
     }
 
     for (PsiElement element : workSet) {
