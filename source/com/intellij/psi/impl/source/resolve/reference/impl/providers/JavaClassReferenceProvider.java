@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import gnu.trove.THashMap;
+
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -67,7 +69,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable) {
-    myOptions = new HashMap<CustomizationKey, Object>();
+    myOptions = new THashMap<CustomizationKey, Object>();
     EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
     INSTANTIATABLE.putValue(myOptions, instantiatable);
     RESOLVE_ONLY_CLASSES.putValue(myOptions, Boolean.TRUE);
@@ -191,12 +193,45 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       int currentDot = -1;
       int index = 0;
       boolean allowDollarInNames = element.getLanguage()instanceof XMLLanguage;
+      boolean parsingClassNames = true;
 
-      while (true) {
+      while (parsingClassNames) {
         int nextDotOrDollar = str.indexOf(SEPARATOR, currentDot + 1);
         if (nextDotOrDollar == -1 && allowDollarInNames) {
           nextDotOrDollar = str.indexOf(SEPARATOR2, currentDot + 1);
         }
+        
+        if (nextDotOrDollar == -1) {
+          nextDotOrDollar = currentDot + 1;
+          for(int i = nextDotOrDollar; i < str.length() && Character.isJavaIdentifierPart(str.charAt(i)); ++i) nextDotOrDollar++;
+          parsingClassNames = false;
+          int j = nextDotOrDollar;
+          while(j < str.length() && Character.isWhitespace(str.charAt(j))) ++j;
+
+          if (j < str.length()) {
+            char ch = str.charAt(j);
+            boolean recognized = false;
+
+            if (ch == '[') {
+              j++;
+              while(j < str.length() && Character.isWhitespace(str.charAt(j))) ++j;
+
+              if (j < str.length()) {
+                ch = str.charAt(j);
+
+                if (ch == ']') {
+                  j++;
+                  while(j < str.length() && Character.isWhitespace(str.charAt(j))) ++j;
+
+                  recognized = j == str.length();
+                }
+              }
+            }
+
+            if (!recognized) nextDotOrDollar = -1; // nonsensible characters anyway, don't do resolve
+          }
+        }
+
         final String subreferenceText =
           nextDotOrDollar > 0 ? str.substring(currentDot + 1, nextDotOrDollar) : str.substring(currentDot + 1);
 
