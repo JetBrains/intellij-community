@@ -27,6 +27,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Stack;
 
+import gnu.trove.THashSet;
+
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
   private static final ArrayList<RefElement> EMPTY_REFERNCES_LIST = new ArrayList<RefElement>(0);
   private static final HashSet<RefClass> EMPTY_TYPE_REFERENCES_LIST = new HashSet<RefClass>(0);
@@ -53,7 +55,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private ArrayList<RefElement> myOutReferences;
   private ArrayList<RefElement> myInReferences;
 
-  private HashSet<RefClass> myOutTypeReferences;
+  private THashSet<RefClass> myOutTypeReferences;
 
   private String[] mySuppressions = null;
 
@@ -238,7 +240,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   public void addOutTypeRefernce(RefClass refClass){
     if (myOutTypeReferences == null){
-      myOutTypeReferences = new HashSet<RefClass>();
+      myOutTypeReferences = new THashSet<RefClass>();
     }
     myOutTypeReferences.add(refClass);
   }

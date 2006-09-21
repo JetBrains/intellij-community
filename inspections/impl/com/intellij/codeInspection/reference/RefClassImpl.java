@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import gnu.trove.THashSet;
+
 public class RefClassImpl extends RefElementImpl implements RefClass {
   private static final HashSet<RefElement> EMPTY_SET = new HashSet<RefElement>(0);
   private static final HashSet<RefClass> EMPTY_CLASS_SET = new HashSet<RefClass>(0);
@@ -44,8 +46,8 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   private ArrayList<RefMethod> myConstructors;
   private RefMethodImpl myDefaultConstructor;
   private ArrayList<RefMethod> myOverridingMethods;
-  private HashSet<RefElement> myInTypeReferences;
-  private HashSet<RefElement> myInstanceReferences;
+  private THashSet<RefElement> myInTypeReferences;
+  private THashSet<RefElement> myInstanceReferences;
   private ArrayList<RefElement> myClassExporters;
 
   RefClassImpl(PsiClass psiClass, RefManager manager) {
@@ -283,7 +285,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   public void addTypeReference(RefElement from) {
     if (from != null) {
       if (myInTypeReferences == null){
-        myInTypeReferences = new HashSet<RefElement>(1);
+        myInTypeReferences = new THashSet<RefElement>(1);
       }
       myInTypeReferences.add(from);
       ((RefElementImpl)from).addOutTypeRefernce(this);
@@ -299,7 +301,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
 
   public void addInstanceReference(RefElement from) {
     if (myInstanceReferences == null){
-      myInstanceReferences = new HashSet<RefElement>(1);
+      myInstanceReferences = new THashSet<RefElement>(1);
     }
     myInstanceReferences.add(from);
   }
@@ -349,8 +351,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     final Runnable runnable = new Runnable() {
       public void run() {
         PsiClass psiClass = getElement();
-        result[0] = PsiFormatUtil.formatClass(psiClass, PsiFormatUtil.SHOW_NAME |
-          PsiFormatUtil.SHOW_FQ_NAME);
+        result[0] = PsiFormatUtil.formatClass(psiClass, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_FQ_NAME);
       }
     };
 

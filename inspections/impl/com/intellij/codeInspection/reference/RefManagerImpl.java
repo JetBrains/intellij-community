@@ -24,11 +24,12 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class RefManagerImpl extends RefManager {
@@ -40,9 +41,9 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private HashMap<PsiElement, RefElement> myRefTable;
-  private HashMap<String, RefPackage> myPackages;
-  private HashMap<Module, RefModule> myModules;
+  private THashMap<PsiElement, RefElement> myRefTable;
+  private THashMap<String, RefPackage> myPackages;
+  private THashMap<Module, RefModule> myModules;
   private final ProjectIterator myProjectIterator;
   private boolean myDeclarationsFound;
   private PsiMethod myAppMainPattern;
@@ -60,7 +61,7 @@ public class RefManagerImpl extends RefManager {
     myScope = scope;
     myContext = context;
     myRefProject = new RefProjectImpl(this);
-    myRefTable = new HashMap<PsiElement, RefElement>();
+    myRefTable = new THashMap<PsiElement, RefElement>();
 
 
     myProjectIterator = new ProjectIterator();
@@ -80,7 +81,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void iterate(RefVisitor visitor) {
-    final HashMap<PsiElement, RefElement> refTable = getRefTable();
+    final Map<PsiElement, RefElement> refTable = getRefTable();
     for (RefElement refElement : refTable.values()) {
       refElement.accept(visitor);
       if (refElement instanceof RefClass) {
@@ -197,13 +198,13 @@ public class RefManagerImpl extends RefManager {
     return myRefProject;
   }
 
-  public HashMap<PsiElement, RefElement> getRefTable() {
+  public THashMap<PsiElement, RefElement> getRefTable() {
     return myRefTable;
   }
 
   public RefPackage getPackage(String packageName) {
     if (myPackages == null) {
-      myPackages = new HashMap<String, RefPackage>();
+      myPackages = new THashMap<String, RefPackage>();
     }
 
     RefPackage refPackage = myPackages.get(packageName);
@@ -224,7 +225,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void removeReference(RefElement refElem) {
-    final HashMap<PsiElement, RefElement> refTable = getRefTable();
+    final Map<PsiElement, RefElement> refTable = getRefTable();
 
     if (refElem instanceof RefMethod) {
       RefMethod refMethod = (RefMethod)refElem;
@@ -457,7 +458,7 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
     if (myModules == null){
-      myModules = new HashMap<Module, RefModule>();
+      myModules = new THashMap<Module, RefModule>();
     }
     RefModule refModule = myModules.get(module);
     if (refModule == null){
