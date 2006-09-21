@@ -681,21 +681,26 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       if (!myInsideRefresh) {
         beforeRootsChange(false);
       }
+      else if (!myPointerChangesDetected) {
+        //this is the first pointer changing validity
+        myPointerChangesDetected = true;
+        myModuleRootEventDispatcher.getMulticaster().beforeRootsChange(new ModuleRootEventImpl(myProject, false));
+      }
     }
 
     public void validityChanged(VirtualFilePointer[] pointers) {
       assertPointersCorrect(pointers);
       if (myInsideRefresh) {
-        myChangesDetected = true;
         clearScopesCaches();
-      } else {
+      }
+      else {
         rootsChanged(false);
       }
     }
   }
 
   private boolean myInsideRefresh = false;
-  private boolean myChangesDetected = false;
+  private boolean myPointerChangesDetected = false;
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
     public void beforeRefreshStart(boolean asynchonous) {
@@ -704,15 +709,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     public void afterRefreshFinish(boolean asynchonous) {
       myInsideRefresh = false;
-      if (myChangesDetected) {
+      if (myPointerChangesDetected) {
+        myPointerChangesDetected = false;
         final ModuleRootEventImpl event = new ModuleRootEventImpl(myProject, false);
-        myModuleRootEventDispatcher.getMulticaster().beforeRootsChange(event);
         myModuleRootEventDispatcher.getMulticaster().rootsChanged(event);
 
         doSynchronize();
 
         addRootsToWatch();
-        myChangesDetected = false;
       }
     }
   }
