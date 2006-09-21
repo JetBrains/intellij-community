@@ -8,8 +8,18 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
 
   private int myIndex;
 
+  //simulate System.identityHashCode()
+  private static int ourInstanceCounter = 0;
+  private final int myInstanceCreationIndex;
+
   protected OrderEntryBaseImpl(RootModelImpl rootModel) {
     super(rootModel);
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    myInstanceCreationIndex = ourInstanceCounter++;
+  }
+
+  public int hashCode() {
+    return myInstanceCreationIndex;
   }
 
   public void setIndex(int index) { myIndex = index; }

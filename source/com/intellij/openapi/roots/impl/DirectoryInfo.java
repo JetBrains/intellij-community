@@ -77,7 +77,7 @@ public class DirectoryInfo {
       this.orderEntries = parentInfo.getOrderEntries();
     }
     else {
-      List<OrderEntry> tmp = new OrderedSet<OrderEntry>(TObjectHashingStrategy.IDENTITY);
+      List<OrderEntry> tmp = new OrderedSet<OrderEntry>(TObjectHashingStrategy.CANONICAL);
       tmp.addAll(this.orderEntries);
       tmp.addAll(orderEntries);
       this.orderEntries = tmp;
