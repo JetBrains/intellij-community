@@ -36,7 +36,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
 
   private TreeMap<ProjectJdk, ProjectJdk> myProjectJdks = new TreeMap<ProjectJdk, ProjectJdk>(new Comparator<ProjectJdk>() {
     public int compare(final ProjectJdk o1, final ProjectJdk o2) {
-      if (o1 == null || o2 == null) return 0;
+      if (o1 == null || o2 == null) return 1;
       final SdkType type1 = o1.getSdkType();
       final SdkType type2 = o2.getSdkType();
       final int typeComp = type1.getName().compareTo(type2.getName());
@@ -243,6 +243,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     mySdkEventsDispatcher.getMulticaster().sdkAdded(newJdk);
   }
 
+  @Nullable
   public ProjectJdk findSdk(@Nullable final ProjectJdk modelJdk) {
     for (ProjectJdk jdk : myProjectJdks.keySet()) {
       if (Comparing.equal(myProjectJdks.get(jdk), modelJdk)) return jdk;
