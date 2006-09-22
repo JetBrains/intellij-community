@@ -37,6 +37,9 @@ import java.util.List;
  * @since 5.1
  */
 public class ShowMessageHistoryAction extends AnAction {
+  public ShowMessageHistoryAction() {
+    setEnabledInModalContext(true);
+  }
 
   public void update(AnActionEvent e) {
     super.update(e);
