@@ -245,7 +245,11 @@ public class PsiViewerDialog extends DialogWrapper {
             start -= baseOffset;
             end -= baseOffset;
           }
-          myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
+
+          final int textLength = myEditor.getDocument().getTextLength();
+          if (end < textLength) {
+            myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
+          }
         }
       }
     }
