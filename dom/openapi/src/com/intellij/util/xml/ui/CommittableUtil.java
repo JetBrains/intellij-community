@@ -20,6 +20,7 @@ public class CommittableUtil implements ProjectComponent {
   private final Application myApplication;
   private final LinkedHashSet<Committable> myResetQueue = new LinkedHashSet<Committable>();
   private boolean myResetting;
+  private boolean myCommitting;
 
   public CommittableUtil(Application application, CommandProcessor commandProcessor) {
     commandProcessor.addCommandListener(new CommandAdapter() {
@@ -29,27 +30,46 @@ public class CommittableUtil implements ProjectComponent {
       }
 
       public void undoTransparentActionFinished() {
-        if (myResetting) return;
-        myResetting = true;
-        try {
-          for (final Committable committable : myResetQueue) {
-            committable.reset();
-          }
-          myResetQueue.clear();
-        }
-        finally {
-          myResetting = false;
-        }
+        if (myResetting || myCommitting) return;
+        flushResetQueue();
       }
     });
     myApplication = application;
+  }
+
+  private void flushResetQueue() {
+    myResetting = true;
+    try {
+      for (final Committable committable : myResetQueue) {
+        committable.reset();
+      }
+      myResetQueue.clear();
+    }
+    finally {
+      myResetting = false;
+    }
+  }
+
+  public void commit(Committable committable) {
+    assert !myResetting;
+    boolean old = myCommitting;
+    myCommitting = true;
+    try {
+      committable.commit();
+    }
+    finally {
+      myCommitting = old;
+    }
+    if (!myCommitting) {
+      flushResetQueue();
+    }
   }
 
   public void queueReset(Committable committable) {
     if (myResetting && myResetQueue.contains(committable)) return;
     myApplication.assertIsDispatchThread();
     myResetQueue.add(committable);
-    if (CommandProcessor.getInstance().getCurrentCommand() == null &&
+    if (!myCommitting && CommandProcessor.getInstance().getCurrentCommand() == null &&
         !CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
       boolean b = myResetting;
       myResetting = true;

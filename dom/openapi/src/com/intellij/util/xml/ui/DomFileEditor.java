@@ -63,7 +63,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
 
   public void commit() {
     if (checkIsValid()) {
-      myComponent.commit();
+      getProject().getComponent(CommittableUtil.class).commit(myComponent);
     }
   }
 
@@ -79,9 +79,9 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   @NotNull
   protected JComponent createCustomComponent() {
     final UserActivityWatcher userActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
-    myUserActivityListener = new CommitablePanelUserActivityListener() {
+    myUserActivityListener = new CommitablePanelUserActivityListener(getProject()) {
       protected void applyChanges() {
-        commit();
+        DomFileEditor.this.commit();
       }
     };
     userActivityWatcher.addUserActivityListener(myUserActivityListener, this);

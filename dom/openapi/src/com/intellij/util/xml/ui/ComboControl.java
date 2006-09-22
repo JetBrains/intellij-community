@@ -16,7 +16,6 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   private static final Pair<String, Icon> EMPTY = Pair.create(" ", null);
   private final Factory<List<Pair<String, Icon>>> myDataFactory;
   private boolean myNullable;
-  private Map<String, Icon> myIcons = new THashMap<String, Icon>();
+  private Map<String, Icon> myIcons = new HashMap<String, Icon>();
   private final ActionListener myCommitListener = new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       commit();

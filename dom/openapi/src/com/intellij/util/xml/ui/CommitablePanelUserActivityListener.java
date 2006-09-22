@@ -20,6 +20,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.util.Alarm;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 
@@ -28,15 +29,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
  */
 public class CommitablePanelUserActivityListener implements UserActivityListener, Disposable {
   private final Committable myPanel;
+  private final Project myProject;
   private final Alarm myAlarm = new Alarm();
   private boolean myApplying;
 
-  public CommitablePanelUserActivityListener() {
-    this(null);
+  public CommitablePanelUserActivityListener(Project project) {
+    this(null, project);
   }
 
-  public CommitablePanelUserActivityListener(final Committable panel) {
+  public CommitablePanelUserActivityListener(final Committable panel, Project project) {
     myPanel = panel;
+    myProject = project;
   }
 
   final public void stateChanged() {
@@ -66,8 +69,16 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
 
   protected void applyChanges() {
     if (myPanel != null) {
-      myPanel.commit();
+      commit(myPanel);
     }
+  }
+
+  protected final void commit(final Committable panel) {
+    getProject().getComponent(CommittableUtil.class).commit(panel);
+  }
+
+  protected final Project getProject() {
+    return myProject;
   }
 
   public final boolean isWaiting() {
