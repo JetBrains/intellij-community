@@ -9,9 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -124,5 +126,9 @@ public class ExtractIncludeDialog extends DialogWrapper {
     }, RefactoringBundle.message("create.directory"), null);
     if (myTargetDirectory == null) return;
     super.doOKAction();
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_INCLUDE);
   }
 }
