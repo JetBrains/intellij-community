@@ -3,12 +3,14 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
 
@@ -117,5 +119,9 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();
     }
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.INLINE_METHOD);
   }
 }
