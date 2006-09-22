@@ -34,6 +34,9 @@ package com.intellij.ide.highlighter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,5 +68,10 @@ public class XmlFileType extends XmlLikeFileType {
 
   public Icon getIcon() {
     return ICON;
+  }
+
+  public String getCharset(@NotNull VirtualFile file) {
+    String charset = XmlUtil.extractXmlEncodingFromProlog(file);
+    return charset == null ? CharsetToolkit.UTF8 : charset;
   }
 }

@@ -557,7 +557,7 @@ public class VfsUtil {
   public static String getPath(VirtualFile src, VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
     if (commonAncestor != null) {
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       if (src != commonAncestor) {
         while (src.getParent() != commonAncestor) {
           buffer.append("..").append(separatorChar);

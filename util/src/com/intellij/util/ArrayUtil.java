@@ -192,6 +192,21 @@ public class ArrayUtil {
     return true;
   }
 
+  public static boolean startsWith(@NotNull byte[] array, int start, @NotNull byte[] subArray) {
+    int length = subArray.length;
+    if (array.length - start < length) {
+      return false;
+    }
+
+    for (int i = 0; i < length; i++) {
+      if (array[start + i] != subArray[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   public static <T> boolean equals(T[] a1, T[] a2, Equality<? super T> comparator) {
     if (a1 == a2) {
       return true;

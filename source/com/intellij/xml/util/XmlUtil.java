@@ -11,13 +11,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
@@ -312,7 +312,7 @@ public class XmlUtil {
     return (char)code;
   }
 
-  public static boolean attributeFromTemplateFramework(final String name, final XmlTag tag) {
+  public static boolean attributeFromTemplateFramework(@NonNls final String name, final XmlTag tag) {
     return "jsfc".equals(name) && tag.getNSDescriptor(JSF_HTML_URI, true) != null;
   }
 
@@ -772,10 +772,8 @@ public class XmlUtil {
         variants.clear();
         return;
       }
-      else if (localName.equals("annotation")) {
-        continue; // don't go into annotation
-      }
-      else {
+      else if (!localName.equals("annotation")) {
+        // don't go into annotation
         collectEnumerationValues(tag, variants);
       }
     }
@@ -1240,51 +1238,70 @@ public class XmlUtil {
     }
   }
 
-  @NonNls private static final String ENCODING_XML_PROLOG = "<?xml version=\"1.0\" encoding=\"";
-  private static final byte[] ENCODING_XML_PROLOG_BYTES = ENCODING_XML_PROLOG.getBytes();
+  @NonNls private static final byte[] ENCODING_XML_PROLOG_BYTES = "<?xml".getBytes();
+  @NonNls private static final byte[] ENCODING_BYTES = "encoding".getBytes();
+  private static final byte[] XML_PROLOG_END_BYTES = "?>".getBytes();
+
 
   @Nullable
   public static String extractXmlEncodingFromProlog(VirtualFile file) {
-    byte[] bytes;
     try {
-      bytes = file.contentsToByteArray();
+      byte[] bytes = file.contentsToByteArray();
+      return detect(bytes);
     }
     catch (IOException e) {
-      return null;
     }
+    return null;
+  }
+
+  private static String detect(final byte[] bytes) {
     int start = 0;
     if (CharsetToolkit.hasUTF8Bom(bytes)) {
       start = CharsetToolkit.UTF8_BOM.length;
     }
 
-    if (start + ENCODING_XML_PROLOG_BYTES.length >= bytes.length) return null;
-    int i;
-    for (i = 0; i < ENCODING_XML_PROLOG_BYTES.length; i++) {
-      if (bytes[start + i] != ENCODING_XML_PROLOG_BYTES[i]) {
-        return null;
+    start = skipWhiteSpace(start, bytes);
+    if (!ArrayUtil.startsWith(bytes, start, ENCODING_XML_PROLOG_BYTES)) return null;
+    start += ENCODING_XML_PROLOG_BYTES.length;
+    while (start < bytes.length) {
+      start = skipWhiteSpace(start, bytes);
+      if (ArrayUtil.startsWith(bytes, start, XML_PROLOG_END_BYTES)) return null;
+      if (ArrayUtil.startsWith(bytes, start, ENCODING_BYTES)) {
+        start += ENCODING_BYTES.length;
+        start = skipWhiteSpace(start, bytes);
+        if (start >= bytes.length || bytes[start] != '=') continue;
+        start++;
+        start = skipWhiteSpace(start, bytes);
+        if (start >= bytes.length || bytes[start] != '\'' && bytes[start] != '\"') continue;
+        byte quote = bytes[start];
+        start++;
+        StringBuilder encoding = new StringBuilder();
+        while (start < bytes.length) {
+          if (bytes[start] == quote) return encoding.toString();
+          encoding.append((char)bytes[start++]);
+        }
       }
+      start++;
     }
-    StringBuilder encoding = new StringBuilder();
-    while (true) {
-      if (start + i >= bytes.length) return null;
-      byte b = bytes[start + i];
-      if (b == '\"') {
-        break;
-      }
-      encoding.append((char)b);
-      i++;
+    return null;
+  }
+
+  private static int skipWhiteSpace(int start, final byte[] bytes) {
+    while (start < bytes.length) {
+      char c = (char)bytes[start];
+      if (!Character.isWhitespace(c)) break;
+      start++;
     }
-    return encoding.toString();
+    return start;
   }
 
   @Nullable
   public static String extractXmlEncodingFromProlog(String text) {
-    if (text.startsWith(ENCODING_XML_PROLOG)) {
-      int i = text.indexOf('"', ENCODING_XML_PROLOG.length());
-      if (i != -1) {
-        return text.substring(ENCODING_XML_PROLOG.length(), i);
-      }
+    try {
+      return detect(text.getBytes("UTF-8"));
     }
-    return null;
+    catch (IOException e) {
+      return null;
+    }
   }
 }

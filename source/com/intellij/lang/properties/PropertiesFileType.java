@@ -12,11 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 6:02:59 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesFileType extends LanguageFileType {
   public static final Icon FILE_ICON = IconLoader.getIcon("/fileTypes/properties.png");
@@ -47,7 +43,7 @@ public class PropertiesFileType extends LanguageFileType {
     return FILE_ICON;
   }
 
-  public String getCharset(VirtualFile file) {
+  public String getCharset(@NotNull VirtualFile file) {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     if (editorSettings == null) return null;
     String defaultCharsetName = editorSettings.getDefaultPropertiesCharsetName();

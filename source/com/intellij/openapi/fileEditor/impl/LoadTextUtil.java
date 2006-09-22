@@ -1,7 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
-import com.intellij.ide.highlighter.XmlLikeFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -154,7 +154,7 @@ public final class LoadTextUtil {
   private static Charset getCharsetForWriting(final VirtualFile virtualFile, final String text) {
     FileType fileType = virtualFile.getFileType();
     Charset charset = virtualFile.getCharset();
-    if (fileType instanceof XmlLikeFileType) {
+    if (fileType instanceof XmlFileType) {
       charset = Charset.forName(CharsetToolkit.UTF8);
       String name = XmlUtil.extractXmlEncodingFromProlog(text);
       if (name != null) {
