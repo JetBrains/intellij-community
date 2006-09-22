@@ -26,17 +26,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.jsp.WebDirectoryElement;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -47,6 +47,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.refactoring.ui.InfoDialog;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -58,7 +59,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
-import java.util.HashSet;
 
 public class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringUtil");
@@ -174,6 +174,10 @@ public class RefactoringUtil {
   public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
     if (newName == null) {
       return false;
+    }
+    final Condition<String> inputValidator = RenameInputValidatorRegistry.getInstance().getInputValidator(psiElement);
+    if (inputValidator != null) {
+      return inputValidator.value(newName);
     }
     if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
       return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
