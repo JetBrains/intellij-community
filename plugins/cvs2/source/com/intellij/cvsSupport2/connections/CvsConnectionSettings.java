@@ -16,6 +16,7 @@ import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.ConnectException;
+import java.net.NoRouteToHostException;
 
 
 /**
@@ -137,7 +138,7 @@ public abstract class CvsConnectionSettings extends CvsRootData implements CvsEn
                                  true);
       return true;
     }
-    else if (cause instanceof ConnectException) {
+    else if (cause instanceof ConnectException || cause instanceof NoRouteToHostException) {
       showConnectionErrorMessage(CvsBundle.message("error.message.connection.error", HOST),
                                  CvsBundle.message("error.title.connection.error"),
                                  true);
