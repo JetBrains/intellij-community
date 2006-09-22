@@ -1504,7 +1504,8 @@
     </group>
 
     <group id="AddSupportGroup" popup="true" class="com.intellij.javaee.actions.AddSupportActionGroup">
-      <action id="Faces.EnableSupport" class="com.intellij.jsf.actions.AddFacesSupportAction">
+      <action id="Faces.EnableSupport" class="com.intellij.jsf.actions.AddFacesSupportAction"
+        icon="/actions/addFacesSupport.png">
       </action>
 
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
