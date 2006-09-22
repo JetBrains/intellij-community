@@ -15,12 +15,12 @@ import com.intellij.util.xml.ui.DomCollectionControl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -72,7 +72,7 @@ public abstract class AddDomElementAction extends AnAction {
 
       showPopup(groupPopup, e);
     }
-    else {
+    else if (actions.length == 1) {
       actions[0].actionPerformed(e);
     }
   }
