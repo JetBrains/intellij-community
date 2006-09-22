@@ -157,7 +157,9 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
 
     myDialog.show();
-    myDialog.myRepaintRunnable.run();
+    if (myDialog != null) {
+      myDialog.myRepaintRunnable.run();
+    }
   }
 
   public void setIndeterminate(boolean indeterminate) {
