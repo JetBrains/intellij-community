@@ -15,14 +15,15 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.javaee.JavaeeModuleProperties;
-import com.intellij.javaee.make.ModuleBuildProperties;
-import com.intellij.javaee.make.J2EEBuildParticipant;
 import com.intellij.javaee.DeploymentDescriptorFactory;
 import com.intellij.javaee.JavaeeDeploymentItem;
+import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.javaee.make.J2EEBuildParticipant;
+import com.intellij.javaee.make.ModuleBuildProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -33,8 +34,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +115,15 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public void initComponent() {}
 
-  public void disposeComponent() {}
+  public void disposeComponent() {
+    disposePluginXml();
+  }
+
+  private void disposePluginXml() {
+    if (myPluginXML != null) {
+      myPluginXML.dispose();
+    }
+  }
 
   public void readExternal(Element element) throws InvalidDataException {
     String url = element.getAttributeValue(URL_ATTR);
@@ -164,6 +171,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public void setPluginXMLUrl(final String pluginXMLUrl) {
+    disposePluginXml();
     myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
     final String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXMLUrl));
     myPluginXML.setUrl(url);
