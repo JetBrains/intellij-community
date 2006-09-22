@@ -55,7 +55,7 @@ public abstract class TextEditorHighlightingPassRegistrar implements ProjectComp
    */
   public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass);
 
-  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory,
+  public abstract int registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory,
                                                           Anchor anchor,
                                                           int anchorPass,
                                                           boolean needAdditionalIntentionsPass,

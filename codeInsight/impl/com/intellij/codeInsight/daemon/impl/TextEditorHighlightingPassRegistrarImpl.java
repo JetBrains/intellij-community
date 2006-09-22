@@ -43,7 +43,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitin
     registerTextEditorHighlightingPass(factory, anc, anchorPass, true, true);
   }
 
-  public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass, boolean needAdditionalPass, boolean inPostHighlightingPass) {
+  public int registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass, boolean needAdditionalPass, boolean inPostHighlightingPass) {
     if (myRegisteredPasses == null){
       myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>>();
     }
@@ -55,6 +55,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitin
     if (needAdditionalPass) {
       myNeedAdditionalIntentionsPass = true;
     }
+    return myPostHighlightingPassGroups[myPostHighlightingPassGroups.length - 1];
   }
 
   public TextEditorHighlightingPass[] modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
