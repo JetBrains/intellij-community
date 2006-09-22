@@ -189,6 +189,9 @@ public class FileReferenceQuickFixProvider {
     private final PsiDirectory myDirectory;
     private final @Nullable String myText;
     private @NotNull String myKey;
+    private boolean myIsAvailable;
+    private long myIsAvailableTimeStamp;
+    private static final int REFRESH_INTERVAL = 1000;
 
     public CreateFileIntentionAction(final boolean isdirectory,
                                      final String newFileName,
@@ -200,6 +203,8 @@ public class FileReferenceQuickFixProvider {
       myDirectory = directory;
       myText = text;
       myKey = key;
+      myIsAvailable = true;
+      myIsAvailableTimeStamp = System.currentTimeMillis();
     }
 
     public CreateFileIntentionAction(final boolean isdirectory,
@@ -219,42 +224,56 @@ public class FileReferenceQuickFixProvider {
     }
 
     public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      return true;
+      long current = System.currentTimeMillis();
+
+      if (current - myIsAvailableTimeStamp > REFRESH_INTERVAL) {
+        myIsAvailable = myDirectory.getVirtualFile().findChild(myNewFileName) == null;
+        myIsAvailableTimeStamp = current;
+      }
+
+      return myIsAvailable;
     }
 
     public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (myIsdirectory) {
-        myDirectory.createSubdirectory(myNewFileName);
-      }
-      else {
-        final PsiFile newfile = myDirectory.createFile(myNewFileName);
-        String text = null;
+      myIsAvailableTimeStamp = 0; // to revalidate applicability
 
-        if (myText != null) {
-          final PsiManager psiManager = file.getManager();
-          final PsiFile psiFile = psiManager.getElementFactory().createFileFromText("_" + myNewFileName, myText);
-          final PsiElement psiElement = CodeStyleManager.getInstance(file.getProject()).reformat(psiFile);
-
-          text = psiElement.getText();
+      try {
+        if (myIsdirectory) {
+          myDirectory.createSubdirectory(myNewFileName);
         }
+        else {
+          final PsiFile newfile = myDirectory.createFile(myNewFileName);
+          String text = null;
 
-        final FileEditorManager editorManager = FileEditorManager.getInstance(myDirectory.getProject());
-        final FileEditor[] fileEditors = editorManager.openFile(newfile.getVirtualFile(), true);
+          if (myText != null) {
+            final PsiManager psiManager = file.getManager();
+            final PsiFile psiFile = psiManager.getElementFactory().createFileFromText("_" + myNewFileName, myText);
+            final PsiElement psiElement = CodeStyleManager.getInstance(file.getProject()).reformat(psiFile);
 
-        if (text != null) {
-          for(FileEditor feditor:fileEditors) {
-            if (feditor instanceof TextEditor) { // JSP is not safe to edit via Psi
-              final Document document = ((TextEditor)feditor).getEditor().getDocument();
-              document.setText(text);
+            text = psiElement.getText();
+          }
 
-              if (ApplicationManager.getApplication().isUnitTestMode()) {
-                FileDocumentManager.getInstance().saveDocument(document);
+          final FileEditorManager editorManager = FileEditorManager.getInstance(myDirectory.getProject());
+          final FileEditor[] fileEditors = editorManager.openFile(newfile.getVirtualFile(), true);
+
+          if (text != null) {
+            for(FileEditor feditor:fileEditors) {
+              if (feditor instanceof TextEditor) { // JSP is not safe to edit via Psi
+                final Document document = ((TextEditor)feditor).getEditor().getDocument();
+                document.setText(text);
+
+                if (ApplicationManager.getApplication().isUnitTestMode()) {
+                  FileDocumentManager.getInstance().saveDocument(document);
+                }
+                PsiDocumentManager.getInstance(project).commitDocument(document);
+                break;
               }
-              PsiDocumentManager.getInstance(project).commitDocument(document);
-              break;
             }
           }
         }
+      }
+      catch (IncorrectOperationException e) {
+        myIsAvailable = false;
       }
     }
 
