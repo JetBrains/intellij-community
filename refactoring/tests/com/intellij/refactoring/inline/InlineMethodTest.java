@@ -69,6 +69,8 @@ public class InlineMethodTest extends CodeInsightTestCase {
   
   public void testChainingConstructor() throws Exception { doTest(); }
 
+  public void testChainingConstructor1() throws Exception { doTest(); }
+
   public void testNestedCall() throws Exception { doTest(); }
 
   public void testIDEADEV3672() throws Exception { doTest(); }

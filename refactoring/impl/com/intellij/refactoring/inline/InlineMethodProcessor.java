@@ -264,27 +264,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression.copy();
     final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
     for (PsiExpression arg : args) {
-      arg.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiParameter && manager.areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(),
-                                                                                oldConstructor)) {
-            PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
-            PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
-            for (int j = 0; j < declarationParameters.length; j++) {
-              if (declarationParameters[j] == resolved) {
-                try {
-                  expression.replace(instanceCreationArguments[j]);
-                  break;
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-              }
-            }
-          }
-        }
-      });
+      replaceParameterReferences(arg, oldConstructor, instanceCreationArguments);
     }
 
     try {
@@ -292,6 +272,37 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+    }
+  }
+
+  private static void replaceParameterReferences(final PsiElement element, 
+                                                 final PsiMethod oldConstructor,
+                                                 final PsiExpression[] instanceCreationArguments) {
+    if (element instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression expression = (PsiReferenceExpression)element;
+      PsiElement resolved = expression.resolve();
+      if (resolved instanceof PsiParameter && element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(),
+                                                                            oldConstructor)) {
+        PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
+        PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
+        for (int j = 0; j < declarationParameters.length; j++) {
+          if (declarationParameters[j] == resolved) {
+            try {
+              expression.replace(instanceCreationArguments[j]);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+    } else {
+      PsiElement child = element.getFirstChild();
+      while (child != null) {
+        PsiElement next = child.getNextSibling();
+        replaceParameterReferences(child, oldConstructor, instanceCreationArguments);
+        child = next;
+      }
     }
   }
 
