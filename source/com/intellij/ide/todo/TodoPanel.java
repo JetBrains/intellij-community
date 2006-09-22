@@ -204,7 +204,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   /**
    * Updates current filter. If previously set filter was removed then empty filter is set.
    * 
-   * @see com.intellij.ide.todo.TodoTreeBuilder#setTodoFilter
+   * @see TodoTreeBuilder#setTodoFilter
    */
   void updateTodoFilter() {
     TodoFilter filter = TodoConfiguration.getInstance().getTodoFilter(mySettings.getTodoFilterName());
@@ -214,7 +214,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   /**
    * Sets specified <code>TodoFilter</code>. The method also updates window's title.
    * 
-   * @see com.intellij.ide.todo.TodoTreeBuilder#setTodoFilter
+   * @see TodoTreeBuilder#setTodoFilter
    */
   private void setTodoFilter(TodoFilter filter) {
     // Clear name of current filter if it was removed from configuration.
@@ -317,6 +317,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     return null;
   }
 
+  @Nullable
   public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigator.goPreviousOccurence();
   }
@@ -325,6 +326,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
+  @Nullable
   public OccurenceNavigator.OccurenceInfo goNextOccurence() {
     return myOccurenceNavigator.goNextOccurence();
   }
@@ -413,10 +415,12 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       return parent == null || parent.getIndex(node) == 0 && isFirst(parent);
     }
 
+    @Nullable
     public OccurenceNavigator.OccurenceInfo goNextOccurence() {
       return goToPointer(getNextPointer());
     }
 
+    @Nullable
     public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
       return goToPointer(getPreviousPointer());
     }
@@ -429,8 +433,9 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       return IdeBundle.message("action.previous.todo");
     }
 
+    @Nullable
     private OccurenceNavigator.OccurenceInfo goToPointer(TodoItemNode pointer) {
-      LOG.assertTrue(pointer != null);
+      if (pointer == null) return null;
       DefaultMutableTreeNode node = myTodoTreeBuilder.getNodeForElement(pointer);
       if (node == null) {
         myTodoTreeBuilder.buildNodeForElement(pointer);
@@ -450,6 +455,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       );
     }
 
+    @Nullable
     private TodoItemNode getNextPointer() {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
@@ -471,6 +477,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       return pointer;
     }
 
+    @Nullable
     private TodoItemNode getPreviousPointer() {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {

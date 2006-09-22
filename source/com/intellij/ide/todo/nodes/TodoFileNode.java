@@ -58,19 +58,20 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     ArrayList<AbstractTreeNode> children=new ArrayList<AbstractTreeNode>(items.length);
     for (TodoItem todoItem : items) {
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getValue());
-      LOG.assertTrue(todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1);
-      SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
-      TodoFilter toDoFilter = getToDoFilter();
-      if (toDoFilter != null) {
-        TodoItemNode itemNode = new TodoItemNode(getProject(), pointer, myBuilder);
-        if (toDoFilter.contains(todoItem.getPattern())) {
-          children.add(itemNode);
+      if (document != null && todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1) {
+        SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
+        TodoFilter toDoFilter = getToDoFilter();
+        if (toDoFilter != null) {
+          TodoItemNode itemNode = new TodoItemNode(getProject(), pointer, myBuilder);
+          if (toDoFilter.contains(todoItem.getPattern())) {
+            children.add(itemNode);
+          }
+        } else {
+          children.add(new TodoItemNode(getProject(), pointer, myBuilder));
         }
-      } else {
-        children.add(new TodoItemNode(getProject(), pointer, myBuilder));
       }
     }
-    Collections.sort(children,SmartTodoItemPointerComparator.ourInstance);
+    Collections.sort(children, SmartTodoItemPointerComparator.ourInstance);
     return children;
   }
 
@@ -81,16 +82,16 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     final TodoItem[] items = myBuilder.getTodoTreeStructure().getSearchHelper().findTodoItems(psiFile);
     for (final TodoItem todoItem : items) {
       final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-      LOG.assertTrue(todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1);
-      final SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
-      TodoFilter todoFilter = getToDoFilter();
-      if (todoFilter != null) {
-        if (todoFilter.contains(todoItem.getPattern())) {
+      if (document != null && todoItem.getTextRange().getEndOffset() < document.getTextLength() + 1) {
+        final SmartTodoItemPointer pointer = new SmartTodoItemPointer(todoItem, document);
+        TodoFilter todoFilter = getToDoFilter();
+        if (todoFilter != null) {
+          if (todoFilter.contains(todoItem.getPattern())) {
+            children.add(new TodoItemNode(getProject(), pointer, myBuilder));
+          }
+        } else {
           children.add(new TodoItemNode(getProject(), pointer, myBuilder));
         }
-      } else {
-        children.add(new TodoItemNode(getProject(), pointer, myBuilder));
-
       }
     }
     Collections.sort(children, SmartTodoItemPointerComparator.ourInstance);
