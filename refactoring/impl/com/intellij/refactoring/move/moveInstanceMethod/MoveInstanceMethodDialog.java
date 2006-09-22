@@ -3,8 +3,10 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
@@ -132,4 +134,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     invokeRefactoring(processor);
   }
 
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.MOVE_INSTANCE_METHOD);
+  }
 }

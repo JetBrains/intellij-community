@@ -1,11 +1,13 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.HelpID;
 
 import javax.swing.*;
 
@@ -26,6 +28,10 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
                                                                                             myVisibilityPanel.getVisibility());
     if (!verifyTargetClass(processor.getTargetClass())) return;
     invokeRefactoring(processor);
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.CONVERT_TO_INSTANCE_METHOD);
   }
 
   protected JComponent createCenterPanel() {
