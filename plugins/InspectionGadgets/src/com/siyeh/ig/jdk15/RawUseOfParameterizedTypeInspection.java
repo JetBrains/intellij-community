@@ -39,11 +39,13 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
     public boolean ignoreTypeCasts = false;
 
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "raw.use.of.parameterized.type.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
@@ -76,20 +78,11 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
     private class RawUseOfParameterizedTypeVisitor
             extends BaseInspectionVisitor {
 
-        public void visitElement(PsiElement element) {
-            if (element.getLanguage() != StdLanguages.JAVA) {
-                return;
-            }
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(element);
-            if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-                return;
-            }
-            super.visitElement(element);
-        }
-
         public void visitNewExpression(
                 @NotNull PsiNewExpression expression) {
+            if (!hasNeededLanguageLevel(expression)) {
+                return;
+            }
             super.visitNewExpression(expression);
             if (ignoreObjectConstruction) {
                 return;
@@ -105,6 +98,9 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
         }
 
         public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
+            if (!hasNeededLanguageLevel(typeElement)) {
+                return;
+            }
             super.visitTypeElement(typeElement);
             final PsiElement parent = typeElement.getParent();
             if (parent instanceof PsiInstanceOfExpression ||
@@ -125,6 +121,9 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
         public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
+            if (!hasNeededLanguageLevel(reference)) {
+                return;
+            }
             super.visitReferenceElement(reference);
             final PsiElement referenceParent = reference.getParent();
             if (!(referenceParent instanceof PsiReferenceList)) {
@@ -166,6 +165,15 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                 return;
             }
             registerError(reference);
+        }
+
+        private boolean hasNeededLanguageLevel(PsiElement element) {
+            if (element.getLanguage() != StdLanguages.JAVA) {
+                return false;
+            }
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(element);
+            return languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
         }
     }
 }
