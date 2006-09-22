@@ -191,7 +191,7 @@
     <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="/actions/moveUp.png"/>
 
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
-    <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction">
+    <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="/actions/commit.png">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
     </action>
     <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.CommonCheckinFilesAction"/>

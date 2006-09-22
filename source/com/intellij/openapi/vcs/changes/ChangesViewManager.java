@@ -90,6 +90,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
         final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) {
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
+          myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowChanges.png"));
           updateToolWindowAvailability();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
           SelectInManager.getInstance(myProject).addTarget(new SelectInChangesViewTarget(myProject));
@@ -464,7 +465,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   public class CommitAction extends AnAction {
     public CommitAction() {
       super(VcsBundle.message("changes.action.commit.text"), VcsBundle.message("changes.action.commit.description"),
-            IconLoader.getIcon("/actions/execute.png"));
+            IconLoader.getIcon("/actions/commit.png"));
     }
 
     public void update(AnActionEvent e) {
