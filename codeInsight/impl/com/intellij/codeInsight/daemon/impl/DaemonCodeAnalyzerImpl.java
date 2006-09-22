@@ -871,6 +871,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           LOG.debug("update runnable (myUpdateByTimerEnabled = " + myUpdateByTimerEnabled + ")");
         }
         if (!myUpdateByTimerEnabled) return;
+        if (myDisposed) return;
 
         final FileEditor[] activeEditors = getSelectedEditors();
         if (activeEditors.length == 0) {
