@@ -568,10 +568,10 @@ public class TypeConversionUtil {
     }
 
     if (left instanceof PsiWildcardType) {
-      return isAssignableToWildcard((PsiWildcardType)left, right);
+      return isAssignableToWildcard((PsiWildcardType)left, right, allowUncheckedConversion);
     }
     else if (right instanceof PsiWildcardType) {
-      return isAssignableFromWildcard(left, (PsiWildcardType)right);
+      return isAssignableFromWildcard(left, (PsiWildcardType)right, allowUncheckedConversion);
     }
     if (right instanceof PsiArrayType) {
       if (!(left instanceof PsiArrayType)) {
@@ -652,15 +652,15 @@ public class TypeConversionUtil {
     }
   }
 
-  private static boolean isAssignableFromWildcard(PsiType left, PsiWildcardType rightWildcardType) {
-    return isAssignable(left, rightWildcardType.getExtendsBound());
+  private static boolean isAssignableFromWildcard(PsiType left, PsiWildcardType rightWildcardType, final boolean alowUncheckedConversion) {
+    return isAssignable(left, rightWildcardType.getExtendsBound(), alowUncheckedConversion);
   }
 
-  private static boolean isAssignableToWildcard(PsiWildcardType wildcardType, PsiType right) {
+  private static boolean isAssignableToWildcard(PsiWildcardType wildcardType, PsiType right, final boolean allowUncheckedConversion) {
     if (wildcardType.isSuper()) {
-      return isAssignable(right, wildcardType.getSuperBound());
+      return isAssignable(right, wildcardType.getSuperBound(), allowUncheckedConversion);
     }
-    return isAssignable(wildcardType.getExtendsBound(), right);
+    return isAssignable(wildcardType.getExtendsBound(), right, allowUncheckedConversion);
   }
 
   private static boolean isUnboxable(final PsiPrimitiveType left, final PsiClassType right) {
@@ -728,12 +728,12 @@ public class TypeConversionUtil {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
       }
-      if (!typesAgree(typeLeft, typeRight)) return false;
+      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) return false;
     }
     return true;
   }
 
-  private static boolean typesAgree(PsiType typeLeft, PsiType typeRight) {
+  private static boolean typesAgree(PsiType typeLeft, PsiType typeRight, final boolean allowUncheckedConversion) {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
       final PsiType leftBound = leftWildcard.getBound();
@@ -753,10 +753,10 @@ public class TypeConversionUtil {
       }
       else {
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftBound, typeRight, false);
+          return isAssignable(leftBound, typeRight, allowUncheckedConversion);
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, false);
+          return isAssignable(typeRight, leftBound, allowUncheckedConversion);
         }
       }
     }

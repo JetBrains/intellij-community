@@ -577,7 +577,7 @@ public class GenericsHighlightUtil {
     if (lTypeArg instanceof PsiPrimitiveType || rTypeArg instanceof PsiPrimitiveType) return false;
     if (lTypeArg.equals(rTypeArg)) return false;
     if (lTypeArg instanceof PsiWildcardType || rTypeArg instanceof PsiWildcardType) {
-      return !lTypeArg.isAssignableFrom(rTypeArg);
+      return !TypeConversionUtil.isAssignable(lTypeArg, rTypeArg, false);
     }
     if (lTypeArg instanceof PsiCapturedWildcardType || rTypeArg instanceof PsiCapturedWildcardType) return true;
 
