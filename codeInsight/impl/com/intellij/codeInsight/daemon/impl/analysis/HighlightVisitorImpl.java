@@ -13,6 +13,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -404,11 +405,27 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private static boolean filterJspErrors(final PsiErrorElement element) {
     PsiElement nextSibling = element.getNextSibling();
 
+    if (nextSibling != null &&
+        ( nextSibling instanceof PsiErrorElement ||
+          (nextSibling.getNode() != null  && nextSibling.getNode().getElementType() == TokenType.BAD_CHARACTER)
+        )) {
+      nextSibling = nextSibling.getNextSibling();
+    }
+
     if (nextSibling == null) {
       final PsiFile containingFile = element.getContainingFile();
+
       if (PsiUtil.isInJspFile(containingFile)) {
         final JspxFileViewProvider viewProvider = (JspxFileViewProvider)containingFile.getViewProvider();
         nextSibling = viewProvider.findElementAt(element.getTextOffset() + 1, viewProvider.getTemplateDataLanguage());
+
+        if (containingFile.getFileType() == StdFileTypes.JSPX) {
+          final ELExpressionHolder expressionHolder = PsiTreeUtil.getParentOfType(nextSibling, ELExpressionHolder.class);
+          
+          if (expressionHolder != null) {
+            return true;
+          }
+        }
       }
     }
 
