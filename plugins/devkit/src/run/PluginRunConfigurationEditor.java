@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
@@ -88,14 +89,14 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     });
   }
 
-  private void setShow(PluginRunConfiguration prc, boolean show){
+  private static void setShow(PluginRunConfiguration prc, boolean show){
     final ArrayList<LogFileOptions> logFiles = prc.getLogFiles();
     for (LogFileOptions logFile: logFiles) {
-      logFile.setEnable(show);      
+      logFile.setEnable(show);
     }
   }
 
-  private boolean isShow(PluginRunConfiguration prc){
+  private static boolean isShow(PluginRunConfiguration prc){
     final ArrayList<LogFileOptions> logFiles = prc.getLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) return true;
@@ -116,6 +117,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     prc.PROGRAM_PARAMETERS = getProgramParameters().getText();
   }
 
+  @NotNull
   public JComponent createEditor() {
     myModulesModel = new DefaultComboBoxModel(myPRC.getModules());
     myModules.setModel(myModulesModel);

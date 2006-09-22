@@ -16,18 +16,13 @@
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.javaee.DeploymentDescriptorFactory;
-import com.intellij.javaee.JavaeeDeploymentItem;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
-
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
 
 public class PluginModuleBuilder extends JavaModuleBuilder{
   @NonNls private static final String META_INF = "META-INF";
@@ -43,14 +38,8 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
     final String defaultPluginXMLLocation = getModuleFileDirectory() + '/' + META_INF + '/' + PLUGIN_XML;
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(defaultPluginXMLLocation);
     if (file == null) {
-      CommandProcessor.getInstance().executeCommand(rootModel.getModule().getProject(), new Runnable() {
-           public void run() {
-             JavaeeDeploymentItem pluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(rootModel.getModule(),
-                                                                                                           new PluginDescriptorMetaData());
-             pluginXML.setUrl(VfsUtil.pathToUrl(defaultPluginXMLLocation));
-             pluginXML.createIfNotExists();
-           }
-         }, DevKitBundle.message("create.smth", META_INF), null);
+      final PluginModuleBuildProperties moduleProperties = (PluginModuleBuildProperties)PluginModuleBuildProperties.getInstance(rootModel.getModule());
+      moduleProperties.getPluginXML(); //call to create if not exist
     }
   }
 }

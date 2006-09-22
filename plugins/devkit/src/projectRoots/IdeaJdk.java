@@ -225,7 +225,19 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       addSources(home, sdkModificator);
       addDocs(home, sdkModificator);
     }
+    sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox()));
     sdkModificator.commitChanges();
+  }
+
+  static String getDefaultSandbox() {
+    @NonNls String defaultSandbox = "";
+    try {
+      defaultSandbox = new File(PathManager.getConfigPath()).getParentFile().getCanonicalPath() + File.separator + "sandbox";
+    }
+    catch (IOException e) {
+      //can't be on running instance
+    }
+    return defaultSandbox;
   }
 
   public static void addSources(File file, SdkModificator sdkModificator) {
