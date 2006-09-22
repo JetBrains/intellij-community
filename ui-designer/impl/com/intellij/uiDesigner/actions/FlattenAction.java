@@ -12,6 +12,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +102,9 @@ public class FlattenAction extends AbstractGuiEditorAction {
 
   private static boolean canFlatten(final RadComponent c) {
     if (!(c instanceof RadContainer)) {
+      return false;
+    }
+    if (c.getParent() instanceof RadRootContainer) {
       return false;
     }
     RadContainer container = (RadContainer) c;
