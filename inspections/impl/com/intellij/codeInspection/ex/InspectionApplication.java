@@ -27,8 +27,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -151,15 +153,8 @@ public class InspectionApplication {
           if (myVerboseLevel == 0) return;
 
           if (myVerboseLevel == 1) {
-            //noinspection HardCodedStringLiteral
-            int idx = text.indexOf(" in ");
-            if (idx == -1) {
-              //noinspection HardCodedStringLiteral
-              idx = text.indexOf(" of ");
-            }
-
-            if (idx == -1) return;
-            String prefix = text.substring(0, idx);
+            String prefix = getPrefix(text);
+            if (prefix == null) return;
             if (prefix.equals(lastPrefix)) {
               logMessage(1, ".");
               return;
@@ -167,6 +162,22 @@ public class InspectionApplication {
             lastPrefix = prefix;
             logMessageLn(1, "");
             logMessageLn(1, prefix);
+            return;
+          }
+
+          if (myVerboseLevel == 3) {
+            final String prefix = getPrefix(text);
+            if (prefix == null) return;
+            final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+            try {
+              buf.append(prefix);
+              if (!isIndeterminate()) {
+                buf.append("... ").append((int)(getFraction() * 100)).append("%");
+              }
+              logMessageLn(2, buf.toString());
+            } finally {
+              StringBuilderSpinAllocator.dispose(buf);
+            }
             return;
           }
 
@@ -185,6 +196,22 @@ public class InspectionApplication {
       logError(e.getMessage());
       System.exit(1);
     }
+  }
+
+  @Nullable
+  private static String getPrefix(final String text) {
+    String prefix = null;
+    //noinspection HardCodedStringLiteral
+    int idx = text.indexOf(" in ");
+    if (idx == -1) {
+      //noinspection HardCodedStringLiteral
+      idx = text.indexOf(" of ");
+    }
+
+    if (idx != -1){
+      prefix = text.substring(0, idx);
+    }
+    return prefix;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

@@ -46,7 +46,11 @@ public class InspectionMain implements ApplicationStarter {
         }
         else if ("-v2".equals(arg)) {
           myApplication.setVerboseLevel(2);
-        } else if ("-e".equals(arg)){
+        }
+        else if ("-v3".equals(arg)) {
+          myApplication.setVerboseLevel(3);
+        }
+        else if ("-e".equals(arg)){
           myApplication.myRunWithEditorSettings = true;
         }
         else {
