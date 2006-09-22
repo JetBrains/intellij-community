@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.connections.local.ui;
 import com.intellij.cvsSupport2.config.LocalSettings;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,14 +17,14 @@ public class LocalConnectionSettingsPanel {
   private JTextField myServerCommand;
 
   public LocalConnectionSettingsPanel() {
-    myPathToCvsClient.addBrowseFolderListener(com.intellij.CvsBundle.message("dialog.title.select.path.to.cvs.client"),
-                                              com.intellij.CvsBundle.message("dialog.description.select.path.to.cvs.client"), null,
+    myPathToCvsClient.addBrowseFolderListener(CvsBundle.message("dialog.title.select.path.to.cvs.client"),
+                                              CvsBundle.message("dialog.description.select.path.to.cvs.client"), null,
                                               new FileChooserDescriptor(true, false, false, false, false, false));
   }
 
-  public void updateFrom(LocalSettings local_configuration) {
-    myPathToCvsClient.setText(local_configuration.PATH_TO_CVS_CLIENT);
-    myServerCommand.setText(local_configuration.SERVER_COMMAND);
+  public void updateFrom(LocalSettings localConfiguration) {
+    myPathToCvsClient.setText(localConfiguration.PATH_TO_CVS_CLIENT);
+    myServerCommand.setText(localConfiguration.SERVER_COMMAND);
   }
 
   public boolean equalsTo(LocalSettings local_configuration) {
@@ -32,9 +33,10 @@ public class LocalConnectionSettingsPanel {
       && myServerCommand.getText().equals(local_configuration.SERVER_COMMAND);
   }
 
-  public void saveTo(LocalSettings local_configuration) {
-    local_configuration.PATH_TO_CVS_CLIENT = myPathToCvsClient.getText().trim();
-    local_configuration.SERVER_COMMAND = myServerCommand.getText().trim();
+  public void saveTo(LocalSettings localConfiguration) {
+    localConfiguration.PATH_TO_CVS_CLIENT = myPathToCvsClient.getText().trim();
+    localConfiguration.SERVER_COMMAND = myServerCommand.getText().trim();
+    localConfiguration.setCvsClientVerified(false);
   }
 
   public Component getPanel() {

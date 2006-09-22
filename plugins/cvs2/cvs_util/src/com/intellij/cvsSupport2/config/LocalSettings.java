@@ -20,12 +20,22 @@ public class LocalSettings implements JDOMExternalizable, Cloneable {
   @NonNls
   public String SERVER_COMMAND = "server";
 
+  private boolean myCvsClientVerified = false;
+
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+  public boolean isCvsClientVerified() {
+    return myCvsClientVerified;
+  }
+
+  public void setCvsClientVerified(final boolean cvsClientVerified) {
+    myCvsClientVerified = cvsClientVerified;
   }
 
   public LocalSettings clone() {
