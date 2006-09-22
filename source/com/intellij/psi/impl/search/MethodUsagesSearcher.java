@@ -95,7 +95,7 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
 
     searchScope = searchScope.intersectWith(accessScope);
 
-    short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS;
+    short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
     boolean toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
                                                                               searchScope,
                                                                               text,
