@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class CollapseAllAction extends AnAction {
 
-  private JTree myTree;
+  protected JTree myTree;
 
   public CollapseAllAction(JTree tree) {
     super("Collapse All", "", IconLoader.getIcon("/actions/collapseall.png"));

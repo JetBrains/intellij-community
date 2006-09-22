@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class ExpandAllAction extends AnAction {
 
-  private JTree myTree;
+  protected JTree myTree;
 
   public ExpandAllAction(JTree tree) {
     super("Expand All", "", IconLoader.getIcon("/actions/expandall.png"));
@@ -20,8 +20,12 @@ public class ExpandAllAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    for (int i = 0; i < myTree.getRowCount(); i++) {
-      myTree.expandRow(i);
+    for (int i = 0; i < getTree().getRowCount(); i++) {
+      getTree().expandRow(i);
     }
+  }
+
+  protected JTree getTree() {
+    return myTree;
   }
 }
