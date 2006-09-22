@@ -1,6 +1,7 @@
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -53,6 +54,10 @@ public class InvertBooleanDialog extends RefactoringDialog {
     }
 
     invokeRefactoring(new InvertBooleanProcessor(myElement, name));
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.INVERT_BOOLEAN);
   }
 
   protected JComponent createCenterPanel() {
