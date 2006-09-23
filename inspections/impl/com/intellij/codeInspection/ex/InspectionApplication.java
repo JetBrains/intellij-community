@@ -167,10 +167,9 @@ public class InspectionApplication {
 
           if (myVerboseLevel == 3) {
             final String prefix = getPrefix(text);
-            if (prefix == null) return;
             final StringBuilder buf = StringBuilderSpinAllocator.alloc();
             try {
-              buf.append(prefix);
+              buf.append(prefix == null ? text : prefix);  //messages like Scanning scopes...
               if (!isIndeterminate()) {
                 buf.append("... ").append((int)(getFraction() * 100)).append("%");
               }
