@@ -42,6 +42,14 @@ public class CharArrayUtil {
     }
   }
 
+  public static char[] fromSequenceStrict(CharSequence seq) {
+    char[] chars = fromSequence(seq);
+    if (seq.length() == chars.length) return chars;
+    char[] strictchars = new char[seq.length()];
+    System.arraycopy(chars, 0, strictchars, 0, seq.length());
+    return strictchars;
+  }
+
   public static char[] fromSequence(CharSequence seq) {
     if (seq instanceof CharArrayCharSequence) {
       return ((CharArrayCharSequence)seq).getChars();
@@ -51,7 +59,9 @@ public class CharArrayUtil {
       final CharBuffer buffer = (CharBuffer)seq;
       if (buffer.hasArray() && buffer.arrayOffset() == 0 && !buffer.isReadOnly()) {
         final char[] bufArray = buffer.array();
-        if (bufArray.length == seq.length()) return bufArray;
+        /* return larger array. Clients may use seq.length() to calculate correct processing range.
+        if (bufArray.length == seq.length())
+        */ return bufArray;
       }
 
       char[] chars = new char[seq.length()];

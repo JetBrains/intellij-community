@@ -5,6 +5,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.OldXmlLexer;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.parsing.tabular.ParsingException;
 import com.intellij.psi.impl.source.parsing.tabular.ParsingUtil;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
@@ -13,13 +14,12 @@ import com.intellij.psi.impl.source.parsing.xml.DTDMarkupParser;
 import com.intellij.psi.impl.source.parsing.xml.DTDParser;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.util.text.CharArrayUtil;
 
 
@@ -111,7 +111,7 @@ public interface XmlElementType {
       final OldXmlLexer oldXmlLexer = new OldXmlLexer();
       final char[] chars = CharArrayUtil.fromSequence(buffer);
 
-      oldXmlLexer.start(chars, 0, chars.length);
+      oldXmlLexer.start(chars, 0, buffer.length());
       while(oldXmlLexer.getTokenType() != null && oldXmlLexer.getTokenEnd() != buffer.length()){
         if(oldXmlLexer.getTokenType() == XmlTokenType.XML_MARKUP_END) return false;
         oldXmlLexer.advance();

@@ -6,7 +6,6 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -59,7 +58,7 @@ public interface JavaDocElementType {
     public boolean isParsable(CharSequence buffer, final Project project) {
       final JavaLexer lexer = new JavaLexer(LanguageLevel.JDK_1_5);
 
-      lexer.start(CharArrayUtil.fromSequence(buffer));
+      lexer.start(CharArrayUtil.fromSequence(buffer), 0, buffer.length());
       if(lexer.getTokenType() != DOC_COMMENT) return false;
       lexer.advance();
       if(lexer.getTokenType() != null) return false;

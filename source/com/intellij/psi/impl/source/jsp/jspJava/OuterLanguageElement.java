@@ -315,7 +315,7 @@ public class OuterLanguageElement extends LeafElement implements PsiElement{
 
   @NotNull
   public char[] textToCharArray() {
-    return CharArrayUtil.fromSequence(getInternedText());
+    return CharArrayUtil.fromSequenceStrict(getInternedText());
   }
 
   public boolean textContains(char c) {

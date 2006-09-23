@@ -273,7 +273,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @NotNull
   public char[] textToCharArray() {
-    return CharArrayUtil.fromSequence(getViewProvider().getContents());
+    return CharArrayUtil.fromSequenceStrict(getViewProvider().getContents());
   }
 
   public boolean isContentsLoaded() {

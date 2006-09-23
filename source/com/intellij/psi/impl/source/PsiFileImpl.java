@@ -360,6 +360,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   @NotNull
   public char[] textToCharArray() {
-    return CharArrayUtil.fromSequence(getViewProvider().getContents());
+    return CharArrayUtil.fromSequenceStrict(getViewProvider().getContents());
   }
 }
