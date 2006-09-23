@@ -103,16 +103,19 @@ class RunConfigurable extends BaseConfigurable {
           } else {
             final RunManager runManager = getRunManager();
             RunConfiguration configuration = null;
+            String name = null;
             if (userObject instanceof SingleConfigurationConfigurable){
               final SingleConfigurationConfigurable settings = ((SingleConfigurationConfigurable)userObject);
               configuration = settings.getConfiguration();
               setIcon(ExecutionUtil.getConfigurationIcon(getProject(), configuration, !settings.isValid()));
+              name = settings.getNameText();
             } else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               configuration = ((RunnerAndConfigurationSettingsImpl)userObject).getConfiguration();
               setIcon(ExecutionUtil.getConfigurationIcon(getProject(), configuration));
+              name = configuration.getName();
             }
             if (configuration != null) {
-              append(configuration.getName(), runManager.isTemporary(configuration) ? SimpleTextAttributes.GRAY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              append(name, runManager.isTemporary(configuration) ? SimpleTextAttributes.GRAY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
             }
           }
         }
