@@ -12,6 +12,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import org.jetbrains.annotations.Nullable;
@@ -164,7 +165,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     if (!canBeModified(fileType)) return;
     UserFileType ftToEdit = myOriginalToEditedMap.get(fileType);
     if (ftToEdit == null) ftToEdit = ((UserFileType)fileType).clone();
-    if (ftToEdit.getEditor() == null) return;
     TypeEditor editor =
       new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
     editor.show();
@@ -186,13 +186,13 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   private static boolean canBeModified(FileType fileType) {
-    return fileType instanceof UserFileType && ((UserFileType)fileType).getEditor() != null;
+    return fileType instanceof CustomFileType; //todo: add API for canBeModified
   }
 
   private void addFileType() {
     //TODO: support adding binary file types...
     CustomFileType type = new CustomFileType(new SyntaxTable());
-    TypeEditor editor = new TypeEditor(myRecognizedFileType.myAddButton, type, FileTypesBundle.message("filetype.edit.new.title"));
+    TypeEditor<CustomFileType> editor = new TypeEditor<CustomFileType>(myRecognizedFileType.myAddButton, type, FileTypesBundle.message("filetype.edit.new.title"));
     editor.show();
     if (editor.isOK()) {
       myTempFileTypes.add(type);
@@ -434,6 +434,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       myEditor = fileType.getEditor();
       setTitle(title);
       init();
+      Disposer.register(myDisposable, myEditor);
     }
 
     protected void init() {
