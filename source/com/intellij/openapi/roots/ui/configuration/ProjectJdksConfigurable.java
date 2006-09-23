@@ -10,6 +10,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -22,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.Consumer;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +45,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
   private ProjectJdksModel myProjectJdksModel;
   private Project myProject;
+  @NonNls 
+  private static final String SPLITTER_PROPORTION = "project.jdk.splitter";
 
   public ProjectJdksConfigurable(Project project) {
     super();
@@ -70,8 +75,28 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER);
       addNode(new MyNode(configurable), myRoot);
     }
+    final String value = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION);
+    if (value != null) {
+      try {
+        final Splitter splitter = extractSplitter();
+        if (splitter != null) {
+          (splitter).setProportion(Float.parseFloat(value));
+        }
+      }
+      catch (NumberFormatException e) {
+        //do not set proportion
+      }
+    }
   }
 
+  @Nullable
+  private Splitter extractSplitter() {
+    final Component[] components = myWholePanel.getComponents();
+    if (components.length == 1 && components[0] instanceof Splitter) {
+      return (Splitter)components[0];
+    }
+    return null;
+  }
 
   public void apply() throws ConfigurationException {
     super.apply();
@@ -98,6 +123,10 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
 
   public void disposeUIResources() {
+    final Splitter splitter = extractSplitter();
+    if (splitter != null) {
+      PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION, String.valueOf(splitter.getProportion()));
+    }
     myProjectJdksModel.disposeUIResources();
     super.disposeUIResources();
   }
@@ -142,6 +171,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     return myProjectJdksModel.getProjectJdks().containsKey((ProjectJdk)editableObject);
   }
 
+  @Nullable
   public ProjectJdk getSelectedJdk() {
     return (ProjectJdk)getSelectedObject();
   }
@@ -150,10 +180,12 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     selectNodeInTree(projectJdk);
   }
 
+  @Nullable
   public String getDisplayName() {
     return null;
   }
 
+  @Nullable
   public Icon getIcon() {
     return null;
   }
