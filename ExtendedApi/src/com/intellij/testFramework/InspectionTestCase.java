@@ -72,6 +72,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
     final Element root = new Element("problems");
     final Document doc = new Document(root);
+    tool.updateContent();  //e.g. dead code need check for reachables  
     tool.exportResults(root);
 
     File file = new File(testDir + "/expected.xml");
@@ -147,7 +148,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     return PathManagerEx.getTestDataPath()+"/inspection/";
   }
 
-  private static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
+  protected static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
     ArrayList<Object> expectedProblems = new ArrayList<Object>(expectedDoc.getRootElement().getChildren("problem"));
     ArrayList<Object> reportedProblems = new ArrayList<Object>(doc.getRootElement().getChildren("problem"));
 

@@ -519,8 +519,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     final RefUnreferencedFilter filter = new RefUnreferencedFilter(this);
     final DeadHTMLComposer composer = new DeadHTMLComposer(this);
 
-    checkForReachables();
-
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
@@ -833,13 +831,11 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
 
     private void processDelayedMethods() {
-      RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[myInstantiatedClasses.size()]);
-      for (RefClass refClass : instClasses) {
+      for (RefClass refClass : myInstantiatedClasses) {
         if (isClassInstantiated(refClass)) {
           HashSet<RefMethod> methods = myClassIDtoMethods.get(refClass);
           if (methods != null) {
-            RefMethod[] arMethods = methods.toArray(new RefMethod[methods.size()]);
-            for (RefMethod arMethod : arMethods) {
+            for (RefMethod arMethod : methods) {
               arMethod.accept(this);
             }
           }
