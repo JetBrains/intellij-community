@@ -227,14 +227,14 @@ public class InspectionApplication {
         for (ContentEntry entry : entries) {
           final VirtualFile virtualFile = entry.getFile();
           if (virtualFile == null) continue;
-          if (virtualFile.getName().equals("testData")) {
+          if (virtualFile.getName().compareToIgnoreCase("testData") == 0) {
             entry.addExcludeFolder(virtualFile);
             break;
           }
           if (virtualFile.isDirectory()) {
             final VirtualFile[] children = virtualFile.getChildren();
             for (VirtualFile child : children) {
-              if (child.getName().equals("testData")) {
+              if (child.getName().compareToIgnoreCase("testData") == 0) {
                 entry.addExcludeFolder(child);
               }
             }
