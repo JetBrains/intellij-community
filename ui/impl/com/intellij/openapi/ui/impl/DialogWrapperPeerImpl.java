@@ -509,10 +509,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           field.setAccessible(true);
           field.set(rootPane, null);
           rootPane = null;
+
+          field = Window.class.getDeclaredField("windowListener");
+          field.setAccessible(true);
+          field.set(this, null);
         }
-        catch (Exception e) {
-          int a = 1;
-        }
+        catch (Exception e) {}
       }
     }
 
