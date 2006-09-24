@@ -1,8 +1,8 @@
 package com.intellij.application.options;
 
-import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
@@ -16,7 +16,7 @@ public class CodeStyleImportsConfigurable extends BaseConfigurable {
   }
 
   public boolean isModified() {
-    return myPanel.isModified();
+    return myPanel != null && myPanel.isModified();
   }
 
   public JComponent createComponent() {
@@ -33,11 +33,15 @@ public class CodeStyleImportsConfigurable extends BaseConfigurable {
   }
 
   public void reset() {
-    myPanel.reset();
+    if (myPanel != null) {
+      myPanel.reset();
+    }
   }
 
   public void apply() {
-    myPanel.apply();
+    if (myPanel != null) {
+      myPanel.apply();
+    }
   }
 
   public void disposeUIResources() {
