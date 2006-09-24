@@ -90,6 +90,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return getParent().getNamespaceByPrefix(prefixByQualifiedName);
   }
 
+  @NonNls
+  @NotNull
+  public String getNamespacePrefix() {
+    return XmlUtil.findPrefixByQualifiedName(getName());
+  }
+
   public XmlTag getParent(){
     final PsiElement parentTag = super.getParent();
     return parentTag instanceof XmlTag ? (XmlTag)parentTag : null; // Invalid elements might belong to DummyHolder instead.

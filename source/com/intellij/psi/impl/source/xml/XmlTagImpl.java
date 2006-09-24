@@ -431,12 +431,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   @NotNull
   public String getNamespacePrefix() {
-    final String name = getName();
-    final int index = name.indexOf(':');
-    if(index >= 0){
-      return name.substring(0, index);
-    }
-    return "";
+    return XmlUtil.findPrefixByQualifiedName(getName());
   }
 
   @NotNull
