@@ -110,6 +110,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     addInternalResource(PERSISTENCE_NS,"persistence.xsd");
     addInternalResource(PERSISTENCE_ORM_NS,"orm_1_0.xsd");
+    addInternalResource(XmlUtil.JSTL_FN_FACELET_URI,"jstl.fn.facelets.tld");
+    addInternalResource(XmlUtil.JSTL_CORE_FACELET_URI,"jstl.core.facelets.tld");
 
 
     // Plugins DTDs // stathik

@@ -113,6 +113,9 @@ public class XmlUtil {
   public static final @NonNls String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   public static final @NonNls String FACELETS_TAGLIB_URI = "http://java.sun.com/dtd/facelet-taglib_1_0.dtd";
   public static final @NonNls String FACELETS_TAGLIB_URI2 = "http://java.sun.com/JSF/Facelet";
+  public static final @NonNls String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
+  public static final @NonNls String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
+  public static final @NonNls String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
 
   private XmlUtil() {
   }
