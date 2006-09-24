@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
 public class IdTableBuilding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding");
 
-  private static final int FILE_SIZE_LIMIT = 1000000; // ignore files of size > 1Mb
+  private static final int FILE_SIZE_LIMIT = 10000000; // ignore files of size > 10Mb
 
   private IdTableBuilding() {
   }
@@ -230,6 +230,7 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.IDEA_PROJECT, new EmptyBuilder());
   }
 
+  @Nullable
   public static IdCacheBuilder getCacheBuilder(FileType fileType, final Project project, final VirtualFile virtualFile) {
     final IdCacheBuilder idCacheBuilder = cacheBuilders.get(fileType);
 
@@ -331,13 +332,16 @@ public class IdTableBuilding {
 
     final VirtualFile virtualFile = fileContent.getVirtualFile();
     LOG.assertTrue(virtualFile.isValid());
-    //seems we don't want this check anymore
-    //if (virtualFile.getLength() > FILE_SIZE_LIMIT) return null;
+
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (fileTypeManager.isFileIgnored(virtualFile.getName())) return null;
     final FileType fileType = fileTypeManager.getFileTypeByFile(virtualFile);
     if (fileType.isBinary()) return null;
     if (StdFileTypes.CLASS.equals(fileType)) return null;
+
+    // Still we have to have certain limit since there might be virtually unlimited resources like xml, sql etc, which
+    // once loaded will produce OutOfMemoryError
+    if (fileType != StdFileTypes.JAVA && virtualFile.getLength() > FILE_SIZE_LIMIT) return null;
 
     final TIntIntHashMap wordsTable = new TIntIntHashMap();
 
