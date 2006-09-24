@@ -20,6 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -122,8 +123,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     DefaultMutableTreeNode node = myModuleNodes.get(module);
     if (node == null) {
       node = new DefaultMutableTreeNode(module, true);
-      LOG.assertTrue(module != null);
-      final String[] groupPath = ModuleManager.getInstance(myProject).getModuleGroupPath(module);
+      final String[] groupPath = module != null ? ModuleManager.getInstance(myProject).getModuleGroupPath(module) : null;
       if (groupPath == null || groupPath.length == 0){
         insertNode(node, myRootNode);
       } else {
@@ -160,8 +160,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
           return ((Module)o1).getName().compareToIgnoreCase(((Module)o2).getName());
         }
         if (o1 instanceof ModuleGroup && o2 instanceof ModuleGroup){
-          return ((ModuleGroup)o1).toString()
-            .compareToIgnoreCase(((ModuleGroup)o2).toString());
+          return o1.toString().compareToIgnoreCase(o2.toString());
         }
         if (o1 instanceof ModuleGroup) return -1;
         return 1;
@@ -187,6 +186,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     return myItems.size();
   }
 
+  @Nullable
   public DirectoryChooser.ItemWrapper getSelectedItem() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath == null) return null;
@@ -212,7 +212,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(IconUtilEx.getIcon(module, expanded ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED));
       } else if (value instanceof ModuleGroup) {
-        append(((ModuleGroup)value).toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(expanded ? Icons.OPENED_MODULE_GROUP_ICON : Icons.CLOSED_MODULE_GROUP_ICON);
       }
     }

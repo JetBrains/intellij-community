@@ -1,5 +1,7 @@
 package com.intellij.ide.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -24,5 +26,6 @@ public interface DirectoryChooserView {
 
   int getItemsSize();
 
+  @Nullable
   DirectoryChooser.ItemWrapper getSelectedItem();
 }
