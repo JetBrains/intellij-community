@@ -835,8 +835,9 @@ public class ClasspathPanel extends JPanel {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
       setBorder(NO_FOCUS_BORDER);
-      final TableItem item = (TableItem)value;
-      getCellAppearance(item, selected).customize(this);
+      if (value instanceof TableItem) {
+        getCellAppearance((TableItem)value, selected).customize(this);
+      }
     }
   }
 
