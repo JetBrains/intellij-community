@@ -36,6 +36,8 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
 
   public abstract NamedScope getProjectTestScope();
 
+  public abstract NamedScope getProjectProductionScope();
+
   public abstract boolean hasRules();
 
   @Nullable

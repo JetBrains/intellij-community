@@ -42,6 +42,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String IS_DENY_KEY = "is_deny";
   private NamedScope myProjectScope;
   private NamedScope myProjectTestScope;
+  private NamedScope myProjectProductionScope;
   private List<NamedScope> myPredifinedScopes;
   private NamedScope myProblemsScope;
 
@@ -51,7 +52,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   public NamedScope getProjectScope() {
     if (myProjectScope == null) {
-      myProjectScope = new NamedScope(IdeBundle.message("predifined.scope.production.name"), new PackageSet() {
+      myProjectScope = new NamedScope(IdeBundle.message("predefined.scope.project.name"), new PackageSet() {
         public boolean contains(PsiFile file, NamedScopesHolder holder) {
           return file.getProject() == myProject;
         }
@@ -75,7 +76,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   public NamedScope getProjectTestScope() {
     if (myProjectTestScope == null) {
       final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-      myProjectTestScope = new NamedScope(IdeBundle.message("predifined.scope.tests.name"), new PackageSet() {
+      myProjectTestScope = new NamedScope(IdeBundle.message("predefined.scope.tests.name"), new PackageSet() {
         public boolean contains(PsiFile file, NamedScopesHolder holder) {
           final VirtualFile virtualFile = file.getVirtualFile();
           return file.getProject() == myProject && virtualFile != null && index.isInTestSourceContent(virtualFile);
@@ -97,9 +98,34 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return myProjectTestScope;
   }
 
+  public NamedScope getProjectProductionScope() {
+    if (myProjectProductionScope == null) {
+      final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+      myProjectProductionScope = new NamedScope(IdeBundle.message("predefined.scope.production.name"), new PackageSet() {
+        public boolean contains(PsiFile file, NamedScopesHolder holder) {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          return file.getProject() == myProject && virtualFile != null && !index.isInTestSourceContent(virtualFile);
+        }
+
+        public PackageSet createCopy() {
+          return this;
+        }
+
+        public String getText() {
+          return PatternPackageSet.SCOPE_SOURCE+":*..*";
+        }
+
+        public int getNodePriority() {
+          return 0;
+        }
+      });
+    }
+    return myProjectProductionScope;
+  }
+
   public NamedScope getProblemsScope() {
     if (myProblemsScope == null) {
-      myProblemsScope = new NamedScope(IdeBundle.message("predifined.scope.problems.name"), new PackageSet() {
+      myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new PackageSet() {
         public boolean contains(PsiFile file, NamedScopesHolder holder) {
           return file.getProject() == myProject && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
         }
@@ -125,6 +151,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     if (myPredifinedScopes == null){
       myPredifinedScopes = new ArrayList<NamedScope>();
       myPredifinedScopes.add(getProjectScope());
+      myPredifinedScopes.add(getProjectProductionScope());
       myPredifinedScopes.add(getProjectTestScope());
       myPredifinedScopes.add(getProblemsScope());
     }
