@@ -9,8 +9,10 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiFormatUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public class MethodSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
   public MethodSmartPointerNode(Project project, PsiMethod value, ViewSettings viewSettings) {
@@ -21,8 +23,9 @@ public class MethodSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElem
     this(project, (PsiMethod)value, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildrenImpl() {
-    return null;
+    return Collections.emptyList();
   }
 
   public void updateImpl(PresentationData data) {
@@ -40,8 +43,7 @@ public class MethodSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElem
 
   public boolean isConstructor() {
     final PsiMethod psiMethod = (PsiMethod)getPsiElement();
-    if (psiMethod == null) return false;
-    return psiMethod.isConstructor();
+    return psiMethod != null && psiMethod.isConstructor();
   }
 
 }

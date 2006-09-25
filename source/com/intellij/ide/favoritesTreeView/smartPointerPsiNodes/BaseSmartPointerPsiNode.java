@@ -32,13 +32,11 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
   public final Collection<AbstractTreeNode> getChildren() {
     PsiElement value = getPsiElement();
     if (value == null) return new ArrayList<AbstractTreeNode>();
-    boolean valid = value.isValid();
-    if (!LOG.assertTrue(valid)) {
-      return null;
-    }
+    LOG.assertTrue(value.isValid());
     return getChildrenImpl();
   }
 
+  @NotNull
   protected abstract Collection<AbstractTreeNode> getChildrenImpl();
 
   protected boolean isMarkReadOnly() {
@@ -93,10 +91,9 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
 
   private boolean isDeprecated() {
     final PsiElement element = getPsiElement();
-    if (element == null || !element.isValid()) return false;
-    if (!(element instanceof PsiDocCommentOwner)) return false;
-    return ((PsiDocCommentOwner)element).isDeprecated();
-
+    return element instanceof PsiDocCommentOwner
+           && element.isValid()
+           && ((PsiDocCommentOwner)element).isDeprecated();
   }
 
   public boolean contains(@NotNull VirtualFile file) {
@@ -123,4 +120,4 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
     final Type value = getValue();
     return value == null ? null : value.getElement();
   }
-  }
+}

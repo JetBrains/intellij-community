@@ -14,7 +14,6 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -421,8 +420,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return result;
   }
 
-  private boolean addToPath(AbstractTreeNode rootElement, Object element, ArrayList<AbstractTreeNode> result, Collection<Object> processedElements) {
-
+  private static boolean addToPath(AbstractTreeNode<?> rootElement, Object element, ArrayList<AbstractTreeNode> result, Collection<Object> processedElements) {
     Object value = rootElement.getValue();
     if (value instanceof TreeElement) {
       value = ((StructureViewTreeElement) value).getValue();
@@ -436,7 +434,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       return true;
     }
 
-    Collection<AbstractTreeNode> children = rootElement.getChildren();
+    Collection<? extends AbstractTreeNode> children = rootElement.getChildren();
     for (AbstractTreeNode child : children) {
       if (addToPath(child, element, result, processedElements)) {
         result.add(0, rootElement);
@@ -447,7 +445,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return false;
   }
 
-  private DefaultMutableTreeNode findInChildren(DefaultMutableTreeNode currentTreeNode, AbstractTreeNode topPathElement) {
+  private static DefaultMutableTreeNode findInChildren(DefaultMutableTreeNode currentTreeNode, AbstractTreeNode topPathElement) {
     for (int i = 0; i < currentTreeNode.getChildCount(); i++) {
       TreeNode child = currentTreeNode.getChildAt(i);
       if (((DefaultMutableTreeNode)child).getUserObject().equals(topPathElement))
@@ -635,22 +633,22 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       if (!((PsiElement)element).isValid()) return null;
       return element;
     }
-    if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return convertToPsiElementsArray(getSelectedElements());
     }
     if (DataConstants.FILE_EDITOR.equals(dataId)) {
       return myFileEditor;
     }
-    if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (DataConstantsEx.NAVIGATABLE.equals(dataId)) {
+    if (DataConstants.NAVIGATABLE.equals(dataId)) {
       Object[] selectedElements = getSelectedTreeElements();
       if (selectedElements == null || selectedElements.length == 0) return null;
       if (selectedElements[0] instanceof Navigatable) {

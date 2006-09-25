@@ -6,10 +6,10 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
   public ClassSmartPointerNode(Project project, PsiClass value, ViewSettings viewSettings) {
@@ -20,6 +20,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     this(project, (PsiClass)value, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildrenImpl() {
     PsiClass parent = getPsiClass();
     final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<AbstractTreeNode>();
@@ -27,8 +28,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     ArrayList<PsiElement> result = new ArrayList<PsiElement>();
     if (getSettings().isShowMembers()) {
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
-      for (Iterator<PsiElement> iterator = result.iterator(); iterator.hasNext();) {
-        PsiElement psiElement = iterator.next();
+      for (PsiElement psiElement : result) {
         psiElement.accept(new PsiElementVisitor() {
           public void visitClass(PsiClass aClass) {
             treeNodes.add(new ClassSmartPointerNode(getProject(), aClass, getSettings()));
@@ -59,8 +59,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
   }
 
   public boolean isTopLevel() {
-    if (getPsiElement() == null) return false;
-    return getPsiElement().getParent() instanceof PsiFile;
+    return getPsiElement() != null && getPsiElement().getParent() instanceof PsiFile;
   }
 
 

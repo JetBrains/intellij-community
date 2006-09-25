@@ -9,8 +9,10 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiFormatUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public class FieldSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
 
@@ -22,8 +24,9 @@ public class FieldSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     this(project, (PsiField)value, viewSettings);
   }
 
+  @NotNull
   public Collection<AbstractTreeNode> getChildrenImpl() {
-    return null;
+    return Collections.emptyList();
   }
 
   public void updateImpl(PresentationData data) {
