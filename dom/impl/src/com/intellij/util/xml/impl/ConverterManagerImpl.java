@@ -55,7 +55,7 @@ class ConverterManagerImpl implements ConverterManager {
     return null;
   }
 
-  public void registerConverterImplementation(Class<? extends Converter> converterInterface, Converter converterImpl) {
+  public <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl) {
     myConverterInstances.put(converterInterface, converterImpl);
   }
 }

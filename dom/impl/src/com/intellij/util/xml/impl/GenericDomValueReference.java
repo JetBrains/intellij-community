@@ -62,8 +62,9 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return mySoft;
   }
 
+  @Nullable
   protected PsiElement resolveInner(T o) {
-    final Converter<T> converter = myGenericValue.getConverter();
+    final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       final PsiElement psiElement = ((ResolvingConverter<T>)converter).getPsiElement(o);
       return psiElement == null && o != null ? getElement() : psiElement;
@@ -87,6 +88,22 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return o != null ? getElement() : null;
   }
 
+  public boolean isReferenceTo(final PsiElement element) {
+    final Converter<T> converter = getConverter();
+    if (converter instanceof ResolvingConverter) {
+      return ((ResolvingConverter<T>)converter).isReferenceTo(element, getStringValue(), myGenericValue.getValue(), getConvertContext());
+    }
+    return super.isReferenceTo(element);
+  }
+
+  private String getStringValue() {
+    return myGenericValue.getStringValue();
+  }
+
+  private Converter<T> getConverter() {
+    return myGenericValue.getConverter();
+  }
+
   @Nullable
   public PsiElement resolve() {
     final T value = myGenericValue.getValue();
@@ -94,19 +111,25 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   public String getCanonicalText() {
-    String value = myGenericValue.getStringValue();
+    String value = getStringValue();
     return value != null ? value : J2EEBundle.message("unknown.j2ee.reference.canonical.text");
   }
 
   public String getUnresolvedMessagePattern() {
-    return myGenericValue.getConverter().getErrorMessage(myGenericValue.getStringValue(), createConvertContext());
+    return getConverter().getErrorMessage(getStringValue(), getConvertContext());
   }
 
-  private ConvertContextImpl createConvertContext() {
+  private ConvertContextImpl getConvertContext() {
     return new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(myGenericValue));
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    final Converter<T> converter = getConverter();
+    if (converter instanceof ResolvingConverter) {
+      ((ResolvingConverter)converter).bindReference(myGenericValue, getConvertContext(), element);
+      return myGenericValue.getXmlTag();
+    }
+
     if (element instanceof XmlTag) {
       DomElement domElement = myGenericValue.getManager().getDomElement((XmlTag) element);
       if (domElement != null) {
@@ -120,10 +143,10 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   public Object[] getVariants() {
-    final Converter<T> converter = myGenericValue.getConverter();
+    final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
-      final ConvertContext convertContext = createConvertContext();
+      final ConvertContext convertContext = getConvertContext();
       ArrayList<Object> result = new ArrayList<Object>();
       for (T variant: resolvingConverter.getVariants(convertContext)) {
         String name = converter.toString(variant, convertContext);

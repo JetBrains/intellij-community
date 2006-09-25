@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Type;
 
@@ -44,6 +45,7 @@ public interface DomElement extends AnnotatedElement{
   DomGenericInfo getGenericInfo();
 
   @NotNull
+  @NonNls
   String getXmlElementName();
 
   void accept(final DomElementVisitor visitor);

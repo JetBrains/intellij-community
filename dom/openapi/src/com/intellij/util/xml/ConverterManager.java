@@ -33,5 +33,5 @@ public interface ConverterManager {
   @Nullable
   Converter getConverterByClass(Class<?> convertingClass);
 
-  void registerConverterImplementation(Class<? extends Converter> converterInterface, Converter converterImpl);
+  <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl);
 }

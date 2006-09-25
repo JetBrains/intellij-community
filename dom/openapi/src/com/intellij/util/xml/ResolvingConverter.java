@@ -17,6 +17,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,17 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     return Collections.emptySet();
   }
 
-  public PsiElement getPsiElement(T resolvedValue) {
+  public void bindReference(final GenericDomValue<T> genericValue, final ConvertContext context, final PsiElement newTarget) {
+    if (newTarget instanceof XmlTag) {
+      DomElement domElement = genericValue.getManager().getDomElement((XmlTag) newTarget);
+      if (domElement != null) {
+        genericValue.setStringValue(ElementPresentationManager.getElementName(domElement));
+      }
+    }
+  }
+
+  @Nullable
+  public PsiElement getPsiElement(@Nullable T resolvedValue) {
     if (resolvedValue instanceof PsiElement) {
       return (PsiElement)resolvedValue;
     }
@@ -84,6 +95,11 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
       return ((DomElement)resolvedValue).getXmlElement();
     }
     return null;
+  }
+
+  public boolean isReferenceTo(@NotNull PsiElement element, final String stringValue, @Nullable T resolveResult,
+                               final ConvertContext context) {
+    return element.getManager().areElementsEquivalent(element, getPsiElement(resolveResult));
   }
 
   public static abstract class WrappedResolvingConverter<T> extends ResolvingConverter<T> {
