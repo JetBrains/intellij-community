@@ -561,6 +561,9 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     int result = 1;
     FormLayout formLayout = (FormLayout) grid.getLayout();
     if (isRow) {
+      int[][] groupIndices = formLayout.getRowGroups();
+      groupIndices = removeDeletedCell(groupIndices, cellIndex+1);
+      formLayout.setRowGroups(groupIndices);
       formLayout.removeRow(cellIndex+1);
       updateGridConstraintsFromCellConstraints(grid);
       if (formLayout.getRowCount() % 2 == 0) {
@@ -573,6 +576,9 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       }
     }
     else {
+      int[][] groupIndices = formLayout.getColumnGroups();
+      groupIndices = removeDeletedCell(groupIndices, cellIndex+1);
+      formLayout.setColumnGroups(groupIndices);
       formLayout.removeColumn(cellIndex+1);
       updateGridConstraintsFromCellConstraints(grid);
       if (formLayout.getColumnCount() % 2 == 0) {
@@ -585,6 +591,45 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       }
     }
     return result;
+  }
+
+  private static int[][] removeDeletedCell(final int[][] groupIndices, final int deletedIndex) {
+    for(int i=0; i<groupIndices.length; i++) {
+      for(int j=0; j<groupIndices [i].length; j++) {
+        if (groupIndices [i][j] == deletedIndex) {
+          int[][] newIndices;
+          if (groupIndices [i].length <= 2) {
+            // deleted cell is contained in a group with 1 or 2 cells => delete entire group
+            newIndices = new int[groupIndices.length-1][];
+            for (int newI = 0; newI < i; newI++) {
+              newIndices [newI] = new int[groupIndices [newI].length];
+              System.arraycopy(groupIndices [newI], 0, newIndices [newI], 0, groupIndices [newI].length);
+            }
+            for(int newI=i+1; newI<groupIndices.length; newI++) {
+              newIndices [newI-1] = new int[groupIndices [newI].length];
+              System.arraycopy(groupIndices [newI], 0, newIndices [newI-1], 0, groupIndices [newI].length);
+            }
+          }
+          else {
+            // deleted cell is contained in a group with more than 2 cells => keep the group and delete only the item
+            newIndices = new int[groupIndices.length][];
+            for(int newI=0; newI<groupIndices.length; newI++) {
+              if (newI == i) {
+                newIndices [newI] = new int[groupIndices [newI].length-1];
+                System.arraycopy(groupIndices [newI], 0, newIndices [newI], 0, j);
+                System.arraycopy(groupIndices [newI], j+1, newIndices [newI], j, groupIndices [i].length-j-1);
+              }
+              else {
+                newIndices [newI] = new int[groupIndices [newI].length];
+                System.arraycopy(groupIndices [newI], 0, newIndices [newI], 0, groupIndices [i].length);
+              }
+            }
+          }
+          return newIndices;
+        }
+      }
+    }
+    return groupIndices;
   }
 
   @Override @Nullable
