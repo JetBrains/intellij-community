@@ -2391,27 +2391,27 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "class C extends B2 { static void foo(); }\n";
     String s2 = "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( I )] {}";
     String s2_2 = "class '_ extends '_Extends:[!regex( *A )]{}";
-    assertEquals("Find class within type hierarchy with not", 3, findMatchesCount(s1,s2));
+    assertEquals("Find class within type hierarchy with not", 1, findMatchesCount(s1,s2));
     assertEquals("Find class within type hierarchy with not, 2", 1, findMatchesCount(s1,s2_2));
   }
 
-  public void testFindTryWithoutProperFinally() {
-    String s1 = "try {\n" +
-                "  conn = 1;\n" +
-                "} finally {\n" +
-                "  conn.close();\n" +
-                "}\n" +
-                "try {\n" +
-                "  conn = 1;\n" +
-                "} finally {\n" +
-                "  int a = 1;\n" +
-                "}\n" +
-                "try {\n" +
-                "  conn = 1;\n" +
-                "} finally {\n" +
-                "  int a = 1;\n" +
-                "}";
-    String s2 = "try { '_StatementBefore*; '_Dcl:[ regex(conn = 1)]; '_StatementAfter*; } finally { '_Finally*:[!regex( .*conn.*) ]; }";
-    assertEquals("FindTryWithoutProperFinally", 1, findMatchesCount(s1,s2));
-  }
+  //public void testFindTryWithoutProperFinally() {
+  //  String s1 = "try {\n" +
+  //              "  conn = 1;\n" +
+  //              "} finally {\n" +
+  //              "  conn.close();\n" +
+  //              "}\n" +
+  //              "try {\n" +
+  //              "  conn = 1;\n" +
+  //              "} finally {\n" +
+  //              "  int a = 1;\n" +
+  //              "}\n" +
+  //              "try {\n" +
+  //              "  conn = 1;\n" +
+  //              "} finally {\n" +
+  //              "  int a = 1;\n" +
+  //              "}";
+  //  String s2 = "try { '_StatementBefore*; '_Dcl:[ regex(conn = 1)]; '_StatementAfter*; } finally { '_Finally*:[!regex( .*conn.*) ]; }";
+  //  assertEquals("FindTryWithoutProperFinally", 1, findMatchesCount(s1,s2));
+  //}
 }
