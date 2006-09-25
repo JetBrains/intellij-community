@@ -162,7 +162,11 @@ public class HorizontalList extends JPanel {
         scrollToVisible(1);
       }
       paintBorder();
-      requestFocusInWindow();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          requestFocusInWindow();
+        }
+      });
     }
   }
 
