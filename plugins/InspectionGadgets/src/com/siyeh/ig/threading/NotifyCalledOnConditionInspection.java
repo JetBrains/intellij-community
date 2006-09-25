@@ -27,6 +27,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class NotifyCalledOnConditionInspection extends ExpressionInspection {
 
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "notify.called.on.condition.display.name");
+    }
+
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.THREADING_GROUP_NAME;
     }
