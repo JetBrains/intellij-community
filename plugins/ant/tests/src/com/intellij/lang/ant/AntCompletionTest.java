@@ -142,6 +142,18 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
 
   public void testEndTagCompletion() throws Exception {
     if (true) return;
+    doTest();
+  }
+
+  public void testTargetIfAttrEasterEgg() throws Exception {
+    doTest();
+  }
+
+  public void testTargetUnlessAttrEasterEgg() throws Exception {
+    doTest();
+  }
+
+  private void doTest() throws Exception {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");
     performNormalCompletion();
