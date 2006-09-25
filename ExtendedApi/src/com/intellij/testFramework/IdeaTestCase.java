@@ -170,6 +170,10 @@ import java.util.HashSet;
   }
 
   protected Module createModule(final String moduleName) {
+    return doCreateRealModule(moduleName);
+  }
+
+  protected Module doCreateRealModule(final String moduleName) {
     final VirtualFile projectFile = myProject.getProjectFile();
     assertNotNull(projectFile);
     final File moduleFile = new File(projectFile.getParent().getPath().replace('/', File.separatorChar),

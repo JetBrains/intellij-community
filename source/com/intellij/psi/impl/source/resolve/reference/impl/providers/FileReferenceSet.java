@@ -5,6 +5,7 @@ import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -264,8 +265,10 @@ public class FileReferenceSet {
     else {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
-          .getContentRootForFile(virtualFile);
+        final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+        VirtualFile contentRootForFile = index.getSourceRootForFile(virtualFile);
+        if (contentRootForFile == null) contentRootForFile = index.getContentRootForFile(virtualFile);
+
         if (contentRootForFile != null) {
           result = PsiManager.getInstance(project).findDirectory(contentRootForFile);
         }
