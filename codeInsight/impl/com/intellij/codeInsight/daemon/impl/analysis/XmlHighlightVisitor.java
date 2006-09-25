@@ -130,16 +130,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  //public void visitXmlText(XmlText text) {
-  //  final String textString = text.getText();
-  //  int ampInd = textString.indexOf('&');
-  //  if (ampInd!=-1) {
-  //
-  //  }
-  //  super.visitXmlText(text);
-  //}
-
-
   private void checkTag(XmlTag tag) {
     if (ourDoJaxpTesting) return;
 
@@ -159,11 +149,15 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (myResult == null) {
       if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
-        if (tag instanceof HtmlTag && tag.getDescriptor() instanceof AnyXmlElementDescriptor) {
+        final XmlElementDescriptor descriptor = tag.getDescriptor();
+        if (tag instanceof HtmlTag &&
+            ( descriptor instanceof AnyXmlElementDescriptor ||
+              descriptor == null
+            )
+           ) {
           final String name = tag.getName();
+          XmlEntitiesInspection inspection = getInspectionProfile(tag, HtmlStyleLocalInspection.SHORT_NAME);
 
-          InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
-          HtmlStyleLocalInspection inspection = (HtmlStyleLocalInspection)((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME)).getTool();
           reportOneTagProblem(
             tag,
             name,
@@ -180,6 +174,15 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         checkReferences(tag, QuickFixProvider.NULL);
       }
     }
+  }
+
+  private static XmlEntitiesInspection getInspectionProfile(final XmlTag tag, final String inspectionName) {
+    final PsiFile psiFile = tag.getContainingFile();
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(psiFile.getProject()).getInspectionProfile(psiFile);
+    XmlEntitiesInspection inspection = (XmlEntitiesInspection)((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(
+      inspectionName)
+    ).getTool();
+    return inspection;
   }
 
   private void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix) {
@@ -444,6 +447,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           parentTag.getUserData(DO_NOT_VALIDATE_KEY) == null &&
           !XmlUtil.tagFromTemplateFramework(tag)
       ) {
+        if (tag instanceof HtmlTag) {
+          XmlEntitiesInspection inspection = getInspectionProfile(tag, HtmlStyleLocalInspection.SHORT_NAME);
+          if (inspection != null && isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_TAG), name)) {
+            return;
+          }
+        }
+
         addElementsForTag(
           tag,
           XmlErrorMessages.message("element.is.not.allowed.here", name),
@@ -551,7 +561,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  private static boolean isAdditionallyDeclared(final String additional, final String name) {
+  private static boolean isAdditionallyDeclared(final String additional, String name) {
+    name = name.toLowerCase();
+    if (additional.indexOf(name) == -1) return false;
+    
     StringTokenizer tokenizer = new StringTokenizer(additional, ", ");
     while (tokenizer.hasMoreTokens()) {
       if (name.equals(tokenizer.nextToken())) {

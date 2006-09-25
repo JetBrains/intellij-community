@@ -40,14 +40,14 @@ public class HtmlUtil {
 
   private HtmlUtil() {}
   @NonNls private static final String[] EMPTY_TAGS = { 
-    "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col","embed" 
+    "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col"
   };
   private static final Set<String> EMPTY_TAGS_MAP = new THashSet<String>();
   @NonNls private static final String[] OPTIONAL_END_TAGS = {
     //"html",
     "head",
     //"body",
-    "p", "li", "dd", "dt", "thead", "tfoot", "tbody", "colgroup", "tr", "th", "td", "option"
+    "p", "li", "dd", "dt", "thead", "tfoot", "tbody", "colgroup", "tr", "th", "td", "option", "embed", "noembed"
   };
   private static final Set<String> OPTIONAL_END_TAGS_MAP = new THashSet<String>();
 
@@ -56,7 +56,7 @@ public class HtmlUtil {
    // nonexplicitly specified
    "map",
    // flow elements
-   "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe"
+   "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe","comment","nobr"
   };
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<String>();
 
