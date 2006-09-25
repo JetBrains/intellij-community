@@ -32,11 +32,18 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   protected String getActionName(VcsContext dataContext) {
@@ -59,6 +66,38 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
         return VcsBundle.message("action.name.checkin.files", getCheckinActionName(dataContext));
       }
     }
+  }
+
+  @Override
+  protected ChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+
+    FilePath[] roots = getRoots(context);
+    for(FilePath root: roots) {
+      final VirtualFile file = root.getVirtualFile();
+      if (file == null) continue;
+      final Ref<Change> change = new Ref<Change>();
+      if (!file.isDirectory()) {
+        change.set(changeListManager.getChange(file));
+      }
+      else {
+        ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(file, new ContentIterator() {
+          public boolean processFile(VirtualFile fileOrDir) {
+            Change c = changeListManager.getChange(fileOrDir);
+            if (c != null) {
+              change.set(c);
+              return false;
+            }
+            return true;
+          }
+        });
+      }
+      if (!change.isNull()) {
+        return changeListManager.getChangeList(change.get());
+      }
+    }
+
+    return changeListManager.getDefaultChangeList();
   }
 
   private String getCheckinActionName(VcsContext dataContext) {

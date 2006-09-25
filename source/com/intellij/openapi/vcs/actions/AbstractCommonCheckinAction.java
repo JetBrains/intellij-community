@@ -95,25 +95,30 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     }
     else {
       if (ChangeListManager.getInstance(project).ensureUpToDate(true)) {
-        ChangeList initialSelection;
-        ChangeList[] selectedChangeLists = context.getSelectedChangeLists();
-        if (selectedChangeLists != null && selectedChangeLists.length > 0) {
-          // convert copy to real
-          initialSelection = ChangeListManager.getInstance(project).findChangeList(selectedChangeLists [0].getName());
-        }
-        else {
-          Change[] selectedChanges = context.getSelectedChanges();
-          if (selectedChanges != null && selectedChanges.length > 0) {
-            initialSelection = ChangeListManager.getInstance(project).getChangeList(selectedChanges [0]);
-          }
-          else {
-            initialSelection = ChangeListManager.getInstance(project).getDefaultChangeList();
-          }
-        }
+        ChangeList initialSelection = getInitiallySelectedChangeList(context, project);
 
         CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection);
       }
     }
+  }
+
+  protected ChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
+    ChangeList initialSelection;
+    ChangeList[] selectedChangeLists = context.getSelectedChangeLists();
+    if (selectedChangeLists != null && selectedChangeLists.length > 0) {
+      // convert copy to real
+      initialSelection = ChangeListManager.getInstance(project).findChangeList(selectedChangeLists [0].getName());
+    }
+    else {
+      Change[] selectedChanges = context.getSelectedChanges();
+      if (selectedChanges != null && selectedChanges.length > 0) {
+        initialSelection = ChangeListManager.getInstance(project).getChangeList(selectedChanges [0]);
+      }
+      else {
+        initialSelection = ChangeListManager.getInstance(project).getDefaultChangeList();
+      }
+    }
+    return initialSelection;
   }
 
   private void oldActionPerformed(final FilePath[] roots, final Project project, final VcsContext context) {
