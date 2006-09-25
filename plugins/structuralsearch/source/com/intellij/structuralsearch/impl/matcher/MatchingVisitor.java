@@ -90,24 +90,32 @@ public class MatchingVisitor extends PsiElementVisitor {
     final boolean isTypedVar = matchContext.getPattern().isTypedVar(tag.getNameElement());
 
     result = (isTypedVar || tag.getName().equals(tag2.getName()) );
-    if (result && tag.getValueElement()!=null) {
-      if (tag2.getValueElement()!=null) {
-        result = match(tag.getValueElement(),tag2.getValueElement());
-      }
-      else {
-        result = allowsAbsenceOfMatch(tag.getValueElement());
+
+    final PsiDocTagValue psiDocTagValue = tag.getValueElement();
+    boolean isTypedValue = false;
+
+    if (result && psiDocTagValue !=null) {
+      isTypedValue = matchContext.getPattern().isTypedVar(psiDocTagValue);
+
+      if (isTypedValue) {
+        if (tag2.getValueElement()!=null) {
+          result = handleTypedElement(psiDocTagValue,tag2.getValueElement());
+        }
+        else {
+          result = allowsAbsenceOfMatch(psiDocTagValue);
+        }
       }
     }
 
-    if (result) {
+    if (result && !isTypedValue) {
       result = matchInAnyOrder(
         new DocValuesIterator(tag.getFirstChild()),
         new DocValuesIterator(tag2.getFirstChild())
       );
+    }
 
-      if (result && isTypedVar) {
-        result = handleTypedElement(tag.getNameElement(), tag2.getNameElement());
-      }
+    if (result && isTypedVar) {
+      result = handleTypedElement(tag.getNameElement(), tag2.getNameElement());
     }
   }
 

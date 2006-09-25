@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 
@@ -21,11 +22,16 @@ public class DocDataHandler extends Handler {
   );
 
   public boolean match(PsiElement node, PsiElement match, MatchContext context) {
-    PsiDocToken t1 = (PsiDocToken)node;
-    PsiDocToken t2 = (PsiDocToken)match;
+    String text1 = node.getText();
 
-    Matcher m1 = p.matcher(t1.getText());
-    Matcher m2 = p.matcher(t2.getText());
+    text1 = getTextFromNode(node, text1);
+
+    Matcher m1 = p.matcher(text1);
+
+    String text2 = match.getText();
+    text2 = getTextFromNode(match, text2);
+
+    Matcher m2 = p.matcher(text2);
 
     if (m1.matches() && m2.matches()) {
       String name = m1.group(1);
@@ -46,6 +52,20 @@ public class DocDataHandler extends Handler {
         return true;
       }
     }
-    return false;
+    return text1.equals(text2);
+  }
+
+  // since doctag value may be inside doc comment we specially build text including skipped nodes
+  private static String getTextFromNode(final PsiElement node, String text1) {
+    PsiElement nextSibling = node.getNextSibling();
+    if (nextSibling instanceof PsiDocTagValue) {
+      text1 += nextSibling.getText();
+
+      nextSibling = nextSibling.getNextSibling();
+      if (nextSibling instanceof PsiDocToken && ((PsiDocToken)nextSibling).getTokenType() == PsiDocToken.DOC_COMMENT_DATA) {
+        text1 += nextSibling.getText();
+      }
+    }
+    return text1;
   }
 }

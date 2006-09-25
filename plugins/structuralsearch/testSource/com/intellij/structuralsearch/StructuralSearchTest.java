@@ -1,9 +1,5 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.idea.IdeaTestUtil;
-
-import java.util.Calendar;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Maxim.Mossienko
@@ -1578,25 +1574,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // just javadoc comment search
     assertEquals(
       "just javadoc comment search",
-      findMatchesCount(s57,s58_4),
-      4
+      4,
+      findMatchesCount(s57,s58_4)
     );
 
-    if (IdeaTestUtil.bombExplodes(2006, Calendar.SEPTEMBER, 25, 15, 0, "maxim.mossienko", "next token after tag correctly becomes " +
-                                                                                         "a tag parameter even if located on next line." +
-                                                                                         "Leading asterisks should not be counted as well.")) {
-      assertEquals(
-      "XDoclet metadata",
-        findMatchesCount(s83,s84),
-        2
-      );
+    assertEquals(
+    "XDoclet metadata",
+      2,
+      findMatchesCount(s83,s84)
+    );
 
-      assertEquals(
-      "XDoclet metadata 2",
-        findMatchesCount(s83,s84_2),
-        1
-      );
-    }
+    assertEquals(
+    "XDoclet metadata 2",
+      1,
+      findMatchesCount(s83,s84_2)
+    );
 
     assertEquals(
       "optional tag value match",
@@ -1606,8 +1598,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "multiple tags match +",
-      findMatchesCount(s75,s76),
-      2
+      2,
+      findMatchesCount(s75,s76)
     );
 
     assertEquals(
@@ -2399,7 +2391,27 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "class C extends B2 { static void foo(); }\n";
     String s2 = "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( I )] {}";
     String s2_2 = "class '_ extends '_Extends:[!regex( *A )]{}";
-    assertEquals("Find class within type hierarchy with not", 1, findMatchesCount(s1,s2));
+    assertEquals("Find class within type hierarchy with not", 3, findMatchesCount(s1,s2));
     assertEquals("Find class within type hierarchy with not, 2", 1, findMatchesCount(s1,s2_2));
+  }
+
+  public void testFindTryWithoutProperFinally() {
+    String s1 = "try {\n" +
+                "  conn = 1;\n" +
+                "} finally {\n" +
+                "  conn.close();\n" +
+                "}\n" +
+                "try {\n" +
+                "  conn = 1;\n" +
+                "} finally {\n" +
+                "  int a = 1;\n" +
+                "}\n" +
+                "try {\n" +
+                "  conn = 1;\n" +
+                "} finally {\n" +
+                "  int a = 1;\n" +
+                "}";
+    String s2 = "try { '_StatementBefore*; '_Dcl:[ regex(conn = 1)]; '_StatementAfter*; } finally { '_Finally*:[!regex( .*conn.*) ]; }";
+    assertEquals("FindTryWithoutProperFinally", 1, findMatchesCount(s1,s2));
   }
 }
