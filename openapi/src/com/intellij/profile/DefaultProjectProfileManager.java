@@ -131,7 +131,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
         for (Object s : children) {
           Element scopeElement = (Element)s;
           final String profile = scopeElement.getAttributeValue(PROFILE);
-          if (profile != null) {
+          if (profile != null && myProfiles.containsKey(profile)) {
             final NamedScope scope = holder.getScope(scopeElement.getAttributeValue(NAME));
             if (scope != null) {
               myScopeToProfileMap.put(scope, profile);
