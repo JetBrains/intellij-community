@@ -47,8 +47,8 @@ public class Splash extends JWindow {
       if (myShowLicenseeInfo) {
         g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
         g.setColor(ideaDARK_BLUE);
-        g.drawString(LicenseManager.getInstance().licensedToMessage(), x + 20, y + getIconHeight() - 60);
-        g.drawString(LicenseManager.getInstance().licensedRestrictionsMessage(), x + 20, y + getIconHeight() - 40);
+        g.drawString(LicenseManager.getInstance().licensedToMessage(), x + 20, y + getIconHeight() - 52);
+        g.drawString(LicenseManager.getInstance().licensedRestrictionsMessage(), x + 20, y + getIconHeight() - 32);
       }
     }
 
