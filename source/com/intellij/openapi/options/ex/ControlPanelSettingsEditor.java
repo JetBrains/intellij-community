@@ -41,7 +41,7 @@ import java.util.Set;
  * To change this template use Options | File Templates.
  */
 public class ControlPanelSettingsEditor extends DialogWrapper {
-  private static final int ICONS_PER_ROW = 7;
+  private static final int ICONS_PER_ROW = 8;
   private static final Insets ICON_INSETS = new Insets(2, 2, 2, 2);
 
   protected final Project myProject;
