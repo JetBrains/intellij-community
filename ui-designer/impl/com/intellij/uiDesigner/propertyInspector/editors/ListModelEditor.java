@@ -39,7 +39,7 @@ public class ListModelEditor extends PropertyEditor<String[]> {
     dlg.show();
     if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       myLastValue = dlg.getValue();
-      myTextField.setText(StringUtil.join(myLastValue, ", "));
+      myTextField.setText(listValueToString(myLastValue));
       fireValueCommitted(true, false);
     }
   }
@@ -51,7 +51,7 @@ public class ListModelEditor extends PropertyEditor<String[]> {
   public JComponent getComponent(final RadComponent component, final String[] value, final boolean inplace) {
     myLastComponent = component;
     myLastValue = value;
-    myTextField.setText(StringUtil.join(value, ", "));
+    myTextField.setText(listValueToString(value));
     if (inplace) {
       openListEditorDialog();
     }
@@ -60,5 +60,10 @@ public class ListModelEditor extends PropertyEditor<String[]> {
 
   public void updateUI() {
     SwingUtilities.updateComponentTreeUI(myTextField);
+  }
+
+  public static String listValueToString(final String[] value) {
+    if (value == null) return "";
+    return StringUtil.join(value, ", ");
   }
 }

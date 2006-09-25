@@ -44,7 +44,7 @@ public class ListEditorDialog extends DialogWrapper {
   }
 
   public void setValue(final String[] value) {
-    myLinesTextArea.setText(StringUtil.join(value, "\n"));
+    myLinesTextArea.setText(value == null ? "" : StringUtil.join(value, "\n"));
   }
 
   @Override

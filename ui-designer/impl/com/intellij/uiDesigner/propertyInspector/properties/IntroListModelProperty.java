@@ -4,7 +4,6 @@
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -100,7 +99,7 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
 
   private static class MyRenderer extends LabelPropertyRenderer<String[]> {
     @Override protected void customize(final String[] value) {
-      setText(StringUtil.join(value, ", "));
+      setText(ListModelEditor.listValueToString(value));
     }
   }
 }
