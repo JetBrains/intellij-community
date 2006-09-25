@@ -1,9 +1,12 @@
 package com.intellij.lang.ant.config.execution;
 
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.NextOccurenceToolbarAction;
+import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
@@ -53,8 +56,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     TARGET,
     TASK,
     MESSAGE,
-    ERROR,
-  }
+    ERROR, }
 
   private static final Key<AntBuildMessageView> KEY = Key.create("BuildMessageView.KEY");
   private static final String BUILD_CONTENT_NAME = AntBundle.message("ant.build.tab.content.title");
@@ -465,7 +467,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
           final File file = new File(fileName);
           final VirtualFile result = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
             public VirtualFile compute() {
-              String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getAbsolutePath().replace(File.separatorChar, '/'));
+              String url =
+                VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getAbsolutePath().replace(File.separatorChar, '/'));
               return VirtualFileManager.getInstance().findFileByUrl(url);
             }
           });
@@ -811,6 +814,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
     else if (errors == 0 && warnings == 0) {
       return AntBundle.message("build.finished.status.ant.build.completed.successfully", buildTimeInSeconds, theDateAsString);
+    }
+    else if (errors == 0) {
+      return AntBundle
+        .message("build.finished.status.ant.build.completed.with.warnings", warnings, buildTimeInSeconds, theDateAsString);
     }
     else {
       return AntBundle

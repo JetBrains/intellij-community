@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
@@ -17,29 +18,37 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 public class OutputParser implements BuildProgressWindow.BackgroundListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.OutputParser");
 
+  @NonNls private static final String JAVAC = "javac";
+  @NonNls private static final String ECHO = "echo";
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.OutputParser");
   private final Project myProject;
   private final AntBuildMessageView myMessageView;
   private final WeakReference<BuildProgressWindow> myProgress;
   private final String myBuildName;
   private final OSProcessHandler myProcessHandler;
-  private boolean isStopped = false;
-  private ArrayList<String> myJavacMessages = null;
-  private boolean myFirstLineProcessed = false;
+  private boolean isStopped;
+  private List<String> myJavacMessages;
+  private boolean myFirstLineProcessed;
   private boolean myStartedSuccessfully;
-  @NonNls public static final String JAVAC = "javac";
+  private boolean myIsEcho;
 
-  public OutputParser(Project project, OSProcessHandler processHandler, AntBuildMessageView errorsView, BuildProgressWindow progress, String buildName){
+  public OutputParser(Project project,
+                      OSProcessHandler processHandler,
+                      AntBuildMessageView errorsView,
+                      BuildProgressWindow progress,
+                      String buildName) {
     myProject = project;
     myProcessHandler = processHandler;
     myMessageView = errorsView;
     myProgress = new WeakReference<BuildProgressWindow>(progress);
     myBuildName = buildName;
     myMessageView.setParsingThread(this);
-    if(progress != null) {
+    if (progress != null) {
       progress.setBackgroundListener(this);
     }
   }
@@ -75,20 +84,20 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
 
   private void setProgressStatistics(String s) {
     final BuildProgressWindow progress = getProgress();
-    if(progress != null) {
+    if (progress != null) {
       progress.setStatistics(s);
     }
-    if(progress == null || progress.isSentToBackground()) {
+    if (progress == null || progress.isSentToBackground()) {
       myMessageView.setProgressStatistics(s);
     }
   }
 
   private void setProgressText(String s) {
     final BuildProgressWindow progress = getProgress();
-    if(progress != null) {
+    if (progress != null) {
       progress.setText(s);
     }
-    if(progress == null || progress.isSentToBackground()) {
+    if (progress == null || progress.isSentToBackground()) {
       myMessageView.setProgressText(s);
     }
   }
@@ -119,18 +128,26 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
     }
     else if (IdeaAntLogger2.TASK == tagName) {
       setProgressText(AntBundle.message("executing.task.tag.value.status.text", tagValue));
-      if(JAVAC.equals(tagValue)) {
+      if (JAVAC.equals(tagValue)) {
         myJavacMessages = new ArrayList<String>();
+      }
+      else if (ECHO.equals(tagValue)) {
+        myIsEcho = true;
       }
     }
 
-    if(myJavacMessages != null && (IdeaAntLogger2.MESSAGE == tagName || IdeaAntLogger2.ERROR == tagName)) {
+    if (myJavacMessages != null && (IdeaAntLogger2.MESSAGE == tagName || IdeaAntLogger2.ERROR == tagName)) {
       myJavacMessages.add(tagValue);
       return;
     }
 
     if (IdeaAntLogger2.MESSAGE == tagName) {
-      myMessageView.outputMessage(tagValue, priority);
+      if (myIsEcho) {
+        myMessageView.outputMessage(tagValue, AntMain2.MSG_VERBOSE);
+      }
+      else {
+        myMessageView.outputMessage(tagValue, priority);
+      }
     }
     else if (IdeaAntLogger2.TARGET == tagName) {
       myMessageView.startTarget(tagValue);
@@ -148,37 +165,37 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
     else if (IdeaAntLogger2.BUILD == tagName) {
       myMessageView.startBuild(myBuildName);
     }
-    else if (IdeaAntLogger2.TARGET_END == tagName) {
-      ArrayList<String> javacMessages = myJavacMessages;
+    else if (IdeaAntLogger2.TARGET_END == tagName || IdeaAntLogger2.TASK_END == tagName) {
+      final List<String> javacMessages = myJavacMessages;
       myJavacMessages = null;
       processJavacMessages(javacMessages, myMessageView, myProject);
-      myMessageView.finishTarget();
-    }
-    else if (IdeaAntLogger2.TASK_END == tagName) {
-      ArrayList<String> javacMessages = myJavacMessages;
-      myJavacMessages = null;
-      processJavacMessages(javacMessages, myMessageView, myProject);
-      myMessageView.finishTask();
+      myIsEcho = false;
+      if (IdeaAntLogger2.TARGET_END == tagName) {
+        myMessageView.finishTarget();
+      }
+      else {
+        myMessageView.finishTask();
+      }
     }
   }
 
   private static boolean isJikesMessage(String errorMessage) {
-    for(int j=0; j<errorMessage.length(); j++) {
-      if(errorMessage.charAt(j) == ':') {
+    for (int j = 0; j < errorMessage.length(); j++) {
+      if (errorMessage.charAt(j) == ':') {
         int offset = getNextTwoPoints(j, errorMessage);
-        if(offset < 0) {
+        if (offset < 0) {
           continue;
         }
         offset = getNextTwoPoints(offset, errorMessage);
-        if(offset < 0) {
+        if (offset < 0) {
           continue;
         }
         offset = getNextTwoPoints(offset, errorMessage);
-        if(offset < 0) {
+        if (offset < 0) {
           continue;
         }
         offset = getNextTwoPoints(offset, errorMessage);
-        if(offset >= 0) {
+        if (offset >= 0) {
           return true;
         }
       }
@@ -187,12 +204,12 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
   }
 
   private static int getNextTwoPoints(int offset, String message) {
-    for(int i = offset+1; i < message.length(); i++) {
+    for (int i = offset + 1; i < message.length(); i++) {
       char c = message.charAt(i);
-      if(c == ':') {
+      if (c == ':') {
         return i;
       }
-      if(Character.isDigit(c)) {
+      if (Character.isDigit(c)) {
         continue;
       }
       return -1;
@@ -200,7 +217,7 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
     return -1;
   }
 
-  private static void processJavacMessages(final ArrayList<String> javacMessages, final AntBuildMessageView messageView, Project project) {
+  private static void processJavacMessages(final List<String> javacMessages, final AntBuildMessageView messageView, Project project) {
     if (javacMessages == null) return;
 
     boolean isJikes = false;
@@ -212,7 +229,7 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
     }
 
     com.intellij.compiler.OutputParser outputParser;
-    if(isJikes) {
+    if (isJikes) {
       outputParser = new JikesOutputParser(project);
     }
     else {
@@ -241,6 +258,7 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
                           final int columnNum) {
         StringTokenizer tokenizer = new StringTokenizer(message, "\n", false);
         final String[] strings = new String[tokenizer.countTokens()];
+        //noinspection ForLoopThatDoesntUseLoopVariable
         for (int idx = 0; tokenizer.hasMoreTokens(); idx++) {
           strings[idx] = tokenizer.nextToken();
         }
@@ -262,13 +280,13 @@ public class OutputParser implements BuildProgressWindow.BackgroundListener {
       }
     };
     try {
-      while(true){
+      while (true) {
         if (!outputParser.processMessageLine(callback)) {
           break;
         }
       }
     }
-    catch(Exception e) {
+    catch (Exception e) {
       //ignore
     }
   }
