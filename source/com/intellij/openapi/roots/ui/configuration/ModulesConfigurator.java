@@ -150,20 +150,24 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public GraphGenerator<ModifiableRootModel> createGraphGenerator() {
-    final List<ModifiableRootModel> result = new ArrayList<ModifiableRootModel>();
+    final Map<Module, ModifiableRootModel> models = new HashMap<Module,ModifiableRootModel>();
     for (ModuleEditor moduleEditor : myModuleEditors) {
-      result.add(moduleEditor.getModifiableRootModel());
+      models.put(moduleEditor.getModule(), moduleEditor.getModifiableRootModel());
     }
+    return createGraphGenerator(models);
+  }
+
+  private static GraphGenerator<ModifiableRootModel> createGraphGenerator(final Map<Module, ModifiableRootModel> models) {
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModifiableRootModel>() {
       public Collection<ModifiableRootModel> getNodes() {
-        return result;
+        return models.values();
       }
 
       public Iterator<ModifiableRootModel> getIn(final ModifiableRootModel model) {
         final Module[] modules = model.getModuleDependencies();
         final List<ModifiableRootModel> dependencies = new ArrayList<ModifiableRootModel>();
         for (Module module : modules) {
-          dependencies.add(getModuleEditor(module).getModifiableRootModel());
+          dependencies.add(models.get(module));
         }
         return dependencies.iterator();
       }
@@ -410,22 +414,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private static Collection<Chunk<ModifiableRootModel>> buildChunks(final Map<Module, ModifiableRootModel> models) {
-    GraphGenerator<ModifiableRootModel> generator =
-      GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModifiableRootModel>() {
-        public Collection<ModifiableRootModel> getNodes() {
-          return models.values();
-        }
-
-        public Iterator<ModifiableRootModel> getIn(final ModifiableRootModel model) {
-          final Module[] modules = model.getModuleDependencies();
-          final List<ModifiableRootModel> dependencies = new ArrayList<ModifiableRootModel>();
-          for (Module module : modules) {
-            dependencies.add(models.get(module));
-          }
-          return dependencies.iterator();
-        }
-      }));
-
-    return ModuleCompilerUtil.toChunkGraph(generator).getNodes();
+    return ModuleCompilerUtil.toChunkGraph(createGraphGenerator(models)).getNodes();
   }
 }
