@@ -86,12 +86,12 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
   ) {
     final StringBuffer result = new StringBuffer(1024);
 
-    result.append("public class " + className + " extends javax.swing.JDialog {\n");
+    result.append("public class ").append(className).append(" extends javax.swing.JDialog {\n");
     result.append("private javax.swing.JPanel contentPane;\n");
     result.append("private javax.swing.JButton buttonOK;\n");
     result.append("private javax.swing.JButton buttonCancel;\n");
     result.append("\n");
-    result.append("public " + className + "(){\n");
+    result.append("public ").append(className).append("(){\n");
     result.append("setContentPane(contentPane);\n");
     result.append("setModal(true);\n");
     result.append("getRootPane().setDefaultButton(buttonOK);\n");
@@ -128,7 +128,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
       result.append("      onCancel();\n");
       result.append("    }");
       result.append("  },");
-      result.append("  KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),");
+      result.append("  javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),");
       result.append("  javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT");
       result.append(");");
     }
@@ -154,7 +154,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     if (generateMain) {
       result.append("\n");
       result.append("public static void main(String[] args){\n");
-      result.append(className + " dialog = new " + className + "();\n");
+      result.append(className).append(" dialog = new ").append(className).append("();\n");
       result.append("dialog.pack();\n");
       result.append("dialog.setVisible(true);\n");
       result.append("System.exit(0);\n");
