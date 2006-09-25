@@ -5,6 +5,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 
 import java.util.*;
 
@@ -38,38 +39,41 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       return text;
     }
 
-    StringBuilder newText = null;
-    int i = 0;
-    while (i < text.length()) {
-      int i1 = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
-      if (i1 >= 0) {
-        int endOfOccurence = i1 + path.length();
-        if (endOfOccurence < text.length() && text.charAt(endOfOccurence) != '/') {
-          i = endOfOccurence;
-          continue;
+    final StringBuilder newText = StringBuilderSpinAllocator.alloc();
+    try {
+      final boolean isWindowsRoot = path.endsWith(":/");
+      int i = 0;
+      while (i < text.length()) {
+        int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
+        if (occurrenceOfPath >= 0) {
+          int endOfOccurence = occurrenceOfPath + path.length();
+          if (!isWindowsRoot && endOfOccurence < text.length() && text.charAt(endOfOccurence) != '/') {
+            i = endOfOccurence;
+            continue;
+          }
+        }
+        if (occurrenceOfPath < 0) {
+          if (newText.length() == 0) {
+            return text;
+          }
+          newText.append(text.substring(i));
+          break;
+        }
+        else {
+          if (macro == null) {
+            return null;
+          }
+          newText.append(text.substring(i, occurrenceOfPath));
+          newText.append(macro);
+          logUsage(macro);
+          i = occurrenceOfPath + path.length();
         }
       }
-      if (i1 < 0) {
-        if (newText == null) {
-          return text;
-        }
-        newText.append(text.substring(i));
-        break;
-      }
-      else {
-        if (macro == null) {
-          return null;
-        }
-        if (newText == null) {
-          newText = new StringBuilder();
-        }
-        newText.append(text.substring(i, i1));
-        newText.append(macro);
-        logUsage(macro);
-        i = i1 + path.length();
-      }
+      return newText.toString();
     }
-    return newText != null ? newText.toString() : "";
+    finally {
+      StringBuilderSpinAllocator.dispose(newText);
+    }
   }
 
   private void logUsage(String macroReplacement) {
