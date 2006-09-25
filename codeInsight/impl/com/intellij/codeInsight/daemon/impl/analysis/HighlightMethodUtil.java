@@ -124,7 +124,9 @@ public class HighlightMethodUtil {
                                                          PsiMethod methodToHighlight) {
     if (superReturnType == null) return null;
     PsiType substitutedSuperReturnType;
-    if (!superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
+    final boolean isJdk15 = LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(method)) <= 0;
+    if (isJdk15 &&
+        !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
       PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
                                                                                                   superMethodSignature);
       substitutedSuperReturnType = unifyingSubstitutor == null
@@ -138,7 +140,7 @@ public class HighlightMethodUtil {
     if (returnType.equals(substitutedSuperReturnType)) return null;
     if (returnType.getDeepComponentType() instanceof PsiClassType &&
         substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
-      if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(method)) <= 0 &&
+      if (isJdk15 &&
           TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
         return null;
       }
