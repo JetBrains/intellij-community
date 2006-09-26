@@ -305,11 +305,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
    * @param hint may be null
    */
   protected void doStep(final ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
-    /*
-    if (stepThread == null || !stepThread.isSuspended()) {
-      return false;
+    if (stepThread == null || stepThread.isCollected()) {
+      return;
     }
-    */
     if (LOG.isDebugEnabled()) {
       LOG.debug("DO_STEP: creating step request for " + stepThread.getThreadReference());
     }
