@@ -9,6 +9,8 @@ import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.jgoodies.forms.layout.FormLayout;
 
+import java.util.ArrayList;
+
 /**
  * @author yole
  */
@@ -24,7 +26,7 @@ public class GroupRowsColumnsAction extends RowColumnAction {
     if (selection != null) {
       e.getPresentation().setEnabled(selection.getContainer() != null &&
         selection.getContainer().getLayout() instanceof FormLayout &&
-        selection.getSelection().length > 1 &&
+        getCellsToGroup(selection).length > 1 &&
         !isGrouped(selection));
     }
   }
@@ -53,10 +55,10 @@ public class GroupRowsColumnsAction extends RowColumnAction {
     int[][] oldGroups = selection.isRow() ? layout.getRowGroups() : layout.getColumnGroups();
     int[][] newGroups = new int[oldGroups.length + 1][];
     System.arraycopy(oldGroups, 0, newGroups, 0, oldGroups.length);
-    newGroups [oldGroups.length] = new int [selection.getSelection().length];
-    int[] indices = selection.getSelection();
-    for(int i=0; i<indices.length; i++) {
-      newGroups [oldGroups.length] [i] = indices [i]+1;
+    int[] cellsToGroup = getCellsToGroup(selection);
+    newGroups [oldGroups.length] = new int [cellsToGroup.length];
+    for(int i=0; i<cellsToGroup.length; i++) {
+      newGroups [oldGroups.length] [i] = cellsToGroup [i]+1;
     }
     if (selection.isRow()) {
       layout.setRowGroups(newGroups);
@@ -64,5 +66,20 @@ public class GroupRowsColumnsAction extends RowColumnAction {
     else {
       layout.setColumnGroups(newGroups);
     }
+  }
+
+  private static int[] getCellsToGroup(CaptionSelection selection) {
+    ArrayList<Integer> cells = new ArrayList<Integer>();
+    int[] selectedIndices = selection.getSelection();
+    for(int i: selectedIndices) {
+      if (!selection.getContainer().getGridLayoutManager().isGapCell(selection.getContainer(), selection.isRow(), i)) {
+        cells.add(i);
+      }
+    }
+    int[] result = new int[cells.size()];
+    for(int i=0; i<cells.size(); i++) {
+      result [i] = cells.get(i).intValue();
+    }
+    return result;
   }
 }
