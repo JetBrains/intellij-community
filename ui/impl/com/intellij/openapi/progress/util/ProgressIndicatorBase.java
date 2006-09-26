@@ -47,21 +47,27 @@ public class ProgressIndicatorBase implements ProgressIndicator {
     enterModality();
   }
 
-  protected final synchronized void enterModality() {
-    if (myModalityProgress == this && !myModalityEntered){
-      myModalityEntered = true;
+  protected final void enterModality() {
+    if (myModalityProgress == this){
       if (!EventQueue.isDispatchThread()){
         SwingUtilities.invokeLater(
           new Runnable() {
             public void run() {
-              LaterInvocator.enterModal(ProgressIndicatorBase.this);
+              doEnterModality();
             }
           }
         );
       }
       else{
-        LaterInvocator.enterModal(this);
+        doEnterModality();
       }
+    }
+  }
+
+  private void doEnterModality() {
+    if (!myModalityEntered) {
+      LaterInvocator.enterModal(this);
+      myModalityEntered = true;
     }
   }
 
@@ -72,21 +78,27 @@ public class ProgressIndicatorBase implements ProgressIndicator {
     exitModality();
   }
 
-  protected final synchronized void exitModality() {
-    if (myModalityProgress == this && myModalityEntered){
-      myModalityEntered = false;
+  protected final void exitModality() {
+    if (myModalityProgress == this){
       if (!EventQueue.isDispatchThread()){
         SwingUtilities.invokeLater(
           new Runnable() {
             public void run() {
-              LaterInvocator.leaveModal(ProgressIndicatorBase.this);
+              doExitModality();
             }
           }
         );
       }
       else{
-        LaterInvocator.leaveModal(this);
+        doExitModality();
       }
+    }
+  }
+
+  private void doExitModality() {
+    if (myModalityEntered) {
+      LaterInvocator.leaveModal(this);
+      myModalityEntered = false;
     }
   }
 
