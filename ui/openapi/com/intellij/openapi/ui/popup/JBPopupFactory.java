@@ -65,9 +65,6 @@ public abstract class JBPopupFactory {
    */
   public abstract ListPopup createConfirmation(String title, String yesText, String noText, Runnable onYes, Runnable onNo, int defaultOptionIndex);
 
-  /**
-   * @deprecated use {@link #createActionGroupPopup(String, com.intellij.openapi.actionSystem.ActionGroup, com.intellij.openapi.actionSystem.DataContext, com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid, boolean)} instead
-   */
   public abstract ListPopupStep createActionsStep(ActionGroup actionGroup,
                                                   DataContext dataContext,
                                                   boolean showNumbers,
@@ -76,9 +73,6 @@ public abstract class JBPopupFactory {
                                                   Component component,
                                                   boolean honorActionMnemonics);
 
-  /**
-   * @deprecated use {@link #createActionGroupPopup(String, com.intellij.openapi.actionSystem.ActionGroup, com.intellij.openapi.actionSystem.DataContext, com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid, boolean)} instead
-   */
   public abstract ListPopupStep createActionsStep(ActionGroup actionGroup,
                                                   DataContext dataContext,
                                                   boolean showNumbers,
