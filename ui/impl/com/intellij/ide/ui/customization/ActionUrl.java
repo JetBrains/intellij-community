@@ -9,12 +9,12 @@ import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * User: anna
@@ -70,6 +70,7 @@ public class ActionUrl implements JDOMExternalizable {
     return myComponent;
   }
 
+  @Nullable
   public AnAction getComponentAction(){
     if (myComponent instanceof Separator){
       return Separator.getInstance();
@@ -113,9 +114,8 @@ public class ActionUrl implements JDOMExternalizable {
 
   public void readExternal(Element element) throws InvalidDataException {
     myGroupPath = new ArrayList<String>();
-    for (Iterator<Element> iterator = element.getChildren(PATH).iterator(); iterator.hasNext();) {
-      Element o = iterator.next();
-      myGroupPath.add(o.getAttributeValue(VALUE));
+    for (Object o : element.getChildren(PATH)) {
+      myGroupPath.add(((Element)o).getAttributeValue(VALUE));
     }
     final String attributeValue = element.getAttributeValue(VALUE);
     if (element.getAttributeValue(IS_ACTION) != null) {
@@ -136,8 +136,7 @@ public class ActionUrl implements JDOMExternalizable {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator<String> iterator = myGroupPath.iterator(); iterator.hasNext();) {
-      String s = iterator.next();
+    for (String s : myGroupPath) {
       Element path = new Element(PATH);
       path.setAttribute(VALUE, s);
       element.addContent(path);
@@ -150,7 +149,9 @@ public class ActionUrl implements JDOMExternalizable {
       element.setAttribute(SEPARATOR, Boolean.TRUE.toString());
     }
     else if (myComponent instanceof Group) {
-      final String groupId = ((Group)myComponent).getId() != null && !((Group)myComponent).getId().equals("") ? ((Group)myComponent).getId() : ((Group)myComponent).getName();
+      final String groupId = ((Group)myComponent).getId() != null && ((Group)myComponent).getId().length() != 0
+                             ? ((Group)myComponent).getId()
+                             : ((Group)myComponent).getName();
       element.setAttribute(VALUE, groupId != null ? groupId : "");
       element.setAttribute(IS_GROUP, Boolean.TRUE.toString());
     }
@@ -160,9 +161,8 @@ public class ActionUrl implements JDOMExternalizable {
   }
 
   public boolean isGroupContainsInPath(ActionGroup group){
-    for (Iterator<String> iterator = myGroupPath.iterator(); iterator.hasNext();) {
-      String s = iterator.next();
-      if (s.equals(group.getTemplatePresentation().getText())){
+    for (String s : myGroupPath) {
+      if (s.equals(group.getTemplatePresentation().getText())) {
         return true;
       }
     }
@@ -212,11 +212,15 @@ public class ActionUrl implements JDOMExternalizable {
     if (treePath != null){
       if (treePath.getLastPathComponent() != null){
         final DefaultMutableTreeNode parent = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
-        if (parent.getChildCount() > url.getInitialPosition()) {
-          final DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(url.getInitialPosition());
-          if (child.getUserObject().equals(url.getComponent())){
-            parent.remove(child);
-            parent.insert(child, url.getAbsolutePosition());
+        final int absolutePosition = url.getAbsolutePosition();
+        final int initialPosition = url.getInitialPosition();
+        if (parent.getChildCount() > absolutePosition && absolutePosition >= 0) {
+          if (parent.getChildCount() > initialPosition && initialPosition >= 0) {
+            final DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(initialPosition);
+            if (child.getUserObject().equals(url.getComponent())){
+              parent.remove(child);
+              parent.insert(child, absolutePosition);
+            }
           }
         }
       }
