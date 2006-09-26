@@ -636,8 +636,8 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void sortInspections() {
-    TreeUtil.sort(myRoot, new Comparator() {
-      public int compare(Object o1, Object o2) {
+    Comparator<MyTreeNode> comparator = new Comparator<MyTreeNode>() {
+      public int compare(MyTreeNode o1, MyTreeNode o2) {
         String s1 = null;
         String s2 = null;
         Object userObject1 = ((MyTreeNode)o1).getUserObject();
@@ -660,7 +660,8 @@ public class SingleInspectionProfilePanel extends JPanel {
         //can't be
         return -1;
       }
-    });
+    };
+    TreeUtil.sort(myRoot, comparator);
   }
 
   public static String getDisplayTextToSort(String s) {

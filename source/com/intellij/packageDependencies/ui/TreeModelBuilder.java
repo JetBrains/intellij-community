@@ -409,7 +409,7 @@ public class TreeModelBuilder {
   }
 
   @Nullable
-  public DefaultMutableTreeNode addFileNode(final PsiFile file){
+  public PackageDependenciesNode addFileNode(final PsiFile file){
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (!isMarked) return null;
 

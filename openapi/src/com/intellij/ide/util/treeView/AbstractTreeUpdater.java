@@ -17,11 +17,11 @@ import java.util.LinkedList;
 public class AbstractTreeUpdater implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeUpdater");
 
-  private LinkedList<DefaultMutableTreeNode> myNodesToUpdate = new LinkedList<DefaultMutableTreeNode>();
+  private final LinkedList<DefaultMutableTreeNode> myNodesToUpdate = new LinkedList<DefaultMutableTreeNode>();
   private final AbstractTreeBuilder myTreeBuilder;
   private Runnable myRunAfterUpdate;
   private Runnable myRunBeforeUpdate;
-  private MergingUpdateQueue myUpdateQueue;
+  private final MergingUpdateQueue myUpdateQueue;
 
   public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
@@ -86,6 +86,7 @@ public class AbstractTreeUpdater implements Disposable {
   public synchronized void performUpdate() {
     if (myRunBeforeUpdate != null){
       myRunBeforeUpdate.run();
+      myRunBeforeUpdate = null;
     }
 
     while(!myNodesToUpdate.isEmpty()){
