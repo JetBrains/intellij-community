@@ -27,6 +27,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -335,14 +336,18 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     int offset1 = ref.getTextOffset();
     int offset2 = ref.getTextRange().getEndOffset();
-    QuestionAction action = new AddImportAction(manager.getProject(), ref, editor, classes);
+    final QuestionAction action = new AddImportAction(manager.getProject(), ref, editor, classes);
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(manager.getProject());
 
     if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && !isCaretNearRef(editor, ref) &&
         !PsiUtil.isInJspFile(psiFile) && codeAnalyzer.canChangeFileSilently(psiFile) &&
         !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())) {
-      action.execute();
+      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        public void run() {
+          action.execute();
+        }
+      });
       return false;
     }
     HintManager hintManager = HintManager.getInstance();
