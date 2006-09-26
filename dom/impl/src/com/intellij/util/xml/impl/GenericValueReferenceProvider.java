@@ -69,7 +69,8 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     GenericDomValue domValue = (GenericDomValue)domElement;
 
-    boolean soft = false;
+    final Convert annotation = domValue.getAnnotation(Convert.class);
+    boolean soft = annotation != null && annotation.soft();
     final Converter converter = domValue.getConverter();
     if (converter instanceof ResolvingConverter) {
       final Set additionalVariants = ((ResolvingConverter)converter).getAdditionalVariants();
@@ -77,6 +78,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
         soft = true;
       }
     }
+
 
     PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, soft, converter);
 
@@ -96,10 +98,9 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement, boolean soft, final Converter converter) {
+  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement, final boolean soft, final Converter converter) {
     if (converter instanceof PsiReferenceConverter) {
-      final Convert annotation = domValue.getAnnotation(Convert.class);
-      return ((PsiReferenceConverter)converter).createReferences(psiElement, annotation != null && annotation.soft());
+      return ((PsiReferenceConverter)converter).createReferences(psiElement, soft);
     }
 
     final DomInvocationHandler invocationHandler = getInvocationHandler(domValue);
