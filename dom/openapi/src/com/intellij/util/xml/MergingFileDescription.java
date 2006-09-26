@@ -44,21 +44,31 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final DomElement annotation = getScopeFromAnnotation(reference);
     if (annotation != null) return annotation;
 
-    return getMergedRoot(reference);
+    return getMergedRoot(reference.getRoot());
   }
 
-  protected final DomElement getMergedRoot(DomElement element) {
-    Set<XmlFile> files = getFilesToMerge(element);
+  protected final DomElement getMergedRoot(DomFileElement element) {
+    final DomManager domManager = element.getManager();
 
-    final XmlFile xmlFile = element.getRoot().getFile();
+    XmlFile xmlFile = element.getFile();
+    Set<XmlFile> files = new HashSet<XmlFile>();
     if (xmlFile != null) {
-      files = new HashSet<XmlFile>(files);
       files.add(xmlFile);
+      final XmlFile originalFile = (XmlFile)xmlFile.getOriginalFile();
+      if (originalFile != null) {
+        final DomFileElement originalElement = domManager.getFileElement(originalFile);
+        if (originalElement != null) {
+          element = originalElement;
+        }
+      }
     }
+
+    files.addAll(getFilesToMerge(element));
+
 
     ArrayList<T> roots = new ArrayList<T>(files.size());
     for (XmlFile file: files) {
-      final DomFileElement<T> fileElement = element.getManager().getFileElement(file);
+      final DomFileElement<T> fileElement = domManager.getFileElement(file);
       if (fileElement != null) {
         roots.add(fileElement.getRootElement());
       }
@@ -69,7 +79,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     }
 
     if (myMerger == null) {
-      myMerger = element.getManager().createModelMerger();
+      myMerger = domManager.createModelMerger();
     }
     return myMerger.mergeModels(getRootElementClass(), roots);
   }
@@ -82,7 +92,7 @@ public abstract class MergingFileDescription<T extends DomElement> extends DomFi
     final List<JavaMethod> methods = DomUtil.getFixedPath(element.getParent());
     if (methods == null) return super.getIdentityScope(element);
 
-    Object o = getMergedRoot(element);
+    Object o = getMergedRoot(element.getRoot());
     for (final JavaMethod method : methods) {
       o = method.invoke(o, ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
