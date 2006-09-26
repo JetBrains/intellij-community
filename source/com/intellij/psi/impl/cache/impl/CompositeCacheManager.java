@@ -7,8 +7,9 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.util.Processor;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ public class CompositeCacheManager implements CacheManager{
     }
   }
 
+  @NotNull
   public CacheUpdater[] getCacheUpdaters() {
     List<CacheUpdater> updaters = new ArrayList<CacheUpdater>();
     for (CacheManager cacheManager : myManagers) {
@@ -44,19 +46,21 @@ public class CompositeCacheManager implements CacheManager{
     return updaters.toArray(new CacheUpdater[updaters.size()]);
   }
 
-  public PsiFile[] getFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively) {
+  @NotNull
+  public PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively) {
     CommonProcessors.CollectProcessor<PsiFile> processor = new CommonProcessors.CollectProcessor<PsiFile>();
     processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
     return processor.toArray(PsiFile.EMPTY_ARRAY);
   }
 
-  public boolean processFilesWithWord(Processor<PsiFile> processor, String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively) {
+  public boolean processFilesWithWord(@NotNull Processor<PsiFile> processor, @NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively) {
     for (CacheManager cacheManager : myManagers) {
       if (!cacheManager.processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively)) return false;
     }
     return true;
   }
 
+  @NotNull
   public PsiFile[] getFilesWithTodoItems() {
     List<PsiFile> files = new ArrayList<PsiFile>();
     for (CacheManager cacheManager : myManagers) {
@@ -65,7 +69,7 @@ public class CompositeCacheManager implements CacheManager{
     return files.toArray(new PsiFile[files.size()]);
   }
 
-  public int getTodoCount(VirtualFile file, final IndexPatternProvider patternProvider) {
+  public int getTodoCount(@NotNull VirtualFile file, final IndexPatternProvider patternProvider) {
     int count = 0;
     for (CacheManager cacheManager : myManagers) {
       count += cacheManager.getTodoCount(file, patternProvider);
@@ -73,7 +77,7 @@ public class CompositeCacheManager implements CacheManager{
     return count;
   }
 
-  public int getTodoCount(VirtualFile file, IndexPattern pattern) {
+  public int getTodoCount(@NotNull VirtualFile file, IndexPattern pattern) {
     int count = 0;
     for (CacheManager cacheManager : myManagers) {
       count += cacheManager.getTodoCount(file, pattern);
@@ -81,7 +85,7 @@ public class CompositeCacheManager implements CacheManager{
     return count;
   }
 
-  public void addOrInvalidateFile(VirtualFile file) {
+  public void addOrInvalidateFile(@NotNull VirtualFile file) {
     for (CacheManager cacheManager : myManagers) {
       cacheManager.addOrInvalidateFile(file);
     }

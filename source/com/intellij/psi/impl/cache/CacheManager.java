@@ -7,34 +7,35 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 public interface CacheManager {
   void initialize();
   void dispose();
-  CacheUpdater[] getCacheUpdaters();
+  @NotNull CacheUpdater[] getCacheUpdaters();
 
-  PsiFile[] getFilesWithWord(String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively);
+  @NotNull PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
 
-  boolean processFilesWithWord(Processor<PsiFile> processor,String word, short occurenceMask, GlobalSearchScope scope, final boolean caseSensitively);
+  boolean processFilesWithWord(@NotNull Processor<PsiFile> processor,@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
 
   /**
    * @return all VirtualFile's that contain todo-items under project roots
    */
-  PsiFile[] getFilesWithTodoItems();
+  @NotNull PsiFile[] getFilesWithTodoItems();
 
   /**
    * @return -1 if it's not known
    */
-  int getTodoCount(VirtualFile file, final IndexPatternProvider patternProvider);
+  int getTodoCount(@NotNull VirtualFile file, final IndexPatternProvider patternProvider);
 
   /**
    * @return -1 if it's not known
    */
-  int getTodoCount(VirtualFile file, IndexPattern pattern);
+  int getTodoCount(@NotNull VirtualFile file, IndexPattern pattern);
 
   /**
    * @deprecated
    */
-  void addOrInvalidateFile(VirtualFile file);
+  void addOrInvalidateFile(@NotNull VirtualFile file);
 }
 
