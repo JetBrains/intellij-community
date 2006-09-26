@@ -105,6 +105,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final ButtonGroupProperty myButtonGroupProperty = new ButtonGroupProperty();
 
   private boolean myInsideSynch;
+  private boolean myStoppingEditing;
   private final Project myProject;
 
   PropertyInspectorTable(Project project, @NotNull final ComponentTree componentTree) {
@@ -589,6 +590,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   public void editingStopped(final ChangeEvent ignored){
     LOG.assertTrue(isEditing());
     LOG.assertTrue(editingRow!=-1);
+    if (myStoppingEditing) return;
+    myStoppingEditing = true;
     final Property property=myProperties.get(editingRow);
     final PropertyEditor editor=property.getEditor();
     editor.removePropertyEditorListener(myPropertyEditorListener);
@@ -601,6 +604,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
     finally {
       removeEditor();
+      myStoppingEditing = false;
     }
   }
 
