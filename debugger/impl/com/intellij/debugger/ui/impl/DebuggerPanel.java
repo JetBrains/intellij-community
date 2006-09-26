@@ -10,13 +10,14 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
+import com.sun.jdi.VMDisconnectedException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -103,7 +104,12 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
     myRebuildAlarm.cancelAllRequests();
     myRebuildAlarm.addRequest(new Runnable() {
       public void run() {
-        rebuild(event);
+        try {
+          rebuild(event);
+        }
+        catch (VMDisconnectedException e) {
+          // ignored
+        }
       }
     }, 100);
   }
