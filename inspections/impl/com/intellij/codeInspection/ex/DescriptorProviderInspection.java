@@ -376,6 +376,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       final Set<QuickFix> localQuickFixes = getQuickFixActions().get(refElement);
       if (localQuickFixes != null){
         for (QuickFix fix : localQuickFixes) {
+          if (fix == null) continue;
           final Class klass = fix.getClass();
           final QuickFixAction quickFixAction = result.get(klass);
           if (quickFixAction != null){
@@ -390,7 +391,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
             }
           } else {
             LocalQuickFixWrapper quickFixWrapper = new LocalQuickFixWrapper(fix, this);
-            result.put(fix.getClass(), quickFixWrapper);
+            result.put(klass, quickFixWrapper);
           }
         }
       }
