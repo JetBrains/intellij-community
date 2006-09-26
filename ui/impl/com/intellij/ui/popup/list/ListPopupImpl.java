@@ -27,23 +27,23 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   private int myIndexForShowingChild = -1;
   private int myMaxRowCount = 20;
 
-  public ListPopupImpl(PopupStep aStep, int maxRowCount) {
+  public ListPopupImpl(ListPopupStep aStep, int maxRowCount) {
     super(aStep);
     if (maxRowCount != -1){
       myMaxRowCount = maxRowCount;
     }
   }
 
-  public ListPopupImpl(PopupStep aStep) {
+  public ListPopupImpl(ListPopupStep aStep) {
     super(aStep);
   }
 
-  public ListPopupImpl(BasePopup aParent, PopupStep aStep, Object parentValue) {
+  public ListPopupImpl(BasePopup aParent, ListPopupStep aStep, Object parentValue) {
     super(aParent, aStep);
     setParentValue(parentValue);
   }
 
-  public ListPopupImpl(BasePopup aParent, PopupStep aStep, Object parentValue, int maxRowCount) {
+  public ListPopupImpl(BasePopup aParent, ListPopupStep aStep, Object parentValue, int maxRowCount) {
     super(aParent, aStep);
     setParentValue(parentValue);
     if (maxRowCount != -1){

@@ -14,6 +14,7 @@ import java.awt.*;
  * Factory class for creating popup chooser windows (similar to the Code | Generate... popup).
  *
  * @author mike
+ * @since 6.0
  */
 public abstract class JBPopupFactory {
   /**
@@ -147,12 +148,17 @@ public abstract class JBPopupFactory {
 
 
   /**
-   * Creates a custom popup with the specified step.
-   *
-   * @param step the custom step for the popup.
-   * @return the popup instance.
+   * @deprecated use {@link #createListPopup(ListPopupStep)} instead (<code>step</code> must be a ListPopupStep in any case)
    */
   public abstract ListPopup createWizardStep(PopupStep step);
+
+  /**
+   * Creates a custom list popup with the specified step.
+   *
+   * @param step the custom step for the list popup.
+   * @return the popup instance.
+   */
+  public abstract ListPopup createListPopup(ListPopupStep step);
 
   public abstract TreePopup createTree(JBPopup parent, TreePopupStep step, Object parentValue);
   public abstract TreePopup createTree(TreePopupStep step);

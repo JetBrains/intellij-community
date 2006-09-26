@@ -6,6 +6,7 @@ package com.intellij.openapi.ui.popup;
  * @author mike
  * @see com.intellij.openapi.ui.popup.JBPopupFactory#createActionGroupPopup
  * @see com.intellij.openapi.ui.popup.JBPopupFactory#createWizardStep
+ * @since 6.0
  */
 public interface ListPopup extends JBPopup {
 

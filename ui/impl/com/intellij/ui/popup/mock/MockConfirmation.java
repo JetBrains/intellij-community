@@ -1,6 +1,6 @@
 package com.intellij.ui.popup.mock;
 
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
 
 import java.awt.*;
@@ -11,7 +11,7 @@ import java.awt.*;
  */
 public class MockConfirmation extends ListPopupImpl {
   String myOnYesText;
-  public MockConfirmation(PopupStep aStep, String onYesText) {
+  public MockConfirmation(ListPopupStep aStep, String onYesText) {
     super(aStep);
     myOnYesText = onYesText;
   }

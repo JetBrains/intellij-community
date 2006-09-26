@@ -103,7 +103,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
     LOG.assertTrue(component != null);
 
-    PopupStep step = createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
+    ListPopupStep step = createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
 
     return new ListPopupImpl(step, maxRowCount){
       protected void dispose() {
@@ -171,6 +171,10 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
   }
 
   public ListPopup createWizardStep(PopupStep step) {
+    return new ListPopupImpl((ListPopupStep) step);
+  }
+
+  public ListPopup createListPopup(ListPopupStep step) {
     return new ListPopupImpl(step);
   }
 

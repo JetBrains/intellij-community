@@ -446,7 +446,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
 
   protected BasePopup createPopup(BasePopup parent, PopupStep step, Object parentValue) {
     if (step instanceof ListPopupStep) {
-      return new ListPopupImpl(parent, step, parentValue);
+      return new ListPopupImpl(parent, (ListPopupStep) step, parentValue);
     }
     else if (step instanceof TreePopupStep) {
       return new TreePopupImpl(parent, (TreePopupStep) step, parentValue);
