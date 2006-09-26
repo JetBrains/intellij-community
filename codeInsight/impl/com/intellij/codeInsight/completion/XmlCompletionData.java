@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -206,7 +207,12 @@ public class XmlCompletionData extends CompletionData {
       editor.getDocument().insertString(offset, " ");
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       PsiElement current = context.file.findElementAt(context.startOffset);
-      editor.getDocument().deleteString(offset, offset + 1);
+      if (CodeInsightUtil.isAntFile(context.file)) {
+        editor.getCaretModel().moveToOffset(offset + 1);
+      }
+      else {
+        editor.getDocument().deleteString(offset, offset + 1);
+      }
       final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
       if (tag == null) return;
