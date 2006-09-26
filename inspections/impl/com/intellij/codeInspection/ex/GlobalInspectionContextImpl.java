@@ -90,6 +90,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private InspectionProfile myExternalProfile = null;
 
   public boolean RUN_WITH_EDITOR_PROFILE = false;
+  public boolean RUN_GLOBAL_TOOLS_ONLY = false;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
   @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
@@ -304,6 +305,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   public void launchInspectionsOffline(final AnalysisScope scope,
                                        final String outputPath,
                                        final boolean runWithEditorSettings,
+                                       final boolean runGlobalToolsOnly,
                                        final InspectionManager manager) {
     cleanup();
 
@@ -312,6 +314,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final boolean oldProfileSetting = RUN_WITH_EDITOR_PROFILE;
     InspectionTool.setOutputPath(outputPath);
     RUN_WITH_EDITOR_PROFILE = runWithEditorSettings;
+    final boolean oldToolsSettings = RUN_GLOBAL_TOOLS_ONLY;
+    RUN_GLOBAL_TOOLS_ONLY = runGlobalToolsOnly;
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
@@ -378,6 +382,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     finally {
       InspectionTool.setOutputPath(null);
       RUN_WITH_EDITOR_PROFILE = oldProfileSetting;
+      RUN_GLOBAL_TOOLS_ONLY = oldToolsSettings;
     }
   }
 
@@ -836,6 +841,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       }
     }
     performPostRunFindUsages(needRepeatSearchRequest, manager);
+    if (RUN_GLOBAL_TOOLS_ONLY) return;
     final Set<InspectionTool> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
     if (RUN_WITH_EDITOR_PROFILE || (currentProfileLocalTools != null && currentProfileLocalTools.size() > 0)) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);

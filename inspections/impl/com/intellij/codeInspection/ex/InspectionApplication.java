@@ -54,6 +54,7 @@ public class InspectionApplication {
   public String mySourceDirectory = null;
   public String myProfileName = null;
   public boolean myRunWithEditorSettings = false;
+  public boolean myRunGlobalToolsOnly = false;
   private Project myProject;
   private int myVerboseLevel = 0;
 
@@ -141,7 +142,7 @@ public class InspectionApplication {
             System.exit(1);
             return;
           }
-          inspectionContext.launchInspectionsOffline(scope, myOutPath, myRunWithEditorSettings, im);
+          inspectionContext.launchInspectionsOffline(scope, myOutPath, myRunWithEditorSettings, myRunGlobalToolsOnly, im);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");
