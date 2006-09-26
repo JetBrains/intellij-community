@@ -51,6 +51,6 @@ public abstract class AbstractConvertContext extends ConvertContext {
   }
 
   public Module getModule() {
-    return getInvocationElement().getModule();
+    return getInvocationElement().getRoot().getRootElement().getModule();
   }
 }

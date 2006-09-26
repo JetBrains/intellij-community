@@ -3,10 +3,9 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.AbstractConvertContext;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.xml.AbstractConvertContext;
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,10 +21,6 @@ public class ConvertContextImpl extends AbstractConvertContext {
   @NotNull
   public final DomElement getInvocationElement() {
     return myHandler.getProxy();
-  }
-
-  public Module getModule() {
-    return myHandler.getModule();
   }
 
   public PsiManager getPsiManager() {

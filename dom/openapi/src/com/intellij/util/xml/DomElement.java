@@ -66,6 +66,7 @@ public interface DomElement extends AnnotatedElement{
 
   <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict);
 
+  @Nullable
   Module getModule();
 
   void copyFrom(DomElement other);
