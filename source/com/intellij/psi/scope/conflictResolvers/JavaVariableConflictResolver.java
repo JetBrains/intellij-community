@@ -82,7 +82,7 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
           }
 
           //This test should go last
-          if (otherElement == currentElement && candidate.getSubstitutor().equals(currentResult.getSubstitutor())) {
+          if (otherElement == currentElement) {
             conflicts.remove(candidate);
             continue;
           }
