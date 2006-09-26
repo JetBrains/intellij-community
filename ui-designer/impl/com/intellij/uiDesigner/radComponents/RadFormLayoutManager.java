@@ -354,23 +354,25 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     boolean haveTopLeft = false, haveTopRight = false, haveTopLine = false;
     //noinspection MultipleVariablesInDeclaration
     boolean haveBottomLeft = false, haveBottomRight = false, haveBottomLine = false;
+    boolean inGroup = false;
     for(int i=0; i<groups.length; i++) {
       int minMember = Integer.MAX_VALUE;
       int maxMember = -1;
       for(int member: groups [i]) {
         minMember = Math.min(member-1, minMember);
         maxMember = Math.max(member-1, maxMember);
+        inGroup = inGroup || (member-1 == index);
       }
       if (minMember <= index && index <= maxMember) {
         if (i % 2 == 0) {
           haveTopLeft = haveTopLeft || index > minMember;
           haveTopRight = haveTopRight || index < maxMember;
-          haveTopLine = haveTopLine || index == minMember || index == maxMember;
+          haveTopLine = haveTopLine || inGroup;
         }
         else {
           haveBottomLeft = haveBottomLeft || index > minMember;
           haveBottomRight = haveBottomRight || index < maxMember;
-          haveBottomLine = haveBottomLine || index == minMember || index == maxMember;
+          haveBottomLine = haveBottomLine || inGroup;
         }
       }
     }
