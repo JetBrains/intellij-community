@@ -6,7 +6,7 @@
 
 :: ---------------------------------------------------------------------
 :: Before you run IntelliJ IDEA specify the location of the
-:: JDK 1.5 or higher installation directory which will be used for running IDEA
+:: JDK 1.5 installation directory which will be used for running IDEA
 :: ---------------------------------------------------------------------
 IF "%IDEA_JDK%" == "" SET IDEA_JDK=%JDK_HOME%
 IF "%IDEA_JDK%" == "" goto error
