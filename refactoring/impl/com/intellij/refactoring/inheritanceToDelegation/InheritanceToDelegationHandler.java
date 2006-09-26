@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.HelpID;
@@ -71,6 +72,12 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
 
     if (aClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.is.interface", aClass.getQualifiedName()));
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INHERITANCE_TO_DELEGATION, project);
+      return;
+    }
+
+    if (aClass instanceof JspClass) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INHERITANCE_TO_DELEGATION, project);
       return;
     }
