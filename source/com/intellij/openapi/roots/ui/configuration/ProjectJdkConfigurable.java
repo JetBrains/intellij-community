@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,6 +60,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     init();
   }
 
+  @Nullable
   public ProjectJdk getSelectedProjectJdk() {
     return myJdksModel.findSdk(myCbProjectJdk.getSelectedJdk());
   }
@@ -71,7 +73,18 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myFreeze = true;
     final ProjectJdk projectJdk = myJdksModel.getProjectJdk();
     myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
-    myCbProjectJdk.setSelectedJdk(projectJdk); //restore selection
+    final String sdkName = projectJdk == null ? ProjectRootManager.getInstance(myProject).getProjectJdkName() : projectJdk.getName();
+    if (sdkName != null) {
+      final ProjectJdk jdk = (ProjectJdk)myJdksModel.findSdk(sdkName);
+      if (jdk != null) {
+        myCbProjectJdk.setSelectedJdk(jdk);
+      } else {
+        myCbProjectJdk.setInvalidJdk(sdkName);
+        clearCaches(null);
+      }
+    } else {
+      myCbProjectJdk.setSelectedJdk(null);
+    }
     myFreeze = false;
   }
 
@@ -84,11 +97,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
         if (myFreeze) return;
         final ProjectJdk oldJdk = myJdksModel.getProjectJdk();
         myJdksModel.setProjectJdk(myCbProjectJdk.getSelectedJdk());
-        final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
-        Module[] modules = rootConfigurable.getModules();
-        for (Module module : modules) {
-          rootConfigurable.clearCaches(module, oldJdk, getSelectedProjectJdk());
-        }
+        clearCaches(oldJdk);
       }
     });
     myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 4, 0), 0, 0));
@@ -96,10 +105,19 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     final JButton setUpButton = myCbProjectJdk.createSetupButton(myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem());
     myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
     myCbProjectJdk.appendEditButton(myProject, myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0), new Computable<ProjectJdk>() {
+      @Nullable
       public ProjectJdk compute() {
         return myJdksModel.getProjectJdk();
       }
     });
+  }
+
+  private void clearCaches(final ProjectJdk oldJdk) {
+    final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(myProject);
+    Module[] modules = rootConfigurable.getModules();
+    for (Module module : modules) {
+      rootConfigurable.clearCaches(module, oldJdk, getSelectedProjectJdk());
+    }
   }
 
   public boolean isModified() {

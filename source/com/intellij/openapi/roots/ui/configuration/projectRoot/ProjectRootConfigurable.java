@@ -206,7 +206,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
               buf.append(" - ");
             }
             buf.append("\'").append(problem).append("\'").append("\n");
-          }          
+          }
         }
       } else {
         buf.append(ProjectBundle.message("project.roots.tooltip.library.misconfigured", displayName)).append("\n");
@@ -583,7 +583,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply(this);
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
-    if (isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified()) myProjectConfigurable.apply(); //do not reorder 
+    if (isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified()) myProjectConfigurable.apply(); //do not reorder
     if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -1187,7 +1187,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       if (editableObject instanceof ProjectJdk) {
         final ProjectJdk jdk = (ProjectJdk)editableObject;
         myJdksTreeModel.removeJdk(jdk);
-        invalidateModules(myJdkDependencyCache.get(jdk));
+        Module[] modules = getModules();
+        for (Module module : modules) {
+          myValidityCache.remove(module);
+        }
         myJdkDependencyCache.remove(jdk);
       }
       else if (editableObject instanceof Module) {
@@ -1329,7 +1332,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       final Rectangle rowBounds = myTree.getRowBounds(selectedRow);
       final Point location = rowBounds.getLocation();
       location.x += rowBounds.width;
-      JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<String>(
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(
         ProjectBundle.message("dependencies.used.in.popup.title"), dependencies.toArray(new String[dependencies.size()])) {
 
         public PopupStep onChosen(final String nameToSelect, final boolean finalChoice) {
