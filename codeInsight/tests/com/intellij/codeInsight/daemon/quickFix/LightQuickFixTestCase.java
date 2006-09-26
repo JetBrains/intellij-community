@@ -24,16 +24,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
+  @NonNls private static final String BEFORE_PREFIX = "before";
+
   protected boolean shouldBeAvailableAfterExecution() {
     return false;
   }
 
-  protected void doTestFor(final String testName) throws Exception {
+  private void doTestFor(final String testName) throws Exception {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            final String relativePath = getBasePath() + "/before" + testName;
+            final String relativePath = getBasePath() + "/" + BEFORE_PREFIX + testName;
             final String testFullPath = getTestDataPath().replace(File.separatorChar, '/') + relativePath;
             final File ioFile = new File(testFullPath);
             try {
@@ -60,6 +62,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         });
       }
     }, "", "");
+    System.out.print(testName + " ");
   }
 
   protected void afterActionCompleted(final String testName, final String contents) {
@@ -122,14 +125,12 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     File testDir = new File(testDirPath);
     final File[] files = testDir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, @NonNls String name) {
-        return name.startsWith("before");
+        return name.startsWith(BEFORE_PREFIX);
       }
     });
     for (File file : files) {
-      final String testName = file.getName().substring("before".length());
+      final String testName = file.getName().substring(BEFORE_PREFIX.length());
       doTestFor(testName);
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.print(testName + " ");
     }
     assertTrue("Test files not found in "+testDirPath,files.length != 0);
   }
