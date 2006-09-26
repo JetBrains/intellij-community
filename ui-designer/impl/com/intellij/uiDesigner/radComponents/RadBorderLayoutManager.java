@@ -43,6 +43,14 @@ public class RadBorderLayoutManager extends RadLayoutManager {
   }
 
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+    if (component.getCustomLayoutConstraints() == null) {
+      if (container.getDelegee().getComponentCount() == 0) {
+        component.setCustomLayoutConstraints(BorderLayout.CENTER);
+      }
+      else {
+        throw new RuntimeException("can't add component without constraints to container with BorderLayout");
+      }
+    }
     container.getDelegee().add(component.getDelegee(), component.getCustomLayoutConstraints(), index);
   }
 
