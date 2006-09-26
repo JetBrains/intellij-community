@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -12,11 +11,10 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBlock{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl");
@@ -25,7 +23,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
     super(CODE_BLOCK);
   }
 
-  public void clearCaches() {
+  public synchronized void clearCaches() {
     super.clearCaches();
     myProcessed = false;
     myConflict = false;
@@ -65,7 +63,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
   private boolean myConflict = false;
   private boolean myProcessed = false;
 
-  private void buildMaps(){
+  private synchronized void buildMaps(){
     if(myProcessed) return;
     myProcessed = true;
     PsiScopesUtil.walkChildrenScopes(this, new BaseScopeProcessor() {
