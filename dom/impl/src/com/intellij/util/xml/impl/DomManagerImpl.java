@@ -49,7 +49,6 @@ import java.util.*;
  * @author peter
  */
 public final class DomManagerImpl extends DomManager implements ProjectComponent {
-  static final Key<Module> MODULE = Key.create("NameStrategy");
   static final Key<Object> MOCK = Key.create("MockElement");
   private static final Key<DomInvocationHandler> CACHED_HANDLER = Key.create("CachedInvocationHandler");
   private static final Key<FileDescriptionCachedValueProvider> CACHED_FILE_ELEMENT_PROVIDER = Key.create("CachedFileElementProvider");
@@ -536,7 +535,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
     final XmlFile file = (XmlFile)myElementFactory.createFileFromText("a.xml", StdFileTypes.XML, "", 0, physical);
     final DomFileElementImpl<T> fileElement = getFileElement(file, aClass, "root");
-    fileElement.putUserData(MODULE, module);
+    fileElement.putUserData(MOCK_ELEMENT_MODULE, module);
     fileElement.putUserData(MOCK, new Object());
     return fileElement.getRootElement();
   }

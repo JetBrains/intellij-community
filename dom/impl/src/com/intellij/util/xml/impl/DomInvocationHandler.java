@@ -212,7 +212,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   public final Module getModule() {
     final Module module = ModuleUtil.findModuleForPsiElement(getFile());
-    return module != null ? module : getRoot().getUserData(DomManagerImpl.MODULE);
+    return module != null ? module : getRoot().getUserData(DomManagerImpl.MOCK_ELEMENT_MODULE);
   }
 
   public XmlTag ensureTagExists() {
