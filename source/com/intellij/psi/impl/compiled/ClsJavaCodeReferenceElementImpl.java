@@ -24,13 +24,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl");
 
   private PsiElement myParent;
   private final String myCanonicalText;
   private final String myQualifiedName;
-  private ClsReferenceParametersListImpl myTypeParameterList = null;
   private final ClsTypeElementImpl[] myTypeParameters;  // in right-to-left order
   private PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
   private static final @NonNls String EXTENDS_PREFIX = "?extends";
@@ -241,7 +239,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   public PsiReferenceParameterList getParameterList() {
-    return myTypeParameterList;
+    return null;
   }
 
   public String getQualifiedName() {

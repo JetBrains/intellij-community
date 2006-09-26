@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiTypeParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParametersListImpl");
 
-  private PsiElement myParent;
+  private final PsiElement myParent;
   private ClsTypeParameterImpl[] myParameters;
 
   public ClsTypeParametersListImpl(PsiElement parent, ClsTypeParameterImpl[] parameters) {

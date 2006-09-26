@@ -183,19 +183,24 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   private void createComponentTypeChild() {
-    if (!myChildSet) {
-      if (isArray()) {
-        if (myVariance == VARIANCE_NONE) {
-          myChild = new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 2), myVariance);
-        } else {
-          myChild = new ClsTypeElementImpl(this, myTypeText, VARIANCE_NONE);
+    synchronized (PsiLock.LOCK) {
+      if (!myChildSet) {
+        if (isArray()) {
+          if (myVariance == VARIANCE_NONE) {
+            myChild = new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 2), myVariance);
+          }
+          else {
+            myChild = new ClsTypeElementImpl(this, myTypeText, VARIANCE_NONE);
+          }
         }
-      } else if (isVarArgs()) {
-        myChild = new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 3), myVariance);
-      } else {
-        LOG.assertTrue(false);
+        else if (isVarArgs()) {
+          myChild = new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 3), myVariance);
+        }
+        else {
+          LOG.assertTrue(false);
+        }
+        myChildSet = true;
       }
-      myChildSet = true;
     }
   }
 

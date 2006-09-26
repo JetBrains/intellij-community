@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implements PsiClassObjectAccessExpression {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsClassObjectAccessExpressionImpl");
-  private ClsTypeElementImpl myTypeElement;
-  private ClsElementImpl myParent;
+  private final ClsTypeElementImpl myTypeElement;
+  private final ClsElementImpl myParent;
   private static final @NonNls String CLASS_ENDING = ".class";
 
   public ClsClassObjectAccessExpressionImpl(String canonicalClassText, ClsElementImpl parent) {

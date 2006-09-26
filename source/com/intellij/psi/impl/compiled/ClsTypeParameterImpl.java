@@ -31,9 +31,9 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   static ClsTypeParameterImpl[] EMPTY_ARRAY = new ClsTypeParameterImpl[0];
 
   private String myName;
-  private ClsReferenceListImpl myBoundsList;
-  private PsiElement myParent;
-  private int myIndex;
+  private final ClsReferenceListImpl myBoundsList;
+  private final PsiElement myParent;
+  private final int myIndex;
   private LightEmptyImplementsList myLightEmptyImplementsList;
   private final String mySignature;
 

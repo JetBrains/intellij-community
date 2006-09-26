@@ -197,7 +197,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
             myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
           }
           else {
-            StringBuffer compiledParams = new StringBuffer();
+            StringBuilder compiledParams = new StringBuilder();
             compiledParams.append('<');
             for (int i = 0; i < count; i++) {
               compiledParams.append(classView.getParameterText(repositoryId, i));
@@ -250,10 +250,11 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
           }
         }
         else {
-          myQualifiedName = getRepositoryManager().getClassView().getQualifiedName(repositoryId);
-          if (myQualifiedName == null) {
-            myQualifiedName = "";
+          String qualifiedName = getRepositoryManager().getClassView().getQualifiedName(repositoryId);
+          if (qualifiedName == null) {
+            qualifiedName = "";
           }
+          myQualifiedName = qualifiedName;
         }
       }
     }
@@ -301,10 +302,11 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
           for (int i = 0; i < refTexts.length; i++) {
             refs[i] = new ClsJavaCodeReferenceElementImpl(null, refTexts[i]);
           }
-          myExtendsList = new ClsReferenceListImpl(this, refs, PsiKeyword.EXTENDS);
+          ClsReferenceListImpl extendsList = new ClsReferenceListImpl(this, refs, PsiKeyword.EXTENDS);
           for (ClsJavaCodeReferenceElementImpl ref : refs) {
-            ref.setParent(myExtendsList);
+            ref.setParent(extendsList);
           }
+          myExtendsList = extendsList;
         }
       }
     }
@@ -427,7 +429,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
-    return parent instanceof PsiClass ? ((PsiClass)parent) : null;
+    return parent instanceof PsiClass ? (PsiClass)parent : null;
   }
 
   @NotNull
@@ -682,11 +684,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   public PsiField findFieldByName(String name, boolean checkBases) {
     if (!checkBases) {
       if (myCachedFieldsMap == null) {
-        myCachedFieldsMap = new HashMap<String, PsiField>();
+        HashMap<String, PsiField> cachedFieldsMap = new HashMap<String, PsiField>();
         final PsiField[] fields = getFields();
         for (final PsiField field : fields) {
-          myCachedFieldsMap.put(field.getName(), field);
+          cachedFieldsMap.put(field.getName(), field);
         }
+        myCachedFieldsMap = cachedFieldsMap;
       }
       return myCachedFieldsMap.get(name);
     }
@@ -706,7 +709,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
     if (!checkBases) {
       if (myCachedMethodsMap == null) {
-        myCachedMethodsMap = new HashMap<String, PsiMethod[]>();
+        Map<String, PsiMethod[]> methodsMap = new HashMap<String, PsiMethod[]>();
         Map<String, List<PsiMethod>> cachedMethodsMap = new HashMap<String, List<PsiMethod>>();
         final PsiMethod[] methods = getMethods();
         for (final PsiMethod method : methods) {
@@ -718,8 +721,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
           list.add(method);
         }
         for (final String methodName : cachedMethodsMap.keySet()) {
-          myCachedMethodsMap.put(methodName, cachedMethodsMap.get(methodName).toArray(PsiMethod.EMPTY_ARRAY));
+          methodsMap.put(methodName, cachedMethodsMap.get(methodName).toArray(PsiMethod.EMPTY_ARRAY));
         }
+        myCachedMethodsMap = methodsMap;
       }
       final PsiMethod[] psiMethods = myCachedMethodsMap.get(name);
       return psiMethods != null ? psiMethods : PsiMethod.EMPTY_ARRAY;
@@ -741,11 +745,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
     if (!checkBases) {
       if (myCachedInnersMap == null) {
-        myCachedInnersMap = new HashMap<String, PsiClass>();
+        HashMap<String, PsiClass> cachedInnersMap = new HashMap<String, PsiClass>();
         final PsiClass[] classes = getInnerClasses();
         for (final PsiClass psiClass : classes) {
-          myCachedInnersMap.put(psiClass.getName(), psiClass);
+          cachedInnersMap.put(psiClass.getName(), psiClass);
         }
+        myCachedInnersMap = cachedInnersMap;
       }
       return myCachedInnersMap.get(name);
     }
@@ -867,8 +872,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   public boolean isEnum() {
     PsiField[] fields = getFields();
-    if (fields.length == 0) return false;
-    return fields[0] instanceof ClsEnumConstantImpl;
+    return fields.length != 0 && fields[0] instanceof ClsEnumConstantImpl;
   }
 
   private int getAccessFlags() {

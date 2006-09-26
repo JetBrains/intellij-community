@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsTypeParameterReferenceImpl");
-  private PsiElement myParent;
-  private String myName;
+  private final PsiElement myParent;
+  private final String myName;
 
   public ClsTypeParameterReferenceImpl(PsiElement parent, String name) {
     myParent = parent;

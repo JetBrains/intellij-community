@@ -37,7 +37,7 @@ import java.util.List;
 public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotationMethod, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsMethodImpl");
 
-  private ClsClassImpl myParent;
+  private final ClsClassImpl myParent;
   private int myStartOffset;
 
   private String myName = null;
@@ -134,13 +134,12 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiIdentifier getNameIdentifier() {
-  synchronized (PsiLock.LOCK) {
-    if (myNameIdentifier == null) {
-      myNameIdentifier = new ClsIdentifierImpl(this, getName());
+    synchronized (PsiLock.LOCK) {
+      if (myNameIdentifier == null) {
+        myNameIdentifier = new ClsIdentifierImpl(this, getName());
+      }
     }
-  ;
-  }
-               return myNameIdentifier;
+    return myNameIdentifier;
   }
 
   @NotNull
@@ -179,38 +178,37 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   @NotNull
   public String getName() {
     if (myName == null) {
-    synchronized (PsiLock.LOCK) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          ClassFileData classFileData = myParent.getClassFileData();
-          byte[] data = classFileData.getData();
-          int offset = myStartOffset + 2;
-          int b1 = data[offset++] & 0xFF;
-          int b2 = data[offset++] & 0xFF;
-          int index = (b1 << 8) + b2;
-          offset = classFileData.getOffsetInConstantPool(index);
-          String name = ClsUtil.readUtf8Info(data, offset);
-          if (name.equals(SYNTHETIC_INIT_METHOD)) {
-            name = myParent.getName();
-            myConstructorFlag = true;
+      synchronized (PsiLock.LOCK) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          try {
+            ClassFileData classFileData = myParent.getClassFileData();
+            byte[] data = classFileData.getData();
+            int offset = myStartOffset + 2;
+            int b1 = data[offset++] & 0xFF;
+            int b2 = data[offset++] & 0xFF;
+            int index = (b1 << 8) + b2;
+            offset = classFileData.getOffsetInConstantPool(index);
+            String name = ClsUtil.readUtf8Info(data, offset);
+            if (name.equals(SYNTHETIC_INIT_METHOD)) {
+              name = myParent.getName();
+              myConstructorFlag = true;
+            }
+            else {
+              myConstructorFlag = false;
+            }
+            myName = name;
           }
-          else {
-            myConstructorFlag = false;
+          catch (ClsFormatException e) {
+            myName = "";
           }
-          myName = name;
         }
-        catch (ClsFormatException e) {
-          myName = "";
+        else {
+          MethodView methodView = getRepositoryManager().getMethodView();
+          myName = methodView.getName(repositoryId);
+          myConstructorFlag = methodView.getReturnTypeText(repositoryId) == null;
         }
       }
-      else {
-        MethodView methodView = getRepositoryManager().getMethodView();
-        myName = methodView.getName(repositoryId);
-        myConstructorFlag = methodView.getReturnTypeText(repositoryId) == null;
-      }
-    ;
-    }
     }
     return myName;
   }
@@ -261,7 +259,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
           myReturnType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
         }
       }
-      ;
     }
     return myReturnType;
   }
@@ -579,6 +576,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiAnnotationMemberValue getDefaultValue() {
+    synchronized (PsiLock.LOCK) {
       if (myDefaultValue == null) {
         myDefaultValue = new PsiAnnotationMemberValue[1];
 
@@ -605,9 +603,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
           }
         }
       }
-
-      return myDefaultValue[0];
     }
+
+    return myDefaultValue[0];
+  }
 
   private boolean parseViaGenericSignature() {
     if (getRepositoryId() >= 0) return false;
@@ -672,24 +671,25 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public boolean isVarArgs() {
-      if (myIsVarArgs == null) {
-        boolean isVarArgs;
-        if (PsiUtil.getLanguageLevel(this).compareTo(LanguageLevel.JDK_1_5) >= 0) {
-          if (getRepositoryId() < 0) {
-            isVarArgs = (getAccessFlags() & ClsUtil.ACC_VARARGS) != 0;
-          }
-          else {
-            RepositoryManager repositoryManager = getRepositoryManager();
-            isVarArgs = repositoryManager.getMethodView().isVarArgs(getRepositoryId());
-          }
-        } else {
-          isVarArgs = false;
+    if (myIsVarArgs == null) {
+      boolean isVarArgs;
+      if (PsiUtil.getLanguageLevel(this).compareTo(LanguageLevel.JDK_1_5) >= 0) {
+        if (getRepositoryId() < 0) {
+          isVarArgs = (getAccessFlags() & ClsUtil.ACC_VARARGS) != 0;
         }
-
-        myIsVarArgs = isVarArgs ? Boolean.TRUE : Boolean.FALSE;
+        else {
+          RepositoryManager repositoryManager = getRepositoryManager();
+          isVarArgs = repositoryManager.getMethodView().isVarArgs(getRepositoryId());
+        }
+      }
+      else {
+        isVarArgs = false;
       }
 
-      return myIsVarArgs.booleanValue();
+      myIsVarArgs = isVarArgs ? Boolean.TRUE : Boolean.FALSE;
+    }
+
+    return myIsVarArgs.booleanValue();
     }
 
   @NotNull
@@ -798,40 +798,40 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiTypeParameterList getTypeParameterList() {
-  synchronized (PsiLock.LOCK) {
-    if (myTypeParameters == null) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        if (!parseViaGenericSignature()) {
-          myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
-        }
-      }
-      else {
-        MethodView methodView = getRepositoryManager().getMethodView();
-        int count = methodView.getTypeParametersCount(repositoryId);
-        if (count == 0) {
-          myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
+    synchronized (PsiLock.LOCK) {
+      if (myTypeParameters == null) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          if (!parseViaGenericSignature()) {
+            myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
+          }
         }
         else {
-          StringBuffer compiledParams = new StringBuffer();
-          compiledParams.append('<');
-          for (int i = 0; i < count; i++) {
-            compiledParams.append(methodView.getTypeParameterText(repositoryId, i));
+          MethodView methodView = getRepositoryManager().getMethodView();
+          int count = methodView.getTypeParametersCount(repositoryId);
+          if (count == 0) {
+            myTypeParameters = new ClsTypeParametersListImpl(this, new ClsTypeParameterImpl[0]);
           }
-          compiledParams.append('>');
-          try {
-            final String signature = compiledParams.toString();
-            myTypeParameters =
-            GenericSignatureParsing.parseTypeParametersDeclaration(new StringCharacterIterator(signature, 0), this, signature);
-          }
-          catch (ClsFormatException e) {
-            LOG.error(e); // dsl: should not happen when stuff is parsed from repository
+          else {
+            StringBuffer compiledParams = new StringBuffer();
+            compiledParams.append('<');
+            for (int i = 0; i < count; i++) {
+              compiledParams.append(methodView.getTypeParameterText(repositoryId, i));
+            }
+            compiledParams.append('>');
+            try {
+              final String signature = compiledParams.toString();
+              myTypeParameters =
+                GenericSignatureParsing.parseTypeParametersDeclaration(new StringCharacterIterator(signature, 0), this, signature);
+            }
+            catch (ClsFormatException e) {
+              LOG.error(e); // dsl: should not happen when stuff is parsed from repository
+            }
           }
         }
       }
+      return myTypeParameters;
     }
-    return myTypeParameters;
-  }
   }
 
   public boolean hasTypeParameters() {

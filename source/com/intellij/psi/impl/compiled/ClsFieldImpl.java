@@ -29,7 +29,7 @@ import java.util.Set;
 public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, PsiVariableEx, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFieldImpl");
 
-  private ClsClassImpl myParent;
+  private final ClsClassImpl myParent;
   private int myStartOffset;
 
   private String myName = null;
@@ -103,12 +103,12 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public PsiIdentifier getNameIdentifier() {
-  synchronized (PsiLock.LOCK) {
-    if (myNameIdentifier == null) {
-      myNameIdentifier = new ClsIdentifierImpl(this, getName());
+    synchronized (PsiLock.LOCK) {
+      if (myNameIdentifier == null) {
+        myNameIdentifier = new ClsIdentifierImpl(this, getName());
+      }
     }
-  }
-               return myNameIdentifier;
+    return myNameIdentifier;
   }
 
   public @NonNls String getName() {
@@ -150,32 +150,32 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
 
   public PsiTypeElement getTypeElement() {
     if (myType == null) {
-    synchronized (PsiLock.LOCK) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        if (!parseViaGenericSignature()) {
-          try {
-            ClassFileData classFileData = myParent.getClassFileData();
-            byte[] data = classFileData.getData();
-            int offset = myStartOffset + 4;
-            int b1 = data[offset++] & 0xFF;
-            int b2 = data[offset++] & 0xFF;
-            int index = (b1 << 8) + b2;
-            offset = classFileData.getOffsetInConstantPool(index);
-            offset += 3; // skip tag and length
-            String typeText = ClsUtil.getTypeText(data, offset);
-            myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-          }
-          catch (ClsFormatException e) {
-            myType = null;
+      synchronized (PsiLock.LOCK) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          if (!parseViaGenericSignature()) {
+            try {
+              ClassFileData classFileData = myParent.getClassFileData();
+              byte[] data = classFileData.getData();
+              int offset = myStartOffset + 4;
+              int b1 = data[offset++] & 0xFF;
+              int b2 = data[offset++] & 0xFF;
+              int index = (b1 << 8) + b2;
+              offset = classFileData.getOffsetInConstantPool(index);
+              offset += 3; // skip tag and length
+              String typeText = ClsUtil.getTypeText(data, offset);
+              myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+            }
+            catch (ClsFormatException e) {
+              myType = null;
+            }
           }
         }
+        else {
+          String typeText = getRepositoryManager().getFieldView().getTypeText(repositoryId);
+          myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+        }
       }
-      else {
-        String typeText = getRepositoryManager().getFieldView().getTypeText(repositoryId);
-        myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-      }
-    }
     }
     return myType;
   }
@@ -206,13 +206,13 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public PsiModifierList getModifierList() {
-  synchronized (PsiLock.LOCK) {
-    if (myModifierList == null) {
-      int flags = getAccessFlags();
-      myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_FIELD_MASK);
+    synchronized (PsiLock.LOCK) {
+      if (myModifierList == null) {
+        int flags = getAccessFlags();
+        myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_FIELD_MASK);
+      }
     }
-  }
-               return myModifierList;
+    return myModifierList;
   }
 
   public boolean hasModifierProperty(String name) {
@@ -245,23 +245,23 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public PsiExpression getInitializer() {
-  synchronized (PsiLock.LOCK) {
-    if (!myInitializerInitialized) {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          myInitializer = createInitializerFromClassFile();
+    synchronized (PsiLock.LOCK) {
+      if (!myInitializerInitialized) {
+        long repositoryId = getRepositoryId();
+        if (repositoryId < 0) {
+          try {
+            myInitializer = createInitializerFromClassFile();
+          }
+          catch (ClsFormatException e) {
+          }
         }
-        catch (ClsFormatException e) {
+        else {
+          myInitializer = createInitializerFromRepository();
         }
+        myInitializerInitialized = true;
       }
-      else {
-        myInitializer = createInitializerFromRepository();
-      }
-      myInitializerInitialized = true;
     }
-  }
-               return myInitializer;
+    return myInitializer;
   }
 
   private PsiExpression createInitializerFromClassFile() throws ClsFormatException {
@@ -526,14 +526,14 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public PsiDocComment getDocComment() {
-               if (!isDeprecated()) return null;
+    if (!isDeprecated()) return null;
 
-  synchronized (PsiLock.LOCK) {
-    if (myDocComment == null) {
-      myDocComment = new ClsDocCommentImpl(this);
+    synchronized (PsiLock.LOCK) {
+      if (myDocComment == null) {
+        myDocComment = new ClsDocCommentImpl(this);
+      }
     }
-  }
-               return myDocComment;
+    return myDocComment;
   }
 
   public void normalizeDeclaration() throws IncorrectOperationException {

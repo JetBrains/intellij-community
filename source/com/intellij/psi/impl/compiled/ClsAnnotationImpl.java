@@ -16,9 +16,9 @@ import org.jetbrains.annotations.Nullable;
 public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
   public static final ClsAnnotationImpl[] EMPTY_ARRAY = new ClsAnnotationImpl[0];
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationImpl");
-  private ClsJavaCodeReferenceElementImpl myReferenceElement;
+  private final ClsJavaCodeReferenceElementImpl myReferenceElement;
   private ClsAnnotationParameterListImpl myParameterList;
-  private ClsElementImpl myParent;
+  private final ClsElementImpl myParent;
   public static final ClsAnnotationImpl[][] EMPTY_2D_ARRAY = new ClsAnnotationImpl[0][];
 
   public ClsAnnotationImpl(ClsJavaCodeReferenceElementImpl referenceElement, ClsElementImpl parent) {

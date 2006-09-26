@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValuePair {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsNameValuePairImpl");
-  private ClsElementImpl myParent;
+  private final ClsElementImpl myParent;
   private ClsIdentifierImpl myNameIdentifier;
   private PsiAnnotationMemberValue myMemberValue;
 
