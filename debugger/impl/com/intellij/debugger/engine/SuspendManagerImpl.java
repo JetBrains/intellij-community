@@ -106,8 +106,11 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.logThreads();
         final ThreadReferenceProxyImpl thread = getThread();
 
-        if (thread != null && !thread.isCollected()) {
-          LOG.assertTrue(thread.isSuspended(), "Context thread must be suspended");
+        if (thread != null) { // check that thread is suspended at the moment
+          final boolean isSuspended = thread.isSuspended();
+          if (!isSuspended && !thread.isCollected()) {
+            LOG.assertTrue(false, "Context thread must be suspended");
+          }
         }
 
         int attempts = 5;
