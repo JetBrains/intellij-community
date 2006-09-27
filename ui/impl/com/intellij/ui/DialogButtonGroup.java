@@ -54,7 +54,7 @@ public class DialogButtonGroup extends JPanel {
   }
 
   public void remove(AbstractButton button) {
-    remove(button);
+    super.remove(button);
     updateButtonSizes();
   }
 
