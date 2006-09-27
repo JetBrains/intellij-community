@@ -2,6 +2,7 @@ package com.intellij.ide.bookmarks;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.ItemRemovable;
@@ -28,6 +29,7 @@ abstract class BookmarksDialog extends DialogWrapper{
   private JButton myMoveUpButton = new JButton(IdeBundle.message("button.move.up"));
   private JButton myMoveDownButton = new JButton(IdeBundle.message("button.move.down"));
   private JButton myCloseButton = new JButton(CommonBundle.getCloseButtonText());
+  private JButton myHelpButton = new JButton(CommonBundle.getHelpButtonText());  
   protected BookmarkManager myBookmarkManager;
 
   protected class MyModel extends DefaultTableModel implements ItemRemovable {
@@ -105,6 +107,11 @@ abstract class BookmarksDialog extends DialogWrapper{
         else if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
           myGotoButton.doClick();
         }
+        /* // Commented out because this implementation clashes with doHelpAction() inherited from DialogWrapper.
+           // See doHelpAction() in this class.
+        else if (e.getKeyCode() == KeyEvent.VK_F1 && e.getModifiers() == 0) {
+          myHelpButton.doClick();
+        } */
       }
     });
 
@@ -167,6 +174,8 @@ abstract class BookmarksDialog extends DialogWrapper{
     pane.add(myRemoveAllButton, constr);
     constr.gridy = 6;
     pane.add(myCloseButton, constr);
+    constr.gridy = 7;
+    pane.add(myHelpButton, constr);
 
     return pane;
   }
@@ -296,6 +305,14 @@ abstract class BookmarksDialog extends DialogWrapper{
       }
     );
 
+    myHelpButton.addActionListener(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          HelpManager.getInstance().invokeHelp("find.bookmarks");
+        }
+      }
+    );
+
     ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet();
     new AnAction() {
       public void actionPerformed(AnActionEvent e){
@@ -314,6 +331,10 @@ abstract class BookmarksDialog extends DialogWrapper{
     );
 
     getRootPane().setDefaultButton(myGotoButton);
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("find.bookmarks");
   }
 
   private void removeSelectedBookmark() {
