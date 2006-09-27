@@ -213,6 +213,11 @@ public class ModelMergerImpl implements ModelMerger {
     }
 
     protected final void setImplementations(final T[] implementations) {
+      for (final T implementation : implementations) {
+        if (implementation instanceof StableElement) {
+          throw new AssertionError("Stable values merging is prohibited: " + implementation);
+        }
+      }
       myImplementations = implementations;
     }
 
