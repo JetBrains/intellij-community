@@ -18,7 +18,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   }
 
   public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
-    return new HeavyTestFixtureBuilderImpl<IdeaProjectTestFixture>(new HeavyIdeaTestFixtureImpl());
+    return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl());
   }
 
   public CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {

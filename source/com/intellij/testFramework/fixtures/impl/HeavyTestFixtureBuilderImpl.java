@@ -19,13 +19,13 @@ import java.util.HashMap;
 /**
  * @author mike
 */
-class HeavyTestFixtureBuilderImpl<T extends IdeaProjectTestFixture> implements TestFixtureBuilder<T> {
+class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
 
   private final Map<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder> myModuleFixtureBuilderFactory = new HashMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder>();
 
-  private T myFixture;
+  private HeavyIdeaTestFixtureImpl myFixture;
 
-  public HeavyTestFixtureBuilderImpl(T fixture) {
+  public HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture) {
     myFixture = fixture;
 
     myModuleFixtureBuilderFactory.put(JavaModuleFixtureBuilder.class, new JavaModuleFixtureBuilderImpl(this));
@@ -41,11 +41,13 @@ class HeavyTestFixtureBuilderImpl<T extends IdeaProjectTestFixture> implements T
     throw new UnsupportedOperationException("setLanguageLevel is not implemented in : " + getClass());
   }
 
-  public T getFixture() {
+  public HeavyIdeaTestFixtureImpl getFixture() {
     return myFixture;
   }
 
   public <M extends ModuleFixtureBuilder> M addModule(final Class<M> builderClass) {
-    return (M)myModuleFixtureBuilderFactory.get(builderClass);
+    final M builder = (M)myModuleFixtureBuilderFactory.get(builderClass);
+    myFixture.addModuleFixtureBuilder(builder);
+    return builder;
   }
 }

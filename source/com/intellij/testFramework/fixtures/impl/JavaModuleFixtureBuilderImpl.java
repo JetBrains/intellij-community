@@ -30,6 +30,7 @@ import java.util.List;
 class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl implements JavaModuleFixtureBuilder {
   private List<Pair<String, String[]>> myLibraries = new ArrayList<Pair<String, String[]>>();
   private String myJdk;
+  private ModuleFixtureImpl myModuleFixture;
 
   public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(ModuleType.JAVA, fixtureBuilder);
@@ -62,8 +63,11 @@ class JavaModuleFixtureBuilderImpl extends ModuleFixtureBuilderImpl implements J
     return this;
   }
 
-  protected ModuleFixtureImpl instantiateFixture() {
-    return new ModuleFixtureImpl(this);
+  protected synchronized ModuleFixtureImpl instantiateFixture() {
+    if (myModuleFixture == null) {
+      myModuleFixture = new ModuleFixtureImpl(this);
+    }
+    return myModuleFixture;
   }
 
 

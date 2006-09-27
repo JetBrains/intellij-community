@@ -4,7 +4,6 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -19,18 +18,22 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.lang.properties.PropertiesReferenceManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -40,13 +43,18 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
   private Project myProject;
   private Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
+  private final List<ModuleFixtureBuilder> myModuleFixtureBuilders = new ArrayList<ModuleFixtureBuilder>();
+
+  protected void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
+    myModuleFixtureBuilders.add(builder);
+  }
 
   public void setUp() throws Exception {
     initApplication();
     setUpProject();
   }
 
-  protected void setUpProject() throws IOException {
+  protected void setUpProject() throws Exception {
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
 
     File projectFile = File.createTempFile("temp", ".ipr");
@@ -54,7 +62,13 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
 
     myProject = projectManager.newProject(projectFile.getPath(), false, false);
 
+    for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
+      moduleFixtureBuilder.getFixture().getModule();
+    }
+
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
+
+    PropertiesReferenceManager.getInstance(myProject).projectOpened();
   }
 
 
