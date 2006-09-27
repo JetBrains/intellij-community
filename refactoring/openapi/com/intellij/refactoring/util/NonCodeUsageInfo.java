@@ -18,6 +18,7 @@ package com.intellij.refactoring.util;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 public class NonCodeUsageInfo extends MoveRenameUsageInfo{
   public final String newText;
@@ -27,15 +28,15 @@ public class NonCodeUsageInfo extends MoveRenameUsageInfo{
     this.newText = newText;
   }
 
+  @Nullable
   public static NonCodeUsageInfo create(PsiFile file,
                                         int startOffset,
                                         int endOffset,
                                         PsiElement referencedElement,
                                         String newText) {
     PsiElement element = file.findElementAt(startOffset);
-    TextRange range;
-    while(true){
-      range = element.getTextRange();
+    while(element != null){
+      TextRange range = element.getTextRange();
       if (range.getEndOffset() < endOffset){
         element = element.getParent();
       }
@@ -44,7 +45,9 @@ public class NonCodeUsageInfo extends MoveRenameUsageInfo{
       }
     }
 
-    int elementStart = range.getStartOffset();
+    if (element == null) return null;
+
+    int elementStart = element.getTextRange().getStartOffset();
     startOffset -= elementStart;
     endOffset -= elementStart;
     return new NonCodeUsageInfo(element, startOffset, endOffset, referencedElement, newText);
