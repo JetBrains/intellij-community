@@ -2,6 +2,7 @@ package com.intellij.compiler.actions;
 
 import com.intellij.compiler.Chunk;
 import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.compiler.HelpID;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
@@ -271,5 +273,13 @@ public class GenerateAntBuildDialog extends DialogWrapper{
       component.setHorizontalAlignment(SwingConstants.CENTER);
       return component;
     }
+  }
+
+  protected Action[] createActions() {
+    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.GENERATE_ANT_BUILD);
   }
 }
