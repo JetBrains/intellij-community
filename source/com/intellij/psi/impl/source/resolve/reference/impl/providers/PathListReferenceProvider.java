@@ -19,8 +19,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlValueProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.CharFilter;
@@ -35,7 +33,7 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
   public PsiReference[] getReferencesByElement(PsiElement element) {
 
     PsiReference[] result = PsiReference.EMPTY_ARRAY;
-    XmlValueProvider provider = XmlValueProvider.getProvider(element);
+    XmlValueProvider<PsiElement> provider = XmlValueProvider.getProvider(element);
     String s = provider.getValue(element);
     int offset = provider.getRangeInElement(element).getStartOffset();
     if (!s.trim().startsWith("/")) {
@@ -46,13 +44,13 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
       int nextPos = s.indexOf(',', pos + 1);
       if (nextPos == -1) {
         PsiReference[] refs =
-          createReferenceSet(element, s.substring(pos + 1), pos + offset + 1).getAllReferences();
+          createReferenceSet(element, s.substring(pos + 1), pos + offset + 1, false).getAllReferences();
         result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
         break;
       }
       else {
         PsiReference[] refs =
-          createReferenceSet(element, s.substring(pos + 1, nextPos), pos + offset + 1).getAllReferences();
+          createReferenceSet(element, s.substring(pos + 1, nextPos), pos + offset + 1, false).getAllReferences();
         result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
         pos = nextPos;
       }
@@ -61,11 +59,16 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
     return result;
   }
 
-  protected FileReferenceSet createReferenceSet(PsiElement element, String s, int offset) {
+  protected FileReferenceSet createReferenceSet(PsiElement element, String s, int offset, final boolean soft) {
     int contentOffset = StringUtil.findFirst(s, CharFilter.NOT_WHITESPACE_FILTER);
     if (contentOffset >= 0) {
       offset += contentOffset;
     }
-    return new FileReferenceSet(StringUtil.strip(s, CharFilter.NOT_WHITESPACE_FILTER), element, offset, this, true);
+    return new FileReferenceSet(s.trim(), element, offset, this, true) {
+
+      protected boolean isSoft() {
+        return soft;
+      }
+    };
   }
 }
