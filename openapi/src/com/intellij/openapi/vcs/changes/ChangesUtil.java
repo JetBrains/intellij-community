@@ -63,8 +63,8 @@ public class ChangesUtil {
   public static Navigatable[] getNavigatableArray(final Project project, final VirtualFile[] selectedFiles) {
     Navigatable[] navigatables = new Navigatable[selectedFiles.length];
     for (int i = 0; i < selectedFiles.length; i++) {
-    navigatables[i] = new OpenFileDescriptor(project, selectedFiles[i], 0);
-  }
+      navigatables[i] = new OpenFileDescriptor(project, selectedFiles[i]);
+    }
     return navigatables;
   }
 
