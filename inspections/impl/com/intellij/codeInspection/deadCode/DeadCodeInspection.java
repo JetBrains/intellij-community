@@ -831,11 +831,13 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
 
     private void processDelayedMethods() {
-      for (RefClass refClass : myInstantiatedClasses) {
+      RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[myInstantiatedClasses.size()]);
+      for (RefClass refClass : instClasses) {
         if (isClassInstantiated(refClass)) {
           HashSet<RefMethod> methods = myClassIDtoMethods.get(refClass);
           if (methods != null) {
-            for (RefMethod arMethod : methods) {
+            RefMethod[] arMethods = methods.toArray(new RefMethod[methods.size()]);
+            for (RefMethod arMethod : arMethods) {
               arMethod.accept(this);
             }
           }
