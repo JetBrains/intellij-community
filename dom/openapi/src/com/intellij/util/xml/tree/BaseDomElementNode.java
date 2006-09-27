@@ -222,6 +222,6 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   }
 
   public boolean expandOnDoubleClick() {
-    return false;
+    return true;
   }
 }
