@@ -267,7 +267,7 @@ public final class FormSourceCodeGenerator {
     return "private void " + methodName + "(" + componentClass.getName() + " component, java.lang.String text) {" +
                                         "  StringBuffer result = new StringBuffer(); " +
                                         "  boolean haveMnemonic = false;    " +
-                                        "  char mnemonic = '\0';" +
+                                        "  char mnemonic = '\\0';" +
                                         (needIndex ? "int mnemonicIndex = -1;" : "") +
                                         "  for(int i=0; i<text.length(); i++) {" +
                                         "    if (text.charAt(i) == '&') {" +
