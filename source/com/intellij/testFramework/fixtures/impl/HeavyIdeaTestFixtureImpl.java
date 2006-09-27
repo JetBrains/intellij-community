@@ -4,6 +4,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -16,17 +17,16 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.lang.properties.PropertiesReferenceManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,9 +66,9 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
       moduleFixtureBuilder.getFixture().getModule();
     }
 
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
+    ((ModuleManagerImpl)ModuleManager.getInstance(myProject)).projectOpened();
 
-    PropertiesReferenceManager.getInstance(myProject).projectOpened();
+    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
   }
 
 

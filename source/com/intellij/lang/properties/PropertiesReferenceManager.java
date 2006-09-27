@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -88,15 +87,11 @@ public class PropertiesReferenceManager implements ProjectComponent {
       }
     }, PsiLiteralExpression.class, new ResourceBundleReferenceProvider());
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      refreshAllPropFilesInProject();
-    } else {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        public void run() {
-          refreshAllPropFilesInProject();
-        }
-      });
-    }
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        refreshAllPropFilesInProject();
+      }
+    });
   }
 
   private void refreshAllPropFilesInProject() {
