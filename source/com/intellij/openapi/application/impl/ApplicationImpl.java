@@ -104,7 +104,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
     };
 
-    if (!isUnitTestMode && !isHeadless) {
+    if (!isUnitTestMode) {
       Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
       IconLoader.activate();
     }
