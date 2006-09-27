@@ -2,6 +2,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.HelpID;
 import com.intellij.debugger.actions.EvaluateAction;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -164,7 +166,11 @@ public class StatementEvaluationDialog extends EvaluationDialog{
   }
 
   protected Action[] createActions(){
-    return new Action[]{getOKAction(), getCancelAction(), mySwitchAction };
+    return new Action[]{getOKAction(), getCancelAction(), mySwitchAction, getHelpAction() };
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.EVALUATE);
   }
 
   protected DebuggerEditorImpl createEditor() {

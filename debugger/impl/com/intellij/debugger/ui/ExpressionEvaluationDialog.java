@@ -2,6 +2,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.HelpID;
 import com.intellij.debugger.actions.EvaluateAction;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.PositionUtil;
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.help.HelpManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -112,7 +114,11 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
   }
 
   protected Action[] createActions() {
-    return new Action[] { getOKAction(), getCancelAction(), new SwitchAction()} ;
+    return new Action[] { getOKAction(), getCancelAction(), new SwitchAction(), getHelpAction() } ;
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.EVALUATE);
   }
 
   private class SwitchAction extends AbstractAction {
