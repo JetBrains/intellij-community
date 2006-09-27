@@ -28,6 +28,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   private static final ClassCache CLASS_CACHE = new ClassCache();
   private AntTypeDefinitionImpl myNewDefinition;
   private boolean myClassesLoaded;
+  private String myLocalizedError;
 
   public AntTypeDefImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
@@ -98,6 +99,11 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     return myClassesLoaded;
   }
 
+  @Nullable
+  public String getLocalizedError() {
+    return myLocalizedError;
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   private void loadClass(final String classname) {
     URL[] urls = ClassEntry.EMPTY_URL_ARRAY;
@@ -140,7 +146,16 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
           }
           newlyLoaded = true;
         }
-        catch (Exception e) {
+        catch (ClassNotFoundException e) {
+          myLocalizedError = e.getLocalizedMessage();
+          clazz = null;
+        }
+        catch (NoClassDefFoundError e) {
+          myLocalizedError = e.getLocalizedMessage();
+          clazz = null;
+        }
+        catch (UnsupportedClassVersionError e) {
+          myLocalizedError = e.getLocalizedMessage();
           clazz = null;
         }
       }

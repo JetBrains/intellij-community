@@ -58,8 +58,13 @@ public class AntAnnotator implements Annotator {
           }
         }
         if (se instanceof AntTypeDef) {
-          if (!((AntTypeDef)se).typesLoaded()) {
-            holder.createErrorAnnotation(absoluteRange, AntBundle.message("failed.to.load.types", name));
+          final AntTypeDef td = (AntTypeDef)se;
+          if (!td.typesLoaded()) {
+            String failedMessage = AntBundle.message("failed.to.load.types");
+            if(td.getLocalizedError() != null ) {
+              failedMessage = failedMessage + ": " + td.getLocalizedError();  
+            }
+            holder.createErrorAnnotation(absoluteRange, failedMessage);
           }
         }
         else if (se.isTypeDefined()) {

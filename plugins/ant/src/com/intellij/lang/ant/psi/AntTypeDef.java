@@ -20,4 +20,7 @@ public interface AntTypeDef extends AntTask {
   AntTypeDefinition getDefinition();
 
   boolean typesLoaded();
+
+  @Nullable
+  String getLocalizedError();
 }
