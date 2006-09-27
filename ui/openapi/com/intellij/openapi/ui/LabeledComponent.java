@@ -18,16 +18,15 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 
-import org.jetbrains.annotations.NonNls;
-
 public class LabeledComponent<Comp extends JComponent> extends JPanel {
   private final JLabel myLabel = new JLabel();
-  private Comp myCompoenent;
-  private String myLabelConstrains = BorderLayout.NORTH;
+  private Comp myComponent;
+  private String myLabelConstraints = BorderLayout.NORTH;
 
   public LabeledComponent() {
     super(new BorderLayout());
@@ -39,7 +38,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
   private void updateLabelBorder() {
     int left = 0;
     int bottom = 0;
-    if (BorderLayout.NORTH.equals(myLabelConstrains)) {
+    if (BorderLayout.NORTH.equals(myLabelConstraints)) {
       bottom = 2;
     }
     myLabel.setBorder(BorderFactory.createEmptyBorder(0, left, bottom, 0));
@@ -52,7 +51,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
 
   private void insertLabel() {
     remove(myLabel);
-    add(myLabel, myLabelConstrains);
+    add(myLabel, myLabelConstraints);
   }
 
   public void setText(String textWithMnemonic) {
@@ -60,9 +59,10 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
     TextWithMnemonic withMnemonic = TextWithMnemonic.fromTextWithMnemonic(textWithMnemonic);
     withMnemonic.setToLabel(myLabel);
   }
+
   public String getText() {
     String text = TextWithMnemonic.fromLabel(myLabel).getTextWithMnemonic();
-    if (StringUtil.endsWithChar(text, ':')) text.substring(0, text.length() - 1);
+    if (StringUtil.endsWithChar(text, ':')) return text.substring(0, text.length() - 1);
     return text;
   }
 
@@ -74,38 +74,38 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
   }
 
   public void setComponent(Comp component) {
-    if (myCompoenent != null) remove(myCompoenent);
-    myCompoenent = component;
-    add(myCompoenent, BorderLayout.CENTER);
-    if (myCompoenent instanceof ComponentWithBrowseButton) {
-      myLabel.setLabelFor(((ComponentWithBrowseButton)myCompoenent).getChildComponent());
-    } else myLabel.setLabelFor(myCompoenent);
+    if (myComponent != null) remove(myComponent);
+    myComponent = component;
+    add(myComponent, BorderLayout.CENTER);
+    if (myComponent instanceof ComponentWithBrowseButton) {
+      myLabel.setLabelFor(((ComponentWithBrowseButton)myComponent).getChildComponent());
+    } else myLabel.setLabelFor(myComponent);
   }
 
   public String getComponentClass() {
-    if (myCompoenent == null) return null;
+    if (myComponent == null) return null;
     return getComponent().getClass().getName();
   }
 
   public Comp getComponent() {
-    return myCompoenent;
+    return myComponent;
   }
 
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-    if (myCompoenent != null) myCompoenent.setEnabled(enabled);
+    if (myComponent != null) myComponent.setEnabled(enabled);
     myLabel.setEnabled(enabled);
   }
 
   public void setLabelLocation(@NonNls String borderConstrains) {
     String constrains = findBorderConstrains(borderConstrains);
-    if (constrains == null || constrains == myLabelConstrains) return;
-    myLabelConstrains = borderConstrains;
+    if (constrains == null || constrains == myLabelConstraints) return;
+    myLabelConstraints = borderConstrains;
     insertLabel();
   }
 
   public String getLabelLocation() {
-    return myLabelConstrains;
+    return myLabelConstraints;
   }
 
   public Insets getLabelInsets() {
@@ -119,9 +119,8 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
 
   private static final String[] LABEL_BORDER_CONSTRAINS = new String[]{BorderLayout.NORTH, BorderLayout.EAST, BorderLayout.SOUTH, BorderLayout.WEST};
 
-  private String findBorderConstrains(String str) {
-    for (int i = 0; i < LABEL_BORDER_CONSTRAINS.length; i++) {
-      String constrain = LABEL_BORDER_CONSTRAINS[i];
+  private static String findBorderConstrains(String str) {
+    for (String constrain : LABEL_BORDER_CONSTRAINS) {
       if (constrain.equals(str)) return constrain;
     }
     return null;
