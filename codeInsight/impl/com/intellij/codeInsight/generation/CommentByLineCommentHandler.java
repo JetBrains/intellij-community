@@ -131,9 +131,16 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     CharSequence chars = myDocument.getCharsSequence();
 
     boolean singleline = myLine1 == myLine2;
+    int offset = myDocument.getLineStartOffset(myLine1);
+    offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
+    Language languageAtStart = PsiUtil.getLanguageAtOffset(myFile, offset);
+    final Language languageSuitableForCompleteFragment = CommentByBlockCommentHandler.evaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
+      myDocument.getCharsSequence(), myDocument.getLineEndOffset(myLine2), " \t\n"), myFile, languageAtStart);
+
+    Commenter blockSuitableCommenter = languageSuitableForCompleteFragment != languageAtStart ? languageSuitableForCompleteFragment.getCommenter(): null;
 
     for (int line = myLine1; line <= myLine2; line++) {
-      final Commenter commenter = findCommenter(line);
+      final Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);
       if (commenter == null) return;
 
       if (commenter.getLineCommentPrefix() == null &&
@@ -149,10 +156,10 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     if (!allLineCommented) {
       if (CodeStyleSettingsManager.getSettings(myProject).LINE_COMMENT_AT_FIRST_COLUMN) {
-        doDefaultCommenting();
+        doDefaultCommenting(blockSuitableCommenter);
       }
       else {
-        doIndentCommenting();
+        doIndentCommenting(blockSuitableCommenter);
       }
     }
     else {
@@ -234,7 +241,6 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     int offset = myDocument.getLineStartOffset(line);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
     Language language = PsiUtil.getLanguageAtOffset(myFile, offset);
-    language = CommentByBlockCommentHandler.evaluateLanguageInRange(offset, myDocument.getLineEndOffset(line),myFile, language);
     return language.getCommenter();
   }
 
@@ -267,14 +273,14 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     return CharArrayUtil.regionMatches(chars, offset, prefix) ? offset : -1;
   }
 
-  public void doDefaultCommenting() {
+  public void doDefaultCommenting(Commenter commenter) {
     for (int line = myLine2; line >= myLine1; line--) {
       int offset = myDocument.getLineStartOffset(line);
-      commentLine(line, offset);
+      commentLine(line, offset, commenter);
     }
   }
 
-  private void doIndentCommenting() {
+  private void doIndentCommenting(Commenter commenter) {
     CharSequence chars = myDocument.getCharsSequence();
     final FileType fileType = myFile.getFileType();
     Indent minIndent = computeMinIndent(myLine1, myLine2, chars, myCodeStyleManager, fileType);
@@ -302,12 +308,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       finally {
         StringBuilderSpinAllocator.dispose(buffer);
       }
-      commentLine(line, offset);
+      commentLine(line, offset,commenter);
     }
   }
 
-  private void commentLine(int line, int offset) {
-    final Commenter commenter = findCommenter(line);
+  private void commentLine(int line, int offset, Commenter commenter) {
+    if (commenter == null) commenter = findCommenter(line);
     if (commenter == null) return;
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
