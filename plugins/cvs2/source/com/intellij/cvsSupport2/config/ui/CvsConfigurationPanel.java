@@ -11,14 +11,12 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.VcsConfiguration;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 
 /**
  * author: lesya
@@ -41,10 +39,8 @@ public class CvsConfigurationPanel {
   private JRadioButton mySkipOnMergedWithConflict;
   private JRadioButton myShowDialogOnMergedWithConflict;
   private JRadioButton[] myOnFileMergedWithConflictGroup;
-  private final Project myProject;
 
   public CvsConfigurationPanel(Project project) {
-    myProject = project;
     myOnFileMergedWithConflictGroup = new JRadioButton[]{
       myShowDialogOnMergedWithConflict,
       myGetLatestVersionOnMergedWithConflict,
@@ -84,30 +80,19 @@ public class CvsConfigurationPanel {
     myShowOutput.setSelected(config.SHOW_OUTPUT);
     myMakeNewFilesReadOnly.setSelected(config.MAKE_NEW_FILES_READONLY);
 
-    createButtonGroup(myOnFileMergedWithConflictGroup);
     myOnFileMergedWithConflictGroup[config.SHOW_CORRUPTED_PROJECT_FILES].setSelected(true);
 
+    //noinspection MismatchedQueryAndUpdateOfCollection
     KeywordSubstitutionListWithSelection keywordSubstitutions = new KeywordSubstitutionListWithSelection();
     myDefaultTextFileKeywordSubstitution.removeAllItems();
-    for (Iterator each = keywordSubstitutions.iterator(); each.hasNext();) {
-      myDefaultTextFileKeywordSubstitution.addItem(each.next());
+    for (final KeywordSubstitutionWrapper keywordSubstitution : keywordSubstitutions) {
+      myDefaultTextFileKeywordSubstitution.addItem(keywordSubstitution);
     }
     myDefaultTextFileKeywordSubstitution.setSelectedItem(
       KeywordSubstitutionWrapper.getValue(config.DEFAULT_TEXT_FILE_SUBSTITUTION));
   }
 
-  private VcsConfiguration getCommonConfig() {
-    return VcsConfiguration.getInstance(myProject);
-  }
-
-  private void createButtonGroup(JRadioButton[] group) {
-    ButtonGroup buttonGroup = new ButtonGroup();
-    for (int i = 0; i < group.length; i++) {
-      buttonGroup.add(group[i]);
-    }
-  }
-
-  private int getSelected(JRadioButton[] group) {
+  private static int getSelected(JRadioButton[] group) {
     for (int i = 0; i < group.length; i++) {
       JRadioButton jRadioButton = group[i];
       if (jRadioButton.isSelected()) return i;
@@ -133,7 +118,7 @@ public class CvsConfigurationPanel {
 
   public boolean equalsTo(CvsConfiguration config,
                           CvsApplicationLevelConfiguration appLevelConfiguration) {
-    return new HashSet(appLevelConfiguration.CONFIGURATIONS).equals(new HashSet(myConfigurations))
+    return new HashSet<CvsRootConfiguration>(appLevelConfiguration.CONFIGURATIONS).equals(new HashSet<CvsRootConfiguration>(myConfigurations))
            && config.MAKE_NEW_FILES_READONLY == myMakeNewFilesReadOnly.isSelected()
            && config.SHOW_OUTPUT == myShowOutput.isSelected()
            && config.SHOW_CORRUPTED_PROJECT_FILES == getSelected(myOnFileMergedWithConflictGroup)

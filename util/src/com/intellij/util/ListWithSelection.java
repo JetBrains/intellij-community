@@ -18,30 +18,30 @@ package com.intellij.util;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ListWithSelection extends ArrayList{
-  private Object mySelection;
+public class ListWithSelection<E> extends ArrayList<E> {
+  private E mySelection;
 
-  public ListWithSelection(Collection collection) {
+  public ListWithSelection(Collection<E> collection) {
     super(collection);
   }
 
-  public ListWithSelection(Collection collection, Object selection) {
+  public ListWithSelection(Collection<E> collection, E selection) {
     this(collection);
     select(selection);
   }
 
   public ListWithSelection() {
-    this(new ArrayList());
+    this(new ArrayList<E>());
   }
 
-  public boolean select(Object object){
+  public boolean select(E object){
     if (!contains(object))
       return false;
     mySelection = object;
     return true;
   }
 
-  public Object getSelection(){
+  public E getSelection(){
     return mySelection;
   }
 

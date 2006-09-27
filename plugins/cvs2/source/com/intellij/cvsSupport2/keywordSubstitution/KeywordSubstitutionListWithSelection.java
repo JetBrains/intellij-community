@@ -3,12 +3,11 @@ package com.intellij.cvsSupport2.keywordSubstitution;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.util.ListWithSelection;
-import com.intellij.util.ListWithSelection;
 
 /**
  * author: lesya
  */
-public class KeywordSubstitutionListWithSelection extends ListWithSelection{
+public class KeywordSubstitutionListWithSelection extends ListWithSelection<KeywordSubstitutionWrapper> {
 
   public KeywordSubstitutionListWithSelection() {
 
