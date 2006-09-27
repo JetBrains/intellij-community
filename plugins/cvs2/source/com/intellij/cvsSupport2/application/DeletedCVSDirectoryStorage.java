@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.application;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,7 +17,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class DeletedCVSDirectoryStorage {
   private File myRoot;
@@ -31,8 +31,7 @@ public class DeletedCVSDirectoryStorage {
   public void saveCVSInfo(File directory) throws IOException {
     if (!directory.isDirectory()) return;
     File[] subdirectories = directory.listFiles(DirectoryFilter.getInstance());
-    for (int i = 0; i < subdirectories.length; i++) {
-      File subdirectory = subdirectories[i];
+    for (File subdirectory : subdirectories) {
       if (isAdminDir(subdirectory)) {
         FileUtil.copyDir(subdirectory, translatePath(subdirectory));
       }
@@ -47,29 +46,27 @@ public class DeletedCVSDirectoryStorage {
     }
   }
 
-  private boolean doesNotContainDirectoriesExceptCvs(File directory) {
+  private static boolean doesNotContainDirectoriesExceptCvs(File directory) {
     File[] files = directory.listFiles();
     if (files == null) return true;
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    for (File file : files) {
       if (!isAdminDir(file)) return false;
     }
     return true;
   }
 
-  private boolean doesNotContainFileEntry(File directory) throws IOException {
+  private static boolean doesNotContainFileEntry(File directory) throws IOException {
     if (!containsEntriesFile(directory)) return true;
     EntriesHandler entriesHandler = new EntriesHandler(directory);
     entriesHandler.read(CvsApplicationLevelConfiguration.getCharset());
-    Collection entries = entriesHandler.getEntries().getEntries();
-    for (Iterator each = entries.iterator(); each.hasNext();) {
-      Entry entry = (Entry)each.next();
+    Collection<Entry> entries = entriesHandler.getEntries().getEntries();
+    for (Entry entry : entries) {
       if (!entry.isDirectory()) return false;
     }
     return true;
   }
 
-  private boolean containsEntriesFile(File directory) {
+  private static boolean containsEntriesFile(File directory) {
     return new File(new File(directory, CVS_ADMIN_DIR), CvsUtil.ENTRIES).isFile();
   }
 
@@ -97,14 +94,13 @@ public class DeletedCVSDirectoryStorage {
 
   public void purgeDirsWithNoEntries() throws IOException {
     purgeDirsWithoutFileEntries(myRoot);
-
   }
 
-  private boolean purgeDirsWithoutFileEntries(File root) throws IOException {
+  private static boolean purgeDirsWithoutFileEntries(File root) throws IOException {
     File[] subdirectories = root.listFiles(DirectoryFilter.getInstance());
+    if (subdirectories == null) return false;
     boolean canPurgeChildren = true;
-    for (int i = 0; i < subdirectories.length; i++) {
-      File subdirectory = subdirectories[i];
+    for (File subdirectory : subdirectories) {
       if (isAdminDir(subdirectory)) continue;
       boolean canPurgeChild = purgeDirsWithoutFileEntries(subdirectory);
       if (canPurgeChild) FileUtil.delete(subdirectory);
@@ -143,11 +139,10 @@ public class DeletedCVSDirectoryStorage {
   }
 
 
-  private boolean canDeleteSavedCopy(File original, File copy) {
+  private static boolean canDeleteSavedCopy(File original, File copy) {
     File[] savedFiles = copy.listFiles();
     if (savedFiles == null) savedFiles = new File[0];
-    for (int i = 0; i < savedFiles.length; i++) {
-      File savedFile = savedFiles[i];
+    for (File savedFile : savedFiles) {
       if (!new File(original, savedFile.getName()).exists()) return false;
     }
     return true;
@@ -159,8 +154,8 @@ public class DeletedCVSDirectoryStorage {
     }
     else if (file.isDirectory()) {
       VirtualFile[] children = file.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        deleteIfAdminDirCreated(children[i]);
+      for (VirtualFile child : children) {
+        deleteIfAdminDirCreated(child);
       }
     }
   }
@@ -195,16 +190,15 @@ public class DeletedCVSDirectoryStorage {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
-              for (Iterator each = myFilesToDelete.iterator(); each.hasNext();) {
-                VirtualFile file = (VirtualFile)each.next();
+              for (VirtualFile file : myFilesToDelete) {
                 file.delete(DeletedCVSDirectoryStorage.this);
               }
             }
             catch (final IOException e) {
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  Messages.showErrorDialog(com.intellij.CvsBundle.message("message.error.cannot.delete.cvs.admin.directory"),
-                                           com.intellij.CvsBundle.message("message.error.cannot.delete.cvs.admin.directory.title"));
+                  Messages.showErrorDialog(CvsBundle.message("message.error.cannot.delete.cvs.admin.directory"),
+                                           CvsBundle.message("message.error.cannot.delete.cvs.admin.directory.title"));
                 }
               });
 
