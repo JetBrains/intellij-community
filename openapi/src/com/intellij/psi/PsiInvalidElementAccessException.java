@@ -26,6 +26,7 @@ public class PsiInvalidElementAccessException extends RuntimeException {
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, exceptions are stored in IdeaLogger
 
   public PsiInvalidElementAccessException(PsiElement element) {
+    super("Element: " + element.getClass());
     myElementReference = new SoftReference<PsiElement>(element);
   }
 
@@ -34,13 +35,13 @@ public class PsiInvalidElementAccessException extends RuntimeException {
     myElementReference = new SoftReference<PsiElement>(element);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, String message, Throwable cause) {
-    super(message, cause);
+  public PsiInvalidElementAccessException(PsiElement element, Throwable cause) {
+    super(cause);
     myElementReference = new SoftReference<PsiElement>(element);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, Throwable cause) {
-    super(cause);
+  public PsiInvalidElementAccessException(PsiElement element, String message, Throwable cause) {
+    super(message, cause);
     myElementReference = new SoftReference<PsiElement>(element);
   }
 }
