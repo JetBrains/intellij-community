@@ -70,7 +70,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
   /**
    * Get all necessary data from event's DataContext to be used in <code>performUpdate()</code>, which is called asynchronously.
    * @param e action event original update() method have been called with.
-   * @return prepared data for {@link #performUpdate(Presentation, T)} method.
+   * @return prepared data for {@link #performUpdate} method.
    */
   protected abstract T prepareDataFromContext(final AnActionEvent e);
 

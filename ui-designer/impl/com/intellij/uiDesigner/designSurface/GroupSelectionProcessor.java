@@ -22,7 +22,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
   private final MyRectanglePainter myRectangePainter;
 
   /**
-   * @param container group where drag is started. This group should not be selected
+   * @param component group where drag is started. This group should not be selected
    * after drag is complete.
    */
   public GroupSelectionProcessor(final GuiEditor editor, final RadComponent component) {

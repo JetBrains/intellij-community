@@ -106,7 +106,7 @@ public abstract class AbstractVcsHelper {
   public abstract void showChangesBrowser(VersionsProvider versionsProvider);
 
   /**
-   * @deprecated Use {@link #showChangesBrowser(java.util.List<com.intellij.openapi.vcs.versionBrowser.CommittedChangeList>, String title )} instead.
+   * @deprecated Use {@link #showChangesBrowser(java.util.List<com.intellij.openapi.vcs.versionBrowser.CommittedChangeList>, String)} instead.
    * @param versionsProvider
    */
   public abstract void showChangesBrowser(VersionsProvider versionsProvider, String browserTitle);
