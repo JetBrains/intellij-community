@@ -44,7 +44,9 @@ import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -102,7 +104,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
     };
 
-    if (!isUnitTestMode) {
+    if (!isUnitTestMode && !isHeadless) {
       Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
       IconLoader.activate();
     }
