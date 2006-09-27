@@ -423,10 +423,14 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       if (schemaChecking) {
         parser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE,JAXPConstants.W3C_XML_SCHEMA);
         parser.getXMLReader().setFeature(SCHEMA_FULL_CHECKING_FEATURE_ID, true);
-        // bug in Xerces 2.6.2 / 2.7.0, http://nagoya.apache.org/bugzilla/show_bug.cgi?id=14217
-        // parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-undeclared-elemdef",Boolean.TRUE);
-        //setupSchemas(parser);
+
+        parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-undeclared-elemdef",Boolean.TRUE);
+        parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-duplicate-attdef",Boolean.TRUE);
       }
+
+      parser.getXMLReader().setFeature("http://apache.org/xml/features/warn-on-duplicate-entitydef",Boolean.TRUE);
+      parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/unparsed-entity-checking",Boolean.FALSE);
+      parser.getXMLReader().setFeature("http://apache.org/xml/features/xinclude",Boolean.TRUE);
 
       return parser;
     }
