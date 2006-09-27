@@ -18,4 +18,9 @@ public interface HelpID {
 
   @NonNls String FIND_IN_PROJECT = "find.findInProject";
   @NonNls String REPLACE_IN_PROJECT = "find.findInProject";
+
+  @NonNls String FIND_OPTIONS = "find.findOptions";
+  @NonNls String REPLACE_OPTIONS = "find.replaceOptions";
+  @NonNls String FIND_IN_PATH = "find.findInPath";
+  @NonNls String REPLACE_IN_PATH = "find.replaceInPath";
 }

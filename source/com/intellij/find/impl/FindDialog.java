@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -96,9 +97,9 @@ final class FindDialog extends DialogWrapper {
   @Override
   protected Action[] createActions() {
     if (!myModel.isMultipleFiles() && !myModel.isReplaceState() && myModel.isFindAllEnabled()) {
-      return new Action[] { getFindAllAction(), getOKAction(), getCancelAction() };      
+      return new Action[] { getFindAllAction(), getOKAction(), getCancelAction(), getHelpAction() };
     }
-    return super.createActions();
+    return new Action[] { getOKAction(), getCancelAction(), getHelpAction() };
   }
 
   private Action getFindAllAction() {
@@ -402,6 +403,24 @@ final class FindDialog extends DialogWrapper {
     }
 
     super.doOKAction();
+  }
+
+  public void doHelpAction() {
+    String id;
+    if (myModel.isReplaceState()) {
+      if (myModel.isMultipleFiles()) {
+        id = HelpID.REPLACE_IN_PATH;
+      } else {
+        id = HelpID.REPLACE_OPTIONS;
+      }
+    } else {
+      if (myModel.isMultipleFiles()) {
+        id = HelpID.FIND_IN_PATH;
+      } else {
+        id = HelpID.FIND_OPTIONS;
+      }
+    }
+    HelpManager.getInstance().invokeHelp(id);
   }
 
   public boolean isSkipResultsWhenOneUsage() {
