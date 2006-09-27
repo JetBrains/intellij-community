@@ -304,7 +304,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      if (myIsDisposed) return;
+      if (myProject.isDisposed()) return;
       LOG.debug("LineStatusTrackerManager: fileStatusesChanged");
       resetTrackersForOpenFiles();
     }
