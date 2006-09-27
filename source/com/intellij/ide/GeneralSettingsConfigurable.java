@@ -15,6 +15,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.util.net.HTTPProxySettingsPanel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -229,10 +230,12 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myDiffOptions = null;
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "preferences.general";
   }
 
+  @NotNull
   public String getComponentName() {
     return "GeneralSettingsConfigurable";
   }
@@ -249,9 +252,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     private JComboBox myCharsetNameCombo;
     private JCheckBox myChkUTFGuessing;
     private JPanel myDiffOptionsPanel;
-    private JRadioButton myRbAskBeforeCheck;
-    private JRadioButton myRbCheckAutomatically;
-    private JRadioButton myRbNeverCheck;
     private JRadioButton myUseSystemDefaultBrowser;
     private JRadioButton myUseUserDefinedBrowser;
     private JCheckBox myUseCyclicBuffer;
@@ -263,18 +263,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
     private final HTTPProxySettingsPanel myHTTPProxySettingsEditor;
     private JCheckBox mySearchInBackground;
-    private JCheckBox myCheckBox1;
 
     public MyComponent() {
-      ButtonGroup buttonGroup = new ButtonGroup();
-      buttonGroup.add(myRbAskBeforeCheck);
-      buttonGroup.add(myRbCheckAutomatically);
-      buttonGroup.add(myRbNeverCheck);
-
-      ButtonGroup browserGroup = new ButtonGroup();
-      browserGroup.add(myUseSystemDefaultBrowser);
-      browserGroup.add(myUseUserDefinedBrowser);
-
       if (BrowserUtil.canStartDefaultBrowser()) {
         ActionListener actionListener = new ActionListener() {
           public void actionPerformed(ActionEvent e) {
