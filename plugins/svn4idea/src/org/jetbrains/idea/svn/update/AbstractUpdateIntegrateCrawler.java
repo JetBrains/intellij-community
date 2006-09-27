@@ -97,8 +97,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
           if (status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL ||
               status.getContentsStatus() == SVNStatusType.STATUS_IGNORED ||
               status.getContentsStatus() == SVNStatusType.STATUS_MISSING ||
-              status.getContentsStatus() == SVNStatusType.STATUS_INCOMPLETE ||
-              status.getContentsStatus() == SVNStatusType.STATUS_MISSING) {
+              status.getContentsStatus() == SVNStatusType.STATUS_INCOMPLETE) {
             // not interesting in post-update.
           }
           else if (status.getContentsStatus() != SVNStatusType.STATUS_NONE || status.getPropertiesStatus() == SVNStatusType.STATUS_NONE) {
