@@ -23,6 +23,7 @@ public class GroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   public static void groupButtons(final GuiEditor editor, final List<RadComponent> selectedComponents) {
+    if (!editor.ensureEditable()) return;
     String groupName = Messages.showInputDialog(editor.getProject(),
                                                 UIDesignerBundle.message("group.buttons.name.prompt"),
                                                 UIDesignerBundle.message("group.buttons.title"),
