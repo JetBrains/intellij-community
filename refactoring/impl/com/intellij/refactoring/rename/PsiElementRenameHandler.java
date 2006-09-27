@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
@@ -101,7 +102,9 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (element instanceof XmlTag && !(((XmlTag)element).getMetaData() instanceof PsiWritableMetaData) ||
         !(element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
+      }
       return false;
     }
 
