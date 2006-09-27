@@ -34,6 +34,9 @@ public class DateFormatUtil {
 
   public static final long[] DELIMS = new long[] {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
 
+  private DateFormatUtil() {
+  }
+
   enum Period {
     YEAR, MONTH, WEEK, DAY, HOUR, MINUTE
   }
@@ -71,8 +74,6 @@ public class DateFormatUtil {
     long delta = Math.abs(d1 - d2);
     if (delta == 0) return CommonBundle.message("date.format.right.now");
 
-    StringBuffer buf = new StringBuffer();
-
     int n = -1;
     int i;
     for (i = 0; i < DELIMS.length; i++) {
@@ -83,7 +84,6 @@ public class DateFormatUtil {
       }
     }
 
-    String result = buf.toString();
     if (d2 > d1) {
       if (n <= 0) {
         return CommonBundle.message("date.format.a.few.moments.ago");
@@ -100,7 +100,7 @@ public class DateFormatUtil {
 
     }
 
-    return result;
+    return "";
   }
 
   private static String composeInSomeTimeMessage(final Period period, final int n) {
