@@ -945,14 +945,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         if (currentProjectViewPane == null) {
           return null;
         }
-        final List<PsiElement> elements = new ArrayList<PsiElement>(Arrays.asList(currentProjectViewPane.getSelectedPSIElements()));
-        for (Iterator<PsiElement> it = elements.iterator(); it.hasNext();) {
-          PsiElement psiElement = it.next();
-          if (!psiElement.isValid()) {
-            it.remove();
-          }
-        }
-        return elements.isEmpty() ? null : elements.toArray(new PsiElement[elements.size()]);
+        PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
+        return elements.length == 0 ? null : elements;
       }
       if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
         return null;

@@ -253,15 +253,19 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     return elements.length == 1 ? elements[0] : null;
   }
 
+  @NotNull
   public final PsiElement[] getSelectedPSIElements() {
     List<PsiElement> psiElements = new ArrayList<PsiElement>();
     for (Object element : getSelectedElements()) {
       if (element instanceof PsiElement) {
-        psiElements.add((PsiElement)element);
+        PsiElement psiElement = (PsiElement)element;
+        if (psiElement.isValid()) {
+          psiElements.add(psiElement);
+        }
       }
       else if (element instanceof PackageElement) {
         PsiPackage aPackage = ((PackageElement)element).getPackage();
-        if (aPackage != null) {
+        if (aPackage != null && aPackage.isValid()) {
           psiElements.add(aPackage);
         }
       }
