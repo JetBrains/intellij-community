@@ -83,14 +83,15 @@ public class ClsUtil {
   }
 
   public static long readU8(BytePointer ptr) throws ClsFormatException {
-    int b1 = readU1(ptr);
-    int b2 = readU1(ptr);
-    int b3 = readU1(ptr);
-    int b4 = readU1(ptr);
-    int b5 = readU1(ptr);
-    int b6 = readU1(ptr);
-    int b7 = readU1(ptr);
-    int b8 = readU1(ptr);
+    long b1 = readU1(ptr);
+    long b2 = readU1(ptr);
+    long b3 = readU1(ptr);
+    long b4 = readU1(ptr);
+    long b5 = readU1(ptr);
+    long b6 = readU1(ptr);
+    long b7 = readU1(ptr);
+    long b8 = readU1(ptr);
+
     return (b1 << 56) + (b2 << 48) + (b3 << 40) + (b4 << 32) + (b5 << 24) + (b6 << 16) + (b7 << 8) + b8;
   }
 
