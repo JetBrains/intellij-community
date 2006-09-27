@@ -7,9 +7,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.shared.XYLayoutManager;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -17,10 +15,13 @@ import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
+import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.shared.XYLayoutManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -151,7 +152,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
       }, null, null);
   }
 
-  protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
+  protected void update(@NotNull final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     FormEditingUtil.remapToActionTargets(selection);
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     e.getPresentation().setEnabled(selectionParent != null &&
@@ -171,7 +172,9 @@ public class SurroundAction extends AbstractGuiEditorAction {
 
   private static boolean isSelectionContiguous(RadContainer selectionParent,
                                                ArrayList<RadComponent> selection) {
-    assert selectionParent.getLayoutManager().isGrid();
+    if (!selectionParent.getLayoutManager().isGrid()) {
+      return false;
+    }
     Rectangle rc = FormEditingUtil.getSelectionBounds(selection);
     for(RadComponent c: selectionParent.getComponents()) {
       if (!selection.contains(c) &&
