@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
@@ -24,8 +25,10 @@ public abstract class ProjectJdkTable {
     return ApplicationManager.getApplication().getComponent(ProjectJdkTable.class);
   }
 
+  @Nullable
   public abstract ProjectJdk findJdk(String name);
 
+  @Nullable
   public abstract ProjectJdk findJdk(String name, String type);
 
   public abstract ProjectJdk getInternalJdk();
