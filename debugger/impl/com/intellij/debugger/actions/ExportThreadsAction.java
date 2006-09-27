@@ -47,9 +47,13 @@ public class ExportThreadsAction extends AnAction {
         try {
           File file = new File(dialog.getFilePath());
           BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-          String text = StringUtil.convertLineSeparators(dialog.getTextToSave(), SystemProperties.getLineSeparator());
-          writer.write(text);
-          writer.close();
+          try {
+            String text = StringUtil.convertLineSeparators(dialog.getTextToSave(), SystemProperties.getLineSeparator());
+            writer.write(text);
+          }
+          finally {
+            writer.close();
+          }
         }
         catch (IOException ex) {
           Messages.showMessageDialog(project, ex.getMessage(), ActionsBundle.actionText(DebuggerActions.EXPORT_THREADS), Messages.getErrorIcon());

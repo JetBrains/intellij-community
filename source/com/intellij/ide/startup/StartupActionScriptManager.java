@@ -22,8 +22,7 @@ public class StartupActionScriptManager {
   public static synchronized void executeActionScript() throws IOException {
     List<ActionCommand> commands = loadActionScript();
 
-    for (int i = 0; i < commands.size(); i++) {
-      ActionCommand actionCommand = commands.get(i);
+    for (ActionCommand actionCommand : commands) {
       //noinspection HardCodedStringLiteral
       System.out.println("Execute " + actionCommand);
       actionCommand.execute();
@@ -41,8 +40,7 @@ public class StartupActionScriptManager {
 
   private static String getActionScriptPath() {
     String systemPath = PathManagerEx.getPluginTempPath();
-    String filePath = systemPath + File.separator + ACTION_SCRIPT_FILE;
-    return filePath;
+    return systemPath + File.separator + ACTION_SCRIPT_FILE;
   }
 
   private static List<ActionCommand> loadActionScript() throws IOException {
@@ -50,10 +48,8 @@ public class StartupActionScriptManager {
     if (file.exists()) {
       ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
       try {
-        List<ActionCommand> commands = (List<ActionCommand>)ois.readObject();
-        ois.close();
-
-        return commands;
+        //noinspection unchecked
+        return (List<ActionCommand>)ois.readObject();
       }
       catch (ClassNotFoundException e) {
         // problem with scrambled code
@@ -63,6 +59,9 @@ public class StartupActionScriptManager {
           "Internal {0} file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.",
           ApplicationNamesInfo.getInstance().getProductName()));
         return new ArrayList<ActionCommand>();
+      }
+      finally {
+        ois.close();
       }
     }
     else {
@@ -78,8 +77,12 @@ public class StartupActionScriptManager {
 
     File file = new File(getActionScriptPath());
     ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file, false));
-    oos.writeObject(commands);
-    oos.close();
+    try {
+      oos.writeObject(commands);
+    }
+    finally {
+      oos.close();
+    }
   }
 
   private static boolean canCreateFile(File file) {

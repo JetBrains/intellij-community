@@ -79,8 +79,12 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     catch(FileNotFoundException e){
       String fullName = myFullDataPath + File.separatorChar + targetDataName;
       FileWriter writer = new FileWriter(fullName);
-      writer.write(text);
-      writer.close();
+      try {
+        writer.write(text);
+      }
+      finally {
+        writer.close();
+      }
       fail("No output text found. File " + fullName + " created.");
     }
   }

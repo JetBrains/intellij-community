@@ -2,7 +2,7 @@ package com.intellij.execution.applet;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -106,7 +106,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
         return handler;
       }
     };
-    state.setConsoleBuilder(TextConsoleBuidlerFactory.getInstance().createBuilder(getProject()));
+    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     state.setModulesToCompile(getModules());
     return state;
   }
@@ -290,25 +290,28 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
     //noinspection HardCodedStringLiteral
     final File tempFile = File.createTempFile("AppletPage", ".html");
     @NonNls final FileWriter writer = new FileWriter(tempFile);
-    writer.write("<html>\n" +
-                 "<head>\n" +
-                 "<title>" + MAIN_CLASS_NAME + "</title>\n" +
-                 "</head>\n" +
-                 "<applet codebase=\".\"\n" +
-                 "code=\"" + MAIN_CLASS_NAME + "\"\n" +
-                 "name=\"" + MAIN_CLASS_NAME + "\"\n" +
-                 "width=" + WIDTH + "\n" +
-                 "height=" + HEIGHT + "\n" +
-                 "align=top>\n");
-    final AppletParameter[] appletParameters = getAppletParameters();
-    if (appletParameters != null) {
-      for (int i = 0; i < appletParameters.length; i++) {
-        final AppletParameter parameter = appletParameters[i];
-        writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
+    try {
+      writer.write("<html>\n" +
+                   "<head>\n" +
+                   "<title>" + MAIN_CLASS_NAME + "</title>\n" +
+                   "</head>\n" +
+                   "<applet codebase=\".\"\n" +
+                   "code=\"" + MAIN_CLASS_NAME + "\"\n" +
+                   "name=\"" + MAIN_CLASS_NAME + "\"\n" +
+                   "width=" + WIDTH + "\n" +
+                   "height=" + HEIGHT + "\n" +
+                   "align=top>\n");
+      final AppletParameter[] appletParameters = getAppletParameters();
+      if (appletParameters != null) {
+        for (final AppletParameter parameter : appletParameters) {
+          writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
+        }
       }
+      writer.write("</applet>\n</body>\n</html>\n");
     }
-    writer.write("</applet>\n</body>\n</html>\n");
-    writer.close();
+    finally {
+      writer.close();
+    }
     final String htmlFile = tempFile.getAbsolutePath();
     return new AppletHtmlFile(htmlFile, tempFile);
   }

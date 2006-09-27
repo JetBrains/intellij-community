@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.containers.HashMap;
 
 import java.io.*;
 
@@ -23,6 +24,9 @@ import java.util.TreeMap;
 class ExportToHTMLManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.ExportToHTMLManager");
   private static FileNotFoundException myLastException;
+
+  private ExportToHTMLManager() {
+  }
 
   /**
    * Should be invoked in event dispatch thread
@@ -99,7 +103,7 @@ class ExportToHTMLManager {
     }
   }
 
-  private static void findClassReferences(PsiElement psiElement, TreeMap refMap, com.intellij.util.containers.HashMap filesMap, PsiFile psiFile) {
+  private static void findClassReferences(PsiElement psiElement, TreeMap refMap, HashMap filesMap, PsiFile psiFile) {
     PsiReference ref = psiElement.getReference();
     if(ref instanceof PsiJavaCodeReferenceElement) {
       PsiElement refElement = ref.resolve();
@@ -119,7 +123,7 @@ class ExportToHTMLManager {
     }
   }
 
-  private static boolean exportPsiFile(final PsiFile psiFile, String outputDirectoryName, Project project, com.intellij.util.containers.HashMap filesMap) {
+  private static boolean exportPsiFile(final PsiFile psiFile, String outputDirectoryName, Project project, HashMap filesMap) {
     ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(project);
 
     if (psiFile instanceof PsiBinaryFile) {
@@ -175,19 +179,18 @@ class ExportToHTMLManager {
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory,
-                                       ArrayList filesList,
+                                       ArrayList<PsiFile> filesList,
                                        boolean isRecursive,
                                        final String outputDirectoryName) throws FileNotFoundException {
     PsiFile[] files = psiDirectory.getFiles();
-    for(int i = 0; i < files.length; i++) {
-      Object obj = files[i];
-      filesList.add(obj);
+    for (PsiFile file : files) {
+      filesList.add(file);
     }
     generateIndexHtml(psiDirectory, isRecursive, outputDirectoryName);
     if(isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
-      for(int i = 0; i < directories.length; i++) {
-        addToPsiFileList(directories[i], filesList, isRecursive, outputDirectoryName);
+      for (PsiDirectory directory : directories) {
+        addToPsiFileList(directory, filesList, isRecursive, outputDirectoryName);
       }
     }
   }
@@ -246,7 +249,7 @@ class ExportToHTMLManager {
     public void run() {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-      final ArrayList filesList = new ArrayList();
+      final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
       final boolean isRecursive = myExportToHTMLSettings.isIncludeSubdirectories();
 
       try {
@@ -256,13 +259,13 @@ class ExportToHTMLManager {
         myLastException = e;
         return;
       }
-      com.intellij.util.containers.HashMap filesMap = new com.intellij.util.containers.HashMap();
+      HashMap filesMap = new HashMap();
       for(int i = 0; i < filesList.size(); i++) {
-        PsiFile psiFile = (PsiFile)filesList.get(i);
+        PsiFile psiFile = filesList.get(i);
         filesMap.put(psiFile, psiFile);
       }
       for(int i = 0; i < filesList.size(); i++) {
-        PsiFile psiFile = (PsiFile)filesList.get(i);
+        PsiFile psiFile = filesList.get(i);
         if(progressIndicator.isCanceled()) {
           return;
         }

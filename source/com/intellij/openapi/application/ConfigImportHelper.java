@@ -132,10 +132,15 @@ public class ConfigImportHelper {
   public static String getConfigFromLaxFile(File file) {
       if (file.getName().endsWith(".properties")) {
           try {
-              InputStream fis = new BufferedInputStream(new FileInputStream(file));
-              PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
+            InputStream fis = new BufferedInputStream(new FileInputStream(file));
+            PropertyResourceBundle bundle;
+            try {
+              bundle = new PropertyResourceBundle(fis);
+            }
+            finally {
               fis.close();
-              return bundle.getString("idea.config.path");
+            }
+            return bundle.getString("idea.config.path");
           } catch (IOException e) {
               return null;
           }
@@ -183,15 +188,20 @@ public class ConfigImportHelper {
   @Nullable
   private static String getContent(File file) {
     try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
       StringBuffer content = new StringBuffer();
-      do {
-        String line = reader.readLine();
-        if (line == null) break;
-        content.append(line);
-        content.append('\n');
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+      try {
+        do {
+          String line = reader.readLine();
+          if (line == null) break;
+          content.append(line);
+          content.append('\n');
+        }
+        while (true);
       }
-      while (true);
+      finally {
+        reader.close();
+      }
 
       return content.toString();
     }

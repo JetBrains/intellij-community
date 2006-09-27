@@ -52,19 +52,23 @@ public class ExportSettingsAction extends AnAction {
         if (ret != 0) return;
       }
       final JarOutputStream output = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(saveFile)));
-      final File configPath = new File(PathManager.getConfigPath());
-      final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
-      for (File file : exportFiles) {
-        final String relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(configPath, file));
-        if (file.exists()) {
-          ZipUtil.addFileOrDirRecursively(output, saveFile, file, relativePath, null, writtenItemRelativePaths);
+      try {
+        final File configPath = new File(PathManager.getConfigPath());
+        final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
+        for (File file : exportFiles) {
+          final String relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(configPath, file));
+          if (file.exists()) {
+            ZipUtil.addFileOrDirRecursively(output, saveFile, file, relativePath, null, writtenItemRelativePaths);
+          }
         }
+        final File magicFile = new File(FileUtil.getTempDirectory(), SETTINGS_JAR_MARKER);
+        magicFile.createNewFile();
+        magicFile.deleteOnExit();
+        ZipUtil.addFileToZip(output, magicFile, SETTINGS_JAR_MARKER, writtenItemRelativePaths, null);
       }
-      final File magicFile = new File(FileUtil.getTempDirectory(), SETTINGS_JAR_MARKER);
-      magicFile.createNewFile();
-      magicFile.deleteOnExit();
-      ZipUtil.addFileToZip(output, magicFile, SETTINGS_JAR_MARKER, writtenItemRelativePaths, null);
-      output.close();
+      finally {
+        output.close();
+      }
       Messages.showMessageDialog(IdeBundle.message("message.settings.exported.successfully"),
                                  IdeBundle.message("title.export.successful"), Messages.getInformationIcon());
     }

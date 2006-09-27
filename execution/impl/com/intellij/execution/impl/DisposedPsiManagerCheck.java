@@ -3,11 +3,10 @@ package com.intellij.execution.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
-import org.jetbrains.annotations.NonNls;
 
 public class DisposedPsiManagerCheck {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.DisposedPsiManagerCheck");
@@ -30,8 +29,12 @@ public class DisposedPsiManagerCheck {
   private void log(@NonNls final String message) {
     final StringWriter stringWriter = new StringWriter();
     final PrintWriter writer = new PrintWriter(stringWriter);
-    myAllocationPlace.printStackTrace(writer);
-    LOG.error(message + "\n" + stringWriter.toString());
-    writer.close();
+    try {
+      myAllocationPlace.printStackTrace(writer);
+      LOG.error(message + "\n" + stringWriter.toString());
+    }
+    finally {
+      writer.close();
+    }
   }
 }
