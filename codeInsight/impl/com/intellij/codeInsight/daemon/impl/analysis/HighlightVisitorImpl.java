@@ -154,7 +154,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     for (Pair<PsiElement, TextRange> pair : injected) {
       PsiElement injectedPsi = pair.getFirst();
       final DocumentRange documentRange = (DocumentRange)documentManager.getDocument((PsiFile)injectedPsi);
-      LOG.assertTrue(documentRange.getText().equals(injectedPsi.getText()));
+      assert documentRange != null;
+      assert documentRange.getText().equals(injectedPsi.getText());
 
       Language injectedLanguage = injectedPsi.getLanguage();
       VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
@@ -165,10 +166,13 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
           protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
             TextRange editable = documentRange.intersectWithEditable(range);
-            if (editable==null) return null; //do not highlight generated header/footer
+            boolean shouldHighlight = editable != null;
+            if (editable == null) editable = new TextRange(0,0);
             TextRange patched = new TextRange(documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()));
             Annotation annotation = super.createAnnotation(patched, severity, message);
-            myAnnotationHolder.add(annotation);
+            if (shouldHighlight) { //do not highlight generated header/footer
+              myAnnotationHolder.add(annotation);
+            }
             return annotation;
           }
         };
