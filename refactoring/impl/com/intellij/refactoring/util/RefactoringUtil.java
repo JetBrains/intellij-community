@@ -3,6 +3,7 @@ package com.intellij.refactoring.util;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
@@ -309,37 +310,38 @@ public class RefactoringUtil {
 
   public static void renameNonCodeUsages(final Project project, final NonCodeUsageInfo[] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    HashMap<PsiFile,ArrayList<UsageOffset>> filesToOffsetsMap = new HashMap<PsiFile, ArrayList<UsageOffset>>();
+    HashMap<Document, ArrayList<UsageOffset>> docsToOffsetsMap = new HashMap<Document, ArrayList<UsageOffset>>();
+    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (NonCodeUsageInfo usage : usages) {
-      final PsiElement element = usage.getElement();
+      PsiElement element = usage.getElement();
 
       if (element == null) continue;
+      element = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(element);
+      if (element == null) continue;
       final PsiFile containingFile = element.getContainingFile();
+      final Document document = psiDocumentManager.getDocument(containingFile);
       int fileOffset = element.getTextRange().getStartOffset() + usage.startOffset;
 
-      ArrayList<UsageOffset> list = filesToOffsetsMap.get(containingFile);
+      ArrayList<UsageOffset> list = docsToOffsetsMap.get(document);
       if (list == null) {
         list = new ArrayList<UsageOffset>();
-        filesToOffsetsMap.put(containingFile, list);
+        docsToOffsetsMap.put(document, list);
       }
       list.add(new UsageOffset(fileOffset, fileOffset + usage.endOffset - usage.startOffset,
-                               ((NonCodeUsageInfo)usage).newText));
+                               usage.newText));
     }
 
-    for (PsiFile file : filesToOffsetsMap.keySet()) {
-      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-      final Document editorDocument = psiDocumentManager.getDocument(file);
-      psiDocumentManager.doPostponedOperationsAndUnblockDocument(editorDocument);
+    for (Document document : docsToOffsetsMap.keySet()) {
 
-      ArrayList<UsageOffset> list = filesToOffsetsMap.get(file);
+      ArrayList<UsageOffset> list = docsToOffsetsMap.get(document);
       UsageOffset[] offsets = list.toArray(new UsageOffset[list.size()]);
       Arrays.sort(offsets);
 
       for (int i = offsets.length - 1; i >= 0; i--) {
         UsageOffset usageOffset = offsets[i];
-        editorDocument.replaceString(usageOffset.startOffset, usageOffset.endOffset, usageOffset.newText);
+        document.replaceString(usageOffset.startOffset, usageOffset.endOffset, usageOffset.newText);
       }
-      PsiDocumentManager.getInstance(project).commitDocument(editorDocument);
+      PsiDocumentManager.getInstance(project).commitDocument(document);
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
   }

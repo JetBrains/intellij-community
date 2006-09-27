@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -50,15 +51,23 @@ public class CodeInsightUtil {
   }
 
   public static <T extends PsiElement> T findElementInRange(PsiFile file, int startOffset, int endOffset, Class<T> klass) {
-    PsiElement element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
-    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
+    return findElementInRange(file, startOffset, endOffset, klass, StdLanguages.JAVA);
+  }
+
+  private static <T extends PsiElement> T findElementInRange(final PsiFile file,
+                                                             int startOffset,
+                                                             int endOffset,
+                                                             final Class<T> klass,
+                                                             final Language language) {
+    PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
+    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
     if (element1 instanceof PsiWhiteSpace) {
       startOffset = element1.getTextRange().getEndOffset();
-      element1 = file.getViewProvider().findElementAt(startOffset, StdLanguages.JAVA);
+      element1 = file.getViewProvider().findElementAt(startOffset, language);
     }
     if (element2 instanceof PsiWhiteSpace) {
       endOffset = element2.getTextRange().getStartOffset();
-      element2 = file.getViewProvider().findElementAt(endOffset - 1, StdLanguages.JAVA);
+      element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
     }
     if (element2 == null || element1 == null) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
@@ -393,7 +402,7 @@ public class CodeInsightUtil {
     documentManager.doPostponedOperationsAndUnblockDocument(document);
     documentManager.commitDocument(document);
 
-    return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), (Class<? extends T>)element.getClass());
+    return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), (Class<? extends T>)element.getClass(), element.getLanguage());
   }
 
   private static Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
