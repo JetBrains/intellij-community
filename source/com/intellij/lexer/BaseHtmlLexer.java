@@ -237,7 +237,8 @@ abstract class BaseHtmlLexer extends LexerBase {
   }
 
   protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
-    return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
+    return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+      tokenType == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
   public void advance() {
