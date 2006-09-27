@@ -178,12 +178,13 @@ public class SvnChangeProvider implements ChangeProvider {
       }
     } catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-        builder.processUnversionedFile(path.getVirtualFile());
+        final VirtualFile virtualFile = path.getVirtualFile();
+        builder.processUnversionedFile(virtualFile);
         // process children recursively!
-        if (recursively && path.isDirectory()) {
-          VirtualFile[] children = path.getVirtualFile().getChildren();
-          for (VirtualFile aChildren : children) {
-            FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
+        if (recursively && path.isDirectory() && virtualFile != null) {
+          VirtualFile[] children = virtualFile.getChildren();
+          for (VirtualFile child : children) {
+            FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
             processFile(filePath, stClient, builder, recursively);
           }
         }
