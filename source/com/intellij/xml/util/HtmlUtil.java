@@ -207,6 +207,10 @@ public class HtmlUtil {
         public String getName(PsiElement context) {
           return tagName;
         }
+
+        public String getDefaultName() {
+          return tagName;
+        }
       };
     }
 
