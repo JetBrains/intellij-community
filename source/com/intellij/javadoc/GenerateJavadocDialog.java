@@ -3,6 +3,7 @@ package com.intellij.javadoc;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.CommonBundle;
 
@@ -105,11 +106,19 @@ final class GenerateJavadocDialog extends DialogWrapper {
     return isGenerationForPackage() && myIncludeSubpackagesCheckBox.isSelected();
   }
 
+  protected Action[] createActions(){
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction() };
+  }
+
   protected void doOKAction() {
     if (checkOutputDirectory(myConfigurable.getOutputDir())) {
       myConfigurable.apply();
       close(OK_EXIT_CODE);
     }
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("editing.javadocGeneration");
   }
 
   private boolean checkOutputDirectory(String outputDirectory) {
