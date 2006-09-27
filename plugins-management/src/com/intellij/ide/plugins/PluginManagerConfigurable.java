@@ -103,10 +103,12 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   }
 
   public void disposeUIResources() {
-    mySplitterProportionsData.saveSplitterProportions(myPluginManagerMain.getMainPanel());
-    myAvailableTableProportions.saveProportion(myPluginManagerMain.getAvailablePluginsTable());
-    myInstalledTableProportions.saveProportion(myPluginManagerMain.getInstalledPluginTable());
-    myPluginManagerMain = null;
+    if (myPluginManagerMain != null) {
+      mySplitterProportionsData.saveSplitterProportions(myPluginManagerMain.getMainPanel());
+      myAvailableTableProportions.saveProportion(myPluginManagerMain.getAvailablePluginsTable());
+      myInstalledTableProportions.saveProportion(myPluginManagerMain.getInstalledPluginTable());
+      myPluginManagerMain = null;
+    }
   }
 
   public JComponent createComponent() {
