@@ -14,6 +14,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -266,7 +267,13 @@ public class CvsChangeProvider implements ChangeProvider {
             myContent = myVcs.getUpToDateRevisionProvider().getLastUpToDateContentFor(virtualFile, true);
           }
           if (myContent == null) {
-            final GetFileContentOperation operation = GetFileContentOperation.createForFile(myPath);
+            final GetFileContentOperation operation;
+            if (virtualFile != null) {
+              operation = GetFileContentOperation.createForFile(virtualFile, SimpleRevision.createForTheSameVersionOf(virtualFile));
+            }
+            else {
+              operation = GetFileContentOperation.createForFile(myPath);
+            }
             if (operation.getRoot().isOffline()) return null;
             CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
             final byte[] fileBytes = operation.tryGetFileBytes();
