@@ -191,7 +191,7 @@ public class AntUIUtil {
       String name = target.getName();
       CompositeAppearance appearance = name != null
                    ? CompositeAppearance.single(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-                   : CompositeAppearance.single(AntBundle.message("unnamed.dom.target.string.presentation"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+                   : CompositeAppearance.single(AntBundle.message("unnamed.string.presentation"), SimpleTextAttributes.ERROR_ATTRIBUTES);
 
       AntProject project = target.getAntProject();
       if (project != myDomProject) {
