@@ -131,4 +131,8 @@ public class ExtractIncludeDialog extends DialogWrapper {
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_INCLUDE);
   }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
 }
