@@ -1260,7 +1260,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         Collection<ThreadReferenceProxyImpl> allThreads = getVirtualMachineProxy().allThreads();
         for (Iterator<ThreadReferenceProxyImpl> iterator = allThreads.iterator(); iterator.hasNext();) {
           ThreadReferenceProxyImpl threadReferenceProxy = iterator.next();
-          LOG.debug("Thread name=" + threadReferenceProxy.name() + " suspendCount()=" + threadReferenceProxy.suspendCount());
+          LOG.debug("Thread name=" + threadReferenceProxy.name() + " suspendCount()=" + threadReferenceProxy.getSuspendCount());
         }
       }
       catch (Exception e) {

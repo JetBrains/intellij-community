@@ -3,6 +3,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -78,7 +79,11 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 
     if(myStackFrame == null) {
       try {
-        myStackFrame = myThreadProxy.getThreadReference().frame(getFrameIndex());
+        final ThreadReference threadRef = myThreadProxy.getThreadReference();
+        if (threadRef == null) {
+          throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.collected"));
+        }
+        myStackFrame = threadRef.frame(getFrameIndex());
       }
       catch (IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
