@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
+import com.siyeh.InspectionGadgetsBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +56,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
         for (RefMethod siblingMethod : siblingMethods) {
             if (!globalContext.isSuppressed(siblingMethod, getShortName())) {
                 final PsiMethod siblingPsiMethod = (PsiMethod) siblingMethod.getElement();
-                out.add(manager.createProblemDescriptor(siblingPsiMethod, InspectionsBundle.message(
+                out.add(manager.createProblemDescriptor(siblingPsiMethod, InspectionGadgetsBundle.message(
                         "method.return.always.constant.problem.descriptor"), (LocalQuickFix[]) null,
                                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }

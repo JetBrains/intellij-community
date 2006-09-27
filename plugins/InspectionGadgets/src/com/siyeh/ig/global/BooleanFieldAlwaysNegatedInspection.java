@@ -9,13 +9,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nullable;
 
 public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
     private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_FIELD");
 
     public String getDisplayName() {
-        return InspectionsBundle.message("boolean.field.always.negated.display.name");
+        return InspectionGadgetsBundle.message("boolean.field.always.negated.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -46,8 +47,8 @@ public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
         if (alwaysInverted == null || !alwaysInverted) {
             return null;
         }
-        return new ProblemDescriptor[]{manager.createProblemDescriptor(refField.getElement(), InspectionsBundle.message(
-                "boolean.field.is.always.inverted.problem.descriptor"), (LocalQuickFix []) null,
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(refField.getElement(), InspectionGadgetsBundle.message(
+                "boolean.field.always.negated.problem.descriptor"), (LocalQuickFix []) null,
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 

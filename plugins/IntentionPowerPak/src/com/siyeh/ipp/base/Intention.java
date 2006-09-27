@@ -214,11 +214,13 @@ public abstract class Intention implements IntentionAction{
 
     @NotNull
     public String getText() {
+        //noinspection UnresolvedPropertyKey
         return IntentionPowerPackBundle.message(getPrefix() + ".name");
     }
 
     @NotNull
     public String getFamilyName() {
+        //noinspection UnresolvedPropertyKey
         return IntentionPowerPackBundle.message(getPrefix() + ".family.name");
     }
 }

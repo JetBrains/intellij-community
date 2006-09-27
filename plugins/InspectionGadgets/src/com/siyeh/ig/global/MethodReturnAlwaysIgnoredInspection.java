@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -56,7 +57,7 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
         }
 
         final ProblemDescriptor descriptor = manager.createProblemDescriptor(method,
-                InspectionsBundle.message("method.return.always.ignored.problem.descriptor"),
+                InspectionGadgetsBundle.message("method.return.always.ignored.problem.descriptor"),
                 (LocalQuickFix []) null,
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         if (originalProblemDescriptors == null) {
