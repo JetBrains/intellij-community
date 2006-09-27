@@ -12,4 +12,5 @@ public interface HelpID {
   @NonNls String METHOD_BREAKPOINTS = "debugging.methodBreakpoint";
   @NonNls String EXCEPTION_BREAKPOINTS = "debugging.exceptionBreakpoint";
   @NonNls String FIELD_WATCHPOINTS = "debugging.fieldWatchpoint";
+  @NonNls String EVALUATE = "debugging.debugMenu.evaluate";
 }
