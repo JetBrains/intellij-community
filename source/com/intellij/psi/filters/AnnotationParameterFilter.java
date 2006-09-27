@@ -3,11 +3,10 @@
  */
 package com.intellij.psi.filters;
 
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiAnnotationParameterList;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -28,15 +27,16 @@ public class AnnotationParameterFilter implements ElementFilter{
   }
 
   public boolean isAcceptable(Object element, PsiElement context) {
-    final PsiNameValuePair pair = PsiTreeUtil.getParentOfType((PsiElement)element, PsiNameValuePair.class);
-    if (pair != null) {
+    final PsiElement parent = ((PsiElement)element).getParent();
+    if (parent instanceof PsiNameValuePair) {
+      final PsiNameValuePair pair = (PsiNameValuePair)parent;
       final String name = pair.getName();
       if (myParameterName.equals(name) || name == null && "value".equals(myParameterName)) {
         final PsiElement psiElement = pair.getParent();
         if (psiElement instanceof PsiAnnotationParameterList) {
-          final PsiElement parent = psiElement.getParent();
-          if (parent instanceof PsiAnnotation) {
-            if (myAnnotationQualifiedName.equals(((PsiAnnotation)parent).getQualifiedName())) {
+          final PsiElement grandParent = psiElement.getParent();
+          if (grandParent instanceof PsiAnnotation) {
+            if (myAnnotationQualifiedName.equals(((PsiAnnotation)grandParent).getQualifiedName())) {
               return true;
             }
           }
