@@ -57,7 +57,7 @@ public class ModulesConfigurable extends NamedConfigurable<ModuleManager> {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "project.structureModulesPage";
   }
 
   public boolean isModified() {

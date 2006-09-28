@@ -222,7 +222,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   @Nullable
   @NonNls
   public String getHelpTopic() { //todo help id
-    return null;
+    return "project.structure";
   }
 
 

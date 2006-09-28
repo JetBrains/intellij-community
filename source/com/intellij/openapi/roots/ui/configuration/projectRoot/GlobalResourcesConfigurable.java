@@ -51,7 +51,7 @@ public class GlobalResourcesConfigurable extends NamedConfigurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "preferences.jdkGlobalLibs";
   }
 
   public boolean isModified() {

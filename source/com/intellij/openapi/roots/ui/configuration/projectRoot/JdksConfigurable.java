@@ -51,7 +51,7 @@ public class JdksConfigurable extends NamedConfigurable<ProjectJdksModel> {
   @Nullable
   @NonNls
   public String getHelpTopic() {     //todo help
-    return null;
+    return "preferences.jdks";
   }
 
 

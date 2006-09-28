@@ -223,7 +223,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "project.structureModulesPage.outputJavadoc";
   }
 
 
