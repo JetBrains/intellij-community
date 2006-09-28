@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
 
-  protected TreeElement myMirror = null;
+  protected volatile TreeElement myMirror = null;
 
   @NotNull
   public Language getLanguage() {
