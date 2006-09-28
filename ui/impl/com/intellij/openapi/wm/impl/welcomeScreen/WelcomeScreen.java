@@ -99,7 +99,7 @@ public class WelcomeScreen {
   private static final Color MAIN_PANEL_BACKGROUND = new Color(238, 238, 238);
   private static final Color LEARN_MORE_BUTTON_COLOR = new Color(238, 238, 238);
   private static final Color GRAY_BORDER_COLOR = new Color(177, 177, 177);
-  private static Color CAPTION_BACKGROUND = new Color(24, 52, 146);
+  private static Color CAPTION_BACKGROUND = new Color(23, 52, 150);
   private static final Color ACTION_BUTTON_COLOR = new Color(201, 205, 217);
   private static final Color ACTION_BUTTON_BORDER_COLOR = new Color(166, 170, 182);
   private static final Color WHITE_BORDER_COLOR = new Color(255, 255, 255);
