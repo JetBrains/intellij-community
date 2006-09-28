@@ -45,6 +45,11 @@ public abstract class VcsHistorySession {
     return myCachedRevisionNumber;
   }
 
+  public boolean isCurrentRevision(VcsRevisionNumber rev) {
+    VcsRevisionNumber revNumber = getCurrentRevisionNumber();
+    return revNumber != null && revNumber.compareTo(rev) == 0;
+  }
+
   public synchronized boolean refresh() {
     final VcsRevisionNumber oldValue = myCachedRevisionNumber;
     myCachedRevisionNumber = calcCurrentRevisionNumber();

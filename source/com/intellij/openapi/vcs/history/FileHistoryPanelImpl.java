@@ -1076,9 +1076,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                      Object treeNode) {
       VcsFileRevision revision = (VcsFileRevision)treeNode;
       if (revision == null) return;
-      final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
-      if (currentRevisionNumber == null) return;
-      if (revision.getRevisionNumber().compareTo(currentRevisionNumber) == 0) {
+      if (myHistorySession.isCurrentRevision(revision.getRevisionNumber())) {
         makeBold(component);
       }
     }
