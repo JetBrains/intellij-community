@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -16,7 +17,9 @@ import java.util.List;
  */
 public interface DomChildrenDescription extends AnnotatedElement {
   String getXmlElementName();
+  @NotNull
   List<? extends DomElement> getValues(DomElement parent);
+  @NotNull
   List<? extends DomElement> getStableValues(DomElement parent);
   Type getType();
   String getCommonPresentableName(DomNameStrategy strategy);
