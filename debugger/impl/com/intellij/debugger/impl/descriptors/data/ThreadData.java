@@ -1,7 +1,7 @@
 package com.intellij.debugger.impl.descriptors.data;
 
-import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.project.Project;
 
 /*
@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
   private final ThreadReferenceProxyImpl myThread;
   public ThreadData(ThreadReferenceProxyImpl thread) {
-    super(ThreadDescriptorImpl.class);
+    super();
     myThread = thread;
   }
 

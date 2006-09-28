@@ -23,20 +23,17 @@ import java.awt.*;
 
 public class ClassLabelExpressionConfigurable implements UnnamedConfigurable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.configurables.ClassLabelExpressionConfigurable");
-
-  private final Project                      myProject;
   private final LabelRenderer myRenderer;
   private LabeledComponent<CompletionEditor> myCompletionEditor;
   private final JPanel myPanel;
 
   public ClassLabelExpressionConfigurable(Project project, LabelRenderer renderer) {
     LOG.assertTrue(project != null);
-    myProject = project;
     myRenderer = renderer;
 
     myCompletionEditor = new LabeledComponent<CompletionEditor>();
-    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject, GlobalSearchScope.allScope(myProject));
-    myCompletionEditor.setComponent(((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "ClassLabelExpression"));
+    final PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), project, GlobalSearchScope.allScope(project));
+    myCompletionEditor.setComponent(((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassLabelExpression"));
     myCompletionEditor.setText(DebuggerBundle.message("label.class.label.expression.configurable.node.label"));
 
     myPanel = new JPanel(new BorderLayout());

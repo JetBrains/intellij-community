@@ -1,7 +1,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.tree.IElementType;
 import com.sun.jdi.Value;
@@ -21,7 +21,6 @@ public class PostfixOperationEvaluator implements Evaluator{
   private IElementType myOpType;
   private String myExpectedType; // a result of PsiType.getCanonicalText()
 
-  private Object myValue;
   private Modifier myModifier;
 
   public PostfixOperationEvaluator(Evaluator operandEvaluator, IElementType opType, String expectedType) {
@@ -31,13 +30,12 @@ public class PostfixOperationEvaluator implements Evaluator{
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    myValue = (Value)myOperandEvaluator.evaluate(context);
+    final Object value = myOperandEvaluator.evaluate(context);
     myModifier = myOperandEvaluator.getModifier();
-
     IElementType opType = myOpType == TokenTypeEx.PLUSPLUS ? TokenTypeEx.PLUS : TokenTypeEx.MINUS;
-    Object operationResult = BinaryExpressionEvaluator.evaluateOperation((Value)myValue, opType, myRightEvaluator, myExpectedType, context);
+    Object operationResult = BinaryExpressionEvaluator.evaluateOperation((Value)value, opType, myRightEvaluator, myExpectedType, context);
     AssignmentEvaluator.assign(myModifier, operationResult, context);
-    return myValue;
+    return value;
   }
 
   public Modifier getModifier() {

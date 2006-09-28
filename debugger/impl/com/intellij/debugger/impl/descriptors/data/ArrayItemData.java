@@ -17,7 +17,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
   private int myIndex;
 
   public ArrayItemData(ArrayReference arrRef, int idx) {
-    super(ArrayElementDescriptorImpl.class);
+    super();
     LOG.assertTrue(arrRef != null);
     LOG.assertTrue(0 <= idx);
     if(LOG.isDebugEnabled()) {

@@ -47,10 +47,6 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
     }
   };
 
-  public ExpressionChildrenRenderer() {
-    super();
-  }
-
   public String getUniqueId() {
     return UNIQUE_ID;
   }
@@ -125,7 +121,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
   public boolean isExpandable(Value value, final EvaluationContext context, NodeDescriptor parentDescriptor) {
     final EvaluationContext evaluationContext = context.createEvaluationContext(value);
 
-    if(!"".equals(myChildrenExpandable.getReferenceExpression())) {
+    if(!"".equals(myChildrenExpandable.getReferenceExpression().getText())) {
       try {
         Value expanded = myChildrenExpandable.getEvaluator(evaluationContext.getProject()).evaluate(evaluationContext);
         if(expanded instanceof BooleanValue) {
@@ -133,6 +129,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
         }
       }
       catch (EvaluateException e) {
+        // ignored
       }
     }
 

@@ -1,7 +1,7 @@
 package com.intellij.debugger.impl.descriptors.data;
 
-import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
+import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.openapi.project.Project;
 
 /*
@@ -13,7 +13,7 @@ public class LocalData extends DescriptorData<LocalVariableDescriptorImpl>{
   private final LocalVariableProxyImpl myLocalVariable;
 
   public LocalData(LocalVariableProxyImpl localVariable) {
-    super(LocalVariableDescriptorImpl.class);
+    super();
     myLocalVariable = localVariable;
   }
 

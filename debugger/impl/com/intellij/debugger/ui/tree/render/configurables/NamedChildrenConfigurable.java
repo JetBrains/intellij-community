@@ -32,7 +32,6 @@ import java.util.ArrayList;
 
 public class NamedChildrenConfigurable implements UnnamedConfigurable{
   private Table myTable;
-  private final Project myProject;
   private final EnumerationChildrenRenderer myRenderer;
   private JPanel myPanel;
   private JLabel myTableLabel;
@@ -43,7 +42,6 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
   private CompletionEditor myCompletionEditor;
 
   public NamedChildrenConfigurable(Project project, EnumerationChildrenRenderer renderer) {
-    myProject = project;
     myRenderer = renderer;
 
     myTableLabel.setLabelFor(myTable);
@@ -52,8 +50,8 @@ public class NamedChildrenConfigurable implements UnnamedConfigurable{
     final String expressionColumnName = DebuggerBundle.message("label.named.children.configurable.table.header.column.expression");
     getModel().addColumn(expressionColumnName, (Object[])null);
 
-    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject, GlobalSearchScope.allScope(myProject));
-    myCompletionEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(myProject, psiClass, "NamedChildrenConfigurable");
+    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), project, GlobalSearchScope.allScope(project));
+    myCompletionEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "NamedChildrenConfigurable");
 
     myTable.setDragEnabled(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));

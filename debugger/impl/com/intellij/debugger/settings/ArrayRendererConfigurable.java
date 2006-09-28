@@ -1,11 +1,11 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.ui.tree.render.ArrayRenderer;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -24,10 +24,6 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
   private ArrayRenderer myRenderer;
   private JComponent myPanel;
-
-  private JLabel myEntriesLimitLabel;
-  private JLabel myEndIndexLabel;
-  private JLabel myStartIndexLabel;
 
   public ArrayRendererConfigurable(ArrayRenderer renderer) {
     myRenderer = renderer;
@@ -95,21 +91,21 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     myEndIndex.setMinimumSize(minSize);
     myEntriesLimit.setMinimumSize(minSize);
 
-    myStartIndexLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.start.index"));
-    myStartIndexLabel.setLabelFor(myStartIndex);
+    JLabel startIndexLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.start.index"));
+    startIndexLabel.setLabelFor(myStartIndex);
 
-    myEndIndexLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.end.index"));
-    myEndIndexLabel.setLabelFor(myEndIndex);
+    JLabel endIndexLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.end.index"));
+    endIndexLabel.setLabelFor(myEndIndex);
 
-    myEntriesLimitLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count1"));
-    myEntriesLimitLabel.setLabelFor(myEntriesLimit);
+    JLabel entriesLimitLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count1"));
+    entriesLimitLabel.setLabelFor(myEntriesLimit);
 
-    myPanel.add(myStartIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(startIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
     myPanel.add(myStartIndex, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
-    myPanel.add(myEndIndexLabel, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(endIndexLabel, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
     myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
 
-    myPanel.add(myEntriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
+    myPanel.add(entriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
     myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
     myPanel.add(new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 4, 0, 4), 0, 0));
 
@@ -132,12 +128,13 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     return myPanel;
   }
 
-  private int getInt(JTextField textField) {
+  private static int getInt(JTextField textField) {
     int newEndIndex = 0;
     try {
       newEndIndex = Integer.parseInt(textField.getText().trim());
     }
     catch (NumberFormatException exception) {
+      // ignored
     }
     return newEndIndex;
   }

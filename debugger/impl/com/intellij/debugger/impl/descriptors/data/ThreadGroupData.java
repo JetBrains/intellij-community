@@ -1,7 +1,7 @@
 package com.intellij.debugger.impl.descriptors.data;
 
-import com.intellij.debugger.ui.impl.watch.ThreadGroupDescriptorImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
+import com.intellij.debugger.ui.impl.watch.ThreadGroupDescriptorImpl;
 import com.intellij.openapi.project.Project;
 
 /*
@@ -13,7 +13,7 @@ public class ThreadGroupData extends DescriptorData<ThreadGroupDescriptorImpl>{
   private final ThreadGroupReferenceProxyImpl myThreadGroup;
 
   public ThreadGroupData(ThreadGroupReferenceProxyImpl threadGroup) {
-    super(ThreadGroupDescriptorImpl.class);
+    super();
     myThreadGroup = threadGroup;
   }
 

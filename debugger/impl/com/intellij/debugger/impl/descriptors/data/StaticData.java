@@ -1,10 +1,10 @@
 package com.intellij.debugger.impl.descriptors.data;
 
-import com.sun.jdi.ReferenceType;
-import com.intellij.openapi.util.Key;
+import com.intellij.debugger.ui.impl.watch.StaticDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.debugger.ui.impl.watch.StaticDescriptorImpl;
+import com.intellij.openapi.util.Key;
+import com.sun.jdi.ReferenceType;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -19,7 +19,7 @@ public final class StaticData extends DescriptorData<StaticDescriptorImpl>{
   private final ReferenceType myRefType;
 
   public StaticData(ReferenceType refType) {
-    super(StaticDescriptorImpl.class);
+    super();
     LOG.assertTrue(refType != null);
     myRefType = refType;
   }

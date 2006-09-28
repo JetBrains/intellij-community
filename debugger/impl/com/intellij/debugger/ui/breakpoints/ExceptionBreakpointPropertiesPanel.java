@@ -4,15 +4,10 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ide.util.TreeClassChooserDialog;
-import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,12 +17,10 @@ import java.awt.event.ActionListener;
 public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
   private JCheckBox myNotifyCaughtCheckBox;
   private JCheckBox myNotifyUncaughtCheckBox;
-  private Project myProject;
   private ExceptionBreakpoint myExceptionBreakpoint;
 
   public ExceptionBreakpointPropertiesPanel(Project project) {
     super(project);
-    myProject = project;
   }
 
   protected TreeClassChooser.ClassFilter createClassConditionFilter() {
@@ -35,7 +28,8 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
   }
 
   protected JComponent createSpecialBox() {
-    JPanel _panel, _panel0;
+    JPanel _panel;
+    JPanel _panel0;
 
     myNotifyCaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.caught.exception"));
     myNotifyUncaughtCheckBox = new JCheckBox(DebuggerBundle.message("label.exception.breakpoint.properties.panel.uncaught.exception"));

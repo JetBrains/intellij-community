@@ -18,7 +18,7 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptor>
   protected TextWithImports myText;
 
   public UserExpressionData(ValueDescriptorImpl parentDescriptor, String typeName, String name, TextWithImports text) {
-    super(UserExpressionDescriptorImpl.class);
+    super();
     myParentDescriptor = parentDescriptor;
     myTypeName = typeName;
     myName = name;

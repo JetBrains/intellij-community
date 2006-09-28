@@ -15,7 +15,7 @@ public final class StaticFieldData extends DescriptorData<FieldDescriptorImpl>{
   private final Field myField;
 
   public StaticFieldData(Field field) {
-    super(FieldDescriptorImpl.class);
+    super();
     LOG.assertTrue(field != null);
     myField = field;
   }

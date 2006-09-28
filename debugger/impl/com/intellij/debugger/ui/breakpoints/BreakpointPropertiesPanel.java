@@ -4,10 +4,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -15,18 +14,21 @@ import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.impl.UIUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.classFilter.ClassFilter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,7 +38,6 @@ public abstract class BreakpointPropertiesPanel {
   private JPanel myPanel;
   private DebuggerExpressionComboBox myConditionCombo;
   private DebuggerExpressionComboBox myLogExpressionCombo;
-  private JComboBox myBaseBreakpointCombo;
   private JTextField myPassCountField;
   private FieldPanel myInstanceFiltersField;
 
@@ -129,9 +130,9 @@ public abstract class BreakpointPropertiesPanel {
     myConditionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint condition");
     myLogExpressionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint logMessage");
     
-    myBaseBreakpointCombo = new ComboBox();
-    myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, myBaseBreakpointCombo);
-    myBaseBreakpointCombo.setRenderer(new BreakpointComboRenderer());
+    final JComboBox baseBreakpointCombo = new ComboBox();
+    myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, baseBreakpointCombo);
+    baseBreakpointCombo.setRenderer(new BreakpointComboRenderer());
     myInstanceFiltersField = new FieldPanel(new MyTextField(), "", null,
      new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -180,7 +181,7 @@ public abstract class BreakpointPropertiesPanel {
 
     insert(myConditionComboPanel, myConditionCombo);
     insert(myLogExpressionComboPanel, myLogExpressionCombo);
-    insert(myDependentBreakpointComboPanel, myBaseBreakpointCombo);
+    insert(myDependentBreakpointComboPanel, baseBreakpointCombo);
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
     insert(myClassFiltersFieldPanel, myClassFiltersField);
 
@@ -627,10 +628,6 @@ public abstract class BreakpointPropertiesPanel {
       setIcon(icon);
       setDisabledIcon(icon);
       return this;
-    }
-
-    private String truncateText(final String text) {
-      return text;
     }
   }
 }

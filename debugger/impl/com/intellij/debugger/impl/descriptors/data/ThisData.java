@@ -19,7 +19,7 @@ public final class ThisData extends DescriptorData<ThisDescriptorImpl>{
   private final Value myThisValue;
 
   public ThisData(Value thisValue) {
-    super(ThisDescriptorImpl.class);
+    super();
     LOG.assertTrue(thisValue != null);
     myThisValue = thisValue;
   }

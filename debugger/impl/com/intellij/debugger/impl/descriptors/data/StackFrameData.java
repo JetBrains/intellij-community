@@ -15,7 +15,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   private final StackFrameProxyImpl myFrame;
 
   public StackFrameData(StackFrameProxyImpl frame) {
-    super(StackFrameDescriptorImpl.class);
+    super();
     myFrame = frame;
   }
 

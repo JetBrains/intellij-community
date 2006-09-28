@@ -20,7 +20,6 @@ import java.awt.*;
  */
 
 public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
-  private final Project myProject;
   private final ExpressionChildrenRenderer myRenderer;
 
   private JPanel myPanel;
@@ -31,10 +30,9 @@ public class ClassChildrenExpressionConfigurable implements UnnamedConfigurable{
   private final CompletionEditor myExpandableEditor;
 
   public ClassChildrenExpressionConfigurable(Project project, ExpressionChildrenRenderer renderer) {
-    myProject = project;
     myRenderer = renderer;
 
-    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), myProject, GlobalSearchScope.allScope(myProject));
+    PsiClass psiClass = DebuggerUtils.findClass(myRenderer.getClassName(), project, GlobalSearchScope.allScope(project));
     myChildrenEditor   = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassChildrenExpression");
     myExpandableEditor = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).createEditor(project, psiClass, "ClassChildrenExpression");
 

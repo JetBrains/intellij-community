@@ -1,10 +1,10 @@
 package com.intellij.debugger.impl.descriptors.data;
 
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Field;
+import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
+import com.sun.jdi.Field;
+import com.sun.jdi.ObjectReference;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -18,7 +18,7 @@ public final class FieldData extends DescriptorData<FieldDescriptorImpl>{
   private final Field myField;
 
   public FieldData(ObjectReference objRef, Field field) {
-    super(FieldDescriptorImpl.class);
+    super();
     LOG.assertTrue(objRef != null);
     LOG.assertTrue(field != null);
     myObjRef = objRef;
