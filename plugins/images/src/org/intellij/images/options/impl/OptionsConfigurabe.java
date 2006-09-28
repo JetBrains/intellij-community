@@ -53,7 +53,7 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
     }
 
     public String getHelpTopic() {
-        return null;
+        return "preferences.images";
     }
 
     public JComponent createComponent() {
