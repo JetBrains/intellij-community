@@ -988,6 +988,7 @@ public final class PsiUtil {
     return psiFile instanceof JspFile ? (JspFile)psiFile : null;
   }
 
+  @Nullable
   public static VirtualFile getVirtualFile(PsiElement element) {
     if (element == null) {
       return null;
