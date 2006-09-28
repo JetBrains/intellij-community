@@ -80,6 +80,9 @@ class LineMover extends Mover {
       element2 = element2.getParent();
     }
     if (element1 == null || element2 == null) return null;
+    if (element1 != element2) {
+      assert element1.getTextRange().getEndOffset() <= element2.getTextRange().getStartOffset() : element1.getTextRange() + "-"+element2.getTextRange()+element1+element2;
+    }
     return Pair.create(element1, element2);
   }
 }

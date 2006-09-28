@@ -117,7 +117,6 @@ class DeclarationMover extends LineMover {
       if (lineRange1 == null) return false;
       final LineRange lineRange2 = memberRange(combinedRange.getSecond(), editor, oldRange);
       if (lineRange2 == null) return false;
-
       range = new LineRange(lineRange1.startLine, lineRange2.endLine);
       range.firstElement = combinedRange.getFirst();
       range.lastElement = combinedRange.getSecond();
