@@ -12,6 +12,7 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,28 +37,29 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       final RefModule refModule = (RefModule)refEntity;
       final Module module = refModule.getModule();
       final Module[] declaredDependencies = ModuleRootManager.getInstance(module).getDependencies();
-      if (declaredDependencies != null){
-        List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
-        final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
-        for (Module dependency : declaredDependencies) {
-          if (modules == null || !modules.contains(dependency)) {
-            descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName()), null));
-          }
+      List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
+      final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
+      for (Module dependency : declaredDependencies) {
+        if (modules == null || !modules.contains(dependency)) {
+          descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName())));
         }
-        return descriptors.isEmpty() ? null : descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
       }
-    }  
+      return descriptors.isEmpty() ? null : descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+    }
     return null;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("unnecessary.module.dependency.display.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "UnnecessaryModuleDependencyInspection";
