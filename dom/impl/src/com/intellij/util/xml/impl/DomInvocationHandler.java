@@ -34,12 +34,12 @@ import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
-import javax.swing.*;
 
 /**
  * @author peter
@@ -47,8 +47,8 @@ import javax.swing.*;
 public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   private static final String ATTRIBUTES = "@";
-  public static Method ACCEPT_METHOD = null;
-  public static Method ACCEPT_CHILDREN_METHOD = null;
+  private static Method ACCEPT_METHOD = null;
+  private static Method ACCEPT_CHILDREN_METHOD = null;
   protected static Method CREATE_STABLE_COPY_METHOD = null;
 
   static {
@@ -242,7 +242,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return createEmptyTag(myTagName);
   }
 
-  protected final XmlTag createEmptyTag(final String tagName) throws IncorrectOperationException {
+  private final XmlTag createEmptyTag(final String tagName) throws IncorrectOperationException {
     return getFile().getManager().getElementFactory().createTagFromText("<" + tagName + "/>");
   }
 
@@ -270,6 +270,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myParent == null || myParent.isValidLight() || invalidate();
   }
 
+  @SuppressWarnings({"SameReturnValue"})
   private boolean invalidate() {
     myInvalidated = true;
     return false;
@@ -320,7 +321,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException;
 
-  protected final void addRequiredChildren() {
+  protected void addRequiredChildren() {
     for (final DomChildrenDescription description : myGenericInfo.getChildrenDescriptions()) {
       if (description instanceof DomAttributeChildDescription) {
         final Required required = description.getAnnotation(Required.class);
@@ -727,7 +728,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return element;
   }
 
-  protected final void createFixedChildrenTags(String tagName, int count) throws IncorrectOperationException {
+  protected final void createFixedChildrenTags(String tagName, int count) {
     checkInitialized(tagName);
     final XmlTag tag = ensureTagExists();
     final XmlTag[] subTags = tag.findSubTags(tagName);
