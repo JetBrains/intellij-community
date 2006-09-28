@@ -15,7 +15,7 @@ import java.util.List;
  * @author yole
  */
 public class UngroupButtonsAction extends AbstractGuiEditorAction {
-  protected UngroupButtonsAction() {
+  public UngroupButtonsAction() {
     super(true);
   }
 
