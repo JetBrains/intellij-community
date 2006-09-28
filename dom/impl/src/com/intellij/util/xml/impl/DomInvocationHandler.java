@@ -242,7 +242,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return createEmptyTag(myTagName);
   }
 
-  private final XmlTag createEmptyTag(final String tagName) throws IncorrectOperationException {
+  private XmlTag createEmptyTag(final String tagName) throws IncorrectOperationException {
     return getFile().getManager().getElementFactory().createTagFromText("<" + tagName + "/>");
   }
 
@@ -490,7 +490,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return _getParentOfType(requiredClass, strict ? getParent() : getProxy());
   }
 
-  protected final Invocation createInvocation(final JavaMethod method) throws IllegalAccessException, InstantiationException {
+  protected final Invocation createInvocation(final JavaMethod method) {
     if (DomImplUtil.isTagValueGetter(method)) {
       return createGetValueInvocation(getScalarConverter(method));
     }
@@ -548,7 +548,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
   }
 
-  public final Object doInvoke(final JavaMethodSignature signature, final Object... args) throws Throwable {
+  private Object doInvoke(final JavaMethodSignature signature, final Object... args) throws Throwable {
     Invocation invocation = myInvocationCache.getInvocation(signature);
     if (invocation == null) {
       invocation = createInvocation(JavaMethod.getMethod(getRawType(), signature));
@@ -620,7 +620,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     myAttributeChildren.put(handler.getXmlElementName(), handler);
   }
 
-  private IndexedElementInvocationHandler getOrCreateIndexedChild(final XmlTag subTag, final Pair<String, Integer> pair) {
+  private void getOrCreateIndexedChild(final XmlTag subTag, final Pair<String, Integer> pair) {
     IndexedElementInvocationHandler handler = myFixedChildren.get(pair);
     if (handler == null) {
       handler = createIndexedChild(subTag, pair);
@@ -629,7 +629,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     else {
       handler.attach(subTag);
     }
-    return handler;
   }
 
   private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag, final Pair<String, Integer> pair) {
@@ -652,7 +651,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return type;
   }
 
-  protected final Class<?> getRawType() {
+  private Class<?> getRawType() {
     return DomReflectionUtil.getRawType(myType);
   }
 
@@ -661,7 +660,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   @Nullable
-  protected static XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
+  private static XmlTag findSubTag(final XmlTag tag, final String qname, final int index) {
     if (tag == null) {
       return null;
     }
@@ -710,6 +709,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     DomManagerImpl.setCachedElement(tag, this);
   }
 
+  @NotNull
   public final DomManagerImpl getManager() {
     return myManager;
   }
