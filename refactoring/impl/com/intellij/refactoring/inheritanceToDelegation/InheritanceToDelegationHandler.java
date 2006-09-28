@@ -20,6 +20,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.util.containers.HashMap;
@@ -77,8 +78,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     }
 
     if (aClass instanceof JspClass) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INHERITANCE_TO_DELEGATION, project);
+      RefactoringMessageUtil.showNotSupportedForJspClassesError(project, REFACTORING_NAME, HelpID.INHERITANCE_TO_DELEGATION);
       return;
     }
 
