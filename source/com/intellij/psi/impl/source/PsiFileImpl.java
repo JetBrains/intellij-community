@@ -140,7 +140,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     FileElement treeElement = (FileElement)_getTreeElement();
     if (treeElement != null) return treeElement;
     if (getViewProvider().isPhysical() && myManager.isAssertOnFileLoading(getViewProvider().getVirtualFile())) {
-      LOG.error("File text loaded " + getViewProvider().getVirtualFile().getPresentableUrl());
+      LOG.error("Access to tree elements not allowed in tests." + getViewProvider().getVirtualFile().getPresentableUrl());
     }
     final FileViewProvider viewProvider = getViewProvider();
     // load document outside lock for better performance
