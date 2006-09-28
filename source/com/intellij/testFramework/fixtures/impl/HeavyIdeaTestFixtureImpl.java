@@ -27,6 +27,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.lang.properties.PropertiesReferenceManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,13 +63,12 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
 
     myProject = projectManager.newProject(projectFile.getPath(), false, false);
 
-    for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
-      moduleFixtureBuilder.getFixture().getModule();
-    }
-
     ((ModuleManagerImpl)ModuleManager.getInstance(myProject)).projectOpened();
 
+    PropertiesReferenceManager.getInstance(myProject).projectOpened();
+
     ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
+    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
   }
 
 
