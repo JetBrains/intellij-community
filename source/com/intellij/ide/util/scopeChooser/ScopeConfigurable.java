@@ -67,7 +67,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "project.scopes";
   }
 
   public JComponent createOptionsPanel() {
