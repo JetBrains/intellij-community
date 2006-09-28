@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nullable;
 
 public interface AntTypeDefinition {
 
+  AntTypeDefinition[] EMPTY_ARRAY = new AntTypeDefinition[0];
+
   AntTypeId getTypeId();
 
   void setTypeId(final AntTypeId id);

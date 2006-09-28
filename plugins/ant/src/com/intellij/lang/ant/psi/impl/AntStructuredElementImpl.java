@@ -7,23 +7,23 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -421,48 +421,9 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
       builder.append(ns.substring(ANTLIB_NS_PREFIX.length()).replace('.', '/'));
       builder.append('/');
       builder.append(ANTLIB_XML);
-      InputStream antlibStream = null;
-      try {
-        try {
-          antlibStream = loader.getResourceAsStream(builder.toString());
-          if (antlibStream != null) {
-            builder.setLength(0);
-            int nextByte;
-            while ((nextByte = antlibStream.read()) >= 0) {
-              builder.append((char)nextByte);
-            }
-          }
-        }
-        finally {
-          if (antlibStream != null) {
-            antlibStream.close();
-          }
-        }
-      }
-      catch (IOException e) {
-        return;
-      }
+      final InputStream antlibStream = loader.getResourceAsStream(builder.toString());
       if (antlibStream != null) {
-        final XmlFile xmlFile = (XmlFile)getManager().getElementFactory()
-          .createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
-        final XmlDocument document = xmlFile.getDocument();
-        if (document == null) return;
-        final XmlTag rootTag = document.getRootTag();
-        if (rootTag == null) return;
-        for (final XmlTag tag : rootTag.getSubTags()) {
-          final AntElement element = AntElementFactory.createAntElement(this, tag);
-          if (element instanceof AntTypeDef) {
-            final AntTypeDefinition def = ((AntTypeDef)element).getDefinition();
-            if (def != null) {
-              if (parent instanceof AntStructuredElementImpl) {
-                ((AntStructuredElementImpl)parent).registerCustomType(def);
-              }
-              else {
-                file.registerCustomType(def);
-              }
-            }
-          }
-        }
+        AntTypeDefImpl.loadAntlibStream(antlibStream, this, ns);
       }
     }
     finally {
