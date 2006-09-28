@@ -25,15 +25,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConfusingOctalEscapeInspection extends ExpressionInspection {
 
+    @NotNull
     public String getID() {
         return "ConfusingOctalEscapeSequence";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "confusing.octal.escape.sequence.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.STYLE_GROUP_NAME;
     }
@@ -69,6 +72,15 @@ public class ConfusingOctalEscapeInspection extends ExpressionInspection {
                 escapeStart = text.indexOf((int) '\\', escapeStart + 1);
                 if (escapeStart < 0) {
                     return false;
+                }
+                if (escapeStart > 0 && text.charAt(escapeStart - 1) == '\\') {
+                    if (escapeStart > 1) {
+                        if (text.charAt(escapeStart - 2) != '\\') {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 int digitPosition = escapeStart + 1;
                 while (digitPosition < text.length() &&
