@@ -44,6 +44,13 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return ResolveUtil.getReferencesFromProviders(this, ourReferenceClass);
   }
 
+  public PsiReference getReference() {
+    final PsiReference[] refs = getReferences();
+    if (refs.length > 0) return refs[0];
+    return null;
+  }
+
+
   public PsiElement replaceRangeInText(final TextRange range, String newSubText)
     throws IncorrectOperationException {
     XmlFile file = (XmlFile) getManager().getElementFactory().createFileFromText("dummy.xml", "<a attr=" + getNewText(range, newSubText) + "/>");
