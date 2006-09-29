@@ -103,12 +103,23 @@ public class PsiSuperMethodImplUtil {
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
-      PsiSubstitutor finalSubstitutor = PsiClassImplUtil.obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor,
+      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), substitutor,
                                                                                 aClass);
       buildMethodHierarchy(superClass, finalSubstitutor, visited, signatures, result);
     }
 
     signatures.putAll(toRestore);
+  }
+
+  private static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass,
+                                               PsiSubstitutor candidateSubstitutor,
+                                               PsiSubstitutor substitutor,
+                                               final PsiElement place) {
+    PsiElementFactory elementFactory = candidateClass.getManager().getElementFactory();
+    final PsiType containingType = elementFactory.createType(candidateClass, candidateSubstitutor, PsiUtil.getLanguageLevel(place));
+    PsiType type = substitutor.substitute(containingType);
+    if (!(type instanceof PsiClassType)) return candidateSubstitutor;
+    return ((PsiClassType)type).resolveGenerics().getSubstitutor();
   }
 
   public static Collection<HierarchicalMethodSignature> getVisibleSignatures(PsiClass aClass) {
