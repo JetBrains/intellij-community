@@ -22,6 +22,9 @@ package com.intellij.openapi.actionSystem;
  * @see DefaultActionGroup
  */
 public class Constraints implements Cloneable {
+
+  public final static Constraints FIRST = new Constraints(Anchor.FIRST, null);
+  public final static Constraints LAST = new Constraints(Anchor.LAST, null);
   /**
    * Anchor.
    */
