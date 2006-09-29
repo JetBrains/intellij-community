@@ -55,11 +55,14 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
     if (psiElement instanceof XmlAttributeValue) {
-      final XmlAttribute parent = (XmlAttribute)psiElement.getParent();
-      final String name = parent.getLocalName();
-      final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(name);
-      if (childDescription != null) {
-        domElement = childDescription.getDomAttributeValue(domElement);
+      final PsiElement parent = psiElement.getParent();
+      if (parent instanceof XmlAttribute) {
+        final XmlAttribute attribute = (XmlAttribute)parent;
+        final String name = attribute.getLocalName();
+        final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(name);
+        if (childDescription != null) {
+          domElement = childDescription.getDomAttributeValue(domElement);
+        }
       }
     }
 
