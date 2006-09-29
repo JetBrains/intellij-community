@@ -142,6 +142,10 @@ public class TextFieldWithHistory extends JPanel {
     getTextEditor().getDocument().addDocumentListener(listener);
   }
 
+  public void removeDocumentListener(DocumentListener listener) {
+    getTextEditor().getDocument().removeDocumentListener(listener);
+  }
+
   public void addKeyboardListener(final KeyListener listener) {
     getTextEditor().addKeyListener(listener);
   }

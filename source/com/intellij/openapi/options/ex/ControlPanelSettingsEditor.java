@@ -6,6 +6,7 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +18,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.DocumentAdapter;
@@ -93,98 +95,14 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
       myPanel.add(createGroupComponent(group, i));
     }
 
-    myPanel.addKeyListener(new KeyAdapter() {
-      public void keyPressed(KeyEvent e) {
-        try {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            myKeypressedConfigurable = getSelectedConfigurable();
-            return;
-          }
-
-          int code = e.getKeyCode();
-          if (code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN || code == KeyEvent.VK_RIGHT ||
-              code == KeyEvent.VK_LEFT) {
-            if (getSelectedConfigurable() == null) {
-              mySelectedColumn = 0;
-              mySelectedRow = 0;
-              mySelectedGroup = 0;
-              return;
-            }
-
-            int xShift = 0;
-            int yShift = 0;
-
-            if (code == KeyEvent.VK_UP) {
-              yShift = -1;
-            }
-            else if (code == KeyEvent.VK_DOWN) {
-              yShift = 1;
-            }
-            else if (code == KeyEvent.VK_LEFT) {
-              xShift = -1;
-            }
-            else /*if (code == KeyEvent.VK_RIGHT)*/ {
-              xShift = 1;
-            }
-
-            int newColumn = mySelectedColumn + xShift;
-            int newRow = mySelectedRow + yShift;
-            int newGroup = mySelectedGroup;
-
-            if (newColumn < 0) newColumn = 0;
-            if (newColumn >= ICONS_PER_ROW) newColumn = ICONS_PER_ROW - 1;
-
-            int idx = newColumn + newRow * ICONS_PER_ROW;
-            if (idx >= myGroups[newGroup].getConfigurables().length) {
-              if (yShift > 0) {
-                newRow = 0;
-                newGroup++;
-                if (newGroup >= myGroups.length) return;
-
-                idx = newColumn + newRow * ICONS_PER_ROW;
-                if (idx >= myGroups[newGroup].getConfigurables().length) return;
-              }
-              else if (xShift > 0) {
-                return;
-              }
-            }
-
-            if (yShift < 0 && idx < 0) {
-              newGroup--;
-              if (newGroup < 0) return;
-              int rowCount = getRowCount(myGroups[newGroup].getConfigurables().length);
-              newRow = rowCount - 1;
-              idx = newColumn + newRow * ICONS_PER_ROW;
-              if (idx >= myGroups[newGroup].getConfigurables().length) {
-                if (newRow <= 0) return;
-                newRow--;
-              }
-            }
-
-            mySelectedColumn = newColumn;
-            mySelectedRow = newRow;
-            mySelectedGroup = newGroup;
-            return;
-          }
-
-          myKeypressedConfigurable = ControlPanelMnemonicsUtil.getConfigurableFromMnemonic(e, myGroups);
-        }
-        finally {
-          myPanel.repaint();
-        }
-      }
-
-      public void keyReleased(KeyEvent e) {
-        if (myKeypressedConfigurable != null) {
-          e.consume();
-          selectConfigurable(myKeypressedConfigurable);
-          editConfigurable(myKeypressedConfigurable);
-          myKeypressedConfigurable = null;
-          myPanel.repaint();
-        }
+    final MyKeyAdapter keyAdapter = new MyKeyAdapter();
+    myPanel.addKeyListener(keyAdapter);
+    Disposer.register(myDisposable, new Disposable() {
+      public void dispose() {
+        myPanel.removeKeyListener(keyAdapter);
       }
     });
-
+    
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(myPanel,
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
@@ -317,6 +235,9 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
         popup.cancel();
       }
     }
+
+    mySearchUpdater.cancelAllRequests();
+    myOptionContainers = null;
     myGlassPanel = null;
     super.dispose();
   }
@@ -337,16 +258,20 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final JPanel panel = new JPanel(new GridBagLayout());
     mySearchField = new SearchUtil.SearchTextField();
-    mySearchField.addDocumentListener(new DocumentAdapter() {
+    final DocumentAdapter docAdapter = new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         mySearchUpdater.cancelAllRequests();
         mySearchUpdater.addRequest(new Runnable() {
           public void run() {
+            if (myGlassPanel == null) return;
             myGlassPanel.clear();
             final @NonNls String searchPattern = mySearchField.getText();
             if (searchPattern != null && searchPattern.length() > 0) {
-              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern, CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS);
-            } else {
+              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern,
+                                                                     CodeStyleSettingsManager
+                                                                       .getInstance(myProject).USE_PER_PROJECT_SETTINGS);
+            }
+            else {
               myOptionContainers = null;
             }
             SearchUtil.showHintPopup(mySearchField, myPopup, mySearchUpdater, selectConfigurable, myProject);
@@ -354,7 +279,14 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
           }
         }, 300, ModalityState.defaultModalityState());
       }
+    };
+    mySearchField.addDocumentListener(docAdapter);
+    Disposer.register(myDisposable, new Disposable() {
+      public void dispose() {
+        mySearchField.removeDocumentListener(docAdapter);
+      }
     });
+
     SearchUtil.registerKeyboardNavigation(mySearchField, myPopup, mySearchUpdater, selectConfigurable, myProject);
     final GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(Box.createHorizontalBox(), gc);
@@ -432,7 +364,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     }
 
     private void setupListeners() {
-      addMouseListener(new MouseAdapter() {
+      final MouseAdapter mouseAdapter = new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
           myKeypressedConfigurable = myConfigurable;
           myPanel.repaint();
@@ -449,9 +381,16 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
           myPanel.repaint();
         }
+      };
+      addMouseListener(mouseAdapter);
+      Disposer.register(myDisposable, new Disposable() {
+        public void dispose() {
+          removeMouseListener(mouseAdapter);
+        }
       });
 
-      addMouseMotionListener(new MouseMotionListener() {
+
+      final MouseMotionListener motionListener = new MouseMotionListener() {
         public void mouseDragged(MouseEvent e) {
         }
 
@@ -460,6 +399,12 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
           mySelectedRow = myRowIdx;
           mySelectedGroup = myGroupIdx;
           myPanel.repaint();
+        }
+      };
+      addMouseMotionListener(motionListener);
+      Disposer.register(myDisposable, new Disposable() {
+        public void dispose() {
+          removeMouseMotionListener(motionListener);
         }
       });
     }
@@ -478,6 +423,98 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
             ((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).showExplorerOptions(myProject, myGroups);
           }
         }, ModalityState.NON_MODAL);
+    }
+  }
+
+  private class MyKeyAdapter extends KeyAdapter {
+    public void keyPressed(KeyEvent e) {
+      try {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          myKeypressedConfigurable = getSelectedConfigurable();
+          return;
+        }
+
+        int code = e.getKeyCode();
+        if (code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN || code == KeyEvent.VK_RIGHT ||
+            code == KeyEvent.VK_LEFT) {
+          if (getSelectedConfigurable() == null) {
+            mySelectedColumn = 0;
+            mySelectedRow = 0;
+            mySelectedGroup = 0;
+            return;
+          }
+
+          int xShift = 0;
+          int yShift = 0;
+
+          if (code == KeyEvent.VK_UP) {
+            yShift = -1;
+          }
+          else if (code == KeyEvent.VK_DOWN) {
+            yShift = 1;
+          }
+          else if (code == KeyEvent.VK_LEFT) {
+            xShift = -1;
+          }
+          else /*if (code == KeyEvent.VK_RIGHT)*/ {
+            xShift = 1;
+          }
+
+          int newColumn = mySelectedColumn + xShift;
+          int newRow = mySelectedRow + yShift;
+          int newGroup = mySelectedGroup;
+
+          if (newColumn < 0) newColumn = 0;
+          if (newColumn >= ICONS_PER_ROW) newColumn = ICONS_PER_ROW - 1;
+
+          int idx = newColumn + newRow * ICONS_PER_ROW;
+          if (idx >= myGroups[newGroup].getConfigurables().length) {
+            if (yShift > 0) {
+              newRow = 0;
+              newGroup++;
+              if (newGroup >= myGroups.length) return;
+
+              idx = newColumn + newRow * ICONS_PER_ROW;
+              if (idx >= myGroups[newGroup].getConfigurables().length) return;
+            }
+            else if (xShift > 0) {
+              return;
+            }
+          }
+
+          if (yShift < 0 && idx < 0) {
+            newGroup--;
+            if (newGroup < 0) return;
+            int rowCount = getRowCount(myGroups[newGroup].getConfigurables().length);
+            newRow = rowCount - 1;
+            idx = newColumn + newRow * ICONS_PER_ROW;
+            if (idx >= myGroups[newGroup].getConfigurables().length) {
+              if (newRow <= 0) return;
+              newRow--;
+            }
+          }
+
+          mySelectedColumn = newColumn;
+          mySelectedRow = newRow;
+          mySelectedGroup = newGroup;
+          return;
+        }
+
+        myKeypressedConfigurable = ControlPanelMnemonicsUtil.getConfigurableFromMnemonic(e, myGroups);
+      }
+      finally {
+        myPanel.repaint();
+      }
+    }
+
+    public void keyReleased(KeyEvent e) {
+      if (myKeypressedConfigurable != null) {
+        e.consume();
+        selectConfigurable(myKeypressedConfigurable);
+        editConfigurable(myKeypressedConfigurable);
+        myKeypressedConfigurable = null;
+        myPanel.repaint();
+      }
     }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +17,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -204,6 +206,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         popup.cancel();
       }
     }
+    mySearchUpdater.cancelAllRequests();
     myAlarm.cancelAllRequests();
     rememberLastUsedPage();
 
@@ -212,6 +215,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       configurable.disposeUIResources();
     }
 
+    myOptionContainers = null;
     myInitializedConfigurables2Component.clear();
     super.dispose();
   }
@@ -267,7 +271,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     optionsScrollForTinyScreens.setPreferredSize(myPreferredSize);
 
     myComponentPanel.setFocusable(true);
-    myComponentPanel.addKeyListener(new KeyAdapter() {
+    final KeyAdapter keyAdapter = new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         Configurable[] configurables = mySelectedGroup.getConfigurables();
         int index = myKeySelectedConfigurableIndex;
@@ -275,9 +279,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         int keyCode = e.getKeyCode();
         if (keyCode == KeyEvent.VK_UP) {
           index--;
-          if (index == -1){
+          if (index == -1) {
             final int groupIdx = ArrayUtil.find(myGroups, mySelectedGroup);
-            if (groupIdx > 0){
+            if (groupIdx > 0) {
               selectGroup(groupIdx - 1, myGroups[groupIdx - 1].getConfigurables().length - 1);
               return;
             }
@@ -285,9 +289,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         }
         else if (keyCode == KeyEvent.VK_DOWN) {
           index++;
-          if (index == configurables.length){
+          if (index == configurables.length) {
             final int groupIdx = ArrayUtil.find(myGroups, mySelectedGroup);
-            if (groupIdx < myGroups.length - 1){
+            if (groupIdx < myGroups.length - 1) {
               selectGroup(groupIdx + 1, 0);
               return;
             }
@@ -317,9 +321,16 @@ public class ExplorerSettingsEditor extends DialogWrapper {
         }
         if (index == -1 || index >= configurables.length) return;
         final TreeNode groupNode = myRoot.getChildAt(ArrayUtil.find(myGroups, mySelectedGroup));
-        TreeUtil.selectPath(myTree, new TreePath(new TreeNode[]{ myRoot, groupNode, groupNode.getChildAt(index)}));
+        TreeUtil.selectPath(myTree, new TreePath(new TreeNode[]{myRoot, groupNode, groupNode.getChildAt(index)}));
+      }
+    };
+    myComponentPanel.addKeyListener(keyAdapter);
+    Disposer.register(myDisposable, new Disposable() {
+      public void dispose() {
+        myComponentPanel.removeKeyListener(keyAdapter);
       }
     });
+
     return myComponentPanel;
   }
 

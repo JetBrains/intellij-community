@@ -209,7 +209,7 @@ public class PackageUtil {
 
   public static boolean isSourceRoot(final PsiDirectory psiDirectory) {
     return psiDirectory.getVirtualFile().equals(
-      ProjectRootManager.getInstance(psiDirectory.getManager().getProject()).getFileIndex()
+      ProjectRootManager.getInstance(psiDirectory.getProject()).getFileIndex()
         .getSourceRootForFile(psiDirectory.getVirtualFile()));
   }
 

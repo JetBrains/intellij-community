@@ -3,14 +3,15 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.Patches;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ToolWindow;
@@ -21,7 +22,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -907,6 +907,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void appendRequestFocusInEditorComponentCmd(final ArrayList<FinalizableCommand> commandList) {
+    if (myProject.isDisposed()) return;
     final CommandProcessor commandProcessor = getWindowManager().getCommandProcessor();
     final RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject),
                                                                                           commandProcessor);

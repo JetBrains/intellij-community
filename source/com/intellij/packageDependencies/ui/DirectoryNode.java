@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -32,15 +34,19 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public DirectoryNode(PsiDirectory aDirectory, boolean showModules, boolean compactPackages, boolean showFQName) {
     myDirectory = aDirectory;
-    final VirtualFile directory = myDirectory.getVirtualFile();
+    VirtualFile directory = myDirectory.getVirtualFile();
     final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
     myDirName = aDirectory.getName();
     myShowModules = showModules;
     if (showModules) {
       if (showFQName) {
         final VirtualFile contentRoot = index.getContentRootForFile(directory);
-        LOG.assertTrue(contentRoot != null);
-        myFQName = VfsUtil.getRelativePath(directory, contentRoot.getParent(), '/');
+        if (contentRoot != null) {
+          myFQName = VfsUtil.getRelativePath(directory, contentRoot.getParent(), '/');
+        }
+        else {
+          myFQName = PatternPackageSet.getLibRelativePath(directory, index);
+        }
         myDirName = myFQName;
       }
     }
@@ -68,7 +74,22 @@ public class DirectoryNode extends PackageDependenciesNode {
     if (myCompactPackages && myCompactedDirNode != null){
       return myDirName + "/" + myCompactedDirNode.getDirName();
     }
+    final String locationString = getLocationString();
+    if (locationString != null) return locationString;
     return myDirName;
+  }
+
+  @Nullable
+  public String getLocationString() {
+    if (myDirectory != null) {
+      final VirtualFile directory = myDirectory.getVirtualFile();
+      final VirtualFile contentRootForFile = ProjectRootManager.getInstance(myDirectory.getProject())
+        .getFileIndex().getContentRootForFile(directory);
+      if (Comparing.equal(contentRootForFile, directory)) {
+        return directory.getPresentableUrl();
+      }
+    }
+    return null;
   }
 
   public String getDirName(){

@@ -429,9 +429,13 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       if (isJavaDocRequired(psiMethod)) {
         if (superMethods.length > 0) return null;
         if (EjbHelper.getEjbHelper().getEjbRole(psiMethod) instanceof EjbImplMethodRole) return null;
-        return superMethods.length == 0
-               ? new ProblemDescriptor[]{createDescriptor(psiMethod.getNameIdentifier(), JavaDocLocalInspection.REQUIRED_JAVADOC_IS_ABSENT, manager)}
-               : null;
+        if (superMethods.length == 0) {
+          final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
+          return nameIdentifier != null ? new ProblemDescriptor[] { createDescriptor(nameIdentifier, JavaDocLocalInspection.REQUIRED_JAVADOC_IS_ABSENT, manager)} : null;
+        }
+        else {
+          return null;
+        }
       }
       else {
         return null;
@@ -498,14 +502,18 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
 
     if (isReturnRequired && isReturnAbsent) {
-      ProblemDescriptor descriptor = createMissingTagDescriptor(psiMethod.getNameIdentifier(), "return", manager);
-      problems.add(descriptor);
+      final PsiIdentifier psiIdentifier = psiMethod.getNameIdentifier();
+      if (psiIdentifier != null) {
+        problems.add(createMissingTagDescriptor(psiIdentifier, "return", manager));
+      }
     }
 
     if (absentParameters != null) {
       for (PsiParameter psiParameter : absentParameters) {
-        ProblemDescriptor descriptor = createMissingParamTagDescriptor(psiMethod.getNameIdentifier(), psiParameter.getName(), manager);
-        problems.add(descriptor);
+        final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
+        if (nameIdentifier != null) {
+          problems.add(createMissingParamTagDescriptor(nameIdentifier, psiParameter.getName(), manager));
+        }
       }
     }
 
@@ -546,7 +554,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       processThrowsTags(tags, declaredExceptions, manager, problems);
       if (!declaredExceptions.isEmpty()) {
         for (PsiClassType declaredException : declaredExceptions.keySet()) {
-          problems.add(createMissingThrowsTagDescriptor(psiMethod, manager, declaredException, true));
+          problems.add(createMissingThrowsTagDescriptor(psiMethod, manager, declaredException));
         }
       }
     }
@@ -623,20 +631,15 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
   }
 
+  @Nullable
   private static ProblemDescriptor createMissingThrowsTagDescriptor(final PsiMethod method,
                                                                     final InspectionManager manager,
-                                                                    final PsiClassType exceptionClassType,
-                                                                    final boolean quickfixNeeded) {
+                                                                    final PsiClassType exceptionClassType) {
     @NonNls String tag = "throws";
     String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code> " + exceptionClassType.getCanonicalText());
     final String firstDeclaredException = exceptionClassType.getCanonicalText();
     final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-    LOG.assertTrue(nameIdentifier != null);
-    if (quickfixNeeded) {
-      return createDescriptor(nameIdentifier, message,new AddMissingTagFix(tag, firstDeclaredException), manager);
-    } else {
-      return createDescriptor(nameIdentifier, message, manager);
-    }
+    return nameIdentifier != null ? createDescriptor(nameIdentifier, message,new AddMissingTagFix(tag, firstDeclaredException), manager) : null;    
   }
 
   private static ProblemDescriptor createMissingTagDescriptor(PsiElement elementToHighlight,

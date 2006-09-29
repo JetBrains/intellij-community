@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,9 +70,21 @@ public abstract class BaseAnalysisAction extends AnAction {
         protected JComponent getAdditionalActionSettings(final Project project) {
           return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);
         }
+
+
+        protected void doHelpAction() {
+          HelpManager.getInstance().invokeHelp(getHelpTopic());
+        }
+
+        protected Action[] createActions() {
+          return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+        }
       };
       dlg.show();
-      if (!dlg.isOK()) return;
+      if (!dlg.isOK()) {
+        canceled();
+        return;
+      }
       final int oldScopeType = uiOptions.SCOPE_TYPE;
       scope = dlg.getScope(uiOptions, scope, project, module);
       if (!rememberScope){
@@ -82,6 +96,14 @@ public abstract class BaseAnalysisAction extends AnAction {
 
       analyze(project, scope);
     }
+  }
+
+  protected void canceled() {
+  }
+
+  @NonNls
+  protected String getHelpTopic() {
+    return "editing.analyzeDependencies.dialog";
   }
 
   protected abstract void analyze(Project project, AnalysisScope scope);

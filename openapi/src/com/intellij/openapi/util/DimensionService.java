@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -265,7 +266,10 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   private static String realKey(String key, @Nullable Project project) {
     if (project == null) return key;
 
-    final Point topLeft = WindowManager.getInstance().getFrame(project).getLocation();
+    final JFrame frame = WindowManager.getInstance().getFrame(project);
+    if (frame == null) return key; //during frame initialization
+
+    final Point topLeft = frame.getLocation();
     final Rectangle frameScreen = ScreenUtil.getScreenRectangle(topLeft.x, topLeft.y);
     StringBuffer buf = new StringBuffer(key);
     buf.append('.').append(frameScreen.x)

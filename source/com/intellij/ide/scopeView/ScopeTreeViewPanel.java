@@ -302,7 +302,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     if (rootToReload != null) {
       TreeUtil.sort(rootToReload, new DependencyNodeComparator());
-      treeModel.reload(rootToReload);
       collapseExpand(rootToReload);
     }
     else {
@@ -444,6 +443,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   private void collapseExpand(DefaultMutableTreeNode node){
     if (node == null) return;
+    ((DefaultTreeModel)myTree.getModel()).reload(node);
     TreePath path = new TreePath(node.getPath());
     if (!myTree.isCollapsed(path)){
       myTree.collapsePath(path);
@@ -589,7 +589,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
             DefaultMutableTreeNode rootToReload = rootToReloadGetter.fun(psiFile);
             if (rootToReload != null) {
               TreeUtil.sort(rootToReload, new DependencyNodeComparator());
-              treeModel.reload(rootToReload);
               collapseExpand(rootToReload);
             }
             else {

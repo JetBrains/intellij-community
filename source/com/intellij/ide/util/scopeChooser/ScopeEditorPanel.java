@@ -31,7 +31,6 @@ import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -490,18 +489,17 @@ public class ScopeEditorPanel {
     });
   }
 
-  private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
+  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     private static final Color WHOLE_INCLUDED = new Color(10, 119, 0);
     private static final Color PARTIAL_INCLUDED = new Color(0, 50, 160);
 
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean sel,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+    public void customizeCellRenderer(JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
       if (value instanceof PackageDependenciesNode) {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
         if (expanded) {
@@ -511,16 +509,21 @@ public class ScopeEditorPanel {
           setIcon(node.getClosedIcon());
         }
 
-        if (!sel && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
+        if (!selected && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }
         if (node instanceof DirectoryNode) {
           final DirectoryNode directoryNode = (DirectoryNode)node;
-          setText(directoryNode.getDirName());
+          append(directoryNode.getDirName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          final String locationString = directoryNode.getLocationString();
+          if (locationString != null) {
+            append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+        }
+        else {
+          append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
-
-      return this;
     }
   }
 

@@ -31,6 +31,10 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
   }
 
+  protected String getHelpTopic() {
+    return "runningInspections";
+  }
+
   protected void analyze(Project project, AnalysisScope scope) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManager.getInstance(project));
@@ -41,11 +45,17 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
 
-  public GlobalInspectionContextImpl getGlobalInspectionContext(Project project) {
+  private GlobalInspectionContextImpl getGlobalInspectionContext(Project project) {
     if (myGlobalInspectionContext == null) {
       myGlobalInspectionContext = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).createNewGlobalContext(false);
     }
     return myGlobalInspectionContext;
+  }
+
+
+  protected void canceled() {
+    super.canceled();
+    myGlobalInspectionContext = null;
   }
 
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {

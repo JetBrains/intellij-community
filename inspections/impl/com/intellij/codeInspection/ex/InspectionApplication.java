@@ -14,9 +14,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -139,8 +138,27 @@ public class InspectionApplication {
           PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object", GlobalSearchScope.allScope(myProject));
           if (psiObjectClass == null) {
             logError(InspectionsBundle.message("inspection.no.jdk.error.message"));
+            logError(InspectionsBundle.message("offline.inspections.jdk.not.found",
+                                               ProjectRootManager.getInstance(myProject).getProjectJdkName()));
             System.exit(1);
             return;
+          }
+          final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+          for (Module module : modules) {
+            final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+            final ProjectJdk jdk = rootManager.getJdk();
+            if (jdk == null) {
+              final OrderEntry[] entries = rootManager.getOrderEntries();
+              for (OrderEntry entry : entries) {
+                if (entry instanceof JdkOrderEntry) {
+                  logError(InspectionsBundle.message("offline.inspections.module.jdk.not.found", 
+                                                     ((JdkOrderEntry)entry).getJdkName(),
+                                                     module.getName()));
+                  System.exit(1);
+                  return;
+                }
+              }
+            }
           }
           inspectionContext.launchInspectionsOffline(scope, myOutPath, myRunWithEditorSettings, myRunGlobalToolsOnly, im);
           logMessageLn(1, "\n" +
@@ -167,11 +185,16 @@ public class InspectionApplication {
           }
 
           if (myVerboseLevel == 3) {
+            if (text.length() == 0) return;
             final String prefix = getPrefix(text);
             final StringBuilder buf = StringBuilderSpinAllocator.alloc();
             try {
-              buf.append(prefix == null ? text : prefix);  //messages like Scanning scopes...
-              if (!isIndeterminate()) {
+              if (prefix == null) {
+                buf.append(text);
+              } else {
+                buf.append(prefix);
+              }
+              if (!isIndeterminate() && getFraction() > 0 && prefix != null && prefix.length() > 0) {
                 buf.append("... ").append((int)(getFraction() * 100)).append("%");
               }
               logMessageLn(2, buf.toString());

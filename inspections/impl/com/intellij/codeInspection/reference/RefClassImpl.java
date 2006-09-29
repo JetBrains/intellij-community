@@ -17,6 +17,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +25,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import gnu.trove.THashSet;
 
 public class RefClassImpl extends RefElementImpl implements RefClass {
   private static final HashSet<RefElement> EMPTY_SET = new HashSet<RefElement>(0);
@@ -214,6 +213,10 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       PsiField[] psiFields = psiClass.getFields();
       for (PsiField psiField : psiFields) {
         ((RefManagerImpl)getRefManager()).getFieldReference(this, psiField);
+        final PsiExpression initializer = psiField.getInitializer();
+        if (initializer != null) {
+          ((RefUtilImpl)RefUtil.getInstance()).addReferences(psiClass, this, initializer);
+        }        
       }
 
       PsiMethod[] psiMethods = psiClass.getMethods();

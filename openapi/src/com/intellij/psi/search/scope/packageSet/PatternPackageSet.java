@@ -218,7 +218,22 @@ public class PatternPackageSet implements PackageSet {
       }
       return virtualFile.getPath();
     } else {
-      return VfsUtil.getRelativePath(virtualFile, index.getContentRootForFile(virtualFile), '/');
+      final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);
+      if (contentRootForFile != null) {
+        return VfsUtil.getRelativePath(virtualFile, contentRootForFile, '/');
+      }
+      return getLibRelativePath(virtualFile, index);
     }
+  }
+
+  public static String getLibRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index) {
+    StringBuilder relativePath = new StringBuilder(100);
+    VirtualFile directory = virtualFile;
+    while (directory != null && index.isInLibraryClasses(directory)) {
+      relativePath.insert(0, '/');
+      relativePath.insert(0, directory.getName());
+      directory = directory.getParent();
+    }
+    return relativePath.toString();
   }
 }
