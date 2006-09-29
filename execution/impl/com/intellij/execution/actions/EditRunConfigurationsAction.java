@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nullable;
 
 public class EditRunConfigurationsAction extends AnAction{
 
@@ -22,10 +23,12 @@ public class EditRunConfigurationsAction extends AnAction{
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = getProject(e);
+    if (project == null || project.isDisposed()) return;
     final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project);
     dialog.show();
   }
-
+                                                          
+  @Nullable
   private static Project getProject(final AnActionEvent e) {
     return (Project)e.getDataContext().getData(DataConstants.PROJECT);
   }
