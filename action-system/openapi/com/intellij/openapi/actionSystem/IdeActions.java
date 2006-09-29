@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * Identifiers for standard actions and action groups supported by IDEA.
  */
-@NonNls  
+@SuppressWarnings({"HardCodedStringLiteral"})
 public interface IdeActions {
   String ACTION_EDITOR_CUT = "EditorCut";
   String ACTION_EDITOR_COPY = "EditorCopy";
