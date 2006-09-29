@@ -24,10 +24,10 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   private static final Icon INSPECTION_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
   private static final Icon NO_ICON = new EmptyIcon(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
 
-  private Project myProject;
-  private Document myDocument;
+  private final Project myProject;
+  private final Document myDocument;
   private final PsiFile myFile;
-  private DaemonCodeAnalyzerImpl myHighlighter;
+  private final DaemonCodeAnalyzerImpl myHighlighter;
 
   @NonNls private static final String HTML_HEADER = "<html><body>";
   @NonNls private static final String HTML_FOOTER = "</body></html>";
@@ -44,7 +44,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   }
 
   protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
-    if (myFile == null || !myHighlighter.isHighlightingAvailable(myFile)) return null;
+    if (myFile == null || myProject.isDisposed() || !myHighlighter.isHighlightingAvailable(myFile)) return null;
 
     ArrayList<String> noInspectionRoots = new ArrayList<String>();
     ArrayList<String> noHighlightingRoots = new ArrayList<String>();
