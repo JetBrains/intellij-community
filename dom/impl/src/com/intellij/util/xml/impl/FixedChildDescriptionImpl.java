@@ -10,6 +10,7 @@ import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -36,7 +37,9 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   }
 
   public void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass) {
-    DomManagerImpl.getDomInvocationHandler(parent).setFixedChildClass(getXmlElementName(), aClass);
+    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
+    assert handler != null;
+    handler.setFixedChildClass(getXmlElementName(), aClass);
   }
 
   @Nullable
@@ -48,6 +51,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return myCount;
   }
 
+  @NotNull
   public List<? extends DomElement> getValues(final DomElement element) {
     final ArrayList<DomElement> result = new ArrayList<DomElement>();
     for (JavaMethod method : myGetterMethods) {

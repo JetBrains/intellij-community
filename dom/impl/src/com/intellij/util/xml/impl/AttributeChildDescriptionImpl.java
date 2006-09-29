@@ -7,6 +7,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -38,6 +39,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     return getGetterMethod().getAnnotation(annotationClass);
   }
 
+  @NotNull
   public List<? extends DomElement> getValues(DomElement parent) {
     return Arrays.asList(getDomAttributeValue(parent));
   }

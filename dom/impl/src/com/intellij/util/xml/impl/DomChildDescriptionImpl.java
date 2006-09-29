@@ -5,8 +5,13 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -28,6 +33,7 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     return myTagName;
   }
 
+  @NotNull
   public List<? extends DomElement> getStableValues(final DomElement parent) {
     final List<? extends DomElement> list = getValues(parent);
     final ArrayList<DomElement> result = new ArrayList<DomElement>(list.size());
@@ -35,6 +41,7 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
     for (int i = 0; i < list.size(); i++) {
       final int i1 = i;
       result.add(domManager.createStableValue(new Factory<DomElement>() {
+        @Nullable
         public DomElement create() {
           if (!parent.isValid()) return null;
 

@@ -11,6 +11,8 @@ import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -20,10 +22,13 @@ import java.util.List;
  * @author peter
  */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription {
-  private final JavaMethod myGetterMethod, myAdderMethod, myIndexedAdderMethod;
+  private final JavaMethod myGetterMethod;
+  private final JavaMethod myAdderMethod;
+  private final JavaMethod myIndexedAdderMethod;
   private final JavaMethod myClassAdderMethod;
   private final JavaMethod myIndexedClassAdderMethod;
   private final JavaMethod myInvertedIndexedClassAdderMethod;
+  @NonNls private static final String ES = "es";
 
   public CollectionChildDescriptionImpl(final String tagName,
                                         final Type type,
@@ -64,7 +69,9 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
 
   private DomElement addChild(final DomElement element, final Type type, final int index) {
     try {
-      return DomManagerImpl.getDomInvocationHandler(element).addChild(getXmlElementName(), type, index);
+      final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
+      assert handler != null;
+      return handler.addChild(getXmlElementName(), type, index);
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);
@@ -91,13 +98,14 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return myIndexedAdderMethod;
   }
 
+  @NotNull
   public List<? extends DomElement> getValues(final DomElement element) {
     return (List<? extends DomElement>)myGetterMethod.invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
   public String getCommonPresentableName(DomNameStrategy strategy) {
     String words = strategy.splitIntoWords(getXmlElementName());
-    return StringUtil.capitalizeWords(words.endsWith("es") ? words: StringUtil.pluralize(words), true);
+    return StringUtil.capitalizeWords(words.endsWith(ES) ? words: StringUtil.pluralize(words), true);
   }
 
   @Nullable
