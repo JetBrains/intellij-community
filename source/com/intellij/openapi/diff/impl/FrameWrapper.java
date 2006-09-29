@@ -144,6 +144,7 @@ public class FrameWrapper {
         Disposable disposable = iterator.next();
         disposable.dispose();
       }
+      myDatas.clear();
       super.dispose();
     }
 
