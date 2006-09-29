@@ -353,6 +353,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private boolean myOpened = false;
 
     private FocusTrackback myFocusTrackback;
+    private MyDialog.MyWindowListener myWindowListener;
 
     public MyDialog(Dialog owner, DialogWrapper dialogWrapper) {
       super(owner);
@@ -368,7 +369,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     private void initDialog() {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-      addWindowListener(new MyWindowListener());
+      myWindowListener = new MyWindowListener();
+      addWindowListener(myWindowListener);
       addComponentListener(new ComponentAdapter() {
         @SuppressWarnings({"RefusedBequest"})
         public void componentResized(ComponentEvent e) {
@@ -497,6 +499,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     public void dispose() {
+      if (myWindowListener != null) {
+        removeWindowListener(myWindowListener);
+        myWindowListener = null;
+      }
       super.dispose();
 
       if (rootPane != null) { // Workaround for bug in native code to hold rootPane
