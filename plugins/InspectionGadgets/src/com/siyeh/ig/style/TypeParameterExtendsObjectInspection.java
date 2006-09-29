@@ -85,12 +85,10 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
             super.visitTypeParameter(parameter);
             final PsiClassType[] extendsListTypes =
                     parameter.getExtendsListTypes();
-            for(final PsiClassType extendsListType : extendsListTypes) {
-                if(extendsListType.equalsToText("java.lang.Object")){
-                    final PsiIdentifier nameIdentifier =
+            if (extendsListTypes.length == 1 && extendsListTypes[0].equalsToText("java.lang.Object")) {
+                final PsiIdentifier nameIdentifier =
                             parameter.getNameIdentifier();
                     registerError(nameIdentifier);
-                }
             }
         }
     }
