@@ -7,13 +7,15 @@ import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.pom.Navigatable;
+import com.intellij.ide.util.EditSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
+public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation, Navigatable {
   public static final ClsAnnotationImpl[] EMPTY_ARRAY = new ClsAnnotationImpl[0];
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationImpl");
   private final ClsJavaCodeReferenceElementImpl myReferenceElement;
