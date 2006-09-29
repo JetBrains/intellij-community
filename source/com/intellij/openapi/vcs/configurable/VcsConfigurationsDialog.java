@@ -191,6 +191,11 @@ public class VcsConfigurationsDialog extends DialogWrapper{
     super.doOKAction();
   }
 
+  protected void dispose() {
+    myVcses.setCellRenderer(new DefaultListCellRenderer());
+    super.dispose();
+  }
+
   private static class MyNullConfigurable implements Configurable {
     public String getDisplayName() {
       return NONE;
