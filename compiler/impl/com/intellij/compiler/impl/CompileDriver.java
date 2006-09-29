@@ -47,9 +47,9 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.StringInterner;
@@ -692,15 +692,17 @@ public class CompileDriver {
   private static boolean doPrune(final File directory) {
     final File[] files = directory.listFiles();
     boolean isEmpty = true;
-    for (File file : files) {
-      if (file.isDirectory()) {
-        if (doPrune(file)) {
-          file.delete();
+    if (files != null) {
+      for (File file : files) {
+        if (file.isDirectory()) {
+          if (doPrune(file)) {
+            file.delete();
+          } else {
+            isEmpty = false;
+          }
         } else {
           isEmpty = false;
         }
-      } else {
-        isEmpty = false;
       }
     }
 
