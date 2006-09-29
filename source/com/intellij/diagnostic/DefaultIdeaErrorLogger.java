@@ -5,18 +5,17 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author kir
@@ -38,6 +37,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
     return  notificationEnabled ||
+            !(IdeErrorsDialog.getSubmitter(event.getThrowable()) instanceof ITNReporter) ||
             ApplicationManagerEx.getApplicationEx().isInternal() ||
             event.getThrowable() instanceof OutOfMemoryError;
   }

@@ -404,7 +404,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         return;
       }
 
-      final ErrorReportSubmitter submitter = getSubmitter(logMessage);
+      final ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
       if (logMessage.isSubmitted() || submitter == null) {
         presentation.setEnabled(false);
         return;
@@ -421,7 +421,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     private void reportMessage(final AbstractMessage logMessage) {
-      ErrorReportSubmitter submitter = getSubmitter(logMessage);
+      ErrorReportSubmitter submitter = getSubmitter(logMessage.getThrowable());
 
       if (submitter != null) {
         logMessage.setSubmitted(submitter.submit(getEvents(logMessage), getContentPane()));
@@ -446,11 +446,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   @Nullable
-  private static ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
-    if (logMessage.getThrowable() instanceof MessagePool.TooManyErrorsException) {
+  public static ErrorReportSubmitter getSubmitter(final Throwable throwable) {
+    if (throwable instanceof MessagePool.TooManyErrorsException) {
       return null;
     }
-    final PluginId pluginId = findPluginId(logMessage.getThrowable());
+    final PluginId pluginId = findPluginId(throwable);
     final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER).getExtensions();
     ErrorReportSubmitter submitter = null;
     for (Object reporter1 : reporters) {
