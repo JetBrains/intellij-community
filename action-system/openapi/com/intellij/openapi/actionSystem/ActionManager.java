@@ -76,6 +76,8 @@ public abstract class ActionManager implements ApplicationComponent {
    *  there is no actions associated with the speicified actionId
    *
    * @exception java.lang.IllegalArgumentException if <code>actionId</code> is <code>null</code>
+   *
+   * @see com.intellij.openapi.actionSystem.IdeActions
    */
   public abstract AnAction getAction(@NonNls @NotNull String actionId);
 
