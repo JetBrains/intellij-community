@@ -82,6 +82,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
 
     place.accept(new PsiRecursiveElementVisitor() {
       public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+        super.visitMethodCallExpression(methodCall);
         final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
         if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) return;
