@@ -85,6 +85,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private Set<PropertiesFile> myBackSlashPressed = new THashSet<PropertiesFile>();
   @NonNls private static final String VALUES = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
+  private PropertiesFilesManager.PropertiesFileListener myPropertiesFileListener;
+  private PsiTreeChangeAdapter myPsiTreeChangeAdapter;
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
@@ -198,7 +200,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private void installPropertiesChangeListeners() {
-    PropertiesFilesManager.getInstance().addPropertiesFileListener(new PropertiesFilesManager.PropertiesFileListener() {
+    myPropertiesFileListener = new PropertiesFilesManager.PropertiesFileListener() {
       public void fileAdded(VirtualFile propertiesFile) {
         recreateEditorsPanel();
       }
@@ -215,8 +217,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           updateEditorsFromProperties();
         }
       }
-    });
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+    };
+    PropertiesFilesManager.getInstance().addPropertiesFileListener(myPropertiesFileListener);
+    myPsiTreeChangeAdapter = new PsiTreeChangeAdapter() {
       public void childAdded(PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
@@ -239,7 +242,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         if (!((PropertiesFile)file).getResourceBundle().equals(myResourceBundle)) return;
         updateEditorsFromProperties();
       }
-    });
+    };
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
+  }
+  private void uninstallListeners() {
+    PropertiesFilesManager.getInstance().removePropertiesFileListener(myPropertiesFileListener);
+    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
   }
 
   private final Alarm myUpdateEditorAlarm = new Alarm();
@@ -370,6 +378,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       editor.getDocument().addDocumentListener(listener);
     }
   }
+
   private void uninstallDocumentListeners() {
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
     for (final PropertiesFile propertiesFile : propertiesFiles) {
@@ -429,6 +438,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return value instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)value).getValue() : null;
   }
 
+  @NotNull
   public JComponent getComponent() {
     return myDataProviderPanel;
   }
@@ -541,6 +551,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   public void dispose() {
     myDisposed = true;
+    uninstallListeners();
     Disposer.dispose(myStructureViewComponent);
     releaseAllEditors();
   }
