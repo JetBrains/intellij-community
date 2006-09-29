@@ -90,9 +90,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       final Type returnType = method.getGenericReturnType();
       final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
       final Class parameter = DomReflectionUtil.substituteGenericType(type, myType);
-      assert parameter != null : type + " " + myType;
+      LOG.assertTrue(parameter != null, type + " " + myType);
       final Converter converter = getConverter(method, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Factory.NULL_FACTORY);
-      assert converter != null : "No converter specified: String<->" + parameter.getName();
+      LOG.assertTrue(converter != null, "No converter specified: String<->" + parameter.getName());
       return converter;
     }
   };
