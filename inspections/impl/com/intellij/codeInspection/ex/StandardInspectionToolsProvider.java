@@ -23,6 +23,7 @@ import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.jsp.UnhandledExceptionInJSP;
+import com.intellij.codeInspection.jsp.ELValidationInspection;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
@@ -119,6 +120,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       DefaultFileTemplateUsageInspection.class,
       UnnecessaryModuleDependencyInspection.class,
       UnhandledExceptionInJSP.class,
+      ELValidationInspection.class,
       RedundantSuppressInspection.class,
       UnusedSymbolLocalInspection.class,
       UnusedImportLocalInspection.class,
