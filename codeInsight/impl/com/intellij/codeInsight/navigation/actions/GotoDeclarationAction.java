@@ -117,8 +117,18 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
       return methods;
     }
+
     if (reference instanceof PsiPolyVariantReference) {
-      return Arrays.asList(PsiUtil.mapElements(((PsiPolyVariantReference)reference).multiResolve(false)));
+      final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+      final ArrayList<PsiElement> navigatableResults = new ArrayList<PsiElement>(results.length);
+
+      for(ResolveResult r:results) {
+        if (EditSourceUtil.canNavigate(r.getElement())) {
+          navigatableResults.add(r.getElement());
+        }
+      }
+
+      return navigatableResults;
     }
     PsiElement resolved = reference.resolve();
     if (resolved != null) {
