@@ -64,7 +64,7 @@ public class InspectionMain implements ApplicationStarter {
       printHelp();
     }
 
-    myApplication.myRunGlobalToolsOnly = System.getProperty("idea.global.inspections") != null;
+    myApplication.myRunGlobalToolsOnly = System.getProperty("idea.no.local.inspections") != null;
   }
 
   public void main(String[] args) {
