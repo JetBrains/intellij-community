@@ -76,7 +76,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void markEverythingDirty() {
-    if (!myIsInitialized || myIsDisposed) return;
+    if (!myIsInitialized || myIsDisposed || myProject.isDisposed()) return;
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
