@@ -13,7 +13,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
-import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -22,7 +21,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 /** extended by fabrique */
-public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
+public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
 
   /**
@@ -36,7 +35,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
   /** protected for fabrique */
   protected Dimension myMinimumButtonSize;
   /**
-   * @see ActionToolbarEx#getLayoutPolicy()
+   * @see ActionToolbar#getLayoutPolicy()
    */
   private int myLayoutPolicy;
   private int myOrientation;
@@ -50,7 +49,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
   /** protected for fabrique */
   protected final PresentationFactory myPresentationFactory;
   /**
-   * @see ActionToolbarEx#adjustTheSameSize(boolean)
+   * @see ActionToolbar#adjustTheSameSize(boolean)
    */
   private boolean myAdjustTheSameSize;
 
@@ -104,12 +103,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
       throw new IllegalArgumentException("wrong layoutPolicy: " + layoutPolicy);
     }
     myLayoutPolicy = layoutPolicy;
-  }
-
-  public void setButtonLook(final ActionButtonLook buttonLook) {
-    myButtonLook = buttonLook;
-    myVisibleActions.clear();
-    updateActionsImmediately();
   }
 
   public void paint(final Graphics g) {
