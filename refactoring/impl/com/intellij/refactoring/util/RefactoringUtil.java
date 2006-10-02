@@ -173,7 +173,7 @@ public class RefactoringUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
-    if (newName == null) {
+    if (newName == null || newName.length() == 0) {
       return false;
     }
     final Condition<String> inputValidator = RenameInputValidatorRegistry.getInstance().getInputValidator(psiElement);
