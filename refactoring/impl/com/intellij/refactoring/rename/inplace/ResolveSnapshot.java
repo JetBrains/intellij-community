@@ -6,6 +6,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 
 import java.util.Map;
 
@@ -18,14 +19,17 @@ public class ResolveSnapshot {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.ResolveSnapshot");
 
   private Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap = new HashMap<SmartPsiElementPointer, SmartPsiElementPointer>();
+  private Project myProject;
+  private Document myDocument;
 
   public static ResolveSnapshot createSnapshot(PsiElement scope) {
     return new ResolveSnapshot(scope);
   }
 
   private ResolveSnapshot(final PsiElement scope) {
-    final Project project = scope.getProject();
-    final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+    myProject = scope.getProject();
+    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(scope.getContainingFile());
+    final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
     final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<PsiElement, SmartPsiElementPointer>();
     scope.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression refExpr) {
@@ -47,6 +51,7 @@ public class ResolveSnapshot {
   }
 
   public void apply(String hidingLocalName) {
+    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     for (Map.Entry<SmartPsiElementPointer,SmartPsiElementPointer> entry : myReferencesMap.entrySet()) {
       qualify(entry.getKey().getElement(), entry.getValue().getElement(), hidingLocalName);
     }
