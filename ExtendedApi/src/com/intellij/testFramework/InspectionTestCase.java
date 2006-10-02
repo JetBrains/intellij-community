@@ -190,11 +190,11 @@ expected:
   }
 
   private static boolean compareTextRange(final Element reportedProblem, final Element expectedProblem) {
-    Element reportedTextRange = reportedProblem.getChild("text_range");
+    Element reportedTextRange = reportedProblem.getChild("entry_point");
     if (reportedTextRange == null) return false;
-    Element expectedTextRange = expectedProblem.getChild("text_range");
-    return Comparing.equal(reportedTextRange.getAttributeValue("end"), expectedTextRange.getAttributeValue("end")) &&
-           Comparing.equal(reportedTextRange.getAttributeValue("start"), expectedTextRange.getAttributeValue("start"));
+    Element expectedTextRange = expectedProblem.getChild("entry_point");
+    return Comparing.equal(reportedTextRange.getAttributeValue("TYPE"), expectedTextRange.getAttributeValue("TYPE")) &&
+           Comparing.equal(reportedTextRange.getAttributeValue("FQNAME"), expectedTextRange.getAttributeValue("FQNAME"));
   }
 
   private static boolean compareDescriptions(Element reportedProblem, Element expectedProblem) throws Exception {

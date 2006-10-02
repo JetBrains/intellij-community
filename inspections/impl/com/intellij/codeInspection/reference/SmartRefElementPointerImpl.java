@@ -12,9 +12,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 public class SmartRefElementPointerImpl implements SmartRefElementPointer {
-  @NonNls private static final String CLASS="class";
-  @NonNls private static final String METHOD="method";
-  @NonNls private static final String FIELD="field";
+  @NonNls private static final String CLASS = "class";
+  @NonNls private static final String METHOD = "method";
+  @NonNls private static final String FIELD = "field";
+
+  @NonNls private static final String FILE = "file";
+  @NonNls private static final String PARAMETER = "parameter";
 
   private final boolean myIsPersistent;
   private RefElement myRefElement;
@@ -40,6 +43,10 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
         myType = CLASS;
       } else if (ref instanceof RefField) {
         myType = FIELD;
+      } else if (ref instanceof RefFile) {
+        myType = FILE;
+      } else if (ref instanceof RefParameter) {
+        myType = PARAMETER;
       } else {
         myType = null;
       }
@@ -57,6 +64,10 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
       myType = CLASS;
     } else if (FIELD.equals(type)) {
       myType = FIELD;
+    } else if (FILE.equals(type)) {
+      myType = FILE;
+    } else if (PARAMETER.equals(type)) {
+      myType = PARAMETER;
     } else {
       myType = null;
     }
@@ -98,6 +109,10 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
       }
     } else if (FIELD.equals(myType)) {
       myRefElement = RefFieldImpl.fieldFromExternalName(manager, getFQName());
+    } else if (FILE.equals(myType)) {
+      myRefElement = RefFileImpl.fileFromExternalName(manager, getFQName());
+    } else if (PARAMETER.equals(myType)) {
+      myRefElement = RefParameterImpl.parameterFromExternalName(manager, getFQName());
     }
 
     return myRefElement != null;

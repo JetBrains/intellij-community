@@ -11,6 +11,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class RefParameterImpl extends RefElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0x10000;
@@ -97,5 +98,29 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
 
   protected void initialize() {
     ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
+  }
+
+  @Nullable
+  public static RefElement parameterFromExternalName(final RefManager manager, final String fqName) {
+    final int idx = fqName.lastIndexOf('.');
+    if (idx > 0) {
+      final String paramName = fqName.substring(idx + 1);
+      final String method = fqName.substring(0, idx);
+      final RefMethod refMethod = RefMethodImpl.methodFromExternalName(manager, method);
+      if (refMethod != null) {
+        final PsiMethod element = (PsiMethod)refMethod.getElement();
+        final PsiParameterList list = element.getParameterList();
+        final PsiParameter[] parameters = list.getParameters();
+        int paramIdx = 0;
+        for (PsiParameter parameter : parameters) {
+          final String name = parameter.getName();
+          if (name != null && name.equals(paramName)) {
+            return manager.getParameterReference(parameter, paramIdx);
+          }
+          paramIdx++;
+        }
+      }
+    }
+    return null; 
   }
 }

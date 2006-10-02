@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,5 +90,17 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
 
   protected void initialize() {
     ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
+  }
+
+  @Nullable
+  public static RefElement fileFromExternalName(final RefManager manager, final String fqName) {
+    final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(fqName);
+    if (virtualFile != null) {
+      final PsiFile psiFile = PsiManager.getInstance(manager.getProject()).findFile(virtualFile);
+      if (psiFile != null) {
+        return manager.getReference(psiFile);
+      }
+    }
+    return null;  
   }
 }

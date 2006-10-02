@@ -4,7 +4,7 @@
     <file>Base.java</file>
     <line>2</line>
     <description>empty</description>
-    <text_range start="34" end="37" />
+    <entry_point TYPE="method" FQNAME="void Base.foo()" />
   </problem>
 </problems>
 
