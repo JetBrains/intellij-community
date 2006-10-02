@@ -138,6 +138,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         final Pair<PsiType,ConstraintType> currentSubstitution = getSubstitutionForTypeParameterConstraint(typeParameter, parameterType,
                                                                             argumentType, true, PsiUtil.getLanguageLevel(argument));
         if (currentSubstitution == null) continue;
+        if (currentSubstitution == FAILED_INFERENCE) {
+          return typeParameter.getManager().getElementFactory().createType(typeParameter);
+        }
+        
         final ConstraintType constraintType = currentSubstitution.getSecond();
         final PsiType type = currentSubstitution.getFirst();
         if (type == null) return null;
@@ -368,7 +372,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
           param = factory.createType(argClass, substitutor, languageLevel);
         }
 
-        return getSubstitutionForTypeParameterInner(param, arg, patternType, ConstraintType.SUPERTYPE);
+        return getSubstitutionForTypeParameterInner(param, arg, patternType, ConstraintType.SUPERTYPE, true);
       }
     }
 
@@ -381,11 +385,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     SUPERTYPE
   }
 
+  //represents the result of failed type inference: in case we failed inferring from parameters, do not perform inference from context
+  private static final Pair<PsiType, ConstraintType> FAILED_INFERENCE = new Pair<PsiType, ConstraintType>(PsiType.NULL, ConstraintType.EQUALS);
+
   @Nullable
   private static Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterInner(PsiType param,
                                                                                     PsiType arg,
                                                                                     PsiType patternType,
-                                                                                    final ConstraintType constraintType) {
+                                                                                    final ConstraintType constraintType,
+                                                                                    final boolean captureWildcard) {
     if (arg instanceof PsiCapturedWildcardType) arg = ((PsiCapturedWildcardType)arg).getWildcard(); //reopen
 
     if (patternType.equals(param)) {
@@ -400,19 +408,19 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       if (arg instanceof PsiWildcardType) {
         if (((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends()) {
           Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(paramBound, ((PsiWildcardType)arg).getBound(),
-                                                                                   patternType, constrType);
+                                                                                   patternType, constrType, captureWildcard);
           if (res != null) return res;
         }
       }
       else if (patternType.equals(paramBound)) {
         Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(paramBound, arg,
-                                                                                   patternType, constrType);
+                                                                                   patternType, constrType, captureWildcard);
         if (res != null) return res;
       }
       else if (paramBound instanceof PsiArrayType && arg instanceof PsiArrayType) {
         Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(((PsiArrayType) paramBound).getComponentType(),
                                                                                  ((PsiArrayType) arg).getComponentType(),
-                                                                                 patternType, constrType);
+                                                                                 patternType, constrType, captureWildcard);
         if (res != null) return res;
       }
       else if (paramBound instanceof PsiClassType && arg instanceof PsiClassType) {
@@ -433,7 +441,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                     final Pair<PsiType, ConstraintType> res;
                     res = getSubstitutionForTypeParameterInner(boundResult.getSubstitutor().substitute(typeParameter),
                                                                substituted,
-                                                               patternType, ConstraintType.EQUALS);
+                                                               patternType, ConstraintType.EQUALS, false);
                     if (res != null) return res;
                   }
                 }
@@ -450,7 +458,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
                     final Pair<PsiType, ConstraintType> res;
                     res = getSubstitutionForTypeParameterInner(superSubstitutor.substitute(typeParameter),
                                                                substituted,
-                                                               patternType, ConstraintType.EQUALS);
+                                                               patternType, ConstraintType.EQUALS, false);
                     if (res != null) return res;
                   }
                 }
@@ -463,7 +471,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
     if (param instanceof PsiArrayType && arg instanceof PsiArrayType) {
       return getSubstitutionForTypeParameterInner(((PsiArrayType)param).getComponentType(), ((PsiArrayType)arg).getComponentType(),
-                                                  patternType, constraintType);
+                                                  patternType, constraintType, captureWildcard);
     }
 
     if (param instanceof PsiClassType && arg instanceof PsiClassType) {
@@ -481,14 +489,16 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         final PsiTypeParameter typeParameter = iterator.next();
         PsiType paramType = paramResult.getSubstitutor().substitute(typeParameter);
         PsiType argType = argResult.getSubstitutor().substituteWithBoundsPromotion(typeParameter);
-        Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramType, argType, patternType, ConstraintType.EQUALS);
+
+        //Do not capture not a toplevel wildcard and won't capture it
+        Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramType, argType, patternType, ConstraintType.EQUALS, false);
+
         if (res != null) {
           PsiType type = res.getFirst();
           if (!(type instanceof PsiWildcardType)) return res;
-          if (wildcardCaptured != null) return null;
-          if (argType instanceof PsiWildcardType || argType instanceof PsiCapturedWildcardType) { //otherwise we got not a toplevel wildcard and won't capture it
-            wildcardCaptured = res;
-          }
+          if (!captureWildcard) return FAILED_INFERENCE;
+          if (wildcardCaptured != null) return FAILED_INFERENCE;
+          wildcardCaptured = res;
         }
       }
 
