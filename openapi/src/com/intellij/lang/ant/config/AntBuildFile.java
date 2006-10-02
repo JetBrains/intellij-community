@@ -42,4 +42,6 @@ public interface AntBuildFile {
   String getPresentableUrl();
 
   boolean isTargetVisible(final AntBuildTarget target);
+
+  boolean exists();
 }

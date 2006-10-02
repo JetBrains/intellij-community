@@ -212,7 +212,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
     final String fileName = buildFile.getPresentableUrl();
     final int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.reference.to.file.confirmation.text", fileName),
-                                          AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
+                                                AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
     if (result != 0) {
       return;
     }
@@ -245,7 +245,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       return false;
     }
     final AntBuildFile buildFile = getCurrentBuildFile();
-    if (buildFile == null) {
+    if (buildFile == null || !buildFile.exists()) {
       return false;
     }
     for (final TreePath path : paths) {
@@ -298,7 +298,9 @@ public class AntExplorer extends JPanel implements DataProvider {
   }
 
   public boolean isBuildFileSelected() {
-    return myProject != null && getCurrentBuildFile() != null;
+    if( myProject == null) return false;
+    final AntBuildFileBase file = getCurrentBuildFile();
+    return file != null && file.exists();
   }
 
   @Nullable
@@ -343,7 +345,8 @@ public class AntExplorer extends JPanel implements DataProvider {
     }
     if (userObject instanceof AntTargetNodeDescriptor) {
       final AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
-      final DefaultActionGroup executeOnGroup = new DefaultActionGroup(AntBundle.message("ant.explorer.execute.on.action.group.name"), true);
+      final DefaultActionGroup executeOnGroup =
+        new DefaultActionGroup(AntBundle.message("ant.explorer.execute.on.action.group.name"), true);
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteBeforeCompilationEvent.getInstance()));
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteAfterCompilationEvent.getInstance()));
       executeOnGroup.addSeparator();
@@ -375,7 +378,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       if (node == null) {
         return null;
       }
-      if (node.getUserObject()instanceof AntTargetNodeDescriptor) {
+      if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
         final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
         final AntBuildTargetBase buildTarget = targetNodeDescriptor.getTarget();
         final OpenFileDescriptor descriptor = buildTarget.getOpenFileDescriptor();
@@ -495,7 +498,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       else {
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null && paths.length == 1 &&
-            ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject()instanceof AntBuildFileNodeDescriptor) {
+            ((DefaultMutableTreeNode)paths[0].getLastPathComponent()).getUserObject() instanceof AntBuildFileNodeDescriptor) {
           presentation.setText(AntBundle.message("run.ant.build.action.name"));
         }
         else {
@@ -558,6 +561,12 @@ public class AntExplorer extends JPanel implements DataProvider {
       }
       myBuilder.refresh();
     }
+
+    public void update(AnActionEvent e) {
+      super.update(e);
+      final AntBuildFile buildFile = myTarget.getModel().getBuildFile();
+      e.getPresentation().setEnabled(buildFile != null && buildFile.exists());
+    }
   }
 
   private final class ExecuteBeforeRunAction extends AnAction {
@@ -574,6 +583,10 @@ public class AntExplorer extends JPanel implements DataProvider {
       final ExecuteOnRunDialog dialog = new ExecuteOnRunDialog(myProject, myTarget, myBuildFile);
       dialog.show();
       myBuilder.refresh();
+    }
+
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myBuildFile.exists());
     }
   }
 
@@ -633,7 +646,7 @@ public class AntExplorer extends JPanel implements DataProvider {
         // try to remove build file
         if (paths.length == 1) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[0].getLastPathComponent();
-          if (node.getUserObject()instanceof AntBuildFileNodeDescriptor) {
+          if (node.getUserObject() instanceof AntBuildFileNodeDescriptor) {
             final AntBuildFileNodeDescriptor descriptor = (AntBuildFileNodeDescriptor)node.getUserObject();
             if (descriptor.getBuildFile().equals(getCurrentBuildFile())) {
               removeBuildFile();
@@ -672,7 +685,7 @@ public class AntExplorer extends JPanel implements DataProvider {
         String text = AntBundle.message("remove.meta.target.action.name");
         boolean enabled = false;
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[0].getLastPathComponent();
-        if (node.getUserObject()instanceof AntBuildFileNodeDescriptor) {
+        if (node.getUserObject() instanceof AntBuildFileNodeDescriptor) {
           final AntBuildFileNodeDescriptor descriptor = (AntBuildFileNodeDescriptor)node.getUserObject();
           if (descriptor.getBuildFile().equals(getCurrentBuildFile())) {
             text = AntBundle.message("remove.selected.build.file.action.name");

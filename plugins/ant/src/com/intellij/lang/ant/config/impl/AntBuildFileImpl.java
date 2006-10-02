@@ -246,6 +246,18 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     return filter.isVisible();
   }
 
+  public boolean exists() {
+    final PsiFile psiFile = getAntFile();
+    if (psiFile == null) {
+      return false;
+    }
+    final VirtualFile file = psiFile.getVirtualFile();
+    if (file == null || !(new File(file.getPath()).exists())) {
+      return false;
+    }
+    return true;
+  }
+
   public void updateProperties() {
     final Map<String, AntBuildTarget> targetByName =
       ContainerUtil.assignKeys(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
