@@ -21,6 +21,18 @@ package com.intellij.testFramework.fixtures;
  * This is to be provided by IDEA and not by plugin authors.
  */
 public interface IdeaTestFixture {
+
+  /**
+   * Initializes the fixture.
+   * Typically, should be called from your TestCase.setUp() method.
+   * @throws Exception any exception thrown during initializing
+   */
   void setUp() throws Exception;
+
+  /**
+   * Destroys the fixture.
+   * Typically, should be called from your TestCase.tearDown() method.
+   * @throws Exception any exception thrown during destroying
+   */
   void tearDown() throws Exception;
 }
