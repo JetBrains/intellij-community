@@ -125,7 +125,7 @@ public abstract class DomFileDescription<T> {
    * @return set of files, whose DOM may change on changedRoot changes
    */
   @NotNull
-  public Set<XmlFile> getDomModelDependentFiles(DomFileElement changedRoot) {
+  public Set<XmlFile> getDomModelDependentFiles(@NotNull DomFileElement changedRoot) {
     return Collections.emptySet();
   }
 

@@ -12,27 +12,27 @@ public abstract class DomChangeAdapter extends DomEventAdapter {
 
   protected abstract void elementChanged(DomElement element);
 
-  public final void childAdded(CollectionElementAddedEvent event) {
+  public void childAdded(CollectionElementAddedEvent event) {
     elementChanged(event.getParent());
   }
 
-  public final void childRemoved(CollectionElementRemovedEvent event) {
+  public void childRemoved(CollectionElementRemovedEvent event) {
     elementChanged(event.getParent());
   }
 
-  public final void elementChanged(ElementChangedEvent event) {
+  public void elementChanged(ElementChangedEvent event) {
     elementChanged(event.getElement());
   }
 
-  public final void elementDefined(ElementDefinedEvent event) {
+  public void elementDefined(ElementDefinedEvent event) {
     elementChanged(event.getElement());
   }
 
-  public final void elementUndefined(ElementUndefinedEvent event) {
+  public void elementUndefined(ElementUndefinedEvent event) {
     elementChanged(event.getElement());
   }
 
-  public final void valueChanged(TagValueChangeEvent event) {
+  public void valueChanged(TagValueChangeEvent event) {
     elementChanged(event.getElement());
   }
 }

@@ -225,7 +225,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       LOG.error(e);
     }
 
-    myManager.fireEvent(new ElementDefinedEvent(getProxy()), true);
+    myManager.fireEvent(new ElementDefinedEvent(getProxy()));
     addRequiredChildren();
     return myXmlTag;
   }
@@ -316,7 +316,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   protected final void fireUndefinedEvent() {
-    myManager.fireEvent(new ElementUndefinedEvent(getProxy()), true);
+    myManager.fireEvent(new ElementUndefinedEvent(getProxy()));
   }
 
   protected abstract XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException;
@@ -723,7 +723,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     final XmlTag tag = addEmptyTag(tagName, index);
     final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, this);
     final DomElement element = handler.getProxy();
-    myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()), true);
+    myManager.fireEvent(new CollectionElementAddedEvent(element, tag.getName()));
     handler.addRequiredChildren();
     return element;
   }

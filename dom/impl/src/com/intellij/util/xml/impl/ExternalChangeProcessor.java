@@ -83,7 +83,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
 
   private void documentChanged(final XmlFile xmlFile) {
     myDocumentChanged = true;
-    final DomFileElementImpl element = myDomManager.getFileElement(xmlFile);
+    final DomFileElementImpl element = myDomManager.getCachedFileElement(xmlFile);
     if (element != null) {
       final DomInvocationHandler rootHandler = element.getRootHandler();
       rootHandler.detach(false);
@@ -91,7 +91,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
       if (rootTag != null) {
         rootHandler.attach(rootTag);
       }
-      element.getManager().fireEvent(new ElementChangedEvent(element.getRootElement()), true);
+      element.getManager().fireEvent(new ElementChangedEvent(element.getRootElement()));
     }
   }
 
