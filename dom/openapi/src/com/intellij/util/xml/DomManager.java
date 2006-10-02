@@ -33,26 +33,26 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
 
   public abstract Project getProject();
 
+  @Nullable
+  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> domClass);
+
+  @Nullable
+  @Deprecated
+  /**
+   * @deprecated use {@link #getFileElement(XmlFile, Class)}
+   */
+  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file);
+
   @NotNull
   @Deprecated
   /**
-   * @deprecated use DomFileDescription and getFileElement(XmlFile, Class)
+   * @deprecated use {@link #getFileElement(XmlFile, Class)}
    */
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
   public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
 
   public abstract DomGenericInfo getGenericInfo(Type type);
-
-  @Nullable
-  @Deprecated
-  /**
-   * @deprecated use DomFileDescription and getFileElement(XmlFile, Class)
-   */
-  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file);
-
-  @Nullable
-  public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> domClass);
 
   @Nullable
   public abstract DomElement getDomElement(final XmlTag element);
@@ -68,7 +68,8 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
    * Creates DOM element of needed type, that is wrapper around real DOM element. Once the wrapped element
    * becomes invalid, a new value is requested from provider parameter, so there's a possibility to
    * restore the functionality. The resulting element will also implement StableElement interface.
-   * @param provider
+   *
+   * @param provider provides values to be wrapped
    * @return stable DOM element
    */
   public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
