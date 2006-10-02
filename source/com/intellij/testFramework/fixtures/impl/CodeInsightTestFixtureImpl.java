@@ -7,8 +7,16 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,9 +31,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,10 +50,14 @@ import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,16 +65,23 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
+  @NonNls protected static final String PROFILE = "Configurable";
+
   private PsiManagerImpl myPsiManager;
   private PsiFile myFile;
   private Editor myEditor;
   private String myTestDataPath;
+
+  private LocalInspectionTool[] myInspections;
+  private Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
+  private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
   protected final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl() {
 
@@ -87,6 +106,10 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
   public String getTempDirPath() {
     return myTempDirFixture.getTempDirPath();
+  }
+
+  public void enableInspections(LocalInspectionTool... inspections) {
+    myInspections = inspections;
   }
 
   public void testHighlighting(final boolean checkWarnings,
@@ -167,6 +190,52 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   public void setUp() throws Exception {
     myProjectFixture.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
+    configureInspections(myInspections);
+  }
+
+  protected void enableInspectionTool(LocalInspectionTool tool){
+    final String shortName = tool.getShortName();
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null){
+      HighlightDisplayKey.register(shortName, tool.getDisplayName(), tool.getID());
+    }
+    myAvailableTools.put(shortName, tool);
+    myAvailableLocalTools.put(shortName, new LocalInspectionToolWrapper(tool));
+  }
+  
+  private void configureInspections(final LocalInspectionTool[] tools) {
+    for (LocalInspectionTool tool : tools) {
+      enableInspectionTool(tool);
+    }
+
+    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
+      public ModifiableModel getModifiableModel() {
+        mySource = this;
+        return this;
+      }
+
+      public InspectionProfileEntry[] getInspectionTools() {
+        final Collection<LocalInspectionToolWrapper> tools = myAvailableLocalTools.values();
+        return tools.toArray(new LocalInspectionToolWrapper[tools.size()]);
+      }
+
+      public boolean isToolEnabled(HighlightDisplayKey key) {
+        return key != null && myAvailableTools.containsKey(key.toString());
+      }
+
+      public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
+        final LocalInspectionTool localInspectionTool = myAvailableTools.get(key.toString());
+        return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
+      }
+
+      public InspectionTool getInspectionTool(String shortName) {
+        return myAvailableLocalTools.get(shortName);
+      }
+    };
+    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+    inspectionProfileManager.addProfile(profile);
+    inspectionProfileManager.setRootProfile(profile.getName());
+    InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
   }
 
   public void tearDown() throws Exception {
@@ -192,7 +261,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     String fullPath = getTestDataPath() + filePath;
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    TestCase.assertNotNull("file " + fullPath + " not found", vFile);
+    assert vFile != null: "file " + fullPath + " not found";
     configureByFile(vFile);
   }
 
@@ -211,7 +280,10 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     if (myFile == null) myFile = myPsiManager.findFile(copy);
     if (myEditor == null) {
       myEditor = createEditor(copy);
-      if (loader.caretMarker != null) myEditor.getCaretModel().moveToOffset(loader.caretMarker.getStartOffset());
+      assert myEditor != null;
+      if (loader.caretMarker != null) {
+        myEditor.getCaretModel().moveToOffset(loader.caretMarker.getStartOffset());
+      }
       if (loader.selStartMarker != null && loader.selEndMarker != null) {
         myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
       }
@@ -222,7 +294,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   protected Editor createEditor(VirtualFile file) {
     final Project project = getProject();
     final FileEditorManager instance = FileEditorManager.getInstance(project);
-    if (file.getFileType() != null && file.getFileType().isBinary()) {
+    if (file.getFileType().isBinary()) {
       return null;
     }
     return instance.openTextEditor(new OpenFileDescriptor(project, file, 0), false);
@@ -270,14 +342,13 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     action2.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
 
-/*
     Collection<HighlightInfo> highlights3 = null;
     if (myAvailableTools.size() > 0) {
-      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myProject, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
+      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(project, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
       inspectionsPass.doCollectInformation(new MockProgressIndicator());
       highlights3 = inspectionsPass.getHighlights();
     }
-*/
+
     ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights1) {
       list.add(info);
@@ -286,13 +357,13 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     for (HighlightInfo info : highlights2) {
       list.add(info);
     }
-/*
+
     if (highlights3 != null) {
       for (HighlightInfo info : highlights3) {
         list.add(info);
       }
     }
-*/
+
     return list;
   }
 
@@ -312,7 +383,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     return myFile;
   }
 
-  class SelectionAndCaretMarkupLoader {
+  static class SelectionAndCaretMarkupLoader {
     final String newFileText;
     final RangeMarker caretMarker;
     final RangeMarker selStartMarker;

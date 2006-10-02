@@ -17,15 +17,15 @@
 
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiFile;
 
 /**
  * @author Dmitry Avdeev
@@ -53,6 +53,14 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   void setTestDataPath(String dataPath);
 
   String getTempDirPath();
+
+  /**
+   * Enables inspections for highlighting tests.
+   * Should be called BEFORE {@link #setUp()} 
+   *
+   * @param inspections inspections to be enabled in highliting tests
+   */
+  void enableInspections(LocalInspectionTool... inspections);
 
   /**
    * Runs highliting test for the given files
