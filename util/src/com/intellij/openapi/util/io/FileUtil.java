@@ -31,12 +31,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
   private static final byte[] BUFFER = new byte[1024 * 20];
-
-  private FileUtil() {
-  }
 
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
