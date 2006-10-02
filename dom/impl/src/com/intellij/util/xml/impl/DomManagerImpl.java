@@ -197,7 +197,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         }
       }
     };
-    psiManager.addPsiTreeChangeListener(psiTreeChangeAdapter, project);
+    //psiManager.addPsiTreeChangeListener(psiTreeChangeAdapter, project);
 
     /*
     StdLanguages.XML.injectAnnotator(new Annotator() {
