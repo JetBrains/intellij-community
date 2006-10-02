@@ -29,7 +29,7 @@ public class WrapExpressionFix implements IntentionAction {
     PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
     PsiClass aClass = wrapper.getContainingClass();
     String methodPresentation = aClass.getName() + "." + wrapper.getName();
-    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", myExpression.getText(), methodPresentation);
+    return QuickFixBundle.message("wrap.expression.using.static.accessor.text", methodPresentation);
   }
 
   private static PsiMethod findWrapper(PsiType type, PsiClassType expectedType) {
