@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Sergey.Vasiliev
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 abstract public class DomElementsInspection extends LocalInspectionTool {
 
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isAcceptable(file)) {
       return findProblems(file, manager, isOnTheFly);
     }
@@ -41,10 +42,11 @@ abstract public class DomElementsInspection extends LocalInspectionTool {
   }
 
   @Nullable
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return null;
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
