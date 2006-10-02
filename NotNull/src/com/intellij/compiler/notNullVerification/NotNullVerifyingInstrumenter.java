@@ -58,7 +58,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         av = mv.visitParameterAnnotation(parameter,
                                          anno,
                                          visible);
-        if (args[parameter].getSort() == Type.OBJECT &&
+        if (isReferenceType(args[parameter]) &&
             anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
           myNotNullParams.add(new Integer(parameter));
         }
@@ -68,7 +68,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
       public AnnotationVisitor visitAnnotation(String anno,
                                                boolean isRuntime) {
         final AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
-        if (returnType.getSort() == Type.OBJECT &&
+        if (isReferenceType(returnType) &&
             anno.equals("Lorg/jetbrains/annotations/NotNull;")) {
           myIsNotNull = true;
         }
@@ -131,5 +131,9 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         myIsModification = true;
       }
     };
+  }
+
+  private boolean isReferenceType(final Type type) {
+    return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
   }
 }
