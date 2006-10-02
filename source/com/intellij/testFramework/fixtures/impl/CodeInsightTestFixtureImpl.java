@@ -190,7 +190,9 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   public void setUp() throws Exception {
     myProjectFixture.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-    configureInspections(myInspections);
+    if (myInspections != null) {
+      configureInspections(myInspections);
+    }
   }
 
   protected void enableInspectionTool(LocalInspectionTool tool){
