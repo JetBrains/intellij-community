@@ -120,14 +120,6 @@ public class TreeState implements JDOMExternalizable {
 
 
 
-    public boolean matchedWithByIndex(NodeDescriptor nodeDescriptor) {
-
-      return myItemIndex == nodeDescriptor.getIndex();
-
-    }
-
-
-
     public boolean matchedWithByObject(Object object) {
 
       return myUserObject != null && myUserObject.equals(object);
@@ -474,7 +466,11 @@ public class TreeState implements JDOMExternalizable {
 
     applyExpanded(tree, node);
 
-    applySelected(tree, node);
+    if (tree.getSelectionCount() == 0) {
+
+      applySelected(tree, node);
+
+    }
 
   }
 
