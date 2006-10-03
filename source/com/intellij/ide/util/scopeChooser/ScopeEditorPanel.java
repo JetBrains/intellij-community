@@ -509,6 +509,7 @@ public class ScopeEditorPanel {
           setIcon(node.getClosedIcon());
         }
 
+        setForeground(selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
         if (!selected && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }
