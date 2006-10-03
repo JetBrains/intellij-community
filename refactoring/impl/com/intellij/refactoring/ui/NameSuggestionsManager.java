@@ -57,7 +57,7 @@ public class NameSuggestionsManager {
     editor.getSelectionModel().removeSelection();
     LookupItemPreferencePolicy first = pair.first;
     LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, first, new CharFilter() {
-      public int accept(char c) {
+      public int accept(char c, final String prefix) {
         if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
         return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
       }

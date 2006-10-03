@@ -46,7 +46,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     }
 
     Lookup lookup = LookupManager.getInstance(project).showLookup(editor, items, prefix, null, new CharFilter() {
-      public int accept(char c) {
+      public int accept(char c, final String prefix) {
         if (isInPrefix(c)) return CharFilter.ADD_TO_PREFIX;
         return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
       }

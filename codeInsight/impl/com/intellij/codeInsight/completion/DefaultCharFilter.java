@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.Language;
@@ -55,8 +54,8 @@ public class DefaultCharFilter implements CharFilter {
     }
   }
 
-  public int accept(char c) {
-    if (myDelegate != null) return myDelegate.accept(c);
+  public int accept(char c, final String prefix) {
+    if (myDelegate != null) return myDelegate.accept(c, prefix);
 
     if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
     switch(c){

@@ -132,7 +132,7 @@ public class RenameDialog extends RefactoringDialog {
     editor.getCaretModel().moveToOffset(prefix.length());
     editor.getSelectionModel().removeSelection();
     LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, new CharFilter() {
-      public int accept(char c) {
+      public int accept(char c, final String prefix) {
         if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
         return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
       }

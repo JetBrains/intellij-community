@@ -14,7 +14,7 @@ public class XmlCharFilter implements CharFilter {
   public XmlCharFilter() {
   }
 
-  public int accept(char c) {
+  public int accept(char c, final String prefix) {
     if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
     switch(c){
       case ':':
@@ -26,6 +26,9 @@ public class XmlCharFilter implements CharFilter {
       case '=':
       case '(':
 
+      case '>': if (prefix != null && prefix.length() > 0) {
+        return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
       default:
         return CharFilter.HIDE_LOOKUP;
       case ' ':

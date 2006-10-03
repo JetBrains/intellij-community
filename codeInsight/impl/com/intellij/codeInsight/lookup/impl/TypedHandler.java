@@ -31,7 +31,7 @@ class TypedHandler implements TypedActionHandler {
     }
 
     CharFilter charFilter = lookup.getCharFilter();
-    final int result = charFilter.accept(charTyped);
+    final int result = charFilter.accept(charTyped, lookup.getPrefix());
 
     CommandProcessor.getInstance().executeCommand(
         (Project)dataContext.getData(DataConstants.PROJECT), new Runnable() {

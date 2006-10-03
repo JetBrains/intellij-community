@@ -13,5 +13,11 @@ public interface CharFilter {
   int SELECT_ITEM_AND_FINISH_LOOKUP = 1;
   int HIDE_LOOKUP = 2;
 
-  int accept(char c);
+  /**
+   * Informs about further action on typing character c when completion lookup has specified prefix
+   * @param c character being inserted
+   * @param prefix current completion prefix
+   * @return one of above constants
+   */
+  int accept(char c, final String prefix);
 }
