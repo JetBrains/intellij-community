@@ -6,7 +6,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.util.text.SyncDateFormat;
-import com.intellij.util.ui.SelectDateDialog;
+import com.michaelbaranov.microba.calendar.DatePicker;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -14,8 +14,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.beans.PropertyVetoException;
 
 /**
  * author: lesya
@@ -24,16 +26,13 @@ public class DateOrRevisionOrTagSettings {
 
   @NonNls private static final String FORMAT = "EEE MMM dd HH:mm:ss yyyy";
   private static final SyncDateFormat CVS_FORMAT = new SyncDateFormat(new SimpleDateFormat(FORMAT, Locale.US));
-  private static final SyncDateFormat PRESENTABLE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT,
-                                                                                                                   SimpleDateFormat.SHORT,
-                                                                                                                   Locale.getDefault()));
 
   private JRadioButton myUseBranch;
   private JRadioButton myUseDate;
   private JRadioButton myUseHead;
   private TextFieldWithBrowseButton myBranch;
-  private TextFieldWithBrowseButton myDate;
   private JPanel myPanel;
+  private DatePicker myDatePicker;
   private final Project myProject;
 
   private TagsProvider myTagsProvider;
@@ -42,11 +41,7 @@ public class DateOrRevisionOrTagSettings {
   public DateOrRevisionOrTagSettings(TagsProvider tagsProvider, Project project, final boolean forTemporaryConfiguration) {
     myTagsProvider = tagsProvider;
     myProject = project;
-
-    ButtonGroup mergingGroup = new ButtonGroup();
-    mergingGroup.add(myUseBranch);
-    mergingGroup.add( myUseDate);
-    mergingGroup.add( myUseHead);
+    myDatePicker.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
 
     myUseBranch.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -71,7 +66,7 @@ public class DateOrRevisionOrTagSettings {
         }
         refreshEnabling();
         if (myUseDate.isEnabled()){
-          myDate.getButton().requestFocus();
+          myDatePicker.requestFocus();
         }
 
       }
@@ -83,29 +78,16 @@ public class DateOrRevisionOrTagSettings {
         if (tagName != null) myBranch.setText(tagName);
       }
     });
-
-    myDate.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        chooseDate();
-      }
-    });
-
     refreshEnabling();
   }
 
-  private boolean chooseDate() {
-    SelectDateDialog selectDateDialog = new SelectDateDialog(myProject);
-    selectDateDialog.setDate(getDate());
-    selectDateDialog.show();
-    if (selectDateDialog.isOK()) {
-      setDate(selectDateDialog.getDate());
-      return true;
-    }
-    return false;
-  }
-
   private void setDate(Date date) {
-    myDate.setText(PRESENTABLE_FORMAT.format(date));
+    try {
+      myDatePicker.setDate(date);
+    }
+    catch (PropertyVetoException e) {
+      // ignore
+    }
   }
 
   public void updateFrom(DateOrRevisionSettings settings) {
@@ -129,17 +111,7 @@ public class DateOrRevisionOrTagSettings {
   }
 
   private String getDateString() {
-    String dateString = getDateStringValue();
-    if (dateString.length() > 0) {
-      return CVS_FORMAT.format(getDate());
-    }
-    else {
-      return "";
-    }
-  }
-
-  private String getDateStringValue() {
-    return myDate.getText();
+    return CVS_FORMAT.format(myDatePicker.getDate());
   }
 
   private void refreshEnabling() {
@@ -150,28 +122,25 @@ public class DateOrRevisionOrTagSettings {
     myBranch.setEnabled(useBranch);
     myBranch.setEditable(useBranch);
 
-    myDate.getTextField().setEditable(false);
-    myDate.setEnabled(useDate);
+    myDatePicker.setEnabled(useDate);
 
-    myDate.getButton().setEnabled(useDate);
     myBranch.getButton().setEnabled(useBranch);
   }
 
   private void updateDate(String dateString) {
+    final Date date;
     try {
-      myDate.setText(PRESENTABLE_FORMAT.format(CVS_FORMAT.parse(dateString)));
+      date = CVS_FORMAT.parse(dateString);
     }
     catch (ParseException e) {
-      myDate.setText("");
+      // ignore
+      return;
     }
-  }
-
-  private Date getDate() {
     try {
-      return PRESENTABLE_FORMAT.parse(getDateStringValue());
+      myDatePicker.setDate(date);
     }
-    catch (ParseException e) {
-      return new Date();
+    catch (PropertyVetoException e) {
+      // ignore
     }
   }
 
