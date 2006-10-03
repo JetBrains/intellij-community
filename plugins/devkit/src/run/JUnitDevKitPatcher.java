@@ -18,8 +18,10 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.module.Module;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -29,7 +31,7 @@ import java.io.File;
  */
 public class JUnitDevKitPatcher extends JUnitPatcher{
 
-  public void patchJavaParameters(JavaParameters javaParameters) {
+  public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
     final ProjectJdk jdk = javaParameters.getJdk();
     if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
       return;
