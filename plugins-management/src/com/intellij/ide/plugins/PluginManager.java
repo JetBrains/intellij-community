@@ -55,6 +55,7 @@ public class PluginManager {
   @NonNls private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
+  private static String myPluginError = null;
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -322,12 +323,19 @@ public class PluginManager {
     }
     if (errorMessage != null) {
       if (!Main.isHeadless()) {
-        JOptionPane.showMessageDialog(null, errorMessage, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
+        myPluginError = errorMessage;
       } else {
         getLogger().error(errorMessage);
       }
     }
     return pluginDescriptors;
+  }
+
+  public static synchronized void reportPluginError() {
+    if (myPluginError != null) {
+      JOptionPane.showMessageDialog(null, myPluginError, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
+      myPluginError = null;
+    }
   }
 
   private static void loadDescriptorsFromProperty(final List<IdeaPluginDescriptorImpl> result) {

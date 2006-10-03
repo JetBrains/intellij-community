@@ -4,6 +4,7 @@ import com.incors.plaf.alloy.*;
 import com.intellij.ExtensionPoints;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.*;
@@ -134,6 +135,8 @@ public class IdeaApplication {
         public void run() {
           mySplash.dispose();
           mySplash = null; // Allow GC collect the splash window
+
+          PluginManager.reportPluginError();
 
           if (myPerformProjectLoad) {
             loadProject();
