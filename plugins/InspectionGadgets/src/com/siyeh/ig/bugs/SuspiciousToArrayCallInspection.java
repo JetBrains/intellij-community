@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Bas Leijdekkers
+ * Copyright 2005-2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,16 @@ import org.jetbrains.annotations.NotNull;
 
 public class SuspiciousToArrayCallInspection extends StatementInspection {
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.BUGS_GROUP_NAME;
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "suspicious.to.array.call.display.name");
     }
-
 
     @NotNull
     protected String buildErrorString(Object... infos) {
@@ -100,21 +101,31 @@ public class SuspiciousToArrayCallInspection extends StatementInspection {
                     return;
                 }
                 final PsiType parameter = parameters[0];
+                final PsiType type;
+                if (parameter instanceof PsiWildcardType) {
+                    final PsiWildcardType wildcardType = (PsiWildcardType)parameter;
+                    type = wildcardType.getBound();
+                } else if (parameter instanceof PsiClassType) {
+                    final PsiClassType classType = (PsiClassType)parameter;
+                    type = classType.rawType();
+                } else {
+                    type = parameter;
+                }
                 final PsiType componentType = arrayType.getComponentType();
-                if (!parameter.equals(componentType)) {
-                    registerError(argument, parameter);
+                if (!type.equals(componentType)) {
+                    registerError(argument, type);
                 }
             } else {
                 final PsiElement parent = expression.getParent();
                 if (!(parent instanceof PsiTypeCastExpression)) {
-                    return ;
+                    return;
                 }
                 final PsiTypeCastExpression castExpression =
                         (PsiTypeCastExpression)parent;
                 final PsiTypeElement castTypeElement =
                         castExpression.getCastType();
                 if (castTypeElement == null) {
-                    return ;
+                    return;
                 }
                 final PsiType castType = castTypeElement.getType();
                 if (!castType.equals(arrayType)) {
