@@ -500,6 +500,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     public void dispose() {
       if (myWindowListener != null) {
+        myWindowListener.saveSize();
         removeWindowListener(myWindowListener);
         myWindowListener = null;
       }
@@ -547,7 +548,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       public void windowClosed(WindowEvent e) {
-        if (myDimensionServiceKey != null && myInitialSize != null) { // myInitialSize can be null only if dialog is disposed before first showing
+        saveSize();
+      }
+
+      public void saveSize() {
+        if (myDimensionServiceKey != null && myInitialSize != null && myOpened) { // myInitialSize can be null only if dialog is disposed before first showing
           final Project projectGuess = (Project)DataManager.getInstance().getDataContext(MyDialog.this).getData(DataConstants.PROJECT);
 
           // Save location
