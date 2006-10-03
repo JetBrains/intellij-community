@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +24,8 @@ import java.util.List;
 public class AntDuplicateTargetsInspection extends AntInspection {
 
   @NonNls private static final String SHORT_NAME = "AntDuplicateTargetsInspection";
+
+  public boolean IMPORTED_TARGETS = false;
 
   @Nls
   @NotNull
@@ -54,15 +60,17 @@ public class AntDuplicateTargetsInspection extends AntInspection {
             }
             name2Target.put(name, target);
           }
-          final AntTarget[] importedTargets = project.getImportedTargets();
-          for (final AntTarget target : importedTargets) {
-            final String name = target.getName();
-            final AntTarget t = name2Target.get(name);
-            if (t != null) {
-              final String duplicatedMessage =
-                AntBundle.message("target.is.duplicated.in.imported.file", name, target.getAntFile().getName());
-              problems
-                .add(manager.createProblemDescriptor(t, duplicatedMessage, EMPTY_FIXES, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          if (IMPORTED_TARGETS) {
+            final AntTarget[] importedTargets = project.getImportedTargets();
+            for (final AntTarget target : importedTargets) {
+              final String name = target.getName();
+              final AntTarget t = name2Target.get(name);
+              if (t != null) {
+                final String duplicatedMessage =
+                  AntBundle.message("target.is.duplicated.in.imported.file", name, target.getAntFile().getName());
+                problems
+                  .add(manager.createProblemDescriptor(t, duplicatedMessage, EMPTY_FIXES, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+              }
             }
           }
           final int prolemCount = problems.size();
@@ -73,5 +81,19 @@ public class AntDuplicateTargetsInspection extends AntInspection {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public JComponent createOptionsPanel() {
+    final JPanel panel = new JPanel(new BorderLayout());
+    final JCheckBox imported_targets = new JCheckBox(AntBundle.message("ant.inspection.duplicate.targets.check.imported"), IMPORTED_TARGETS);
+    final ActionListener listener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        IMPORTED_TARGETS = imported_targets.isSelected();
+      }
+    };
+    imported_targets.addActionListener(listener);
+    panel.add(imported_targets, BorderLayout.NORTH);
+    return panel;
   }
 }
