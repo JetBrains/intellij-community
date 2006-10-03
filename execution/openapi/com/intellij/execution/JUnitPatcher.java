@@ -18,6 +18,8 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -41,5 +43,13 @@ public abstract class JUnitPatcher implements PluginAware {
     return myPlugin;
   }
 
-  public abstract void patchJavaParameters(JavaParameters javaParameters);
+  /**
+   * @deprecated override {@link #patchJavaParameters(Module, JavaParameters)} instead
+   */
+  public void patchJavaParameters(JavaParameters javaParameters) {
+  }
+
+  public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
+    patchJavaParameters(javaParameters);
+  }
 }
