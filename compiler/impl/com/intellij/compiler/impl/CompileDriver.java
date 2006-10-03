@@ -685,17 +685,17 @@ public class CompileDriver {
 
   private static void pruneEmptyDirectories(final Set<File> directories) {
     for (File directory : directories) {
-      doPrune(directory);
+      doPrune(directory, directories);
     }
   }
 
-  private static boolean doPrune(final File directory) {
+  private static boolean doPrune(final File directory, final Set<File> outPutDirectories) {
     final File[] files = directory.listFiles();
     boolean isEmpty = true;
     if (files != null) {
       for (File file : files) {
-        if (file.isDirectory()) {
-          if (doPrune(file)) {
+        if (file.isDirectory() && !outPutDirectories.contains(file)) {
+          if (doPrune(file, outPutDirectories)) {
             file.delete();
           } else {
             isEmpty = false;
