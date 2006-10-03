@@ -18,6 +18,8 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.ConstantExpressionUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpressionUtils {
@@ -39,5 +41,27 @@ public class ExpressionUtils {
         }
         final String text = expression.getText();
         return PsiKeyword.NULL.equals(text);
+    }
+
+    public static boolean isZero(PsiExpression expression) {
+        final PsiType expressionType = expression.getType();
+        final Object value =
+                ConstantExpressionUtil.computeCastTo(expression, expressionType);
+        if(value == null){
+            return false;
+        }
+        if(value instanceof Integer && ((Integer) value) == 0){
+            return true;
+        }
+        if(value instanceof Long && ((Long) value) == 0L){
+            return true;
+        }
+        if(value instanceof Short && ((Short) value) == 0){
+            return true;
+        }
+        if(value instanceof Character && ((Character) value) == 0){
+            return true;
+        }
+        return value instanceof Byte && ((Byte) value) == 0;
     }
 }
