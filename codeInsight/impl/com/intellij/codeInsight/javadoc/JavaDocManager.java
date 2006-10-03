@@ -308,6 +308,7 @@ public class JavaDocManager implements ProjectComponent {
     fetchDocInfo(getDefaultProvider(element), component);
 
     myDocInfoHintRef = new WeakReference<JBPopup>(hint);
+    myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
 
     return hint;
   }
