@@ -10,7 +10,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -20,7 +21,6 @@ import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -452,6 +452,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
     if (file == null) return null;
+    if (!StdFileTypes.XML.equals(file.getFileType())) return null;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.isDirectory()) return null;
     synchronized (PsiLock.LOCK) {
@@ -462,6 +463,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   @Nullable
   final <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(XmlFile file) {
     if (file == null) return null;
+    if (!StdFileTypes.XML.equals(file.getFileType())) return null;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.isDirectory()) return null;
     synchronized (PsiLock.LOCK) {
@@ -527,7 +529,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   public final DomFileDescription getDomFileDescription(PsiElement element) {
     if (element instanceof XmlElement) {
       final PsiFile psiFile = element.getContainingFile();
-      if (psiFile instanceof XmlFile && !(psiFile instanceof JspFile)) {
+      if (psiFile instanceof XmlFile) {
         return getDomFileDescription((XmlFile)psiFile);
       }
     }
