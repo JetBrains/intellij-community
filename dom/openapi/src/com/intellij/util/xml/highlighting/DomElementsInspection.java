@@ -1,50 +1,48 @@
 /*
- * Copyright 2000-2006 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.ArrayUtil;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * User: Sergey.Vasiliev
+ * @author Dmitry Avdeev
  */
-abstract public class DomElementsInspection extends LocalInspectionTool {
+public abstract class DomElementsInspection<T extends DomElement> extends LocalInspectionTool {
+
+  private final Class<? extends T>[] myDomClasses;
+
+  public DomElementsInspection(Class<? extends T> domClass, @NotNull Class<? extends T>... additonalClasses) {
+    myDomClasses = ArrayUtil.append(additonalClasses, domClass);
+  }
 
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (isAcceptable(file)) {
-      return findProblems(file, manager, isOnTheFly);
+    if (file instanceof XmlFile) {
+      for (Class<? extends T> domClass: myDomClasses) {
+        final DomFileElement<? extends T> fileElement = DomManager.getDomManager(file.getProject()).getFileElement((XmlFile)file, domClass);
+        if (fileElement != null) {
+          return checkDomFile((DomFileElement<T>)fileElement, manager, isOnTheFly);
+        }
+      }
     }
-
-    return super.checkFile(file, manager, isOnTheFly);
+    return null;
   }
 
   @Nullable
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return null;
-  }
+  protected abstract ProblemDescriptor[] checkDomFile(@NotNull DomFileElement<T> fileElement, @NotNull InspectionManager manager, boolean isOnTheFly);
 
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
@@ -54,7 +52,4 @@ abstract public class DomElementsInspection extends LocalInspectionTool {
   public boolean isEnabledByDefault() {
     return true;
   }
-
-  abstract protected boolean isAcceptable(final PsiFile file);
-  abstract protected ProblemDescriptor[] findProblems(final PsiFile file, final InspectionManager manager, final boolean onTheFly);
 }
