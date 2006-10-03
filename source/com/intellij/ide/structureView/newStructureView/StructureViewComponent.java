@@ -146,12 +146,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   private static PsiElement[] filterPsiElements(Object[] selectedElements) {
-    ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
-
-    if (selectedElements == null)
-    {
+    if (selectedElements == null) {
       return null;
     }
+    ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
+
     for (Object selectedElement : selectedElements) {
       if (selectedElement instanceof PsiElement) {
         psiElements.add((PsiElement)selectedElement);

@@ -212,7 +212,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         result.add((PsiElement)element);
       }
       else if (element instanceof SmartPsiElementPointer) {
-        result.add(((SmartPsiElementPointer)element).getElement());
+        PsiElement psiElement = ((SmartPsiElementPointer)element).getElement();
+        if (psiElement != null) {
+          result.add(psiElement);
+        }
       }
     }
     return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);

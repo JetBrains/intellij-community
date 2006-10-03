@@ -537,7 +537,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         String clipString = getStringContent(content);
         String datasString = null;
 
-        if (myDatas.size() > 0) {
+        if (!myDatas.isEmpty()) {
           datasString = getStringContent(myDatas.get(0));
         }
 
@@ -557,7 +557,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     boolean isCurrentClipboardContent = myDatas.indexOf(t) == 0;
     myDatas.remove(t);
     if (isCurrentClipboardContent) {
-      if (myDatas.size() > 0) {
+      if (!myDatas.isEmpty()) {
         setSystemClipboardContent(myDatas.get(0));
       }
       else {
