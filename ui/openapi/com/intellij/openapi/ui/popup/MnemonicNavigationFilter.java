@@ -4,6 +4,8 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 public interface MnemonicNavigationFilter<T> {
@@ -12,5 +14,6 @@ public interface MnemonicNavigationFilter<T> {
 
   String getTextFor(T value);
 
+  @NotNull
   List<T> getValues();
 }

@@ -43,7 +43,7 @@ public class SelectInAction extends AnAction {
   private static void invoke(DataContext dataContext, SelectInContext context) {
     final List<SelectInTarget> targetVector = Arrays.asList(getSelectInManager(context.getProject()).getTargets());
     ListPopup popup;
-    if (targetVector.size() == 0) {
+    if (targetVector.isEmpty()) {
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(new NoTargetsAction());
       popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("title.popup.select.target"), group, dataContext,
@@ -107,7 +107,7 @@ public class SelectInAction extends AnAction {
       }
     }
 
-    public TopLevelActionsStep(final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
+    public TopLevelActionsStep(@NotNull final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
       mySelectInContext = selectInContext;
       myVirtualFile = virtualFile;
       myProjectViewTargets = new ArrayList<SelectInTarget>();
@@ -184,7 +184,7 @@ public class SelectInAction extends AnAction {
 
     private final VirtualFile myVirtualFile;
 
-    public SelectActionStep(final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
+    public SelectActionStep(@NotNull final List<SelectInTarget> targetVector, SelectInContext selectInContext, VirtualFile virtualFile) {
       mySelectInContext = selectInContext;
       myTargets = targetVector;
       myVirtualFile = virtualFile;

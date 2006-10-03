@@ -193,7 +193,8 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
  
   public RelativePoint guessBestPopupLocation(DataContext dataContext) {
     KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    JComponent focusOwner=(JComponent)focusManager.getFocusOwner();
+    Component component = focusManager.getFocusOwner();
+    JComponent focusOwner=component instanceof JComponent ? (JComponent)component : null;
 
     if (focusOwner == null) {
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
@@ -422,7 +423,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     private boolean myEnableMnemonics;
     private int myDefaultOptionIndex;
 
-    public ActionPopupStep(final ArrayList<ActionItem> items,
+    public ActionPopupStep(@NotNull final ArrayList<ActionItem> items,
                            final String title,
                            Component context,
                            boolean enableMnemonics,
@@ -434,6 +435,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
       myDefaultOptionIndex = defaultOptionIndex;
     }
 
+    @NotNull
     public List<ActionItem> getValues() {
       return myItems;
     }
