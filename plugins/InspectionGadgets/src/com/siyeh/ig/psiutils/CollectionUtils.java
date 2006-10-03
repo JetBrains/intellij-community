@@ -287,11 +287,15 @@ public class CollectionUtils{
         return "java.util.WeakHashMap".equals(typeText);
     }
 
-    public static boolean isConstantArrayOfZeroSize(@NotNull PsiField field){
+    public static boolean isConstantEmptyArray(@NotNull PsiField field){
         if(!field.hasModifierProperty(PsiModifier.STATIC) ||
                 !field.hasModifierProperty(PsiModifier.FINAL)){
             return false;
         }
+        return isEmptyArray(field);
+    }
+
+    public static boolean isEmptyArray(PsiField field) {
         final PsiExpression initializer = field.getInitializer();
         if (initializer instanceof PsiArrayInitializerExpression) {
             final PsiArrayInitializerExpression arrayInitializerExpression =
@@ -329,7 +333,7 @@ public class CollectionUtils{
         if (!isCollectionClassOrInterface(type)) {
             if (type instanceof PsiArrayType) {
                 // constants empty arrays are ignored.
-                return !isConstantArrayOfZeroSize(field);
+                return !isConstantEmptyArray(field);
             }
             return false;
         }

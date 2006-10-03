@@ -28,11 +28,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class PublicStaticArrayFieldInspection extends FieldInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "public.static.array.field.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.SECURITY_GROUP_NAME;
     }
@@ -62,7 +64,7 @@ public class PublicStaticArrayFieldInspection extends FieldInspection {
             if (!(type instanceof PsiArrayType)) {
                 return;
             }
-            if (CollectionUtils.isConstantArrayOfZeroSize(field)) {
+            if (CollectionUtils.isConstantEmptyArray(field)) {
                 return;
             }
             registerFieldError(field);
