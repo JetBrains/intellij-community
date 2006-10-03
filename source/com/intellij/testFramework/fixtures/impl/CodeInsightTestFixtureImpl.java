@@ -33,6 +33,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -112,22 +113,24 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     myInspections = inspections;
   }
 
-  public void testHighlighting(final boolean checkWarnings,
+  public long testHighlighting(final boolean checkWarnings,
                                final boolean checkInfos,
                                final boolean checkWeakWarnings,
                                final String... filePaths) throws Throwable {
 
+    final Ref<Long> duration = new Ref<Long>();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
         configureByFiles(filePaths);
-        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings);
+        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
       }
     }.execute().throwException();
+    return duration.get().longValue();
   }
 
-  public void testHighlighting(final String... filePaths) throws Throwable {
-    testHighlighting(true, true, true, filePaths);
+  public long testHighlighting(final String... filePaths) throws Throwable {
+    return testHighlighting(true, true, true, filePaths);
   }
 
   @NotNull
@@ -141,12 +144,9 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
         final Collection<HighlightInfo> infos = doHighlighting();
         for (HighlightInfo info :infos) {
-          final int startOffset = info.fixStartOffset;
-          final int endOffset = info.fixEndOffset;
           if (info.quickFixActionRanges != null) {
             for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
               IntentionAction action = pair.first.getAction();
-              TextRange range = pair.second;
               if (action.isAvailable(project, myEditor, myFile)) {
                 availableActions.add(action);
                 if (pair.first.getOptions() != null) {
@@ -302,7 +302,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     return instance.openTextEditor(new OpenFileDescriptor(project, file, 0), false);
   }
 
-  protected Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
+  protected Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration) {
     final Project project = getProject();
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
 
@@ -320,7 +320,9 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     };
     myPsiManager.setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
 
+    final long start = System.currentTimeMillis();
     Collection<HighlightInfo> infos = doHighlighting();
+    duration.set(System.currentTimeMillis() - start);
 
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 

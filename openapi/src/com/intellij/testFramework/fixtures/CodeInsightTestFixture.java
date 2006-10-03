@@ -66,12 +66,12 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * Runs highliting test for the given files
    * Checks for {@link #ERROR_MARKER} markers by default
    *
-   * @param filePaths the first file is tested only; the others are just copied along the first
    * @param checkWarnings enables {@link #WARNING_MARKER} support
    * @param checkInfos enables {@link #INFO_MARKER} support
    * @param checkWeakWarnings enables {@link #INFORMATION_MARKER} support
+   * @param filePaths the first file is tested only; the others are just copied along the first
    */
-  void testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String... filePaths) throws Throwable;
+  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String... filePaths) throws Throwable;
 
   /**
    * Runs highliting test for the given files.
@@ -79,7 +79,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    *
    * @param filePaths the first file is tested only; the others are just copied along the first
    */
-  void testHighlighting(String... filePaths) throws Throwable;
+  long testHighlighting(String... filePaths) throws Throwable;
 
   @NotNull
   Collection<IntentionAction> getAvailableIntentions(String... filePaths) throws Throwable;
