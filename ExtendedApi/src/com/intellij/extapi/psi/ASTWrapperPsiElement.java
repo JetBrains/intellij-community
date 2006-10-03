@@ -125,6 +125,9 @@ public class ASTWrapperPsiElement extends PsiElementBase {
     return myNode;
   }
 
+  public void subtreeChanged() {
+  }
+
   @NotNull
   public Language getLanguage() {
     return myNode.getElementType().getLanguage();

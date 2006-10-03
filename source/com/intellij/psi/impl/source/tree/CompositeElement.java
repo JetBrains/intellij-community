@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
@@ -128,6 +129,13 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public void subtreeChanged() {
     clearCaches();
+    if (!(this instanceof PsiElement)) {
+      final PsiElement psi = getPsi();
+      if (psi instanceof ASTWrapperPsiElement) {
+        ((ASTWrapperPsiElement)psi).subtreeChanged();
+      }
+    }
+    
     CompositeElement treeParent = getTreeParent();
     if (treeParent != null) treeParent.subtreeChanged();
   }
