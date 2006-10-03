@@ -25,18 +25,17 @@ import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import gnu.trove.THashMap;
 
 public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiClass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
@@ -157,7 +156,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     final ProjectFileIndex idx = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
 
     if (!idx.isInLibrarySource(vFile)) return this;
-    final Set<OrderEntry> orderEntries = new HashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
+    final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
     PsiClass original = myManager.findClass(getQualifiedName(), new GlobalSearchScope() {
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
@@ -165,10 +164,13 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
       public boolean contains(VirtualFile file) {
         // order for file and vFile has non empty intersection.
-        Set<OrderEntry> entries = new HashSet<OrderEntry>(idx.getOrderEntriesForFile(file));
-        int size = entries.size();
-        entries.addAll(orderEntries);
-        return size + orderEntries.size() > entries.size();
+        List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < entries.size(); i++) {
+          final OrderEntry entry = entries.get(i);
+          if (orderEntries.contains(entry)) return true;
+        }
+        return false;
       }
 
       public boolean isSearchInModuleContent(Module aModule) {

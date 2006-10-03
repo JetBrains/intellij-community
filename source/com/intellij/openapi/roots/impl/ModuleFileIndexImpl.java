@@ -12,11 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Query;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ModuleFileIndexImpl implements ModuleFileIndex {
@@ -93,9 +92,11 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     if (dir == null) return Collections.emptyList();
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return Collections.emptyList();
-    final Collection<OrderEntry> orderEntries = info.getOrderEntries();
-    List<OrderEntry> result = new LinkedList<OrderEntry>();
-    for (OrderEntry orderEntry : orderEntries) {
+    final List<OrderEntry> orderEntries = info.getOrderEntries();
+    List<OrderEntry> result = new SmartList<OrderEntry>();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < orderEntries.size(); i++) {
+      final OrderEntry orderEntry = orderEntries.get(i);
       if (orderEntry.getOwnerModule() == myModule) {
         result.add(orderEntry);
       }
@@ -108,8 +109,10 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     if (dir == null) return null;
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return null;
-    final Collection<OrderEntry> orderEntries = info.getOrderEntries();
-    for (OrderEntry orderEntry : orderEntries) {
+    final List<OrderEntry> orderEntries = info.getOrderEntries();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < orderEntries.size(); i++) {
+      final OrderEntry orderEntry = orderEntries.get(i);
       if (orderEntry.getOwnerModule() == myModule) return orderEntry;
     }
     return null;

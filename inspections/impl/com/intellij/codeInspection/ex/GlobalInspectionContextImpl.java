@@ -756,6 +756,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       return;
     }
 
+    LOG.info("Code inspection finished");
+
     InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(), scope, this);
     if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
       Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
@@ -845,13 +847,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final Set<InspectionTool> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
     if (RUN_WITH_EDITOR_PROFILE || (currentProfileLocalTools != null && currentProfileLocalTools.size() > 0)) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
+      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
       scope.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
         }
 
         @Override
         public void visitFile(PsiFile file) {
-          final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
           InspectionProfile profile;
           if (RUN_WITH_EDITOR_PROFILE) {
             profile = profileManager.getInspectionProfile(file);
@@ -864,19 +866,19 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(LOCAL_ANALYSIS, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
           }
           final Set<InspectionTool> tools = localTools.get(profile.getName());
-          for (InspectionTool tool : tools) {
-            try {
+          try {
+            for (InspectionTool tool : tools) {
               ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
             }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Exception e) {
-              //LOG.error("Problem file: " + file.getVirtualFile().getPresentableUrl());
-              LOG.error(e);
-            }
-            psiManager.dropResolveCaches();
           }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            //LOG.error("Problem file: " + file.getVirtualFile().getPresentableUrl());
+            LOG.error(e);
+          }
+          psiManager.dropResolveCaches();
         }
       });
     }
