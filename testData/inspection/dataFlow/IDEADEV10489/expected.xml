@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>IDEADEV10489.java</file>
+    <line>10</line>
+    <description>Method invocation 's.length()' may produce NullPointerException</description>
+  </problem>
+  <problem>
+    <file>IDEADEV10489.java</file>
+    <line>12</line>
+    <description>Method invocation 's.length()' may produce NullPointerException</description>
+  </problem>
+</problems>

@@ -125,4 +125,5 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testBoxingBoolean() throws Exception { doTest15();}
 
   public void testCheckedExceptionDominance() throws Exception { doTest15();}
+  public void testIDEADEV10489() throws Exception { doTest15();}
 }

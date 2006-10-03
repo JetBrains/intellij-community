@@ -28,6 +28,7 @@ public abstract class SdkType {
   /**
    * @return path to set up filechooser to or null if not applicable
    */
+  @Nullable
   public abstract String suggestHomePath();
 
   public abstract boolean isValidSdkHome(String path);

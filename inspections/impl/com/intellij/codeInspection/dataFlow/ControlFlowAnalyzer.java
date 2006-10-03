@@ -1172,24 +1172,43 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     pushUnknown();
 
-    final PsiExpressionList args = expression.getArgumentList();
-    PsiMethod ctr = expression.resolveConstructor();
-    if (args != null) {
-      PsiExpression[] params = args.getExpressions();
-      PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
-      for (int i = 0; i < params.length; i++) {
-        PsiExpression param = params[i];
-        param.accept(this);
-        if (parameters != null && i < parameters.length) {
-          generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
+    if (expression.getType() instanceof PsiArrayType) {
+      final PsiExpression[] dimensions = expression.getArrayDimensions();
+      for (final PsiExpression dimension : dimensions) {
+        dimension.accept(this);
+      }
+      for (int i = 0; i < dimensions.length; i++) {
+        addInstruction(new PopInstruction());
+      }
+      final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
+      if (arrayInitializer != null) {
+        for (final PsiExpression initializer : arrayInitializer.getInitializers()) {
+          initializer.accept(this);
+          addInstruction(new PopInstruction());
         }
       }
+      addInstruction(new MethodCallInstruction(expression, myFactory));
     }
+    else {
+      final PsiExpressionList args = expression.getArgumentList();
+      PsiMethod ctr = expression.resolveConstructor();
+      if (args != null) {
+        PsiExpression[] params = args.getExpressions();
+        PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
+        for (int i = 0; i < params.length; i++) {
+          PsiExpression param = params[i];
+          param.accept(this);
+          if (parameters != null && i < parameters.length) {
+            generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
+          }
+        }
+      }
 
-    addInstruction(new MethodCallInstruction(expression, myFactory));
+      addInstruction(new MethodCallInstruction(expression, myFactory));
 
-    if (!myCatchStack.isEmpty()) {
-      addMethodThrows(ctr);
+      if (!myCatchStack.isEmpty()) {
+        addMethodThrows(ctr);
+      }
     }
 
     finishElement(expression);
