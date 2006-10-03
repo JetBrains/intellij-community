@@ -55,6 +55,7 @@ public abstract class ColumnInfo <Item, Aspect> {
     return getComparator() != null;
   }
 
+  @Nullable
   public Comparator<Item> getComparator(){
     return null;
   }

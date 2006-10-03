@@ -37,9 +37,7 @@ import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserDialog;
-import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
-import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
@@ -52,6 +50,7 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vcs.versionBrowser.*;
+import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vcs.versions.VersionRevisions;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -68,6 +67,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -183,7 +183,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
     }
 
-  private static List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
+  public static List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
     List<Change> result = new ArrayList<Change>();
     for (AbstractRevisions revision : revisions) {
       final DifferenceType type = revision.getDifference();
@@ -623,14 +623,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists) {
-    new ChangesBrowserDialog(myProject, changelists, null, false).show();
+    showChangesBrowser(changelists, null);
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(changelists, null, title, false);
+    showChangesBrowser(new CommittedChangesTableModel(changelists), null, title, false);
   }
 
-  private void showChangesBrowser(List<CommittedChangeList> changelists, VersionsProvider provider, String title, boolean showSearchAgain) {
+  private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, VersionsProvider provider, String title, boolean showSearchAgain) {
     final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, provider, showSearchAgain);
     if (title != null) {
       dlg.setTitle(title);
@@ -702,12 +702,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           return;
         }
 
-        final List<CommittedChangeList> lists = new ArrayList<CommittedChangeList>();
-        for (RepositoryVersion version : versions) {
-          lists.add(createFromRepositoryVersion(version));
-        }
-
-        showChangesBrowser(lists, provider, title, filterUI != null);
+        showChangesBrowser(new RepositoryVersionTableModel(provider, versions), provider, title, filterUI != null);        
       }
     }
     catch (VcsException e) {
@@ -922,32 +917,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     public void selectionChanged(ContentManagerEvent event) {
     }
-  }
-
-  private static CommittedChangeList createFromRepositoryVersion(final RepositoryVersion version) throws VcsException {
-    final List<Change> changes = createChangeFromAbstractRevisions(version.getFileRevisions());
-
-    return new CommittedChangeList() {
-      public String getCommitterName() {
-        return version.getUser();
-      }
-
-      public Date getCommitDate() {
-        return version.getDate();
-      }
-
-      public Collection<Change> getChanges() {
-        return changes;
-      }
-
-      public String getName() {
-        return String.valueOf(version.getNumber());
-      }
-
-      public String getComment() {
-        return version.getDescription();
-      }
-    };
   }
 
   private static class FilterDialog extends DialogWrapper {

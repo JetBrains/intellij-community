@@ -4,28 +4,28 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
-import com.intellij.CommonBundle;
+import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author max
  */
 public class ChangesBrowserDialog extends DialogWrapper {
   private final Project myProject;
-  private final List<CommittedChangeList> myChanges;
+  private final ListTableModel<CommittedChangeList> myChanges;
   private final VersionsProvider myVersionsProvider;
   private final boolean myShowSearchAgain;
   private CommittedChangesBrowser myCommittedChangesBrowser;
 
-  public ChangesBrowserDialog(Project project, List<CommittedChangeList> changes, final VersionsProvider provider, final boolean showSearchAgain) {
+  public ChangesBrowserDialog(Project project, ListTableModel<CommittedChangeList> changes, final VersionsProvider provider, final boolean showSearchAgain) {
     super(project, true);
     myProject = project;
     myChanges = changes;
