@@ -54,6 +54,7 @@ public class PluginManager {
   @NonNls public static final String AREA_IDEA_MODULE = "IDEA_MODULE";
   @NonNls private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
+  private static final Object PLUGIN_CLASSES_LOCK = new Object();
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -839,10 +840,12 @@ public class PluginManager {
   }
 
   public static void addPluginClass(String className, PluginId pluginId) {
-    if (ourPluginClasses == null) {
-      ourPluginClasses = new HashMap<String, PluginId>();
+    synchronized(PLUGIN_CLASSES_LOCK) {
+      if (ourPluginClasses == null) {
+        ourPluginClasses = new HashMap<String, PluginId>();
+      }
+      ourPluginClasses.put(className, pluginId);
     }
-    ourPluginClasses.put(className, pluginId);
   }
 
   public static boolean isPluginClass(String className) {
@@ -851,7 +854,9 @@ public class PluginManager {
 
   @Nullable
   public static PluginId getPluginByClassName(String className) {
-    return ourPluginClasses != null ? ourPluginClasses.get(className) : null;
+    synchronized (PLUGIN_CLASSES_LOCK) {
+      return ourPluginClasses != null ? ourPluginClasses.get(className) : null;
+    }
   }
 
   private static class IdeaLogProvider implements LogProvider {
