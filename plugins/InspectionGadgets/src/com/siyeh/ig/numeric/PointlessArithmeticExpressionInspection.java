@@ -26,9 +26,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -63,11 +65,13 @@ public class PointlessArithmeticExpressionInspection
                 this, "m_ignoreExpressionsContainingConstants");
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "pointless.arithmetic.expression.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.NUMERIC_GROUP_NAME;
     }
@@ -83,6 +87,7 @@ public class PointlessArithmeticExpressionInspection
                         calculateReplacementExpression((PsiExpression) infos[0]));
     }
 
+    @NonNls
     String calculateReplacementExpression(
             PsiExpression expression) {
         final PsiBinaryExpression exp = (PsiBinaryExpression) expression;
@@ -111,9 +116,11 @@ public class PointlessArithmeticExpressionInspection
             return lhs.getText();
         } else if (tokenType.equals(JavaTokenType.PERC)) {
             return "0";
-        } else if (tokenType.equals(JavaTokenType.LE) || tokenType.equals(JavaTokenType.GE)) {
+        } else if (tokenType.equals(JavaTokenType.LE) ||
+                tokenType.equals(JavaTokenType.GE)) {
             return "true";
-        } else if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.GT)) {
+        } else if (tokenType.equals(JavaTokenType.LT) ||
+                tokenType.equals(JavaTokenType.GT)) {
             return "true";
         } else {
             return "";
@@ -130,6 +137,7 @@ public class PointlessArithmeticExpressionInspection
 
     private class PointlessArithmeticFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");
@@ -272,10 +280,7 @@ public class PointlessArithmeticExpressionInspection
                 !(expression instanceof PsiLiteralExpression)) {
             return false;
         }
-        final Double value = (Double)
-                ConstantExpressionUtil.computeCastTo(
-                        expression, PsiType.DOUBLE);
-        return value != null && value == 0.0;
+        return ExpressionUtils.isZero(expression);
     }
 
     /**

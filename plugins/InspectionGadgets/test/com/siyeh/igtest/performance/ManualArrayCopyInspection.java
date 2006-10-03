@@ -44,4 +44,11 @@ public class ManualArrayCopyInspection
         for (int i : new_array) System.out.print(i+" ");
         System.out.println();
     }
+
+    static void foobarred(int[] a, int[] b) {
+        int x = 3;
+        for(int i = x ; i < a.length; i++) {
+            b[i - x] = a[i];
+        }
+    }
 }

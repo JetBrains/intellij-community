@@ -19,17 +19,24 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SubstringZeroInspection extends ExpressionInspection {
 
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "substring.zero.problem.descriptor");
+    }
+
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
@@ -50,6 +57,7 @@ public class SubstringZeroInspection extends ExpressionInspection {
 
     private static class SubstringZeroFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");
@@ -90,7 +98,7 @@ public class SubstringZeroInspection extends ExpressionInspection {
             if (arg == null) {
                 return;
             }
-            if (!isZero(arg)) {
+            if (!ExpressionUtils.isZero(arg)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -106,13 +114,6 @@ public class SubstringZeroInspection extends ExpressionInspection {
                 return;
             }
             registerError(expression);
-        }
-
-        private static boolean isZero(PsiExpression expression) {
-            final Integer value =
-                    (Integer)ConstantExpressionUtil.computeCastTo(expression,
-                            PsiType.INT);
-            return value != null && value.intValue() == 0;
         }
     }
 }

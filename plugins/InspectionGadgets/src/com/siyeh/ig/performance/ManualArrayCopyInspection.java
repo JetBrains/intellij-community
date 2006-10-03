@@ -28,17 +28,20 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ManualArrayCopyInspection extends ExpressionInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "manual.array.copy.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
@@ -94,7 +97,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (limit == null) {
                 return null;
             }
-            final String lengthText = limit.getText();
             final PsiStatement initialization =
                     forStatement.getInitialization();
             if (initialization == null) {
@@ -110,6 +112,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             }
             final PsiLocalVariable variable = (PsiLocalVariable)
                     declaration.getDeclaredElements()[0];
+            final String lengthText = getLengthText(limit, variable);
             final PsiExpressionStatement body = getBody(forStatement);
             if (body == null) {
                 return null;
@@ -151,6 +154,25 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             buffer.append(lengthText);
             buffer.append(");");
             return buffer.toString();
+        }
+
+        @Nullable
+        private static String getLengthText(PsiExpression expression,
+                                            PsiLocalVariable variable) {
+            final PsiExpression strippedExpression =
+                    ParenthesesUtils.stripParentheses(expression);
+            if (strippedExpression == null) {
+                return null;
+            }
+            final PsiExpression initializer = variable.getInitializer();
+            final String expressionText = expression.getText();
+            if (initializer == null) {
+                return expressionText;
+            }
+            if (ExpressionUtils.isZero(initializer)) {
+                return expressionText;
+            }
+            return expressionText + '-' + initializer.getText();
         }
 
         @Nullable
@@ -202,8 +224,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             final PsiConstantEvaluationHelper evaluationHelper =
                     manager.getConstantEvaluationHelper();
             final PsiExpression fromOffsetExpression =
-                    factory.createExpressionFromText(expressionText,
-                            context);
+                    factory.createExpressionFromText(expressionText, context);
             final Object fromOffsetConstant =
                     evaluationHelper.computeConstantExpression(
                             fromOffsetExpression);

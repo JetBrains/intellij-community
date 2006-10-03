@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -50,11 +51,13 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
         bitwiseTokens.add(">>>");
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "pointless.bitwise.expression.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName(){
         return GroupNames.BITWISE_GROUP_NAME;
     }
@@ -80,31 +83,31 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
     }
 
     String calculateReplacementExpression(PsiExpression expression){
-        final PsiBinaryExpression exp = (PsiBinaryExpression) expression;
-        final PsiExpression lhs = exp.getLOperand();
-        final PsiExpression rhs = exp.getROperand();
-        final PsiJavaToken sign = exp.getOperationSign();
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression) expression;
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        final PsiExpression rhs = binaryExpression.getROperand();
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         assert rhs != null;
-        final PsiType expressionType = exp.getType();
         if(tokenType.equals(JavaTokenType.AND)){
-            if(isZero(lhs, expressionType) || isAllOnes(rhs, expressionType)){
+            if(isZero(lhs) || isAllOnes(rhs)){
                 return lhs.getText();
             } else{
                 return rhs.getText();
             }
         } else if(tokenType.equals(JavaTokenType.OR)){
-            if(isZero(lhs, expressionType) || isAllOnes(rhs, expressionType)){
+            if(isZero(lhs) || isAllOnes(rhs)){
                 return rhs.getText();
             } else{
                 return lhs.getText();
             }
         } else if(tokenType.equals(JavaTokenType.XOR)){
-            if(isAllOnes(lhs, expressionType)){
+            if(isAllOnes(lhs)){
                 return '~' + rhs.getText();
-            } else if(isAllOnes(rhs, expressionType)){
+            } else if(isAllOnes(rhs)){
                 return '~' + lhs.getText();
-            } else if(isZero(rhs, expressionType)){
+            } else if(isZero(rhs)){
                 return lhs.getText();
             } else{
                 return rhs.getText();
@@ -128,6 +131,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
 
     private class PointlessBitwiseFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "pointless.bitwise.expression.simplify.quickfix");
@@ -153,11 +157,6 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
             if(!bitwiseTokens.contains(signText)){
                 return;
             }
-            final PsiType expressionType = expression.getType();
-            if(expressionType == null){
-                return;
-            }
-
             final PsiExpression rhs = expression.getROperand();
             if(rhs == null){
                 return;
@@ -182,17 +181,15 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
             final IElementType tokenType = sign.getTokenType();
             final boolean isPointless;
             if(tokenType.equals(JavaTokenType.AND)){
-                isPointless = andExpressionIsPointless(lhs, rhs,
-                                                       expressionType);
+                isPointless = andExpressionIsPointless(lhs, rhs);
             } else if(tokenType.equals(JavaTokenType.OR)){
-                isPointless = orExpressionIsPointless(lhs, rhs, expressionType);
+                isPointless = orExpressionIsPointless(lhs, rhs);
             } else if(tokenType.equals(JavaTokenType.XOR)){
-                isPointless = xorExpressionIsPointless(lhs, rhs,
-                                                       expressionType);
+                isPointless = xorExpressionIsPointless(lhs, rhs);
             } else if(tokenType.equals(JavaTokenType.LTLT) ||
                     tokenType.equals(JavaTokenType.GTGT) ||
                     tokenType.equals(JavaTokenType.GTGTGT)){
-                isPointless = shiftExpressionIsPointless(rhs, expressionType);
+                isPointless = shiftExpressionIsPointless(rhs);
             } else{
                 isPointless = false;
             }
@@ -203,65 +200,42 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
         }
 
         private boolean andExpressionIsPointless(PsiExpression lhs,
-                                                 PsiExpression rhs,
-                                                 PsiType expressionType){
-            return isZero(lhs, expressionType) || isZero(rhs, expressionType)
-                   || isAllOnes(lhs, expressionType) || isAllOnes(rhs,
-                    expressionType);
+                                                 PsiExpression rhs) {
+            return isZero(lhs) || isZero(rhs)
+                   || isAllOnes(lhs) || isAllOnes(rhs);
         }
 
         private boolean orExpressionIsPointless(PsiExpression lhs,
-                                                PsiExpression rhs,
-                                                PsiType expressionType){
-            return isZero(lhs, expressionType) || isZero(rhs, expressionType)
-                   || isAllOnes(lhs, expressionType) || isAllOnes(rhs,
-                    expressionType);
+                                                PsiExpression rhs) {
+            return isZero(lhs) || isZero(rhs)
+                   || isAllOnes(lhs) || isAllOnes(rhs);
         }
 
         private boolean xorExpressionIsPointless(PsiExpression lhs,
-                                                 PsiExpression rhs,
-                                                 PsiType expressionType){
-            return isZero(lhs, expressionType) || isZero(rhs, expressionType)
-                   || isAllOnes(lhs, expressionType) || isAllOnes(rhs,
-                    expressionType);
+                                                 PsiExpression rhs) {
+            return isZero(lhs) || isZero(rhs)
+                   || isAllOnes(lhs) || isAllOnes(rhs);
         }
 
-        private boolean shiftExpressionIsPointless(PsiExpression rhs,
-                                                   PsiType expressionType){
-            return isZero(rhs, expressionType);
+        private boolean shiftExpressionIsPointless(PsiExpression rhs) {
+            return isZero(rhs);
         }
     }
 
-    private boolean isZero(PsiExpression expression, PsiType expressionType){
+    private boolean isZero(PsiExpression expression){
         if(m_ignoreExpressionsContainingConstants
                 && !(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final Object value =
-                ConstantExpressionUtil.computeCastTo(expression, expressionType);
-        if(value == null){
-            return false;
-        }
-        if(value instanceof Integer && ((Integer) value) == 0){
-            return true;
-        }
-        if(value instanceof Long && ((Long) value) == 0L){
-            return true;
-        }
-        if(value instanceof Short && ((Short) value) == 0){
-            return true;
-        }
-        if(value instanceof Character && ((Character) value) == 0){
-            return true;
-        }
-        return value instanceof Byte && ((Byte) value) == 0;
+        return ExpressionUtils.isZero(expression);
     }
 
-    private boolean isAllOnes(PsiExpression expression, PsiType expressionType){
+    private boolean isAllOnes(PsiExpression expression){
         if(m_ignoreExpressionsContainingConstants
                 && !(expression instanceof PsiLiteralExpression)){
             return false;
         }
+        final PsiType expressionType = expression.getType();
         final Object value =
                 ConstantExpressionUtil.computeCastTo(expression, expressionType);
         if(value == null){
