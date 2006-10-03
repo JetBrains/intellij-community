@@ -1542,6 +1542,10 @@
 
     <action id="Graph.FitContent" class="com.intellij.openapi.graph.builder.actions.FitContentAction" text="Fit Content"/>
 
+    <action id="Graph.Delete" class="com.intellij.openapi.graph.builder.actions.DeleteSelectionAction" use-shortcut-of="$Delete" text="Delete Selection"/>
+
+    <action id="Graph.Show.Edge.Labels" class="com.intellij.openapi.graph.builder.actions.ShowEdgeLabels" text="Show Edge Labels"/>
+
     <action id="Graph.Print" class="com.intellij.openapi.graph.builder.actions.printing.PrintGraphAction" text="Print Graph"/>
     <action id="Graph.Print.Preview" class="com.intellij.openapi.graph.builder.actions.printing.PrintPreviewAction" text="Print Preview"/>
 
@@ -1592,6 +1596,9 @@
       <reference ref="Graph.FitContent"/>
 
       <separator/>
+      <reference ref="Graph.Delete"/>
+
+      <separator/>
       <reference ref="Graph.ShowHideGrid"/>
       <reference ref="Graph.SnapToGrid"/>
 
@@ -1603,6 +1610,8 @@
       <reference ref="Graph.CommonLayoutGroup"/>
       <reference ref="Graph.Layout.Fit.Content"/>
 
+      <separator/>
+      <reference ref="Graph.Show.Edge.Labels"/>
     </group>
 
     <group id="Graph.Faces.DefaultGraphPopup">
