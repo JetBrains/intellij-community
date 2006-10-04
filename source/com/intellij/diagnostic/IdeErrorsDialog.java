@@ -361,6 +361,21 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         }
       }
     }
+    else if (t instanceof AbstractMethodError && t.getMessage() != null) {
+      String s = t.getMessage();
+      // org.antlr.works.plugin.intellij.PIFileType.getHighlighter(Lcom/intellij/openapi/project/Project;Lcom/intellij/openapi/vfs/VirtualFile;)Lcom/intellij/openapi/fileTypes/SyntaxHighlighter;
+      int pos = s.indexOf('(');
+      if (pos >= 0) {
+        s = s.substring(0, pos);
+        pos = s.lastIndexOf('.');
+        if (pos >= 0) {
+          s = s.substring(0, pos);
+          if (PluginManager.isPluginClass(s)) {
+            return PluginManager.getPluginByClassName(s);
+          }
+        }
+      }
+    }
     else if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
     }
@@ -447,7 +462,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Nullable
   public static ErrorReportSubmitter getSubmitter(final Throwable throwable) {
-    if (throwable instanceof MessagePool.TooManyErrorsException) {
+    if (throwable instanceof MessagePool.TooManyErrorsException || throwable instanceof AbstractMethodError) {
       return null;
     }
     final PluginId pluginId = findPluginId(throwable);
