@@ -197,7 +197,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         }
       }
     };
-    //psiManager.addPsiTreeChangeListener(psiTreeChangeAdapter, project);
+    psiManager.addPsiTreeChangeListener(psiTreeChangeAdapter, project);
 
     /*
     StdLanguages.XML.injectAnnotator(new Annotator() {
@@ -223,9 +223,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (!element.isValid()) {
       for (final Set<DomFileElementImpl> set : myFileDescriptions.values()) {
         for (final DomFileElementImpl fileElement : set) {
-          final XmlFile xmlFile = fileElement.getFile();
-          updateFileDomness(xmlFile, null);
-          updateDependantFiles(xmlFile);
+          processFileChange(fileElement.getFile());
         }
       }
       return;
@@ -241,11 +239,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       return;
     }
 
-    if (element instanceof PsiPackage) {
-      final PsiPackage psiPackage = (PsiPackage)element;
-      for (final PsiDirectory psiDirectory : psiPackage.getDirectories()) {
-        processDirectoryChange(psiDirectory);
-      }
+    for (final PsiDirectory psiDirectory : ((PsiPackage)element).getDirectories()) {
+      processDirectoryChange(psiDirectory);
     }
   }
 

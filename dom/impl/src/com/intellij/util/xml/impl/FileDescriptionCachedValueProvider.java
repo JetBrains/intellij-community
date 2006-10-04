@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -31,7 +32,7 @@ import java.util.*;
 /**
  * @author peter
  */
-class FileDescriptionCachedValueProvider<T extends DomElement> {
+class FileDescriptionCachedValueProvider<T extends DomElement> implements ModificationTracker {
   private final XmlFile myXmlFile;
   private boolean myInModel;
   private boolean myComputing;
@@ -41,6 +42,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
 
   private DomFileDescription<T> myFileDescription;
   private final DomManagerImpl myDomManager;
+  private int myModCount;
 
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
@@ -81,6 +83,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
         return list;
       }
 
+      myModCount++;
       final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
       final DomFileDescription<T> description = originalFile != null
                                                 ? myDomManager.getOrCreateCachedValueProvider(originalFile).getFileDescription()
@@ -149,6 +152,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
     }
 
     final Set<Object> deps = new HashSet<Object>(description.getDependencyItems(myXmlFile));
+    deps.add(this);
     deps.add(myXmlFile);
     computeCachedValue(deps.toArray());
 
@@ -170,6 +174,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
   }
 
   private void computeCachedValue(final Object[] dependencyItems) {
+    assert !myCachedValue.hasUpToDateValue();
     getCachedValueProvider().dependencies = dependencyItems;
     myCachedValue.getValue();
   }
@@ -177,6 +182,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
   private Object[] getAllDependencyItems() {
     final Set<Object> deps = new LinkedHashSet<Object>();
     deps.add(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    deps.add(this);
+    deps.add(myXmlFile);
     for (final DomFileDescription<?> fileDescription : myDomManager.getFileDescriptions().keySet()) {
       deps.addAll(fileDescription.getDependencyItems(myXmlFile));
     }
@@ -186,6 +193,10 @@ class FileDescriptionCachedValueProvider<T extends DomElement> {
   @Nullable
   final DomFileElementImpl<T> getLastValue() {
     return myLastResult;
+  }
+
+  public long getModificationCount() {
+    return myModCount;
   }
 
   private class MyCondition implements Condition<DomFileDescription> {
