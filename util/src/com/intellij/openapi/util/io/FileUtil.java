@@ -36,6 +36,7 @@ public class FileUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
   private static final byte[] BUFFER = new byte[1024 * 20];
 
+  @Nullable
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;
 
@@ -394,6 +395,10 @@ public class FileUtil {
   }
 
   public static void copyDir(File fromDir, File toDir) throws IOException {
+    copyDir(fromDir, toDir, true);
+  }
+
+  public static void copyDir(File fromDir, File toDir, boolean copySystemFiles) throws IOException {
     toDir.mkdirs();
     if (isAncestor(fromDir, toDir, true)) {
       LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
@@ -403,8 +408,11 @@ public class FileUtil {
     if(!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     if(files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
     for (File file : files) {
+      if (!copySystemFiles && file.getName().startsWith(".")) {
+        continue;
+      }
       if (file.isDirectory()) {
-        copyDir(file, new File(toDir, file.getName()));
+        copyDir(file, new File(toDir, file.getName()), copySystemFiles);
       }
       else {
         copy(file, new File(toDir, file.getName()));
