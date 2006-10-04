@@ -561,6 +561,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
+  public boolean isUnversioned(VirtualFile file) {
+    return myUnversionedFilesHolder.containsFile(file);
+  }
+
   @NotNull
   public FileStatus getStatus(VirtualFile file) {
     if (myUnversionedFilesHolder.containsFile(file)) return FileStatus.UNKNOWN;
