@@ -6,6 +6,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IComponent;
@@ -102,27 +103,32 @@ public class PasteProcessor extends EventProcessor {
   }
 
   private void processMousePressed(final MouseEvent e) {
-    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), e.getPoint()
-    );
+    DropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), e.getPoint());
     doPaste(location);
   }
 
   private void doPaste(final DropLocation location) {
     if (location.canDrop(myPastedComponentList)) {
-      RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
-      location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
-      for(RadComponent c: componentsToPaste) {
-        FormEditingUtil.iterate(c, new FormEditingUtil.ComponentVisitor() {
-          public boolean visit(final IComponent component) {
-            if (component.getBinding() != null) {
-              InsertComponentProcessor.createBindingField(myEditor, (RadComponent) component);
+      final RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
+      CommandProcessor.getInstance().executeCommand(
+        myEditor.getProject(),
+        new Runnable() {
+          public void run() {
+            location.processDrop(myEditor, componentsToPaste, null, myPastedComponentList);
+            for(RadComponent c: componentsToPaste) {
+              FormEditingUtil.iterate(c, new FormEditingUtil.ComponentVisitor() {
+                public boolean visit(final IComponent component) {
+                  if (component.getBinding() != null) {
+                    InsertComponentProcessor.createBindingField(myEditor, (RadComponent) component);
+                  }
+                  return true;
+                }
+              });
             }
-            return true;
+            FormEditingUtil.selectComponents(myEditor, myComponentsToPaste);
+            myEditor.refreshAndSave(true);
           }
-        });
-      }
-      myEditor.refreshAndSave(true);
-      FormEditingUtil.selectComponents(myEditor, myComponentsToPaste);
+        }, UIDesignerBundle.message("command.paste"), null);
       endPaste();
     }
   }
