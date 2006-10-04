@@ -91,7 +91,7 @@ public class FileUtil {
     return loadFileText(file, null);
   }
 
-  public static char[] loadFileText(File file, String encoding) throws IOException{
+  public static char[] loadFileText(File file, @NonNls String encoding) throws IOException{
     InputStream stream = new FileInputStream(file);
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
     try{

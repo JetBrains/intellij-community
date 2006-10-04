@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +40,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
             final String testFullPath = getTestDataPath().replace(File.separatorChar, '/') + relativePath;
             final File ioFile = new File(testFullPath);
             try {
-              String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile)), "\n");
+              String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8)), "\n");
               configureFromFileText(ioFile.getName(), contents);
               final Pair<String, Boolean> pair = parseActionHint(getFile(), contents);
               final String text = pair.getFirst();
