@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.validation;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -17,14 +18,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class AntDuplicateTargetsInspection extends AntInspection {
+public class AntDuplicateImportedTargetsInspection extends AntInspection {
 
-  @NonNls private static final String SHORT_NAME = "AntDuplicateTargetsInspection";
+  @NonNls private static final String SHORT_NAME = "AntDuplicateImportedTargetsInspection";
 
   @Nls
   @NotNull
   public String getDisplayName() {
-    return AntBundle.message("ant.duplicate.targets.inspection");
+    return AntBundle.message("ant.duplicate.imported.targets.inspection");
   }
 
   @NonNls
@@ -41,18 +42,20 @@ public class AntDuplicateTargetsInspection extends AntInspection {
         final AntTarget[] targets = project.getTargets();
         if (targets.length > 0) {
           final HashMap<String, AntTarget> name2Target = new HashMap<String, AntTarget>();
-          final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
           for (final AntTarget target : targets) {
+            name2Target.put(target.getName(), target);
+          }
+          final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
+          final AntTarget[] importedTargets = project.getImportedTargets();
+          for (final AntTarget target : importedTargets) {
             final String name = target.getName();
             final AntTarget t = name2Target.get(name);
             if (t != null) {
-              final String duplicatedMessage = AntBundle.message("target.is.duplicated", name);
-              problems.add(
-                manager.createProblemDescriptor(target, duplicatedMessage, EMPTY_FIXES, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+              final String duplicatedMessage =
+                AntBundle.message("target.is.duplicated.in.imported.file", name, target.getAntFile().getName());
               problems
                 .add(manager.createProblemDescriptor(t, duplicatedMessage, EMPTY_FIXES, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
-            name2Target.put(name, target);
           }
           final int prolemCount = problems.size();
           if (prolemCount > 0) {
@@ -62,5 +65,10 @@ public class AntDuplicateTargetsInspection extends AntInspection {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.WARNING;
   }
 }

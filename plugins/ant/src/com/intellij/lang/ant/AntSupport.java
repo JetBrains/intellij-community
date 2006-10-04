@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
+import com.intellij.lang.ant.validation.AntDuplicateImportedTargetsInspection;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -65,6 +66,6 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   }
 
   public Class[] getInspectionClasses() {
-    return new Class[]{AntDuplicateTargetsInspection.class};
+    return new Class[]{AntDuplicateTargetsInspection.class, AntDuplicateImportedTargetsInspection.class};
   }
 }
