@@ -51,6 +51,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -251,7 +252,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       info = processParameter((PsiParameter)parent, options, displayName);
     }
     else if (parent instanceof PsiMethod && unusedSymbolInspection.METHOD) {
-      info = processMethod((PsiMethod)parent, options, displayName);
+      info = processMethod((PsiMethod)parent, options, displayName, unusedSymbolInspection);
     }
     else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier()) && unusedSymbolInspection.CLASS) {
       info = processClass((PsiClass)parent, options, displayName);
@@ -358,9 +359,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       if (!field.hasInitializer()) {
-        final boolean injected = SpecialAnnotationsUtil.isSpecialAnnotationPresent(field, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS, unusedSymbolInspection.INJECTION_ANNOS);
+        final boolean isInjected = SpecialAnnotationsUtil.isSpecialAnnotationPresent(field, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS, unusedSymbolInspection.INJECTION_ANNOS);
         final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
-        if (!writeReferenced && !injected && !isImplicitWrite(field)) {
+        if (!writeReferenced && !isInjected && !isImplicitWrite(field)) {
           String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.assigned"), identifier.getText());
           final HighlightInfo info = createUnusedSymbolInfo(identifier, message);
           QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options, displayName);
@@ -420,10 +421,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processMethod(PsiMethod method, final List<IntentionAction> options, final String displayName) {
+  private HighlightInfo processMethod(final PsiMethod method, final List<IntentionAction> options, final String displayName,
+                                      final UnusedSymbolLocalInspection unusedSymbolInspection) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      final boolean isSetter = PropertyUtil.isSimplePropertySetter(method);
+      final boolean isInjected = isSetter && SpecialAnnotationsUtil.isSpecialAnnotationPresent(method, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS, unusedSymbolInspection.INJECTION_ANNOS);
       if (!myRefCountHolder.isReferenced(method)) {
-        if (HighlightMethodUtil.isSerializationRelatedMethod(method) ||
+        if (isInjected || HighlightMethodUtil.isSerializationRelatedMethod(method) ||
             isIntentionalPrivateConstructor(method) ||
             isImplicitUsage(method)
         ) {
@@ -433,8 +437,16 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY);
         String message = MessageFormat.format(pattern, symbolName);
         PsiIdentifier identifier = method.getNameIdentifier();
-        HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
+        final HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), options, displayName);
+        if (isSetter) {
+          SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
+            public boolean process(final String annoName) {
+              QuickFixAction.registerQuickFixAction(highlightInfo, unusedSymbolInspection.createQuickFix(annoName, method));
+              return true;
+            }
+          });
+        }
         return highlightInfo;
       }
     }
