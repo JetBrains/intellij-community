@@ -81,6 +81,7 @@ public class UpdatedFiles implements JDOMExternalizable {
     updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.restored"), VcsBundle.message("status.group.name.will.be.restored"), false, FileGroup.RESTORED_ID, false));
 
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.modified"), VcsBundle.message("status.group.name.modified"), false, FileGroup.MODIFIED_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.skipped"), VcsBundle.message("status.group.name.skipped"), false, FileGroup.SKIPPED_ID, false));
 
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.conflicts"), VcsBundle.message("status.group.name.will.be.merged.with.conflicts"), false, FileGroup.MERGED_WITH_CONFLICT_ID, false));
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged"), VcsBundle.message("status.group.name.will.be.merged"), false, FileGroup.MERGED_ID, false));
