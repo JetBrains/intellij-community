@@ -169,10 +169,10 @@ public class AsmCodeGenerator {
     }
 
     FirstPassClassVisitor visitor = new FirstPassClassVisitor();
-    reader.accept(visitor, true);
+    reader.accept(visitor, ClassReader.SKIP_DEBUG);
 
-    ClassWriter cw = new ClassWriter(true);
-    reader.accept(new FormClassVisitor(cw, visitor.isExplicitSetupCall()), false);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    reader.accept(new FormClassVisitor(cw, visitor.isExplicitSetupCall()), 0);
     myPatchedData = cw.toByteArray();
     return myPatchedData;
   }
