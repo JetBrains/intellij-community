@@ -18,6 +18,7 @@ package com.intellij.refactoring.util;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
 
 public class NonCodeUsageInfo extends MoveRenameUsageInfo{
@@ -51,5 +52,10 @@ public class NonCodeUsageInfo extends MoveRenameUsageInfo{
     startOffset -= elementStart;
     endOffset -= elementStart;
     return new NonCodeUsageInfo(element, startOffset, endOffset, referencedElement, newText);
+  }
+
+  @Nullable
+  public PsiReference getReference() {
+    return null;
   }
 }
