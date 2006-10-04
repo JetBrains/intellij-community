@@ -50,7 +50,7 @@ public class PreviewNestedFormLoader extends PsiNestedFormLoader {
 
   private void generateStubClass(final LwRootContainer rootContainer, final String generatedClassName) throws IOException,
                                                                                                               CodeGenerationException {
-    @NonNls ClassWriter cw = new ClassWriter(true);
+    @NonNls ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
     cw.visit(Opcodes.V1_1, Opcodes.ACC_PUBLIC, generatedClassName, null, "java/lang/Object", ArrayUtil.EMPTY_STRING_ARRAY);
 
     cw.visitField(Opcodes.ACC_PUBLIC, PreviewFormAction.PREVIEW_BINDING_FIELD, "Ljavax/swing/JComponent;", null, null);
