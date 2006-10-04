@@ -68,7 +68,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   public IntentionAction createMakeClassInterfaceFix(@NotNull PsiClass aClass) {
-    return new MakeClassInterfaceFix(aClass);
+    return new MakeClassInterfaceFix(aClass, true);
+  }
+
+  public IntentionAction createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface) {
+    return new MakeClassInterfaceFix(aClass, makeInterface);
   }
 
   public IntentionAction createExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd) {

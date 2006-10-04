@@ -42,6 +42,7 @@ public abstract class QuickFixFactory implements ApplicationComponent {
   public abstract IntentionAction createAddDefaultConstructorFix(@NotNull PsiClass aClass);
   public abstract IntentionAction createMethodParameterTypeFix(@NotNull PsiMethod method, int index, @NotNull PsiType newType, boolean fixWholeHierarchy);
   public abstract IntentionAction createMakeClassInterfaceFix(@NotNull PsiClass aClass);
+  public abstract IntentionAction createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface);
   public abstract IntentionAction createExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd);
   public abstract IntentionAction createRemoveUnusedParameterFix(PsiParameter parameter);
 }
