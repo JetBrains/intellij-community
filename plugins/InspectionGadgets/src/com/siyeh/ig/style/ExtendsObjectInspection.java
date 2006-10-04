@@ -28,14 +28,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsObjectInspection extends ClassInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("extends.object.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "ClassExplicitlyExtendsObject";
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.STYLE_GROUP_NAME;
     }
@@ -56,12 +59,13 @@ public class ExtendsObjectInspection extends ClassInspection {
 
     private static class ExtendsObjectFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "extends.object.remove.quickfix");
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
+        public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement extendClassIdentifier = descriptor.getPsiElement();
             final PsiClass element =
@@ -90,6 +94,9 @@ public class ExtendsObjectInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface() || aClass.isAnnotationType()) {
+                return;
+            }
+            if (aClass instanceof PsiTypeParameter) {
                 return;
             }
             final PsiClassType[] types = aClass.getExtendsListTypes();

@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterExtendsObjectInspection extends ClassInspection {
 
+    @NotNull
     public String getID() {
         return "TypeParameterExplicitlyExtendsObject";
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.STYLE_GROUP_NAME;
     }
@@ -52,12 +54,14 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
 
     private static class ExtendsObjectFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "extends.object.remove.quickfix");
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
+        public void doFix(@NotNull Project project,
+                          ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement extendClassIdentifier = descriptor.getPsiElement();
             final PsiTypeParameter element =
@@ -85,10 +89,16 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
             super.visitTypeParameter(parameter);
             final PsiClassType[] extendsListTypes =
                     parameter.getExtendsListTypes();
-            if (extendsListTypes.length == 1 && extendsListTypes[0].equalsToText("java.lang.Object")) {
-                final PsiIdentifier nameIdentifier =
-                            parameter.getNameIdentifier();
-                    registerError(nameIdentifier);
+            if (extendsListTypes.length != 1) {
+                return;
+            }
+            final PsiClassType extendsType = extendsListTypes[0];
+            if (!extendsType.equalsToText("java.lang.Object")) {
+                return;
+            }
+            final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
+            if (nameIdentifier != null) {
+                registerError(nameIdentifier);
             }
         }
     }
