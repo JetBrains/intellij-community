@@ -40,6 +40,10 @@ import java.util.Set;
  * @author mike
  */
 class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
+
+  @NonNls private static final String PROJECT_FILE_PREFIX = "temp";
+  @NonNls private static final String PROJECT_FILE_SUFFIX = ".ipr";
+
   private Project myProject;
   private Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
@@ -57,13 +61,13 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
   protected void setUpProject() throws Exception {
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
 
-    File projectFile = File.createTempFile("temp", ".ipr");
+    File projectFile = File.createTempFile(PROJECT_FILE_PREFIX, PROJECT_FILE_SUFFIX);
     myFilesToDelete.add(projectFile);
 
     myProject = projectManager.newProject(projectFile.getPath(), false, false);
 
     for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
-      moduleFixtureBuilder.getFixture().getModule();
+      moduleFixtureBuilder.getFixture().setUp();
     }
 
     PropertiesReferenceManager.getInstance(myProject).projectOpened();

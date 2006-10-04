@@ -28,6 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 /**
+ *
+ * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
+ *
  * @author Dmitry Avdeev
  */
 public interface CodeInsightTestFixture extends IdeaTestFixture {
@@ -70,14 +73,20 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @param checkInfos enables {@link #INFO_MARKER} support
    * @param checkWeakWarnings enables {@link #INFORMATION_MARKER} support
    * @param filePaths the first file is tested only; the others are just copied along the first
+   *
+   * @return highlighting duration in milliseconds
+   * @throws Throwable any exception thrown during highlighting
    */
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String... filePaths) throws Throwable;
 
   /**
    * Runs highliting test for the given files.
-   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set
+   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
    *
    * @param filePaths the first file is tested only; the others are just copied along the first
+   *
+   * @return highlighting duration in milliseconds
+   * @throws Throwable any exception thrown during highlighting
    */
   long testHighlighting(String... filePaths) throws Throwable;
 

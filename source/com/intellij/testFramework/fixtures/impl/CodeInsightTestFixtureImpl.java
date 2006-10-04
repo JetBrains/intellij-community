@@ -4,19 +4,20 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -32,13 +33,16 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -51,9 +55,6 @@ import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -84,18 +85,9 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   private Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
   private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
-  protected final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl() {
-
-    protected File createTempDirectory() {
-      return super.createTempDirectory();
-/*
-      final File file = new File(myTestDataPath + "/temp");
-        file.mkdir();
-      return file;
-*/
-    }
-  };
+  protected final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl();
   private final IdeaProjectTestFixture myProjectFixture;
+  @NonNls private static final String XXX = "XXX";
 
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture) {
     myProjectFixture = projectFixture;
@@ -188,6 +180,10 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   }
 
   public void setUp() throws Exception {
+    final String testDataPath = getTestDataPath();
+    if (testDataPath != null) {
+      FileUtil.copyDir(new File(testDataPath), new File(getTempDirPath()), false);
+    }
     myProjectFixture.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
     if (myInspections != null) {
@@ -251,7 +247,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     myTempDirFixture.tearDown();
   }
 
-  protected void configureByFiles(@NonNls String... filePaths) {
+  protected void configureByFiles(@NonNls String... filePaths) throws IOException {
     myFile = null;
     myEditor = null;
     for (String filePath : filePaths) {
@@ -259,16 +255,12 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     }
   }
 
-  protected void configureByFile(@NonNls String filePath) {
-    String fullPath = getTestDataPath() + filePath;
+  protected void configureByFile(@NonNls String filePath) throws IOException {
+    String fullPath = getTempDirPath() + "/" + filePath;
 
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    assert vFile != null: "file " + fullPath + " not found";
-    configureByFile(vFile);
-  }
+    final VirtualFile copy = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    assert copy != null: "file " + fullPath + " not found";
 
-  protected void configureByFile(VirtualFile file) {
-    VirtualFile copy = myTempDirFixture.copyFile(file);
     SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(copy.getPath());
     try {
       final OutputStream outputStream = copy.getOutputStream(null, 0, 0);
@@ -302,7 +294,9 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     return instance.openTextEditor(new OpenFileDescriptor(project, file, 0), false);
   }
 
-  protected Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration) {
+  @NotNull
+  protected Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration)
+    throws Exception {
     final Project project = getProject();
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
 
@@ -311,7 +305,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     ((PsiFileImpl)myFile).calcTreeElement(); //to load text
 
     //to initialize caches
-    myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
+    myPsiManager.getCacheManager().getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
     VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
       public boolean accept(VirtualFile file) {
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
@@ -321,8 +315,10 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     myPsiManager.setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
 
     final long start = System.currentTimeMillis();
+//    ProfilingUtil.forceCPUTracing();
     Collection<HighlightInfo> infos = doHighlighting();
     duration.set(System.currentTimeMillis() - start);
+//    ProfilingUtil.forceStopCPUTracing("testing");
 
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
@@ -333,6 +329,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
   @NotNull
   protected Collection<HighlightInfo> doHighlighting() {
+
     final Project project = myProjectFixture.getProject();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -393,16 +390,10 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     final RangeMarker selStartMarker;
     final RangeMarker selEndMarker;
 
-    SelectionAndCaretMarkupLoader(String fullPath) {
+    SelectionAndCaretMarkupLoader(String fullPath) throws IOException {
       final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-      TestCase.assertNotNull("Cannot find file " + fullPath, vFile);
-      String fileText = null;
-      try {
-        fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
-      }
-      catch (IOException e) {
-        TestCase.fail("Cannot load " + vFile);
-      }
+      assert vFile != null: "Cannot find file " + fullPath;
+      String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
       Document document = EditorFactory.getInstance().createDocument(fileText);
 
       int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -427,7 +418,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     }
 
   }
-  protected void checkResultByFile(@NonNls String filePath, boolean stripTrailingSpaces) {
+  protected void checkResultByFile(@NonNls String filePath, boolean stripTrailingSpaces) throws IOException {
 
     Project project = myProjectFixture.getProject();
 
@@ -449,7 +440,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     String text = myFile.getText();
     text = StringUtil.convertLineSeparators(text, "\n");
 
-    TestCase.assertEquals("Text mismatch in file " + filePath, newFileText1, text);
+    assert newFileText1.equals(text): "Text mismatch in file " + filePath;
 
     if (loader.caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());

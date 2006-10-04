@@ -21,6 +21,7 @@ import junit.framework.TestCase;
  * @author Maxim.Mossienko
  */
 public class AntMultiFileCompletionTest extends TestCase {
+  private CodeInsightTestFixture myFixture;
 
   protected String getTestDataPath() {
     return PathManager.getHomePath() + "/plugins/ant/tests/data/psi/completion/";
@@ -43,22 +44,26 @@ public class AntMultiFileCompletionTest extends TestCase {
   }
 
   private void doTestFor(final String[] fileNames, final String ext) throws Throwable {
-    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
-    final CodeInsightTestFixture codeInsightFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
-    codeInsightFixture.setUp();
 
     String initialTest = fileNames[0];
     for(int i = 0; i < fileNames.length; ++i) {
       if (fileNames[i].indexOf('.') == -1) fileNames[i] += "."+ext;
     }
 
-    codeInsightFixture.setTestDataPath(getTestDataPath());
-    try {
-      codeInsightFixture.testCompletion(fileNames, initialTest + "_after." + ext);
-    }
-    finally {
-      codeInsightFixture.tearDown();
-    }
+    myFixture.testCompletion(fileNames, initialTest + "_after." + ext);
+  }
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
+    myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
+  }
+
+  protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    super.tearDown();
   }
 }
