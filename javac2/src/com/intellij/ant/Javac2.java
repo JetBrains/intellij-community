@@ -184,10 +184,10 @@ public class Javac2 extends Javac{
           final FileInputStream inputStream = new FileInputStream(file);
           try {
             ClassReader reader = new ClassReader(inputStream);
-            ClassWriter writer = new ClassWriter(true);
+            ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
             final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-            reader.accept(instrumenter, false);
+            reader.accept(instrumenter, ClassReader.SKIP_DEBUG);
             if (instrumenter.isModification()) {
               final FileOutputStream fileOutputStream = new FileOutputStream(path);
               try {
