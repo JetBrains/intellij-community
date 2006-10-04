@@ -575,6 +575,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(SingletonInspection.class);
         m_inspectionClasses.add(StaticInheritanceInspection.class);
         m_inspectionClasses.add(StaticNonFinalFieldInspection.class);
+        m_inspectionClasses.add(TypeParameterExtendsFinalClassInspection.class);
         m_inspectionClasses.add(UtilityClassWithPublicConstructorInspection.class);
         m_inspectionClasses.add(UtilityClassWithoutPrivateConstructorInspection.class);
         m_inspectionClasses.add(UtilityClassInspection.class);
