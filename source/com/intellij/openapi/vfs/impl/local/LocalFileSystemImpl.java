@@ -466,7 +466,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                   fireBeforeFileDeletion(null, file);
                   synchronized (LOCK) {
                     myUnaccountedFiles.put(entry.getKey(), null);
-                    file.setParent(null);
                   }
                   fireFileDeleted(null, file, file.getName(), isDirectory, null);
                 }

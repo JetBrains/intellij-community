@@ -3,15 +3,10 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -22,7 +17,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomFileElement;
@@ -33,16 +27,12 @@ import com.intellij.util.xml.events.ElementUndefinedEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 
 /**
  * @author peter
  */
 class FileDescriptionCachedValueProvider<T extends DomElement> implements ModificationTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FileDescriptionCachedValueProvider");
   private final XmlFile myXmlFile;
   private boolean myInModel;
   private boolean myComputing;
@@ -53,8 +43,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   private DomFileDescription<T> myFileDescription;
   private final DomManagerImpl myDomManager;
   private int myModCount;
-  private static final int LIMIT = 17239;
-  private static final int START = 1024;
 
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
@@ -88,13 +76,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       }
 
       final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
-      final NullableLazyValue<String> rootTagName = new NullableLazyValue<String>() {
-        protected String compute() {
-          return getRootTagName();
-        }
-      };
-
-      if (myLastResult != null && myFileDescription.getRootTagName().equals(rootTagName.getValue()) && myFileDescription.isMyFile(myXmlFile, module)) {
+      final String rootTagName = getRootTagName();
+      if (myLastResult != null && myFileDescription.getRootTagName().equals(rootTagName) && myFileDescription.isMyFile(myXmlFile, module)) {
         List<DomEvent> list = new SmartList<DomEvent>();
         setInModel(changedRoot, list, myLastResult, fireEvents);
         return list;
@@ -117,62 +100,15 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   }
 
   @Nullable
-  private CharSequence getFileStartText() {
-    final Document document = PsiDocumentManager.getInstance(myXmlFile.getProject()).getCachedDocument(myXmlFile);
-    if (document != null) {
-      final CharSequence sequence = document.getCharsSequence();
-      return sequence.subSequence(0, Math.min(sequence.length(), START));
-    }
-
-    final VirtualFile virtualFile = myXmlFile.getVirtualFile();
-    if (virtualFile != null) {
-      final long l = virtualFile.getLength();
-      if (l > LIMIT) {
-        BufferedReader reader = null;
-        try {
-          reader = new BufferedReader(new InputStreamReader(virtualFile.getInputStream()));
-          final char[] buf = new char[START];
-          final int i = reader.read(buf, 0, 1024);
-          if (i <= 0) return null;
-          return new CharArrayCharSequence(buf, 0, i);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        } finally{
-          if (reader != null) {
-            try {
-              reader.close();
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private boolean containsRootTags(String s) {
-    for (final String string : myDomManager.getRootTagNames()) {
-      if (string != null && s.contains(string)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Nullable
-  private DomFileDescription<T> findFileDescription(final NullableLazyValue<String> rootTagName, Module module) {
+  private DomFileDescription<T> findFileDescription(final String rootTagName, Module module) {
     myCondition.module = module;
-    final CharSequence text = getFileStartText();
-    if (text != null && containsRootTags(text.toString()) || rootTagName.getValue() != null) {
-      final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName.getValue()), myCondition);
+    if (rootTagName != null) {
+      final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
       if (description != null) {
         return description;
       }
     }
-    return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(rootTagName.getValue()), myCondition);
+    return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(rootTagName), myCondition);
   }
 
   @Nullable
@@ -208,8 +144,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     }
 
     myFileDescription = description;
-    myLastResult = description == null ? null : new DomFileElementImpl<T>(myXmlFile, description.getRootElementClass(),
-                                                                          description.getRootTagName(), myDomManager);
+    myLastResult = description == null ? null : myDomManager.createFileElement(myXmlFile, description);
     setInModel(changedRoot, events, oldValue, fireEvents);
     if (description == null) {
       computeCachedValue(getAllDependencyItems());
