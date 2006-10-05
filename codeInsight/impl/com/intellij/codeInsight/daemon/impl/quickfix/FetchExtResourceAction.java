@@ -140,12 +140,18 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return null;
   }
 
-  class FetchingResourceIOException extends IOException {
+  static class FetchingResourceIOException extends IOException {
     private String url;
 
     FetchingResourceIOException(Throwable cause, String url) {
       initCause(cause);
       this.url = url;
+    }
+  }
+
+  static class FetchingResourceProblemRuntimeWrapper extends RuntimeException {
+    FetchingResourceProblemRuntimeWrapper(FetchingResourceIOException cause) {
+      super(cause);
     }
   }
 
@@ -163,36 +169,50 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       new Thread(new Runnable() {
         public void run() {
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            public void run() {
-              do {
-                try {
-                  HttpConfigurable.getInstance().prepareURL(url);
-                  fetchDtd(project, uri, url);
-                  break;
-                }
-                catch (IOException ex) {
-                  String urlWithProblems = url;
-                  String message = QuickFixBundle.message("error.fetching.title");
-                  IOException cause = ex;
+          while(true) {
+            try {
+              ProgressManager.getInstance().runProcess(new Runnable() {
+                  public void run() {
+                    try {
+                      HttpConfigurable.getInstance().prepareURL(url);
+                      fetchDtd(project, uri, url);
+                    }
+                    catch (IOException ex) {
+                      FetchingResourceIOException exceptionDescribingIOProblem;
 
-                  if (ex instanceof FetchingResourceIOException) {
-                    urlWithProblems = ((FetchingResourceIOException)ex).url;
-                    cause = (IOException)ex.getCause();
-                    if (!url.equals(urlWithProblems)) message = QuickFixBundle.message("error.fetching.dependent.resource.title");
-                  }
+                      if (ex instanceof FetchingResourceIOException) {
+                        exceptionDescribingIOProblem = (FetchingResourceIOException)ex;
+                      } else {
+                        exceptionDescribingIOProblem = new FetchingResourceIOException(ex, url);
+                      }
 
-                  if (!IOExceptionDialog.showErrorDialog(cause, message, QuickFixBundle.message("error.fetching.resource", urlWithProblems))) {
-                    break;
+                      throw new FetchingResourceProblemRuntimeWrapper(exceptionDescribingIOProblem);
+                    }
+
                   }
-                  else {
-                    continue;
-                  }
-                }
-              }
-              while (true);
+                }, progressWindow);
             }
-          }, progressWindow);
+            catch (FetchingResourceProblemRuntimeWrapper e) {
+              String message = QuickFixBundle.message("error.fetching.title");
+              FetchingResourceIOException ioproblem = (FetchingResourceIOException)e.getCause();
+
+              if (!url.equals(ioproblem.url)) {
+                message = QuickFixBundle.message("error.fetching.dependent.resource.title");
+              }
+
+              if (!IOExceptionDialog.showErrorDialog(
+                (IOException)ioproblem.getCause(),
+                message,
+                QuickFixBundle.message("error.fetching.resource", ioproblem.url))
+              ) {
+                break; // cancel fetching
+              }
+              else {
+                continue;  // try another time
+              }
+            }
+            break; // success fetching
+          }
         }
       }, FETCHING_THREAD_ID).start();
     }
