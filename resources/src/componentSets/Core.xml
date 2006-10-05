@@ -23,10 +23,6 @@
       <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.ActivationServerImpl</interface-class>
-      <implementation-class>com.intellij.ide.ActivationServerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
       <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
     </component>
