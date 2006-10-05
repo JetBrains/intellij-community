@@ -73,7 +73,7 @@ public abstract class FindSettings{
    */
   public abstract String[] getRecentFileMasks();
 
-  public abstract ArrayList getRecentDirectories();
+  public abstract ArrayList<String> getRecentDirectories();
 
   public abstract void setWithSubdirectories(boolean b);
 

@@ -88,7 +88,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
         Element itemElement = new Element(ATTR_ITEM);
         itemElement.setAttribute(ATTR_INDEX, Integer.toString(i));
         itemElement.setAttribute(ATTR_CLASS, listItem.getClass().getName());
-        itemElement.setAttribute(ATTR_VALUE, listItem);
+        itemElement.setAttribute(ATTR_VALUE, DefaultJDOMExternalizer.filterXMLCharacters(listItem));
         listElement.addContent(itemElement);
       }
     }

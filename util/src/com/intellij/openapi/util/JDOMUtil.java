@@ -181,13 +181,18 @@ public class JDOMUtil {
   }
 
   public static Document loadDocument(File file) throws JDOMException, IOException {
-    SAXBuilder saxBuilder = createBuilder();
-    return saxBuilder.build(new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), ENCODING));
+    return loadDocument(new BufferedInputStream(new FileInputStream(file)));
   }
 
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     SAXBuilder saxBuilder = createBuilder();
-    return saxBuilder.build(new InputStreamReader(stream, ENCODING));
+    InputStreamReader reader = new InputStreamReader(stream, ENCODING);
+    try {
+      return saxBuilder.build(reader);
+    }
+    finally {
+      reader.close();
+    }
   }
 
   public static Document loadDocument(URL url) throws JDOMException, IOException {

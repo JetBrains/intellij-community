@@ -12,6 +12,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.properties.PropertiesFileType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   @NonNls public static final String FIND_SCOPE_SELECTED = "selected";
   public static final String DEFAULT_SEARCH_SCOPE = FindBundle.message("find.scope.all.project.classes");
   
-  public static final int MAX_RECENT_SIZE = 30;
+  private static final int MAX_RECENT_SIZE = 30;
 
 
   public boolean isSearchOverloadedMethods() {
@@ -59,6 +60,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   public JDOMExternalizableStringList RECENT_DIR_STRINGS = new JDOMExternalizableStringList();
   public JDOMExternalizableStringList RECENT_FILE_MASKS = new JDOMExternalizableStringList();
 
+  @NotNull
   public String getComponentName(){
     return "FindSettings";
   }
@@ -70,7 +72,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
 
   public void readExternal(Element element) throws InvalidDataException{
     DefaultJDOMExternalizer.readExternal(this, element);
-    if (RECENT_FILE_MASKS.size() == 0) {
+    if (RECENT_FILE_MASKS.isEmpty()) {
       RECENT_FILE_MASKS.add("*" + PropertiesFileType.DOT_DEFAULT_EXTENSION);
       RECENT_FILE_MASKS.add("*" + HtmlFileType.DOT_DEFAULT_EXTENSION);
       RECENT_FILE_MASKS.add("*" + NewJspFileType.DOT_DEFAULT_EXTENSION);
@@ -193,14 +195,14 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   }
 
   public void addStringToFind(String s){
-    if ((s == null) || (s.indexOf('\r') >= 0) || (s.indexOf('\n') >= 0)){
+    if (s == null || s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
       return;
     }
     addStringToList(s, RECENT_FIND_STRINGS, MAX_RECENT_SIZE);
   }
 
   public void addStringToReplace(String s) {
-    if ((s == null) || (s.indexOf('\r') >= 0) || (s.indexOf('\n') >= 0)){
+    if (s == null || s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0){
       return;
     }
     addStringToList(s, RECENT_REPLACE_STRINGS, MAX_RECENT_SIZE);
@@ -225,8 +227,8 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     return RECENT_FILE_MASKS.toArray(new String[RECENT_FILE_MASKS.size()]);
   }
 
-  public ArrayList getRecentDirectories(){
-    return new ArrayList(RECENT_DIR_STRINGS);
+  public ArrayList<String> getRecentDirectories(){
+    return new ArrayList<String>(RECENT_DIR_STRINGS);
   }
 
   public String getFileMask() {
