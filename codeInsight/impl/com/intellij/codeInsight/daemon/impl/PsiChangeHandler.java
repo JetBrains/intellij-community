@@ -113,7 +113,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     // change in e.g. sciptlet may lead to error in any other place
     Language language = file.getLanguage();
     if (language == StdLanguages.JSPX || language == StdLanguages.JSP) {
-      myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, file);
+      myDaemonCodeAnalyzer.getFileStatusMap().markAllFilesDirty();
       return;
     }
 
