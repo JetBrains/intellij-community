@@ -770,7 +770,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * Creates and sets new <code>RadRootContainer</code>
    * @param keepSelection if true, the GUI designer tries to preserve the selection state after reload.
    */
-  private void readFromFile(final boolean keepSelection) {
+  public void readFromFile(final boolean keepSelection) {
     try {
       ComponentPtr[] selection = null;
       Map<String, String> tabbedPaneSelectedTabs = null;

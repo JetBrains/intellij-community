@@ -36,8 +36,7 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
     public void beforeRootsChange(final ModuleRootEvent event) {}
 
     public void rootsChanged(final ModuleRootEvent event) {
-      myModule2ClassLoader.clear();
-      myProjectClassLoader = null;
+      clearClassLoaderCache();
     }
   };
   private ClassLoader myProjectClassLoader = null;
@@ -126,10 +125,15 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
       urls.add(new File(PathUtil.getJarPathForClass(Spacer.class)).toURI().toURL());
     }
     catch (MalformedURLException ignored) {
+      // ignore
     }
 
     final URL[] _urls = urls.toArray(new URL[urls.size()]);
-    //final URLClassLoader classLoader = new URLClassLoader(_urls, null);
     return new UrlClassLoader(Arrays.asList(_urls), null);
+  }
+
+  public void clearClassLoaderCache() {
+    myModule2ClassLoader.clear();
+    myProjectClassLoader = null;
   }
 }
