@@ -394,7 +394,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public long physicalLength(final VirtualFile virtualFile) throws IOException {
-    return ((VirtualFileImpl)virtualFile).getPhysicalFileLength();
+    if (virtualFile instanceof VirtualFileImpl) {
+      return ((VirtualFileImpl)virtualFile).getPhysicalFileLength();
+    }
+    return virtualFile.getLength();
   }
 
   public String extractPresentableUrl(String path) {
