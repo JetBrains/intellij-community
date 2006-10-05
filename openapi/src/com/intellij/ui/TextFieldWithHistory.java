@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -135,7 +136,9 @@ public class TextFieldWithHistory extends JPanel {
 
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction clearTextAction = actionManager.getAction(IdeActions.ACTION_CLEAR_TEXT);
-    clearTextAction.registerCustomShortcutSet(clearTextAction.getShortcutSet(), this);
+    if (clearTextAction.getShortcutSet().getShortcuts().length == 0) {
+      clearTextAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
+    }
   }
 
   public void addDocumentListener(DocumentListener listener) {
