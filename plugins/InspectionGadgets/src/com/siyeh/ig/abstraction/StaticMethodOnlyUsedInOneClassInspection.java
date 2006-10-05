@@ -9,6 +9,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -31,11 +33,13 @@ import org.jetbrains.annotations.Nullable;
 public class StaticMethodOnlyUsedInOneClassInspection
         extends MethodInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.method.only.used.in.one.class.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.ABSTRACTION_GROUP_NAME;
     }
@@ -72,17 +76,25 @@ public class StaticMethodOnlyUsedInOneClassInspection
                     "static.method.only.used.in.one.class.quickfix");
         }
 
-        protected void doFix(Project project, ProblemDescriptor descriptor)
+        protected void doFix(final Project project,
+                             ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement location = descriptor.getPsiElement();
             final PsiMethod method = (PsiMethod)location.getParent();
-            final RefactoringActionHandlerFactory factory =
-                    RefactoringActionHandlerFactory.getInstance();
-            final RefactoringActionHandler moveHandler =
-                    factory.createMoveHandler();
-            final DataManager dataManager = DataManager.getInstance();
-            final DataContext dataContext = dataManager.getDataContext();
-            moveHandler.invoke(project, new PsiElement[]{method}, dataContext);
+            final Application application = ApplicationManager.getApplication();
+            application.invokeLater(new Runnable() {
+                public void run() {
+                    final RefactoringActionHandlerFactory factory =
+                            RefactoringActionHandlerFactory.getInstance();
+                    final RefactoringActionHandler moveHandler =
+                            factory.createMoveHandler();
+                    final DataManager dataManager = DataManager.getInstance();
+                    final DataContext dataContext =
+                            dataManager.getDataContext();
+                    moveHandler.invoke(project, new PsiElement[]{method},
+                            dataContext);
+                }
+            });
         }
     }
 
