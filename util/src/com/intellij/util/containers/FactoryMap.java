@@ -17,8 +17,8 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -28,7 +28,7 @@ public abstract class FactoryMap<T,V> {
   private final Map<T,V> myMap = new THashMap<T, V>();
 
   protected abstract V create(T key);
-
+  
   public final V get(T key) {
     V v = myMap.get(getKey(key));
     if (v == null) {
@@ -38,7 +38,7 @@ public abstract class FactoryMap<T,V> {
     return v == NULL ? null : v;
   }
 
-  static <T> T getKey(final T key) {
+  private static <T> T getKey(final T key) {
     return key == null ? (T)NULL : key;
   }
 
@@ -51,7 +51,14 @@ public abstract class FactoryMap<T,V> {
   }
 
   public Set<T> keySet() {
-    return myMap.keySet();
+    final Set<T> ts = myMap.keySet();
+    if (ts.contains(NULL)) {
+      final HashSet<T> hashSet = new HashSet<T>(ts);
+      hashSet.remove(NULL);
+      hashSet.add(null);
+      return hashSet;
+    }
+    return ts;
   }
 
   public void clear() {
