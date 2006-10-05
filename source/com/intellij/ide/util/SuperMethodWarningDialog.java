@@ -55,7 +55,7 @@ class SuperMethodWarningDialog extends DialogWrapper {
     }
     JPanel labelsPanel = new JPanel(new GridLayout(0, 1, 0, 0));
     labelsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
-    String classType = (myIsParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class"));
+    String classType = myIsParentInterface ? IdeBundle.message("element.of.interface") : IdeBundle.message("element.of.class");
     String methodString = IdeBundle.message("element.method");
     labelsPanel.add(new JLabel(IdeBundle.message("label.method", myName)));
     if (myClassNames.length == 1) {

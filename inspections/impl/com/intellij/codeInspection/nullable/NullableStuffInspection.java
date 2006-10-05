@@ -9,7 +9,9 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +26,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
 
   @Nullable
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
 
@@ -65,14 +67,17 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
 
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.nullable.problems.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return "NullableProblems";
   }
@@ -103,7 +108,11 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         holder.registerProblem(method.getNameIdentifier(),
                                InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               new AnnotateMethodFix(AnnotationUtil.NOT_NULL));
+                               new AnnotateMethodFix(AnnotationUtil.NOT_NULL){
+                                 protected int askUserWhetherToAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+                                   return NullableStuffInspection.this.askUserWhetherToAnnotateBaseMethod(method, superMethod, project);
+                                 }
+                               });
       }
       if (REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL) {
         PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
@@ -132,6 +141,14 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         }
       }
     }
+  }
+
+  protected int askUserWhetherToAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+    return new AnnotateMethodFix(AnnotationUtil.NOT_NULL){
+      public int askUserWhetherToAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+        return super.askUserWhetherToAnnotateBaseMethod(method, superMethod, project);
+      }
+    }.askUserWhetherToAnnotateBaseMethod(method, superMethod, project);
   }
 
   private static void reportNullableNotNullConflict(final ProblemsHolder holder, PsiIdentifier psiElement) {
