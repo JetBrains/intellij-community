@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -164,13 +165,22 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
     final String url = findUrl(file, offset, uri);
 
-    final ProgressWindow progressWindow = new ProgressWindow(true, project);
-    progressWindow.setTitle(QuickFixBundle.message("fetching.resource.title"));
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       new Thread(new Runnable() {
         public void run() {
           while(true) {
             try {
+              final ProgressWindow[] result = new ProgressWindow[1];
+
+              ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+                public void run() {
+                  final ProgressWindow progressWindow = new ProgressWindow(true, project);
+                  progressWindow.setTitle(QuickFixBundle.message("fetching.resource.title"));
+                  result[0] = progressWindow;
+                }
+              }, ModalityState.defaultModalityState());
+
+
               ProgressManager.getInstance().runProcess(new Runnable() {
                   public void run() {
                     try {
@@ -190,7 +200,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                     }
 
                   }
-                }, progressWindow);
+                }, result[0]);
             }
             catch (FetchingResourceProblemRuntimeWrapper e) {
               String message = QuickFixBundle.message("error.fetching.title");
