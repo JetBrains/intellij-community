@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ex.SurroundWithIfFix;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -37,16 +38,14 @@ import java.util.*;
 
 public class DataFlowInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
-
-  public static final @NonNls String SHORT_NAME = "ConstantConditions";
-
+  private static final @NonNls String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
 
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
   }
 
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
@@ -96,9 +95,9 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static void createDescription(DataFlowRunner runner, ProblemsHolder holder) {
-    HashSet<Instruction>[] constConditions = runner.getConstConditionalExpressions();
-    HashSet<Instruction> trueSet = constConditions[0];
-    HashSet<Instruction> falseSet = constConditions[1];
+    Pair<Set<Instruction>,Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
+    Set<Instruction> trueSet = constConditions.getFirst();
+    Set<Instruction> falseSet = constConditions.getSecond();
     Set<Instruction> npeSet = runner.getNPEInstructions();
     Set<Instruction> cceSet = runner.getCCEInstructions();
     Set<Instruction> redundantInstanceofs = runner.getRedundantInstanceofs();
@@ -281,7 +280,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         return fix.getText();
       }
 
-      public void applyFix(Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
         final PsiElement psiElement = descriptor.getPsiElement();
         try {
           LOG.assertTrue(psiElement.isValid());
@@ -305,7 +304,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiInstanceOfExpression) {
         try {
@@ -327,14 +326,17 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.data.flow.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

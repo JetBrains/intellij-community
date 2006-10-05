@@ -30,7 +30,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private Map<DfaVariableValue,DfaVariableState> myVariableStates;
   private DfaValueFactory myFactory;
 
-  public DfaMemoryStateImpl(final DfaValueFactory factory) {
+  private DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
   }
 
@@ -274,7 +274,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @NotNull
-  public DfaValue[] getEqClassesFor(DfaValue dfaValue) {
+  private DfaValue[] getEqClassesFor(DfaValue dfaValue) {
     int index = getEqClassIndex(dfaValue);
     List<DfaValue> result = new ArrayList<DfaValue>();
     SortedIntSet set = index == -1 ? null : myEqClasses.get(index);
@@ -327,13 +327,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static Object box(final Object value) {
-    Object newBoxedValue = null;
+    Object newBoxedValue;
     if (value instanceof Integer) newBoxedValue = Integer.valueOf(((Integer)value).intValue());
-    if (value instanceof Byte) newBoxedValue = Byte.valueOf(((Byte)value).byteValue());
-    if (value instanceof Short) newBoxedValue = Short.valueOf(((Short)value).shortValue());
-    if (value instanceof Long) newBoxedValue = Long.valueOf(((Long)value).longValue());
-    if (value instanceof Boolean) newBoxedValue = Boolean.valueOf(((Boolean)value).booleanValue());
-    if (value instanceof Character) newBoxedValue = Character.valueOf(((Character)value).charValue());
+    else if (value instanceof Byte) newBoxedValue = Byte.valueOf(((Byte)value).byteValue());
+    else if (value instanceof Short) newBoxedValue = Short.valueOf(((Short)value).shortValue());
+    else if (value instanceof Long) newBoxedValue = Long.valueOf(((Long)value).longValue());
+    else if (value instanceof Boolean) newBoxedValue = Boolean.valueOf(((Boolean)value).booleanValue());
+    else if (value instanceof Character) newBoxedValue = Character.valueOf(((Character)value).charValue());
+    else return new Object();
     return newBoxedValue;
   }
 
@@ -429,7 +430,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
-  public boolean isNotNull(DfaVariableValue dfaVar) {
+  private boolean isNotNull(DfaVariableValue dfaVar) {
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
     int c1Index = getOrCreateEqClassIndex(dfaVar);
     int c2Index = getOrCreateEqClassIndex(dfaNull);

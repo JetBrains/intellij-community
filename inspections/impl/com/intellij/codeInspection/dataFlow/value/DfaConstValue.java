@@ -51,7 +51,14 @@ public class DfaConstValue extends DfaValue {
       if (value == Boolean.FALSE) return dfaFalse;
 
       if (TypeConversionUtil.isNumericType(type)) {
-        value = TypeConversionUtil.computeCastTo(value, PsiType.DOUBLE);
+        if (type == PsiType.DOUBLE || type == PsiType.FLOAT) {
+          double dbVal = type == PsiType.DOUBLE ? ((Double)value).doubleValue() : ((Float)value).doubleValue();
+          // 5.0f == 5
+          if (Math.floor(dbVal) == dbVal) value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
+        }
+        else {
+          value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
+        }
       }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {

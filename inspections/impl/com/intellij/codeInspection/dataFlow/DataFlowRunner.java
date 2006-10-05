@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -214,9 +215,9 @@ public class DataFlowRunner {
     return myFields;
   }
 
-  public HashSet<Instruction>[] getConstConditionalExpressions() {
-    HashSet<BranchingInstruction> trueSet = new HashSet<BranchingInstruction>();
-    HashSet<BranchingInstruction> falseSet = new HashSet<BranchingInstruction>();
+  public Pair<Set<Instruction>,Set<Instruction>> getConstConditionalExpressions() {
+    Set<Instruction> trueSet = new HashSet<Instruction>();
+    Set<Instruction> falseSet = new HashSet<Instruction>();
 
     for (Instruction instruction : myInstructions) {
       if (instruction instanceof BranchingInstruction) {
@@ -245,7 +246,7 @@ public class DataFlowRunner {
       }
     }
 
-    return new HashSet[]{trueSet, falseSet};
+    return Pair.create(trueSet, falseSet);
   }
 
   public void onPassingNullParameter(PsiExpression expr) {
@@ -264,16 +265,15 @@ public class DataFlowRunner {
   }
 
   public boolean problemsDetected() {
-    final HashSet[] constConditions = getConstConditionalExpressions();
-    return constConditions[0].size() > 0 ||
-           constConditions[1].size() > 0 ||
-           myNPEInstructions.size() > 0 ||
-           myCCEInstructions.size() > 0 ||
-           getRedundantInstanceofs().size() > 0 ||
-           myNullableArguments.size() > 0 ||
-           myNullableAssignments.size() > 0 ||
-           myNullableReturns.size() > 0 ||
-           !myUnboxedNullables.isEmpty();
+    final Pair<Set<Instruction>, Set<Instruction>> constConditions = getConstConditionalExpressions();
+    return !constConditions.getFirst().isEmpty()
+           || !constConditions.getSecond().isEmpty()
+           || !myNPEInstructions.isEmpty()
+           || !myCCEInstructions.isEmpty()
+           || !getRedundantInstanceofs().isEmpty()
+           || !myNullableArguments.isEmpty()
+           || !myNullableAssignments.isEmpty()
+           || !myNullableReturns.isEmpty()
+           || !myUnboxedNullables.isEmpty();
   }
-
 }

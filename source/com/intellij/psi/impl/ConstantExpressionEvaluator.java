@@ -82,7 +82,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
         value = Boolean.valueOf(lOperandValue == rOperandValue);
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() != ((Boolean)rOperandValue).booleanValue());
+        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() == ((Boolean)rOperandValue).booleanValue());
       }
     }
     else if (tokenType == JavaTokenType.NE) {

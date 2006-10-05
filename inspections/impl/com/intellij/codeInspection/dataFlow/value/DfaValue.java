@@ -24,8 +24,7 @@ public class DfaValue {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof DfaValue)) return false;
-    return getID() == ((DfaValue) obj).getID();
+    return obj instanceof DfaValue && getID() == ((DfaValue)obj).getID();
   }
 
   public int hashCode() {

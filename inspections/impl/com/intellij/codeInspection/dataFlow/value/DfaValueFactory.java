@@ -92,9 +92,6 @@ public class DfaValueFactory {
     return null;
   }
 
-  public static void freeInstance() {
-  }
-
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
