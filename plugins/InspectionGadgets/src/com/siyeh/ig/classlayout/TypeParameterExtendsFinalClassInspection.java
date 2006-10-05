@@ -15,13 +15,20 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
 
@@ -43,6 +50,48 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         final String name = namedElement.getName();
         return InspectionGadgetsBundle.message(
                 "type.parameter.extends.final.class.problem.descriptor", name);
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new TypeParameterExtendsFinalClassFix();
+    }
+
+    private static class TypeParameterExtendsFinalClassFix
+            extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "type.parameter.extends.final.class.quickfix");
+        }
+
+        protected void doFix(@NotNull Project project,
+                             ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiTypeParameter typeParameter =
+                    (PsiTypeParameter)element.getParent();
+            final PsiReferenceList extendsList = typeParameter.getExtendsList();
+            final PsiClassType[] referenceElements =
+                    extendsList.getReferencedTypes();
+            if (referenceElements.length < 1) {
+                return;
+            }
+            final PsiClass finalClass = referenceElements[0].resolve();
+            final PsiManager manager = element.getManager();
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiJavaCodeReferenceElement classReference =
+                    factory.createClassReferenceElement(finalClass);
+            final Query<PsiReference> query =
+                    ReferencesSearch.search(typeParameter,
+                            typeParameter.getUseScope());
+            for (PsiReference reference : query) {
+                final PsiElement referenceElement = reference.getElement();
+                referenceElement.replace(classReference);
+            }
+            typeParameter.delete();
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
