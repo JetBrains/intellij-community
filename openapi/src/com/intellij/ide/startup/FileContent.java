@@ -20,6 +20,7 @@ public class FileContent implements UserDataHolder {
   private byte[] myCachedBytes;
   private THashMap myUserMap = null;
   private boolean myGetBytesCalled = false;
+  private long myLength = -1;
 
   public FileContent(VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
@@ -77,5 +78,13 @@ public class FileContent implements UserDataHolder {
         }
       }
     }
+  }
+
+  public long getPhysicalLength() throws IOException {
+    if (myLength == -1) {
+      myLength = LocalFileSystem.getInstance().physicalLength(myVirtualFile);
+    }
+
+    return myLength;
   }
 }

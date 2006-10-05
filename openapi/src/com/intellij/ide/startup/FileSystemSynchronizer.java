@@ -229,18 +229,20 @@ public class FileSystemSynchronizer {
       FileContent content;
       synchronized (this) {
         content = new FileContent(file);
-        try {
-          while (totalSize > SIZE_THRESHOLD) {
-            wait();
-          }
+          try {
+            if (content.getPhysicalLength() < SIZE_THRESHOLD) {
+              while (totalSize > SIZE_THRESHOLD) {
+                wait();
+              }
 
-          totalSize += content.getPhysicalBytes().length;
-        }
-        catch (IOException e) {
-          content.setEmptyContent();
-        }
+              totalSize += content.getPhysicalBytes().length;
+            }
+          }
+          catch (IOException e) {
+            content.setEmptyContent();
+          }
       }
-      
+
       put(content);
     }
 
@@ -250,7 +252,7 @@ public class FileSystemSynchronizer {
 
       synchronized (this) {
         try {
-          if (result.getVirtualFile() == null) return result;
+          if (result.getVirtualFile() == null || result.getPhysicalLength() >= SIZE_THRESHOLD) return result;
           totalSize -= result.getPhysicalBytes().length;
         }
         catch (IOException e) {

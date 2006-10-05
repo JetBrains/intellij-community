@@ -17,9 +17,9 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +56,7 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
 
 
   public abstract byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException;
+  public abstract long physicalLength(final VirtualFile virtualFile) throws IOException;
 
   public interface WatchRequest {
     @NotNull String getRootPath();
