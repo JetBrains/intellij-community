@@ -126,6 +126,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
                                         XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
                                         XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER,
                                         XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER,
+                                        XmlTokenType.XML_CHAR_ENTITY_REF,
                                         XmlTokenType.XML_EQ};
 
     for (int i = 0; i < javaDocMarkup.length; i++) {
