@@ -121,13 +121,13 @@ public class Util {
       final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(element);
       while(iterator.hasNext()) {
         final PsiType actual = subst.substitute(iterator.next());
-        if (!(actual instanceof PsiTypeParameter) && isRaw(actual, settings, false)) return true;
+        if (isRaw(actual, settings, false)) return true;
       }
 
       return false;
     }
     else if (t instanceof PsiArrayType) {
-      return settings.preserveRawArrays() ? false : isRaw(((PsiArrayType)t).getComponentType(), settings, upper);
+      return !settings.preserveRawArrays() && isRaw(((PsiArrayType)t).getComponentType(), settings, upper);
     }
 
     return false;
@@ -150,8 +150,7 @@ public class Util {
 
       PsiSubstitutor subst = PsiSubstitutor.EMPTY;
 
-      for (final Iterator<PsiTypeParameter> p = theSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-        final PsiTypeParameter theParm = p.next();
+      for (final PsiTypeParameter theParm : theSubst.getSubstitutionMap().keySet()) {
         final PsiType actualType = theSubst.substitute(theParm);
 
         if (actualType == null /*|| actualType instanceof PsiWildcardType*/) {
@@ -167,10 +166,9 @@ public class Util {
           else {
             final PsiType banabound = banalize(bound);
 
-            subst = subst.put(theParm,
-                              wctype.isExtends()
-                              ? PsiWildcardType.createExtends(theManager, banabound)
-                              : PsiWildcardType.createSuper(theManager, banabound));
+            subst = subst.put(theParm, wctype.isExtends()
+                                       ? PsiWildcardType.createExtends(theManager, banabound)
+                                       : PsiWildcardType.createSuper(theManager, banabound));
           }
         }
         else {
@@ -201,8 +199,7 @@ public class Util {
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
     Set<PsiTypeParameter> base = g.getSubstitutionMap().keySet();
 
-    for (Iterator<PsiTypeParameter> i = base.iterator(); i.hasNext();) {
-      PsiTypeParameter p = i.next();
+    for (PsiTypeParameter p : base) {
       PsiType type = g.substitute(p);
       subst = subst.put(p, type == null ? null : f.substitute(type));
     }
@@ -215,11 +212,7 @@ public class Util {
       final PsiWildcardType wct = ((PsiWildcardType)t);
       final PsiType bound = wct.getBound();
 
-      if (bound != null && wct.isExtends()) {
-        return bindsTypeParameters(bound, params);
-      }
-
-      return false;
+      return bound != null && wct.isExtends() && bindsTypeParameters(bound, params);
     }
 
     final PsiClassType.ClassResolveResult result = Util.resolveType(t);
@@ -287,8 +280,7 @@ public class Util {
 
       final HashSet<PsiTypeVariable> cluster = new HashSet<PsiTypeVariable>();
 
-      for (Iterator<PsiTypeParameter> i = aSubst.getSubstitutionMap().keySet().iterator(); i.hasNext();) {
-        final PsiTypeParameter parm = i.next();
+      for (final PsiTypeParameter parm : aSubst.getSubstitutionMap().keySet()) {
         final PsiType type = createParameterizedType(aSubst.substitute(parm), factory, false, context);
 
         if (type instanceof PsiTypeVariable) {
@@ -330,8 +322,8 @@ public class Util {
 
     if (t instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)t).getConjuncts();
-      for (int i = 0; i < conjuncts.length; i++) {
-        if (bindsTypeVariables(conjuncts[i])) return true;
+      for (PsiType conjunct : conjuncts) {
+        if (bindsTypeVariables(conjunct)) return true;
       }
       return false;
     }
@@ -341,8 +333,8 @@ public class Util {
     if (result.getElement() != null) {
       final PsiSubstitutor subst = result.getSubstitutor();
 
-      for (Iterator<PsiType> types = subst.getSubstitutionMap().values().iterator(); types.hasNext();) {
-        if (bindsTypeVariables(types.next())) {
+      for (final PsiType psiType : subst.getSubstitutionMap().values()) {
+        if (bindsTypeVariables(psiType)) {
           return true;
         }
       }
@@ -398,20 +390,19 @@ public class Util {
           final PsiElementFactory factory = newx.getManager().getElementFactory();
 
           PsiTypeElement[] elements = list.getTypeParameterElements();
-          for (int i = 0; i < elements.length; i++) {
-            elements[i].delete();
+          for (PsiTypeElement element1 : elements) {
+            element1.delete();
           }
 
-          for (int i = 0; i < parms.length; i++) {
-            PsiType aType = subst.substitute(parms[i]);
+          for (PsiTypeParameter parm : parms) {
+            PsiType aType = subst.substitute(parm);
 
             if (aType instanceof PsiWildcardType) {
               aType = ((PsiWildcardType)aType).getBound();
             }
 
-            list.add(factory.createTypeElement(aType == null
-                                               ? PsiType.getJavaLangObject(list.getManager(), list.getResolveScope())
-                                               : aType));
+            list
+              .add(factory.createTypeElement(aType == null ? PsiType.getJavaLangObject(list.getManager(), list.getResolveScope()) : aType));
           }
         }
       }
