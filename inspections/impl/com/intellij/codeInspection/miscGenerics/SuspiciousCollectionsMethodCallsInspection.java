@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,7 +97,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
         if (!(argType instanceof PsiClassType)) return;
 
         final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
-        final PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();
+        PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();
         if (calleeMethod == null) return;
         PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
 
@@ -108,11 +109,17 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
           //we are in collections method implementation
           if (contextMethod != null && isInheritorOrSelf(contextMethod, patternMethod)) return;
 
-          if (isInheritorOrSelf(calleeMethod, patternMethod)) {
-            PsiTypeParameter[] typeParameters = calleeMethod.getContainingClass().getTypeParameters();
+          final PsiClass calleeClass = calleeMethod.getContainingClass();
+          PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+          final PsiClass patternClass = patternMethod.getContainingClass();
+          substitutor = TypeConversionUtil.getClassSubstitutor(patternClass, calleeClass, substitutor);
+          if (substitutor == null) continue;
+
+          if (patternMethod.getSignature(substitutor).equals(calleeMethod.getSignature(PsiSubstitutor.EMPTY))) {
+            PsiTypeParameter[] typeParameters = patternClass.getTypeParameters();
             if (typeParameters.length <= index) return;
             final PsiTypeParameter typeParameter = typeParameters[index];
-            PsiType typeParamMapping = resolveResult.getSubstitutor().substitute(typeParameter);
+            PsiType typeParamMapping = substitutor.substitute(typeParameter);
             if (typeParamMapping != null) {
               String message = null;
               if (!typeParamMapping.isAssignableFrom(argType)) {
@@ -126,7 +133,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
                       );
                 } else {
                   message = InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor1",
-                      PsiFormatUtil.formatMethod(calleeMethod, resolveResult.getSubstitutor(),
+                      PsiFormatUtil.formatMethod(calleeMethod, substitutor,
                           PsiFormatUtil.SHOW_NAME |
                               PsiFormatUtil.SHOW_CONTAINING_CLASS,
                           PsiFormatUtil.SHOW_TYPE));
@@ -157,14 +164,17 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
     return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.suspicious.collections.method.calls.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return "SuspiciousMethodCalls";
   }
