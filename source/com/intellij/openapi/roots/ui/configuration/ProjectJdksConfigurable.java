@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
@@ -143,11 +143,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       }
     });
     actions.add(new MyActionGroupWrapper(group));
-    actions.add(new MyDeleteAction(new Condition<Object>() {
-      public boolean value(final Object object) {
-        return true;
-      }
-    }));
+    actions.add(new MyDeleteAction(Conditions.alwaysTrue()));
     return actions;
   }
 

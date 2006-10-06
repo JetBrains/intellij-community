@@ -16,6 +16,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -105,11 +106,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
   }
 
   public static <T> Condition<T> alwaysTrueCondition(Class<T> aClass) {
-    return new Condition<T>() {
-      public boolean value(T t) {
-        return true;
-      }
-    };
+    return Conditions.alwaysTrue();
   }
 
   public static <T> InstanceOf<T> instanceOf(final Class<T> aClass) {

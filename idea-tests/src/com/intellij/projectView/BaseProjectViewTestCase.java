@@ -122,20 +122,22 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     assertStructureEqual(packageDirectory, expected, maxRowCount, myStructure);
   }
 
-  static VirtualFile[] getFiles(AbstractTreeNode kid) {
+  private static VirtualFile[] getFiles(AbstractTreeNode kid) {
     if (kid instanceof BasePsiNode) {
       Object value = kid.getValue();
       VirtualFile virtualFile = PsiUtil.getVirtualFile((PsiElement)value);
       return new VirtualFile[]{virtualFile};
-    } else if (kid instanceof PackageElementNode) {
-        return ((PackageElementNode)kid).getVirtualFiles();
-    } else {
+    }
+    else if (kid instanceof PackageElementNode) {
+      return ((PackageElementNode)kid).getVirtualFiles();
+    }
+    else {
       return new VirtualFile[0];
     }
 
   }
 
-  protected static void collect(AbstractTreeNode node, MultiValuesMap<VirtualFile, AbstractTreeNode> map,
+  private static void collect(AbstractTreeNode node, MultiValuesMap<VirtualFile, AbstractTreeNode> map,
                                 final AbstractTreeStructure structure) {
     Object[] kids = structure.getChildElements(node);
     for (Object kid1 : kids) {
@@ -232,8 +234,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
     DefaultMutableTreeNode nodeForElement = getNodeForElement(element, pane);
-    if (nodeForElement == null) return false;
-    return isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
+    return nodeForElement != null && isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
   }
 
   protected static void assertListsEqual(DefaultListModel model, String expected) {

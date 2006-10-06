@@ -284,11 +284,7 @@ public class CustomizableActionsPanel {
           customActionsSchema.setName(createUniqueName());
           return customActionsSchema;
         }
-      }, new Condition<CustomActionsSchema>() {
-        public boolean value(final CustomActionsSchema object) {
-          return true;
-        }
-      });
+      }, Conditions.<CustomActionsSchema>alwaysTrue());
     myListPane.setLayout(new BorderLayout());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     myListPane.add(toolbar.getComponent(), BorderLayout.NORTH);

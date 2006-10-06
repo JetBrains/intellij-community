@@ -321,8 +321,7 @@ public final class TreeUtil {
     for (int i = 0; i < childCount; i++){
       if (!traverse(node.getChildAt(i), traverse)) return false;
     }
-    if (!traverse.accept(node)) return false;
-    return true;
+    return traverse.accept(node);
   }
 
   public static boolean traverseDepth(final TreeNode node, final Traverse traverse) {
@@ -441,7 +440,9 @@ public final class TreeUtil {
       }
       tree.scrollRectToVisible(bounds);
     }
-    tree.setSelectionRow(row);
+    if (!tree.isRowSelected(row)) {
+      tree.setSelectionRow(row);
+    }
   }
 
   private static int getSelectedRow(final JTree tree) {
@@ -519,9 +520,7 @@ public final class TreeUtil {
     if (leadSelectionPath != null) {
       final Object[] path = leadSelectionPath.getPath();
       final Object[] pathToSelect = new Object[path.length > keepSelectionLevel && keepSelectionLevel >= 0 ? keepSelectionLevel : path.length];
-      for (int i = 0; i < pathToSelect.length; i++) {
-        pathToSelect[i] = path[i];
-      }
+      System.arraycopy(path, 0, pathToSelect, 0, pathToSelect.length);
       if (pathToSelect.length == 0) return;
       selectPath(tree, new TreePath(pathToSelect));
     }
@@ -539,7 +538,7 @@ public final class TreeUtil {
     parent.remove(treeNode);
     parent.insert(treeNode, idx + direction);
     ((DefaultTreeModel)tree.getModel()).reload(parent);
-    TreeUtil.selectNode(tree, treeNode);
+    selectNode(tree, treeNode);
   }
 
   public static ArrayList<TreeNode> childrenToArray(final TreeNode node) {
@@ -571,8 +570,8 @@ public final class TreeUtil {
   }
 
   public static void expandAll(final JTree tree) {
-    int oldRowCount = 0;
     tree.expandPath(new TreePath(tree.getModel().getRoot()));
+    int oldRowCount = 0;
     do {
       int rowCount = tree.getRowCount();
       if (rowCount == oldRowCount) break;
@@ -639,12 +638,7 @@ public final class TreeUtil {
     }
   }
 
-  public interface RemoveNodeOperation {
-    void removeNode(DefaultTreeModel model, TreePath path);
-  }
-
   public interface Traverse{
     boolean accept(Object node);
   }
-
 }

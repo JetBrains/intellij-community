@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -49,7 +50,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  protected static VirtualFile[] getFilesToRefresh(Object element) {
+  private static VirtualFile[] getFilesToRefresh(Object element) {
     final VirtualFile virtualFile;
     if (element instanceof PsiDirectory){
       virtualFile = ((PsiDirectory)element).getVirtualFile();
@@ -91,7 +92,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return result;
   }
 
-  public void hideChildrenFor(DefaultMutableTreeNode node) {
+  private void hideChildrenFor(DefaultMutableTreeNode node) {
     if (node != null){
       final JTree tree = getTree();
       final TreePath path = new TreePath(node.getPath());
@@ -104,11 +105,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   public void select(Object element, VirtualFile file, boolean requestFocus) {
     DefaultMutableTreeNode selected = alreadySelectedNode(element);
     if (selected == null) {
-      AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), file, element, new Condition<AbstractTreeNode>() {
-        public boolean value(final AbstractTreeNode object) {
-          return true;
-        }
-      });
+      AbstractTreeNode node = expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, Conditions.<AbstractTreeNode>alwaysTrue());
       selected = getNodeForElement(node);
     }
     TreeUtil.selectInTree(selected, requestFocus, getTree());
@@ -117,7 +114,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   public void selectInWidth(final Object element, final boolean requestFocus, final Condition<AbstractTreeNode> nonStopCondition) {
     DefaultMutableTreeNode selected = alreadySelectedNode(element);
     if (selected == null) {
-      AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), null, element, nonStopCondition);
+      AbstractTreeNode node = expandPathTo(null, (AbstractTreeNode)getTreeStructure().getRootElement(), element, nonStopCondition);
       selected = getNodeForElement(node);
     }
     TreeUtil.selectInTree(selected, requestFocus, getTree());
@@ -149,19 +146,19 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  private AbstractTreeNode select(AbstractTreeNode current, VirtualFile file, Object element, Condition<AbstractTreeNode> nonStopCondition) {
-    if (current.canRepresent(element)) return current;
-    if (current instanceof ProjectViewNode && file != null && !((ProjectViewNode)current).contains(file)) return null;
+  private AbstractTreeNode expandPathTo(VirtualFile file, AbstractTreeNode root, Object element, Condition<AbstractTreeNode> nonStopCondition) {
+    if (root.canRepresent(element)) return root;
+    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode)root).contains(file)) return null;
 
-    DefaultMutableTreeNode currentNode = getNodeForElement(current);
+    DefaultMutableTreeNode currentNode = getNodeForElement(root);
     boolean expanded = currentNode != null && getTree().isExpanded(new TreePath(currentNode.getPath()));
 
-    List<AbstractTreeNode> kids = getOrBuildChildren(current);
+    List<AbstractTreeNode> kids = getOrBuildChildren(root);
     for (AbstractTreeNode node : kids) {
       if (nonStopCondition.value(node)) {
-        AbstractTreeNode result = select(node, file, element, nonStopCondition);
+        AbstractTreeNode result = expandPathTo(file, node, element, nonStopCondition);
         if (result != null) {
-          currentNode = getNodeForElement(current);
+          currentNode = getNodeForElement(root);
           if (currentNode != null) {
             final TreePath path = new TreePath(currentNode.getPath());
             if (!getTree().isExpanded(path)) {
@@ -170,10 +167,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           }
           return result;
         }
-        else {
-          if (!expanded) {
-            hideChildrenFor(currentNode);
-          }
+        else if (!expanded) {
+          hideChildrenFor(currentNode);
         }
       }
     }
