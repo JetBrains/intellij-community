@@ -1,5 +1,5 @@
 <project default="main">
   <target name="main">
-    <echo message="p1=${<ref>env.JDK_HOME}"/>
+    <echo message="p1=${<ref>env.ComSpec}"/>
   </target>
 </project>
