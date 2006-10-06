@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.javaee.make.ModuleBuildProperties;
 
 import java.io.File;
 
@@ -66,7 +67,11 @@ public class ChunkBuild extends CompositeGenerator{
 
     if (chunk.isJ2EE()) {
       add(new J2EEBuildTarget(chunk, chunkBaseDir, genOptions));
+      add(new Comment(CompilerBundle.message("generated.ant.build.exploded.target.comment", chunk.getName(),
+                                             BuildProperties.getJ2EEExplodedPathProperty())), 1);
       add(new J2EEExplodedBuildTarget(chunk, chunkBaseDir, genOptions));
+      add(new Comment(CompilerBundle.message("generated.ant.build.jar.target.comment", ModuleBuildProperties.getInstance(chunk.getModules()[0]).getArchiveExtension(), chunk.getName(),
+                                             BuildProperties.getJ2EEJarPathProperty())), 1);
       add(new J2EEJarBuildTarget(chunk, chunkBaseDir, genOptions));
     }
   }
