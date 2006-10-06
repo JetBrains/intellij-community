@@ -1,5 +1,7 @@
 package com.intellij.openapi.diff.impl.mergeTool;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -13,20 +15,17 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.ide.DataManager;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
-
-import org.jetbrains.annotations.NonNls;
 
 public class MergeRequestImpl extends MergeRequest {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl");
   private final DiffContent[] myDiffContents = new DiffContent[3];
   private String myWindowTitle = null;
   private String[] myVersionTitles = null;
-  private int myResult;
+  private int myResult = DialogWrapper.CANCEL_EXIT_CODE;
   private String myHelpId;
   private final ActionButtonPresentation myActionButtonPresenation;
 
