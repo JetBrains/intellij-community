@@ -25,7 +25,7 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField>{
   public String getPresentableText() {
     return PsiFormatUtil.formatVariable(
       getElement(),
-      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER,
+      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_INITIALIZER,
       PsiSubstitutor.EMPTY
     );
   }
