@@ -74,10 +74,6 @@ public class AntPropertyReference extends AntGenericReference {
     return handleElementRename(((PsiNamedElement)element).getName());
   }
 
-  public static ReferenceType getReferenceType() {
-    return ourRefType;
-  }
-
   public ReferenceType getType() {
     return getReferenceType();
   }
@@ -199,5 +195,9 @@ public class AntPropertyReference extends AntGenericReference {
         variants.add(new AntElementCompletionWrapper(name, project, AntElementRole.PROPERTY_ROLE));
       }
     }
+  }
+
+  private static ReferenceType getReferenceType() {
+    return ourRefType;
   }
 }

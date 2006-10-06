@@ -31,7 +31,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     ourFileRefAttributes.put("loadfile", "srcfile");
   }
 
-  private AntElement myPropHolder;
+  @NonNls private AntElement myPropHolder;
   private PsiElement myPropertiesFile;
 
   public AntPropertyImpl(final AntElement parent,
@@ -178,32 +178,13 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   @Nullable
   public String[] getNames() {
     if (isTstamp()) {
-      final Set<String> strings = StringSetSpinAllocator.alloc();
-      try {
-        String prefix = getSourceElement().getAttributeValue(AntFileImpl.PREFIX_ATTR);
-        if (prefix == null) {
-          strings.add("DSTAMP");
-          strings.add("TSTAMP");
-          strings.add("TODAY");
-        }
-        else {
-          prefix += '.';
-          strings.add(prefix + "DSTAMP");
-          strings.add(prefix + "TSTAMP");
-          strings.add(prefix + "TODAY");
-        }
-        final XmlAttributeValue value = getTstampPropertyAttributeValue();
-        if (value != null && value.getValue() != null) {
-          strings.add(value.getValue());
-        }
-        return strings.toArray(new String[strings.size()]);
-      }
-      finally {
-        StringSetSpinAllocator.dispose(strings);
-      }
+      return getTstampNames();
     }
     final String name = getName();
     if (name != null) {
+      if (getAntProject().isEnvironmentProperty(name)) {
+        return getEnvironmentNames(name);
+      }
       return new String[]{name};
     }
     return null;
@@ -359,5 +340,45 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   private boolean isTstamp() {
     return TSTAMP_TAG.equals(getSourceElement().getName());
+  }
+
+  private String[] getTstampNames() {
+    @NonNls final Set<String> strings = StringSetSpinAllocator.alloc();
+    try {
+      String prefix = getSourceElement().getAttributeValue(AntFileImpl.PREFIX_ATTR);
+      if (prefix == null) {
+        strings.add("DSTAMP");
+        strings.add("TSTAMP");
+        strings.add("TODAY");
+      }
+      else {
+        prefix += '.';
+        strings.add(prefix + "DSTAMP");
+        strings.add(prefix + "TSTAMP");
+        strings.add(prefix + "TODAY");
+      }
+      final XmlAttributeValue value = getTstampPropertyAttributeValue();
+      if (value != null && value.getValue() != null) {
+        strings.add(value.getValue());
+      }
+      return strings.toArray(new String[strings.size()]);
+    }
+    finally {
+      StringSetSpinAllocator.dispose(strings);
+    }
+  }
+
+  private String[] getEnvironmentNames(final String name) {
+    @NonNls final Set<String> strings = StringSetSpinAllocator.alloc();
+    try {
+      final String sourceName = name.substring(AntProjectImpl.ourDefaultEnvPrefix.length());
+      for (final String prefix : getAntProject().getEnvironmentPrefixes()) {
+        strings.add(prefix + sourceName);
+      }
+      return strings.toArray(new String[strings.size()]);
+    }
+    finally {
+      StringSetSpinAllocator.dispose(strings);
+    }
   }
 }

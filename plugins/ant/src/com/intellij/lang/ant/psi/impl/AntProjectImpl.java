@@ -37,8 +37,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
   private Map<String, AntElement> myReferencedElements;
   private String[] myRefIdsArray;
+  private AntProject myFakeProject; // project that holds predefined properties
   @NonNls private List<String> myEnvPrefixes;
-  @NonNls private static final String ourDefaultEnvPrefix = "env.";
+  @NonNls public static final String ourDefaultEnvPrefix = "env.";
 
   public AntProjectImpl(final AntFileImpl parent, final XmlTag tag, final AntTypeDefinition projectDefinition) {
     super(parent, tag);
@@ -242,23 +243,33 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     final String env = (envPrefix.endsWith(".")) ? envPrefix : envPrefix + '.';
     if (myEnvPrefixes.indexOf(env) < 0) {
       myEnvPrefixes.add(env);
-      for (AntProperty element : getProperties()) {
+      for (final AntProperty element : getProperties()) {
         final String name = element.getName();
         if (name != null && name.startsWith(ourDefaultEnvPrefix)) {
           setProperty(env + name.substring(ourDefaultEnvPrefix.length()), element);
         }
+      }
+      if (myFakeProject != null) {
+        myFakeProject.addEnvironmentPropertyPrefix(envPrefix);
       }
     }
   }
 
   public synchronized boolean isEnvironmentProperty(@NotNull final String propName) {
     checkEnvList();
-    for (final String prefix : myEnvPrefixes) {
-      if (propName.startsWith(prefix)) {
-        return true;
+    if (!propName.endsWith(".")) {
+      for (final String prefix : myEnvPrefixes) {
+        if (propName.startsWith(prefix)) {
+          return true;
+        }
       }
     }
     return false;
+  }
+
+  public synchronized List<String> getEnvironmentPrefixes() {
+    checkEnvList();
+    return myEnvPrefixes;
   }
 
   @Nullable
@@ -300,11 +311,14 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       final Map<String, String> envMap = System.getenv();
       for (final String name : envMap.keySet()) {
         final String value = envMap.get(name);
-        builder.append("<property name=\"");
-        builder.append(name);
-        builder.append("\" value=\"");
-        builder.append(value);
-        builder.append("\"/>");
+        if (name.length() > 0) {
+          builder.append("<property name=\"");
+          builder.append(ourDefaultEnvPrefix);
+          builder.append(name);
+          builder.append("\" value=\"");
+          builder.append(value);
+          builder.append("\"/>");
+        }
       }
       if (externalProps != null) {
         for (final String name : externalProps.keySet()) {
@@ -355,9 +369,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       final XmlTag rootTag = document.getRootTag();
       if (rootTag == null) return;
       final AntTypeDefinition propertyDef = getAntFile().getBaseTypeDefinition(Property.class.getName());
-      final AntProject fakeProject = new AntProjectImpl(null, rootTag, myDefinition);
+      myFakeProject = new AntProjectImpl(null, rootTag, myDefinition);
       for (final XmlTag tag : rootTag.getSubTags()) {
-        final AntPropertyImpl property = new AntPropertyImpl(fakeProject, tag, propertyDef) {
+        final AntPropertyImpl property = new AntPropertyImpl(myFakeProject, tag, propertyDef) {
           public PsiFile getContainingFile() {
             return getSourceElement().getContainingFile();
           }
