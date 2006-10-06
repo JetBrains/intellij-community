@@ -473,6 +473,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                   fireBeforeFileDeletion(null, file);
                   synchronized (LOCK) {
                     myUnaccountedFiles.put(entry.getKey(), null);
+                    file.setParent(null);
                   }
                   fireFileDeleted(null, file, file.getName(), isDirectory, null);
                 }
@@ -969,7 +970,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public boolean processCachedFilesInSubtree(final VirtualFile file, Processor<VirtualFile> processor) {
     if (file.getFileSystem() != this) return true;
-    
+
     if (!processFile(file, processor)) return false;
 
     if (file.isDirectory()) {
