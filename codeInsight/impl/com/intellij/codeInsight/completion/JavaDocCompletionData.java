@@ -24,6 +24,7 @@ import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -228,7 +229,7 @@ public class JavaDocCompletionData extends CompletionData {
       buffer.append(method.getName() + "(");
       final int afterParenth = afterSharp + buffer.length();
       for (int i = 0; i < parameters.length; i++) {
-        final PsiType type = parameters[i].getType();
+        final PsiType type = TypeConversionUtil.erasure(parameters[i].getType());
         buffer.append(type.getCanonicalText());
 
         if (i < parameters.length - 1) {
