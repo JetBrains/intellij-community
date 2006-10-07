@@ -10,12 +10,14 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.pom.Navigatable;
@@ -24,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -41,16 +44,19 @@ public class FileStructureDialog extends DialogWrapper {
   private final Project myProject;
   private MyCommanderPanel myCommanderPanel;
   private final StructureViewModel myTreeModel;
+  private final Disposable myAuxDisposable;
 
   @NonNls private static final String ourPropertyKey = "FileStructure.narrowDown";
   private boolean myShouldNarrowDown = false;
 
-  public FileStructureDialog(StructureViewModel structureViewModel, Editor editor, Project project, Navigatable navigatable) {
+  public FileStructureDialog(StructureViewModel structureViewModel, Editor editor, Project project, Navigatable navigatable,
+                             final @NotNull Disposable auxDisposable) {
     super(project, true);
     myProject = project;
     myEditor = editor;
     myNavigatable = navigatable;
     myTreeModel = structureViewModel;
+    myAuxDisposable = auxDisposable;
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
 
@@ -67,6 +73,8 @@ public class FileStructureDialog extends DialogWrapper {
         myCommanderPanel.getBuilder().selectElement(elementAtCursor, PsiUtil.getVirtualFile(elementAtCursor));
       }
     }
+
+    Disposer.register(myDisposable, myAuxDisposable);
   }
 
   protected Border createContentPaneBorder(){
@@ -74,7 +82,6 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   public void dispose() {
-    myTreeModel.dispose();
     myCommanderPanel.dispose();
     super.dispose();
   }
