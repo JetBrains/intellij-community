@@ -103,7 +103,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         return other.getRootPath().startsWith(myRootPath);
       }
 
-      return myRootPath.equals(other.getRootPath());
+      return !other.isToWatchRecursively() && myRootPath.equals(other.getRootPath());
     }
   }
 
