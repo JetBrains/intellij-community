@@ -265,7 +265,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public void setCompilerOutputUrl(String compilerOutputUrl) {
     myCompilerOutput = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myVirtualFilePointerListener);
     final LocalFileSystem.WatchRequest watchRequest =
-      LocalFileSystem.getInstance().addRootToWatch(VfsUtil.urlToPath(compilerOutputUrl), true);
+      LocalFileSystem.getInstance().addRootToWatch(extractLocalPath(compilerOutputUrl), true);
     if (myCompilerOutputWatchRequest != null) {
       LocalFileSystem.getInstance().removeWatchedRoot(myCompilerOutputWatchRequest);
     }
@@ -580,14 +580,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final String[] contentRootUrls = moduleRootManager.getContentRootUrls();
       for (String url : contentRootUrls) {
-        rootPaths.add(VfsUtil.urlToPath(url));
+        rootPaths.add(extractLocalPath(url));
       }
 
-      final String compilerOutputPath = VfsUtil.urlToPath(moduleRootManager.getCompilerOutputPathUrl());
+      final String compilerOutputPath = extractLocalPath(moduleRootManager.getCompilerOutputPathUrl());
       if (compilerOutputPath.length() > 0) {
         rootPaths.add(compilerOutputPath);
       }
-      final String compilerOutputPathForTests = VfsUtil.urlToPath(moduleRootManager.getCompilerOutputPathForTestsUrl());
+      final String compilerOutputPathForTests = extractLocalPath(moduleRootManager.getCompilerOutputPathForTestsUrl());
       if (compilerOutputPathForTests.length() > 0) {
         rootPaths.add(compilerOutputPathForTests);
       }
@@ -618,7 +618,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final String explodedDirectory = moduleRootManager.getExplodedDirectoryUrl();
       if (explodedDirectory != null) {
-        rootPaths.add(VfsUtil.urlToPath(explodedDirectory));
+        rootPaths.add(extractLocalPath(explodedDirectory));
       }
     }
 
@@ -635,12 +635,21 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final String[] urls = library.getUrls(rootType);
       for (String url : urls) {
         if (url != null) {
-          String path = VfsUtil.urlToPath(url);
+          String path = extractLocalPath(url);
           result.add(path);
         }
       }
     }
     return result;
+  }
+
+  private static String extractLocalPath(final String url) {
+    final String path = VfsUtil.urlToPath(url);
+    final int jarSeparatorIndex = path.indexOf(JarFileSystem.JAR_SEPARATOR);
+    if (jarSeparatorIndex > 0) {
+      return path.substring(0, jarSeparatorIndex);
+    }
+    return path;
   }
 
   private ModuleManager getModuleManager() {

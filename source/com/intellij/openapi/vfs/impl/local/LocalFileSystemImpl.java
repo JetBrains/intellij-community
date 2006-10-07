@@ -100,7 +100,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     public boolean dominates(WatchRequest other) {
       if (myToWatchRecursively) {
-        return myRootPath.startsWith(other.getRootPath());
+        return other.getRootPath().startsWith(myRootPath);
       }
 
       return myRootPath.equals(other.getRootPath());
