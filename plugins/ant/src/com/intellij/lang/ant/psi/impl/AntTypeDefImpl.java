@@ -287,12 +287,36 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   private void loadClass(@Nullable final String classname, @Nullable final String name, @Nullable final String uri) {
+    final AntTypeDefinitionImpl def = loadClassAndCreateDefinition(classname, name, uri);
+    if (def == null) return;
+    myNewDefinitions = new AntTypeDefinition[]{def};
+    def.setDefiningElement(this);
+    final AntStructuredElement parent = getAntParent();
+    if (parent != null) {
+      parent.registerCustomType(def);
+      final AntFile antFile = parent.getAntFile();
+      if (antFile != null) {
+        for (final AntTypeId typeId : def.getNestedElements()) {
+          final String nestedClassName = def.getNestedClassName(typeId);
+          AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)antFile.getBaseTypeDefinition(nestedClassName);
+          if (nestedDef == null) {
+            nestedDef = loadClassAndCreateDefinition(nestedClassName, typeId.getName(), uri);
+          }
+          if (nestedDef != null) {
+            nestedDef.setDefiningElement(this);
+            parent.registerCustomType(nestedDef);
+          }
+        }
+      }
+    }
+  }
 
-    if (classname == null || name == null || name.length() == 0) return;
-
+  private AntTypeDefinitionImpl loadClassAndCreateDefinition(@Nullable final String classname,
+                                                             @Nullable final String name,
+                                                             @Nullable final String uri) {
+    if (classname == null || name == null || name.length() == 0) return null;
     boolean newlyLoaded = false;
     final URL[] urls = getClassPathUrls();
-
     Class clazz = CLASS_CACHE.getClass(urls, classname);
     if (clazz == null) {
       ClassLoader loader = getClassLoader(urls);
@@ -328,17 +352,10 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       myClassesLoaded = true;
       def = (AntTypeDefinitionImpl)AntFileImpl.createTypeDefinition(id, clazz, Task.class.isAssignableFrom(clazz));
     }
-    if (def != null) {
-      myNewDefinitions = new AntTypeDefinition[]{def};
-      def.setDefiningElement(this);
-      final AntStructuredElement parent = getAntParent();
-      if (parent != null) {
-        parent.registerCustomType(def);
-      }
-      if (newlyLoaded && clazz != null) {
-        CLASS_CACHE.setClass(urls, classname, clazz);
-      }
+    if (newlyLoaded && clazz != null) {
+      CLASS_CACHE.setClass(urls, classname, clazz);
     }
+    return def;
   }
 
   private URL[] getClassPathUrls() {
