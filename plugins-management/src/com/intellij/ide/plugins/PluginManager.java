@@ -234,7 +234,14 @@ public class PluginManager {
 
       public Iterator<PluginId> getIn(PluginId pluginId) {
         final IdeaPluginDescriptor descriptor = idToDescriptorMap.get(pluginId);
-        return Arrays.asList(descriptor.getDependentPluginIds()).iterator();
+        ArrayList<PluginId> plugins = new ArrayList<PluginId>();
+        for(PluginId dependentPluginId: descriptor.getDependentPluginIds()) {
+          // check for missing optional dependency
+          if (idToDescriptorMap.containsKey(pluginId)) {
+            plugins.add(pluginId);
+          }
+        }
+        return plugins.iterator();
       }
     }));
   }

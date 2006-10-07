@@ -37,7 +37,12 @@ public class PluginDescriptorComparator implements Comparator<IdeaPluginDescript
   private void assignNumbers(PluginId id, Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap, Stack<PluginId> visited) throws Exception {
     visited.push(id);
     try {
-      final PluginId[] parentIds = idToDescriptorMap.get(id).getDependentPluginIds();
+      final IdeaPluginDescriptor ideaPluginDescriptor = idToDescriptorMap.get(id);
+      if (ideaPluginDescriptor == null) {
+        // missing optional dependency
+        return;
+      }
+      final PluginId[] parentIds = ideaPluginDescriptor.getDependentPluginIds();
       for (final PluginId parentId : parentIds) {
         if (visited.contains(parentId)) {
           throw new Exception(IdeBundle.message("error.plugins.should.not.have.cyclic.dependencies") + id + "->" + parentId + "->...->" + id);
