@@ -283,6 +283,16 @@ public class PullUpHelper {
     for (final PsiField initializedField : initializedFields) {
       Initializer initializer = fieldsToInitializers.get(initializedField);
 
+      //correct constructor parameters and subConstructors super calls
+      final PsiParameterList parameterList = constructor.getParameterList();
+      for (final PsiParameter parameter : initializer.usedParameters) {
+        parameterList.add(parameter);
+      }
+
+      for (final PsiMethod subConstructor : subConstructors) {
+        modifySuperCall(subConstructor, initializer.usedParameters);
+      }
+
       // create assignment statement
       PsiExpressionStatement assignmentStatement =
         (PsiExpressionStatement)factory.createStatementFromText(initializedField.getName() + "=0;", constructor.getBody());
@@ -304,16 +314,6 @@ public class PullUpHelper {
                                           myTargetSuperClass, RefactoringUtil.createThisExpression(myManager, null));
       for (PsiElement psiElement : initializer.statementsToRemove) {
         psiElement.delete();
-      }
-
-      //correct constructor parameters and subConstructors super calls
-      final PsiParameterList parameterList = constructor.getParameterList();
-      for (final PsiParameter parameter : initializer.usedParameters) {
-        parameterList.add(parameter);
-      }
-
-      for (final PsiMethod subConstructor : subConstructors) {
-        modifySuperCall(subConstructor, initializer.usedParameters);
       }
     }
   }
