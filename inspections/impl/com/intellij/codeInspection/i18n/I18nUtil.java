@@ -154,23 +154,19 @@ public class I18nUtil {
 
   public static boolean isPropertyRef(final PsiLiteralExpression expression, final String value, final String resourceBundleName) {
     if (resourceBundleName != null) {
-      final PropertiesFile propertiesFile = propertiesFileByBundleName(expression, resourceBundleName);
-      if (propertiesFile == null) return false;
-      return propertiesFile.findPropertyByKey(value) != null;
+      final List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
+      for (PropertiesFile propertiesFile : propertiesFiles) {
+        if (propertiesFile.findPropertyByKey(value) != null) return true;
+      }
+      return false;
     }
     else {
       return !PropertiesUtil.findPropertiesByKey(expression.getProject(), value).isEmpty();
     }
   }
 
-  @Nullable
-  public static PropertiesFile propertiesFileByBundleName(final PsiElement context, final String resourceBundleName) {
-    List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(context, resourceBundleName);
-    return propertiesFiles.size() == 0 ? null : propertiesFiles.get(0);
-  }
-
   @NotNull
-  public static List<PropertiesFile> propertiesFilesByBundleName(final PsiElement context, final String resourceBundleName) {
+  public static List<PropertiesFile> propertiesFilesByBundleName(final String resourceBundleName, final PsiElement context) {
     final PsiFile containingFile = context.getContainingFile();
     VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) {
@@ -184,7 +180,7 @@ public class I18nUtil {
       if (module != null) {
         PropertiesReferenceManager refManager = context.getProject().getComponent(PropertiesReferenceManager.class);
         List<PropertiesFile> propFiles = refManager.findPropertiesFiles(module, resourceBundleName);
-        if (propFiles.size() > 0) {
+        if (!propFiles.isEmpty()) {
           return propFiles;
         }
       }

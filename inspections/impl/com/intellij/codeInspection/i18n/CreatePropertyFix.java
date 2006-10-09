@@ -61,8 +61,8 @@ public class CreatePropertyFix implements IntentionAction {
       }
 
       protected List<String> suggestPropertiesFiles() {
-        List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myElement, myBundleName);
-        if (propertiesFiles.size() == 0) {
+        List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myBundleName, myElement);
+        if (propertiesFiles.isEmpty()) {
           return super.suggestPropertiesFiles();
         }
         ArrayList<String> list = new ArrayList<String>();

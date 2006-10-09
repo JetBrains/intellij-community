@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,18 +32,22 @@ import java.util.List;
 public class InvalidPropertyKeyInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.InvalidPropertyKeyInspection");
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return CodeInsightBundle.message("inspection.unresolved.property.key.reference.name");
   }
 
+  @NotNull
   public String getShortName() {
     return "UnresolvedPropertyKey";
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
@@ -53,13 +58,13 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return checkElement(method, manager);
   }
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
     for (PsiClassInitializer initializer : initializers) {
@@ -74,7 +79,7 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiExpression initializer = field.getInitializer();
     if (initializer != null) return checkElement(initializer, manager);
 
@@ -93,7 +98,7 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkFile(final PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
     final Object[] fileCheckingInspections = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INVALID_PROPERTY_KEY_INSPECTION_TOOL).getExtensions();
     for(Object obj: fileCheckingInspections) {
       FileCheckingInspection inspection = (FileCheckingInspection) obj;
@@ -115,11 +120,12 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
       myBundleName = bundleName;
     }
 
+    @NotNull
     public String getName() {
       return CreatePropertyFix.NAME;
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)descriptor.getPsiElement();
       try {
         new CreatePropertyFix(literalExpression, myKey, myBundleName).invoke(project, null, literalExpression.getContainingFile());
@@ -129,6 +135,7 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }
@@ -175,7 +182,7 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
           Module module = ModuleUtil.findModuleForPsiElement(expression);
           if (module != null) {
             List<PropertiesFile> propFiles = manager.findPropertiesFiles(module, key);
-            if (propFiles.size() == 0) {
+            if (propFiles.isEmpty()) {
               final String description = CodeInsightBundle.message("inspection.invalid.resource.bundle.reference", key);
               final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                                   description,

@@ -67,7 +67,7 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
       properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), key);
     }
     else {
-      final List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myElement, myBundleName);
+      final List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myBundleName, myElement);
       properties = new ArrayList<Property>();
       for (PropertiesFile propertiesFile : propertiesFiles) {
         properties.addAll(propertiesFile.findPropertiesByKey(key));
@@ -132,8 +132,9 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
       }
     }
     else {
-      PropertiesFile propFile = I18nUtil.propertiesFileByBundleName(myElement, myBundleName);
-      addVariantsFromFile(propFile, variants);
+      for (PropertiesFile propFile : I18nUtil.propertiesFilesByBundleName(myBundleName, myElement)) {
+        addVariantsFromFile(propFile, variants);
+      }
     }
     return variants.toArray(new Object[variants.size()]);
   }
