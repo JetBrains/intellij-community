@@ -98,6 +98,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return getViewProvider().getVirtualFile().getFileType();
   }
 
+  public PsiElement getOriginalElement() {
+    return getSourceElement().getOriginalElement();
+  }
+
   public VirtualFile getVirtualFile() {
     return getSourceElement().getVirtualFile();
   }
@@ -542,4 +546,3 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 }
-
