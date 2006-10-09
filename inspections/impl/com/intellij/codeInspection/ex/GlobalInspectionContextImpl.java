@@ -90,7 +90,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private InspectionProfile myExternalProfile = null;
 
   public boolean RUN_WITH_EDITOR_PROFILE = false;
-  public boolean RUN_GLOBAL_TOOLS_ONLY = false;
+  private boolean RUN_GLOBAL_TOOLS_ONLY = false;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
   @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
@@ -130,14 +130,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   public ContentManager getContentManager() {
     return myContentManager;
   }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-    cleanup();
-  }
-
 
   public InspectionProfile getCurrentProfile() {
     if (myExternalProfile != null) return myExternalProfile;
@@ -580,7 +572,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return null;
   }
 
-  public static PsiElement getDocCommentToolSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
+  private static PsiElement getDocCommentToolSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
@@ -852,7 +844,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
         }
 
-        @Override
+        @Override               
         public void visitFile(PsiFile file) {
           InspectionProfile profile;
           if (RUN_WITH_EDITOR_PROFILE) {
@@ -1000,9 +992,5 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public void setExternalProfile(InspectionProfile profile) {
     myExternalProfile = profile;
-  }
-
-  public boolean areResultsShown() {
-    return myView != null;
   }
 }
