@@ -104,7 +104,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   public GlobalInspectionContextImpl(Project project, ContentManager contentManager) {
     myProject = project;
 
-    myUIOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions().copy();
+    myUIOptions = ((InspectionManagerEx)InspectionManager.getInstance(project)).getUIOptions().copy();
     myRefManager = null;
     myCurrentScope = null;
     myContentManager = contentManager;
@@ -141,7 +141,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public InspectionProfile getCurrentProfile() {
     if (myExternalProfile != null) return myExternalProfile;
-    InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(myProject);
+    InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
     Profile profile = inspectionProfileManager.getProfiles().get(managerEx.getCurrentProfile());
     if (profile == null) {
@@ -269,7 +269,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public void doInspections(final AnalysisScope scope, final InspectionManager manager) {
-    while (PsiManager.getInstance(getProject()).findClass("java.lang.Object") == null) {
+    while (PsiManager.getInstance(getProject()).findClass("java.lang.Object", GlobalSearchScope.allScope(getProject())) == null) {
       if (ModuleManager.getInstance(getProject()).getModules().length == 0) {
         Messages.showMessageDialog(getProject(), InspectionsBundle.message("inspection.no.modules.error.message"),
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());
@@ -392,7 +392,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                                                                  final boolean localTool) throws IOException {
     BufferedReader reader = null;
     try {
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       reader = new BufferedReader(new FileReader(file));
       String line = reader.readLine();
       while (line != null) {
@@ -455,7 +455,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                     processors.remove(processor);
                   }
                 }
-                return processors.size() > 0;
+                return !processors.isEmpty();
               }
             }, psiClass, searchScope, false);
           }
@@ -482,7 +482,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                   }
                 }
 
-                return processors.size() > 0;
+                return !processors.isEmpty();
               }
             }, psiMethod, searchScope, true);
           }
@@ -730,7 +730,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
         }
 
-        return processors.size() > 0;
+        return !processors.isEmpty();
       }
     };
   }
@@ -816,7 +816,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       FIND_EXTERNAL_USAGES.setTotalAmount(totalAmount);
       FIND_EXTERNAL_USAGES.setDoneAmount((int)(totalAmount * proportion));
     }
-    while (needRepeatSearchRequest.size() > 0);
+    while (!needRepeatSearchRequest.isEmpty());
   }
 
   private void runTools(final List<InspectionTool> needRepeatSearchRequest, final AnalysisScope scope, final InspectionManager manager) {
@@ -845,7 +845,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     performPostRunFindUsages(needRepeatSearchRequest, manager);
     if (RUN_GLOBAL_TOOLS_ONLY) return;
     final Set<InspectionTool> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
-    if (RUN_WITH_EDITOR_PROFILE || (currentProfileLocalTools != null && currentProfileLocalTools.size() > 0)) {
+    if (RUN_WITH_EDITOR_PROFILE || currentProfileLocalTools != null && !currentProfileLocalTools.isEmpty()) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
       scope.accept(new PsiRecursiveElementVisitor() {
@@ -866,17 +866,17 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(LOCAL_ANALYSIS, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
           }
           final Set<InspectionTool> tools = localTools.get(profile.getName());
-          try {
-            for (InspectionTool tool : tools) {
+          for (InspectionTool tool : tools) {
+            try {
               ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
             }
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Exception e) {
-            //LOG.error("Problem file: " + file.getVirtualFile().getPresentableUrl());
-            LOG.error(e);
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Exception e) {
+              //LOG.error("Problem file: " + file.getVirtualFile().getPresentableUrl());
+              LOG.error(e);
+            }
           }
           psiManager.dropResolveCaches();
         }
@@ -955,7 +955,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public void close(boolean noSuspisiousCodeFound) {
     if (!noSuspisiousCodeFound && (myView == null || myView.isRerun())) return;
-    final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
+    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     managerEx.closeRunningContext(this);
     managerEx.getUIOptions().save(myUIOptions);
     getContentManager().removeContent(myContent);
