@@ -42,6 +42,10 @@ public final class Presentation implements Cloneable {
    */
   @NonNls public static final String PROP_MNEMONIC_KEY = "mnemonicKey";
   /**
+   * value: Integer
+   */
+  @NonNls public static final String PROP_MNEMONIC_INDEX = "mnemonicIndex";
+  /**
    * value: String
    */
   @NonNls public static final String PROP_DESCRIPTION = "description";
@@ -69,6 +73,7 @@ public final class Presentation implements Cloneable {
   private Icon myIcon;
   private Icon myDisabledIcon;
   private int myMnemonic;
+  private int myDisplayedMnemonicIndex = -1;
   private boolean myVisible;
   private boolean myEnabled;
 
@@ -94,6 +99,7 @@ public final class Presentation implements Cloneable {
     int oldMnemonic = myMnemonic;
     String oldText = myText;
     myMnemonic = 0;
+    myDisplayedMnemonicIndex = -1;
 
     if (text != null){
 
@@ -114,6 +120,7 @@ public final class Presentation implements Cloneable {
             if (ch != '_' && ch != '&'){
               // Mnemonic is case insensitive.
               myMnemonic = Character.toUpperCase(ch);
+              myDisplayedMnemonicIndex = i - 1;
             }
           }
           plainText.append(ch);
@@ -136,6 +143,13 @@ public final class Presentation implements Cloneable {
 
   public void setText(String text){
     setText(text, true);
+  }
+
+  public String getTextWithMnemonic() {
+    if ((myText != null) && (myDisplayedMnemonicIndex > -1)) {
+      return myText.substring(0, myDisplayedMnemonicIndex) + "_" + myText.substring(myDisplayedMnemonicIndex);
+    }
+    return myText;
   }
 
   public void restoreTextWithMnemonic(Presentation presentation) {
@@ -187,6 +201,10 @@ public final class Presentation implements Cloneable {
     return myMnemonic;
   }
 
+  public int getDisplayedMnemonicIndex(){
+    return myDisplayedMnemonicIndex;
+  }
+
   public boolean isVisible(){
     return myVisible;
   }
@@ -235,7 +253,7 @@ public final class Presentation implements Cloneable {
   }
 
   public void copyFrom(Presentation presentation) {
-    setText(presentation.getText());
+    setText(presentation.getTextWithMnemonic());
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());
     setDisabledIcon(presentation.getDisabledIcon());
