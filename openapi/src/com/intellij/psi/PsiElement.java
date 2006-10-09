@@ -193,7 +193,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * either the project source path or class path. The method can either return
    * <code>this</code> or substitute a different element if this element does
    * not belong to the source path or class path. (For example, the original
-   * element for a library source file is the corresponding compiled class file.)
+   * element for a library compiled class file is the corresponding source file.)
    *
    * @return the original element.
    */
