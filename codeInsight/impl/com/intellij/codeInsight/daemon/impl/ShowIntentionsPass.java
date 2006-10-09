@@ -340,7 +340,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(manager.getProject());
 
-    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && !isCaretNearRef(editor, ref) &&
+    if (classes.length == 1 && CodeInsightSettings.getInstance().ADD_UNAMBIGUOUS_IMPORTS_ON_THE_FLY && !isCaretNearRef(editor, ref) &&
         !PsiUtil.isInJspFile(psiFile) && codeAnalyzer.canChangeFileSilently(psiFile) &&
         !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {

@@ -299,7 +299,7 @@
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="title.imports"/>
             <children>
-              <component id="5b608" class="javax.swing.JCheckBox" binding="myCbAddUnabmigiousImports">
+              <component id="5b608" class="javax.swing.JCheckBox" binding="myCbAddUnabmiguousImports">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>

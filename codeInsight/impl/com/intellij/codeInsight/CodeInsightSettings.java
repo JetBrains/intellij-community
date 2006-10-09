@@ -114,7 +114,7 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
 
   public boolean AUTOINDENT_CLOSING_BRACE = true;
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
-  public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
+  public boolean ADD_UNAMBIGUOUS_IMPORTS_ON_THE_FLY = false;
 
   public String[] EXCLUDED_PACKAGES = new String[0];
 

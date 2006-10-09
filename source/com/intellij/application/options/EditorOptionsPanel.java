@@ -92,7 +92,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbCamelWords;
   private JCheckBox myCbVirtualPageAtBottom;
   private JCheckBox myCbOptimizeImports;
-  private JCheckBox myCbAddUnabmigiousImports;
+  private JCheckBox myCbAddUnabmiguousImports;
   private JCheckBox myCbEnableDnD;
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
@@ -280,7 +280,7 @@ public class EditorOptionsPanel {
 
     // optmiza imports
     myCbOptimizeImports.setSelected(codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
-    myCbAddUnabmigiousImports.setSelected(codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
+    myCbAddUnabmiguousImports.setSelected(codeInsightSettings.ADD_UNAMBIGUOUS_IMPORTS_ON_THE_FLY);
 
     // Advanced mouse
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
@@ -415,7 +415,7 @@ public class EditorOptionsPanel {
     codeFoldingSettings.setCollapseAnnotations( myCbCollapseAnnotations.isSelected() );
 
     codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
-    codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnabmigiousImports.isSelected();
+    codeInsightSettings.ADD_UNAMBIGUOUS_IMPORTS_ON_THE_FLY = myCbAddUnabmiguousImports.isSelected();
 
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
@@ -555,7 +555,7 @@ public class EditorOptionsPanel {
 
     // optimize imports
     isModified |= isModified(myCbOptimizeImports, codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
-    isModified |= isModified(myCbAddUnabmigiousImports, codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
+    isModified |= isModified(myCbAddUnabmiguousImports, codeInsightSettings.ADD_UNAMBIGUOUS_IMPORTS_ON_THE_FLY);
 
     // advanced mouse
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
