@@ -80,7 +80,9 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
   public static PsiLiteralExpression getEnclosingStringLiteral(final PsiFile psiFile, final Editor editor) {
     PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (psiElement == null) return null;
-    return PsiTreeUtil.getParentOfType(psiElement, PsiLiteralExpression.class);
+    PsiLiteralExpression expression = PsiTreeUtil.getParentOfType(psiElement, PsiLiteralExpression.class);
+    if (expression == null || !(expression.getValue() instanceof String)) return null;
+    return expression;
   }
 
   private static boolean canBeExtractedAway(final JspFile jspFile, final Editor editor) {

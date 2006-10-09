@@ -165,7 +165,8 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     return new I18nizeQuickFixDialog(project, context, literalExpression, value, true, true);
   }
 
-  @Nullable public static PsiBinaryExpression breakStringLiteral(PsiLiteralExpression literalExpression, int offset) throws IncorrectOperationException {
+  @Nullable
+  private static PsiBinaryExpression breakStringLiteral(PsiLiteralExpression literalExpression, int offset) throws IncorrectOperationException {
     TextRange literalRange = literalExpression.getTextRange();
     PsiElementFactory factory = literalExpression.getManager().getElementFactory();
     if (literalRange.getStartOffset()+1 < offset && offset < literalRange.getEndOffset()-1) {
