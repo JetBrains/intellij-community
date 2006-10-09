@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!ELEMENT idea-plugin (name | id? | description | version | vendor | change-notes? | idea-version | depends* | extensions* | application-components? | project-components? | module-components? | actions? | helpset)+>
+<!ELEMENT idea-plugin (name | id? | description | version | vendor | change-notes? | idea-version | category | resource-bundle | depends* | extensions* | application-components? | project-components? | module-components? | actions? | helpset)+>
 <!ATTLIST idea-plugin
     url CDATA #IMPLIED
     version CDATA #IMPLIED>
@@ -19,6 +19,7 @@
     <version> specified current plugin version.
 -->
 <!ELEMENT version (#PCDATA)>
+
 <!--
     <vendor> tag now could have 'url', 'email' and 'logo' attributes;
     'logo' should contain path to a 16 x 16 icon that will appear near the plugin name in the IDEA Welcome Screen 
@@ -28,6 +29,29 @@
     url CDATA #IMPLIED
     email CDATA #IMPLIED
     logo CDATA #IMPLIED>
+
+<!--
+    Plugin category (displayed in plugin manager) e.g. inspection, Misc, Fun Stuff, etc
+-->
+<!ELEMENT category (#PCDATA)>
+
+<!--
+    Fully qualified name of bundle used by this plugin e.g. com.mycompany.MyBundle
+-->
+<!ELEMENT resource-bundle (#PCDATA)>
+
+<!--
+    Possible extensions element
+-->
+<!ELEMENT errorHandler (#PCDATA)>
+<!ATTLIST errorHandler implementation CDATA #REQUIRED>
+
+<!--
+    Possible extensions element
+-->
+<!ELEMENT indexPatternProvider (#PCDATA)>
+<!ATTLIST indexPatternProvider implementation CDATA #REQUIRED>
+
 <!--
     <idea-version> tag specified version of IDEA which
     plugin could work with
@@ -35,7 +59,10 @@
 <!ELEMENT idea-version EMPTY>
 <!ATTLIST idea-version
     since-build CDATA #REQUIRED
-    until-build CDATA #IMPLIED>
+    until-build CDATA #IMPLIED
+    min CDATA #IMPLIED  -- for compatibility --
+    max CDATA #IMPLIED -- for compatibility --
+    >
 
 <!-- change notes of current version -->
 <!ELEMENT change-notes (#PCDATA)>
@@ -47,7 +74,9 @@
 <!-- extensions. Most relaxed constraints since content of the particular extension cannot be expressed with DTD -->
 <!ELEMENT extensions ANY>
 <!ATTLIST extensions
-   xmlns CDATA #REQUIRED>
+   defaultExtensionNs CDATA #REQUIRED -- namespace prepended to referenced extension name to get qname--
+   xmlns CDATA #IMPLIED -- same as previous, left for compatibility --
+   >
 
 <!ELEMENT application-components (component*)>
 <!ELEMENT project-components (component*)>

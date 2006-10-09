@@ -149,9 +149,17 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private String extractEPName(final Element extensionElement) {
     String epName = extensionElement.getAttributeValue("point");
+
     if (epName == null) {
-      Namespace namespace = extensionElement.getNamespace();
-      epName = namespace.getURI() + '.' + extensionElement.getName();
+      final Element parentElement = extensionElement.getParentElement();
+      final String ns = parentElement != null ? parentElement.getAttributeValue("defaultExtensionNs"):null;
+
+      if (ns != null) {
+        epName = ns + '.' + extensionElement.getName();
+      } else {
+        Namespace namespace = extensionElement.getNamespace();
+        epName = namespace.getURI() + '.' + extensionElement.getName();
+      }
     }
     return epName;
   }
