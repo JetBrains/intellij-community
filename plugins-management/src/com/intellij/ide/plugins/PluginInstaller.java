@@ -55,7 +55,7 @@ public class PluginInstaller {
     return result;
   }
 
-  public static boolean prepareToInstall (final PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
+  public static boolean prepareToInstall(final PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
@@ -71,6 +71,7 @@ public class PluginInstaller {
 
         PluginNode depPlugin = new PluginNode(depPluginId);
         depPlugin.setSize("-1");
+        depPlugin.setName(depPluginId.getIdString()); //prevent from exceptions
         depends.add(depPlugin);
       }
 
