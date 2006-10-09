@@ -433,8 +433,8 @@ public final class InsertComponentProcessor extends EventProcessor {
     RadComponent result;
     final String id = FormEditingUtil.generateId(editor.getRootContainer());
 
-    RadComponentFactory factory = getRadComponentFactory(editor.getProject(), item.getClassName());
     final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
+    RadComponentFactory factory = getRadComponentFactory(item.getClassName(), loader);
     if (factory != null) {
       try {
         result = factory.newInstance(editor.getModule(), item.getClassName(), id);
@@ -501,6 +501,11 @@ public final class InsertComponentProcessor extends EventProcessor {
   @Nullable
   public static RadComponentFactory getRadComponentFactory(Project project, final String className) {
     ClassLoader loader = LoaderFactory.getInstance(project).getProjectClassLoader();
+    return getRadComponentFactory(className, loader);
+  }
+
+  @Nullable
+  private static RadComponentFactory getRadComponentFactory(final String className, final ClassLoader loader) {
     Class componentClass;
     try {
       componentClass = Class.forName(className, false, loader);

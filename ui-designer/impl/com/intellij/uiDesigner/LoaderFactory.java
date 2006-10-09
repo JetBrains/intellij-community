@@ -16,13 +16,11 @@ import com.intellij.util.lang.UrlClassLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.StringTokenizer;
-import java.util.WeakHashMap;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -129,11 +127,29 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
     }
 
     final URL[] _urls = urls.toArray(new URL[urls.size()]);
-    return new UrlClassLoader(Arrays.asList(_urls), null);
+    return new DesignTimeClassLoader(Arrays.asList(_urls), null);
   }
 
   public void clearClassLoaderCache() {
+    // clear classes with invalid classloader from UIManager cache
+    final UIDefaults uiDefaults = UIManager.getDefaults();
+    for (Iterator it = uiDefaults.keySet().iterator(); it.hasNext();) {
+      Object key = it.next();
+      Object value = uiDefaults.get(key);
+      if (value instanceof Class) {
+        ClassLoader loader = ((Class)value).getClassLoader();
+        if (loader instanceof DesignTimeClassLoader) {
+          it.remove();
+        }
+      }
+    }
     myModule2ClassLoader.clear();
     myProjectClassLoader = null;
+  }
+
+  private static class DesignTimeClassLoader extends UrlClassLoader {
+    public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent) {
+      super(urls, parent);
+    }
   }
 }

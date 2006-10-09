@@ -228,7 +228,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   }
 
   @NotNull
-  public Dimension getInitialSize(final JComponent parent) {
+  public Dimension getInitialSize(final RadContainer targetContainer) {
     if (myOriginalBounds.length == 1) {
       return myOriginalBounds [0].getSize();
     }

@@ -11,10 +11,10 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
@@ -182,7 +182,7 @@ public class PasteProcessor extends EventProcessor {
     }
 
     @NotNull
-    public Dimension getInitialSize(final JComponent parent) {
+    public Dimension getInitialSize(final RadContainer targetContainer) {
       if (myComponentsToPaste.size() == 1) {
         return myComponentsToPaste.get(0).getSize();
       }

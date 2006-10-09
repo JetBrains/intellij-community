@@ -15,7 +15,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -368,14 +367,14 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @NotNull
-  public Dimension getInitialSize(final JComponent parent) {
+  public Dimension getInitialSize(final JComponent parent, final ClassLoader loader) {
     if (myInitialSize != null) {
       return myInitialSize;
     }
     myInitialSize = new Dimension(myDefaultConstraints.myPreferredSize);
     if (myInitialSize.width <= 0 || myInitialSize.height <= 0) {
       try {
-        Class aClass = Class.forName(getClassName(), true, LoaderFactory.getInstance(myProject).getProjectClassLoader());
+        Class aClass = Class.forName(getClassName(), true, loader);
         RadAtomicComponent component = new RadAtomicComponent(aClass, "", Palette.getInstance(myProject));
         component.initDefaultProperties(this);
         final JComponent delegee = component.getDelegee();

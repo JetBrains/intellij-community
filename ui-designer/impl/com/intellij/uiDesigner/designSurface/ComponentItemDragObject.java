@@ -6,9 +6,11 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.LoaderFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -53,12 +55,14 @@ public class ComponentItemDragObject implements ComponentDragObject {
     return 1;
   }
 
+  @Nullable
   public Point getDelta(int componentIndex) {
     return null;
   }
 
   @NotNull
-  public Dimension getInitialSize(final JComponent parent) {
-    return myItem.getInitialSize(parent);
+  public Dimension getInitialSize(final RadContainer targetContainer) {
+    final ClassLoader loader = LoaderFactory.getInstance(targetContainer.getProject()).getLoader(targetContainer.getModule());
+    return myItem.getInitialSize(targetContainer.getDelegee(), loader);
   }
 }

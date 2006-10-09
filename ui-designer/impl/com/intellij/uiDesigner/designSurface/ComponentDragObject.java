@@ -4,9 +4,10 @@
 
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -20,6 +21,6 @@ public interface ComponentDragObject {
   int getRelativeCol(int componentIndex);
   int getRowSpan(int componentIndex);
   int getColSpan(int componentIndex);
-  Point getDelta(int componentIndex);
-  @NotNull Dimension getInitialSize(final JComponent parent);
+  @Nullable Point getDelta(int componentIndex);
+  @NotNull Dimension getInitialSize(final RadContainer targetContainer);
 }

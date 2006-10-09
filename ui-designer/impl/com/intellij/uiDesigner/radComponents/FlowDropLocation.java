@@ -62,7 +62,7 @@ public class FlowDropLocation implements DropLocation {
 
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     if (myContainer.getComponentCount() == 0) {
-      Dimension initialSize = dragObject.getInitialSize(myContainer.getDelegee());
+      Dimension initialSize = dragObject.getInitialSize(getContainer());
       int originX;
       if (myAlignment == FlowLayout.CENTER) {
         originX = myContainer.getSize().width / 2 - initialSize.width / 2 - myHGap;
@@ -79,7 +79,7 @@ public class FlowDropLocation implements DropLocation {
     }
     else if ((myInsertIndex == myContainer.getComponentCount() && !isRightAlign()) ||
         (myInsertIndex == 0 && !isLeftAlign())) {
-      Dimension initialSize = dragObject.getInitialSize(myContainer.getDelegee());
+      Dimension initialSize = dragObject.getInitialSize(getContainer());
       JComponent component = myContainer.getDelegee();
       int minX = component.getComponent(0).getBounds().x;
       int maxX = 0;

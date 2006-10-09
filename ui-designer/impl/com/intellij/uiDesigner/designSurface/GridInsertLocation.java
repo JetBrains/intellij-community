@@ -203,7 +203,7 @@ public class GridInsertLocation extends GridDropLocation {
 
       if (rcFeedback == null) {
         if (insertCol == layoutManager.getGridColumnCount(getContainer())-1 && myMode == GridInsertMode.ColumnAfter) {
-          final Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
+          final Dimension initialSize = dragObject.getInitialSize(getContainer());
           int feedbackX = vGridLines [vGridLines.length-1] + layoutManager.getGapCellSize(myContainer, false);
           int remainingSize = getContainer().getDelegee().getWidth() - feedbackX;
           if (!dragObject.isHGrow() && remainingSize > initialSize.width) {
@@ -220,7 +220,7 @@ public class GridInsertLocation extends GridDropLocation {
           }
         }
         else if (insertRow == layoutManager.getGridRowCount(getContainer())-1 && myMode == GridInsertMode.RowAfter) {
-          final Dimension initialSize = dragObject.getInitialSize(getContainer().getDelegee());
+          final Dimension initialSize = dragObject.getInitialSize(getContainer());
           int feedbackY = hGridLines [hGridLines.length-1] + layoutManager.getGapCellSize(myContainer, true);
           int remainingSize = getContainer().getDelegee().getHeight() - feedbackY;
           if (!dragObject.isVGrow() && remainingSize > initialSize.height) {
