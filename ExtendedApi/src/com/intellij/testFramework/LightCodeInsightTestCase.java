@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
@@ -146,6 +147,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private static void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
     deleteVFile();
     myVFile = getSourceRoot().createChildData(null, fileName);
+    myVFile.setCharset(Charset.forName(CharsetToolkit.UTF8));
     VfsUtil.saveText(myVFile, fileText);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     manager.reloadFromDisk(manager.getDocument(myVFile));
