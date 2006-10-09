@@ -21,40 +21,101 @@ import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.portability.contenttype.ApplicationMediaType;
+import com.siyeh.ig.portability.contenttype.AudioMediaType;
+import com.siyeh.ig.portability.contenttype.ImageMediaType;
+import com.siyeh.ig.portability.contenttype.MessageMediaType;
+import com.siyeh.ig.portability.contenttype.ModelMediaType;
+import com.siyeh.ig.portability.contenttype.MultipartMediaType;
+import com.siyeh.ig.portability.contenttype.TextMediaType;
+import com.siyeh.ig.portability.contenttype.VideoMediaType;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Set;
+import java.util.HashSet;
+
+import javax.swing.JComponent;
 
 public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
 
     private static final char BACKSLASH = '\\';
     private static final char SLASH = '/';
     /**
-         * The regular expression pattern that matches strings which are likely to
-         * be date formats. <code>Pattern</font></b> instances are immutable, so
-         * caching the pattern like this is still thread-safe.
-         */
+     * The regular expression pattern that matches strings which are likely to
+     * be date formats. <code>Pattern</font></b> instances are immutable, so
+     * caching the pattern like this is still thread-safe.
+     */
     @NonNls private static final Pattern DATE_FORMAT_PATTERN =
             Pattern.compile("\\b[dDmM]+/[dDmM]+(/[yY]+)?");
     /**
-         * A regular expression pattern that matches strings which start with a URL
-         * protocol, as they're likely to actually be URLs.
-         */
+     * A regular expression that matches strings which represent example MIME
+     * media types.
+     */
+    @NonNls private static final String EXAMPLE_MIME_MEDIA_TYPE_PATTERN =
+            "example/\\p{Alnum}+(?:[\\.\\-\\\\+]\\p{Alnum}+)*";
+    /**
+     * A regular expression pattern that matches strings which start with a URL
+     * protocol, as they're likely to actually be URLs.
+     */
     @NonNls private static final Pattern URL_PATTERN =
             Pattern.compile("^[a-z][a-z0-9+\\-.]+://.*$");
 
+    /**
+     * All mimetypes, see http://www.iana.org/assignments/media-types/
+     */
+    private static final Set<String> mimeTypes = new HashSet();
+    static {
+        for (ImageMediaType imageMediaType : ImageMediaType.values()){
+            mimeTypes.add(imageMediaType.toString());
+        }
+        for (ApplicationMediaType applicationMediaType :
+                ApplicationMediaType.values()){
+            mimeTypes.add(applicationMediaType.toString());
+        }
+        for (AudioMediaType audioMediaType : AudioMediaType.values()){
+            mimeTypes.add(audioMediaType.toString());
+        }
+        for (MessageMediaType messageMediaType : MessageMediaType.values()){
+            mimeTypes.add(messageMediaType.toString());
+        }
+        for (ModelMediaType modelMediaType : ModelMediaType.values()){
+            mimeTypes.add(modelMediaType.toString());
+        }
+        for (MultipartMediaType multipartMediaType :
+                MultipartMediaType.values()){
+            mimeTypes.add(multipartMediaType.toString());
+        }
+        for (TextMediaType textMediaType : TextMediaType.values()){
+            mimeTypes.add(textMediaType.toString());
+        }
+        for (VideoMediaType videoContentTypeMediaType :
+                VideoMediaType.values()){
+            mimeTypes.add(videoContentTypeMediaType.toString());
+        }
+    }
+
+    /**
+     * @noinspection PublicField
+     */
+    public boolean m_recognizeExampleMediaType = false;
+
+    @NotNull
     public String getID(){
         return "HardcodedFileSeparator";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "hardcoded.file.separator.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName(){
         return GroupNames.PORTABILITY_GROUP_NAME;
     }
@@ -65,14 +126,22 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
                 "hardcoded.file.separator.problem.descriptor");
     }
 
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "hardcoded.file.separator.include.option"),
+                this, "m_recognizeExampleMediaType");
+    }
+
     public BaseInspectionVisitor buildVisitor(){
         return new HardcodedFileSeparatorsVisitor();
     }
 
-    private static class HardcodedFileSeparatorsVisitor
+    private class HardcodedFileSeparatorsVisitor
             extends BaseInspectionVisitor{
 
-        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression){
+        public void visitLiteralExpression(
+                @NotNull PsiLiteralExpression expression){
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if(TypeUtils.isJavaLangString(type)){
@@ -100,74 +169,73 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
          * type of data - a URL, a date format, or an XML fragment - before deciding
          * that the string is a filename.
          *
-         * @param str The string to examine.
+         * @param string The string to examine.
          * @return <code>true</font></b> if the string is likely to be a filename
          *         with hardcoded file separators, <code>false</font></b>
          *         otherwise.
          */
-        private static boolean isHardcodedFilenameString(String str){
-            if(str == null){
+        private boolean isHardcodedFilenameString(String string){
+            if(string == null){
                 return false;
             }
-            if(str.indexOf((int) '/') == -1 && str.indexOf((int) '\\') == -1){
+            if(string.indexOf((int) '/') == -1 &&
+                    string.indexOf((int) '\\') == -1){
                 return false;
             }
-
-            final char startChar = str.charAt(0);
-            if(Character.isLetter(startChar) && str.charAt(1) == ':'){
+            final char startChar = string.charAt(0);
+            if(Character.isLetter(startChar) && string.charAt(1) == ':'){
                 return true;
             }
-
-            if(isXMLString(str)){
+            if(isXMLString(string)){
+                return false;
+            }
+            if(isDateFormatString(string)){
                 return false;
             }
 
-            if(isDateFormatString(str)){
+            if(isURLString(string)){
                 return false;
             }
-            return !isURLString(str);
+            return !isMediaTypeString(string);
         }
 
         /**
          * Check whether a string containing at least one '/' or '\' character is
          * likely to be a fragment of XML.
          *
-         * @param str The string to examine.
+         * @param string The string to examine.
          * @return <code>true</font></b> if the string is likely to be an XML
          *         fragment, or <code>false</font></b> if not.
          */
-        private static boolean isXMLString(String str){
-            if(str.contains("</")){
-                return true;
-            }
-            return str.contains("/>");
+        private boolean isXMLString(String string){
+            return string.contains("</") || string.contains("/>");
         }
 
         /**
          * Check whether a string containing at least one '/' or '\' character is
          * likely to be a date format string.
          *
-         * @param str The string to check.
+         * @param string The string to check.
          * @return <code>true</font></b> if the string is likely to be a date
          *         string, <code>false</font></b> if not.
          */
-        private static boolean isDateFormatString(String str){
-            if(str.length() < 3){
+        private boolean isDateFormatString(String string){
+            if(string.length() < 3){
                 // A string this short is very unlikely to be a date format.
                 return false;
             }
-            final int strLength = str.length();
-            final char startChar = str.charAt(0);
-            final char endChar = str.charAt(strLength - 1);
+            final int strLength = string.length();
+            final char startChar = string.charAt(0);
+            final char endChar = string.charAt(strLength - 1);
             if(startChar == '/' || endChar == '/'){
-                // Most likely it's a filename if the string starts or ends with a slash.
+                // Most likely it's a filename if the string starts or ends
+                // with a slash.
                 return false;
-            } else if(Character.isLetter(startChar) && str.charAt(1) == ':'){
+            } else if(Character.isLetter(startChar) && string.charAt(1) == ':'){
                 // Most likely this is a Windows-style full file name.
                 return false;
             }
-
-            final Matcher dateFormatMatcher = DATE_FORMAT_PATTERN.matcher(str);
+            final Matcher dateFormatMatcher = DATE_FORMAT_PATTERN.matcher(string);
             return dateFormatMatcher.find();
         }
 
@@ -175,13 +243,55 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
          * Checks whether a string containing at least one '/' or '\' character is
          * likely to be a URL.
          *
-         * @param str The string to check.
+         * @param string The string to check.
          * @return <code>true</font></b> if the string is likely to be a URL,
          *         <code>false</font></b> if not.
          */
-        private static boolean isURLString(String str){
-            final Matcher urlMatcher = URL_PATTERN.matcher(str);
+        private boolean isURLString(String string){
+            final Matcher urlMatcher = URL_PATTERN.matcher(string);
             return urlMatcher.find();
+        }
+
+        /**
+         * Checks whether a string containing at least one '/' character is
+         * likely to be a MIME media type.  See the
+         * <a href="http://www.iana.org/assignments/media-types/">IANA</a>
+         * documents for registered MIME media types.
+         *
+         * @param string The string to check.
+         * @return <code>true</font></b> if the string is likely to be a MIME
+         *         media type, <code>false</font></b> if not.
+         */
+        private boolean isMediaTypeString(String string){
+            // No need to go further if we have a \ or don't have a /
+            //
+            if(string.indexOf((int) '\\') != -1 ||
+                    string.indexOf((int) '/') == -1){
+                return false;
+            }
+
+            // IANA doesn't specify a pattern for the subtype of example content
+            // types but other subtypes seem to be one or more groups of
+            // alphanumerics characters, the groups being separated by a single
+            // period (.), hyphen (-) or plus (+) character
+            //
+            // Valid examples:
+            //
+            // "example/foo"
+            // "example/foo.bar"
+            // "example/foo-bar+baz"
+            // "example/foo1.2006-bar"
+            //
+            // Invalid examples:
+            //
+            // "example/foo$bar"              ($ isn't a valid separator)
+            // "example/foo."                 (can't end with a separator)
+            //
+            if(m_recognizeExampleMediaType &&
+                    string.matches(EXAMPLE_MIME_MEDIA_TYPE_PATTERN)){
+                return true;
+            }
+            return mimeTypes.contains(string);
         }
     }
 }
