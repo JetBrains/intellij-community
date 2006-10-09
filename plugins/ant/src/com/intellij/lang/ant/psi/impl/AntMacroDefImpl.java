@@ -74,7 +74,10 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       myMacroDefinition = null;
       return;
     }
+
     final AntFile file = getAntFile();
+    if (file == null) return;
+
     final String thisClassName = toString();
     myMacroDefinition = (AntTypeDefinitionImpl)file.getBaseTypeDefinition(thisClassName);
     final Map<String, AntAttributeType> attributes =
@@ -124,9 +127,9 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
     // define itself as nested task for sequential
     final AntAllTasksContainerImpl sequential = PsiTreeUtil.getChildOfType(this, AntAllTasksContainerImpl.class);
     if (sequential != null) {
-      final AntTypeDefinition sequentialDef = sequential.getTypeDefinition();
-      if (sequentialDef != null) {
-        sequentialDef.registerNestedType(definedTypeId, thisClassName);
+      sequential.registerCustomType(myMacroDefinition);
+      for (final AntTypeId id : myMacroDefinition.getNestedElements()) {
+        sequential.registerCustomType(file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id)));
       }
     }
   }

@@ -24,12 +24,12 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
     if (!(element instanceof AntStructuredElement)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    AntStructuredElement antElement = (AntStructuredElement)element;
-    AntAllTasksContainer sequential = PsiTreeUtil.getParentOfType(element, AntAllTasksContainer.class);
+    final AntStructuredElement antElement = (AntStructuredElement)element;
+    final AntAllTasksContainer sequential = PsiTreeUtil.getParentOfType(antElement, AntAllTasksContainer.class);
     if (sequential == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    AntMacroDef macrodef = PsiTreeUtil.getParentOfType(sequential, AntMacroDef.class);
+    final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(sequential, AntMacroDef.class);
     if (macrodef == null) {
       return PsiReference.EMPTY_ARRAY;
     }
@@ -54,15 +54,28 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
     int endIndex = -1;
     while ((startIndex = text.indexOf("@{", endIndex + 1)) > endIndex) {
       startIndex += 2;
-      endIndex = text.indexOf('}', startIndex);
-      if (endIndex < 0) {
-        endIndex = startIndex;
+      endIndex = startIndex;
+      int nestedBrackets = 0;
+      while (text.length() > endIndex) {
+        final char ch = text.charAt(endIndex);
+        if (ch == '}') {
+          if (nestedBrackets == 0) {
+            break;
+          }
+          --nestedBrackets;
+        }
+        else if (ch == '{') {
+          ++nestedBrackets;
+        }
+        ++endIndex;
       }
+      if(nestedBrackets > 0 || endIndex == text.length()) return;
       if (endIndex >= startIndex) {
         final String name = text.substring(startIndex, endIndex);
         refs.add(new AntMacroDefParameterReference(this, antElement, name,
                                                    new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), element));
       }
+      endIndex = startIndex; 
     }
   }
 

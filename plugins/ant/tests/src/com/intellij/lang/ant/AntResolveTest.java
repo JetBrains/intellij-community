@@ -196,6 +196,15 @@ public class AntResolveTest extends ResolveTestCase {
   public void testBuildNumber() throws Exception {
     doPropertyTest();
   }
+  public void testPropertyInMacrodefParam() throws Exception {
+    PsiReference ref = configure();
+    assertNotNull(ref.resolve());
+  }
+
+  public void testMacrodefElement() throws Exception {
+    PsiReference ref = configure();
+    assertNotNull(ref.resolve());
+  }
 
   private void doTargetTest() throws Exception {
     PsiReference ref = configure();

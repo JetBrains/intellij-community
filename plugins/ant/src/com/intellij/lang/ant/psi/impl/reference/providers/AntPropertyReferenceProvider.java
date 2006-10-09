@@ -74,10 +74,22 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
       int endIndex = -1;
       while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
         startIndex += 2;
-        endIndex = value.indexOf('}', startIndex);
-        if (endIndex < 0) {
-          endIndex = startIndex;
+        endIndex = startIndex;
+        int nestedBrackets = 0;
+        while (value.length() > endIndex) {
+          final char ch = value.charAt(endIndex);
+          if (ch == '}') {
+            if (nestedBrackets == 0) {
+              break;
+            }
+            --nestedBrackets;
+          }
+          else if (ch == '{') {
+            ++nestedBrackets;
+          }
+          ++endIndex;
         }
+        if (nestedBrackets > 0 || endIndex == value.length()) return;
         if (endIndex >= startIndex) {
           final String propName = value.substring(startIndex, endIndex);
           if (project.isEnvironmentProperty(propName) && AntElementImpl.resolveProperty(element, propName) == null) {
@@ -86,6 +98,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
           refs.add(new AntPropertyReference(this, element, propName,
                                             new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
         }
+        endIndex = startIndex;
       }
     }
   }

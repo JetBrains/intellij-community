@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntAllTasksContainer;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntMacroDef;
@@ -13,7 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringSetSpinAllocator;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -30,10 +29,22 @@ public class AntMacroDefParameterReference extends AntGenericReference {
     myXmlElement = xmlElement;
   }
 
+  @Nullable
+  public String getCanonicalText() {
+    String text = super.getCanonicalText();
+    if (text.indexOf("${") >= 0) {
+      final AntStructuredElement se = PsiTreeUtil.getParentOfType(getElement(), AntStructuredElement.class);
+      if (se != null) {
+        text = se.computeAttributeValue(text);
+      }
+    }
+    return text;
+  }
+
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final AntElement element = getElement();
     final String oldName = getCanonicalText();
-    if (!oldName.equals(newElementName)) {
+    if (oldName != null && !oldName.equals(newElementName)) {
       if (myXmlElement instanceof XmlAttributeValue) {
         final String text = myXmlElement.getText();
         if (text.length() > 2) {
@@ -50,18 +61,21 @@ public class AntMacroDefParameterReference extends AntGenericReference {
     return element;
   }
 
+  @Nullable
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
     return handleElementRename(((PsiNamedElement)element).getName());
   }
 
   public PsiElement resolve() {
-    AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class);
+    final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class);
     if (macrodef != null) {
       final String name = getCanonicalText();
-      for (PsiElement child : macrodef.getChildren()) {
-        if (child instanceof AntStructuredElement && !(child instanceof AntAllTasksContainer)) {
-          if (name.equals(((AntStructuredElement)child).getName())) {
-            return child;
+      if (name != null) {
+        for (final PsiElement child : macrodef.getChildren()) {
+          if (child instanceof AntStructuredElement && !(child instanceof AntAllTasksContainer)) {
+            if (name.equals(((AntStructuredElement)child).getName())) {
+              return child;
+            }
           }
         }
       }
@@ -69,14 +83,9 @@ public class AntMacroDefParameterReference extends AntGenericReference {
     return null;
   }
 
-  @NotNull
-  public IntentionAction[] getFixes() {
-    return super.getFixes();
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Object[] getVariants() {
-    Set<String> variants = StringSetSpinAllocator.alloc();
+    final Set<String> variants = StringSetSpinAllocator.alloc();
     try {
       AntMacroDef macrodef = PsiTreeUtil.getParentOfType(getElement(), AntMacroDef.class);
       if (macrodef != null) {

@@ -1,0 +1,9 @@
+<project default="t">
+  <macrodef name="md">
+    <attribute name="myattribute"/>
+    <sequential>
+      <echo message="${property@{myattribute<caret>}}"/>
+    </sequential>
+  </macrodef>
+  <target name="t"/>
+</project>

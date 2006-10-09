@@ -153,6 +153,18 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testMacrodefParam() throws Exception {
+    doTest();
+  }
+
+  public void testMacrodefParam1() throws Exception {
+    doTest();
+  }
+
+  public void testMacrodefNestedElement() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     final String testName = getTestName(false);
     configureByFile(testName + ".xml");

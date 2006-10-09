@@ -1,0 +1,9 @@
+<project default="t">
+  <macrodef name="md">
+    <attribute name="at"/>
+    <sequential>
+      <echo message="@{at<caret>}"/>
+    </sequential>
+  </macrodef>
+  <target name="t"/>
+</project>

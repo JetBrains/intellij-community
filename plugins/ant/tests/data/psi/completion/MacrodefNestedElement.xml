@@ -1,0 +1,9 @@
+<project default="t">
+  <macrodef name="md">
+    <element name="nested_element"/>
+    <sequential>
+      <nested_<caret>/>
+    </sequential>
+  </macrodef>
+  <target name="t"/>
+</project>

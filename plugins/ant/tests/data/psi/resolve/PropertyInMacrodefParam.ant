@@ -1,0 +1,10 @@
+<project default="main">
+  <property name="qwerty" value="qwe"/>
+  <macrodef name="md">
+    <attribute name="qwerty"/>
+    <sequential>
+      <echo message="@{<ref>${qwerty}rty}"/>
+    </sequential>
+  </macrodef>
+  <target name="main"/>
+</project>
