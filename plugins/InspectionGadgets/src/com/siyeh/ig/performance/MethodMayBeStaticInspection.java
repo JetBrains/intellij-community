@@ -48,11 +48,13 @@ public class MethodMayBeStaticInspection extends MethodInspection{
      */
     public boolean m_ignoreEmptyMethods = true;
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "method.may.be.static.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName(){
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
@@ -104,10 +106,11 @@ public class MethodMayBeStaticInspection extends MethodInspection{
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if (method.hasModifierProperty(PsiModifier.STATIC) ||
-                method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                    method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+                    method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
                 return;
             }
-            if(method.isConstructor() || method.getNameIdentifier() == null) {
+            if(method.isConstructor() || method.getNameIdentifier() == null){
                 return;
             }
             if(m_ignoreEmptyMethods && MethodUtils.isEmpty(method)){
