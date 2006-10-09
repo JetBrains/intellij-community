@@ -46,14 +46,14 @@ class FormatDecode{
     public static Validator[] decode(String line){
         final ArrayList<Validator> args = new ArrayList<Validator>();
 
-        final Matcher m = fsPattern.matcher(line);
+        final Matcher matcher = fsPattern.matcher(line);
         int implicit = 0;
         int pos = 0;
-        for(int i = 0; m.find(i); i = m.end()){
-            final String posSpec = m.group(1);
-            final String flags = m.group(2);
-            final String dateSpec = m.group(5);
-            final String spec = m.group(6);
+        for(int i = 0; matcher.find(i); i = matcher.end()){
+            final String posSpec = matcher.group(1);
+            final String flags = matcher.group(2);
+            final String dateSpec = matcher.group(5);
+            final String spec = matcher.group(6);
 
             // check this first because it should not affect "implicit"
             if ("n".equals(spec) || "%".equals(spec)) {
@@ -93,7 +93,7 @@ class FormatDecode{
                         allowed = FLOAT_VALIDATOR;
                         break;
                     default:
-                        throw new UnknownFormatException(m.group());
+                        throw new UnknownFormatException(matcher.group());
                 }
             }
             argAt(allowed, pos, args);
@@ -114,7 +114,7 @@ class FormatDecode{
                         "requires both " + old.type() + " and " + val.type());
             }
         } else{
-            while(pos < args.size()) {
+            while(pos > args.size()) {
                 args.add(ALL_VALIDATOR);
             }
             args.add(val);

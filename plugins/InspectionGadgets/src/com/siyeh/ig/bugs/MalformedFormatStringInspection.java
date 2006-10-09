@@ -31,11 +31,13 @@ import java.util.Set;
 
 public class MalformedFormatStringInspection extends BaseInspection{
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "malformed.format.string.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
@@ -46,7 +48,7 @@ public class MalformedFormatStringInspection extends BaseInspection{
         final Validator[] validators;
         try{
             validators = FormatDecode.decode(value);
-        }  catch(Exception ignore){
+        } catch(Exception ignore){
             return InspectionGadgetsBundle.message(
                     "malformed.format.string.problem.descriptor.malformed");
         }
@@ -114,7 +116,6 @@ public class MalformedFormatStringInspection extends BaseInspection{
                 formatArgPosition = 0;
             }
             final PsiExpression formatArg = args[formatArgPosition];
-
             if(!TypeUtils.expressionHasType("java.lang.String", formatArg)){
                 return;
             }
@@ -145,7 +146,8 @@ public class MalformedFormatStringInspection extends BaseInspection{
             }
             for(int i = 0; i < validators.length; i++){
                 final Validator validator = validators[i];
-                final PsiType argType = args[i + formatArgPosition + 1].getType();
+                final PsiType argType =
+                        args[i + formatArgPosition + 1].getType();
                 if(!validator.valid(argType)){
                     registerError(formatArg, value, Integer.valueOf(numArgs));
                     return;
