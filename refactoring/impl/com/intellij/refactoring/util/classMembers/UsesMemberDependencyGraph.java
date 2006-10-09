@@ -40,7 +40,7 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
     if (myDependencies == null) {
       myDependencies = new HashSet<PsiMember>();
       myDependenciesToDependentMap = new HashMap<PsiMember, HashSet<PsiMember>>();
-      buildDeps(null, mySelectedNormal, myDependencies, myDependenciesToDependentMap, true);
+      buildDeps(null, mySelectedNormal);
     }
     return myDependencies;
   }
@@ -65,25 +65,42 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
   }
 
 
-  protected void buildDeps(PsiMember sourceElement, Set<PsiMember> members, Set<PsiMember> result, HashMap<PsiMember,HashSet<PsiMember>> relationMap, boolean recurse) {
-    for (PsiMember member : members) {
-      if (!result.contains(member)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(member.toString());
-        }
-        result.add(member);
-        if (sourceElement != null) {
-          HashSet<PsiMember> relations = relationMap.get(member);
-          if (relations == null) {
-            relations = new HashSet<PsiMember>();
-            relationMap.put(member, relations);
-          }
-          relations.add(sourceElement);
-        }
-        if (recurse && !mySelectedAbstract.contains(member)) {
-          buildDeps(member, myMemberDependenciesStorage.getMemberDependencies(member), result, relationMap, myRecursive);
+  private void buildDeps(PsiMember sourceElement, Set<PsiMember> members) {
+    if (myRecursive) {
+      buildDepsRecursively(sourceElement, members);
+    }
+    else {
+      for (final PsiMember member : members) {
+        for (final PsiMember dependency : myMemberDependenciesStorage.getMemberDependencies(member)) {
+          addDependency(dependency, member);
         }
       }
+    }
+  }
+
+  private void buildDepsRecursively(final PsiMember sourceElement, final Set<PsiMember> members) {
+    for (PsiMember member : members) {
+      if (!myDependencies.contains(member)) {
+        addDependency(member, sourceElement);
+        if (!mySelectedAbstract.contains(member)) {
+          buildDepsRecursively(member, myMemberDependenciesStorage.getMemberDependencies(member));
+        }
+      }
+    }
+  }
+
+  private void addDependency(final PsiMember member, final PsiMember sourceElement) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(member.toString());
+    }
+    myDependencies.add(member);
+    if (sourceElement != null) {
+      HashSet<PsiMember> relations = myDependenciesToDependentMap.get(member);
+      if (relations == null) {
+        relations = new HashSet<PsiMember>();
+        myDependenciesToDependentMap.put(member, relations);
+      }
+      relations.add(sourceElement);
     }
   }
 
