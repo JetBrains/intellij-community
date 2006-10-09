@@ -51,11 +51,13 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
         s_boxingArgs.put("java.lang.Character", "char");
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.boxing.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
@@ -80,12 +82,13 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
 
     private static class UnnecessaryBoxingFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.boxing.remove.quickfix");
         }
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
+        public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiCallExpression expression =
                     (PsiCallExpression)descriptor.getPsiElement();
@@ -117,7 +120,8 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             extends BaseInspectionVisitor {
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(expression);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
@@ -138,9 +142,6 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             final PsiParameterList parameterList =
                     constructor.getParameterList();
             final PsiParameter[] args = parameterList.getParameters();
-            if (args == null) {
-                return;
-            }
             if (args.length != 1) {
                 return;
             }
@@ -160,7 +161,8 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
 
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
-            final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
+            final LanguageLevel languageLevel =
+                    PsiUtil.getLanguageLevel(expression);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;
             }
@@ -198,7 +200,10 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
         }
 
         private static boolean canBeUnboxed(PsiExpression expression) {
-            final PsiElement parent = expression.getParent();
+            PsiElement parent = expression.getParent();
+            while (parent instanceof PsiParenthesizedExpression) {
+                parent = parent.getParent();
+            }
             if (parent instanceof PsiExpressionStatement ||
                     parent instanceof PsiReferenceExpression) {
                 return false;
@@ -217,9 +222,9 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             }
             final PsiMethodCallExpression containingMethodCallExpression =
                     getParentMethodCallExpression(expression);
-            return !(containingMethodCallExpression != null &&
-                    !isSameMethodCalledWithoutBoxing(
-                            containingMethodCallExpression, expression));
+            return containingMethodCallExpression == null ||
+                    isSameMethodCalledWithoutBoxing(
+                            containingMethodCallExpression, expression);
         }
 
         @Nullable
