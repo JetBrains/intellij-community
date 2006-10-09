@@ -41,7 +41,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private VariableInfo[] myVariableInfos;
   private AnonymousToInnerDialog myDialog;
   private boolean myMakeStatic;
-  private Set<String> myTypeParametersToCreate = new LinkedHashSet<String>();
+  private Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<PsiTypeParameter>();
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
@@ -139,9 +139,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     if (!myTypeParametersToCreate.isEmpty()) {
       buf.append("<");
       int idx = 0;
-      for (Iterator<String> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
-        String typeParam = it.next();
-        buf.append(typeParam);
+      for (Iterator<PsiTypeParameter> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
+        String typeParamName = it.next().getName();
+        buf.append(typeParamName);
         if (idx > 0) buf.append(", ");
       }
       buf.append(">");
@@ -269,8 +269,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     PsiClass aClass = factory.createClass(name);
     final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
     LOG.assertTrue(typeParameterList != null);
-    for (String typeParamName : myTypeParametersToCreate) {
-      typeParameterList.add((factory.createTypeParameterFromText(typeParamName, null)));
+    for (PsiTypeParameter typeParameter : myTypeParametersToCreate) {
+      typeParameterList.add((typeParameter));
     }
 
     if (!myTargetClass.isInterface()) {
@@ -531,7 +531,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         if (resolved instanceof PsiTypeParameter) {
           final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
           if (!PsiTreeUtil.isAncestor(myAnonClass, owner, false)) {
-            myTypeParametersToCreate.add(((PsiTypeParameter)resolved).getName());
+            myTypeParametersToCreate.add((PsiTypeParameter)resolved);
           }
         }
       }
