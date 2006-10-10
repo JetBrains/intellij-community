@@ -31,7 +31,7 @@ public class AntAnnotator implements Annotator {
       final String name = se.getSourceElement().getName();
       final TextRange absoluteRange = new TextRange(0, name.length()).shiftRight(se.getSourceElement().getTextOffset() + 1);
       if (def == null) {
-        if (!isLegateeOfUndefinedElement(se)) {
+        if (!isLegateeOfUndefinedElement(se.getAntParent())) {
           boolean macroDefined = false;
           while (parent != null) {
             if (parent instanceof AntTask && ((AntTask)parent).isMacroDefined()) {
@@ -78,10 +78,9 @@ public class AntAnnotator implements Annotator {
     checkReferences(element, holder);
   }
 
-  private static boolean isLegateeOfUndefinedElement(final AntStructuredElement se) {
-    AntElement parent = se;
-    do {
-      final AntTypeDefinition def = ((AntStructuredElement)parent).getTypeDefinition();
+  private static boolean isLegateeOfUndefinedElement(AntElement element) {
+    while (element instanceof AntStructuredElement) {
+      final AntTypeDefinition def = ((AntStructuredElement)element).getTypeDefinition();
       if (def == null) {
         return true;
       }
@@ -89,9 +88,8 @@ public class AntAnnotator implements Annotator {
       if (de != null && de instanceof AntTypeDef && !((AntTypeDef)de).typesLoaded()) {
         return true;
       }
-      parent = parent.getAntParent();
+      element = element.getAntParent();
     }
-    while (parent instanceof AntStructuredElement);
     return false;
   }
 
