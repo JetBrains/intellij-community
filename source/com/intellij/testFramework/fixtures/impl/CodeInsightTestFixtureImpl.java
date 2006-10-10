@@ -12,6 +12,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
@@ -20,6 +21,7 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -153,6 +155,12 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
           }
         }
 
+        final IntentionAction[] intentionActions = IntentionManager.getInstance(getProject()).getIntentionActions();
+        for (IntentionAction intentionAction : intentionActions) {
+          if (intentionAction.isAvailable(getProject(), getEditor(), getFile())) {
+            availableActions.add(intentionAction);
+          }
+        }
       }
     }.execute().throwException();
 
@@ -175,6 +183,15 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
         configureByFiles(filesBefore);
         new CodeCompletionHandler().invoke(getProject(), myEditor, myFile);
         checkResultByFile(fileAfter, false);
+      }
+    }.execute().throwException();
+  }
+
+  public void checkResultByFile(final String filePath) throws Throwable {
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+
+      protected void run() throws Throwable {
+        checkResultByFile(filePath, false);
       }
     }.execute().throwException();
   }
@@ -440,7 +457,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     String text = myFile.getText();
     text = StringUtil.convertLineSeparators(text, "\n");
 
-    assert newFileText1.equals(text): "Text mismatch in file " + filePath;
+    TestCase.assertEquals( "Text mismatch in file " + filePath, newFileText1, text );
 
     if (loader.caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());

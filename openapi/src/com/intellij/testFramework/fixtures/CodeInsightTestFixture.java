@@ -96,4 +96,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   void launchAction(IntentionAction action) throws Throwable;
 
   void testCompletion(String[] filesBefore, String fileAfter) throws Throwable;
+
+  void checkResultByFile(String filePath) throws Throwable;
 }
