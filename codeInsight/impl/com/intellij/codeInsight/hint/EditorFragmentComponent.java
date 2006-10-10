@@ -21,6 +21,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Map;
+import java.util.HashMap;
+
+import org.jetbrains.annotations.NotNull;
 
 public class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
@@ -166,8 +170,18 @@ public class EditorFragmentComponent extends JPanel {
     return showEditorFragmentHintAt(editor, range, point.x, point.y, true, showFolding);
   }
 
+  public interface DeclarationRangeHandler {
+    @NotNull TextRange getDeclarationRange(@NotNull PsiElement container);
+  }
+
+  private static Map<Class,DeclarationRangeHandler> ourDeclarationRangeRegistry = new HashMap<Class, DeclarationRangeHandler>();
+
+  public static void setDeclarationHandler(@NotNull Class clazz, DeclarationRangeHandler handler) {
+    ourDeclarationRangeRegistry.put(clazz, handler);
+  }
+
   // Q: not a good place?
-  public static TextRange getDeclarationRange(PsiElement container) {
+  public static @NotNull TextRange getDeclarationRange(PsiElement container) {
     if (container instanceof PsiMethod){
       PsiMethod method = (PsiMethod)container;
       int startOffset = method.getModifierList().getTextRange().getStartOffset();
@@ -209,7 +223,14 @@ public class EditorFragmentComponent extends JPanel {
 
       return new TextRange(xmlTag.getTextRange().getStartOffset(), endOffset);
     }
-    else{
+    else {
+      for(Class clazz:ourDeclarationRangeRegistry.keySet()) {
+        if (clazz.isInstance(container)) {
+          final DeclarationRangeHandler handler = ourDeclarationRangeRegistry.get(clazz);
+          if (handler != null) return handler.getDeclarationRange(container);
+        }
+      }
+
       LOG.assertTrue(false);
       return null;
     }
