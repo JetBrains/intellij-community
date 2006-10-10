@@ -242,7 +242,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Object descriptor = ((PluginTable)table).getObjectAt(row);
       setForeground(Color.black);
-      if (column == 0) {
+      if (column == COLUMN_NAME) {
         if (descriptor instanceof IdeaPluginDescriptorImpl) {
           final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
           if (ideaPluginDescriptor.isDeleted()) {
@@ -260,10 +260,10 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
         }
       }
 
+      if (column == COLUMN_DATE) {
+        setHorizontalAlignment(SwingConstants.RIGHT);
+      }
       if (!isSelected) {
-        if (column == 1) {
-          setHorizontalAlignment(SwingConstants.RIGHT);
-        }
         if (descriptor instanceof IdeaPluginDescriptorImpl) {
           final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
           if (ideaPluginDescriptor.isDeleted()) {
