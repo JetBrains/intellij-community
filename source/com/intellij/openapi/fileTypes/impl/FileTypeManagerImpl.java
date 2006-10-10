@@ -108,10 +108,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
+  @NotNull
   public File[] getExportFiles() {
-    return new File[]{getFileTypesDir(true), PathManager.getOptionsFile(this)};
+    return new File[]{getOrCreateFileTypesDir(), PathManager.getOptionsFile(this)};
   }
 
+  @NotNull
   public String getPresentableName() {
     return FileTypesBundle.message("filetype.settings.component");
   }
@@ -140,13 +142,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // -------------------------------------------------------------------------
 
   @NotNull
-  public FileType getFileTypeByFileName(String fileName) {
+  public FileType getFileTypeByFileName(@NotNull String fileName) {
     FileType type = myPaternsTable.findAssociatedFileType(fileName);
     return type == null ? StdFileTypes.UNKNOWN : type;
   }
 
   @NotNull
-  public FileType getFileTypeByFile(VirtualFile file) {
+  public FileType getFileTypeByFile(@NotNull VirtualFile file) {
     // first let file recognize its type
     for (FakeFileType fileType : mySpecialFileTypes) {
       if (fileType.isMyFileType(file)) return fileType;
@@ -196,7 +198,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public String getIgnoredFilesList() {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (String ignoreMask : myIgnoredFileMasksSet) {
       sb.append(ignoreMask);
       sb.append(';');
@@ -244,7 +246,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return tempSet.equals(myIgnoredFileMasksSet);
   }
 
-  public boolean isFileIgnored(String name) {
+  public boolean isFileIgnored(@NotNull String name) {
     if (myNotIgnoredFiles.contains(name)) return false;
     if (myIgnoredFiles.contains(name)) return true;
 
@@ -306,7 +308,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private void saveAllFileTypes() throws IOException {
-    File dir = getFileTypesDir(true);
+    File dir = getOrCreateFileTypesDir();
     if (dir == null) return;
 
     File[] files = getFileTypeFiles();
@@ -522,7 +524,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   private void registerStandardFileTypes() {
     // Do not remove. This loads StdLanguage.
-    // noinspection UNUSED_SYMBOL
+    //noinspection UnusedDeclaration
     Language elLanguage = ELLanguage.INSTANCE;
 
     if (StdFileTypes.ARCHIVE != null) return;
@@ -579,7 +581,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private static File[] getFileTypeFiles() {
-    File fileTypesDir = getFileTypesDir(true);
+    File fileTypesDir = getOrCreateFileTypesDir();
     if (fileTypesDir == null) return new File[0];
 
     File[] files = fileTypesDir.listFiles(new FileFilter() {
@@ -675,7 +677,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       UserFileType ft = (UserFileType)type;
       if (iconPath != null && !"".equals(iconPath.trim())) {
         Icon icon = IconLoader.getIcon(iconPath);
-        if (icon != null) ft.setIcon(icon);
+        ft.setIcon(icon);
       }
 
       if (fileTypeDescr != null) ft.setDescription(fileTypeDescr);
@@ -760,11 +762,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return table;
   }
 
-  private static File getFileTypesDir(boolean create) {
+  private static File getOrCreateFileTypesDir() {
     String directoryPath = PathManager.getConfigPath() + File.separator + ELEMENT_FILETYPES;
     File directory = new File(directoryPath);
     if (!directory.exists()) {
-      if (!create) return null;
       if (!directory.mkdir()) {
         LOG.error("Could not create directory: " + directory.getAbsolutePath());
         return null;

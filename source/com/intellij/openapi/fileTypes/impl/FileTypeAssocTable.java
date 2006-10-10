@@ -20,8 +20,17 @@ import java.util.*;
  * @author max
  */
 public class FileTypeAssocTable {
-  private Map<String, FileType> myExtensionMappings = new THashMap<String, FileType>();
-  private List<Pair<FileNameMatcher, FileType>> myMatchingMappings = new ArrayList<Pair<FileNameMatcher, FileType>>();
+  private final Map<String, FileType> myExtensionMappings;
+  private final List<Pair<FileNameMatcher, FileType>> myMatchingMappings;
+
+  private FileTypeAssocTable(final Map<String, FileType> extensionMappings, final List<Pair<FileNameMatcher, FileType>> matchingMappings) {
+    myExtensionMappings = new THashMap<String, FileType>(extensionMappings);
+    myMatchingMappings = new ArrayList<Pair<FileNameMatcher, FileType>>(matchingMappings);
+  }
+
+  public FileTypeAssocTable() {
+    this(Collections.<String, FileType>emptyMap(), Collections.<Pair<FileNameMatcher, FileType>>emptyList());
+  }
 
   public boolean isAssociatedWith(FileType type, FileNameMatcher matcher) {
     if (matcher instanceof ExtensionFileNameMatcher) {
@@ -129,10 +138,7 @@ public class FileTypeAssocTable {
 
   @NotNull
   public FileTypeAssocTable copy() {
-    FileTypeAssocTable c = new FileTypeAssocTable();
-    c.myExtensionMappings = new HashMap<String, FileType>(myExtensionMappings);
-    c.myMatchingMappings = new ArrayList<Pair<FileNameMatcher, FileType>>(myMatchingMappings);
-    return c;
+    return new FileTypeAssocTable(myExtensionMappings, myMatchingMappings);
   }
 
   @NotNull
