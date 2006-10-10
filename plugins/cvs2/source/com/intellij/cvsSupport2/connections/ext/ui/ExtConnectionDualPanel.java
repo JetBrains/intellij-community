@@ -4,6 +4,7 @@ import com.intellij.cvsSupport2.config.CvsRootEditor;
 import com.intellij.cvsSupport2.config.ExtConfiguration;
 import com.intellij.cvsSupport2.config.SshSettings;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel;
+import com.intellij.CvsBundle;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -18,7 +19,7 @@ public class ExtConnectionDualPanel {
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
   private final JPanel myDualPanel = new JPanel(new CardLayout());
-  private JCheckBox myUseInternalImplementationCheckBox = new JCheckBox(com.intellij.CvsBundle.message("checkbox.text.use.internal.ssh.implementation"));
+  private JCheckBox myUseInternalImplementationCheckBox = new JCheckBox(CvsBundle.message("checkbox.text.use.internal.ssh.implementation"));
   @NonNls private static final String EXT = "EXT";
   @NonNls private static final String SSH = "SSH";
 
@@ -67,7 +68,7 @@ public class ExtConnectionDualPanel {
     if (!myExtSettingsPanel.equalsTo(extConfiguration)) {
       return false;
     }
-    if (mySshSettingsPanel.equalsTo(sshSettings)) {
+    if (!mySshSettingsPanel.equalsTo(sshSettings)) {
       return false;
     }
     return myUseInternalImplementationCheckBox.isSelected() == extConfiguration.USE_INTERNAL_SSH_IMPLEMENTATION;

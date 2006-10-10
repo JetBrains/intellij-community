@@ -30,8 +30,8 @@ public class SshConnectionSettingsPanel {
 
   public SshConnectionSettingsPanel(final CvsRootEditor rootProvider) {
     myRootProvider = rootProvider;
-    myPathToPrivateKeyFile.addBrowseFolderListener(com.intellij.CvsBundle.message("dialog.title.path.to.private.key.file"),
-                                                   com.intellij.CvsBundle.message("dialog.description.path.to.private.key.file"),
+    myPathToPrivateKeyFile.addBrowseFolderListener(CvsBundle.message("dialog.title.path.to.private.key.file"),
+                                                   CvsBundle.message("dialog.description.path.to.private.key.file"),
                                                    null, new FileChooserDescriptor(true, false, false, false, false, false));
     ActionListener actionListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -56,11 +56,6 @@ public class SshConnectionSettingsPanel {
     myUsePrivateKeyFile.setSelected(ssh_configuration.USE_PPK);
     myPathToPrivateKeyFile.setText(ssh_configuration.PATH_TO_PPK);
     myPort.setText(ssh_configuration.PORT);
-
-    ButtonGroup buttonGroup = new ButtonGroup();
-    buttonGroup.add(myForceSSH1);
-    buttonGroup.add(myForceSSH2);
-    buttonGroup.add(myAllowBoth);
 
     if (ssh_configuration.SSH_TYPE == SshTypesToUse.ALLOW_BOTH) {
       myAllowBoth.setSelected(true);
