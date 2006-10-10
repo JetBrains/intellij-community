@@ -4,14 +4,14 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -133,7 +133,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
                         final XmlAspect xmlAspect,
                         final WolfTheProblemSolver solver,
                         final DomElementAnnotationsManagerImpl annotationsManager,
-                        final VirtualFileManager virtualFileManager) {
+                        final VirtualFileManager virtualFileManager,
+                        final StartupManager startupManager) {
     myProject = project;
     myAnnotationsManager = annotationsManager;
     pomModel.addModelListener(new PomModelListener() {
@@ -168,36 +169,32 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     }, project);
 
-    final PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
-      public void childAdded(PsiTreeChangeEvent event) {
-        processPsiChange(event.getChild());
-      }
+    startupManager.registerStartupActivity(new Runnable() {
+      public void run() {
+        final VirtualFileAdapter listener = new VirtualFileAdapter() {
+          public void contentsChanged(VirtualFileEvent event) {
+            processVfsChange(event.getFile());
+          }
 
-      public void childMoved(PsiTreeChangeEvent event) {
-        processPsiChange(event.getChild());
-      }
+          public void fileCreated(VirtualFileEvent event) {
+            processVfsChange(event.getFile());
+          }
 
-      public void childRemoved(PsiTreeChangeEvent event) {
-        processPsiChange(event.getChild());
-      }
+          public void fileDeleted(VirtualFileEvent event) {
+            processVfsChange(event.getFile());
+          }
 
-      public void childrenChanged(PsiTreeChangeEvent event) {
-        processPsiChange(event.getParent());
-      }
+          public void fileMoved(VirtualFileMoveEvent event) {
+            processVfsChange(event.getFile());
+          }
 
-      public void childReplaced(PsiTreeChangeEvent event) {
-        processPsiChange(event.getOldChild());
-        processPsiChange(event.getNewChild());
+          public void propertyChanged(VirtualFilePropertyEvent event) {
+            processVfsChange(event.getFile());
+          }
+        };
+        virtualFileManager.addVirtualFileListener(listener, project);
       }
-
-      public void propertyChanged(PsiTreeChangeEvent event) {
-        final PsiElement element = event.getElement();
-        if (element != null) {
-          processPsiChange(element);
-        }
-      }
-    };
-    psiManager.addPsiTreeChangeListener(psiTreeChangeAdapter, project);
+    });
 
     /*
     StdLanguages.XML.injectAnnotator(new Annotator() {
@@ -217,47 +214,45 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     */
   }
 
-  private void processPsiChange(final PsiElement element) {
-    if (!(element instanceof PsiFile || element instanceof PsiDirectory || element instanceof PsiPackage)) return;
-
-    if (!element.isValid()) {
+  private void processVfsChange(final VirtualFile file) {
+    if (!file.isValid()) {
+      /*
       for (final Set<DomFileElementImpl> set : myFileDescriptions.values()) {
         for (final DomFileElementImpl fileElement : set) {
           processFileChange(fileElement.getFile());
         }
       }
+      */
       return;
     }
 
-    if (element instanceof PsiFile) {
-      processFileChange((PsiFile)element);
-      return;
-    }
-
-    if (element instanceof PsiDirectory) {
-      processDirectoryChange((PsiDirectory)element);
-      return;
-    }
-
-    for (final PsiDirectory psiDirectory : ((PsiPackage)element).getDirectories()) {
-      processDirectoryChange(psiDirectory);
-    }
+    processFileOrDirectoryChange(file);
   }
 
-  private void processFileChange(final PsiFile element) {
-    if (element instanceof XmlFile) {
-      final XmlFile xmlFile = (XmlFile)element;
+  private void processFileChange(final VirtualFile file) {
+    //PsiManager.getInstance(myProject).findViewProvider(file);
+    //processFileChange(psiFile);
+  }
+
+  private void processFileChange(final PsiFile file) {
+    if (file != null && StdFileTypes.XML.equals(file.getFileType())) {
+      final XmlFile xmlFile = (XmlFile)file;
       updateFileDomness(xmlFile, null);
       updateDependantFiles(xmlFile);
     }
   }
 
-  private void processDirectoryChange(final PsiDirectory psiDirectory) {
-    for (final PsiDirectory directory : psiDirectory.getSubdirectories()) {
-      processPsiChange(directory);
+  private void processDirectoryChange(final VirtualFile directory) {
+    for (final VirtualFile file : directory.getChildren()) {
+      processFileOrDirectoryChange(file);
     }
-    for (final PsiFile psiFile : psiDirectory.getFiles()) {
-      processFileChange(psiFile);
+  }
+
+  private void processFileOrDirectoryChange(final VirtualFile file) {
+    if (!file.isDirectory()) {
+      processFileChange(file);
+    } else {
+      processDirectoryChange(file);
     }
   }
 
@@ -364,11 +359,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return fileElement;
   }
 
-  final <T extends DomElement> DomFileElementImpl<T> createFileElement(final XmlFile file,
-                                                                         final DomFileDescription<T> description) {
-    return new DomFileElementImpl<T>(file, description.getRootElementClass(), description.getRootTagName(), this);
-  }
-
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(XmlFile xmlFile) {
     FileDescriptionCachedValueProvider<T> provider = xmlFile.getUserData(CACHED_FILE_ELEMENT_PROVIDER);
@@ -382,6 +372,10 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (tag != null) {
       tag.putUserData(CACHED_HANDLER, element);
     }
+  }
+
+  public final Set<String> getRootTagNames() {
+    return myRootTagName2FileDescription.keySet();
   }
 
   public final Set<DomFileDescription> getFileDescriptions(String rootTagName) {
