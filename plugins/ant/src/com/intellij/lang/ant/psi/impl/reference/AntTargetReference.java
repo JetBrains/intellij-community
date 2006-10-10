@@ -103,7 +103,16 @@ public class AntTargetReference extends AntGenericReference {
       if (result == null) {
         for (final AntTarget target : project.getImportedTargets()) {
           if (name.equals(target.getName())) {
-            return target;
+            result = target;
+            break;
+          }
+        }
+        if (result == null) {
+          for (final AntTarget target : project.getImportedTargets()) {
+            if (name.equals(target.getQualifiedName())) {
+              result = target;
+              break;
+            }
           }
         }
       }
@@ -167,7 +176,7 @@ public class AntTargetReference extends AntGenericReference {
     final List<IntentionAction> result = new ArrayList<IntentionAction>(importedFiles.length + 1);
     result.add(new AntCreateTargetAction(this));
     for (final AntFile file : importedFiles) {
-      if( file.isPhysical()) {
+      if (file.isPhysical()) {
         result.add(new AntCreateTargetAction(this, file));
       }
     }

@@ -59,6 +59,15 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
     return AntElementRole.TARGET_ROLE;
   }
 
+  @NotNull
+  public String getQualifiedName() {
+    final AntProject project = getAntProject();
+    final String projectName = (project != null) ? project.getName() : null;
+    final String name = getName();
+    final String result = (projectName == null || projectName.length() == 0) ? name : projectName + '.' + name;
+    return (result == null) ? "" : result;
+  }
+
   @Nullable
   public String getDescription() {
     return getSourceElement().getAttributeValue(AntFileImpl.DESCRIPTION_ATTR);
