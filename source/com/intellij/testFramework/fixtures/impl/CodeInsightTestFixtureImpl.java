@@ -275,7 +275,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   protected void configureByFile(@NonNls String filePath) throws IOException {
     String fullPath = getTempDirPath() + "/" + filePath;
 
-    final VirtualFile copy = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
     assert copy != null: "file " + fullPath + " not found";
 
     SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(copy.getPath());
