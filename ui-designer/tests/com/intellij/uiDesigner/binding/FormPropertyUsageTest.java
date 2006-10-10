@@ -13,10 +13,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.Query;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -49,8 +52,23 @@ public class FormPropertyUsageTest extends PsiTestCase {
     super.tearDown();
   }
 
+  public void testClassUsage() {
+    PsiClass psiClass = myPsiManager.findClass(JButton.class.getName(), GlobalSearchScope.allScope(myProject));
+    final Query<PsiReference> query = ReferencesSearch.search(psiClass);
+    final Collection<PsiReference> result = query.findAll();
+    assertEquals(1, result.size());
+  }
+
   public void testFormPropertyUsage() {
-    PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findChild("test.properties"));
+    doPropertyUsageTest("test.properties");
+  }
+
+  public void testLocalizedPropertyUsage() {
+    doPropertyUsageTest("test_ru.properties");
+  }
+
+  private void doPropertyUsageTest(final String propertyFileName) {
+    PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findChild(propertyFileName));
     assertNotNull(propFile);
     final Property prop = propFile.findPropertyByKey("key");
     assertNotNull(prop);
@@ -61,7 +79,15 @@ public class FormPropertyUsageTest extends PsiTestCase {
   }
 
   public void testPropertyFileUsage() {
-    PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findChild("test.properties"));
+    doPropertyFileUsageTest("test.properties");
+  }
+
+  public void testLocalizedPropertyFileUsage() {
+     doPropertyFileUsageTest("test_ru.properties");
+  }
+
+  private void doPropertyFileUsageTest(final String fileName) {
+    PropertiesFile propFile = (PropertiesFile) myPsiManager.findFile(myTestProjectRoot.findChild(fileName));
     assertNotNull(propFile);
     final Query<PsiReference> query = ReferencesSearch.search(propFile);
     final Collection<PsiReference> result = query.findAll();

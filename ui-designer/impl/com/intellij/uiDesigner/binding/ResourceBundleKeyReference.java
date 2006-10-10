@@ -54,4 +54,16 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
     updateRangeText(((Property)element).getKey());
     return myFile;
   }
+
+  public boolean isReferenceTo(final PsiElement element) {
+    if (!(element instanceof Property)) {
+      return false;
+    }
+    Property property = (Property) element;
+    String baseName = PropertiesUtil.getFullName(property.getContainingFile());
+    if (baseName == null) {
+      return false;
+    }
+    return myBundleName.equals(baseName.replace('.', '/')) && getRangeText().equals(property.getKey());
+  }
 }

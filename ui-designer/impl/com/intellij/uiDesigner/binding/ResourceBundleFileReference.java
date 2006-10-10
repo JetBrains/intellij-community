@@ -46,6 +46,16 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
     return PropertiesUtil.getPropertiesFile(getRangeText(), module);
   }
 
+  @Override
+  public boolean isReferenceTo(final PsiElement element) {
+    if (!(element instanceof PropertiesFile)) return false;
+    String baseName = PropertiesUtil.getFullName((PropertiesFile) element);
+    if (baseName == null) return false;
+    baseName = baseName.replace('.', '/');
+    final String rangeText = getRangeText();
+    return rangeText.equals(baseName);
+  }
+
   public PsiElement handleElementRename(final String newElementName){
     final String currentName = getRangeText();
     final int slashIndex = currentName.lastIndexOf('/');
