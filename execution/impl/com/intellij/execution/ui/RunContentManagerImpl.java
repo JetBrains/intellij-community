@@ -30,29 +30,26 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.peer.PeerFactory;
-import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
 
 public class RunContentManagerImpl implements RunContentManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentManagerImpl");
-  public static final Key DESCRIPTOR_KEY = new Key("Descriptor");
+  private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
 
   private Project myProject;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new HashMap<String, ContentManager>();
 
-  private final Map<RunContentListener, MyRunContentListener> myListeners = new com.intellij.util.containers.HashMap<RunContentListener, MyRunContentListener>();
-  private final EventDispatcher<MyRunContentListener>         myEventDispatcher;
+  private final Map<RunContentListener, MyRunContentListener> myListeners = new HashMap<RunContentListener, MyRunContentListener>();
+  private final EventDispatcher<MyRunContentListener> myEventDispatcher;
   private final LinkedList<String> myToolwindowIdZbuffer = new LinkedList<String>();
 
 
@@ -79,8 +76,8 @@ public class RunContentManagerImpl implements RunContentManager {
             Set<String> currentWindows = new HashSet<String>();
             String[] toolWindowIds = toolWindowManager.getToolWindowIds();
 
-            for (int i = 0; i < toolWindowIds.length; i++) {
-              currentWindows.add(toolWindowIds[i]);
+            for (String toolWindowId : toolWindowIds) {
+              currentWindows.add(toolWindowId);
             }
             myToolwindowIdZbuffer.retainAll(currentWindows);
 
@@ -98,8 +95,8 @@ public class RunContentManagerImpl implements RunContentManager {
 
   public void dispose() {
     final String[] ids = myToolwindowIdToContentManagerMap.keySet().toArray(new String[myToolwindowIdToContentManagerMap.size()]);
-    for (int idx = 0; idx < ids.length; idx++) {
-      unregisterToolwindow(ids[idx]);
+    for (String id : ids) {
+      unregisterToolwindow(id);
     }
   }
 
@@ -156,15 +153,6 @@ public class RunContentManagerImpl implements RunContentManager {
         myEventDispatcher.getMulticaster().contentSelected(descriptor, toolWindowId);
       }
     });
-    ((ToolWindowManagerImpl)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
-      public void stateChanged() {
-
-      }
-    });
-    ListenerUtil.addFocusListener(contentManager.getComponent(), new FocusAdapter() {
-      public void focusGained(final FocusEvent e) {
-      }
-    });
     myToolwindowIdToContentManagerMap.put(toolWindowId, contentManager);
     myToolwindowIdZbuffer.addLast(toolWindowId);
   }
@@ -175,7 +163,6 @@ public class RunContentManagerImpl implements RunContentManager {
       return;
     }
     toFrontRunContent(requestor, descriptor);
-
   }
 
 
@@ -249,10 +236,7 @@ public class RunContentManagerImpl implements RunContentManager {
   public boolean removeRunContent(final JavaProgramRunner requestor, final RunContentDescriptor descriptor) {
     final ContentManager contentManager = getContentManagerForRunner(requestor.getInfo());
     final Content content = getRunContentByDescriptor(contentManager, descriptor);
-    if (content != null) {
-      return contentManager.removeContent(content);
-    }
-    return false;
+    return content != null && contentManager.removeContent(content);
   }
 
   public void showRunContent(final JavaProgramRunner requestor, final RunContentDescriptor descriptor) {
@@ -266,7 +250,7 @@ public class RunContentManagerImpl implements RunContentManager {
     Content content;
 
     if(oldDescriptor != null) {
-      content = (Content)oldDescriptor.getAttachedContent();
+      content = oldDescriptor.getAttachedContent();
       myEventDispatcher.getMulticaster().contentRemoved(oldDescriptor, runnerInfo.getToolWindowId());
       oldDescriptor.dispose(); // is of the same category, can be reused
     }
@@ -308,7 +292,7 @@ public class RunContentManagerImpl implements RunContentManager {
     showRunContent(requestor, descriptor);
   }
 
-  private RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager, final RunContentDescriptor descriptor) {
+  private static RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager, final RunContentDescriptor descriptor) {
     Content content = null;
     if (descriptor != null) {
       final Content attachedContent = descriptor.getAttachedContent();
@@ -346,25 +330,24 @@ public class RunContentManagerImpl implements RunContentManager {
     return content;
   }
 
-  private boolean isTerminated(final Content content) {
+  private static boolean isTerminated(final Content content) {
     final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
     if (descriptor == null) {
       return true;
     }
     else {
       final ProcessHandler processHandler = descriptor.getProcessHandler();
-      return processHandler != null ? processHandler.isProcessTerminated() : true;
+      return processHandler == null || processHandler.isProcessTerminated();
     }
   }
 
-  private RunContentDescriptor getRunContentDescriptorByContent(final Content content) {
-    return (RunContentDescriptor)content.getUserData(DESCRIPTOR_KEY);
+  private static RunContentDescriptor getRunContentDescriptorByContent(final Content content) {
+    return content.getUserData(DESCRIPTOR_KEY);
   }
 
-  private Content getRunContentByDescriptor(final ContentManager contentManager, final RunContentDescriptor descriptor) {
+  private static Content getRunContentByDescriptor(final ContentManager contentManager, final RunContentDescriptor descriptor) {
     final Content[] contents = contentManager.getContents();
-    for (int idx = 0; idx < contents.length; idx++) {
-      final Content content = contents[idx];
+    for (final Content content : contents) {
       if (descriptor.equals(content.getUserData(DESCRIPTOR_KEY))) {
         return content;
       }
@@ -405,11 +388,10 @@ public class RunContentManagerImpl implements RunContentManager {
   public RunContentDescriptor[] getAllDescriptors() {
     final List<RunContentDescriptor> descriptors = new ArrayList<RunContentDescriptor>();
     final String[] ids = myToolwindowIdToContentManagerMap.keySet().toArray(new String[myToolwindowIdToContentManagerMap.size()]);
-    for (int i = 0; i < ids.length; i++) {
-      final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(ids[i]);
+    for (String id : ids) {
+      final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(id);
       final Content[] contents = contentManager.getContents();
-      for (int idx = 0; idx < contents.length; idx++) {
-        final Content content = contents[idx];
+      for (final Content content : contents) {
         final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
         if (descriptor != null) {
           descriptors.add(descriptor);
@@ -428,9 +410,8 @@ public class RunContentManagerImpl implements RunContentManager {
   private RunContentDescriptor getDescriptorBy(ProcessHandler handler, RunnerInfo runnerInfo) {
     ContentManager contentManager = getContentManagerForRunner(runnerInfo);
     Content[] contents = contentManager.getContents();
-    for (int i = 0; i < contents.length; i++) {
-      Content content = contents[i];
-      RunContentDescriptor runContentDescriptor = (RunContentDescriptor)content.getUserData(DESCRIPTOR_KEY);
+    for (Content content : contents) {
+      RunContentDescriptor runContentDescriptor = content.getUserData(DESCRIPTOR_KEY);
       if (runContentDescriptor.getProcessHandler() == handler) {
         return runContentDescriptor;
       }
@@ -546,7 +527,7 @@ public class RunContentManagerImpl implements RunContentManager {
     }
   }
 
-  public void waitForProcess(final RunContentDescriptor descriptor) {
+  private void waitForProcess(final RunContentDescriptor descriptor) {
     String progressTitle =  ExecutionBundle.message("terminating.process.progress.title", descriptor.getDisplayName());
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -563,7 +544,7 @@ public class RunContentManagerImpl implements RunContentManager {
       private Thread myCancelListener = new Thread() {
         public void run() {
           for(;;) {
-            if(myProgressIndicator.isCanceled() || !myProgressIndicator.isRunning()) {
+            if(myProgressIndicator != null && (myProgressIndicator.isCanceled() || !myProgressIndicator.isRunning())) {
               mySemaphore.up();
               break;
             }
