@@ -26,6 +26,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.WeakFactoryMap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.LocalQuickFix;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,5 +112,13 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
     final DomElement reference = context.getInvocationElement();
     final DomElement scope = reference.getManager().getResolvingScope((GenericDomValue)reference);
     return (Collection<T>)myResolveCache.get(scope).getValue().values();
+  }
+
+  /**
+   * @param context context
+   * @return LocalQuickFix'es to correct non-resolved value (e.g. 'create from usage')
+   */
+  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
+    return new LocalQuickFix[0];
   }
 }
