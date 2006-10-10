@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +26,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
@@ -273,6 +275,11 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
 
     fileTypes.setSelectedItem(ourFileType);
+    fileTypes.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) initiateValidation();
+      }
+    });
   }
 
   protected boolean isRecursiveSearchEnabled() {
@@ -807,7 +814,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     MatchOptions options = config.getMatchOptions();
 
-    options.setScope(myScopeChooserCombo.getSelectedScope());
+    boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(myScopeChooserCombo.getSelectedScopeName());
+    options.setScope(searchWithinHierarchy ? GlobalSearchScope.projectScope(getProject()) :myScopeChooserCombo.getSelectedScope());
     options.setLooseMatching(true);
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
     //options.setDistinct( distinctResults.isSelected() );
