@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
@@ -13,7 +12,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -79,11 +77,6 @@ public class AntRefIdReference extends AntGenericReference {
     finally {
       PsiElementSetSpinAllocator.dispose(variants);
     }
-  }
-
-  @NotNull
-  public IntentionAction[] getFixes() {
-    return super.getFixes();
   }
 
   @Nullable

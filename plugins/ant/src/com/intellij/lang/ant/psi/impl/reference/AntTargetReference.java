@@ -19,6 +19,9 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AntTargetReference extends AntGenericReference {
 
   private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.ANT_TARGET);
@@ -161,12 +164,14 @@ public class AntTargetReference extends AntGenericReference {
 
     final AntProject project = getElement().getAntProject();
     final AntFile[] importedFiles = project.getImportedFiles();
-    IntentionAction[] result = new IntentionAction[importedFiles.length + 1];
-    result[0] = new AntCreateTargetAction(this);
-    for (int i = 0; i < importedFiles.length; ++i) {
-      result[i + 1] = new AntCreateTargetAction(this, importedFiles[i]);
+    final List<IntentionAction> result = new ArrayList<IntentionAction>(importedFiles.length + 1);
+    result.add(new AntCreateTargetAction(this));
+    for (final AntFile file : importedFiles) {
+      if( file.isPhysical()) {
+        result.add(new AntCreateTargetAction(this, file));
+      }
     }
-    return result;
+    return result.toArray(new IntentionAction[result.size()]);
   }
 
   private int getElementStartOffset() {
