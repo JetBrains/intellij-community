@@ -8,15 +8,17 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.swing.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -55,12 +57,14 @@ public class PluginInstaller {
     return result;
   }
 
-  public static boolean prepareToInstall(final PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
+  private static boolean prepareToInstall(final PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
 
-      List <PluginNode> depends = new ArrayList <PluginNode> ();
+      final PluginId[] optionalDependentPluginIds = pluginNode.getOptionalDependentPluginIds();
+      final List <PluginNode> depends = new ArrayList <PluginNode> ();
+      final List<PluginNode> optionalDeps = new ArrayList<PluginNode>();
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
 
@@ -72,13 +76,65 @@ public class PluginInstaller {
         PluginNode depPlugin = new PluginNode(depPluginId);
         depPlugin.setSize("-1");
         depPlugin.setName(depPluginId.getIdString()); //prevent from exceptions
-        depends.add(depPlugin);
+
+        if (optionalDependentPluginIds != null && Arrays.binarySearch(optionalDependentPluginIds, depPluginId) != -1) {
+          optionalDeps.add(depPlugin);
+        } else {
+          depends.add(depPlugin);
+        }
       }
 
       if (depends.size() > 0) { // has something to install prior installing the plugin
-        final boolean success = prepareToInstall(depends);
-        if (!success) {
+        final boolean [] proceed = new boolean[1];
+        final StringBuffer buf = new StringBuffer();
+        for (PluginNode depend : depends) {
+          buf.append(depend.getName()).append(",");
+        }
+        try {
+          SwingUtilities.invokeAndWait(new Runnable(){
+            public void run() {
+              proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), buf.substring(0, buf.length() - 1)),
+                                                    IdeBundle.message("plugin.manager.dependencies.detected.title"),
+                                                    Messages.getWarningIcon())
+                           == DialogWrapper.OK_EXIT_CODE;
+            }
+          });
+        }
+        catch (Exception e) {
           return false;
+        }
+        if (proceed[0]) {
+          if (!prepareToInstall(depends)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+
+      if (optionalDeps.size() > 0) {
+        final StringBuffer buf = new StringBuffer();
+        for (PluginNode depend : optionalDeps) {
+          buf.append(depend.getName()).append(",");
+        }
+        final boolean [] proceed = new boolean[1];
+        try {
+          SwingUtilities.invokeAndWait(new Runnable(){
+            public void run() {
+              proceed[0] = Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(), buf.substring(0, buf.length() - 1)),
+                                                    IdeBundle.message("plugin.manager.dependencies.detected.title"), 
+                                                    Messages.getWarningIcon())
+                           == DialogWrapper.OK_EXIT_CODE;
+            }
+          });
+        }
+        catch (Exception e) {
+          return false;
+        }
+        if (proceed[0]) {
+          if (!prepareToInstall(optionalDeps)) {
+            return false;
+          }
         }
       }
     }
@@ -197,17 +253,4 @@ public class PluginInstaller {
     }
   }
 
-  public static void savePluginClasses(Map<String, String> classes) throws IOException {
-    synchronized(lock) {
-      File file = new File (getPluginClassesPath());
-
-      ObjectOutputStream oos = new ObjectOutputStream (new FileOutputStream(file, false));
-      try {
-        oos.writeObject(classes);
-      }
-      finally {
-        oos.close();
-      }
-    }
-  }
 }
