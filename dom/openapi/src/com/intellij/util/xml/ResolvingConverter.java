@@ -19,6 +19,7 @@ package com.intellij.util.xml;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInspection.LocalQuickFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,6 +101,14 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
   public boolean isReferenceTo(@NotNull PsiElement element, final String stringValue, @Nullable T resolveResult,
                                final ConvertContext context) {
     return element.getManager().areElementsEquivalent(element, getPsiElement(resolveResult));
+  }
+
+  /**
+   * @param context context
+   * @return LocalQuickFix'es to correct non-resolved value (e.g. 'create from usage')
+   */
+  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
+    return new LocalQuickFix[0];
   }
 
   public static abstract class WrappedResolvingConverter<T> extends ResolvingConverter<T> {

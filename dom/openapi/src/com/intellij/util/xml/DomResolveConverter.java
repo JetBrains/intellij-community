@@ -16,6 +16,8 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -24,9 +26,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.WeakFactoryMap;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.LocalQuickFix;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,11 +113,4 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
     return (Collection<T>)myResolveCache.get(scope).getValue().values();
   }
 
-  /**
-   * @param context context
-   * @return LocalQuickFix'es to correct non-resolved value (e.g. 'create from usage')
-   */
-  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
-    return new LocalQuickFix[0];
-  }
 }
