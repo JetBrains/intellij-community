@@ -223,18 +223,11 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   @Nullable
   private String getPropertyValue() {
     final XmlTag sourceElement = getSourceElement();
-    String value = sourceElement.getAttributeValue("value");
+    final String value = sourceElement.getAttributeValue("value");
     if (value != null) {
       return computeAttributeValue(value);
     }
-    value = computeAttributeValue(sourceElement.getAttributeValue("location"));
-    if (value != null) {
-      final String baseDir = getAntProject().getBaseDir();
-      if (baseDir != null) {
-        return new File(baseDir, value).getAbsolutePath();
-      }
-    }
-    return value;
+    return computeAttributeValue(sourceElement.getAttributeValue("location"));
   }
 
   @Nullable
