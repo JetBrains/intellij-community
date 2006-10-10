@@ -140,6 +140,7 @@ public class DeleteHandler {
           CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false);
 
           for (final PsiElement elementToDelete : elements) {
+            if (!elementToDelete.isValid()) continue; //was already deleted
             if (elementToDelete instanceof PsiDirectory) {
               VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
               if (virtualFile.getFileSystem() instanceof LocalFileSystem) {
