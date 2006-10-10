@@ -61,8 +61,8 @@ public class AntAnnotator implements Annotator {
           final AntTypeDef td = (AntTypeDef)se;
           if (!td.typesLoaded()) {
             String failedMessage = AntBundle.message("failed.to.load.types");
-            if(td.getLocalizedError() != null ) {
-              failedMessage = failedMessage + ": " + td.getLocalizedError();  
+            if (td.getLocalizedError() != null) {
+              failedMessage = failedMessage + ": " + td.getLocalizedError();
             }
             holder.createErrorAnnotation(absoluteRange, failedMessage);
           }
@@ -80,7 +80,7 @@ public class AntAnnotator implements Annotator {
 
   private static boolean isLegateeOfUndefinedElement(final AntStructuredElement se) {
     AntElement parent = se;
-    while ((parent = parent.getAntParent()) instanceof AntStructuredElement) {
+    do {
       final AntTypeDefinition def = ((AntStructuredElement)parent).getTypeDefinition();
       if (def == null) {
         return true;
@@ -89,7 +89,9 @@ public class AntAnnotator implements Annotator {
       if (de != null && de instanceof AntTypeDef && !((AntTypeDef)de).typesLoaded()) {
         return true;
       }
+      parent = parent.getAntParent();
     }
+    while (parent instanceof AntStructuredElement);
     return false;
   }
 
