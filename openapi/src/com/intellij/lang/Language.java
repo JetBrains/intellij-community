@@ -29,19 +29,20 @@ import com.intellij.lang.refactoring.JavaNamesValidator;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +65,7 @@ public abstract class Language {
   private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
   private String[] myMimeTypes;
-  public static final Language ANY = new Language("", "") {
-  };
+  public static final Language ANY = new Language("", "") { };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
   private Set<Annotator> myInjectedAnnotators;
@@ -270,15 +270,15 @@ public abstract class Language {
    *
    * @param annotator the annotator to inject.
    */
-  public final void injectAnnotator(@NotNull Annotator annotator) {
+  public synchronized final void injectAnnotator(@NotNull Annotator annotator) {
     if (myInjectedAnnotators == null) {
-      myInjectedAnnotators = new com.intellij.util.containers.HashSet<Annotator>();
+      myInjectedAnnotators = new THashSet<Annotator>();
     }
     myInjectedAnnotators.add(annotator);
     myCachedAnnotators = null;
   }
 
-  public final void injectAnnotator(@NotNull final Annotator annotator, Disposable parentDisposable) {
+  public synchronized final void injectAnnotator(@NotNull final Annotator annotator, Disposable parentDisposable) {
     injectAnnotator(annotator);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -292,7 +292,7 @@ public abstract class Language {
    *
    * @param annotator the annotator to remove.
    */
-  public final void removeAnnotator(@NotNull Annotator annotator) {
+  public synchronized final void removeAnnotator(@NotNull Annotator annotator) {
     if (myInjectedAnnotators != null) {
       myInjectedAnnotators.remove(annotator);
       myCachedAnnotators = null;
@@ -305,7 +305,7 @@ public abstract class Language {
    * @return a list of all annotators for the language.
    */
   @NotNull
-  public final List<Annotator> getAnnotators() {
+  public synchronized final List<Annotator> getAnnotators() {
     Annotator annotator = getAnnotator();
     if (annotator == myLastAnnotator && myCachedAnnotators != null) {
       return myCachedAnnotators;
@@ -345,9 +345,9 @@ public abstract class Language {
    *
    * @param annotator the annotator to inject.
    */
-  public final void injectExternalAnnotator(@NotNull ExternalAnnotator annotator) {
+  public synchronized final void injectExternalAnnotator(@NotNull ExternalAnnotator annotator) {
     if (myInjectedExternalAnnotators == null) {
-      myInjectedExternalAnnotators = new com.intellij.util.containers.HashSet<ExternalAnnotator>();
+      myInjectedExternalAnnotators = new THashSet<ExternalAnnotator>();
     }
     myInjectedExternalAnnotators.add(annotator);
     myCachedExternalAnnotators = null;
@@ -358,7 +358,7 @@ public abstract class Language {
    *
    * @param annotator the annotator to remove.
    */
-  public final void removeExternalAnnotator(@NotNull ExternalAnnotator annotator) {
+  public synchronized final void removeExternalAnnotator(@NotNull ExternalAnnotator annotator) {
     if (myInjectedExternalAnnotators != null) {
       myInjectedExternalAnnotators.remove(annotator);
       myCachedExternalAnnotators = null;
@@ -371,7 +371,7 @@ public abstract class Language {
    * @return a list of all annotators for the language.
    */
   @NotNull
-  public final List<ExternalAnnotator> getExternalAnnotators() {
+  public synchronized final List<ExternalAnnotator> getExternalAnnotators() {
     ExternalAnnotator annotator = getExternalAnnotator();
     if (annotator == myLastExternalAnnotator && myCachedExternalAnnotators != null) {
       return myCachedExternalAnnotators;
