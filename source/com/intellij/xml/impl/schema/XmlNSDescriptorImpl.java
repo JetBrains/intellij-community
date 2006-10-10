@@ -392,36 +392,36 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             final XmlDocument document = xmlFile.getDocument();
 
             if (document != null) {
-              final XmlTag rTag = document.getRootTag();
-
-              if("import".equals(tag.getLocalName())) {
-                final XmlNSDescriptor importedDescriptor = (XmlNSDescriptor)document.getMetaData();
-                nsDescriptor = (importedDescriptor instanceof XmlNSDescriptorImpl) ?
-                               (XmlNSDescriptorImpl)importedDescriptor:
-                               this;
-              }
-              else {
-                nsDescriptor = this;
-              }
-
-
               final Set<XmlTag> visited1 = visited;
-              final XmlNSDescriptorImpl nsDescriptor1 = nsDescriptor;
 
               final CachedValue<TypeDescriptor> value =
                 tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
                   public Result<TypeDescriptor> compute() {
                     final String currentName = tag.getAttributeValue("name");
 
-                    if (currentName != null && !currentName.equals(XmlUtil.findLocalNameByQualifiedName(name))) {
+                    if (( currentName != null &&
+                          !currentName.equals(XmlUtil.findLocalNameByQualifiedName(name)) ) ||
+                         !xmlFile.isValid() ||
+                         xmlFile.getDocument() == null
+                       ) {
                       myTypesMap.remove(pair);
                       return new Result<TypeDescriptor>(null);
                     }
 
+                    final XmlDocument document = xmlFile.getDocument();
+                    final XmlNSDescriptorImpl nsDescriptor = findNSDescriptor(tag, document);
+
+                    if (nsDescriptor == null) {
+                      myTypesMap.remove(pair);
+                      return new Result<TypeDescriptor>(null);
+                    }
+
+                    final XmlTag rTag = document.getRootTag();
+
                     final TypeDescriptor complexTypeDescriptor =
-                      (nsDescriptor1 != XmlNSDescriptorImpl.this)?
-                      nsDescriptor1.findTypeDescriptor(rTag, name):
-                      nsDescriptor1.findTypeDescriptorImpl(rTag, name,visited1);
+                      (nsDescriptor != XmlNSDescriptorImpl.this)?
+                      nsDescriptor.findTypeDescriptor(rTag, name):
+                      nsDescriptor.findTypeDescriptorImpl(rTag, name,visited1);
                     return new Result<TypeDescriptor>(complexTypeDescriptor, rTag);
                   }
                 }, false
@@ -441,6 +441,20 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       }
     }
     return null;
+  }
+
+  private XmlNSDescriptorImpl findNSDescriptor(final XmlTag tag, final XmlDocument document) {
+    final XmlNSDescriptorImpl nsDescriptor;
+    if("import".equals(tag.getLocalName())) {
+      final XmlNSDescriptor importedDescriptor = (XmlNSDescriptor)document.getMetaData();
+      nsDescriptor = (importedDescriptor instanceof XmlNSDescriptorImpl) ?
+                     (XmlNSDescriptorImpl)importedDescriptor:
+                     this;
+    }
+    else {
+      nsDescriptor = this;
+    }
+    return nsDescriptor;
   }
 
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValueSimpleType(final XmlTag tag, final Pair<String, XmlTag> pair) {
