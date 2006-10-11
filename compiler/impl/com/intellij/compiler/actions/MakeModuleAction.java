@@ -39,7 +39,7 @@ public class MakeModuleAction extends CompileActionBase {
     Module[] modules = (Module[])dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY);
     final boolean isEnabled = module != null || modules != null;
     presentation.setEnabled(isEnabled);
-    final String actionName = Presentation.restoreTextWithMnemonic(getTemplatePresentation().getText(), getTemplatePresentation().getMnemonic());
+    final String actionName = getTemplatePresentation().getTextWithMnemonic();
 
     String presentationText;
     if (modules != null) {
