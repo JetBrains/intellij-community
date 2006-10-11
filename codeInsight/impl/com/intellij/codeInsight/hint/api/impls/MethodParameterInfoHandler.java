@@ -86,6 +86,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandler<PsiExpre
 
   @Nullable
   public static PsiExpressionList findArgumentList(PsiFile file, int offset, int lbraceOffset){
+    if (file == null) return null;
+    
     char[] chars = file.textToCharArray();
     if (offset >= chars.length) offset = chars.length - 1;
     int offset1 = CharArrayUtil.shiftBackward(chars, offset, " \t\n\r");

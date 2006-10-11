@@ -217,6 +217,8 @@ public class JavaDocManager implements ProjectComponent {
             if (ref!=null) originalElement = ref.getElement();
             element = documentationProvider.getDocumentationElementForLookupItem(item.getObject(), originalElement);
           }
+        } else {
+          return null;
         }
       }
     }
