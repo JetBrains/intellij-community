@@ -66,8 +66,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   protected PsiElement resolveInner(T o) {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
-      final PsiElement psiElement = ((ResolvingConverter<T>)converter).getPsiElement(o);
-      return psiElement == null && o != null ? getElement() : psiElement;
+      return ((ResolvingConverter<T>)converter).resolve(o, getConvertContext());
     }
 
     if (o instanceof PsiElement) {
