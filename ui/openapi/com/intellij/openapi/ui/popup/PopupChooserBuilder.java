@@ -115,7 +115,7 @@ public class PopupChooserBuilder {
     if (!myForceMovable && myTitle != null) {
       JLabel label = new JLabel(myTitle);
       label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-      label.setHorizontalAlignment(JLabel.CENTER);
+      label.setHorizontalAlignment(SwingConstants.CENTER);
       contentPane.add(label, BorderLayout.NORTH);
     }
 
@@ -135,8 +135,6 @@ public class PopupChooserBuilder {
       regsiterClosePopupKeyboardAction(keystroke, true);
     }
 
-    myChooserComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
     final JScrollPane scrollPane;
     if (myChooserComponent instanceof MyListWrapper) {
       scrollPane = (MyListWrapper)myChooserComponent;
@@ -151,6 +149,7 @@ public class PopupChooserBuilder {
       throw new IllegalStateException("PopupChooserBuilder is intended to be constructed with one of JTable, JTree, JList components");
     }
 
+    scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     contentPane.add(scrollPane, BorderLayout.CENTER);
 
     if (mySouthComponent != null) {
