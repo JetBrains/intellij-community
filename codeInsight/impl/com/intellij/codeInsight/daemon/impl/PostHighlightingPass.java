@@ -504,7 +504,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       if (resolved instanceof PsiPackage) {
         isRedundant = packageName.equals(((PsiPackage)resolved).getQualifiedName());
       }
-      else if (resolved instanceof PsiClass) {
+      else if (resolved instanceof PsiClass && !importStatement.isOnDemand()) {
         String qName = ((PsiClass)resolved).getQualifiedName();
         if (qName != null) {
           String name = ((PsiClass)resolved).getName();

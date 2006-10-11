@@ -566,10 +566,12 @@ public class ImportHelper{
           refElement = ResolveClassUtil.resolveClass(referenceElement); // might be uncomplete code
         }
 
+        PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
+        if (!(currentFileResolveScope instanceof PsiImportStatementBase)) continue;
+
         if (refElement != null) {
           //Add names imported statically
           if (referenceElement != null) {
-            PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
             if (currentFileResolveScope instanceof PsiImportStaticStatement) {
               PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)currentFileResolveScope;
               String name = importStaticStatement.getImportReference().getCanonicalText();
@@ -584,14 +586,7 @@ public class ImportHelper{
           }
 
           if (refElement instanceof PsiClass) {
-            PsiClass refClass = (PsiClass)refElement;
-            PsiElement parent = refClass.getParent();
-            if (parent instanceof PsiClass && referenceElement != null) {
-              if (isInnerVisibleByShortName(refClass, referenceElement)) continue;
-            }
-            else if (!(parent instanceof PsiFile)) continue;
-
-            String qName = refClass.getQualifiedName();
+            String qName = ((PsiClass)refElement).getQualifiedName();
             if (hasPackage(qName, thisPackageName)) continue;
             names.add(qName);
           }
@@ -639,15 +634,4 @@ public class ImportHelper{
     return dotIndex < 0 ? "" : className.substring(0, dotIndex);
   }
 
-  private static boolean isInnerVisibleByShortName(PsiClass inner, PsiElement place){
-    PsiClass outerClass = inner.getContainingClass();
-    PsiElement parent = place;
-    while(!(parent instanceof PsiFile)){
-      if (parent instanceof PsiClass){
-        if (parent == outerClass || ((PsiClass)parent).isInheritor(outerClass, true)) return true;
-      }
-      parent = parent.getParent();
-    }
-    return false;
-  }
 }
