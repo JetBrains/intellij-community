@@ -62,7 +62,7 @@
       <reference id="IntegrateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <separator/>
-      <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction" text="Edit Properties"/>
+      <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction" text="Edit _Properties"/>
       <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
       <action id="Subversion.Revert" class="org.jetbrains.idea.svn.actions.RevertAction"/>
       <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
