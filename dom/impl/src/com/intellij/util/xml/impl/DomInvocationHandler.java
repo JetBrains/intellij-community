@@ -49,6 +49,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private static final String ATTRIBUTES = "@";
   private static Method ACCEPT_METHOD = null;
   private static Method ACCEPT_CHILDREN_METHOD = null;
+  private static Method TO_STRING_METHOD = null;
   protected static Method CREATE_STABLE_COPY_METHOD = null;
 
   static {
@@ -56,6 +57,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
       ACCEPT_METHOD = DomElement.class.getMethod("accept", DomElementVisitor.class);
       ACCEPT_CHILDREN_METHOD = DomElement.class.getMethod("acceptChildren", DomElementVisitor.class);
       CREATE_STABLE_COPY_METHOD = DomElement.class.getMethod("createStableCopy");
+      TO_STRING_METHOD = Object.class.getMethod("toString");
     }
     catch (NoSuchMethodException e) {
       throw new AssertionError(e);
@@ -569,6 +571,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public final String toString() {
+    if (ReflectionCache.isAssignable(GenericValue.class, getRawType())) {
+      return ((GenericValue) findCallerProxy(TO_STRING_METHOD)).getStringValue();
+    }
     return myType.toString() + " @" + hashCode();
   }
 
