@@ -50,7 +50,7 @@ public class FileManagerImpl implements FileManager {
   private RootManager myRootManager = null;
 
   private HashMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>();
-  private WeakValueHashMap<VirtualFile, FileViewProvider> myVFileToPsiFileMap = new WeakValueHashMap<VirtualFile, FileViewProvider>(); // VirtualFile --> PsiFile
+  private WeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
 
   private VirtualFileListener myVirtualFileListener = null;
   private FileDocumentManagerListener myFileDocumentManagerListener = null;
@@ -101,28 +101,28 @@ public class FileManagerImpl implements FileManager {
   }
 
   public void cleanupForNextTest() {
-    myVFileToPsiFileMap.clear();
+    myVFileToViewProviderMap.clear();
     myVFileToPsiDirMap.clear();
   }
 
   public FileViewProvider findViewProvider(final VirtualFile file) {
     FileViewProvider viewProvider;
     synchronized (PsiLock.LOCK) {
-      viewProvider = myVFileToPsiFileMap.get(file);
+      viewProvider = myVFileToViewProviderMap.get(file);
       if(viewProvider == null){
         viewProvider = createFileViewProvider(file);
-        myVFileToPsiFileMap.put(file, viewProvider);
+        myVFileToViewProviderMap.put(file, viewProvider);
       }
     }
     return viewProvider;
   }
 
   public FileViewProvider findCachedViewProvider(final VirtualFile file) {
-    return myVFileToPsiFileMap.get(file);
+    return myVFileToViewProviderMap.get(file);
   }
 
   public void setViewProvider(final VirtualFile virtualFile, final FileViewProvider fileViewProvider) {
-    myVFileToPsiFileMap.put(virtualFile, fileViewProvider);
+    myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
   }
 
   private FileViewProvider createFileViewProvider(final VirtualFile file) {
@@ -210,16 +210,16 @@ public class FileManagerImpl implements FileManager {
 
   // for tests
   public void checkConsistency() {
-    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = myVFileToPsiFileMap;
-    myVFileToPsiFileMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
-    for (VirtualFile vFile : fileToPsiFileMap.keySet()) {
-      final FileViewProvider psiProvider = fileToPsiFileMap.get(vFile);
+    Map<VirtualFile, FileViewProvider> fileToViewProvider = myVFileToViewProviderMap;
+    myVFileToViewProviderMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
+    for (VirtualFile vFile : fileToViewProvider.keySet()) {
+      final FileViewProvider fileViewProvider = fileToViewProvider.get(vFile);
 
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
       //LOG.assertTrue(psiFile1 != null, vFile.toString());
-      if (psiFile1 != null) { // might get collected
-        LOG.assertTrue(psiFile1.getClass().equals(psiProvider.getPsi(psiProvider.getBaseLanguage()).getClass()));
+      if (psiFile1 != null && fileViewProvider != null) { // might get collected
+        LOG.assertTrue(psiFile1.getClass().equals(fileViewProvider.getPsi(fileViewProvider.getBaseLanguage()).getClass()));
       }
     }
 
@@ -632,13 +632,13 @@ public class FileManagerImpl implements FileManager {
   }
 
   public PsiFile getCachedPsiFileInner(VirtualFile file) {
-    final FileViewProvider fileViewProvider = myVFileToPsiFileMap.get(file);
+    final FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
     return fileViewProvider != null ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
 
   public List<PsiFile> getAllCachedFiles() {
     List<PsiFile> files = new ArrayList<PsiFile>();
-    for (FileViewProvider provider : myVFileToPsiFileMap.values()) {
+    for (FileViewProvider provider : myVFileToViewProviderMap.values()) {
       if (provider != null) {
         files.add(((SingleRootFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
       }
@@ -665,9 +665,9 @@ public class FileManagerImpl implements FileManager {
     myVFileToPsiDirMap = fileToPsiDirMap;
 
     // note: important to update directories map first - findFile uses findDirectory!
-    WeakValueHashMap<VirtualFile, FileViewProvider> fileToPsiFileMap = myVFileToPsiFileMap;
+    WeakValueHashMap<VirtualFile, FileViewProvider> fileToPsiFileMap = myVFileToViewProviderMap;
     if (useFind) {
-      myVFileToPsiFileMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
+      myVFileToViewProviderMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
     }
     for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
       VirtualFile vFile = iterator.next();
@@ -696,7 +696,7 @@ public class FileManagerImpl implements FileManager {
         }
       }
     }
-    myVFileToPsiFileMap = fileToPsiFileMap;
+    myVFileToViewProviderMap = fileToPsiFileMap;
   }
 
   public void reloadFromDisk(@NotNull PsiFile file) {
@@ -836,7 +836,7 @@ public class FileManagerImpl implements FileManager {
       if (!event.isDirectory()) {
         final PsiFile psiFile = getCachedPsiFileInner(vFile);
         if (psiFile != null) {
-          myVFileToPsiFileMap.remove(vFile);
+          myVFileToViewProviderMap.remove(vFile);
 
           if (parentDir != null) {
             ApplicationManager.getApplication().runWriteAction(
@@ -1032,7 +1032,7 @@ public class FileManagerImpl implements FileManager {
                 final PsiFile newPsiFile = fileViewProvider.getPsi(fileViewProvider.getBaseLanguage());
                 if(oldPsiFile != null) {
                   if (newPsiFile == null) {
-                    myVFileToPsiFileMap.remove(vFile);
+                    myVFileToViewProviderMap.remove(vFile);
 
                     treeEvent.setChild(oldPsiFile);
                     myManager.childRemoved(treeEvent);
@@ -1040,7 +1040,7 @@ public class FileManagerImpl implements FileManager {
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
                            newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue())
                           ) {
-                    myVFileToPsiFileMap.put(vFile, fileViewProvider);
+                    myVFileToViewProviderMap.put(vFile, fileViewProvider);
 
                     treeEvent.setOldChild(oldPsiFile);
                     treeEvent.setNewChild(newPsiFile);
@@ -1056,7 +1056,7 @@ public class FileManagerImpl implements FileManager {
                 }
                 else {
                   if (newPsiFile != null) {
-                    myVFileToPsiFileMap.put(vFile, fileViewProvider);
+                    myVFileToViewProviderMap.put(vFile, fileViewProvider);
                     treeEvent.setChild(newPsiFile);
                     myManager.childAdded(treeEvent);
                   }
@@ -1162,7 +1162,7 @@ public class FileManagerImpl implements FileManager {
             if (oldElement != null) {
               if (newElement != null) {
                 if (!oldElement.getClass().equals(oldElement.getClass())) {
-                  myVFileToPsiFileMap.put(vFile, newViewProvider);
+                  myVFileToViewProviderMap.put(vFile, newViewProvider);
                   PsiTreeChangeEventImpl treeRemoveEvent = new PsiTreeChangeEventImpl(myManager);
                   treeRemoveEvent.setParent(oldParentDir);
                   treeRemoveEvent.setChild(oldElement);
@@ -1180,14 +1180,14 @@ public class FileManagerImpl implements FileManager {
                 }
               }
               else {
-                myVFileToPsiFileMap.remove(vFile);
+                myVFileToViewProviderMap.remove(vFile);
                 treeEvent.setParent(oldParentDir);
                 treeEvent.setChild(oldElement);
                 myManager.childRemoved(treeEvent);
               }
             }
             else {
-              myVFileToPsiFileMap.put(vFile, newViewProvider);
+              myVFileToViewProviderMap.put(vFile, newViewProvider);
               LOG.assertTrue(newElement != null); // checked above
               treeEvent.setParent(newParentDir);
               treeEvent.setChild(newElement);
@@ -1207,7 +1207,7 @@ public class FileManagerImpl implements FileManager {
           removeFilesAndDirsRecursively(child);
         }
       }
-      else myVFileToPsiFileMap.remove(vFile);
+      else myVFileToViewProviderMap.remove(vFile);
     }
   }
 
@@ -1262,9 +1262,9 @@ public class FileManagerImpl implements FileManager {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void dumpFilesWithContentLoaded(Writer out) throws IOException {
     out.write("Files with content loaded cached in FileManagerImpl:\n");
-    Set<VirtualFile> vFiles = myVFileToPsiFileMap.keySet();
+    Set<VirtualFile> vFiles = myVFileToViewProviderMap.keySet();
     for (VirtualFile fileCacheEntry : vFiles) {
-      final FileViewProvider view = myVFileToPsiFileMap.get(fileCacheEntry);
+      final FileViewProvider view = myVFileToViewProviderMap.get(fileCacheEntry);
       PsiFile psiFile = view.getPsi(view.getBaseLanguage());
       if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
         out.write(fileCacheEntry.getPresentableUrl());
