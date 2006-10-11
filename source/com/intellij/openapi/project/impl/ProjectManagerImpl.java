@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.ProfilingUtil;
@@ -224,6 +225,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private static boolean showMacrosConfigurationDialog(Project project, final String text, final Set<String> usedMacros) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
+      throw new RuntimeException(text + ": " + StringUtil.join(usedMacros, ", "));
+    }
     final UndefinedMacrosConfigurable configurable =
       new UndefinedMacrosConfigurable(text, usedMacros.toArray(new String[usedMacros.size()]));
     final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable) {
