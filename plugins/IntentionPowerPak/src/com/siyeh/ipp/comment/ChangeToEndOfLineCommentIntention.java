@@ -15,10 +15,11 @@
  */
 package com.siyeh.ipp.comment;
 
-import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -31,56 +32,32 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
         return new CStyleCommentPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiManager manager = element.getManager();
-        final PsiElement parent = element.getParent();
+        final PsiComment comment = (PsiComment)element;
+        final PsiManager manager = comment.getManager();
+        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
+        final PsiElement parent = comment.getParent();
         assert parent != null;
         final PsiElementFactory factory = manager.getElementFactory();
-        final String commentText = element.getText();
-        final PsiElement whitespace = element.getNextSibling();
+        final String commentText = comment.getText();
+        final PsiElement whitespace = comment.getNextSibling();
         final String text = commentText.substring(2, commentText.length() - 2);
         final String[] lines = text.split("\n");
-        final String newComment = buildCommentString(lines);
-        final PsiCodeFragment fragment =
-                factory.createCodeBlockCodeFragment(newComment,
-                        null, false);
-        final PsiElement firstChild = fragment.getFirstChild();
-        final PsiElement lastChild = fragment.getLastChild();
-        parent.addRangeBefore(firstChild, lastChild, element);
-        if (whitespace != null) {
-            whitespace.delete();
-        }
-        element.delete();
-    }
-
-    private static String buildCommentString(String[] lines) {
-        int lastNonEmtpyLine = -1;
-        for (int i = lines.length - 1; i >= 0 && lastNonEmtpyLine == -1; i--) {
-            final String line = lines[i].trim();
-            if (line.length() != 0) {
-                lastNonEmtpyLine = i;
+        for (int i = lines.length - 1; i >= 1; i--) {
+            final PsiComment nextComment =
+                    factory.createCommentFromText("//" + lines[i].trim(),
+                            parent);
+            parent.addAfter(nextComment, comment);
+            if (whitespace != null) {
+                final PsiElement newWhiteSpace =
+                        factory.createWhiteSpaceFromText(whitespace.getText());
+                parent.addAfter(newWhiteSpace, comment);
             }
         }
-        if (lastNonEmtpyLine == -1) {
-            return "//\n";
-        }
-        final StringBuilder buffer = new StringBuilder();
-        for (int i = 0; i <= lastNonEmtpyLine; i++) {
-            final String line = lines[i];
-            final String trimmedLine = line.trim();
-            if (buffer.length() != 0 || trimmedLine.length() != 0) {
-                buffer.append("//");
-                if (line.startsWith(" *")) {
-                    buffer.append(line.substring(2));
-                } else if (line.length() > 0 && line.charAt(0) == '*') {
-                    buffer.append(line.substring(1));
-                } else {
-                    buffer.append(line);
-                }
-                buffer.append('\n');
-            }
-        }
-        return buffer.toString();
+        final PsiComment newComment =
+                factory.createCommentFromText("//" + lines[0], parent);
+        final PsiElement replacedComment = comment.replace(newComment);
+        codeStyleManager.reformat(replacedComment);
     }
 }
