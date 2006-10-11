@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -58,8 +60,17 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
     }
 
-    if (navElement instanceof Navigatable && ((Navigatable)navElement).canNavigate()) {
+    if (navElement instanceof Navigatable) {
+      if (((Navigatable)navElement).canNavigate()) {
         ((Navigatable)navElement).navigate(true);
+      }
+    }
+    else if (navElement != null) {
+      int navOffset = navElement.getTextOffset();
+      VirtualFile virtualFile = PsiUtil.getVirtualFile(navElement);
+      if (virtualFile != null) {
+        new OpenFileDescriptor(project, virtualFile, navOffset).navigate(true);
+      }
     }
   }
 
@@ -176,7 +187,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
           }
           PsiElement nextSibling = statement.getNextSibling();
           while (!(nextSibling instanceof PsiStatement) && nextSibling != null) nextSibling = nextSibling.getNextSibling();
-          return nextSibling != null ? nextSibling : statement.getNextSibling();
+          //return nextSibling != null ? nextSibling : statement.getNextSibling();
+          if (nextSibling != null) return nextSibling;
+          nextSibling = statement.getNextSibling();
+          if (nextSibling != null) return nextSibling;
+          return statement.getLastChild();
         }
       }
     }
