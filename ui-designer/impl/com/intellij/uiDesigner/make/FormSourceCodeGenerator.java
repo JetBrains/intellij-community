@@ -960,8 +960,8 @@ public final class FormSourceCodeGenerator {
     endConstructor();
   }
 
-  private void newRectangle(final Rectangle rectangle){
-    startConstructor(Insets.class.getName());
+  private void newRectangle(final Rectangle rectangle) {
+    startConstructor(Rectangle.class.getName());
     push(rectangle.x);
     push(rectangle.y);
     push(rectangle.width);
