@@ -33,11 +33,13 @@ import java.util.List;
 public class LoopConditionNotUpdatedInsideLoopInspection
         extends StatementInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "loop.condition.not.updated.inside.loop.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
@@ -100,7 +102,8 @@ public class LoopConditionNotUpdatedInsideLoopInspection
             if (condition == null) {
                 return false;
             }
-            if (PsiUtil.isConstantExpression(condition)) {
+            if (PsiUtil.isConstantExpression(condition) ||
+                    PsiKeyword.NULL.equals(condition.getText())) {
                 return true;
             }
             if (condition instanceof PsiInstanceOfExpression) {
