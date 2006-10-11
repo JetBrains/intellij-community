@@ -71,10 +71,17 @@ public class TypeConversionUtil {
    * @return true iff fromType can be casted to toType
    */
   public static boolean areTypesConvertible(@NotNull PsiType fromType, @NotNull PsiType toType) {
-    if (isPrimitiveAndNotNull(fromType) || isPrimitiveAndNotNull(toType)) {
+    final boolean fromIsPrimitive = isPrimitiveAndNotNull(fromType);
+    final boolean toIsPrimitive = isPrimitiveAndNotNull(toType);
+    if (fromIsPrimitive || toIsPrimitive) {
       if (isVoidType(fromType) || isVoidType(toType)) return false;
       final int fromTypeRank = getTypeRank(fromType);
       final int toTypeRank = getTypeRank(toType);
+      if (!toIsPrimitive) return fromTypeRank == toTypeRank;
+      if (!fromIsPrimitive) {
+        if (fromTypeRank == toTypeRank) return true;
+        return fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK && fromTypeRank < toTypeRank;
+      }
       return fromTypeRank == toTypeRank ||
              fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK;
     }
