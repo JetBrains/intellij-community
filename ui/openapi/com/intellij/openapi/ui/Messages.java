@@ -38,6 +38,7 @@ import java.awt.event.ItemListener;
 
 public class Messages {
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
+  private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
 
   private static Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
   protected static final String OK_BUTTON = CommonBundle.getOkButtonText();
@@ -269,9 +270,15 @@ public class Messages {
                                        Icon icon,
                                        String initialValue,
                                        InputValidator validator) {
-    InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
-    dialog.show();
-    return dialog.getInputString();
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return ourTestInputImplementation.show(message);
+    }
+    else {
+      InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
+      dialog.show();
+      return dialog.getInputString();
+    }
   }
 
   public static String showInputDialog(Component parent,
@@ -280,9 +287,16 @@ public class Messages {
                                        Icon icon,
                                        String initialValue,
                                        InputValidator validator) {
-    InputDialog dialog = new InputDialog(parent, message, title, icon, initialValue, validator);
-    dialog.show();
-    return dialog.getInputString();
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return ourTestInputImplementation.show(message);
+    }
+    else {
+
+      InputDialog dialog = new InputDialog(parent, message, title, icon, initialValue, validator);
+      dialog.show();
+      return dialog.getInputString();
+    }
   }
 
   /**
@@ -292,9 +306,15 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
   public static String showInputDialog(String message, String title, Icon icon, String initialValue, InputValidator validator) {
-    InputDialog dialog = new InputDialog(message, title, icon, initialValue, validator);
-    dialog.show();
-    return dialog.getInputString();
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return ourTestInputImplementation.show(message);
+    }
+    else {
+      InputDialog dialog = new InputDialog(message, title, icon, initialValue, validator);
+      dialog.show();
+      return dialog.getInputString();
+    }
   }
 
   public static String showEditableChooseDialog(String message,
@@ -303,34 +323,58 @@ public class Messages {
                                                 String[] values,
                                                 String initialValue,
                                                 InputValidator validator) {
-    ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
-    dialog.setValidator(validator);
-    dialog.getComboBox().setEditable(true);
-    dialog.getComboBox().getEditor().setItem(initialValue);
-    dialog.getComboBox().setSelectedItem(initialValue);
-    dialog.show();
-    return dialog.getInputString();
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return ourTestInputImplementation.show(message);
+    }
+    else {
+      ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
+      dialog.setValidator(validator);
+      dialog.getComboBox().setEditable(true);
+      dialog.getComboBox().getEditor().setItem(initialValue);
+      dialog.getComboBox().setSelectedItem(initialValue);
+      dialog.show();
+      return dialog.getInputString();
+    }
   }
 
   public static int showChooseDialog(String message, String title, String[] values, String initialValue, Icon icon) {
-    ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
-    dialog.show();
-    return dialog.getSelectedIndex();
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return ourTestImplementation.show(message);
+    }
+    else {
+      ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
+      dialog.show();
+      return dialog.getSelectedIndex();
+    }
   }
 
   public static int showChooseDialog(Component parent, String message, String title, String[] values, String initialValue, Icon icon) {
-    ChooseDialog dialog = new ChooseDialog(parent, message, title, icon, values, initialValue);
-    dialog.show();
-    return dialog.getSelectedIndex();
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return ourTestImplementation.show(message);
+    }
+    else {
+      ChooseDialog dialog = new ChooseDialog(parent, message, title, icon, values, initialValue);
+      dialog.show();
+      return dialog.getSelectedIndex();
+    }
   }
 
   /**
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
   public static int showChooseDialog(Project project, String message, String title, Icon icon, String[] values, String initialValue) {
-    ChooseDialog dialog = new ChooseDialog(project, message, title, icon, values, initialValue);
-    dialog.show();
-    return dialog.getSelectedIndex();
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      return ourTestImplementation.show(message);
+    }
+    else {
+      ChooseDialog dialog = new ChooseDialog(project, message, title, icon, values, initialValue);
+      dialog.show();
+      return dialog.getSelectedIndex();
+    }
   }
 
   /**
@@ -358,23 +402,29 @@ public class Messages {
    * Shows dialog with text area to edit long strings that don't fit in text field 
    */
   public static void showTextAreaDialog(final JTextField textField, final String title, @NonNls final String dimensionServiceKey) {
-    JTextArea textArea = new JTextArea(10, 50);
-    textArea.setWrapStyleWord(true);
-    textArea.setLineWrap(true);
-    textArea.setDocument(textField.getDocument());
-    InsertPathAction.copyFromTo(textField, textArea);
-    DialogBuilder builder = new DialogBuilder(textField);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
-    builder.setDimensionServiceKey(dimensionServiceKey);
-    builder.setCenterPanel(scrollPane);
-    builder.setPreferedFocusComponent(textArea);
-    String rawText = title;
-    if (StringUtil.endsWithChar(rawText, ':')) {
-      rawText = rawText.substring(0, rawText.length() - 1);
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()  || application.isHeadlessEnvironment()) {
+      ourTestImplementation.show(title);
     }
-    builder.setTitle(rawText);
-    builder.addCloseButton();
-    builder.show();
+    else {
+      JTextArea textArea = new JTextArea(10, 50);
+      textArea.setWrapStyleWord(true);
+      textArea.setLineWrap(true);
+      textArea.setDocument(textField.getDocument());
+      InsertPathAction.copyFromTo(textField, textArea);
+      DialogBuilder builder = new DialogBuilder(textField);
+      JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
+      builder.setDimensionServiceKey(dimensionServiceKey);
+      builder.setCenterPanel(scrollPane);
+      builder.setPreferedFocusComponent(textArea);
+      String rawText = title;
+      if (StringUtil.endsWithChar(rawText, ':')) {
+        rawText = rawText.substring(0, rawText.length() - 1);
+      }
+      builder.setTitle(rawText);
+      builder.addCloseButton();
+      builder.show();
+    }
   }
 
   private static class MessageDialog extends DialogWrapper {
