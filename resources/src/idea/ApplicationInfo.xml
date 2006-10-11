@@ -1,5 +1,5 @@
 <component>
-  <version name="IntelliJ IDEA" major="6" minor="0 Beta"/>
+  <version name="IntelliJ IDEA" major="6" minor="0.2 Beta"/>
   <!-- <version name="IntelliJ IDEA (Demetra)" />-->
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_logo.png"/>
