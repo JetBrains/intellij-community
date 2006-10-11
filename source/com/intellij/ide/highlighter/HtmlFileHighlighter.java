@@ -76,6 +76,9 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, HighlighterColors.HTML_ATTRIBUTE_VALUE);
     keys2.put(XmlTokenType.XML_EQ, HighlighterColors.HTML_ATTRIBUTE_NAME);
 
+    keys2.put(XmlTokenType.XML_CHAR_ENTITY_REF, HighlighterColors.HTML_ENTITY_REFERENCE);
+    keys2.put(XmlTokenType.XML_ENTITY_REF_TOKEN, HighlighterColors.HTML_ENTITY_REFERENCE);
+
     keys1.put(XmlTokenType.XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
   }
 

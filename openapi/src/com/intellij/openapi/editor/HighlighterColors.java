@@ -42,15 +42,6 @@ public interface HighlighterColors {
   TextAttributesKey JAVA_DOT = TextAttributesKey.createTextAttributesKey("JAVA_DOT");
   TextAttributesKey JAVA_SEMICOLON = TextAttributesKey.createTextAttributesKey("JAVA_SEMICOLON");
 
-
-  /*
-  TextAttributesKey HTML_XML_COMMENT = new TextAttributesKey("HTML_XML_COMMENT");
-  TextAttributesKey HTML_XML_TAG_BACKGROUND = new TextAttributesKey("HTML_XML_TAG_BACKGROUND");
-  TextAttributesKey HTML_XML_TAG_NAME = new TextAttributesKey("HTML_XML_TAG_NAME");
-  TextAttributesKey HTML_XML_ATTRIBUTE_NAME = new TextAttributesKey("HTML_XML_ATTRIBUTE_NAME");
-  TextAttributesKey HTML_XML_ATTRIBUTE_VALUE = new TextAttributesKey("HTML_XML_ATTRIBUTE_VALUE");
-  */
-
   TextAttributesKey XML_PROLOGUE = TextAttributesKey.createTextAttributesKey("XML_PROLOGUE");
   TextAttributesKey XML_COMMENT = TextAttributesKey.createTextAttributesKey("XML_COMMENT");
   TextAttributesKey XML_TAG = TextAttributesKey.createTextAttributesKey("XML_TAG");
@@ -58,12 +49,14 @@ public interface HighlighterColors {
   TextAttributesKey XML_ATTRIBUTE_NAME = TextAttributesKey.createTextAttributesKey("XML_ATTRIBUTE_NAME");
   TextAttributesKey XML_ATTRIBUTE_VALUE = TextAttributesKey.createTextAttributesKey("XML_ATTRIBUTE_VALUE");
   TextAttributesKey XML_TAG_DATA = TextAttributesKey.createTextAttributesKey("XML_TAG_DATA");
+  TextAttributesKey XML_ENTITY_REFERENCE = TextAttributesKey.createTextAttributesKey("XML_ENTITY_REFERENCE");
 
   TextAttributesKey HTML_COMMENT = TextAttributesKey.createTextAttributesKey("HTML_COMMENT");
   TextAttributesKey HTML_TAG = TextAttributesKey.createTextAttributesKey("HTML_TAG");
   TextAttributesKey HTML_TAG_NAME = TextAttributesKey.createTextAttributesKey("HTML_TAG_NAME");
   TextAttributesKey HTML_ATTRIBUTE_NAME = TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_NAME");
   TextAttributesKey HTML_ATTRIBUTE_VALUE = TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_VALUE");
+  TextAttributesKey HTML_ENTITY_REFERENCE = TextAttributesKey.createTextAttributesKey("HTML_ENTITY_REFERENCE");
 
   TextAttributesKey JSP_COMMENT = TextAttributesKey.createTextAttributesKey("JSP_COMMENT");
   TextAttributesKey JSP_SCRIPTING_BACKGROUND = TextAttributesKey.createTextAttributesKey("JSP_SCRIPTING_BACKGROUND");

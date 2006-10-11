@@ -52,7 +52,8 @@ public class HTMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag"), HighlighterColors.HTML_TAG),
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag.name"), HighlighterColors.HTML_TAG_NAME),
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.name"), HighlighterColors.HTML_ATTRIBUTE_NAME),
-    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.value"), HighlighterColors.HTML_ATTRIBUTE_VALUE)
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.value"), HighlighterColors.HTML_ATTRIBUTE_VALUE),
+    new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.entity.reference"), HighlighterColors.HTML_ENTITY_REFERENCE),
   };
 
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
@@ -94,7 +95,7 @@ public class HTMLColorsPage implements ColorSettingsPage {
            "<body>\n" +
            "<h1>IntelliJ IDEA</h1>\n" +
            "<p><br><b><IMG border=0 height=12 src=\"images/hg.gif\" width=18 >\n" +
-           "What is IntelliJ IDEA?</b><br><br>\n" +
+           "What is IntelliJ&nbsp;IDEA? &#x00B7; &Alpha; </b><br><br>\n" +
            "</body>\n" +
            "</html>";
   }

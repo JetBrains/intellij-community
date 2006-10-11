@@ -56,6 +56,7 @@ public class XMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.name"), HighlighterColors.XML_ATTRIBUTE_NAME),
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.value"), HighlighterColors.XML_ATTRIBUTE_VALUE),
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.data"), HighlighterColors.XML_TAG_DATA),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), HighlighterColors.XML_ENTITY_REFERENCE),
   };
 
   @NotNull
@@ -92,7 +93,7 @@ public class XMLColorsPage implements ColorSettingsPage {
            "   <indexitem text=\"rename\" target=\"refactoring.rename\"/>\n" +
            "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
            "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
-           "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n" +
+           "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n&amp; &#x00B7;" +
            "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
            "</index>";
   }

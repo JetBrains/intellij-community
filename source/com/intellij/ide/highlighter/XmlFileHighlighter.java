@@ -109,6 +109,9 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
 
     keys1.put(XmlTokenType.XML_ENTITY_DECL_START, HighlighterColors.XML_PROLOGUE);
     keys2.put(XmlTokenType.XML_ENTITY_DECL_START, HighlighterColors.XML_TAG_NAME);
+
+    keys2.put(XmlTokenType.XML_CHAR_ENTITY_REF, HighlighterColors.XML_ENTITY_REFERENCE);
+    keys2.put(XmlTokenType.XML_ENTITY_REF_TOKEN, HighlighterColors.XML_ENTITY_REFERENCE);
   }
 
   private boolean myIsDtd;
