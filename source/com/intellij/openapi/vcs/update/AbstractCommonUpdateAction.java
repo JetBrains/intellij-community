@@ -74,7 +74,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext, myActionInfo));
   }
 
-
   protected void actionPerformed(final VcsContext context) {
     final Project project = context.getProject();
 
@@ -154,7 +153,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 public void run() {
                   if (!vcsExceptions.isEmpty()) {
                     AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, VcsBundle.message("message.title.vcs.update.errors",
-                                                                                                       getCompleteActionName(context)));
+                                                                                                       getTemplatePresentation().getText()));
                   }
                   else {
                     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -165,14 +164,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                   
                   if (updatedFiles.isEmpty() && vcsExceptions.isEmpty()) {
                     Messages.showMessageDialog(getAllFilesAreUpToDateMessage(roots),
-                                               getCompleteActionName(context),
+                                               getTemplatePresentation().getText(),
                                                Messages.getInformationIcon());
 
                   }
                   else if (!updatedFiles.isEmpty()) {
                     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
                     restoreUpdateTree.registerUpdateInformation(updatedFiles, myActionInfo);
-                    showUpdateProjectInfo(project, updatedFiles, getCompleteActionName(context), myActionInfo);
+                    showUpdateProjectInfo(project, updatedFiles, getTemplatePresentation().getText(), myActionInfo);
 
                   }
 
@@ -184,7 +183,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           }
         };
 
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, getCompleteActionName(context), updateProcess,
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, getTemplatePresentation().getText(), updateProcess,
                                                                            finishRunnable, finishRunnable,
                                                                            VcsConfiguration.getInstance(project).getUpdateOption());
       }

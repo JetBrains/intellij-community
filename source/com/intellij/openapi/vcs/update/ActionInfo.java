@@ -44,7 +44,7 @@ public interface ActionInfo {
     }
 
     public String getActionName(String scopeName) {
-      return VcsBundle.message("action.anme.update.scope", scopeName);
+      return VcsBundle.message("action.name.update.scope", scopeName);
     }
 
     public String getGroupName(FileGroup fileGroup) {
@@ -123,11 +123,11 @@ public interface ActionInfo {
     }
 
     public String getActionName(String scopeName) {
-      return "Integrate " + scopeName;
+      return VcsBundle.message("action.name.integrate.scope", scopeName);
     }
 
     public String getActionName() {
-      return "Integrate";
+      return VcsBundle.message("action.name.integrate");
     }
 
     public String getGroupName(FileGroup fileGroup) {
