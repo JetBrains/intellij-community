@@ -237,8 +237,8 @@ public class PluginManager {
         ArrayList<PluginId> plugins = new ArrayList<PluginId>();
         for(PluginId dependentPluginId: descriptor.getDependentPluginIds()) {
           // check for missing optional dependency
-          if (idToDescriptorMap.containsKey(pluginId)) {
-            plugins.add(pluginId);
+          if (idToDescriptorMap.containsKey(dependentPluginId)) {
+            plugins.add(dependentPluginId);
           }
         }
         return plugins.iterator();
