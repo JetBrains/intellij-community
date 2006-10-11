@@ -29,7 +29,7 @@ public class VcsSelection {
   public VcsSelection(Document document, SelectionModel selectionModel) {
     this(document,
          new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
-         LocalVcsBundle.message("acrtion.name.show.history.for.selection"));
+         LocalVcsBundle.message("action.name.show.history.for.selection"));
   }
 
   public VcsSelection(Document document, TextRange textRange, String actionName) {
