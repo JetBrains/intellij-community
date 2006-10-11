@@ -4,24 +4,24 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.codeInsight.daemon.quickFix.WebRootQuickFixProvider;
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.javaee.web.WebModuleProperties;
+import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.file.PsiDirectoryImpl;
+import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -92,10 +92,10 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     for (PsiElement context : contexts) {
       PsiElement resolved = null;
       if (context instanceof WebDirectoryElement) {
-        if (".".equals(myText)) {
+        if (".".equals(getText())) {
           resolved = context;
         }
-        else if ("..".equals(myText)) {
+        else if ("..".equals(getText())) {
           resolved = ((WebDirectoryElement)context).getParentDirectory();
         }
         else {
@@ -118,10 +118,10 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
         }
       }
       else if (context instanceof PsiDirectory) {
-        if (".".equals(myText)) {
+        if (".".equals(getText())) {
           resolved = context;
         }
-        else if ("..".equals(myText)) {
+        else if ("..".equals(getText())) {
           resolved = ((PsiDirectory)context).getParentDirectory();
         }
         else {
@@ -208,8 +208,8 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   private boolean equalsTo(final String name) {
-    return myFileReferenceSet.isCaseSensitive() ? myText.equals(name) :
-           myText.compareToIgnoreCase(name) == 0;
+    return myFileReferenceSet.isCaseSensitive() ? getText().equals(name) :
+           getText().compareToIgnoreCase(name) == 0;
   }
 
   public boolean isReferenceTo(PsiElement element) {
@@ -238,6 +238,10 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   public String getCanonicalText(){
+    return myText;
+  }
+
+  protected String getText() {
     return myText;
   }
 

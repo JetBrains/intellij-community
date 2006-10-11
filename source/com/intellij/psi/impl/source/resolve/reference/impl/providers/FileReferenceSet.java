@@ -4,19 +4,19 @@ import com.intellij.javaee.web.WebModuleProperties;
 import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
+import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
@@ -145,6 +145,10 @@ public class FileReferenceSet {
     return myProvider;
   }
 
+  protected FileReference createFileReference(final TextRange range, final int index, final String text) {
+    return new FileReference(this, range, index, text);
+  }
+
   protected void reparse(String str) {
     final List<FileReference> referencesList = new ArrayList<FileReference>();
     // skip white space
@@ -157,10 +161,9 @@ public class FileReferenceSet {
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
       if (subreferenceText.length() > 0 || myAllowEmptyFileReferenceAtEnd) { // ? check at end
-        FileReference currentContextRef = new FileReference(this, new TextRange(myStartInElement + currentSlash + 1, myStartInElement + (
-          nextSlash > 0
-          ? nextSlash
-          : str.length())), index++, subreferenceText);
+        final FileReference currentContextRef = createFileReference(
+          new TextRange(myStartInElement + currentSlash + 1, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())), index++,
+          subreferenceText);
         referencesList.add(currentContextRef);
       }
       if ((currentSlash = nextSlash) < 0) {
@@ -291,6 +294,6 @@ public class FileReferenceSet {
     if (myOptions == null) {
       myOptions = new HashMap<CustomizableReferenceProvider.CustomizationKey, Object>(5);
     }
-    myOptions.put(key,value);
+    myOptions.put(key, value);
   }
 }
