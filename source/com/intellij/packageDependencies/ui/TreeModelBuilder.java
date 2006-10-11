@@ -365,6 +365,15 @@ public class TreeModelBuilder {
   @Nullable
   public DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
     Module module = myFileIndex.getModuleForFile(parent.getVirtualFile());
+    if (element instanceof PsiDirectory && myFlattenPackages) {
+      final PackageDependenciesNode moduleNode = getModuleNode(module, ScopeType.SOURCE);
+      final PsiDirectory psiDirectory = (PsiDirectory)element;
+      final VirtualFile virtualFile = psiDirectory.getVirtualFile();
+      final PackageDependenciesNode dirNode =
+        getModuleDirNode(psiDirectory, myFileIndex.getModuleForFile(virtualFile), getFileScopeType(virtualFile), null);
+      dirNode.removeFromParent();
+      return moduleNode;
+    }
     DefaultMutableTreeNode dirNode = getModuleDirNode(parent, module, ScopeType.SOURCE, null);
     if (dirNode == null) return null;
     final PackageDependenciesNode[] classOrDirNodes = findNodeForPsiElement((PackageDependenciesNode)dirNode, element);
@@ -414,11 +423,16 @@ public class TreeModelBuilder {
     if (!isMarked) return null;
 
     final VirtualFile vFile = file.getVirtualFile();
+    LOG.assertTrue(vFile != null);
     PsiDirectory dirToReload = file.getContainingDirectory();
     PackageDependenciesNode rootToReload = getMap(myModuleDirNodes, getFileScopeType(vFile)).get(dirToReload);
-    while (rootToReload == null && dirToReload != null){
-      dirToReload = dirToReload.getParentDirectory();
-      rootToReload = getMap(myModuleDirNodes, getFileScopeType(vFile)).get(dirToReload);
+    if (rootToReload == null && myFlattenPackages) {
+      rootToReload = getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
+    } else {
+      while (rootToReload == null && dirToReload != null){
+        dirToReload = dirToReload.getParentDirectory();
+        rootToReload = getMap(myModuleDirNodes, getFileScopeType(vFile)).get(dirToReload);
+      }
     }
 
     PackageDependenciesNode dirNode = getFileParentNode(file);
@@ -453,11 +467,6 @@ public class TreeModelBuilder {
     }
     return result.isEmpty() ? null : result.toArray(new PackageDependenciesNode[result.size()]);
   }
-
-  public void updateModuleNode(final Module module) {
-
-  }
-
 
   @Nullable
   private PsiPackage getFilePackage(PsiJavaFile file) {

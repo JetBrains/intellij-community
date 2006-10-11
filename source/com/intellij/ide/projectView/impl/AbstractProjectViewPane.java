@@ -4,23 +4,23 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
-import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
+import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -376,4 +376,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     myTree.addMouseListener(popupHandler);
   }
 
+  public JTree getTree() {
+    return myTree;
+  }
 }

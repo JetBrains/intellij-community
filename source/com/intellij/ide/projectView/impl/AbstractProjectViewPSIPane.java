@@ -199,10 +199,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   protected abstract AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder);
 
-  public JTree getTree() {
-    return myTree;
-  }
-
 
   protected static final class MySpeedSearch extends TreeSpeedSearch {
     MySpeedSearch(JTree tree) {

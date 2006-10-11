@@ -340,22 +340,24 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   }
 
   private class MyPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
-    public void beforeChildAddition(final PsiTreeChangeEvent event) {
+    public void childAdded(final PsiTreeChangeEvent event) {
       final PsiElement element = event.getParent();
+      final PsiElement child = event.getChild();
+      if (child == null) return;
       if (element instanceof PsiDirectory || element instanceof PsiPackage) {
-      queueUpdate(new Runnable(){
-        public void run() {
-          if (myProject.isDisposed()) return;
-          myTreeExpansionMonitor.freeze();
-          final PsiElement child = event.getChild();
-          if (child instanceof PsiFile) {
-            processFileAddition((PsiFile)child);
-          } else if (child instanceof PsiDirectory) {
-            processDirectoryCreation((PsiDirectory)child);
+        queueUpdate(new Runnable(){
+          public void run() {
+            if (myProject.isDisposed()) return;         
+            myTreeExpansionMonitor.freeze();
+            if (!child.isValid()) return;
+            if (child instanceof PsiFile) {
+              processFileAddition((PsiFile)child);
+            } else if (child instanceof PsiDirectory) {
+              processDirectoryCreation((PsiDirectory)child);
+            }
+            myTreeExpansionMonitor.restore();
           }
-          myTreeExpansionMonitor.restore();
-        }
-      }, false);
+        }, false);
       }
     }
 
@@ -385,7 +387,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       }
     }
 
-    public void beforeChildMovement(final PsiTreeChangeEvent event) {
+    public void childMoved(PsiTreeChangeEvent event) {
       final PsiElement oldParent = event.getOldParent();
       final PsiElement newParent = event.getNewParent();
       final PsiElement child = event.getChild();
@@ -395,8 +397,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
             public void run() {
               if (myProject.isDisposed()) return;
               myTreeExpansionMonitor.freeze();
-              collapseExpand(myBuilder.removeNode(child, (PsiDirectory)oldParent));
-              collapseExpand(myBuilder.addFileNode((PsiFile)child));
+              if (child.isValid()) {
+                collapseExpand(myBuilder.removeNode(child, (PsiDirectory)oldParent));
+                collapseExpand(myBuilder.addFileNode((PsiFile)child));
+              }
               myTreeExpansionMonitor.restore();
             }
           }, true);
@@ -404,7 +408,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       }
     }
 
-    public void beforeChildrenChange(final PsiTreeChangeEvent event) {
+
+    public void childrenChanged(PsiTreeChangeEvent event) {
       final PsiElement parent = event.getParent();
       final PsiFile file = parent.getContainingFile();
       if (file instanceof PsiJavaFile) {
@@ -413,7 +418,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           public void run() {
             if (myProject.isDisposed()) return;
             myTreeExpansionMonitor.freeze();
-            collapseExpand(myBuilder.getFileParentNode(file));
+            if (file.isValid()) {
+              collapseExpand(myBuilder.getFileParentNode(file));
+            }
             myTreeExpansionMonitor.restore();
           }
         }, false);

@@ -1,7 +1,6 @@
 
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -28,7 +27,7 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   private boolean myCompactPackages = true;
   private String myFQName = null;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.DirectoryNode");
+  //private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.DirectoryNode");
 
   private boolean myShowModules;
 
@@ -81,12 +80,15 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Nullable
   public String getLocationString() {
-    if (myDirectory != null) {
+    if (myDirectory != null && myDirectory.isValid()) {
       final VirtualFile directory = myDirectory.getVirtualFile();
-      final VirtualFile contentRootForFile = ProjectRootManager.getInstance(myDirectory.getProject())
-        .getFileIndex().getContentRootForFile(directory);
-      if (Comparing.equal(contentRootForFile, directory)) {
-        return directory.getPresentableUrl();
+      final Project project = myDirectory.getProject();
+      if (!project.isDisposed()) {
+        final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project)
+          .getFileIndex().getContentRootForFile(directory);
+        if (Comparing.equal(contentRootForFile, directory)) {
+          return directory.getPresentableUrl();
+        }
       }
     }
     return null;
@@ -174,6 +176,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return myWrapper;
   }
 
+  @Nullable
   public DirectoryNode getCompactedDirNode() {
     return myCompactPackages ? myCompactedDirNode : null;
   }
