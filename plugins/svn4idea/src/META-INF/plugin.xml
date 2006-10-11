@@ -41,7 +41,7 @@
     <group id="SubversionFileGroup">
       <separator/>
       <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction"
-              text="Import into SVN..."
+              text="I_mport into SVN..."
         />
       <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction"
         />
