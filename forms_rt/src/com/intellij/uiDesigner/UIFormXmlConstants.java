@@ -99,6 +99,7 @@ public class UIFormXmlConstants {
   public static final String ELEMENT_INSPECTION_SUPPRESSIONS = "inspectionSuppressions";
   public static final String ELEMENT_SUPPRESS = "suppress";
   public static final String ELEMENT_GRIDBAG = "gridbag";
+  public static final String ELEMENT_PROPERTIES = "properties";
 
   public static final String LAYOUT_INTELLIJ = "GridLayoutManager";
   public static final String LAYOUT_GRIDBAG = "GridBagLayout";

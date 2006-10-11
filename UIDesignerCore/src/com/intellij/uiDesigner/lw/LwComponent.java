@@ -211,9 +211,9 @@ public abstract class LwComponent implements IComponent{
       return;
     }
 
-    Element propertiesElement = LwXmlReader.getChild(element, "properties");
+    Element propertiesElement = LwXmlReader.getChild(element, UIFormXmlConstants.ELEMENT_PROPERTIES);
     if(propertiesElement == null){
-      propertiesElement = new Element("properties", element.getNamespace());
+      propertiesElement = new Element(UIFormXmlConstants.ELEMENT_PROPERTIES, element.getNamespace());
     }
 
     final HashMap name2property = provider.getLwProperties(getComponentClassName());

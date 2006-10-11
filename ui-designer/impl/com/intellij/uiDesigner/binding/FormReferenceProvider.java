@@ -2,10 +2,10 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -16,6 +16,7 @@ import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -154,7 +155,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
                                         final PsiReference classReference,
                                         final PsiPlainTextFile file,
                                         final PsiReferenceProcessor processor) {
-    final XmlAttribute clsAttribute = tag.getAttribute("class", Utils.FORM_NAMESPACE);
+    final XmlAttribute clsAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_CLASS, Utils.FORM_NAMESPACE);
     final String classNameStr = clsAttribute != null? clsAttribute.getValue().replace('$','.') : null;
     // field
     {
@@ -198,6 +199,18 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
       }
     }
 
+    // property references
+    XmlTag parentTag = tag.getParentTag();
+    if (parentTag != null && parentTag.getName().equals(UIFormXmlConstants.ELEMENT_PROPERTIES)) {
+      XmlTag componentTag = parentTag.getParentTag();
+      if (componentTag != null) {
+        String className = componentTag.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_CLASS, Utils.FORM_NAMESPACE);
+        if (className != null) {
+          processPropertyReference(tag, processor, file, className.replace('$', '.'));
+        }
+      }
+    }
+
     final XmlTag[] subtags = tag.getSubTags();
     for (XmlTag subtag : subtags) {
       processReferences(subtag, classReference, file, processor);
@@ -217,6 +230,27 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
     final XmlAttribute nameAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_NAME, Utils.FORM_NAMESPACE);
     if (boundAttribute != null && Boolean.parseBoolean(boundAttribute.getValue()) && nameAttribute != null) {
       processor.execute(new FieldFormReference(file, classReference, getValueRange(nameAttribute), null, null, false));
+    }
+  }
+
+  private static void processPropertyReference(final XmlTag tag, final PsiReferenceProcessor processor, final PsiPlainTextFile file,
+                                               final String className) {
+    final XmlAttribute valueAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, Utils.FORM_NAMESPACE);
+    if (valueAttribute != null) {
+      PsiClass psiClass = file.getManager().findClass(className, file.getProject().getAllScope());
+      if (psiClass != null) {
+        PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, tag.getName(), false, true);
+        if (getter != null) {
+          final PsiType returnType = getter.getReturnType();
+          if (returnType instanceof PsiClassType) {
+            PsiClassType propClassType = (PsiClassType)returnType;
+            PsiClass propClass = propClassType.resolve();
+            if (propClass != null && propClass.isEnum()) {
+              processor.execute(new FormEnumConstantReference(file, getValueRange(valueAttribute), propClassType));
+            }
+          }
+        }
+      }
     }
   }
 

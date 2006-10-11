@@ -51,6 +51,9 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     else if (refElement instanceof PsiClass) {
       if (!processReferencesInUIForms(consumer, (PsiClass)refElement, scope, filterScope)) return false;
     }
+    else if (refElement instanceof PsiEnumConstant) {
+      if (!processReferencesInUIForms(consumer, (PsiEnumConstant)refElement, scope, filterScope)) return false;
+    }
     else if (refElement instanceof PsiField) {
       if (!processReferencesInUIForms(consumer, (PsiField)refElement, scope, filterScope)) return false;
     }
@@ -72,6 +75,16 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     if (className == null) return true;
 
     return processReferencesInUIFormsInner(className, aClass, processor, scope, manager, filterScope);
+  }
+
+  private static boolean processReferencesInUIForms(Processor<PsiReference> processor,
+                                                   PsiEnumConstant enumConstant,
+                                                   GlobalSearchScope scope, final LocalSearchScope filterScope) {
+    PsiManagerImpl manager = (PsiManagerImpl)enumConstant.getManager();
+    String className = enumConstant.getName();
+    if (className == null) return true;
+
+    return processReferencesInUIFormsInner(className, enumConstant, processor, scope, manager, filterScope);
   }
 
   public static boolean processReferencesInUIForms(Processor<PsiReference> processor,

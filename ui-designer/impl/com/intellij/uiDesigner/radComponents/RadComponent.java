@@ -562,7 +562,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   protected final void writeProperties(final XmlWriter writer){
-    writer.startElement("properties");
+    writer.startElement(UIFormXmlConstants.ELEMENT_PROPERTIES);
     try{
       final IntrospectedProperty[] introspectedProperties =
         getPalette().getIntrospectedProperties(this);
