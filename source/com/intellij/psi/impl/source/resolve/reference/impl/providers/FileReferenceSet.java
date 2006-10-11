@@ -42,6 +42,7 @@ public class FileReferenceSet {
   private boolean myCaseSensitive;
   private String myPathString;
   private final boolean myAllowEmptyFileReferenceAtEnd;
+  private final boolean myUseIncludingJspFileAsContext;
 
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>> DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>>(PsiBundle.message("default.path.evaluator.option"));
@@ -71,7 +72,7 @@ public class FileReferenceSet {
     if (text != null) {
       text = WebUtil.trimURL(text);
     }
-    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed) {
+    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed, false) {
       protected boolean isSoft() {
         return soft;
       }
@@ -84,7 +85,7 @@ public class FileReferenceSet {
                           int startInElement,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive) {
-    this(str, element, startInElement, ReferenceType.FILE_TYPE, provider, isCaseSensitive, true);
+    this(str, element, startInElement, ReferenceType.FILE_TYPE, provider, isCaseSensitive, true, false);
   }
 
   public FileReferenceSet(String str,
@@ -93,7 +94,7 @@ public class FileReferenceSet {
                           @NotNull ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive) {
-    this(str, element, startInElement, type, provider, isCaseSensitive, true);
+    this(str, element, startInElement, type, provider, isCaseSensitive, true, false);
   }
 
   public FileReferenceSet(String str,
@@ -102,7 +103,8 @@ public class FileReferenceSet {
                           @NotNull ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive,
-                          boolean allowEmptyFileReferenceAtEnd) {
+                          boolean allowEmptyFileReferenceAtEnd,
+                          boolean useIncludingJspFileAsContext) {
     myType = type;
     myElement = element;
     myStartInElement = startInElement;
@@ -110,6 +112,7 @@ public class FileReferenceSet {
     myCaseSensitive = isCaseSensitive;
     myPathString = str.trim();
     myAllowEmptyFileReferenceAtEnd = allowEmptyFileReferenceAtEnd;
+    myUseIncludingJspFileAsContext = useIncludingJspFileAsContext;
     myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
 
     reparse(str);
@@ -219,17 +222,19 @@ public class FileReferenceSet {
       result = getAbsoluteTopLevelDirLocation(properties, project, file);
     }
     else {
-      JspFile jspFile = PsiUtil.getJspFile(file);
-      if (jspFile != null) {
-        final JspContextManager manager = JspContextManager.getInstance(project);
-        JspFile contextFile = manager.getContextFile(jspFile);
-        Set<JspFile> visited = new HashSet<JspFile>();
-        while (contextFile != null && !visited.contains(jspFile)) {
-          visited.add(jspFile);
-          jspFile = contextFile;
-          contextFile = manager.getContextFile(jspFile);
+      if (myUseIncludingJspFileAsContext) {
+        JspFile jspFile = PsiUtil.getJspFile(file);
+        if (jspFile != null) {
+          final JspContextManager manager = JspContextManager.getInstance(project);
+          JspFile contextFile = manager.getContextFile(jspFile);
+          Set<JspFile> visited = new HashSet<JspFile>();
+          while (contextFile != null && !visited.contains(jspFile)) {
+            visited.add(jspFile);
+            jspFile = contextFile;
+            contextFile = manager.getContextFile(jspFile);
+          }
+          file = jspFile;
         }
-        file = jspFile;
       }
 
       final PsiDirectory dir = file.getContainingDirectory();
