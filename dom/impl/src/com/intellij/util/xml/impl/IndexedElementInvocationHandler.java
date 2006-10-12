@@ -35,11 +35,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     return annotation != null && annotation.indicator();
   }
 
-  public final int getIndex() {
-    return myIndex;
-  }
-
-  protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
+  protected XmlTag setXmlTag(final XmlTag tag) {
     final DomInvocationHandler parent = getParentHandler();
     parent.createFixedChildrenTags(getXmlElementName(), myIndex);
     final XmlTag[] newTag = new XmlTag[1];

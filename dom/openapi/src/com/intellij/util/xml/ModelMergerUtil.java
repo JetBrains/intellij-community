@@ -9,10 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author peter
@@ -20,7 +17,7 @@ import java.util.Collection;
 public class ModelMergerUtil {
 
   @Nullable
-  public static <T, V> V getImplementation(final Class<V> clazz, final T... elements) {
+  public static <T, V> V getImplementation(final Class<V> clazz, final Collection<T> elements) {
     for (final T element : elements) {
       final V implementation = getImplementation(element, clazz);
       if (implementation != null) {
@@ -28,6 +25,11 @@ public class ModelMergerUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static <T, V> V getImplementation(final Class<V> clazz, final T... elements) {
+    return getImplementation(clazz, Arrays.asList(elements));
   }
 
   @Nullable

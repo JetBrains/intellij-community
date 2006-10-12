@@ -3,16 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.CollectionElementRemovedEvent;
-import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 
 /**
@@ -26,7 +25,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     super(type, tag, parent, tag.getName(), parent.getManager());
   }
 
-  protected final XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
+  protected final XmlTag setXmlTag(final XmlTag tag) {
     throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called");
   }
 

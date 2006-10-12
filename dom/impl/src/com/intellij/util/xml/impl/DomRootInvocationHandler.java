@@ -79,7 +79,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     });
   }
 
-  protected XmlTag setXmlTag(final XmlTag tag) throws IncorrectOperationException {
+  protected XmlTag setXmlTag(final XmlTag tag) {
     final XmlTag[] result = new XmlTag[]{null};
     getManager().runChange(new Runnable() {
       public void run() {
