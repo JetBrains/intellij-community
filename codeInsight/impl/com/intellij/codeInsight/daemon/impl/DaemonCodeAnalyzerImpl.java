@@ -671,6 +671,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (myDisposed) return;
+              if (myProject.isDisposed()) return;
 
               if (!wasCanceled || wasRunning) {
                 if (daemonPass != null && editor.getComponent().isDisplayable()) {
