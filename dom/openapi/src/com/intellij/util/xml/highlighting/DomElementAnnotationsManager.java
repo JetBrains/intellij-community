@@ -48,6 +48,8 @@ public abstract class DomElementAnnotationsManager {
 
   public abstract void addHighlightingListener(DomHighlightingListener listener, Disposable parentDisposable);
 
+  public abstract void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class<? extends DomElement> aClass);
+
   public interface DomHighlightingListener extends EventListener {
     void highlightingFinished(DomFileElement element);
   }
