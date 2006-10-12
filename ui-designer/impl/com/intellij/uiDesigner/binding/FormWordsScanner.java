@@ -14,6 +14,7 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jdom.input.JDOMParseException;
 
 /**
  * @author yole
@@ -49,6 +50,9 @@ public class FormWordsScanner extends SimpleWordsScanner {
       // ignore
     }
     catch(UnexpectedFormElementException ex) {
+      // ignore
+    }
+    catch(JDOMParseException ex) {
       // ignore
     }
     catch (Exception e) {
