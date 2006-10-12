@@ -176,7 +176,7 @@ public abstract class AbstractAction extends AnAction {
   protected static void adjustName(boolean showDialogOptions, AnActionEvent e) {
     boolean actualShow = showDialogOptions || shiftPressed(e);
     Presentation presentation = e.getPresentation();
-    String itemText = e.getPresentation().getText();
+    String itemText = e.getPresentation().getTextWithMnemonic();
     if (itemText == null) return;
     if (itemText.endsWith("...")) {
       if (actualShow) return;

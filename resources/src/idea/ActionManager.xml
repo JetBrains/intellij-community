@@ -203,7 +203,7 @@
     <action id="Compare.LastVersion" class="com.intellij.openapi.vcs.actions.CompareWithLastVersion"/>
     <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" popup="true"/>
     <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
-            text="Compare with Specified Revision..." popup="true"/>
+            text="Com_pare with Specified Revision..." popup="true"/>
 
     <group id="NewGroup" popup="true">
       <action id="NewClass" class="com.intellij.ide.actions.CreateClassAction"/>
