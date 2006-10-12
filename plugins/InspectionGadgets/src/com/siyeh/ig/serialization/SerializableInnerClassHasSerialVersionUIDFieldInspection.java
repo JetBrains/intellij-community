@@ -35,13 +35,16 @@ import javax.swing.*;
 public class SerializableInnerClassHasSerialVersionUIDFieldInspection
         extends ClassInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreSerializableDueToInheritance = true;
 
     public String getID() {
         return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
+    }
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "serializable.inner.class.has.serial.version.u.i.d.field.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -74,7 +77,8 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isAnnotationType() ||
+                    aClass.isEnum()) {
                 return;
             }
             if (hasSerialVersionUIDField(aClass)) {
@@ -91,10 +95,8 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
                 if (!SerializationUtils.isDirectlySerializable(aClass)) {
                     return;
                 }
-            } else {
-                if (!SerializationUtils.isSerializable(aClass)) {
-                    return;
-                }
+            } else if (!SerializationUtils.isSerializable(aClass)) {
+                return;
             }
             registerClassError(aClass);
         }

@@ -30,10 +30,13 @@ import javax.swing.JComponent;
 public class SerializableInnerClassWithNonSerializableOuterClassInspection
         extends ClassInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreSerializableDueToInheritance = true;
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "serializable.inner.class.with.non.serializable.outer.class.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;
@@ -62,7 +65,8 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspection
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
 
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isAnnotationType() ||
+                    aClass.isEnum()) {
                 return;
             }
             final PsiClass containingClass = aClass.getContainingClass();
@@ -76,10 +80,8 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspection
                 if (!SerializationUtils.isDirectlySerializable(aClass)) {
                     return;
                 }
-            } else {
-                if (!SerializationUtils.isSerializable(aClass)) {
-                    return;
-                }
+            } else if (!SerializationUtils.isSerializable(aClass)) {
+                return;
             }
             if (SerializationUtils.isSerializable(containingClass)) {
                 return;

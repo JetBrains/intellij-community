@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith
+ * Copyright 2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,45 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class NonSerializableFieldInSerializableClassInspection
         extends ClassInspection {
+
+    /** @noinspection PublicField*/
+    public boolean ignoreSerializableDueToInheritance = true;
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "non.serializable.field.in.serializable.class.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-    @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.serializable.field.in.serializable.class.problem.descriptor");
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "non.serializable.field.in.serializable.ignore.option"), this,
+                "ignoreSerializableDueToInheritance");
     }
 
     public BaseInspectionVisitor buildVisitor() {
         return new NonSerializableFieldInSerializableClassVisitor();
     }
 
-    private static class NonSerializableFieldInSerializableClassVisitor
+    private class NonSerializableFieldInSerializableClassVisitor
             extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
@@ -52,7 +70,11 @@ public class NonSerializableFieldInSerializableClassInspection
                 return;
             }
             final PsiClass aClass = field.getContainingClass();
-            if (!SerializationUtils.isSerializable(aClass)) {
+            if (ignoreSerializableDueToInheritance) {
+                if (!SerializationUtils.isDirectlySerializable(aClass)) {
+                    return;
+                }
+            } else if (!SerializationUtils.isSerializable(aClass)) {
                 return;
             }
             if (SerializationUtils.isProbablySerializable(field.getType())) {

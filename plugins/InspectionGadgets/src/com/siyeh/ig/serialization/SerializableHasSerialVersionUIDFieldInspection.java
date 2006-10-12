@@ -94,12 +94,9 @@ public class SerializableHasSerialVersionUIDFieldInspection
                 if (!SerializationUtils.isDirectlySerializable(aClass)) {
                     return;
                 }
-            } else {
-                if (!SerializationUtils.isSerializable(aClass)) {
-                    return;
-                }
+            } else if (!SerializationUtils.isSerializable(aClass)) {
+                return;
             }
-
             registerClassError(aClass);
         }
 

@@ -30,10 +30,13 @@ import javax.swing.JComponent;
 public class SerializableHasSerializationMethodsInspection
         extends ClassInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreSerializableDueToInheritance = true;
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "serializable.has.serialization.methods.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;
@@ -82,10 +85,8 @@ public class SerializableHasSerializationMethodsInspection
                 if (!SerializationUtils.isDirectlySerializable(aClass)) {
                     return;
                 }
-            } else {
-                if (!SerializationUtils.isSerializable(aClass)) {
-                    return;
-                }
+            } else if (!SerializationUtils.isSerializable(aClass)) {
+                return;
             }
             final boolean hasReadObject =
                     SerializationUtils.hasReadObject(aClass);
