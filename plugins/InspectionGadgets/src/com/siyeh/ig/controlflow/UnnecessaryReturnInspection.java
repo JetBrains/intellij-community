@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryReturnInspection extends StatementInspection {
 
-    private final InspectionGadgetsFix fix =
-            new DeleteUnnecessaryStatementFix("return");
-
     public String getID() {
         return "UnnecessaryReturnStatement";
     }
@@ -67,7 +64,7 @@ public class UnnecessaryReturnInspection extends StatementInspection {
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return fix;
+        return new DeleteUnnecessaryStatementFix("return");
     }
 
     private static class UnnecessaryReturnVisitor

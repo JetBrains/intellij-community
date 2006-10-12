@@ -241,12 +241,10 @@ public class UninitializedReadCollector {
         boolean initializedInTryOrCatch =
                 blockAssignsVariable(tryBlock, variable, checkedMethods);
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        if (catchBlocks != null) {
-            for (final PsiCodeBlock catchBlock : catchBlocks){
-                initializedInTryOrCatch &=
-                        blockAssignsVariable(catchBlock, variable,
-                                             checkedMethods);
-            }
+        for (final PsiCodeBlock catchBlock : catchBlocks){
+            initializedInTryOrCatch &=
+                    blockAssignsVariable(catchBlock, variable,
+                                         checkedMethods);
         }
         if (initializedInTryOrCatch) {
             return true;
@@ -304,11 +302,11 @@ public class UninitializedReadCollector {
         if(statementAssignsVariable(initialization, variable, checkedMethods)){
             return true;
         }
-        final PsiExpression test = forStatement.getCondition();
-        if(expressionAssignsVariable(test, variable, checkedMethods)){
+        final PsiExpression condition = forStatement.getCondition();
+        if(expressionAssignsVariable(condition, variable, checkedMethods)){
             return true;
         }
-        if(BoolUtils.isTrue(test)){
+        if(BoolUtils.isTrue(condition)){
             final PsiStatement body = forStatement.getBody();
             if(statementAssignsVariable(body, variable, checkedMethods)){
                 return true;
@@ -338,10 +336,8 @@ public class UninitializedReadCollector {
                 expression instanceof PsiClassObjectAccessExpression){
             return false;
         } else if(expression instanceof PsiReferenceExpression){
-
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) expression;
-
             return referenceExpressionAssignsVariable(referenceExpression,
                                                       variable,
                                                       checkedMethods);
@@ -379,9 +375,7 @@ public class UninitializedReadCollector {
                     accessExpression.getIndexExpression();
             return expressionAssignsVariable(arrayExpression, variable,
                                              checkedMethods) ||
-                    expressionAssignsVariable(
-                            indexExpression,
-                            variable,
+                    expressionAssignsVariable(indexExpression, variable,
                             checkedMethods);
         } else if(expression instanceof PsiPrefixExpression){
             final PsiPrefixExpression prefixExpression =
@@ -450,8 +444,9 @@ public class UninitializedReadCollector {
             @NotNull PsiReferenceExpression referenceExpression,
             @NotNull PsiVariable variable,
             @NotNull Set<MethodSignature> checkedMethods) {
+        final PsiExpression qualifierExpression =
+                referenceExpression.getQualifierExpression();
         if(variable.equals(referenceExpression.resolve())){
-
             final PsiElement parent = referenceExpression.getParent();
             if(parent instanceof PsiAssignmentExpression){
                 final PsiAssignmentExpression assignmentExpression =
@@ -460,22 +455,17 @@ public class UninitializedReadCollector {
                         assignmentExpression.getRExpression();
                 if (rhs != null && rhs.equals(referenceExpression)) {
                     if (!referenceExpression.isQualified() ||
-                            referenceExpression.getQualifierExpression()
-                                    instanceof PsiThisExpression) {
+                            qualifierExpression instanceof PsiThisExpression) {
                         uninitializedReads.add(referenceExpression);
                     }
                 }
-            } else{
-                if(!referenceExpression.isQualified() ||
-                        referenceExpression.getQualifierExpression() instanceof
-                                PsiThisExpression){
-                    uninitializedReads.add(referenceExpression);
-                }
+            } else if (!referenceExpression.isQualified() ||
+                    qualifierExpression instanceof PsiThisExpression) {
+                uninitializedReads.add(referenceExpression);
             }
         }
         if(referenceExpression.isQualified()){
-            return expressionAssignsVariable(
-                    referenceExpression.getQualifierExpression(), variable,
+            return expressionAssignsVariable(qualifierExpression, variable,
                     checkedMethods);
         } else{
             return false;
@@ -515,21 +505,16 @@ public class UninitializedReadCollector {
             @NotNull PsiMethodCallExpression callExpression,
             @NotNull PsiVariable variable,
             @NotNull Set<MethodSignature> checkedMethods){
-        final PsiExpressionList argList = callExpression.getArgumentList();
-        if(argList != null){
-            final PsiExpression[] args = argList.getExpressions();
-            for(final PsiExpression arg : args){
-                if(expressionAssignsVariable(arg, variable, checkedMethods)){
-                    return true;
-                }
+        final PsiExpressionList argumentList = callExpression.getArgumentList();
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        for(final PsiExpression argument : arguments){
+            if(expressionAssignsVariable(argument, variable,
+                    checkedMethods)){
+                return true;
             }
         }
-
         final PsiReferenceExpression methodExpression =
                 callExpression.getMethodExpression();
-        if (methodExpression == null) {
-            return false;
-        }
         if(expressionAssignsVariable(methodExpression, variable,
                                      checkedMethods)) {
             return true;
@@ -543,7 +528,6 @@ public class UninitializedReadCollector {
         if(!checkedMethods.add(methodSignature)){
             return false;
         }
-
         final PsiClass containingClass =
                 ClassUtils.getContainingClass(callExpression);
         final PsiClass calledClass = method.getContainingClass();

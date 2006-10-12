@@ -50,7 +50,6 @@ public class BooleanMethodNameMustStartWithQuestionInspection
     @NonNls public String nameCheckString =
             "is,can,has,should,could,will,shall,check,contains,equals,add,put," +
                     "remove,startsWith,endsWith";
-    private final RenameFix fix = new RenameFix();
 
     private List<Object> nameList = new ArrayList<Object>(32);
     private final Object lock = new Object();
@@ -111,7 +110,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){

@@ -27,6 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,6 @@ public class NegatedIfElseInspection extends StatementInspection {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
-    @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "negated.if.else.problem.descriptor");
@@ -114,66 +114,33 @@ public class NegatedIfElseInspection extends StatementInspection {
 
     private class NegatedIfElseVisitor extends StatementInspectionVisitor {
 
-      public void visitIfStatement(@NotNull PsiIfStatement statement) {
-          super.visitIfStatement(statement);
-          final PsiStatement thenBranch = statement.getThenBranch();
-          if (thenBranch == null) {
-              return;
-          }
-          final PsiStatement elseBranch = statement.getElseBranch();
-          if (elseBranch == null) {
-              return;
-          }
-          if (elseBranch instanceof PsiIfStatement) {
-              return;
-          }
-
-          final PsiExpression condition = statement.getCondition();
-          if (condition == null) {
-              return;
-          }
-          if (!isNegation(condition)) {
-              return;
-          }
-          final PsiElement parent = statement.getParent();
-          if (parent instanceof PsiIfStatement) {
-              return;
-          }
-          registerStatementError(statement);
-      }
-
-        private boolean isNegation(PsiExpression condition) {
-            if (condition instanceof PsiPrefixExpression) {
-                final PsiPrefixExpression prefixExpression =
-                        (PsiPrefixExpression) condition;
-                final PsiJavaToken sign = prefixExpression.getOperationSign();
-                final IElementType tokenType = sign.getTokenType();
-                return tokenType.equals(JavaTokenType.EXCL);
-            } else if (condition instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression) condition;
-                final PsiJavaToken sign = binaryExpression.getOperationSign();
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs == null) {
-                    return false;
-                }
-                final IElementType tokenType = sign.getTokenType();
-                if (tokenType.equals(JavaTokenType.NE)) {
-                    if (m_ignoreNegatedNullComparison) {
-                        final String lhsText = lhs.getText();
-                        final String rhsText = rhs.getText();
-                        return !PsiKeyword.NULL.equals(lhsText) &&
-                                !PsiKeyword.NULL.equals(rhsText);
-                    } else {
-                        return true;
-                    }
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+            super.visitIfStatement(statement);
+            final PsiStatement thenBranch = statement.getThenBranch();
+            if (thenBranch == null) {
+                return;
             }
+            final PsiStatement elseBranch = statement.getElseBranch();
+            if (elseBranch == null) {
+                return;
+            }
+            if (elseBranch instanceof PsiIfStatement) {
+                return;
+            }
+
+            final PsiExpression condition = statement.getCondition();
+            if (condition == null) {
+                return;
+            }
+            if (!ExpressionUtils.isNegation(condition,
+                    m_ignoreNegatedNullComparison)) {
+                return;
+            }
+            final PsiElement parent = statement.getParent();
+            if (parent instanceof PsiIfStatement) {
+                return;
+            }
+            registerStatementError(statement);
         }
     }
 }

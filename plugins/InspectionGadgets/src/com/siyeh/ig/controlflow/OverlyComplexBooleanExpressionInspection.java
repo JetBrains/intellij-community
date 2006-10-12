@@ -62,8 +62,6 @@ public class OverlyComplexBooleanExpressionInspection
     /** @noinspection PublicField*/
     public boolean m_ignorePureConjunctionsDisjunctions = true;
 
-    private final InspectionGadgetsFix fix = new ExtractMethodFix();
-
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.complex.boolean.expression.display.name");
@@ -126,7 +124,7 @@ public class OverlyComplexBooleanExpressionInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new ExtractMethodFix();
     }
 
     public BaseInspectionVisitor buildVisitor() {

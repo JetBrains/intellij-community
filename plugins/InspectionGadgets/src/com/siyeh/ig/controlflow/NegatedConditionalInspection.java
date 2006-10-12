@@ -18,26 +18,30 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
-
-import javax.swing.*;
-
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.JComponent;
 
 public class NegatedConditionalInspection extends ExpressionInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreNegatedNullComparison = true;
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "negated.conditional.display.name");
+    }
 
     public String getID() {
         return "ConditionalExpressionWithNegatedCondition";
@@ -109,48 +113,11 @@ public class NegatedConditionalInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpression condition = expression.getCondition();
-            if (!isNegation(condition)) {
+            if (!ExpressionUtils.isNegation(condition,
+                    m_ignoreNegatedNullComparison)) {
                 return;
             }
             registerError(condition);
-        }
-
-        private boolean isNegation(PsiExpression condition) {
-            if (condition instanceof PsiPrefixExpression) {
-                final PsiPrefixExpression prefixExpression =
-                        (PsiPrefixExpression)condition;
-                final PsiJavaToken sign = prefixExpression.getOperationSign();
-                final IElementType tokenType = sign.getTokenType();
-                return tokenType.equals(JavaTokenType.EXCL);
-            } else if (condition instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression)condition;
-                final PsiJavaToken sign = binaryExpression.getOperationSign();
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs == null) {
-                    return false;
-                }
-                final IElementType tokenType = sign.getTokenType();
-                if (tokenType.equals(JavaTokenType.NE)) {
-                    if (m_ignoreNegatedNullComparison) {
-                        final String lhsText = lhs.getText();
-                        final String rhsText = rhs.getText();
-                        return !PsiKeyword.NULL.equals(lhsText) &&
-                                !PsiKeyword.NULL.equals(rhsText);
-                    } else {
-                        return true;
-                    }
-                } else {
-                    return false;
-                }
-            } else if (condition instanceof PsiParenthesizedExpression) {
-                final PsiExpression expression =
-                        ((PsiParenthesizedExpression)condition).getExpression();
-                return isNegation(expression);
-            } else {
-                return false;
-            }
         }
     }
 }

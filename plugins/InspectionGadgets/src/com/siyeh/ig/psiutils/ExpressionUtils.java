@@ -15,11 +15,9 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpressionUtils {
@@ -50,18 +48,57 @@ public class ExpressionUtils {
         if(value == null){
             return false;
         }
-        if(value instanceof Integer && ((Integer) value) == 0){
+        if(value instanceof Integer && ((Integer) value).intValue() == 0){
             return true;
         }
-        if(value instanceof Long && ((Long) value) == 0L){
+        if(value instanceof Long && ((Long) value).longValue() == 0L){
             return true;
         }
-        if(value instanceof Short && ((Short) value) == 0){
+        if(value instanceof Short && ((Short) value).shortValue() == 0){
             return true;
         }
-        if(value instanceof Character && ((Character) value) == 0){
+        if(value instanceof Character && ((Character) value).charValue() == 0){
             return true;
         }
-        return value instanceof Byte && ((Byte) value) == 0;
+        return value instanceof Byte && ((Byte) value).byteValue() == 0;
+    }
+
+    public static boolean isNegation(@Nullable PsiExpression condition,
+                                     boolean ignoreNegatedNullComparison) {
+        if (condition instanceof PsiPrefixExpression) {
+            final PsiPrefixExpression prefixExpression =
+                    (PsiPrefixExpression)condition;
+            final PsiJavaToken sign = prefixExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            return tokenType.equals(JavaTokenType.EXCL);
+        } else if (condition instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)condition;
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs == null) {
+                return false;
+            }
+            final IElementType tokenType = sign.getTokenType();
+            if (tokenType.equals(JavaTokenType.NE)) {
+                if (ignoreNegatedNullComparison) {
+                    final String lhsText = lhs.getText();
+                    final String rhsText = rhs.getText();
+                    return !PsiKeyword.NULL.equals(lhsText) &&
+                            !PsiKeyword.NULL.equals(rhsText);
+                } else {
+                    return true;
+                }
+            } else {
+                return false;
+            }
+        } else if (condition instanceof PsiParenthesizedExpression) {
+            final PsiExpression expression =
+                    ((PsiParenthesizedExpression)condition).getExpression();
+            return isNegation(expression, ignoreNegatedNullComparison);
+        } else {
+            return false;
+        }
     }
 }

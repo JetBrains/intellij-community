@@ -40,9 +40,6 @@ import org.jetbrains.annotations.NonNls;
 public class ReuseOfLocalVariableInspection
         extends ExpressionInspection{
 
-    private final AssignmentToCatchBlockParameterFix fix =
-            new AssignmentToCatchBlockParameterFix();
-
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "reuse.of.local.variable.display.name");
@@ -59,10 +56,10 @@ public class ReuseOfLocalVariableInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        return new ReuseOfLocalVariableFix();
     }
 
-    private static class AssignmentToCatchBlockParameterFix
+    private static class ReuseOfLocalVariableFix
             extends InspectionGadgetsFix{
 
         public String getName(){
