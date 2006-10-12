@@ -218,7 +218,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, null, project, updatedFiles, actionName, actionInfo);
     Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, VcsBundle.message(
-      "toolwindow.title.update.action.info", actionInfo.getActionName()),
+      "toolwindow.title.update.action.info", actionName),
                                                                                   true);
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null);
