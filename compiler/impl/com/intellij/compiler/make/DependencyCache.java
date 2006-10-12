@@ -525,22 +525,23 @@ public class DependencyCache {
   }
 
   private void buildSubclassDependencies(final int qName, int targetClassQName) throws CacheCorruptedException {
-    final int targetClassId = getCache().getClassId(targetClassQName);
+    final Cache cache = getCache();
+    final int targetClassId = cache.getClassId(targetClassQName);
 
-    final int superQName = getCache().getSuperQualifiedName(targetClassId);
+    final int superQName = cache.getSuperQualifiedName(targetClassId);
     if (superQName != Cache.UNKNOWN) {
-      int superClassId = getCache().getClassId(superQName);
+      int superClassId = cache.getClassId(superQName);
       if (superClassId != Cache.UNKNOWN) {
-        getCache().addSubclass(superClassId, qName);
+        cache.addSubclass(superClassId, qName);
         buildSubclassDependencies(qName, superQName);
       }
     }
 
-    int[] interfaces = getCache().getSuperInterfaces(targetClassId);
+    int[] interfaces = cache.getSuperInterfaces(targetClassId);
     for (final int interfaceName : interfaces) {
-      int superId = getCache().getClassId(interfaceName);
+      int superId = cache.getClassId(interfaceName);
       if (superId != Cache.UNKNOWN) {
-        getCache().addSubclass(superId, qName);
+        cache.addSubclass(superId, qName);
         buildSubclassDependencies(qName, interfaceName);
       }
     }
