@@ -411,6 +411,13 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
   }
 
+
+  public void visitThrowStatement(PsiThrowStatement statement) {
+    if (myChild1.getElementType() == ElementType.THROW_KEYWORD) {
+      createSpaceInCode(true);
+    }
+  }
+
   public void visitTryStatement(PsiTryStatement statement) {
     if (myRole2 == ChildRole.FINALLY_KEYWORD) {
       processOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE);
@@ -1169,12 +1176,14 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
 
   public void visitAssertStatement(PsiAssertStatement statement) {
-    if (myChild1.getElementType() == ElementType.COLON){
+    if (myChild1.getElementType() == ElementType.ASSERT_KEYWORD) {
+      createSpaceInCode(true);
+    }
+    else if (myChild1.getElementType() == ElementType.COLON){
       createSpaceInCode(mySettings.SPACE_AFTER_COLON);
     }
     else if (myChild2.getElementType() == ElementType.COLON) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_COLON
-      );
+      createSpaceInCode(mySettings.SPACE_BEFORE_COLON);
     }
   }
 
