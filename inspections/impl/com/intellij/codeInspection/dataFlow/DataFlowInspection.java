@@ -27,8 +27,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -48,6 +48,13 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
+
+
+      public void visitField(PsiField field) {
+        if (isNullLiteralExpression(field.getInitializer()) && AnnotationUtil.isNotNull(field)) {
+          holder.registerProblem(field.getInitializer(), InspectionsBundle.message("dataflow.message.initializing.field.with.null"));
+        }
+      }
 
       public void visitMethod(PsiMethod method) {
         analyzeCodeBlock(method.getBody(), holder);
