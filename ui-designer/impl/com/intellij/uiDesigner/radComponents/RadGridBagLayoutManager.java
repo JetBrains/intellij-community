@@ -325,6 +325,14 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
         curHeight = 1;
     }
 
+    /* Adjust xMax and yMax */
+    for (int i = curX; i < (curX + curWidth); i++) {
+        mySnapshotYMax[i] = curY + curHeight;
+    }
+    for (int i = curY; i < (curY + curHeight); i++) {
+        mySnapshotXMax[i] = curX + curWidth;
+    }
+
     /* Make negative sizes start a new row/column */
     if (constraints.gridheight == 0 && constraints.gridwidth == 0)
       myLastSnapshotRow = myLastSnapshotCol = -1;
