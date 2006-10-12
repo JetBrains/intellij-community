@@ -1,6 +1,7 @@
 package com.intellij.compiler;
 
 import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.javaee.openapi.ex.J2EEManagerEx;
 import com.intellij.javaee.model.JavaeeApplicationModel;
 import com.intellij.javaee.model.xml.application.JavaeeApplication;
 import com.intellij.javaee.model.xml.application.JavaeeModule;
@@ -34,55 +35,7 @@ public final class ModuleCompilerUtil {
     if (!ModuleType.J2EE_APPLICATION.equals(module.getModuleType())) {
       return ModuleRootManager.getInstance(module).getDependencies();
     }
-    List<Module> result = new ArrayList<Module>();
-    final JavaeeApplication root = ((JavaeeApplicationModel)JavaeeModuleProperties.getInstance(module)).getRoot();
-    if (root == null) {
-      return Module.EMPTY_ARRAY;
-    }
-    final List<JavaeeModule> modules = root.getModules();
-    for (final JavaeeModule moduleInApplication : modules) {
-      final Module depModule = getReferenceModule(moduleInApplication);
-      if (depModule != null && !dependsOn(depModule, module)) {
-        result.add(depModule);
-      }
-    }
-    return result.toArray(new Module[result.size()]);
-  }
-
-  public static Module getReferenceModule(final JavaeeModule moduleLink) {
-    String id = moduleLink.getId().getValue();
-    Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>(){
-      public Module[] compute() {
-        return ModuleManager.getInstance(moduleLink.getModule().getProject()).getModules();
-      }
-    });
-
-    for (Module module : modules) {
-      if (ModuleLink.hasId(module, id)) return module;
-    }
-    return null;
-  }
-
-
-  private static boolean dependsOn(final Module dependant, final Module dependee) {
-    return new Object(){
-      final Set<Module> myChecked = new HashSet<Module>();
-      boolean dependsOn(Module dependant, Module dependee) {
-        if (dependant.equals(dependee)) {
-          return true;
-        }
-        myChecked.add(dependant);
-        final Module[] dependencies = ModuleRootManager.getInstance(dependant).getDependencies();
-        for (final Module dependency : dependencies) {
-          if (!myChecked.contains(dependency)) { // prevent cycles
-            if (dependsOn(dependency, dependee)) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-    }.dependsOn(dependant, dependee);
+    return J2EEManagerEx.getInstanceEx(module.getProject()).getApplicationModuleDependencies(module);
   }
 
   private static Graph<Module> createModuleGraph(final Module[] modules) {
