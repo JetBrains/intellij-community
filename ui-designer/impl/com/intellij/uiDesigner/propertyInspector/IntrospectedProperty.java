@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadGridLayoutManager;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -140,7 +141,8 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     //noinspection SimplifiableIfStatement
     if (name.equals("preferredSize") || name.equals("minimumSize") || name.equals("maximumSize")) {
       // our own properties must be used instead
-      return !(component.getParent().getLayoutManager() instanceof RadGridLayoutManager);
+      final RadContainer parent = component.getParent();
+      return parent != null && !(parent.getLayoutManager() instanceof RadGridLayoutManager);
     }
 
     // check if property is available in the JDK used by the module containing the component
