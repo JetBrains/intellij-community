@@ -19,14 +19,15 @@ public class GenerationUtils {
                                       final String baseDirPropertyName,
                                       GenerationOptions genOptions,
                                       boolean useAbsolutePathsForOuterPaths) {
-    return toRelativePath(PathUtil.getLocalPath(file).replace(File.separatorChar, '/'), baseDir, baseDirPropertyName, genOptions, useAbsolutePathsForOuterPaths);
+    return toRelativePath(PathUtil.getLocalPath(file), baseDir, baseDirPropertyName, genOptions, useAbsolutePathsForOuterPaths);
   }
 
-  public static String toRelativePath(final String path,
+  public static String toRelativePath(String path,
                                       File baseDir,
                                       final String baseDirPropertyName,
                                       GenerationOptions genOptions,
                                       boolean useAbsolutePathsForOuterPaths) {
+    path = path.replace(File.separatorChar, '/');
     final String substitutedPath = genOptions.subsitutePathWithMacros(path);
     if (!substitutedPath.equals(path)) {
       // path variable substitution has highest priority
