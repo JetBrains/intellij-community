@@ -336,6 +336,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           List<Project> projectsToReload = new ArrayList<Project>();
 
           for (Project project : projects) {
+            if (project.isDisposed()) continue;  //already disposed
             List<VirtualFile> causes = myChangedProjectFiles.get(project);
             Set<VirtualFile> liveCauses = new HashSet<VirtualFile>(causes);
             for (VirtualFile cause : causes) {
