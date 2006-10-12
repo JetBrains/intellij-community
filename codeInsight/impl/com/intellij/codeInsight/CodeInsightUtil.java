@@ -1,8 +1,8 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -154,10 +154,6 @@ public class CodeInsightUtil {
     }
 
     return array.toArray(new PsiElement[array.size()]);
-  }
-
-  public static List<PsiElement> getElementsIntersectingRange(PsiElement root, final int startOffset, final int endOffset) {
-    return getElementsInRange(root, startOffset, endOffset, true);
   }
 
   @NotNull

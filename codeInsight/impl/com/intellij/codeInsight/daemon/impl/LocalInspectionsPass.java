@@ -76,43 +76,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
-    final FileViewProvider fileViewProvider = myFile.getViewProvider();
-    final Set<Language> relevantLanguages = fileViewProvider.getPrimaryLanguages();
-    for (Language language : relevantLanguages) {
-      final PsiFile psiRoot = fileViewProvider.getPsi(language);
-      if (HighlightUtil.shouldInspect(psiRoot)) {
-        inspectRoot(psiRoot, iManager);
-      }
-    }
+    inspectRoot(myFile, iManager);
   }
 
-  private void inspectRoot(final PsiElement psiRoot, final InspectionManagerEx iManager) {
-    final TextRange targetRange = new TextRange(myStartOffset, myEndOffset);
-    final Set<PsiElement> workSet = new THashSet<PsiElement>();
-    psiRoot.accept(new PsiRecursiveElementVisitor() {
-      public void visitMethod(PsiMethod method) {
-        processTarget(method);
-      }
-
-      public void visitClass(PsiClass aClass) {
-        processTarget(aClass);
-      }
-
-      public void visitField(PsiField field) {
-        processTarget(field);
-      }
-
-      private void processTarget(PsiMember member) {
-        final TextRange range = member.getTextRange();
-        if (targetRange.intersects(range)) {
-          workSet.add(member);
-          member.acceptChildren(this);
-        }
-      }
-    });
-
-    workSet.add(psiRoot);
-
+  private void inspectRoot(final PsiFile file, final InspectionManagerEx iManager) {
+    final Set<PsiElement> workSet = getWorkSet(file, myStartOffset, myEndOffset);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
 
@@ -178,7 +146,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       }
     }
 
-    final List<PsiElement> elements = CodeInsightUtil.getElementsIntersectingRange(psiRoot, myStartOffset, myEndOffset);
+    final List<PsiElement> elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
     if (!visitors.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < elements.size(); i++) {
@@ -418,4 +386,47 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     return message;
   }
 
+  public static List<PsiElement> getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
+    final FileViewProvider viewProvider = file.getViewProvider();
+    final Set<PsiElement> result = new THashSet<PsiElement>();
+    for (Language language : viewProvider.getPrimaryLanguages()) {
+      final PsiFile psiRoot = viewProvider.getPsi(language);
+      if (HighlightUtil.shouldInspect(psiRoot)) {
+        result.addAll(CodeInsightUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
+      }
+    }
+    return Arrays.asList(result.toArray(new PsiElement[result.size()]));
+  }
+
+  private static Set<PsiElement> getWorkSet(final PsiFile file, final int startOffset, final int endOffset) {
+    final TextRange targetRange = new TextRange(startOffset, endOffset);
+    final Set<PsiElement> workSet = new THashSet<PsiElement>();
+    final FileViewProvider viewProvider = file.getViewProvider();
+    for (Language language : viewProvider.getPrimaryLanguages()) {
+      final PsiFile psiRoot = viewProvider.getPsi(language);
+      psiRoot.accept(new PsiRecursiveElementVisitor() {
+        public void visitMethod(PsiMethod method) {
+          processTarget(method);
+        }
+
+        public void visitClass(PsiClass aClass) {
+          processTarget(aClass);
+        }
+
+        public void visitField(PsiField field) {
+          processTarget(field);
+        }
+
+        private void processTarget(PsiMember member) {
+          final TextRange range = member.getTextRange();
+          if (targetRange.intersects(range)) {
+            workSet.add(member);
+            member.acceptChildren(this);
+          }
+        }
+      });
+      workSet.add(psiRoot);
+    }
+    return workSet;
+  }
 }
