@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author peter
@@ -72,18 +71,9 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     GenericDomValue domValue = (GenericDomValue)domElement;
 
-    final Convert annotation = domValue.getAnnotation(Convert.class);
-    boolean soft = annotation != null && annotation.soft();
     final Converter converter = domValue.getConverter();
-    if (converter instanceof ResolvingConverter) {
-      final Set additionalVariants = ((ResolvingConverter)converter).getAdditionalVariants();
-      if (additionalVariants.contains(domValue.getStringValue())) {
-        soft = true;
-      }
-    }
 
-
-    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, soft, converter);
+    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter);
 
     // creating "declaration" reference
     DomElement parent = domElement.getParent();
@@ -101,9 +91,9 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement, final boolean soft, final Converter converter) {
+  protected final PsiReference[] createReferences(GenericDomValue domValue, XmlElement psiElement, final Converter converter) {
     if (converter instanceof PsiReferenceConverter) {
-      return ((PsiReferenceConverter)converter).createReferences(psiElement, soft);
+      return ((PsiReferenceConverter)converter).createReferences(psiElement, true);
     }
     final boolean isResolvingConverter = converter instanceof ResolvingConverter;
 
@@ -123,13 +113,13 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       else {
         provider = new JavaClassReferenceProvider(extendClass.value(), extendClass.instantiatable());
       }
-      provider.setSoft(soft || isResolvingConverter);
+      provider.setSoft(true);
       final PsiReference[] references = provider.getReferencesByElement(psiElement);
-      return isResolvingConverter ? ArrayUtil.append(references, new GenericDomValueReference(domValue, soft), PsiReference.class)
+      return isResolvingConverter ? ArrayUtil.append(references, new GenericDomValueReference(domValue), PsiReference.class)
         : references;
     }
     if (!isResolvingConverter && ReflectionCache.isAssignable(Integer.class, clazz)) {
-      return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue, true) {
+      return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue) {
         public Object[] getVariants() {
           return new Object[]{"0"};
         }
@@ -143,7 +133,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       return provider.getReferencesByElement(psiElement);
     }
 
-    return new PsiReference[]{new GenericDomValueReference(domValue, soft)};
+    return new PsiReference[]{new GenericDomValueReference(domValue)};
   }
 
 

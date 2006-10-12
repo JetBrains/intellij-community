@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionCache;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -323,7 +324,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     final PsiFile mainRoot = getPsi(getBaseLanguage());
     PsiElement ret = null;
     for (final Language language : getRelevantLanguages()) {
-      if (!lang.isAssignableFrom(language.getClass())) continue;
+      if (!ReflectionCache.isAssignable(lang, language.getClass())) continue;
       if (lang.equals(Language.class) && !getPrimaryLanguages().contains(language)) continue;
 
       final PsiFile psiRoot = getPsi(language);

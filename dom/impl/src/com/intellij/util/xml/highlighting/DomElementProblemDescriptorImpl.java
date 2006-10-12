@@ -17,24 +17,25 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   private final HighlightSeverity myType;
   private final String myMessage;
   private final LocalQuickFix[] myFixes;
-  private final List<Annotation> myAnnotations;
+  private List<Annotation> myAnnotations;
 
-  public DomElementProblemDescriptorImpl(final DomElement domElement,  final String message, final HighlightSeverity type) {
+  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,  final String message, final HighlightSeverity type) {
     this(domElement, message, type, new LocalQuickFix[0]);
   }
 
-  public DomElementProblemDescriptorImpl(final DomElement domElement, final String message, final HighlightSeverity type, final LocalQuickFix... fixes) {
+  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, final String message, final HighlightSeverity type, final LocalQuickFix... fixes) {
     myDomElement = domElement;
     myType = type;
     myMessage = message;
     myFixes = fixes;
-    myAnnotations = DomElementsHighlightingUtil.createAnnotations(this);
   }
 
+  @NotNull
   public DomElement getDomElement() {
     return myDomElement;
   }
 
+  @NotNull
   public HighlightSeverity getHighlightSeverity() {
     return myType;
   }
@@ -44,14 +45,18 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return myMessage == null? "": myMessage;
   }
 
+  @NotNull
   public LocalQuickFix[] getFixes() {
     return myFixes;
   }
 
+  @NotNull
   public final List<Annotation> getAnnotations() {
+    if (myAnnotations == null) {
+      myAnnotations = DomElementsHighlightingUtil.createAnnotations(this);
+    }
     return myAnnotations;
   }
-
 
   public String toString() {
     return myDomElement + "; " + myMessage;

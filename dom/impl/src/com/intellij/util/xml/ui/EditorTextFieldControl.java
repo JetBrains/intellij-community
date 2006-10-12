@@ -143,7 +143,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
 
         final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
         final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
-        final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement, true);
+        final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement);
         final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(domElement, true, true, HighlightSeverity.WARNING));
         warningProblems.removeAll(errorProblems);
 

@@ -280,8 +280,8 @@ public class ComboControl extends BaseControl<JComboBox, String> {
 
         final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
         final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
-        final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement, true);
-        final List<DomElementProblemDescriptor> warningProblems = holder.getProblems(domElement, true, true, HighlightSeverity.WARNING);
+        final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement);
+        final List<DomElementProblemDescriptor> warningProblems = holder.getProblems(domElement, true, HighlightSeverity.WARNING);
 
         Color background = getDefaultBackground();
         comboBox.setToolTipText(null);

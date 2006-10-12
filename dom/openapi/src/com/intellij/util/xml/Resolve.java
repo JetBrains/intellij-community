@@ -25,4 +25,5 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Resolve {
   Class<? extends DomElement> value();
+  boolean soft() default false;
 }

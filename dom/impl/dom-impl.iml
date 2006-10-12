@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="module" module-name="resources_eng" />
+    <orderEntry type="module" module-name="inspections-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

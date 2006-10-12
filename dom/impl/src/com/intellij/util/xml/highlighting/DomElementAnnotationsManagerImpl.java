@@ -56,6 +56,10 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       return Collections.emptyList();
     }
 
+    public List<DomElementProblemDescriptor> getProblems(DomElement domElement, final boolean withChildren, HighlightSeverity minSeverity) {
+      return Collections.emptyList();
+    }
+
     public List<DomElementProblemDescriptor> getAllProblems() {
       return Collections.emptyList();
     }
@@ -132,7 +136,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
 
-  public final void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class aClass) {
+  public final void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class<? extends DomElement> aClass) {
     getOrCreateAnnotators(aClass).add(annotator);
   }
 
@@ -148,7 +152,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
 
   public List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
-    return DomElementsHighlightingUtil.createProblemDescriptors(manager, problemDescriptor);
+    return DomElementsHighlightingUtil.createProblemDescriptors(problemDescriptor);
   }
 
   public boolean isHighlightingFinished(final DomElement[] domElements) {

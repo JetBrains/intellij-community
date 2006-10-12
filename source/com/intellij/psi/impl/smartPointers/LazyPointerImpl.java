@@ -33,6 +33,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.*;
+import com.intellij.util.ReflectionCache;
 
 public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private E myElement = null;
@@ -77,7 +78,7 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
     if (myPointer != null) return (E) myPointer.getElement();
     final PsiElement psiElement = myAnchor.retrieve();
     if (psiElement != null) {
-      return myElementClass.isAssignableFrom(psiElement.getClass()) ? (E) psiElement : null;
+      return ReflectionCache.isAssignable(myElementClass, psiElement.getClass()) ? (E) psiElement : null;
     }
 
     return null;

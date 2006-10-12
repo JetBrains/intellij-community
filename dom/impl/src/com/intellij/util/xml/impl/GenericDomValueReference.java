@@ -26,12 +26,10 @@ import java.util.List;
  */
 public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider {
   private final GenericDomValue<T> myGenericValue;
-  private final boolean mySoft;
 
-  public GenericDomValueReference(GenericDomValue<T> domValue, boolean soft) {
+  public GenericDomValueReference(GenericDomValue<T> domValue) {
     super(DomUtil.getValueElement(domValue));
     myGenericValue = domValue;
-    mySoft = soft;
     assert domValue.getXmlTag() != null;
     setRangeInElement(createTextRange());
   }
@@ -59,7 +57,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   public boolean isSoft() {
-    return mySoft;
+    return true;
   }
 
   @Nullable

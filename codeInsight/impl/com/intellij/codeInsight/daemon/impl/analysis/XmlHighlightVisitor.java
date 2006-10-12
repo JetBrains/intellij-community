@@ -955,14 +955,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public static boolean hasBadResolve(final PsiReference reference) {
-    boolean hasBadResolve;
-
     if (reference instanceof PsiPolyVariantReference) {
-      hasBadResolve = ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
-    } else {
-      hasBadResolve = reference.resolve() == null;
+      return ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
     }
-    return hasBadResolve;
+    return reference.resolve() == null;
   }
 
   public void visitXmlDoctype(XmlDoctype xmlDoctype) {

@@ -25,8 +25,6 @@ import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -313,12 +311,14 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   @NotNull
   public PsiFile[] getPsiRoots() {
-    final Set<Language> languages = getViewProvider().getPrimaryLanguages();
-    final List<PsiFile> roots = new ArrayList<PsiFile>();
+    final FileViewProvider viewProvider = getViewProvider();
+    final Set<Language> languages = viewProvider.getPrimaryLanguages();
+    final PsiFile[] roots = new PsiFile[languages.size()];
+    int i = 0;
     for (Language language : languages) {
-      roots.add(getViewProvider().getPsi(language));
+      roots[i++] = viewProvider.getPsi(language);
     }
-    return roots.toArray(new PsiFile[roots.size()]);
+    return roots;
   }
 
   public <T> T getCopyableUserData(Key<T> key) {

@@ -35,7 +35,7 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(project);
     final DomElementsProblemsHolder problemsHolder = annotationsManager.getProblemHolder(domFileElement);
     List<ProblemDescriptor> problems =
-      ContainerUtil.concat(problemsHolder.getAllProblems(), new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
+      ContainerUtil.concat(problemsHolder.getProblems(domFileElement, true, true), new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
         public Collection<ProblemDescriptor> fun(final DomElementProblemDescriptor s) {
           return annotationsManager.createProblemDescriptors(manager, s);
         }
