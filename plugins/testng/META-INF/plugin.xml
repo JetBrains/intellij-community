@@ -1,0 +1,37 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin>
+    <name>TestNG-J</name>
+    <description>TestNG Integration</description>
+    <version>0.3.14</version>
+    <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
+    <idea-version since-build="5594"/>
+    <application-components>
+        <component>
+            <implementation-class>com.theoryinpractice.testng.TestNGConfigurationType</implementation-class>
+            <option name="workspace" value="true"/>
+        </component>
+    </application-components>
+    <project-components>
+        <component>
+            <implementation-class>com.theoryinpractice.testng.intention.ConvertJUnitIntention</implementation-class>
+        </component>
+        <component>
+            <implementation-class>com.theoryinpractice.testng.intention.ConvertJavadocIntention</implementation-class>
+        </component>
+        <component>
+            <implementation-class>
+                com.theoryinpractice.testng.intention.ConvertAnnotationIntention
+            </implementation-class>
+        </component>
+        <component>
+            <implementation-class>
+                com.theoryinpractice.testng.intention.ConvertOldAnnotationIntention
+            </implementation-class>
+        </component>
+    </project-components>
+    <change-notes>
+        <![CDATA[Updated TestNG 5.3beta. TestNG-J jars come first in classpath to always use correct
+        TestNG release.  When testing a class a suite.xml is generated instead of -testclass. When
+        running a suite.xml the cloned/patched suite.xml was always using javadoc annotions.]]>
+    </change-notes>
+</idea-plugin>
