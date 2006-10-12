@@ -633,8 +633,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     // Expand property
     final Property property=myProperties.get(index);
-    LOG.assertTrue(!myExpandedProperties.contains(getDottedName(property)));
-    myExpandedProperties.add(getDottedName(property));
+    final String dottedName = getDottedName(property);
+
+    // it's possible that property was expanded and we switched to a component which doesn't have this property
+    if (myExpandedProperties.contains(dottedName)) return;
+    myExpandedProperties.add(dottedName);
 
     final Property[] children=getPropChildren(property);
     for (int i = 0; i < children.length; i++) {
