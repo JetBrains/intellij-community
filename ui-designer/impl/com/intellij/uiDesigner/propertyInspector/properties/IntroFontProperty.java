@@ -58,7 +58,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     if (value != null) {
       if (!component.isLoadingProperties()) {
-        invokeSetter(component, null);
+        invokeSetter(component, getDefaultValue(component.getDelegee()));
       }
       Font defaultFont = (Font) invokeGetter(component);
       final Font resolvedFont = value.getResolvedFont(defaultFont);

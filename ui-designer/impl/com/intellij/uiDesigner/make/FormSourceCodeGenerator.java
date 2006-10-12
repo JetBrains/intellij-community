@@ -500,7 +500,7 @@ public final class FormSourceCodeGenerator {
         pushColor((ColorDescriptor) value);
       }
       else if (propertyClass.equals(Font.class.getName())) {
-        pushFont(variable, (FontDescriptor) value);
+        pushFont(variable, (FontDescriptor) value, property.getReadMethodName());
       }
       else if (propertyClass.equals(Icon.class.getName())) {
         pushIcon((IconDescriptor) value);
@@ -648,7 +648,7 @@ public final class FormSourceCodeGenerator {
             push((String) null);
           }
           else {
-            pushFont(variable, container.getBorderTitleFont());
+            pushFont(variable, container.getBorderTitleFont(), "getFont");
           }
           if (container.getBorderTitleColor() != null) {
             pushColor(container.getBorderTitleColor());
@@ -837,7 +837,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private void pushFont(final String variable, final FontDescriptor fontDescriptor) {
+  private void pushFont(final String variable, final FontDescriptor fontDescriptor, final String getterName) {
     if (fontDescriptor.getSwingFont() != null) {
       startStaticMethodCall(UIManager.class, "getFont");
       push(fontDescriptor.getSwingFont());
@@ -849,19 +849,19 @@ public final class FormSourceCodeGenerator {
         push(fontDescriptor.getFontName());
       }
       else {
-        pushVar(variable + ".getFont().getName()");
+        pushVar(variable + "." + getterName + "().getName()");
       }
       if (fontDescriptor.getFontStyle() >= 0) {
         push(fontDescriptor.getFontStyle(), ourFontStyleMap);
       }
       else {
-        pushVar(variable + ".getFont().getStyle()");
+        pushVar(variable + "." + getterName + "().getStyle()");
       }
       if (fontDescriptor.getFontSize() >= 0) {
         push(fontDescriptor.getFontSize());
       }
       else {
-        pushVar(variable + ".getFont().getSize()");
+        pushVar(variable + "." + getterName + "().getSize()");
       }
       endMethod();
     }

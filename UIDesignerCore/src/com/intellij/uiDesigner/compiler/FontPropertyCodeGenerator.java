@@ -33,13 +33,10 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type ourFontType = Type.getType(Font.class);
   private static final Type ourUIManagerType = Type.getType(UIManager.class);
   private static final Type ourObjectType = Type.getType(Object.class);
-  private static final Type ourComponentType = Type.getType(Component.class);
   private static final Type ourStringType = Type.getType(String.class);
 
   private static final Method ourInitMethod = Method.getMethod("void <init>(java.lang.String,int,int)");
   private static final Method ourUIManagerGetFontMethod = new Method("getFont", ourFontType, new Type[] { ourObjectType } );
-  private static final Method ourComponentGetFontMethod = new Method("getFont", ourFontType, new Type[0] );
-  private static final Method ourComponentSetFontMethod = new Method("setFont", Type.VOID_TYPE, new Type[] { ourFontType } );
   private static final Method ourGetNameMethod = new Method("getName", ourStringType, new Type[0] );
   private static final Method ourGetSizeMethod = new Method("getSize", Type.INT_TYPE, new Type[0] );
   private static final Method ourGetStyleMethod = new Method("getStyle", Type.INT_TYPE, new Type[0] );
@@ -53,7 +50,10 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
     if (descriptor.isFixedFont() && !descriptor.isFullyDefinedFont()) {
       final int fontLocal = generator.newLocal(ourFontType);
       generator.loadLocal(componentLocal);
-      generator.invokeVirtual(ourComponentType, ourComponentGetFontMethod);
+
+      Type componentType = AsmCodeGenerator.typeFromClassName(lwComponent.getComponentClassName());
+      Method getFontMethod = new Method(property.getReadMethodName(), ourFontType, new Type[0] );
+      generator.invokeVirtual(componentType, getFontMethod);
       generator.storeLocal(fontLocal);
 
       generator.loadLocal(componentLocal);
@@ -84,7 +84,8 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
       }
 
       generator.invokeConstructor(ourFontType, ourInitMethod);
-      generator.invokeVirtual(ourComponentType, ourComponentSetFontMethod);
+      Method setFontMethod = new Method(property.getWriteMethodName(), Type.VOID_TYPE, new Type[] { ourFontType } );
+      generator.invokeVirtual(componentType, setFontMethod);
       return true;
     }
     return false;

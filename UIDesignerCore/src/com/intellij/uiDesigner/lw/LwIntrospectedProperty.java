@@ -52,6 +52,10 @@ public abstract class LwIntrospectedProperty implements IProperty {
     return myPropertyClassName;
   }
   
+  public final String getReadMethodName() {
+    return "get" + Character.toUpperCase(myName.charAt(0)) + myName.substring(1);
+  }
+
   public final String getWriteMethodName() {
     return "set" + Character.toUpperCase(myName.charAt(0)) + myName.substring(1);
   }

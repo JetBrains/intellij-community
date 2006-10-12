@@ -206,6 +206,10 @@ public class AsmCodeGenerator {
     }
   }
 
+  public static Type typeFromClassName(final String className) {
+    return Type.getType("L" + className.replace('.', '/') + ";");
+  }
+
   class FormClassVisitor extends ClassAdapter {
     private String myClassName;
     private String mySuperName;
@@ -591,10 +595,6 @@ public class AsmCodeGenerator {
         generator.invokeVirtual(componentType, new Method("putClientProperty",
                                                           Type.VOID_TYPE, new Type[] { objectType, objectType } ));
       }
-    }
-
-    private Type typeFromClassName(final String className) {
-      return Type.getType("L" + className.replace('.', '/') + ";");
     }
 
     private void generateComponentReferenceProperties(final LwComponent component,

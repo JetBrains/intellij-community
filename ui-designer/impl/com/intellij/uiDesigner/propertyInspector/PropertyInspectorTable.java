@@ -62,7 +62,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class PropertyInspectorTable extends Table implements DataProvider{
-  private static final Logger LOG = Logger.getInstance("#intellij.uiDesigner.propertyInspector.PropertyInspectorTable");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable");
 
   private static final Color SYNTETIC_PROPERTY_BACKGROUND = new Color(230,230,230);
   private static final Color SYNTETIC_SUBPROPERTY_BACKGROUND = new Color(240,240,240);
