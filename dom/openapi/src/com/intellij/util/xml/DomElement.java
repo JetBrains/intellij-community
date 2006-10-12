@@ -73,6 +73,15 @@ public interface DomElement extends AnnotatedElement{
 
   <T extends DomElement> T createMockCopy(final boolean physical);
 
+  /**
+   * @return stable element (see {@link DomManager#createStableValue(com.intellij.openapi.util.Factory)}}),
+   * that holds the complete 'XPath' to this element in XML. If this element is in collection, and something
+   * is inserted before it, the stable copy behaviour may be unexpected. So use this method only when you
+   * are sure that nothing serious will happen during the lifetime of the stable copy. The most usual use
+   * case is when one creates something inside {@link com.intellij.openapi.command.WriteCommandAction} and
+   * wants to use it outside the action. Due to formatting done on the command finish the element may become
+   * invalidated, but the stable copy will survive, because nothing in fact has changed in its 'XPath'. 
+   */
   <T extends DomElement> T createStableCopy();
 
 }

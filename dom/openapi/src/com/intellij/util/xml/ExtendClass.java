@@ -29,7 +29,7 @@ public @interface ExtendClass {
   /**
    * Full name of the base class
    */
-  String value();
+  String value() default "java.lang.Object";
 
   /**
    * States that the class should be concrete and have public default constructor.
@@ -37,7 +37,8 @@ public @interface ExtendClass {
   boolean instantiatable() default true;
 
 /**
- * States that the class implements "decorator" pattern
+ * States that the class implements "decorator" pattern, i.e. it should have constructor with
+ * one parameter of the same type  
  */
   boolean canBeDecorator() default false;
 }
