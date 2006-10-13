@@ -36,6 +36,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
 import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
@@ -122,7 +123,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return file instanceof XmlFile ? (XmlFile)file : null;
 }
 
-  public static boolean isPluginModuleOrDependency(Module module) {
+  public static boolean isPluginModuleOrDependency(@NotNull Module module) {
     if (isOfType(module)) return true;
 
     return getCandidateModules(module).size() > 0;

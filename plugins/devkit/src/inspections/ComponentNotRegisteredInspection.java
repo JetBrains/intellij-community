@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterComponentFix;
@@ -51,10 +52,12 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   public boolean IGNORE_NON_PUBLIC = true;
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection");
 
+  @NotNull
   public String getDisplayName() {
     return DevKitBundle.message("inspections.component.not.registered.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "ComponentNotRegistered";
@@ -64,6 +67,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     return true;
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
@@ -99,7 +103,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkClass(PsiClass checkedClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiFile psiFile = checkedClass.getContainingFile();
     final PsiIdentifier classIdentifier = checkedClass.getNameIdentifier();
     if (checkedClass.getQualifiedName() != null &&
@@ -171,6 +175,6 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     final PsiFile psiFile = psiClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
     final Module module = VfsUtil.getModuleForFile(project, psiFile.getVirtualFile());
-    return PluginModuleType.isPluginModuleOrDependency(module);
+    return module != null && PluginModuleType.isPluginModuleOrDependency(module);
   }
 }
