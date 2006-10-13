@@ -81,6 +81,7 @@ public class ActionMenuItem extends JMenuItem {
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myPresentation.getMnemonic());
     setText(myPresentation.getText());
+    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
     updateIcon();
     String id = ActionManager.getInstance().getId(myAction);
     if (id != null) {
@@ -195,6 +196,9 @@ public class ActionMenuItem extends JMenuItem {
       }
       else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
         ActionMenuItem.this.setMnemonic(myPresentation.getMnemonic());
+      }
+      else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
+        ActionMenuItem.this.setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
       }
       else if (Presentation.PROP_TEXT.equals(name)) {
         ActionMenuItem.this.setText(myPresentation.getText());

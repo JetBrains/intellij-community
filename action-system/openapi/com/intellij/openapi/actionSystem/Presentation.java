@@ -97,6 +97,7 @@ public final class Presentation implements Cloneable {
 
   public void setText(String text, boolean mayContainMnemonic){
     int oldMnemonic = myMnemonic;
+    int oldDisplayedMnemonicIndex = myDisplayedMnemonicIndex;
     String oldText = myText;
     myMnemonic = 0;
     myDisplayedMnemonicIndex = -1;
@@ -138,6 +139,9 @@ public final class Presentation implements Cloneable {
     myChangeSupport.firePropertyChange(PROP_TEXT, oldText, myText);
     if (myMnemonic != oldMnemonic){
       myChangeSupport.firePropertyChange(PROP_MNEMONIC_KEY, new Integer(oldMnemonic), new Integer(myMnemonic));
+    }
+    if (myDisplayedMnemonicIndex != oldDisplayedMnemonicIndex){
+      myChangeSupport.firePropertyChange(PROP_MNEMONIC_INDEX, new Integer(oldDisplayedMnemonicIndex), new Integer(myDisplayedMnemonicIndex));
     }
   }
 

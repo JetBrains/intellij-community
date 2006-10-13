@@ -158,7 +158,7 @@ public abstract class AnAction {
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
     presentation.setIcon(sourcePresentation.getIcon());
-    presentation.setText(sourcePresentation.getText());
+    presentation.setText(sourcePresentation.getTextWithMnemonic());
     presentation.setDescription(sourcePresentation.getDescription());
     myShortcutSet = sourceAction.myShortcutSet;
   }

@@ -43,6 +43,8 @@ public class PresentationTest extends TestCase {
       Assert.assertEquals(mnemonics[i], p.getMnemonic());
       Assert.assertEquals(indeces[i], p.getDisplayedMnemonicIndex());
       Assert.assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
+
+      Assert.assertTrue(menuTexts[i].length() > p.getDisplayedMnemonicIndex());
     }
   }
 }

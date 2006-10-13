@@ -102,6 +102,7 @@ public class ButtonToolbarImpl extends JPanel {
       super(action.getTemplatePresentation().getText());
       myAction = action;
       setMnemonic(action.getTemplatePresentation().getMnemonic());
+      setDisplayedMnemonicIndex(action.getTemplatePresentation().getDisplayedMnemonicIndex());
 
       addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {

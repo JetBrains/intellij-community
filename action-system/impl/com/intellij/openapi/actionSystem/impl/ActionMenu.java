@@ -98,6 +98,7 @@ public final class ActionMenu extends JMenu {
     setText(myPresentation.getText());
     updateIcon();
     setMnemonic(myPresentation.getMnemonic());
+    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
   }
 
   private void addStubItem() {
@@ -109,6 +110,7 @@ public final class ActionMenu extends JMenu {
   public void setMnemonicEnabled(boolean enable) {
     myMnemonicEnabled = enable;
     setMnemonic(myPresentation.getMnemonic());
+    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
   }
 
   public void setMnemonic(int mnemonic) {
@@ -198,6 +200,9 @@ public final class ActionMenu extends JMenu {
       }
       else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
         ActionMenu.this.setMnemonic(myPresentation.getMnemonic());
+      }
+      else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
+        ActionMenu.this.setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
       }
       else if (Presentation.PROP_TEXT.equals(name)) {
         ActionMenu.this.setText(myPresentation.getText());
