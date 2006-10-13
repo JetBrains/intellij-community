@@ -32,10 +32,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
+import com.intellij.usages.UsageViewManager;
 import com.intellij.util.text.StringSearcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,17 +57,15 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
   private FindModel myFindNextModel = null;
   private static FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
   private Project myProject;
-  private com.intellij.usages.UsageViewManager myAnotherManager;
-  private Key HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
+  private Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
   @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
 
-  public FindManagerImpl(Project project, FindSettings findSettings, com.intellij.usages.UsageViewManager anotherManager) {
+  public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager) {
     myProject = project;
-    myAnotherManager = anotherManager;
     findSettings.initModelBySetings(myFindInFileModel);
     findSettings.initModelBySetings(myFindInProjectModel);
 
-    myFindUsagesManager = new FindUsagesManager(myProject, myAnotherManager);
+    myFindUsagesManager = new FindUsagesManager(myProject, anotherManager);
     myFindInProjectModel.setMultipleFiles(true);
   }
 
@@ -95,6 +95,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
 
   public int showPromptDialog(final FindModel model, String title) {
     ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject) {
+      @Nullable
       public Point getInitialLocation() {
         if (model.isMultipleFiles() && myReplaceInProjectPromptPos.x >= 0 && myReplaceInProjectPromptPos.y >= 0){
           return myReplaceInProjectPromptPos;
@@ -266,7 +267,8 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
       return NOT_FOUND_RESULT;
     }
     else{
-      int start = -1, end = -1;
+      int start = -1;
+      int end = -1;
       while(matcher.find() && matcher.end() < startOffset){
         start = matcher.start();
         end = matcher.end();
@@ -328,7 +330,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     }
   }
 
-  private String replaceWithCaseRespect(String toReplace, String foundString) {
+  private static String replaceWithCaseRespect(String toReplace, String foundString) {
     if (foundString.length() == 0 || toReplace.length() == 0) return toReplace;
     StringBuffer buffer = new StringBuffer();
 
@@ -403,8 +405,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
   private boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset, boolean isForward, boolean secondPass) {
     RangeHighlighter highlighterToSelect = null;
     Object wasNotFound = editor.getUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY);
-    for (int i = 0; i < highlighters.length; i++) {
-      RangeHighlighter highlighter = highlighters[i];
+    for (RangeHighlighter highlighter : highlighters) {
       int start = highlighter.getStartOffset();
       int end = highlighter.getEndOffset();
       if (highlighter.isValid() && start < end) {
@@ -486,6 +487,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     return myFindUsagesManager.findPreviousUsageInFile(fileEditor);
   }
 
+  @NotNull
   public String getComponentName() {
     return "FindManager";
   }

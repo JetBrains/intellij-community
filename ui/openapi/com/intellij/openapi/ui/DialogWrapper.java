@@ -753,6 +753,7 @@ public abstract class DialogWrapper {
    * @return Location in absolute coordinates which is used when dialog has no dimension service key or no position was stored yet.
    *         Can return null. In that case dialog will be centered relative to its owner.
    */
+  @Nullable
   public Point getInitialLocation() {
     return null;
   }
