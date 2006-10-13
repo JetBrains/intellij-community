@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -59,6 +60,7 @@ public class SdkEditor implements Configurable{
   @NonNls private static final String MAC_HOME_PATH = "/Home";
 
   private String myInitialName;
+  private String myInitialPath;
 
   public SdkEditor(NotifiableSdkModel sdkModel) {
     mySdkModel = sdkModel;
@@ -73,8 +75,10 @@ public class SdkEditor implements Configurable{
     mySdk = sdk;
     if (mySdk != null) {
       myInitialName = mySdk.getName();
+      myInitialPath = mySdk.getHomePath();
     } else {
       myInitialName = "";
+      myInitialPath = "";
     }
     final AdditionalDataConfigurable additionalDataConfigurable = getAdditionalDataConfigurable();
     if (additionalDataConfigurable != null) {
@@ -142,10 +146,8 @@ public class SdkEditor implements Configurable{
   }
 
   public boolean isModified(){
-
-    final String initialHome = (mySdk == null) ? "" : mySdk.getHomePath();
     boolean isModified = !Comparing.equal(mySdk == null? null : mySdk.getName(), myInitialName);
-    isModified = isModified || !Comparing.equal(getHomeValue().replace(File.separatorChar, '/'), initialHome);
+    isModified = isModified || !Comparing.equal(FileUtil.toSystemIndependentName(getHomeValue()), FileUtil.toSystemIndependentName(myInitialPath));
     isModified = isModified || myClassPathEditor.isModified();
     isModified = isModified || mySourcePathEditor.isModified();
     isModified = isModified || myJavadocPathEditor.isModified();
@@ -164,6 +166,7 @@ public class SdkEditor implements Configurable{
     }
     if (mySdk != null){
       myInitialName = mySdk.getName();
+      myInitialPath = mySdk.getHomePath();
       final SdkModificator sdkModificator = mySdk.getSdkModificator();
       sdkModificator.setHomePath(getHomeValue().replace(File.separatorChar, '/'));
       myClassPathEditor.apply(sdkModificator);
