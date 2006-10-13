@@ -19,7 +19,11 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
   @NonNls private static final String PROPERTIES = ".properties";
 
   public ResourceBundleReference(final PsiElement element) {
-    super(element);
+    this(element, false);
+  }
+
+  public ResourceBundleReference(final PsiElement element, boolean soft) {
+    super(element, soft);
     myBundleName = getValue();
   }
 
