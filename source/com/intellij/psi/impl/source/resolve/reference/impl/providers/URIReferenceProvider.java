@@ -88,7 +88,8 @@ public class URIReferenceProvider implements PsiReferenceProvider {
 
     public String getCanonicalText() {
       String text = myElement.getText();
-      return text.substring(1,text.length() - 1);
+      if (text.length() > 1) return text.substring(1,text.length() - 1);
+      return "";
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
