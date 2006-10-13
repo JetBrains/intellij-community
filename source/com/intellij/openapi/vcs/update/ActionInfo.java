@@ -28,7 +28,7 @@ public interface ActionInfo {
                                                            final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
-          return getActionName() + " " + scopeName;
+          return VcsBundle.message("action.display.name.update.scope", scopeName);
         }
 
         protected boolean isToBeShown() {
@@ -65,7 +65,7 @@ public interface ActionInfo {
                                                            LinkedHashMap<Configurable, AbstractVcs> envToConfMap, final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
-          return getActionName() + " " + scopeName;
+          return VcsBundle.message("action.display.name.check.scope.status", scopeName);
         }
 
         protected boolean isToBeShown() {
@@ -106,7 +106,7 @@ public interface ActionInfo {
                                                            final String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
-          return "Integrate " + scopeName;
+          return VcsBundle.message("action.display.name.integrate.scope", scopeName);
         }
 
         protected boolean canBeHidden() {

@@ -58,7 +58,7 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
         if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
           ActionInfo actionInfo = myUpdateInfo.getActionInfo();
           if (actionInfo != null) {
-            CommonUpdateProjectAction.showUpdateProjectInfo(myProject, myUpdateInfo.getFileInformation(), VcsBundle.message("action.name.update"), actionInfo);
+            CommonUpdateProjectAction.showUpdateProjectInfo(myProject, myUpdateInfo.getFileInformation(), VcsBundle.message("action.display.name.update"), actionInfo);
           }
           myUpdateInfo = null;
         }
