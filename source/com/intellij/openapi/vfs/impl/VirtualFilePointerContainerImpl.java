@@ -7,10 +7,10 @@ import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,8 +26,8 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
 
   public void readExternal(final Element rootChild, final String childElements) throws InvalidDataException {
     final List urls = rootChild.getChildren(childElements);
-    for (int i = 0; i < urls.size(); i++) {
-      Element pathElement = (Element)urls.get(i);
+    for (Object url : urls) {
+      Element pathElement = (Element)url;
       final String urlAttribute = pathElement.getAttributeValue(URL_ATTR);
       if (urlAttribute == null) throw new InvalidDataException("path element without url");
       add(urlAttribute);
@@ -36,7 +36,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
 
   public void writeExternal(final Element element, final String childElementName) {
     for (int i = 0; i < getList().size(); i++) {
-      String url = ((VirtualFilePointer)getList().get(i)).getUrl();
+      String url = getList().get(i).getUrl();
       final Element rootPathElement = new Element(childElementName);
       rootPathElement.setAttribute(URL_ATTR, url);
       element.addContent(rootPathElement);
@@ -71,7 +71,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     ContainerUtil.swapElements(myList, index, index + 1);
   }
 
-  private class DefaultFactory implements VirtualFilePointerFactory {
+  private static class DefaultFactory implements VirtualFilePointerFactory {
     private final VirtualFilePointerListener myListener;
     private final VirtualFilePointerManager myVirtualFilePointerManager = VirtualFilePointerManager.getInstance();
 
@@ -106,8 +106,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
 
   public void killAll() {
     final VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
-    for (Iterator<VirtualFilePointer> iterator = myList.iterator(); iterator.hasNext();) {
-      final VirtualFilePointer virtualFilePointer = iterator.next();
+    for (final VirtualFilePointer virtualFilePointer : myList) {
       virtualFilePointerManager.kill(virtualFilePointer);
     }
   }
@@ -139,9 +138,8 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     dropCaches();
 
     final ArrayList<VirtualFilePointer> thatList = ((VirtualFilePointerContainerImpl)that).myList;
-    for (Iterator iterator = thatList.iterator(); iterator.hasNext();) {
-      final VirtualFilePointer virtualFilePointer = (VirtualFilePointer)iterator.next();
-      myList.add(myVirtualFilePointerFactory.duplicate(virtualFilePointer));
+    for (final VirtualFilePointer pointer : thatList) {
+      myList.add(myVirtualFilePointerFactory.duplicate(pointer));
     }
   }
 
@@ -162,11 +160,10 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
 
   private String[] calcUrls() {
     final ArrayList<String> result = new ArrayList<String>();
-    for (int i = 0; i < myList.size(); i++) {
-      VirtualFilePointer smartVirtualFilePointer = myList.get(i);
+    for (VirtualFilePointer smartVirtualFilePointer : myList) {
       result.add(smartVirtualFilePointer.getUrl());
     }
-    return (String[]) result.toArray(new String[result.size()]);
+    return result.toArray(new String[result.size()]);
   }
 
   private VirtualFile[] myCachedFiles;
@@ -179,14 +176,13 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
 
   private VirtualFile[] calcFiles() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (int i = 0; i < myList.size(); i++) {
-      VirtualFilePointer smartVirtualFilePointer = myList.get(i);
+    for (VirtualFilePointer smartVirtualFilePointer : myList) {
       final VirtualFile file = smartVirtualFilePointer.getFile();
       if (file != null) {
         result.add(file);
       }
     }
-    return (VirtualFile[]) result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   public VirtualFile[] getDirectories() {
@@ -198,20 +194,19 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
 
   private VirtualFile[] calcDirectories() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (int i = 0; i < myList.size(); i++) {
-      VirtualFilePointer smartVirtualFilePointer = myList.get(i);
+    for (VirtualFilePointer smartVirtualFilePointer : myList) {
       final VirtualFile file = smartVirtualFilePointer.getFile();
       if (file != null && file.isDirectory()) {
         LOG.assertTrue(file.isValid());
         result.add(file);
       }
     }
-    return (VirtualFile[]) result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
+  @Nullable
   public VirtualFilePointer findByUrl(String url) {
-    for (int i = 0; i < myList.size(); i++) {
-      VirtualFilePointer pointer = myList.get(i);
+    for (VirtualFilePointer pointer : myList) {
       if (pointer.getUrl().equals(url)) return pointer;
     }
     return null;

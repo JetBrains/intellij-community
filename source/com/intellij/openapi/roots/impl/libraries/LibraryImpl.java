@@ -60,7 +60,7 @@ public class LibraryImpl implements Library.ModifiableModel, LibraryEx {
     mySource = null;
   }
 
-  LibraryImpl(LibraryImpl that) {
+  private LibraryImpl(LibraryImpl that) {
     myName = that.myName;
     myRoots = initRoots();
     mySource = that;
