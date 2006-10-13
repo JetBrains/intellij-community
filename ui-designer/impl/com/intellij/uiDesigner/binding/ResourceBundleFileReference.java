@@ -34,6 +34,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
 
   public PsiElement resolve() {
     final Project project = myFile.getProject();
+
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile formVirtualFile = myFile.getVirtualFile();
     if (formVirtualFile == null) {
@@ -56,14 +57,19 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
     return rangeText.equals(baseName);
   }
 
-  public PsiElement handleElementRename(final String newElementName){
+  public PsiElement handleElementRename(final String newElementName) {
     final String currentName = getRangeText();
-    final int slashIndex = currentName.lastIndexOf('/');
-    final String prefix = currentName.substring(0, slashIndex);
     final String baseName = newElementName.endsWith(PROPERTIES_EXTENSION)?
                             newElementName.substring(0, newElementName.length() - PROPERTIES_EXTENSION.length()) :
                             newElementName;
-    return super.handleElementRename(prefix + "/" + baseName);
+    final int slashIndex = currentName.lastIndexOf('/');
+    if (slashIndex >= 0) {
+      final String prefix = currentName.substring(0, slashIndex);
+      return super.handleElementRename(prefix + "/" + baseName);
+    }
+    else {
+      return super.handleElementRename(baseName);
+    }
   }
 
   public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {

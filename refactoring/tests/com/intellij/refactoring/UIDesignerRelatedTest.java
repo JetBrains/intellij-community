@@ -4,6 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.pom.java.LanguageLevel;
 
@@ -54,6 +55,18 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
         assertNotNull(enumConstant);
 
         new RenameProcessor(myProject, enumConstant, "newValueB", true, true).run();
+      }
+    });
+  }
+
+  public void testRenameResourceBundle() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        PsiFile file = myPsiManager.findFile(rootDir.findChild("F1.properties"));
+        assertNotNull(file);
+
+
+        new RenameProcessor(myProject, file, "F2.properties", true, true).run();
       }
     });
   }
