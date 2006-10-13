@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -24,15 +25,11 @@ import java.util.Collection;
 public class AnnotateToggleAction extends ToggleAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
 
-
-  public AnnotateToggleAction() {
-  }
-
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(PeerFactory.getInstance().getVcsContextFactory().createContextOn(e)));
   }
 
-  private boolean isEnabled(final VcsContext context) {
+  private static boolean isEnabled(final VcsContext context) {
     VirtualFile[] selectedFiles = context.getSelectedFiles();
     if (selectedFiles == null) return false;
     if (selectedFiles.length == 0) return false;
@@ -48,30 +45,26 @@ public class AnnotateToggleAction extends ToggleAction {
 
   }
 
-  private boolean hasTextEditor(VirtualFile selectedFile) {
+  private static boolean hasTextEditor(VirtualFile selectedFile) {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType fileType = fileTypeManager.getFileTypeByFile(selectedFile);
-    return !fileType.isBinary();
+    return !fileType.isBinary() && fileType != StdFileTypes.GUI_DESIGNER_FORM;
   }
-
 
   public boolean isSelected(AnActionEvent e) {
     VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createContextOn(e);
     Editor editor = context.getEditor();
     if (editor == null) return false;
-    Object annotations = editor.getUserData(AnnotateAction.KEY_IN_EDITOR);
+    Collection annotations = editor.getUserData(AnnotateAction.KEY_IN_EDITOR);
     if (annotations == null) return false;
-    return !((Collection)annotations).isEmpty();
+    return !annotations.isEmpty();
   }
 
   public void setSelected(AnActionEvent e, boolean state) {
     VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createContextOn(e);
     Editor editor = context.getEditor();
     if (!state) {
-      if (editor == null) {
-        return;
-      }
-      else {
+      if (editor != null) {
         editor.getGutter().closeAllAnnotations();
       }
     }
