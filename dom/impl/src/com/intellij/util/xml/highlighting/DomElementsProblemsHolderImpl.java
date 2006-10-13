@@ -7,6 +7,7 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -18,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementsProblemsHolderImpl");
   private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedErrors =
     new ConcurrentHashMap<DomElement, List<DomElementProblemDescriptor>>();
   private final Map<DomElement, List<DomElementProblemDescriptor>> myCachedChildrenErrors =
@@ -55,7 +57,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
             result.clear();
           }
           else {
-            assert mainElement.equals(errorElement) : "DOM problem has been created for wrong element: " + descriptor + "\nRight element:" + mainElement;
+            LOG.assertTrue(mainElement.equals(errorElement), "DOM problem has been created for wrong element: " + descriptor + "\nRight element:" + mainElement);
             if (!childrenHaveErrors) {
               result.add(descriptor);
             }
