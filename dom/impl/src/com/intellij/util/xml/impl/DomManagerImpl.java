@@ -216,13 +216,11 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   private void processVfsChange(final VirtualFile file) {
     if (!file.isValid()) {
-      /*
       for (final Set<DomFileElementImpl> set : myFileDescriptions.values()) {
-        for (final DomFileElementImpl fileElement : set) {
+        for (final DomFileElementImpl fileElement : new HashSet<DomFileElementImpl>(set)) {
           processFileChange(fileElement.getFile());
         }
       }
-      */
       return;
     }
 
@@ -230,8 +228,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   private void processFileChange(final VirtualFile file) {
-    //PsiManager.getInstance(myProject).findViewProvider(file);
-    //processFileChange(psiFile);
+    PsiManager.getInstance(myProject).findViewProvider(file);
+    processFileChange(PsiManager.getInstance(myProject).findFile(file));
   }
 
   private void processFileChange(final PsiFile file) {
@@ -434,8 +432,12 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   public final void projectClosed() {
   }
 
-  public <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
+  public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass);
+  }
+
+  public final void clearImplementations() {
+    myCachedImplementationClasses.clear();
   }
 
   @Nullable

@@ -18,7 +18,7 @@ import java.util.TreeSet;
 
 /**
  * @author peter
-*/
+ */
 class ImplementationClassCache extends WeakFactoryMap<Class<? extends DomElement>, Class<? extends DomElement>> {
   private static final Comparator<Class<? extends DomElement>> CLASS_COMPARATOR = new Comparator<Class<? extends DomElement>>() {
     public int compare(final Class<? extends DomElement> o1, final Class<? extends DomElement> o2) {
@@ -31,7 +31,7 @@ class ImplementationClassCache extends WeakFactoryMap<Class<? extends DomElement
 
 
   private final Map<Class<? extends DomElement>, Class<? extends DomElement>> myImplementationClasses =
-  new THashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
+    new THashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
 
   @Nullable
   protected Class<? extends DomElement> create(final Class<? extends DomElement> concreteInterface) {
@@ -56,8 +56,12 @@ class ImplementationClassCache extends WeakFactoryMap<Class<? extends DomElement
 
   public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     assert domElementClass.isAssignableFrom(implementationClass);
-  myImplementationClasses.put(domElementClass, implementationClass);
-  clear();
+    myImplementationClasses.put(domElementClass, implementationClass);
+    super.clear();
   }
 
+  public final void clear() {
+    super.clear();
+    myImplementationClasses.clear();
+  }
 }
