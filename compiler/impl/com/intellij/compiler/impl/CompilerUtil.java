@@ -136,10 +136,10 @@ public class CompilerUtil {
         ModalityState modalityState;
         if (progress instanceof CompilerProgressIndicator){
           Window window = ((CompilerProgressIndicator)progress).getWindow();
-          modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MMODAL;
+          modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
         }
         else{
-          modalityState = ModalityState.NON_MMODAL;
+          modalityState = ModalityState.NON_MODAL;
         }
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           public void run() {

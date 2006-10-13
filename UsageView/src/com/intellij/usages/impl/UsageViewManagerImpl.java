@@ -273,10 +273,11 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
                                                            myPresentation.getScopeText());
 
             if (notFoundActions == null || notFoundActions.size() == 0) {
-              Messages.showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"),
-                                         Messages.getInformationIcon());
-            } else {
-              List<String> titles = new ArrayList<String>(notFoundActions.size()+1);
+              Messages
+                .showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"), Messages.getInformationIcon());
+            }
+            else {
+              List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);
               titles.add(UsageViewBundle.message("dialog.button.ok"));
               for (Action action : notFoundActions) {
                 Object value = action.getValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY);
@@ -285,19 +286,15 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
                 titles.add((String)value);
               }
 
-              int option = Messages.showDialog(myProject,
-                                               message,
-                                               UsageViewBundle.message("dialog.title.information"),
-                                               titles.toArray(new String[titles.size()]),
-                                               0,
-                                               Messages.getInformationIcon());
+              int option = Messages.showDialog(myProject, message, UsageViewBundle.message("dialog.title.information"),
+                                               titles.toArray(new String[titles.size()]), 0, Messages.getInformationIcon());
 
               if (option > 0) {
-                notFoundActions.get(option-1).actionPerformed(new ActionEvent(this,0,titles.get(option)));
+                notFoundActions.get(option - 1).actionPerformed(new ActionEvent(this, 0, titles.get(option)));
               }
             }
           }
-        }, ModalityState.NON_MMODAL);
+        }, ModalityState.NON_MODAL);
       }
       else if (myUsageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
         SwingUtilities.invokeLater(new Runnable() {

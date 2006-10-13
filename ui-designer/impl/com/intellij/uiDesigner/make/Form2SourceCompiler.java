@@ -178,35 +178,28 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         public void run() {
-          CommandProcessor.getInstance().executeCommand(
-            myProject,
-            new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(
-                  new Runnable() {
-                    public void run() {
-                      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                      generator.generate(formFile);
-                      final ArrayList<FormErrorInfo> errors = generator.getErrors();
-                      if (errors.size() == 0) {
-                        compiledItems.add(item);
-                      }
-                      else {
-                        for (final FormErrorInfo e: errors) {
-                          addError(context, e, formFile);
-                        }
-                      }
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                  generator.generate(formFile);
+                  final ArrayList<FormErrorInfo> errors = generator.getErrors();
+                  if (errors.size() == 0) {
+                    compiledItems.add(item);
+                  }
+                  else {
+                    for (final FormErrorInfo e : errors) {
+                      addError(context, e, formFile);
                     }
                   }
-                );
-              }
-            },
-            "",
-            null
-          );
+                }
+              });
+            }
+          }, "", null);
           FileDocumentManager.getInstance().saveAllDocuments();
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
   }

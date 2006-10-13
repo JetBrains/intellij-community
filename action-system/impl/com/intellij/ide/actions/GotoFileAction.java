@@ -31,12 +31,12 @@ public class GotoFileAction extends GotoActionBase {
         if (file != null){
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              OpenFileDescriptor descriptor=new OpenFileDescriptor(project, file.getVirtualFile());
+              OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile());
               if (descriptor.canNavigate()) {
                 descriptor.navigate(true);
               }
             }
-          }, ModalityState.NON_MMODAL);
+          }, ModalityState.NON_MODAL);
         }
       }
     }, ModalityState.current(), true);

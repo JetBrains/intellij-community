@@ -16,7 +16,7 @@ public class IJSwingUtilities {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     } else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MMODAL);
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
     }
   }
 

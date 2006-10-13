@@ -359,7 +359,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public static ModalityState calcModalityStateForRefreshEventsPosting(final boolean asynchronous) {
-    return asynchronous ? ModalityState.NON_MMODAL : ModalityState.current();
+    return asynchronous ? ModalityState.NON_MODAL : ModalityState.current();
   }
 
   private static class LoggingListener implements VirtualFileListener {

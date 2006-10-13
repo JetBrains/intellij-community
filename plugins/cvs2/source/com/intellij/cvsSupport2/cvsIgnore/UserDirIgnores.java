@@ -31,7 +31,7 @@ public class UserDirIgnores{
       public void run() {
         CvsVfsUtil.refreshAndFindFileByIoFile(file);
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
     return IgnoredFilesInfoImpl.getPattensFor(file);
   }
 

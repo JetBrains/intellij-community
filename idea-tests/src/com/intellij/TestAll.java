@@ -229,7 +229,7 @@ public class TestAll implements Test {
                   e.printStackTrace(System.err);
                 }
               }
-            }, ModalityState.NON_MMODAL);
+            }, ModalityState.NON_MODAL);
           }
         }
         catch (Exception e) {

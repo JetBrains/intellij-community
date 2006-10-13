@@ -698,7 +698,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
         Messages.showMessageDialog(LocalVcsBundle.message("message.text.local.history.corrupt.with.message", message),
                                    LocalVcsBundle.message("message.title.local.history.corrupt"), Messages.getWarningIcon());
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
     Runnable rebuildAction = new Runnable() {
       public void run() {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {

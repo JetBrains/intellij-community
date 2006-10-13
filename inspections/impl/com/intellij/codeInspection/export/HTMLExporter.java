@@ -92,7 +92,7 @@ public class HTMLExporter {
           );
         }
       };
-      ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MMODAL);
+      ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
       throw new ProcessCanceledException();
     } finally {
       if (writer != null) {

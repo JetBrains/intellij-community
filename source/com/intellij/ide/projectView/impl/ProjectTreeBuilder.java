@@ -166,7 +166,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
                 myFilesToRefresh.removeAll(filesToRefresh);
               }
             }
-          }, 200, ModalityState.NON_MMODAL);
+          }, 200, ModalityState.NON_MODAL);
         }
       }
     }

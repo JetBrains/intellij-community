@@ -87,7 +87,7 @@ public abstract class TestErrorViewAction extends AnAction{
         myMillis += duration;
         incMessageCount();
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
   }
 
   protected abstract ErrorTreeView createView(Project project);

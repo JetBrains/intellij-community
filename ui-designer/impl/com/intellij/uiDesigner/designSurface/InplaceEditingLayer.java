@@ -320,10 +320,10 @@ public final class InplaceEditingLayer extends JComponent{
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              finishInplaceEditing();
-            }
-          }, ModalityState.NON_MMODAL);
+        public void run() {
+          finishInplaceEditing();
+        }
+      }, ModalityState.NON_MODAL);
     }
   }
 

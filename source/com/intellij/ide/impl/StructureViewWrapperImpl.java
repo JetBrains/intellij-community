@@ -90,7 +90,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
                     myLastEvent = null;
                   }
                 }
-              }, ModalityState.NON_MMODAL);
+              }, ModalityState.NON_MODAL);
             }
           }, 400
         );

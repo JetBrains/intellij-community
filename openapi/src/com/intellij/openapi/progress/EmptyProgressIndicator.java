@@ -81,7 +81,7 @@ public class EmptyProgressIndicator implements ProgressIndicator {
   }
 
   public ModalityState getModalityState() {
-    return ModalityState.NON_MMODAL;
+    return ModalityState.NON_MODAL;
   }
 
   public void setModalityProgress(ProgressIndicator modalityProgress) {

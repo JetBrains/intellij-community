@@ -1219,7 +1219,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
           public void run() {
             updateFileStatus(file);
           }
-        }, ModalityState.NON_MMODAL);
+        }, ModalityState.NON_MODAL);
       }
     }
 

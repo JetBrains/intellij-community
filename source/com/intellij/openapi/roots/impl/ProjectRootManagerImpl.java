@@ -189,7 +189,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
           myReloadProjectRequest = null;
         }
       };
-      ApplicationManager.getApplication().invokeLater(myReloadProjectRequest, ModalityState.NON_MMODAL);
+      ApplicationManager.getApplication().invokeLater(myReloadProjectRequest, ModalityState.NON_MODAL);
     }
     else {
       // if the project is not open, reset the original level to the same value as mylanguageLevel has

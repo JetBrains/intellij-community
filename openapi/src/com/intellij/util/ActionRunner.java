@@ -46,7 +46,7 @@ public abstract class ActionRunner {
       swingRunnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(swingRunnable, ModalityState.NON_MMODAL);
+      ApplicationManager.getApplication().invokeAndWait(swingRunnable, ModalityState.NON_MODAL);
     }
     Exception e = exception[0];
     if (e != null) {
@@ -83,7 +83,7 @@ public abstract class ActionRunner {
       swingRunnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(swingRunnable, ModalityState.NON_MMODAL);
+      ApplicationManager.getApplication().invokeAndWait(swingRunnable, ModalityState.NON_MODAL);
     }
     Throwable e = exception[0];
     if (e != null) {

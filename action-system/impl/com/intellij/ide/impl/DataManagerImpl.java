@@ -260,7 +260,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
         return _component;
       }
       else if (DataConstantsEx.MODALITY_STATE.equals(dataId)) {
-        return _component != null ? ModalityState.stateForComponent(_component) : ModalityState.NON_MMODAL;
+        return _component != null ? ModalityState.stateForComponent(_component) : ModalityState.NON_MODAL;
       }
       else {
         return DataManagerImpl.this.getData(dataId, _component);

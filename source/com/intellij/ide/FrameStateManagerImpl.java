@@ -70,15 +70,12 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     }
     else{
       mySyncAlarm.cancelAllRequests();
-      mySyncAlarm.addRequest(
-        new Runnable() {
-          public void run() {
-            myShouldSynchronize=true;
-            fireDeactivationEvent();
-          }
-        },
-        200, ModalityState.NON_MMODAL
-      );
+      mySyncAlarm.addRequest(new Runnable() {
+        public void run() {
+          myShouldSynchronize = true;
+          fireDeactivationEvent();
+        }
+      }, 200, ModalityState.NON_MODAL);
     }
   }
 

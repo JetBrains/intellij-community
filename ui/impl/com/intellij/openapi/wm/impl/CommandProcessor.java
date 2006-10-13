@@ -47,7 +47,7 @@ public final class CommandProcessor implements Runnable {
         }
         // max. I'm not actually quite sure this should have NON_MODAL modality but it should
         // definitely have some since runnables in command list may (and do) request some PSI activity
-        ApplicationManager.getApplication().invokeLater(command, ModalityState.NON_MMODAL);
+        ApplicationManager.getApplication().invokeLater(command, ModalityState.NON_MODAL);
       }
     }
   }

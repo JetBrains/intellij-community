@@ -188,16 +188,16 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
       final boolean[] shouldResume = new boolean[]{true};
       DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
-          public void run() {
-            DebuggerSession session = DebuggerManagerEx.getInstanceEx(getProject()).getSession(context.getDebugProcess());
-            DebuggerPanelsManager.getInstance(getProject()).toFront(session);
-            final String text = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", getDisplayName(), ex.getMessage());
-            if (LOG.isDebugEnabled()) {
-              LOG.debug(text);
-            }
-            shouldResume[0] = Messages.showYesNoDialog(getProject(), text, title[0], Messages.getQuestionIcon()) != 0;
+        public void run() {
+          DebuggerSession session = DebuggerManagerEx.getInstanceEx(getProject()).getSession(context.getDebugProcess());
+          DebuggerPanelsManager.getInstance(getProject()).toFront(session);
+          final String text = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", getDisplayName(), ex.getMessage());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(text);
           }
-        }, ModalityState.NON_MMODAL);
+          shouldResume[0] = Messages.showYesNoDialog(getProject(), text, title[0], Messages.getQuestionIcon()) != 0;
+        }
+      }, ModalityState.NON_MODAL);
 
       return shouldResume[0];
     } 

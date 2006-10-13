@@ -326,13 +326,10 @@ public class CompileDriver {
       if (compileContext.isRebuildRequested()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            doRebuild(
-              callback,
-              new CompilerMessageImpl(myProject, CompilerMessageCategory.INFORMATION, compileContext.getRebuildReason(), null, -1, -1,
-                                      null), false, compileContext.getCompileScope()
-            );
+            doRebuild(callback, new CompilerMessageImpl(myProject, CompilerMessageCategory.INFORMATION, compileContext.getRebuildReason(),
+                                                        null, -1, -1, null), false, compileContext.getCompileScope());
           }
-        }, ModalityState.NON_MMODAL);
+        }, ModalityState.NON_MODAL);
       }
       else {
         writeStatus(new CompileStatus(CompilerConfiguration.DEPENDENCY_FORMAT_VERSION, wereExceptions), compileContext);
@@ -355,7 +352,7 @@ public class CompileDriver {
 
             ProfilingUtil.operationFinished("make");
           }
-        }, ModalityState.NON_MMODAL);
+        }, ModalityState.NON_MODAL);
       }
     }
   }

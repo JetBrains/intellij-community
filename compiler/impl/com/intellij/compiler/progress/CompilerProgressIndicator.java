@@ -104,7 +104,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
     }
     else {
       final Window window = getWindow();
-      final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MMODAL;
+      final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           doAddMessage(message);
@@ -203,7 +203,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
             dialog.show();
           }
         }
-      }, ModalityState.NON_MMODAL);
+      }, ModalityState.NON_MODAL);
     }
   }
 
@@ -294,7 +294,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       });
     }
     final Window window = getWindow();
-    final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MMODAL;
+    final ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
     // the work with ToolWindowManager should be done in the Swing thread
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -363,7 +363,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       return;
     }
     Window window = getWindow();
-    ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MMODAL;
+    ModalityState modalityState = window != null ? ModalityState.stateForComponent(window) : ModalityState.NON_MODAL;
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
       public void run() {

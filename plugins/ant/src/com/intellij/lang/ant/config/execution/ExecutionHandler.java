@@ -174,7 +174,7 @@ public final class ExecutionHandler {
               errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener);
             }
           }
-        }, ModalityState.NON_MMODAL);
+        }, ModalityState.NON_MODAL);
       }
     });
     handler.startNotify();

@@ -86,11 +86,11 @@ public class JUnitProcessHandler extends OSProcessHandler {
     public void setFulfilledWorkGate(final DeferedActionsQueue fulfilledWorkGate) {
       super.setFulfilledWorkGate(new DeferedActionsQueue() {
         public void addLast(final Runnable runnable) {
-          ApplicationManager.getApplication().invokeLater(new Runnable(){
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               fulfilledWorkGate.addLast(runnable);
             }
-          }, ModalityState.NON_MMODAL);
+          }, ModalityState.NON_MODAL);
         }
 
         public void setDispactchListener(final DispatchListener listener) {

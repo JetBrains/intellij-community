@@ -148,7 +148,7 @@ public class BrowserUtil {
       runnable.run();
     }
     else {
-      app.invokeLater(runnable, ModalityState.NON_MMODAL);
+      app.invokeLater(runnable, ModalityState.NON_MODAL);
     }
   }
 

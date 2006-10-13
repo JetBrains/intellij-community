@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
  */
 public class ModalityContextImpl implements ModalityContext {
   private final ModalityState myDefaultModalityState;
-  public static final ModalityContext NON_MODAL = new ModalityContextImpl(ModalityState.NON_MMODAL, false);
+  public static final ModalityContext NON_MODAL = new ModalityContextImpl(ModalityState.NON_MODAL, false);
   private final boolean myIsForTemporaryConfiguration;
 
   public ModalityContextImpl(boolean forTemp) {

@@ -107,7 +107,7 @@ public class IdeFrame extends JFrame implements DataProvider {
                 ApplicationManagerEx.getApplicationEx().exit();
               }
             }
-          }, ModalityState.NON_MMODAL);
+          }, ModalityState.NON_MODAL);
         }
       }
     );

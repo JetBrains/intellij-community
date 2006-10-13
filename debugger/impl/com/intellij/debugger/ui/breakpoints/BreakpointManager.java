@@ -91,12 +91,12 @@ public class BreakpointManager implements JDOMExternalizable {
           final List<BreakpointWithHighlighter> breakpointsToUpdate = new ArrayList<BreakpointWithHighlighter>(breakpoints);
           myUpdateAlarm.addRequest(new Runnable() {
             public void run() {
-              if(!myProject.isDisposed()) {
+              if (!myProject.isDisposed()) {
                 PsiDocumentManager.getInstance(myProject).commitDocument(document);
                 update(breakpointsToUpdate);
               }
             }
-          }, 300, ModalityState.NON_MMODAL);
+          }, 300, ModalityState.NON_MODAL);
         }
       }
     }

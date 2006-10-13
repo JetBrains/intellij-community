@@ -134,7 +134,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     };
 
     if (invokeLaterIfNotDispatch && !ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().invokeLater(toRun, ModalityState.NON_MMODAL);
+      ApplicationManager.getApplication().invokeLater(toRun, ModalityState.NON_MODAL);
     }
     else {
       toRun.run();
@@ -262,7 +262,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public ModalityState getModalityState() {
     if (myComponent == null) {
-      return ModalityState.NON_MMODAL;
+      return ModalityState.NON_MODAL;
     }
     return ModalityState.stateForComponent(myComponent);
   }
