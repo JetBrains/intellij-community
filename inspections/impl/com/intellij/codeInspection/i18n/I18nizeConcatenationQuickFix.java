@@ -28,24 +28,10 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
   }
 
-  private static PsiLiteralExpression getContainingLiteral(final PsiBinaryExpression concatenation) {
-    PsiExpression operand = concatenation.getLOperand();
-    PsiLiteralExpression literalExpression = null;
-    if (operand instanceof PsiLiteralExpression) {
-      literalExpression = (PsiLiteralExpression)operand;
-    }
-    else {
-      operand = concatenation.getROperand();
-      if (operand instanceof PsiLiteralExpression) {
-        literalExpression = (PsiLiteralExpression)operand;
-      }
-    }
-    return literalExpression;
-  }
-
   public I18nizeQuickFixDialog createDialog(PsiFile psiFile, Editor editor, Project project) {
     PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile,editor);
-    PsiLiteralExpression literalExpression = getContainingLiteral(concatenation);
+    PsiLiteralExpression literalExpression = ConcatenationToMessageFormatAction.getContainingLiteral(concatenation);
+    if (literalExpression == null) return null;
     return createDialog(project, psiFile, literalExpression);
   }
 

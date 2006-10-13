@@ -33,7 +33,7 @@ public class MacroUtil {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     //-1: Hack to deal with stupid resolve
     PsiElement place = file != null ? file.findElementAt(context.getStartOffset()) : null;
-    PsiDeclarationStatement decl = file != null ? (PsiDeclarationStatement) PsiTreeUtil.getParentOfType(place, PsiDeclarationStatement.class) : null;
+    PsiDeclarationStatement decl = file != null ? PsiTreeUtil.getParentOfType(place, PsiDeclarationStatement.class) : null;
     if (decl != null) {
       place = file.findElementAt(decl.getTextOffset() -1);
     }
@@ -79,7 +79,7 @@ public class MacroUtil {
     }
   }
 
-  @NotNull public static PsiExpression[] getStandardExpressions(PsiElement place) {
+  @NotNull private static PsiExpression[] getStandardExpressions(PsiElement place) {
     ArrayList<PsiExpression> array = new ArrayList<PsiExpression>();
     PsiElementFactory factory = place.getManager().getElementFactory();
     try {
@@ -130,7 +130,7 @@ public class MacroUtil {
 
   @NotNull public static PsiExpression[] getStandardExpressionsOfType(PsiElement place, PsiType type) {
     List<PsiExpression> array = new ArrayList<PsiExpression>();
-    PsiExpression[] expressions = MacroUtil.getStandardExpressions(place);
+    PsiExpression[] expressions = getStandardExpressions(place);
     for (PsiExpression expr : expressions) {
       PsiType type1 = expr.getType();
       if (type == null || type1 != null && type.isAssignableFrom(type1)) {

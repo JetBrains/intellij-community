@@ -140,6 +140,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
     }
 
     final I18nizeQuickFixDialog dialog = handler.createDialog(psiFile, editor, project);
+    if (dialog == null) return;
     dialog.show();
     if (!dialog.isOK()) return;
 

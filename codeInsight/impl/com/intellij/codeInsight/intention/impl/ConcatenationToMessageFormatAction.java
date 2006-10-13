@@ -206,4 +206,19 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   public boolean startInWriteAction() {
     return true;
   }
+
+  public static PsiLiteralExpression getContainingLiteral(final PsiBinaryExpression concatenation) {
+    PsiExpression operand = concatenation.getLOperand();
+    PsiLiteralExpression literalExpression = null;
+    if (operand instanceof PsiLiteralExpression) {
+      literalExpression = (PsiLiteralExpression)operand;
+    }
+    else {
+      operand = concatenation.getROperand();
+      if (operand instanceof PsiLiteralExpression) {
+        literalExpression = (PsiLiteralExpression)operand;
+      }
+    }
+    return literalExpression;
+  }
 }

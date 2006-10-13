@@ -84,7 +84,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
   @NonNls private static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
   @NonNls private static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
-  @NonNls public static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
+  @NonNls private static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
 
   public I18nizeQuickFixDialog(Project project,
                                @NotNull final PsiFile context,
@@ -521,7 +521,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     return getKeyTextField().getText();
   }
 
-  public boolean isUseResourceBundle() {
+  private boolean isUseResourceBundle() {
     return myUseResourceBundle.isSelected();
   }
 
@@ -542,7 +542,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     return propertiesFiles;
   }
 
-  public String getResourceBundleText() {
+  private String getResourceBundleText() {
     return myShowJavaCodeInfo ? myRBEditorTextField.getText() : null;
   }
 
