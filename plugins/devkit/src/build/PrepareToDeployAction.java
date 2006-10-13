@@ -116,7 +116,7 @@ public class PrepareToDeployAction extends AnAction {
               errorSet.add("error");
               Messages.showErrorDialog(e1.getMessage(), DevKitBundle.message("error.occured"));
             }
-          }, ModalityState.NON_MMODAL);
+          }, ModalityState.NON_MODAL);
         }
       }
     }, DevKitBundle.message("prepare.for.deployment", module.getName()), true, module.getProject());

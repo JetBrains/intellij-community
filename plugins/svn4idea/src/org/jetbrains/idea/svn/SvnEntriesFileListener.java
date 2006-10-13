@@ -88,7 +88,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
           listener.onEntriesChanged(parent);
         }
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
   }
 
   public void addListener(SvnEntriesListener listener) {
