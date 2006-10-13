@@ -157,7 +157,7 @@ public final class Presentation implements Cloneable {
   }
 
   public void restoreTextWithMnemonic(Presentation presentation) {
-    setText(restoreTextWithMnemonic(presentation.getText(), presentation.getMnemonic()));
+    setText(presentation.getTextWithMnemonic());
   }
 
   public static String restoreTextWithMnemonic(final String text, final int mnemonic) {

@@ -63,6 +63,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
   public void paint(Graphics g, JComponent comp) {
     JMenuItem jmenuitem = (JMenuItem)comp;
     ButtonModel buttonmodel = jmenuitem.getModel();
+    int mnemonicIndex = jmenuitem.getDisplayedMnemonicIndex();
     Icon icon1 = getIcon();
     Icon icon2 = getAllowedIcon();
     int j1 = jmenuitem.getWidth();
@@ -144,19 +145,19 @@ public class BegMenuItemUI extends BasicMenuItemUI {
         else{
           g.setColor(jmenuitem.getForeground());
         }
-        BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), j.x, j.y + fontmetrics.getAscent());
+        BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, j.x, j.y + fontmetrics.getAscent());
       }
       else {
         final Object disabledForeground = UIUtil.getMenuItemDisabledForegroundObject();
         if (disabledForeground instanceof Color){
           g.setColor((Color)disabledForeground);
-          BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), j.x, j.y + fontmetrics.getAscent());
+          BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, j.x, j.y + fontmetrics.getAscent());
         }
         else{
           g.setColor(jmenuitem.getBackground().brighter());
-          BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), j.x, j.y + fontmetrics.getAscent());
+          BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, j.x, j.y + fontmetrics.getAscent());
           g.setColor(jmenuitem.getBackground().darker());
-          BasicGraphicsUtils.drawString(g, s1, buttonmodel.getMnemonic(), j.x - 1, (j.y + fontmetrics.getAscent()) - 1);
+          BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, j.x - 1, (j.y + fontmetrics.getAscent()) - 1);
         }
       }
     }
