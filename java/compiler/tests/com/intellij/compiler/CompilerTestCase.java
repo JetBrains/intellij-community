@@ -122,7 +122,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
                 assertTrue("Code compiled with errors or did not compile!", !aborted && errors == 0);
-              } finally{
+              }
+              finally {
                 down();
               }
             }
@@ -136,7 +137,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         //  System.out.println("FirstRunnable time:"+(((double)stop-(double)start)/1000.0) + "seconds");
         //}
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
 
     waitFor();
     Thread.sleep(5);
@@ -147,7 +148,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
       public void run() {
         //long start = System.currentTimeMillis();
         try {
-          final Exception[] ex = new Exception[] {null};
+          final Exception[] ex = new Exception[]{null};
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
@@ -200,7 +201,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
                   }
                   myRecompiledPaths.add(path);
                 }
-              } finally{
+              }
+              finally {
                 down();
               }
             }
@@ -214,7 +216,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         //  System.out.println("FirstRunnable time:"+(((double)stop-(double)start)/1000.0) + "seconds");
         //}
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
 
     waitFor();
     checkResults();
@@ -485,11 +487,12 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           mySourceDir = null;
           myOriginalSourceDir = null;
           CompilerTestCase.super.tearDown();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
           exceptions[0] = e;
         }
       }
-    }, ModalityState.NON_MMODAL);
+    }, ModalityState.NON_MODAL);
     if (exceptions[0] != null) {
       throw exceptions[0];
     }
