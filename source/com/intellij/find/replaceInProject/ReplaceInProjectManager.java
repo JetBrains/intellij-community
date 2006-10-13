@@ -23,14 +23,15 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -46,6 +47,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
 
   public void projectClosed() {}
 
+  @NotNull
   public String getComponentName() {
     return "ReplaceInProjectManager";
   }
@@ -59,11 +61,11 @@ public class ReplaceInProjectManager implements ProjectComponent {
   }
 
   static class ReplaceContext {
-    private com.intellij.usages.UsageView usageView;
+    private UsageView usageView;
     private FindModel findModel;
     private Set<Usage> excludedSet;
 
-    ReplaceContext(com.intellij.usages.UsageView _usageView, FindModel _findModel) {
+    ReplaceContext(UsageView _usageView, FindModel _findModel) {
       usageView = _usageView;
       findModel = _findModel;
     }
@@ -72,7 +74,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
       return findModel;
     }
 
-    public com.intellij.usages.UsageView getUsageView() {
+    public UsageView getUsageView() {
       return usageView;
     }
 
@@ -103,18 +105,21 @@ public class ReplaceInProjectManager implements ProjectComponent {
       return;
     }
 
-    com.intellij.usages.UsageViewManager manager = myProject.getComponent(com.intellij.usages.UsageViewManager.class);
+    UsageViewManager manager = myProject.getComponent(UsageViewManager.class);
 
     if (manager!=null) {
-      final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModel);
+      findManager.getFindInProjectModel().copyFrom(findModel);
+      final FindModel findModelCopy = (FindModel)findModel.clone();
+
+      final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
       final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(
         myProject, true, presentation
       );
 
-      final ReplaceContext context[] = new ReplaceContext[1];
+      final ReplaceContext[] context = new ReplaceContext[1];
 
       manager.searchAndShowUsages(
-        new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) },
+        new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModelCopy.getStringToFind()) },
         new Factory<UsageSearcher>() {
           public UsageSearcher create() {
             return new UsageSearcher() {
@@ -123,7 +128,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
               myIsFindInProgress = true;
 
               FindInProjectUtil.findUsages(
-                findModel,
+                findModelCopy,
                 psiDirectory,
                 myProject,
                 new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor)
@@ -137,7 +142,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
         presentation,
         new UsageViewManager.UsageViewStateListener() {
           public void usageViewCreated(UsageView usageView) {
-            context[0] = new ReplaceContext(usageView,findModel);
+            context[0] = new ReplaceContext(usageView,findModelCopy);
             addReplaceActions(context[0]);
           }
 
@@ -172,7 +177,9 @@ public class ReplaceInProjectManager implements ProjectComponent {
       final Usage usage = usages[i];
       final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
 
-      final PsiFile psiFile = usageInfo.getElement().getContainingFile();
+      final PsiElement elt = usageInfo.getElement();
+      if (elt == null) continue;
+      final PsiFile psiFile = elt.getContainingFile();
       if (!psiFile.isWritable()) continue;
 
       Runnable selectOnEditorRunnable = new Runnable() {
@@ -234,7 +241,9 @@ public class ReplaceInProjectManager implements ProjectComponent {
               final Usage usage = usages[j];
               final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
 
-              PsiFile otherPsiFile = usageInfo.getElement().getContainingFile();
+              final PsiElement elt = usageInfo.getElement();
+              if (elt == null) continue;
+              PsiFile otherPsiFile = elt.getContainingFile();
               if (!otherPsiFile.equals(psiFile)){
                 break;
               }
@@ -249,6 +258,8 @@ public class ReplaceInProjectManager implements ProjectComponent {
         };
 
         CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
+
+        //noinspection AssignmentToForLoopParameter
         i = nextNumber[0] - 1;
       }
 
@@ -292,8 +303,8 @@ public class ReplaceInProjectManager implements ProjectComponent {
   }
 
   private void doReplace(final ReplaceContext replaceContext, Set<Usage> usages) {
-    for(Iterator<Usage> i = usages.iterator(); i.hasNext();){
-      doReplace(replaceContext, i.next());
+    for (final Usage usage : usages) {
+      doReplace(replaceContext, usage);
     }
   }
 
@@ -335,8 +346,8 @@ public class ReplaceInProjectManager implements ProjectComponent {
     }
 
     Set<VirtualFile> readOnlyFiles = null;
-    for(Iterator<Usage> i = selectedUsages.iterator();i.hasNext();) {
-      final VirtualFile file = ((UsageInfo2UsageAdapter)i.next()).getFile();
+    for (final Usage usage : selectedUsages) {
+      final VirtualFile file = ((UsageInfo2UsageAdapter)usage).getFile();
 
       if (!file.isWritable()) {
         if (readOnlyFiles == null) readOnlyFiles = new HashSet<VirtualFile>();
