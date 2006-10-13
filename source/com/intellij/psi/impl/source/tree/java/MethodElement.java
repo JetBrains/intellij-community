@@ -1,12 +1,13 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.CharTable;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodElement extends RepositoryTreeElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.MethodElement");
@@ -33,12 +34,19 @@ public class MethodElement extends RepositoryTreeElement{
     return super.addInternal(first, last, anchor, before);
   }
 
-  public void deleteChildInternal(ASTNode child) {
-    super.deleteChildInternal(child);
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == CODE_BLOCK){
+      final ASTNode prevWS = TreeUtil.prevLeaf(child);
+      if (prevWS != null && prevWS.getElementType() == ElementType.WHITE_SPACE) {
+        removeChild(prevWS);
+      }
+      super.deleteChildInternal(child);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1, treeCharTab, getManager());
-      this.addInternal(semicolon, semicolon, null, Boolean.TRUE);
+      addInternal(semicolon, semicolon, null, Boolean.TRUE);
+    }
+    else {
+      super.deleteChildInternal(child);
     }
   }
 
