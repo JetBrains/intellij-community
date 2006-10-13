@@ -30,15 +30,16 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   private Project myProject;
@@ -112,7 +113,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       myRemoveButton.addActionListener(
         new ActionListener(){
           public void actionPerformed(ActionEvent e){
-            removePath();
+            removePaths();
           }
         }
       );
@@ -169,25 +170,34 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       return false;
     }
 
-    private void removePath() {
-      int selected = myExcludedTable.getSelectedRow();
-      if(selected < 0)
+    private void removePaths() {
+      int[] selected = myExcludedTable.getSelectedRows();
+      if(selected == null || selected.length <= 0) {
         return;
+      }
       if(myExcludedTable.isEditing()) {
         TableCellEditor editor = myExcludedTable.getCellEditor();
         if (editor != null) {
           editor.stopCellEditing();
         }
       }
-      myExcludeEntryDescriptions.remove(selected);
       AbstractTableModel model = (AbstractTableModel)myExcludedTable.getModel();
-      model.fireTableRowsDeleted(selected, selected);
-      if(selected >= myExcludeEntryDescriptions.size()) {
-        selected --;
+      Arrays.sort(selected);
+      int indexToSelect = selected[selected.length - 1];
+      int removedCount = 0;
+      for (int indexToRemove : selected) {
+        final int row = indexToRemove - removedCount;
+        myExcludeEntryDescriptions.remove(row);
+        model.fireTableRowsDeleted(row, row);
+        removedCount += 1;
       }
-      if(selected >= 0) {
-        myExcludedTable.setRowSelectionInterval(selected, selected);
+      if(indexToSelect >= myExcludeEntryDescriptions.size()) {
+        indexToSelect = myExcludeEntryDescriptions.size() - 1;
       }
+      if(indexToSelect >= 0) {
+        myExcludedTable.setRowSelectionInterval(indexToSelect, indexToSelect);
+      }
+      myExcludedTable.requestFocus();
     }
 
     protected JComponent createMainComponent(){
@@ -255,7 +265,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       myExcludedTable.setDefaultRenderer(Object.class, new MyObjectRenderer());
       myExcludedTable.getColumn(names[0]).setPreferredWidth(350);
       myExcludedTable.getColumn(names[1]).setPreferredWidth(140);
-      myExcludedTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      myExcludedTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       myExcludedTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           myRemoveButton.setEnabled(myExcludedTable.getSelectedRow() >= 0);
