@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Stack;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
 
@@ -29,7 +31,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private HashMap<String, VirtualFileSystem> myProtocolToSystemMap = null;
 
   private PendingEventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = PendingEventDispatcher.create(VirtualFileListener.class);
-  private PendingEventDispatcher<VirtualFileManagerListener> myVirtualFileManagerListenerMulticaster = PendingEventDispatcher.create(VirtualFileManagerListener.class);
+  private List<VirtualFileManagerListener> myVirtualFileManagerListeners = new CopyOnWriteArrayList<VirtualFileManagerListener>();
   private PendingEventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = PendingEventDispatcher.create(ModificationAttemptListener.class);
 
   private ProgressIndicator myRefreshIndicator = new StatusBarProgress();
@@ -157,11 +159,23 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public void addVirtualFileManagerListener(VirtualFileManagerListener listener) {
-    myVirtualFileManagerListenerMulticaster.addListener(listener);
+    myVirtualFileManagerListeners.add(listener);
   }
 
   public void removeVirtualFileManagerListener(VirtualFileManagerListener listener) {
-    myVirtualFileManagerListenerMulticaster.removeListener(listener);
+    myVirtualFileManagerListeners.remove(listener);
+  }
+
+  private void fireBeforeRefreshStart (boolean asynchronous) {
+    for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
+      listener.beforeRefreshStart(asynchronous);
+    }
+  }
+
+  private void fireAfterRefreshFinish (boolean asynchronous) {
+    for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
+      listener.afterRefreshFinish(asynchronous);
+    }
   }
 
   public void beforeRefreshStart(final boolean asynchronous, ModalityState modalityState, final Runnable postAction) {
@@ -209,7 +223,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              myVirtualFileManagerListenerMulticaster.getMulticaster().beforeRefreshStart(asynchronous);
+              fireBeforeRefreshStart(asynchronous);
               //noinspection ForLoopReplaceableByForEach
               for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
                 Runnable runnable = myRefreshEventsToFire.get(i);
@@ -240,7 +254,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
               if (myRefreshCount > 0) {
                 if (!asynchronous && mySynchronousRefreshCount == 0) {
-                  myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
+                  fireAfterRefreshFinish(asynchronous);
                 }
               }
               else {
@@ -258,7 +272,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 }
 
                 myRefreshEventsToFire = null;
-                myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
+                fireAfterRefreshFinish(asynchronous);
 
                 if (asynchronous) {
                   int filesCount = synchronizer.collectFilesToUpdate();
