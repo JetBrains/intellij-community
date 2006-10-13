@@ -10,6 +10,8 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -21,25 +23,54 @@ public class ToggleCaseAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      if (!editor.getSelectionModel().hasSelection()) {
-        editor.getSelectionModel().selectWordAtCaret(true);
+      final SelectionModel selectionModel = editor.getSelectionModel();
+
+      final int[] starts;
+      final int[] ends;
+      LogicalPosition blockStart = null;
+      LogicalPosition blockEnd = null;
+
+      if (selectionModel.hasBlockSelection()) {
+        starts = selectionModel.getBlockSelectionStarts();
+        ends = selectionModel.getBlockSelectionEnds();
+        blockStart = selectionModel.getBlockStart();
+        blockEnd = selectionModel.getBlockEnd();
       }
-
-      int startOffset = editor.getSelectionModel().getSelectionStart();
-      int endOffset = editor.getSelectionModel().getSelectionEnd();
-
-      StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        final String text = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
-        toCase(builder, text, true);
-        if (text.equals(builder.toString())) {
-          toCase(builder, text, false);
+      else {
+        if (!selectionModel.hasSelection()) {
+          selectionModel.selectWordAtCaret(true);
         }
-        editor.getDocument().replaceString(startOffset, endOffset, builder.toString());
-        editor.getSelectionModel().setSelection(startOffset, endOffset);
+
+        starts = new int[] {selectionModel.getSelectionStart()};
+        ends = new int[] {selectionModel.getSelectionEnd()};
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
+
+      selectionModel.removeBlockSelection();
+      selectionModel.removeSelection();
+
+      for (int i = 0; i < starts.length; i++) {
+        int startOffset = starts[i];
+        int endOffset = ends[i];
+        StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        try {
+          final String text = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
+          toCase(builder, text, true);
+          if (text.equals(builder.toString())) {
+            toCase(builder, text, false);
+          }
+          editor.getDocument().replaceString(startOffset, endOffset, builder.toString());
+
+        }
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
+        }
+      }
+
+      if (blockStart != null) {
+        selectionModel.setBlockSelection(blockStart, blockEnd);
+      }
+      else {
+        selectionModel.setSelection(starts[0], ends[0]);
       }
     }
 
