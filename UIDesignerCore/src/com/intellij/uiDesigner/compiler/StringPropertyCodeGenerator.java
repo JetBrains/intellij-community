@@ -135,7 +135,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
 
   private void generateLoadTextMethod(final AsmCodeGenerator.FormClassVisitor visitor, final String methodName, final String componentClass,
                                       final String setMnemonicMethodName) {
-    MethodVisitor mv = visitor.visitNewMethod(ACC_PRIVATE, methodName, "(L" + componentClass + ";Ljava/lang/String;)V", null, null);
+    MethodVisitor mv = visitor.visitNewMethod(ACC_PRIVATE | ACC_SYNTHETIC, methodName, "(L" + componentClass + ";Ljava/lang/String;)V", null, null);
     mv.visitCode();
     mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
     mv.visitInsn(DUP);
