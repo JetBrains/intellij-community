@@ -197,6 +197,10 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
     return myColoredText.toArray(new ColoredFragment[myColoredText.size()]);
   }
 
+  public Object[] getEqualityObjects() {
+    return NONE;
+  }
+
   public static class ColoredFragment {
     private String myText;
     private String myToolTip;
