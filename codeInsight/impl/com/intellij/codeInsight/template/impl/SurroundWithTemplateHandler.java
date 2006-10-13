@@ -13,13 +13,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.UIUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 /**
  * @author mike
@@ -54,9 +53,10 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       }
     });
 
+    Set<Character> usedMnemonicsSet = new HashSet<Character>();
     DefaultActionGroup group = new DefaultActionGroup();
     for (TemplateImpl template : array) {
-      group.add(new InvokeTemplateAction(template, editor, project));
+      group.add(new InvokeTemplateAction(template, editor, project, usedMnemonicsSet));
     }
 
     final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
@@ -73,13 +73,28 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     return true;
   }
 
+  private static String extractMnemonic(final TemplateImpl template, Set<Character> usedMnemonics) {
+    final String key = template.getKey();
+    if (StringUtil.isEmpty(key)) return "";
+
+    for (int i = 0; i < key.length(); i++) {
+      char c = key.charAt(i);
+      if (!usedMnemonics.contains(c)) {
+        usedMnemonics.add(c);
+        return key.substring(0, i) + UIUtil.MNEMONIC + key.substring(i) + " ";
+      }
+    }
+
+    return key + " ";
+  }
+
   private static class InvokeTemplateAction extends AnAction {
     private TemplateImpl myTemplate;
     private Editor myEditor;
     private Project myProject;
 
-    public InvokeTemplateAction(final TemplateImpl template, final Editor editor, final Project project) {
-      super(String.valueOf(UIUtil.MNEMONIC) + template.getKey() + " " + template.getDescription());
+    public InvokeTemplateAction(final TemplateImpl template, final Editor editor, final Project project, final Set<Character> usedMnemonicsSet) {
+      super(extractMnemonic(template, usedMnemonicsSet) + template.getDescription());
       myTemplate = template;
       myProject = project;
       myEditor = editor;
