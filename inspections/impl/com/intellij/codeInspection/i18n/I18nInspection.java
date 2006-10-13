@@ -499,7 +499,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (ignoreForClassReferences && isClassRef(expression, value)) {
       return false;
     }
-    if (ignoreForPropertyKeyReferences && I18nUtil.isPropertyRef(expression, value, null)) {
+    if (ignoreForPropertyKeyReferences && I18nUtil.isPropertyRef(expression, value, null, null)) {
       return false;
     }
     if (ignoreToString && isToString(expression)) {

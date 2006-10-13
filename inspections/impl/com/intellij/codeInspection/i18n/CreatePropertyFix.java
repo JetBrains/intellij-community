@@ -27,19 +27,21 @@ public class CreatePropertyFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
   private final PsiElement myElement;
   private final String myKey;
-  private final String myBundleName;
+  private final List<PropertiesFile> myPropertiesFiles;
   public static final String NAME = QuickFixBundle.message("create.property.quickfix.text");
 
-  public CreatePropertyFix(PsiElement element, String key, final String bundleName) {
+  public CreatePropertyFix(PsiElement element, String key, final List<PropertiesFile> propertiesFiles) {
     myElement = element;
     myKey = key;
-    myBundleName = bundleName;
+    myPropertiesFiles = propertiesFiles;
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @NotNull
   public String getText() {
     return NAME;
   }
@@ -61,12 +63,11 @@ public class CreatePropertyFix implements IntentionAction {
       }
 
       protected List<String> suggestPropertiesFiles() {
-        List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myBundleName, myElement);
-        if (propertiesFiles.isEmpty()) {
+        if (myPropertiesFiles.isEmpty()) {
           return super.suggestPropertiesFiles();
         }
         ArrayList<String> list = new ArrayList<String>();
-        for (PropertiesFile propertiesFile : propertiesFiles) {
+        for (PropertiesFile propertiesFile : myPropertiesFiles) {
           list.add(propertiesFile.getVirtualFile().getPath());
         }
         return list;
@@ -119,10 +120,5 @@ public class CreatePropertyFix implements IntentionAction {
 
   public boolean startInWriteAction() {
     return false;
-  }
-
-  //tests only
-  public String getKey() {
-    return myKey;
   }
 }

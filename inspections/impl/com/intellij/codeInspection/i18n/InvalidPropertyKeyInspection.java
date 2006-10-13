@@ -17,6 +17,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * @author max
@@ -113,11 +115,16 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
 
   private static class CreatePropertyQuickFix implements LocalQuickFix {
     private final String myKey;
-    private final String myBundleName;
+    private final List<PropertiesFile> myPropertiesFiles;
 
-    public CreatePropertyQuickFix(String key, String bundleName) {
+    public CreatePropertyQuickFix(String key, String bundleName, PsiElement context) {
       myKey = key;
-      myBundleName = bundleName;
+      myPropertiesFiles = I18nUtil.propertiesFilesByBundleName(bundleName, context);
+    }
+
+    public CreatePropertyQuickFix(final String key, final PropertiesFile propertiesFile) {
+      myKey = key;
+      myPropertiesFiles = Collections.singletonList(propertiesFile);
     }
 
     @NotNull
@@ -128,7 +135,7 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
     public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)descriptor.getPsiElement();
       try {
-        new CreatePropertyFix(literalExpression, myKey, myBundleName).invoke(project, null, literalExpression.getContainingFile());
+        new CreatePropertyFix(literalExpression, myKey, myPropertiesFiles).invoke(project, null, literalExpression.getContainingFile());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -167,12 +174,21 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
       String key = (String)value;
 
       String[] resourceBundleName = new String[1];
-      if (!I18nUtil.isValidPropertyReference(expression, key, resourceBundleName)) {
+      Ref<PropertiesFile> missingTranslationFile = new Ref<PropertiesFile>();
+      if (!I18nUtil.isValidPropertyReference(expression, key, resourceBundleName, missingTranslationFile)) {
         final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description,
-                                                                            new CreatePropertyQuickFix(key,resourceBundleName[0]),
+                                                                            new CreatePropertyQuickFix(key,resourceBundleName[0],expression),
                                                                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        myProblems.add(problem);
+      }
+      else if (!missingTranslationFile.isNull()) {
+        final String description = CodeInsightBundle.message("inspection.missing.translation.message", missingTranslationFile.get().getName());
+        final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
+                                                                            description,
+                                                                            new CreatePropertyQuickFix(key,missingTranslationFile.get()),
+                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         myProblems.add(problem);
       }
       else if (expression.getParent() instanceof PsiNameValuePair) {

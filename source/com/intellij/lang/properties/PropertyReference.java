@@ -164,7 +164,8 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
   }
 
   public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-    CreatePropertyFix fix = new CreatePropertyFix(myElement, myKey, myBundleName);
+    List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myBundleName, reference.getElement());
+    CreatePropertyFix fix = new CreatePropertyFix(myElement, myKey, propertiesFiles);
     QuickFixAction.registerQuickFixAction(info, fix);
   }
 

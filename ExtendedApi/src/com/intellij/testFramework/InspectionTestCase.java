@@ -86,37 +86,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
-          assertNotNull(projectDir);
-          sourceDir[0] = projectDir.findChild("src");
-          if (sourceDir[0] == null) {
-            sourceDir[0] = projectDir;
-          }
-          VirtualFile ext_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/ext_src"));
-          final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-          final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-          rootModel.clear();
-          // configure source and output path
-          final ContentEntry contentEntry = rootModel.addContentEntry(projectDir);
-          contentEntry.addSourceFolder(sourceDir[0], false);
-          if (ext_src != null) {
-            contentEntry.addSourceFolder(ext_src, false);
-          }
-
-          // IMPORTANT! The jdk must be obtained in a way it is obtained in the normal program!
-          //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
-          ProjectJdk jdk;
-          if ("java 1.5".equals(jdkName)) {
-            jdk = JavaSdkImpl.getMockJdk15(jdkName);
-            myPsiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
-          }
-          else {
-            jdk = JavaSdkImpl.getMockJdk(jdkName);
-          }
-
-          rootModel.setJdk(jdk);
-
-          rootModel.commit();
+          setupRootModel(testDir, sourceDir, jdkName);
         } catch (Exception e) {
           LOG.error(e);
         }
@@ -141,6 +111,40 @@ public abstract class InspectionTestCase extends PsiTestCase {
     do {
       globalContext.processSearchRequests();
     } while (tool.queryExternalUsagesRequests(inspectionManager));
+  }
+
+  protected void setupRootModel(final String testDir, final VirtualFile[] sourceDir, final String jdkName) {
+    VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
+    assertNotNull(projectDir);
+    sourceDir[0] = projectDir.findChild("src");
+    if (sourceDir[0] == null) {
+      sourceDir[0] = projectDir;
+    }
+    VirtualFile ext_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/ext_src"));
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
+    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+    rootModel.clear();
+    // configure source and output path
+    final ContentEntry contentEntry = rootModel.addContentEntry(projectDir);
+    contentEntry.addSourceFolder(sourceDir[0], false);
+    if (ext_src != null) {
+      contentEntry.addSourceFolder(ext_src, false);
+    }
+
+    // IMPORTANT! The jdk must be obtained in a way it is obtained in the normal program!
+    //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
+    ProjectJdk jdk;
+    if ("java 1.5".equals(jdkName)) {
+      jdk = JavaSdkImpl.getMockJdk15(jdkName);
+      myPsiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    }
+    else {
+      jdk = JavaSdkImpl.getMockJdk(jdkName);
+    }
+
+    rootModel.setJdk(jdk);
+
+    rootModel.commit();
   }
 
   @NonNls

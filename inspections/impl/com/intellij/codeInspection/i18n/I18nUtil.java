@@ -10,6 +10,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
@@ -130,7 +131,8 @@ public class I18nUtil {
     return false;
   }
 
-  public static boolean isValidPropertyReference(PsiLiteralExpression expression, final String key, String[] outResourceBundle) {
+  public static boolean isValidPropertyReference(PsiLiteralExpression expression, final String key, String[] outResourceBundle,
+                                                 final Ref<PropertiesFile> missingTranslationFile) {
     final HashMap<String, Object> annotationAttributeValues = new HashMap<String, Object>();
     annotationAttributeValues.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
     if (mustBePropertyKey(expression, annotationAttributeValues)) {
@@ -145,23 +147,26 @@ public class I18nUtil {
       }
       String bundleName = value.toString();
       outResourceBundle[0] = bundleName;
-      return isPropertyRef(expression, key, bundleName);
+      return isPropertyRef(expression, key, bundleName, missingTranslationFile);
     }
-    else {
-      return true;
-    }
+    return true;
   }
 
-  public static boolean isPropertyRef(final PsiLiteralExpression expression, final String value, final String resourceBundleName) {
-    if (resourceBundleName != null) {
-      final List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
-      for (PropertiesFile propertiesFile : propertiesFiles) {
-        if (propertiesFile.findPropertyByKey(value) != null) return true;
-      }
-      return false;
+  public static boolean isPropertyRef(final PsiLiteralExpression expression, final String value, final String resourceBundleName, final Ref<PropertiesFile> missingTranslationFile) {
+    if (resourceBundleName == null) {
+      return !PropertiesUtil.findPropertiesByKey(expression.getProject(), value).isEmpty();
     }
     else {
-      return !PropertiesUtil.findPropertiesByKey(expression.getProject(), value).isEmpty();
+      final List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
+      boolean containedInPropertiesFile = false;
+      for (PropertiesFile propertiesFile : propertiesFiles) {
+        boolean isItThere = propertiesFile.findPropertyByKey(value) != null;
+        containedInPropertiesFile |= isItThere;
+        if (!isItThere && missingTranslationFile != null) {
+          missingTranslationFile.set(propertiesFile);
+        }
+      }
+      return containedInPropertiesFile;
     }
   }
 
@@ -179,10 +184,7 @@ public class I18nUtil {
       final Module module = ProjectRootManager.getInstance(context.getProject()).getFileIndex().getModuleForFile(virtualFile);
       if (module != null) {
         PropertiesReferenceManager refManager = context.getProject().getComponent(PropertiesReferenceManager.class);
-        List<PropertiesFile> propFiles = refManager.findPropertiesFiles(module, resourceBundleName);
-        if (!propFiles.isEmpty()) {
-          return propFiles;
-        }
+        return refManager.findPropertiesFiles(module, resourceBundleName);
       }
     }
     return Collections.emptyList();
