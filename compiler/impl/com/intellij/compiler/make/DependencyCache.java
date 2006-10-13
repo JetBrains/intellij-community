@@ -207,7 +207,8 @@ public class DependencyCache {
     // build back-dependencies
 
     for (final int qName : namesToUpdate) {
-      buildSubclassDependencies(qName, qName);
+      final int classId = cache.getClassId(qName);
+      buildSubclassDependencies(qName, classId);
     }
 
     final int[] classesToRemove = myClassesWithSourceRemoved.toArray();
@@ -524,16 +525,15 @@ public class DependencyCache {
     }
   }
 
-  private void buildSubclassDependencies(final int qName, int targetClassQName) throws CacheCorruptedException {
+  private void buildSubclassDependencies(final int qName, int targetClassId) throws CacheCorruptedException {
     final Cache cache = getCache();
-    final int targetClassId = cache.getClassId(targetClassQName);
 
     final int superQName = cache.getSuperQualifiedName(targetClassId);
     if (superQName != Cache.UNKNOWN) {
       int superClassId = cache.getClassId(superQName);
       if (superClassId != Cache.UNKNOWN) {
         cache.addSubclass(superClassId, qName);
-        buildSubclassDependencies(qName, superQName);
+        buildSubclassDependencies(qName, superClassId);
       }
     }
 
@@ -542,7 +542,7 @@ public class DependencyCache {
       int superId = cache.getClassId(interfaceName);
       if (superId != Cache.UNKNOWN) {
         cache.addSubclass(superId, qName);
-        buildSubclassDependencies(qName, interfaceName);
+        buildSubclassDependencies(qName, superId);
       }
     }
   }
