@@ -48,12 +48,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ContentsUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
@@ -171,8 +166,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                   else if (!updatedFiles.isEmpty()) {
                     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(project);
                     restoreUpdateTree.registerUpdateInformation(updatedFiles, myActionInfo);
-                    showUpdateProjectInfo(project, updatedFiles, getTemplatePresentation().getText(), myActionInfo);
-
+                    ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, getTemplatePresentation().getText(), myActionInfo);
                   }
 
                   ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
@@ -209,20 +203,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     else {
       return VcsBundle.message("message.text.all.files.are.up.to.date");
     }
-  }
-
-  public static void showUpdateProjectInfo(final Project project,
-                                           final UpdatedFiles updatedFiles,
-                                           String displayActionName,
-                                           ActionInfo actionInfo) {
-    ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
-    final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, null, project, updatedFiles, displayActionName, actionInfo);
-    Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, VcsBundle.message(
-      "toolwindow.title.update.action.info", displayActionName),
-                                                                                  true);
-    ContentsUtil.addOrReplaceContent(contentManager, content, true);
-    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null);
-    updateInfoTree.expandRootChildren();
   }
 
   private void showOptionsDialog(final Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles, final Project project,

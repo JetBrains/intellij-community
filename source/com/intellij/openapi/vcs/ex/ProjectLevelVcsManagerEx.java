@@ -1,9 +1,10 @@
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,4 +28,6 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract List<VcsShowConfirmationOptionImpl> getAllConfirmations();
 
   public abstract void notifyModuleVcsChanged(Module module, AbstractVcs newVcs);
+
+  public abstract void showUpdateProjectInfo(final UpdatedFiles updatedFiles, final String displayActionName, final ActionInfo actionInfo);
 }

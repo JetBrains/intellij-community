@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +125,8 @@ public abstract class ProjectLevelVcsManager {
   public abstract VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
                                                                @NotNull AbstractVcs vcs);
 
+
+  public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName);
 
   /**
    * Returns the list of all registered factories which provide callbacks to run before and after

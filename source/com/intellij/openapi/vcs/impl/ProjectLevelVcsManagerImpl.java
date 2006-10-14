@@ -64,6 +64,9 @@ import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler;
 import com.intellij.openapi.vcs.checkin.StandardBeforeCheckinHandler;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.fileView.impl.VirtualAndPsiFileDataProvider;
+import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.UpdateInfoTree;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -75,6 +78,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EditorAdapter;
@@ -457,6 +461,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     final VcsShowOptionsSettingImpl option = getOrCreateOption(vcsActionName);
     option.addApplicableVcs(vcs);
     return option;
+  }
+
+  public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
+    showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS);
+  }
+
+  public void showUpdateProjectInfo(final UpdatedFiles updatedFiles, final String displayActionName, final ActionInfo actionInfo) {
+    ContentManager contentManager = getInstanceEx(myProject).getContentManager();
+    final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, null, myProject, updatedFiles, displayActionName, actionInfo);
+    Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, VcsBundle.message(
+      "toolwindow.title.update.action.info", displayActionName), true);
+    ContentsUtil.addOrReplaceContent(contentManager, content, true);
+    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
+    updateInfoTree.expandRootChildren();
   }
 
   private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
