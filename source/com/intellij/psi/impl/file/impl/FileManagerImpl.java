@@ -31,6 +31,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakValueHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -237,7 +238,9 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
+  @Nullable
   public PsiFile findFile(@NotNull VirtualFile vFile) {
+    if (vFile.isDirectory()) return null;
     final ProjectEx project = (ProjectEx)myManager.getProject();
     if (project.isDummy() || project.isDefault()) return null;
 

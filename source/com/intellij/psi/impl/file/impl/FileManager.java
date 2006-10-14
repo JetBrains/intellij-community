@@ -4,6 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,6 +14,7 @@ public interface FileManager {
 
   void runStartupActivity();
 
+  @Nullable
   PsiFile findFile(@NotNull VirtualFile vFile);
 
   PsiDirectory findDirectory(@NotNull VirtualFile vFile);
