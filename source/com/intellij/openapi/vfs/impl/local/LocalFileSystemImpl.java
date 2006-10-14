@@ -1109,15 +1109,15 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     final String name = file.getName();
     final boolean handled = auxDelete(file);
 
+    if (!handled) {
+      delete(physicalFile);
+    }
+
     fireBeforeFileDeletion(requestor, file);
 
     boolean isDirectory = file.isDirectory();
 
     parent.removeChild(file);
-
-    if (!handled) {
-      delete(physicalFile);
-    }
 
     fireFileDeleted(requestor, file, name, isDirectory, parent);
 
