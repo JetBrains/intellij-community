@@ -15,20 +15,20 @@
  */
 package com.intellij.cvsSupport2.actions.merge;
 
-import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeProvider;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -120,8 +120,7 @@ public class CvsMergeProvider implements MergeProvider {
     return result;
   }
 
-  @NotNull private MergeDataProvider parseConflictsInFile(final VirtualFile file) {
-
+  @NotNull private static MergeDataProvider parseConflictsInFile(final VirtualFile file) {
     return new MergeDataProvider() {
       @NotNull
       public MergeData createData() throws VcsException {

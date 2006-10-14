@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.actions.merge;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
@@ -17,13 +18,12 @@ import com.intellij.openapi.ui.SelectFromListDialog;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CvsBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -55,19 +55,19 @@ class MergeInfo implements MergeDataProvider{
     myProject = project;
   }
 
-  public boolean isUseStoredRevision() {
+  private boolean isUseStoredRevision() {
     return myUseLocal;
   }
 
-  public String getOriginalRevision() {
+  private String getOriginalRevision() {
     return myOriginalRevision;
   }
 
-  public String getLastRevision() {
+  private String getLastRevision() {
     return myLastRevision;
   }
 
-  public String getResultRevision() {
+  private String getResultRevision() {
     return myResultRevision;
   }
 
@@ -77,7 +77,7 @@ class MergeInfo implements MergeDataProvider{
                                  getLastRevision());
   }
 
-  protected VirtualFile[] getStoredFiles() {
+  private VirtualFile[] getStoredFiles() {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     String prefix = ".#" + myFile.getName() + ".";
     final VirtualFile parent = myFile.getParent();
@@ -94,7 +94,8 @@ class MergeInfo implements MergeDataProvider{
   }
 
 
-  public byte[] getStoredContent() throws VcsException {
+  @Nullable
+  private byte[] getStoredContent() throws VcsException {
     try {
       if (isUseStoredRevision()) {
         String revision = getResultRevision();
@@ -158,7 +159,8 @@ class MergeInfo implements MergeDataProvider{
 
   }
 
-  protected VirtualFile chooseFileFrom(VirtualFile[] storedFiles) {
+  @Nullable
+  private VirtualFile chooseFileFrom(VirtualFile[] storedFiles) {
     SelectFromListDialog selectFromListDialog = new SelectFromListDialog(myProject, storedFiles, new SelectFromListDialog.ToStringAspect() {
       public String getToStirng(Object obj) {
         return ((VirtualFile)obj).getName();

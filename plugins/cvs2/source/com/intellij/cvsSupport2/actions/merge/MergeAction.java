@@ -43,7 +43,7 @@ public class MergeAction extends AnAction {
       final VirtualFile file = context.getSelectedFile();
       if (file == null) return;
       if (!file.isWritable()) {
-        VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(new VirtualFile[]{file});
+        VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(file);
         return;
       }
       final Map<VirtualFile, List<String>> fileToRevisions = new HashMap<VirtualFile, List<String>>();
