@@ -28,7 +28,7 @@ abstract class UndoOrRedo {
   private final FileEditor myEditor;
   protected final UndoableGroup myUndoableGroup;
 
-  public UndoOrRedo(UndoManagerImpl manager, FileEditor editor) {
+  public UndoOrRedo(UndoManagerImpl manager, FileEditor editor) throws NothingToUndoException {
     myManager = manager;
     myEditor = editor;
     myUndoableGroup = getStack().getLast();
@@ -245,8 +245,9 @@ abstract class UndoOrRedo {
     return result;
   }
 
+  public static class NothingToUndoException extends Exception {}
 
-  private LinkedList<UndoableGroup> getStack() {
+  private LinkedList<UndoableGroup> getStack() throws NothingToUndoException {
     if (myEditor == null) {
       return getStackHolder().getGlobalStack();
     }
@@ -274,21 +275,26 @@ abstract class UndoOrRedo {
   }
 
   public static void execute(UndoManagerImpl manager, FileEditor editor, boolean isUndo) {
-    boolean repeat;
-    do {
-      if (isUndo) {
-        final Undo undo = new Undo(manager, editor);
-        undo.execute();
-        repeat = undo.isTransparentsOnly();
+    try {
+      boolean repeat;
+      do {
+        if (isUndo) {
+          final Undo undo = new Undo(manager, editor);
+          undo.execute();
+          repeat = undo.isTransparentsOnly();
+        }
+        else {
+          final Redo redo = new Redo(manager, editor);
+          redo.execute();
+          repeat = redo.isTransparentsOnly();
+        }
       }
-      else {
-        final Redo redo = new Redo(manager, editor);
-        redo.execute();
-        repeat = redo.isTransparentsOnly();
-      }
+      while (repeat);
     }
-    while (repeat);
-    
+    catch (NothingToUndoException e) {
+      // No live stacks left. Last operation at the stack was completely transparent.
+    }
+
   }
 
   public boolean isTransparentsOnly() {

@@ -1,13 +1,13 @@
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.fileEditor.FileEditor;
 
 /**
  * author: lesya
  */
 class Undo extends UndoOrRedo{
-  public Undo(UndoManagerImpl manager, FileEditor editor) {
+  public Undo(UndoManagerImpl manager, FileEditor editor) throws NothingToUndoException {
     super(manager, editor);
   }
 
