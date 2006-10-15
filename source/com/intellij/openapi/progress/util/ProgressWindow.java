@@ -527,7 +527,9 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
 
     final Window wnd = SwingUtilities.windowForComponent(myDialog.myPanel);
-    wnd.pack();
+    if (wnd != null) { // Can be null if just hidden
+      wnd.pack();
+    }
   }
 
   public Project getProject() {
