@@ -27,10 +27,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class OverridableMethodCallInConstructorInspection
+public class OverridableMethodCallDuringObjectConstructionInspection
         extends MethodInspection {
 
     public String getDisplayName() {
@@ -107,7 +108,7 @@ public class OverridableMethodCallInConstructorInspection
             if (method == null) {
                 return;
             }
-            if (!method.isConstructor() && !isReadObject(method)) {
+            if (!isObjectConstructionMethod(method)) {
                 return;
             }
             final PsiReferenceExpression methodExpression =
@@ -146,11 +147,19 @@ public class OverridableMethodCallInConstructorInspection
             registerMethodCallError(call);
         }
 
-        public static boolean isReadObject(PsiMethod method) {
+        public static boolean isObjectConstructionMethod(PsiMethod method) {
+            if (method.isConstructor()) {
+                return true;
+            }
+            if (CloneUtils.isClone(method)) {
+                return true;
+            }
+            if (MethodUtils.simpleMethodMatches(method, null, "void",
+                    "readObject", "java.io.ObjectInputStream")) {
+                return true;
+            }
             return MethodUtils.simpleMethodMatches(method, null, "void",
-                    "readObject", "java.io.ObjectInputStream") ||
-                    MethodUtils.simpleMethodMatches(method, null, "void",
-                            "readObjectNoData");
+                    "readObjectNoData");
         }
     }
 }

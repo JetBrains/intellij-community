@@ -1,7 +1,8 @@
 <html>
 <body><table> <tr> <td valign="top" height="150">
 <font face="verdana" size="-1">
-This inspection reports any calls of overridable methods of the current class within a constructor.
+This inspection reports any calls of overridable methods of the current class during object construction.
+An object is constructed inside a constructor or inside a clone(), readObject() or readObjectNoData() method.
 Methods are overridable if they are not declared <b><font color="#000080">final</font></b>,
 <b><font color="#000080">static</font></b> or <b><font color="#000080">private</font></b>.
 Such calls may result in subtle bugs, as the object is not guaranteed to be initialized

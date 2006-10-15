@@ -617,16 +617,16 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerInitializerInspections() {
-        m_inspectionClasses.add(StaticVariableInitializationInspection.class);
-        m_inspectionClasses.add(InstanceVariableInitializationInspection.class);
         m_inspectionClasses.add(AbstractMethodCallInConstructorInspection.class);
-        m_inspectionClasses.add(OverridableMethodCallInConstructorInspection.class);
-        m_inspectionClasses.add(OverriddenMethodCallInConstructorInspection.class);
-        m_inspectionClasses.add(ThisEscapedInConstructorInspection.class);
-        m_inspectionClasses.add(StaticVariableUninitializedUseInspection.class);
+        m_inspectionClasses.add(InstanceVariableInitializationInspection.class);
         m_inspectionClasses.add(InstanceVariableUninitializedUseInspection.class);
-        m_inspectionClasses.add(NonThreadSafeLazyInitializationInspection.class);
         m_inspectionClasses.add(NonFinalStaticVariableUsedInClassInitializationInspection.class);
+        m_inspectionClasses.add(NonThreadSafeLazyInitializationInspection.class);
+        m_inspectionClasses.add(OverridableMethodCallDuringObjectConstructionInspection.class);
+        m_inspectionClasses.add(OverriddenMethodCallInConstructorInspection.class);
+        m_inspectionClasses.add(StaticVariableInitializationInspection.class);
+        m_inspectionClasses.add(StaticVariableUninitializedUseInspection.class);
+        m_inspectionClasses.add(ThisEscapedInConstructorInspection.class);
     }
 
     private void registerConfusingInspections() {
