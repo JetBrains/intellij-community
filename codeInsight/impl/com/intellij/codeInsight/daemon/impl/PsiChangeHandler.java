@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.xml.XmlFileViewProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,6 +79,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     if (editor != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myProject.isDisposed()) return;
           EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
           markupModel.setErrorStripeRenderer(markupModel.getErrorStripeRenderer());
         }
