@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CodeFoldingManager {
   public static CodeFoldingManager getInstance(Project project){
@@ -14,6 +15,8 @@ public abstract class CodeFoldingManager {
   }
 
   public abstract void updateFoldRegions(Editor editor);
+
+  @Nullable
   public abstract Runnable updateFoldRegionsAsync(Editor editor);
 
   public abstract FoldRegion findFoldRegion(Editor editor, PsiElement element);

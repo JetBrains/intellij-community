@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.CodeFoldingState;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -10,19 +11,20 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.WeakList;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -41,6 +43,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     myProject = project;
   }
 
+  @NotNull
   public String getComponentName() {
     return "CodeFoldingManagerImpl";
   }
@@ -66,28 +69,36 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         //Do not save/restore folding for code fragments
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file == null || !file.getViewProvider().isPhysical()) return;
-        PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
-        Runnable operation = new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            Runnable runnable = updateFoldRegions(editor, true);
-            if (runnable != null) {
-              runnable.run();
-            }
+            if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
+            if (editor.isDisposed()) return;
 
-            DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-            Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-            for (Editor otherEditor : editors) {
-              if (otherEditor == editor) continue;
-              documentFoldingInfo.loadFromEditor(otherEditor);
-              break;
-            }
-            documentFoldingInfo.setToEditor(editor);
+            PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
-            documentFoldingInfo.clear();
+            Runnable operation = new Runnable() {
+              public void run() {
+                Runnable runnable = updateFoldRegions(editor, true);
+                if (runnable != null) {
+                  runnable.run();
+                }
+
+                DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+                Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+                for (Editor otherEditor : editors) {
+                  if (otherEditor == editor) continue;
+                  documentFoldingInfo.loadFromEditor(otherEditor);
+                  break;
+                }
+                documentFoldingInfo.setToEditor(editor);
+
+                documentFoldingInfo.clear();
+              }
+            };
+            editor.getFoldingModel().runBatchFoldingOperation(operation);
           }
-        };
-        editor.getFoldingModel().runBatchFoldingOperation(operation);
+        });
       }
 
       public void editorReleased(EditorFactoryEvent event) {
@@ -192,10 +203,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
   }
 
+  @Nullable
   public Runnable updateFoldRegionsAsync(Editor editor) {
     return updateFoldRegions(editor, false);
   }
 
+  @Nullable
   private Runnable updateFoldRegions(Editor editor, boolean applyDefaultState) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     if (file != null) {
