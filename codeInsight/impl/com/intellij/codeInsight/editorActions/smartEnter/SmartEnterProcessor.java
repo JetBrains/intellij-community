@@ -167,7 +167,8 @@ public class SmartEnterProcessor {
     }
 
     reformat(atCaret);
-    PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+    commit();
+    
     atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
     for (EnterProcessor processor : ourEnterProcessors) {
       if(atCaret == null){
