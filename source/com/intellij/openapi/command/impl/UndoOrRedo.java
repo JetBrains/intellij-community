@@ -269,7 +269,7 @@ abstract class UndoOrRedo {
         return result;
       }
       else {
-        throw new RuntimeException("Cannot find stack");
+        throw new NothingToUndoException();
       }
     }
   }
