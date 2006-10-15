@@ -65,8 +65,8 @@ public class MethodUtils{
      * @param returnType  the return type, specify null if any type matches
      * @param methodName
      * @param parameterTypes  the type of the parameters of the method, specify
-     *  null if any number and type of parameters match or null entries in an
-     * array to match nummber but not type.
+     *  null if any number and type of parameters match or an empty array
+     * to match zero parameters.
      * @return true, if the specified method matches the specified constraints,
      *  false otherwise
      */

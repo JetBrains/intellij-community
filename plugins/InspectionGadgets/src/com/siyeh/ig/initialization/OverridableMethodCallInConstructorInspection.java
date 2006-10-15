@@ -16,17 +16,17 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +107,7 @@ public class OverridableMethodCallInConstructorInspection
             if (method == null) {
                 return;
             }
-            if (!method.isConstructor()) {
+            if (!method.isConstructor() && !isReadObject(method)) {
                 return;
             }
             final PsiReferenceExpression methodExpression =
@@ -144,6 +144,13 @@ public class OverridableMethodCallInConstructorInspection
                 return;
             }
             registerMethodCallError(call);
+        }
+
+        public static boolean isReadObject(PsiMethod method) {
+            return MethodUtils.simpleMethodMatches(method, null, "void",
+                    "readObject", "java.io.ObjectInputStream") ||
+                    MethodUtils.simpleMethodMatches(method, null, "void",
+                            "readObjectNoData");
         }
     }
 }

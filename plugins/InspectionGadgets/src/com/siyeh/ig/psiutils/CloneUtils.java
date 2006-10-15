@@ -45,24 +45,18 @@ public class CloneUtils{
     }
 
     public static boolean isClone(@NotNull PsiMethod method){
-        final String methodName = method.getName();
-        if(!HardcodedMethodConstants.CLONE.equals(methodName)) {
-          return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        if(parameters.length != 0){
-            return false;
-        }
         final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
-        if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
-            //for 1.5 and after, clone may be covariant
-            final PsiType returnType = method.getReturnType();
-            if(!TypeUtils.isJavaLangObject(returnType)){
-                return false;
-            }
+
+        final PsiClassType javaLangObject;
+        if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
+        javaLangObject = PsiType.getJavaLangObject(
+                method.getManager(), method.getResolveScope());
+        } else {
+            // for 1.5 and after, clone may be covaraiant
+            javaLangObject = null;
         }
-        return true;
+        return MethodUtils.methodMatches(method, null, javaLangObject,
+                HardcodedMethodConstants.CLONE, PsiType.EMPTY_ARRAY);
     }
 
     public static boolean onlyThrowsCloneNotSupportedException(
