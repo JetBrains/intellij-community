@@ -6,8 +6,10 @@ import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
@@ -21,12 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.usageView.UsageViewUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -492,7 +492,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       element.setAttribute(ATTRIBUTE_URL, directory.getVirtualFile().getUrl());
     }
     else if (parentElement instanceof PsiClass) {
-      for (PsiElement e = (PsiElement) parentElement; e != null; e = e.getParent()) {
+      for (PsiElement e = (PsiElement) parentElement; e != null && e.isValid(); e = e.getParent()) {
         if (e instanceof PsiClass) {
           final String qualifiedName = ((PsiClass) e).getQualifiedName();
           if (qualifiedName != null) {
