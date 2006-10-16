@@ -1,6 +1,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaLogger;
@@ -162,13 +163,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     throw new WriteExternalException();
   }
 
-  public AnAction getAction(String id) {
+  public AnAction getAction(@NotNull String id) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: getAction(" + id + ")");
-    }
-    if (id == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("id cannot be null");
     }
     return getActionImpl(id, false);
   }
@@ -202,10 +199,31 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         obj = Class.forName(className, true, stub.getLoader()).newInstance();
       }
       catch (ClassNotFoundException e) {
-        throw new IllegalStateException("class with name \"" + className + "\" not found");
+        PluginId pluginId = stub.getPluginId();
+        if (pluginId != null) {
+          throw new PluginException("class with name \"" + className + "\" not found", e, pluginId);
+        }
+        else {
+          throw new IllegalStateException("class with name \"" + className + "\" not found");
+        }
+      }
+      catch(UnsupportedClassVersionError e) {
+        PluginId pluginId = stub.getPluginId();
+        if (pluginId != null) {
+          throw new PluginException(e, pluginId);
+        }
+        else {
+          throw new IllegalStateException(e);
+        }
       }
       catch (Exception e) {
-        throw new IllegalStateException("cannot create class \"" + className + "\"");
+        PluginId pluginId = stub.getPluginId();
+        if (pluginId != null) {
+          throw new PluginException("cannot create class \"" + className + "\"", e, pluginId);
+        }
+        else {
+          throw new IllegalStateException("cannot create class \"" + className + "\"", e);
+        }
       }
 
       if (!(obj instanceof AnAction)) {
@@ -222,14 +240,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String getId(AnAction action) {
+  public String getId(@NotNull AnAction action) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: getId(" + action + ")");
-    }
-    if (action == null) {
-      throw new IllegalArgumentException("action cannot be null");
     }
     LOG.assertTrue(!(action instanceof ActionStub));
     synchronized (myLock) {
@@ -237,13 +250,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  public String[] getActionIds(String idPrefix) {
+  public String[] getActionIds(@NotNull String idPrefix) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: getActionIds(" + idPrefix + ")");
-    }
-    if (idPrefix == null) {
-      LOG.error("idPrefix cannot be null");
-      return null;
     }
     synchronized (myLock) {
       ArrayList<String> idList = new ArrayList<String>();
@@ -314,7 +323,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       return null;
     }
 
-    ActionStub stub = new ActionStub(className, id, text, loader);
+    ActionStub stub = new ActionStub(className, id, text, loader, pluginId);
     Presentation presentation = stub.getTemplatePresentation();
     presentation.setText(text);
 
@@ -723,17 +732,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  public void registerAction(String actionId, AnAction action, PluginId pluginId) {
+  public void registerAction(@NotNull String actionId, @NotNull AnAction action, PluginId pluginId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: registerAction(" + action + ")");
-    }
-    if (action == null) {
-      LOG.error("action cannot be null");
-      return;
-    }
-    if (actionId == null) {
-      LOG.error("action's id cannot be null");
-      return;
     }
     synchronized (myLock) {
       if (myId2Action.containsKey(actionId)) {
@@ -759,17 +760,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  public void registerAction(String actionId, AnAction action) {
+  public void registerAction(@NotNull String actionId, @NotNull AnAction action) {
     registerAction(actionId, action, null);
   }
 
-  public void unregisterAction(String actionId) {
+  public void unregisterAction(@NotNull String actionId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: unregisterAction(" + actionId + ")");
-    }
-    if (actionId == null) {
-      LOG.error("id cannot be null");
-      return;
     }
     synchronized (myLock) {
       if (!myId2Action.containsKey(actionId)) {
@@ -790,6 +787,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "ActionManager";
   }

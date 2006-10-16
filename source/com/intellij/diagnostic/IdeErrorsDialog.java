@@ -326,6 +326,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Nullable
   public static PluginId findPluginId(Throwable t) {
+    if (t instanceof PluginException) {
+      return ((PluginException)t).getPluginId();
+    }
+
     StackTraceElement[] elements = t.getStackTrace();
     for (StackTraceElement element : elements) {
       String className = element.getClassName();
@@ -375,9 +379,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           }
         }
       }
-    }
-    else if (t instanceof PluginException) {
-      return ((PluginException)t).getPluginId();
     }
 
     return null;
