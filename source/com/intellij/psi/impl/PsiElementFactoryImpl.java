@@ -74,12 +74,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
   public PsiJavaFile getDummyJavaFile() {
     if (myDummyJavaFile == null) {
-      try {
-        myDummyJavaFile = createDummyJavaFile("");
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      myDummyJavaFile = createDummyJavaFile("");
     }
 
     return myDummyJavaFile;
@@ -575,15 +570,15 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   }
 
   @NotNull
-  public XmlTag createXHTMLTagFromText(String text) throws IncorrectOperationException {
+  public XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
     return ((XmlFile)createFileFromText("dummy.xhtml", text)).getDocument().getRootTag();
   }
 
   @NotNull
-  public PsiElement createWhiteSpaceFromText(@NonNls String text) throws IncorrectOperationException {
+  public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, null).getTreeElement();
     final LeafElement newElement = Factory.createLeafElement(
-      ElementType.WHITE_SPACE,
+      TokenType.WHITE_SPACE,
       text.toCharArray(),
       0,
       text.length(),
@@ -746,12 +741,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createFileFromText(name, type, text);
   }
 
-  public PsiFile createDummyFileFromText(final String name, FileType fileType, char[] chars, int startOffset, int endOffset) {
-    LOG.assertTrue(!fileType.isBinary());
-    return createFileFromText(fileType, name, chars, startOffset, endOffset);
-  }
-
-  public PsiFile createFileFromText(FileType fileType, final String fileName, char[] chars, int startOffset, int endOffset) {
+  private PsiFile createFileFromText(FileType fileType, final String fileName, char[] chars, int startOffset, int endOffset) {
     LOG.assertTrue(!fileType.isBinary());
     final CharArrayCharSequence text = new CharArrayCharSequence(chars, startOffset, endOffset);
     return createFileFromText(fileName, fileType, text);
@@ -892,7 +882,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
   }
 
-  private PsiJavaFile createDummyJavaFile(String text) throws IncorrectOperationException {
+  private PsiJavaFile createDummyJavaFile(String text) {
     String ext = StdFileTypes.JAVA.getDefaultExtension();
     @NonNls String fileName = "_Dummy_." + ext;
     FileType type = StdFileTypes.JAVA;
