@@ -124,6 +124,8 @@ public class CharArrayUtil {
   }
 
   public static int shiftBackward(CharSequence buffer, int offset, String chars) {
+    if (offset >= buffer.length()) return offset;
+
     while (true) {
       if (offset < 0) break;
       char c = buffer.charAt(offset);
