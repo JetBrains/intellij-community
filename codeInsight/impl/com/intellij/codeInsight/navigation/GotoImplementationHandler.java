@@ -106,6 +106,9 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
       else if (targetElement instanceof PsiMethod && filter.acceptMethod((PsiMethod)targetElement)) {
         result.add(targetElement);
       }
+      else {
+        result.add(targetElement);
+      }
     }
 
     if (result.size() == targetElements.length) {
@@ -186,9 +189,22 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
       }
     }
     else {
-      PsiElementListCellRenderer renderer = sourceElement instanceof PsiMethod
-                                            ? new MethodCellRenderer(!PsiUtil.allMethodsHaveSameSignature(Arrays.asList(elements).toArray(PsiMethod.EMPTY_ARRAY)))
-                                            : new PsiClassListCellRenderer();
+      PsiElementListCellRenderer renderer;
+      boolean onlyMethods = true;
+      boolean onlyClasses = true;
+      for (PsiElement element : elements) {
+        if (!(element instanceof PsiMethod)) onlyMethods = false;
+        if (!(element instanceof PsiClass)) onlyClasses = false;
+      }
+      if (onlyMethods) {
+        renderer = new MethodCellRenderer(!PsiUtil.allMethodsHaveSameSignature(Arrays.asList(elements).toArray(PsiMethod.EMPTY_ARRAY)));
+      }
+      else if (onlyClasses) {
+        renderer = new PsiClassListCellRenderer();
+      }
+      else {
+        renderer = new DefaultPsiElementListCellRenderer();
+      }
 
       Arrays.sort(elements, renderer.getComparator());
 
@@ -201,7 +217,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         public void run() {
           int[] ids = list.getSelectedIndices();
           if (ids == null || ids.length == 0) return;
-          Object [] selectedElements = list.getSelectedValues();
+          Object[] selectedElements = list.getSelectedValues();
           for (Object element : selectedElements) {
             Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
             if (descriptor != null && descriptor.canNavigate()) {
@@ -211,10 +227,32 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         }
       };
 
+      final String name = ((PsiNamedElement)sourceElement).getName();
+      final String title;
+      if (onlyMethods || onlyClasses) {
+        title = CodeInsightBundle.message("goto.implementation.chooser.title", name, elements.length);
+      }
+      else {
+        title = CodeInsightBundle.message("goto.implementation.in.file.chooser.title", name, elements.length);
+      }
       new PopupChooserBuilder(list).
-        setTitle(CodeInsightBundle.message("goto.implementation.chooser.title", ((PsiNamedElement)sourceElement).getName(), elements.length)).
+        setTitle(title).
         setItemChoosenCallback(runnable).
         createPopup().showInBestPositionFor(editor);
+    }
+  }
+
+  private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
+    public String getElementText(final PsiElement element) {
+      return element.getContainingFile().getName();
+    }
+
+    protected String getContainerText(final PsiElement element, final String name) {
+      return null;
+    }
+
+    protected int getIconFlags() {
+      return 0;
     }
   }
 }
