@@ -282,7 +282,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return file instanceof VirtualFileImpl && file.getTimeStamp() != ((VirtualFileImpl)file).getActualTimeStamp();
   }
 
-  public static String getLineSeparator(Document document, VirtualFile file) {
+  private static String getLineSeparator(Document document, VirtualFile file) {
     String lineSeparator = file.getUserData(LoadTextUtil.DETECTED_LINE_SEPARATOR_KEY);
     if (lineSeparator == null){
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
@@ -302,11 +302,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       return lineSeparator;
     }
   }
-
-  public void discardAllChanges() {
-    myUnsavedDocuments.clear();
-  }
-
 
   public Document[] getUnsavedDocuments() {
     return myUnsavedDocuments.toArray(new Document[myUnsavedDocuments.size()]);
