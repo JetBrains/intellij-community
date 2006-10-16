@@ -164,4 +164,10 @@ public class DomUtil {
     return ElementPresentationManager.findByName(getIdentitySiblings(element), newName);
   }
 
+  public static boolean isAncestor(@NotNull DomElement ancestor, @NotNull DomElement descendant, boolean strict) {
+    if (!strict && ancestor.equals(descendant)) return true;
+    final DomElement parent = descendant.getParent();
+    return parent != null && isAncestor(ancestor, parent, false);
+  }
+
 }

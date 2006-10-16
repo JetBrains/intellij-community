@@ -51,16 +51,14 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
         boolean childrenHaveErrors = false;
         for (final DomElementProblemDescriptor descriptor : holder) {
           final DomElement errorElement = descriptor.getDomElement();
-          if (mainElement.equals(errorElement.getParent())) {
+          LOG.assertTrue(DomUtil.isAncestor(mainElement, errorElement, false), "It's only allowed to create DOM problems for the subtree of the element being annotated.\n Error element: " + descriptor + "\nAnnotated element:" + mainElement);
+          if (!mainElement.equals(errorElement)) {
             addProblem(errorElement, descriptor);
             childrenHaveErrors = true;
             result.clear();
           }
-          else {
-            LOG.assertTrue(mainElement.equals(errorElement), "DOM problem has been created for wrong element: " + descriptor + "\nRight element:" + mainElement);
-            if (!childrenHaveErrors) {
-              result.add(descriptor);
-            }
+          else if (!childrenHaveErrors) {
+            result.add(descriptor);
           }
         }
 
