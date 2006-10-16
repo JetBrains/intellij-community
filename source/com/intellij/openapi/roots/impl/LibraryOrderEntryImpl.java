@@ -17,6 +17,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
@@ -113,19 +114,27 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     myExported = exported;
   }
 
+  @Nullable
   public Library getLibrary() {
-    if (myLibrary == null || !getRootModel().isWritable()){
+    if (myLibraryName == null || !getRootModel().isWritable()){
       return myLibrary;
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) return myLibrary;
     final Project project = getRootModel().getModule().getProject();
-    final Library library = ProjectRootConfigurable.getInstance(project).getLibrary(myLibrary);
-    if (library != null){
+    final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
+    Library library;
+    if (myLibrary == null) {
+      library = rootConfigurable.getLibrary(myLibraryName, myLibraryLevel);
+    } else {
+      library = rootConfigurable.getLibrary(myLibrary.getName(), myLibrary.getTable().getTableLevel());
+    }
+    if (library != null) { //library was not deleted
       return library;
     }
-    //library was deleted
-    myLibraryName = myLibrary.getName();
-    myLibraryLevel = myLibrary.getTable().getTableLevel();
+    if (myLibrary != null) {
+      myLibraryName = myLibrary.getName();
+      myLibraryLevel = myLibrary.getTable().getTableLevel();
+    }
     myLibrary = null;
     return null;
   }
@@ -138,6 +147,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     return getLibraryName();
   }
 
+  @Nullable
   private RootProvider getRootProvider() {
     if (myLibrary != null) {
       return myLibrary.getRootProvider();

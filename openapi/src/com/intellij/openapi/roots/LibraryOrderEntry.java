@@ -16,12 +16,15 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.roots.libraries.Library;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
 public interface LibraryOrderEntry extends ExportableOrderEntry {
+  @Nullable
   Library getLibrary();
+  
   boolean isModuleLevel();
 
   String getLibraryLevel();

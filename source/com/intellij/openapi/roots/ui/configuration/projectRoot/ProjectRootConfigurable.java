@@ -501,10 +501,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         final LibraryOrderEntry orderEntry = (LibraryOrderEntry)entry;
         if (orderEntry.isModuleLevel()) {
           final Library library = orderEntry.getLibrary();
-          if (library.getName() == null && orderEntry.getPresentableName() == null) continue;
-          final LibraryConfigurable libraryConfigurable =
-            new LibraryConfigurable(libraryTableModelProvider, library, trancateModuleLibraryName(orderEntry), myProject, TREE_UPDATER);
-          addNode(new MyNode(libraryConfigurable), moduleNode);
+          if (library != null) {
+            if (orderEntry.getPresentableName() == null) continue;
+            final LibraryConfigurable libraryConfigurable =
+              new LibraryConfigurable(libraryTableModelProvider, library, trancateModuleLibraryName(orderEntry), myProject, TREE_UPDATER);
+            addNode(new MyNode(libraryConfigurable), moduleNode);
+          }
         }
       }
     }
@@ -957,15 +959,20 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   @Nullable
-  public Library getLibrary(final Library library) {
-    final String level = library.getTable().getTableLevel();
-    if (level == LibraryTablesRegistrar.PROJECT_LEVEL) {
-      return findLibraryModel(library, myProjectLibrariesProvider);
+  public Library getLibrary(final String libraryName, final String libraryLevel) {
+    if (Comparing.strEqual(libraryLevel, LibraryTablesRegistrar.PROJECT_LEVEL)) {
+      return findLibraryModel(libraryName, myProjectLibrariesProvider);
     }
-    else if (level == LibraryTablesRegistrar.APPLICATION_LEVEL) {
-      return findLibraryModel(library, myGlobalLibrariesProvider);
+    else if (Comparing.strEqual(libraryLevel, LibraryTablesRegistrar.APPLICATION_LEVEL)) {
+      return findLibraryModel(libraryName, myGlobalLibrariesProvider);
     }
-    return findLibraryModel(library, myApplicationServerLibrariesProvider);
+    return findLibraryModel(libraryName, myApplicationServerLibrariesProvider);
+  }
+
+  @Nullable
+  private static Library findLibraryModel(final String libraryName, final LibrariesModifiableModel model) {
+    final Library library = model.getLibraryByName(libraryName);
+    return findLibraryModel(library, model);
   }
 
   @Nullable
