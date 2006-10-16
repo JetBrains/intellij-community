@@ -652,6 +652,7 @@
         <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
         <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
         <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction"/>
+        <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
         <separator/>
         <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="/actions/splitVertically.png"/>
         <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="/actions/splitHorizontally.png"/>
@@ -854,6 +855,7 @@
       <reference ref="CloseAllEditorsButActive"/>
       <reference ref="CloseAllEditors"/>
       <reference ref="CloseAllUnmodifiedEditors"/>
+      <reference ref="CloseAllUnpinnedEditors"/>
       <separator/>
       <reference ref="SplitVertically"/>
       <reference ref="SplitHorizontally"/>

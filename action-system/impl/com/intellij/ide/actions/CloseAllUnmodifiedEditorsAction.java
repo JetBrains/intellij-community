@@ -36,13 +36,17 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
         final EditorComposite [] editors = window.getEditors ();
         for (int j = 0; j < editors.length; j++) {
           final EditorComposite editor = editors [j];
-          if (!editorManager.isChanged (editor)) {
+          if (isFileToClose(editor, window)) {
             res.add (Pair.create (editor, window));
           }
         }
       }
     }
     return res;
+  }
+
+  protected boolean isFileToClose(final EditorComposite editor, final EditorWindow window) {
+    return !window.getManager().isChanged (editor);
   }
 
 
@@ -66,17 +70,22 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
-    if (editorWindow != null && editorWindow.inSplitter()) {
-      presentation.setText(IdeBundle.message("action.close.all.unmodified.editors.in.tab.group"));
-    }
-    else {
-      presentation.setText(IdeBundle.message("action.close.all.unmodified.editors"));
-    }
+    final boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
+    presentation.setText(getPresentationText(inSplitter));
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
     presentation.setEnabled(getFilesToClose (event).size () > 0);
+  }
+
+  protected String getPresentationText(final boolean inSplitter) {
+    if (inSplitter) {
+      return IdeBundle.message("action.close.all.unmodified.editors.in.tab.group");
+    }
+    else {
+      return IdeBundle.message("action.close.all.unmodified.editors");
+    }
   }
 }
