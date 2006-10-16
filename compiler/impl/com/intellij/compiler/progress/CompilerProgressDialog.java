@@ -5,13 +5,13 @@
  */
 package com.intellij.compiler.progress;
 
+import com.intellij.CommonBundle;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.progress.ProgressFunComponentProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.util.Alarm;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -46,6 +46,10 @@ public class CompilerProgressDialog extends DialogWrapper{
       };
       myInstallFunAlarm.addRequest(installer, 3000, progressIndicator.getModalityState());
     }
+  }
+
+  public Container getContentPane() {
+    return getRootPane() != null? super.getContentPane() : null;
   }
 
   private void setFunComponent(JComponent c) {

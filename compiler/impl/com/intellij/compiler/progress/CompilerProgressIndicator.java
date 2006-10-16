@@ -7,33 +7,33 @@ package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.compiler.impl.CompileDriver;
+import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
@@ -392,11 +392,10 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
 
   public Window getWindow(){
     if (!myIsBackgroundMode && myDialog != null) {
-      return SwingUtilities.windowForComponent(myDialog.getContentPane());
+      final Container pane = myDialog.getContentPane();
+      return pane != null? SwingUtilities.windowForComponent(pane) : null;
     }
-    else{
-      return null;
-    }
+    return null;
   }
 
   private CompilerProgressDialog openProgressDialog() {
