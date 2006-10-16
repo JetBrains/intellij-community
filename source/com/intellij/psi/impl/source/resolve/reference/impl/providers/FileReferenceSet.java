@@ -118,7 +118,7 @@ public class FileReferenceSet {
     reparse(str);
   }
 
-  PsiElement getElement() {
+  public PsiElement getElement() {
     return myElement;
   }
 

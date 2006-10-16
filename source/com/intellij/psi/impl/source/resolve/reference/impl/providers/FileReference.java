@@ -8,6 +8,7 @@ import com.intellij.javaee.web.WebModuleProperties;
 import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -86,16 +87,17 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   private ResolveResult[] innerResolve() {
+    final String text = getText();
     final Collection<PsiElement> contexts = getContexts();
-    Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
+    final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
 
-    for (PsiElement context : contexts) {
+    for (final PsiElement context : contexts) {
       PsiElement resolved = null;
       if (context instanceof WebDirectoryElement) {
-        if (".".equals(getText())) {
+        if (".".equals(text)) {
           resolved = context;
         }
-        else if ("..".equals(getText())) {
+        else if ("..".equals(text)) {
           resolved = ((WebDirectoryElement)context).getParentDirectory();
         }
         else {
@@ -118,10 +120,10 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
         }
       }
       else if (context instanceof PsiDirectory) {
-        if (".".equals(getText())) {
+        if (".".equals(text)) {
           resolved = context;
         }
-        else if ("..".equals(getText())) {
+        else if ("..".equals(text)) {
           resolved = ((PsiDirectory)context).getParentDirectory();
         }
         else {
@@ -144,7 +146,20 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
         result.add(new PsiElementResolveResult(resolved));
       }
     }
-    return result.size() > 0? result.toArray(new ResolveResult[result.size()]): ResolveResult.EMPTY_ARRAY;
+    final int resultCount = result.size();
+    if (resultCount > 0) {
+      return result.toArray(new ResolveResult[resultCount]);
+    }
+    if (myFileReferenceSet.isAbsolutePathReference()) {
+      final VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(text);
+      if (dir != null) {
+        final PsiDirectory psiDir = getElement().getManager().findDirectory(dir);
+        if (psiDir != null) {
+          return new ResolveResult[] { new PsiElementResolveResult(psiDir) };
+        }
+      }
+    }
+    return ResolveResult.EMPTY_ARRAY;
   }
 
   public Object[] getVariants(){

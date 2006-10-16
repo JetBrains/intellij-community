@@ -87,7 +87,9 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
         else {
           if (root instanceof LightPsiFileImpl) {
             final LightPsiFileImpl lightFile = (LightPsiFileImpl)root;
-            viewProvider.myRoots.put(entry.getKey(), lightFile.copyLight(viewProvider));
+            final LightPsiFileImpl clone = lightFile.copyLight(viewProvider);
+            clone.setOriginalFile(root);
+            viewProvider.myRoots.put(entry.getKey(), clone);
           }
         }
       }

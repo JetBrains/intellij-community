@@ -169,7 +169,7 @@ public class AntTargetReference extends AntGenericReference {
   @NotNull
   public IntentionAction[] getFixes() {
     final String name = getCanonicalRepresentationText();
-    if (name == null || name.length() == 0) return ourEmptyIntentions;
+    if (name == null || name.length() == 0) return EMPTY_INTENTIONS;
 
     final AntProject project = getElement().getAntProject();
     final AntFile[] importedFiles = project.getImportedFiles();

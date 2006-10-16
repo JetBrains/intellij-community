@@ -4,6 +4,7 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Alarm;
 
 import java.util.HashSet;
@@ -23,13 +25,18 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   private final Alarm myAlarm = new Alarm();
 
   public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
-    clearParentCaches(xmlAttributeSet.getTag());
+    final XmlTag tag = xmlAttributeSet.getTag();
+    if (AntFileImpl.BASEDIR_ATTR.equals(xmlAttributeSet.getName())) {
+      getAntFile(tag).clearCaches();
+    }
+    else {
+      clearParentCaches(tag);
+    }
   }
 
   public void visitDocumentChanged(final XmlDocumentChanged xmlDocumentChanged) {
     final XmlDocument doc = xmlDocumentChanged.getDocument();
-    final AntFile antFile = (AntFile)doc.getContainingFile().getViewProvider()
-      .getPsi(AntSupport.getLanguage());
+    final AntFile antFile = getAntFile(doc);
     if (antFile != null) {
       antFile.clearCaches();
       updateBuildFile(antFile);
@@ -62,7 +69,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
 
   private void clearParentCaches(final XmlElement el) {
     final TextRange textRange = el.getTextRange();
-    final AntFile file = (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
+    final AntFile file = getAntFile(el);
     if (file == null) return;
     AntElement element = file.lightFindElementAt(textRange.getStartOffset());
     while (element != null && !(element instanceof AntFile) &&
@@ -88,6 +95,10 @@ public class AntChangeVisitor implements XmlChangeVisitor {
       }
     }
     updateBuildFile(file);
+  }
+
+  private static AntFile getAntFile(final XmlElement el) {
+    return (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
   }
 
   private void updateBuildFile(final AntFile file) {

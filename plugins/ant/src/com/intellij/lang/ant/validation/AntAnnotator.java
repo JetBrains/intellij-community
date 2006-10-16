@@ -7,7 +7,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.*;
-import com.intellij.lang.ant.psi.impl.reference.AntGenericReference;
+import com.intellij.lang.ant.psi.impl.reference.AntReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.quickfix.AntCreateMacroDefAction;
@@ -137,13 +137,13 @@ public class AntAnnotator implements Annotator {
   private static void checkReferences(AntElement element, final @NonNls AnnotationHolder holder) {
     final PsiReference[] refs = element.getReferences();
     for (final PsiReference ref : refs) {
-      if (ref instanceof AntGenericReference) {
-        final AntGenericReference genRef = (AntGenericReference)ref;
-        if (!genRef.shouldBeSkippedByAnnotator() && ref.resolve() == null) {
+      if (ref instanceof AntReference) {
+        final AntReference antRef = (AntReference)ref;
+        if (!antRef.shouldBeSkippedByAnnotator() && ref.resolve() == null) {
           final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
-          final Annotation annotation = holder.createErrorAnnotation(absoluteRange, genRef.getUnresolvedMessagePattern());
+          final Annotation annotation = holder.createErrorAnnotation(absoluteRange, antRef.getUnresolvedMessagePattern());
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-          final IntentionAction[] intentionActions = genRef.getFixes();
+          final IntentionAction[] intentionActions = antRef.getFixes();
           for (final IntentionAction action : intentionActions) {
             annotation.registerFix(action);
           }

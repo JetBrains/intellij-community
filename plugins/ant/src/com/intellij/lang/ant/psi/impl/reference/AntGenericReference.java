@@ -13,10 +13,9 @@ import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class AntGenericReference extends GenericReference {
+public abstract class AntGenericReference extends GenericReference implements AntReference {
 
   private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.UNKNOWN);
-  protected static final IntentionAction[] ourEmptyIntentions = new IntentionAction[0];
 
   private final AntElement myAntElement;
   private final String myText;
@@ -88,7 +87,7 @@ public abstract class AntGenericReference extends GenericReference {
 
   @NotNull
   public IntentionAction[] getFixes() {
-    return ourEmptyIntentions;
+    return EMPTY_INTENTIONS;
   }
 
   protected XmlAttribute getAttribute() {

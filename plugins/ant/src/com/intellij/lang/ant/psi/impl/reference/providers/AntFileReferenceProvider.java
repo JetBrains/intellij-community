@@ -1,8 +1,7 @@
 package com.intellij.lang.ant.psi.impl.reference.providers;
 
 import com.intellij.lang.ant.psi.AntStructuredElement;
-import com.intellij.lang.ant.psi.impl.reference.AntFileReference;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.ant.psi.impl.reference.AntFileReferenceSet;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -29,12 +28,10 @@ public class AntFileReferenceProvider extends GenericReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
     final String attrValue = attr.getValue();
-    if(attrValue == null || attrValue.indexOf("@{") >=0 ) {
+    if (attrValue == null || attrValue.indexOf("@{") >= 0) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset() + 1;
-    return new AntFileReference[]{
-      new AntFileReference(this, antElement, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()))};
+    return new AntFileReferenceSet(antElement, xmlAttributeValue, this).getAllReferences();
   }
 
   @NotNull
@@ -43,7 +40,10 @@ public class AntFileReferenceProvider extends GenericReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str,
+                                              PsiElement position,
+                                              ReferenceType type,
+                                              int offsetInPosition) {
     return getReferencesByElement(position);
   }
 }
