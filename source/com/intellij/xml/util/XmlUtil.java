@@ -590,24 +590,6 @@ public class XmlUtil {
     return false;
   }
 
-  public static boolean isAntTargetDefinition(XmlAttribute attr) {
-    if (!isInAntBuildFile((XmlFile)attr.getContainingFile())) return false;
-    final XmlTag tag = attr.getParent();
-
-    return tag.getName().equals("target") && attr.getName().equals("name");
-  }
-
-  public static boolean isAntPropertyDefinition(XmlAttribute attr) {
-    final XmlTag parentTag = attr.getParent();
-    if (parentTag != null) {
-      final PsiMetaDataBase data = parentTag.getMetaData();
-      if (data instanceof AntPropertyDeclaration) {
-        if (data.getDeclaration() == attr.getValueElement()) return true;
-      }
-    }
-    return false;
-  }
-
   @NonNls
   public static String[][] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = getContainingFile(document);
