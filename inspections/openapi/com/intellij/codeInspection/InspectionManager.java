@@ -27,7 +27,7 @@ public abstract class InspectionManager {
     return project.getComponent(InspectionManager.class);
   }
 
-  @NotNull public abstract CommonProblemDescriptor createProblemDescriptor(String descriptionTemplate, QuickFix... fixes);
+  @NotNull public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull String descriptionTemplate, QuickFix... fixes);
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
@@ -35,15 +35,15 @@ public abstract class InspectionManager {
    * @param descriptionTemplate problem message. Use <code>#ref</code> for a link to problem piece of code and <code>#loc</code> for location in source code.
    * @param fix should be null if no fix is provided.
    */
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, String descriptionTemplate, LocalQuickFix fix, ProblemHighlightType highlightType);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix fix, ProblemHighlightType highlightType);
 
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType);
 
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine);
 
   @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement startElement,
                                                                      PsiElement endElement,
-                                                                     String descriptionTemplate,
+                                                                     @NotNull String descriptionTemplate,
                                                                      ProblemHighlightType highlightType,
                                                                      LocalQuickFix... fixes
   );

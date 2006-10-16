@@ -96,13 +96,13 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   @NotNull
-  public CommonProblemDescriptor createProblemDescriptor(String descriptionTemplate, QuickFix... fixes) {
+  public CommonProblemDescriptor createProblemDescriptor(@NotNull String descriptionTemplate, QuickFix... fixes) {
     return new CommonProblemDescriptorImpl(fixes, descriptionTemplate);
   }
 
   @NotNull
   public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
-                                                   String descriptionTemplate,
+                                                   @NotNull String descriptionTemplate,
                                                    LocalQuickFix fix,
                                                    ProblemHighlightType highlightType) {
     LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
@@ -111,7 +111,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   @NotNull
   public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
-                                                   String descriptionTemplate,
+                                                   @NotNull String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
                                                    ProblemHighlightType highlightType) {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false);
@@ -119,7 +119,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   @NotNull
   public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
-                                                   String descriptionTemplate,
+                                                   @NotNull String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
                                                    ProblemHighlightType highlightType,
                                                    boolean isAfterEndOfLine) {
@@ -129,7 +129,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   @NotNull
   public ProblemDescriptor createProblemDescriptor(PsiElement startElement,
                                                    PsiElement endElement,
-                                                   String descriptionTemplate,
+                                                   @NotNull String descriptionTemplate,
                                                    ProblemHighlightType highlightType,
                                                    LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false);

@@ -13,7 +13,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private final QuickFix[] myFixes;
   private final String myDescriptionTemplate;
 
-  public CommonProblemDescriptorImpl(final QuickFix[] fixes, final String descriptionTemplate) {
+  public CommonProblemDescriptorImpl(final QuickFix[] fixes, @NotNull final String descriptionTemplate) {
     if (fixes != null) {
       myFixes = new QuickFix[fixes.length];
       System.arraycopy(fixes, 0, myFixes, 0, fixes.length);
