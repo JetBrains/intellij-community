@@ -40,6 +40,46 @@ public class RadGridBagLayoutManagerTest extends TestCase {
     assertEquals(2, myContainer.getComponent(2).getConstraints().getColumn());
   }
 
+  public void testSnapshotRemainder() {
+    JPanel jp = new JPanel();
+    jp.setLayout(new GridBagLayout());
+
+    GridBagConstraints rightGbc = new GridBagConstraints();
+    rightGbc.gridx      = 1;
+    rightGbc.gridy      = 0;
+    rightGbc.gridheight = GridBagConstraints.REMAINDER;
+    rightGbc.fill       = GridBagConstraints.BOTH;
+    rightGbc.weightx    = 1.0;
+    rightGbc.weighty    = 1.0;
+    rightGbc.anchor     = GridBagConstraints.NORTHWEST;
+
+    JPanel rightPanel = new JPanel();
+    jp.add(rightPanel, rightGbc);
+    JTextArea jta = new JTextArea("I am filling all the height.\nLine 2.\nLine 3.\nLine 4.");
+    rightPanel.add(jta);
+
+    GridBagConstraints leftGbc = new GridBagConstraints();
+    leftGbc.gridx  = 0;
+    leftGbc.fill   = GridBagConstraints.HORIZONTAL;
+    leftGbc.anchor = GridBagConstraints.NORTHWEST;
+    leftGbc.ipadx  = 10;
+    leftGbc.ipady  = 4;
+
+    JButton jb1 = new JButton("Button 1");
+    jp.add(jb1, leftGbc);
+    JButton jb2 = new JButton("Button 2");
+    jp.add(jb2, leftGbc);
+    JButton jb3 = new JButton("Button 3");
+    jp.add(jb3, leftGbc);
+
+    processSnapshot(jp);
+
+    assertEquals(4, myContainer.getComponentCount());
+    assertEquals(1, myContainer.getComponent(0).getConstraints().getColumn());
+    assertEquals(0, myContainer.getComponent(0).getConstraints().getRow());
+    assertEquals(3, myContainer.getComponent(0).getConstraints().getRowSpan());
+  }
+
   private void processSnapshot(final JPanel panel) {
     for(int i=0; i<panel.getComponentCount(); i++) {
       RadComponent button = new RadAtomicComponent(null, JButton.class, Integer.toString(i));

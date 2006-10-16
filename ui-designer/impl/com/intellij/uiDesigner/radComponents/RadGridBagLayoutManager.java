@@ -235,8 +235,9 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     container.setLayout(new GridBagLayout());
   }
 
-  public static Dimension getGridBagSize(final JComponent parent, final LayoutManager layout) {
-    GridBagLayout gridBag = (GridBagLayout) layout;
+  public static Dimension getGridBagSize(final JComponent parent) {
+    GridBagLayout gridBag = (GridBagLayout) parent.getLayout();
+    gridBag.layoutContainer(parent);
     int[][] layoutDimensions = gridBag.getLayoutDimensions();
 
     int rowCount = layoutDimensions[1].length;
@@ -257,8 +258,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
                                    final JComponent child,
                                    final RadContainer container,
                                    final RadComponent component) {
-    GridBagLayout grid = (GridBagLayout) container.getLayout();
-    Dimension gridBagSize = getGridBagSize(parent, grid);
+    Dimension gridBagSize = getGridBagSize(parent);
 
     // logic copied from GridBagLayout.java
 
