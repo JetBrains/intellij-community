@@ -240,6 +240,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void execute(final CommitExecutor commitExecutor) {
+    saveState();
     final CommitSession session = commitExecutor.createCommitSession();
     boolean isOK = true;
     if (session.getAdditionalConfigurationUI() != null) {
