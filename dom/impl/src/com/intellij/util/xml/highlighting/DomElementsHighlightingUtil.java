@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
@@ -103,12 +104,6 @@ public class DomElementsHighlightingUtil {
     return descritors;
   }
 
-  @Nullable
-  private static TextRange getTextRange(final DomElementProblemDescriptor problemDescriptor, final PsiElement psiElement) {
-    if (psiElement == null) return null;
-    return StringUtil.isEmpty(psiElement.getText()) ? null : psiElement.getTextRange();
-  }
-
   private static <T> void addDescriptionsToTagEnds(final XmlTag tag, final List<T> descritors, Function<Pair<TextRange, PsiElement>, T> creator) {
     final ASTNode node = tag.getNode();
     assert node != null;
@@ -125,7 +120,9 @@ public class DomElementsHighlightingUtil {
   @Nullable
   private static PsiElement getPsiElement(final DomElement domElement) {
     if (domElement instanceof GenericAttributeValue) {
-      return ((GenericAttributeValue)domElement).getXmlAttributeValue();
+      final GenericAttributeValue attributeValue = (GenericAttributeValue)domElement;
+      final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
+      return value != null && StringUtil.isNotEmpty(value.getText()) ? value : attributeValue.getXmlElement();
     }
     final XmlTag tag = domElement.getXmlTag();
     if (domElement instanceof GenericValue && tag != null) {
