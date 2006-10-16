@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.EvaluatingComputable;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -39,7 +40,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   private ClassFilter[] myClassExclusionFilters = ClassFilter.EMPTY_ARRAY;
 
   public boolean INSTANCE_FILTERS_ENABLED = false;
-  protected InstanceFilter[] myInstanceFilters  = InstanceFilter.EMPTY_ARRAY;
+  private InstanceFilter[] myInstanceFilters  = InstanceFilter.EMPTY_ARRAY;
 
   private static final @NonNls String FILTER_OPTION_NAME = "filter";
   private static final @NonNls String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
@@ -63,9 +64,8 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   /**
    * @return true if the ID was added or false otherwise
    */
-  public boolean hasObjectID(long id) {
-    for (int i = 0; i < myInstanceFilters.length; i++) {
-      InstanceFilter instanceFilter = myInstanceFilters[i];
+  private boolean hasObjectID(long id) {
+    for (InstanceFilter instanceFilter : myInstanceFilters) {
       if (instanceFilter.getId() == id) {
         return true;
       }
@@ -76,7 +76,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   protected void addInstanceFilter(long l) {
     final InstanceFilter[] filters = new InstanceFilter[myInstanceFilters.length + 1];
     System.arraycopy(myInstanceFilters, 0, filters, 0, myInstanceFilters.length);
-    filters[myInstanceFilters.length] = InstanceFilter.create("" + l);
+    filters[myInstanceFilters.length] = InstanceFilter.create(String.valueOf(l));
     myInstanceFilters = filters;
   }
 
@@ -109,9 +109,9 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
     final ClassFilter [] instanceFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
     final List<InstanceFilter> iFilters = new ArrayList<InstanceFilter>(instanceFilters.length);
 
-    for (int i = 0; i < instanceFilters.length; i++) {
+    for (ClassFilter instanceFilter : instanceFilters) {
       try {
-        iFilters.add(InstanceFilter.create(instanceFilters[i]));
+        iFilters.add(InstanceFilter.create(instanceFilter));
       }
       catch (Exception e) {
       }
@@ -142,9 +142,9 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
       }
     }
 
-    if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition())) {
+    if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
       try {
-        ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
+        ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
           public ExpressionEvaluator compute() throws EvaluateException {
             return EvaluatorBuilderImpl.getInstance().build(getCondition(), getEvaluationElement());
           }

@@ -4,21 +4,14 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.*;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -42,7 +35,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class Breakpoint extends FilteredRequestor implements ClassPrepareRequestor {
@@ -115,8 +107,8 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classToBeLoaded);
 
     List list = debugProcess.getVirtualMachineProxy().classesByName(classToBeLoaded);
-    for (Iterator it = list.iterator(); it.hasNext();) {
-      ReferenceType refType = (ReferenceType)it.next();
+    for (final Object aList : list) {
+      ReferenceType refType = (ReferenceType)aList;
       if (refType.isPrepared()) {
         processClassPrepare(debugProcess, refType);
       }
@@ -129,8 +121,8 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
         debugProcess.getRequestsManager().callbackOnPrepareClasses(Breakpoint.this, classPosition);
 
         List list = debugProcess.getPositionManager().getAllClasses(classPosition);
-        for (Iterator it = list.iterator(); it.hasNext();) {
-          ReferenceType refType = (ReferenceType)it.next();
+        for (final Object aList : list) {
+          ReferenceType refType = (ReferenceType)aList;
           if (refType.isPrepared()) {
             processClassPrepare(debugProcess, refType);
           }
@@ -213,19 +205,18 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
         buf.append("\n");
       }
       final DebugProcessImpl debugProcess = context.getDebugProcess();
-      if (LOG_EXPRESSION_ENABLED && getLogMessage() != null && !"".equals(getLogMessage())) {
+      if (LOG_EXPRESSION_ENABLED && getLogMessage() != null && !"".equals(getLogMessage().getText())) {
         if(!debugProcess.isAttached()) {
           return;
         }
 
-        String result;
         try {
-          ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
+          ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
             public ExpressionEvaluator compute() throws EvaluateException {
               return EvaluatorBuilderImpl.getInstance().build(getLogMessage(), ContextUtil.getContextElement(context));
             }
           });
-          result = DebuggerUtilsEx.getValueAsString(context, evaluator.evaluate(context));
+          String result = DebuggerUtils.getValueAsString(context, evaluator.evaluate(context));
           buf.append(getLogMessage());
           buf.append(" = ");
           buf.append(result);
