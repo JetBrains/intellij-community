@@ -16,10 +16,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.peer.PeerFactory;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.MultiLineTooltipUI;
-import com.intellij.ui.PopupHandler;
+import com.intellij.ui.*;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
@@ -31,7 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -130,6 +130,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   public JComponent createComponent() {
+    SwingUtilities.updateComponentTreeUI(myWholePanel);
     final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
     myScrollPane.setPreferredSize(preferredSize);
     myScrollPane.setMaximumSize(new Dimension(150, -1));
@@ -273,29 +274,12 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
-    final DefaultTreeCellRenderer defaultTreeCellRenderer = new DefaultTreeCellRenderer() {
-      public Component getTreeCellRendererComponent(JTree tree,
-                                                    Object value,
-                                                    boolean sel,
-                                                    boolean expanded,
-                                                    boolean leaf,
-                                                    int row,
-                                                    boolean hasFocus) {
-        final Component rendererComponent = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+    myTree.setCellRenderer(new ColoredTreeCellRenderer() {
+      public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (value instanceof MyNode) {
           final MyNode node = ((MyNode)value);
-          setText(node.getDisplayName());
           final Icon icon = node.getConfigurable().getIcon();
           setIcon(icon);
-          if (leaf) {
-            setLeafIcon(icon);
-          }
-          else if (expanded) {
-            setOpenIcon(icon);
-          }
-          else {
-            setClosedIcon(icon);
-          }
           final Font font = UIUtil.getTreeFont();
           if (node.isDisplayInBold()) {
             setFont(font.deriveFont(Font.BOLD));
@@ -303,13 +287,10 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
           else {
             setFont(font.deriveFont(Font.PLAIN));
           }
+          append(node.getDisplayName(), node.isDisplayInBold() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
-        return rendererComponent;
       }
-    };
-
-    myTree.setCellRenderer(defaultTreeCellRenderer);
-
+    });
     initToolbar();
     ArrayList<AnAction> actions = createActions(true);
     if (actions != null) {
@@ -675,7 +656,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
                                                                 myPreselection != null
                                                                   ? myPreselection.getDefaultIndex()
                                                                   : 0);
-      final ListPopup listPopup = popupFactory.createWizardStep(step);
+      final ListPopup listPopup = popupFactory.createListPopup(step);
       listPopup.showUnderneathOf(myNorthPanel);
       SwingUtilities.invokeLater(new Runnable(){
         public void run() {

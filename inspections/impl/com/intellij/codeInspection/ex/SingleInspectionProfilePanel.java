@@ -87,7 +87,6 @@ public class SingleInspectionProfilePanel extends JPanel {
   @NonNls protected static final String EMPTY_HTML = "<html><body></body></html>";
   protected final ProfileManager myProfileManager;
   protected ProfileManager myIDEProfileManager;
-  protected JPanel mySingleProfilePanel;
 
   public SingleInspectionProfilePanel(String inspectionProfileName, Project project, ProfileManager manager) {
     this(inspectionProfileName, null, project, manager);
@@ -105,9 +104,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myProfileManager instanceof ProjectProfileManager){
       myIDEProfileManager = InspectionProfileManager.getInstance();
     }
-    mySingleProfilePanel = new JPanel(new BorderLayout());
-    mySingleProfilePanel.add(createInspectionProfileSettingsPanel(), BorderLayout.CENTER);
-    add(mySingleProfilePanel, BorderLayout.CENTER);
+    add(createInspectionProfileSettingsPanel(), BorderLayout.CENTER);
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
         //invoke after all other listeners
@@ -640,8 +637,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       public int compare(MyTreeNode o1, MyTreeNode o2) {
         String s1 = null;
         String s2 = null;
-        Object userObject1 = ((MyTreeNode)o1).getUserObject();
-        Object userObject2 = ((MyTreeNode)o2).getUserObject();
+        Object userObject1 = o1.getUserObject();
+        Object userObject2 = o2.getUserObject();
 
         if (userObject1 instanceof String && userObject2 instanceof String) {
           s1 = (String)userObject1;
@@ -1139,7 +1136,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         hint = getHint(descriptor);
       }
       Color foreground =
-        selected ? UIUtil.getListSelectionForeground() : node.isProperSetting ? Color.BLUE : UIUtil.getTreeTextForeground();
+        selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting ? Color.BLUE : UIUtil.getTreeTextForeground();
       myTextRenderer.clear();
       if (text != null) {
         SearchUtil.appendFragments(myProfileFilter != null ? myProfileFilter.getFilter() : null, text, style, foreground, background,
