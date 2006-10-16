@@ -44,13 +44,13 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
       int nextPos = s.indexOf(',', pos + 1);
       if (nextPos == -1) {
         PsiReference[] refs =
-          createReferenceSet(element, s.substring(pos + 1), pos + offset + 1, false).getAllReferences();
+          createReferences(element, s.substring(pos + 1), pos + offset + 1, false);
         result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
         break;
       }
       else {
         PsiReference[] refs =
-          createReferenceSet(element, s.substring(pos + 1, nextPos), pos + offset + 1, false).getAllReferences();
+          createReferences(element, s.substring(pos + 1, nextPos), pos + offset + 1, false);
         result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
         pos = nextPos;
       }
@@ -59,7 +59,7 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
     return result;
   }
 
-  protected FileReferenceSet createReferenceSet(PsiElement element, String s, int offset, final boolean soft) {
+  protected PsiReference[] createReferences(PsiElement element, String s, int offset, final boolean soft) {
     int contentOffset = StringUtil.findFirst(s, CharFilter.NOT_WHITESPACE_FILTER);
     if (contentOffset >= 0) {
       offset += contentOffset;
@@ -69,6 +69,6 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
       protected boolean isSoft() {
         return soft;
       }
-    };
+    }.getAllReferences();
   }
 }
