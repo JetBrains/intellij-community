@@ -40,6 +40,7 @@ class MoveStatementHandler extends EditorWriteActionHandler {
     final Project project = editor.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
+    documentManager.commitDocument(document);
     PsiFile psiFile = documentManager.getPsiFile(document);
     PsiFile file = getRoot(psiFile, editor);
     if (file == null) return false;
