@@ -785,8 +785,9 @@ public class TemplateState implements Disposable {
             marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }
           int start = mySegments.getSegmentStart(i);
+          int end = start + marker.length();
           myDocument.insertString(start, marker);
-          mySegments.replaceSegmentAt(i, start, start + marker.length());
+          mySegments.replaceSegmentAt(i, start, end);
           indices.add(i);
           break;
         }
@@ -798,19 +799,7 @@ public class TemplateState implements Disposable {
   private void restoreEmptyVariables(IntArrayList indices) {
     for (int i = 0; i < indices.size(); i++) {
       int index = indices.get(i);
-
-      String name = myTemplate.getSegmentName(index);
-      for (int j = 0; j < myTemplate.getVariableCount(); j++) {
-        if (myTemplate.getVariableNameAt(j).equals(name)) {
-          Expression e = myTemplate.getExpressionAt(j);
-          @NonNls String marker = "a"; //was default
-          if (e instanceof MacroCallNode) {
-            marker = ((MacroCallNode)e).getMacro().getDefaultValue();
-          }
-          myDocument.deleteString(mySegments.getSegmentStart(index), mySegments.getSegmentStart(index) + marker.length());
-          break;
-        }
-      }
+      myDocument.deleteString(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index));
     }
   }
 
