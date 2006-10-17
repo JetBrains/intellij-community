@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
@@ -311,9 +312,8 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
         throw new ClsFormatException();
       }
       char v = (char)ClsUtil.readU4(ptr);
-      Object value = new Character(v);
-      String text = literalToString(value.toString(), '\'');
-      return new ClsLiteralExpressionImpl(this, text, type, value);
+      String text = ClsUtil.literalToString(new CharArrayCharSequence(v), '\'');
+      return new ClsLiteralExpressionImpl(this, text, type, v);
     }
     else if (PsiType.BOOLEAN == type) {
       if (kind != ClsUtil.CONSTANT_Integer) {
@@ -365,7 +365,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
       int stringIndex = ClsUtil.readU2(ptr);
       ptr.offset = classFileData.getOffsetInConstantPool(stringIndex);
       String value = ClsUtil.readUtf8Info(ptr);
-      String text = literalToString(value, '"');
+      String text = ClsUtil.literalToString(value, '"');
       return new ClsLiteralExpressionImpl(this, text, type, value);
     }
     else {
@@ -417,60 +417,6 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     if (initializerText == null) return null;
 
     return ClsParsingUtil.createExpressionFromText(initializerText, getManager(), this);
-  }
-
-  private static String literalToString(String value, char quote) {
-    int length = value.length();
-    @NonNls StringBuffer buffer = new StringBuffer(length + 3);
-    buffer.append(quote);
-
-    for (int i = 0; i < length; i++) {
-      char c = value.charAt(i);
-      if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
-        buffer.append(c);
-      continue;
-      }
-
-      switch (c) {
-      case '\b':
-             buffer.append("\\b");
-             break;
-      case '\t':
-             buffer.append("\\t");
-             break;
-      case '\n':
-             buffer.append("\\n");
-             break;
-      case '\f':
-             buffer.append("\\f");
-             break;
-      case '\r':
-             buffer.append("\\r");
-             break;
-      case '\\':
-             buffer.append("\\\\");
-             break;
-      default:
-             if (c == quote) {
-               buffer.append("\\" + quote);
-             }
-             else if (Character.isISOControl(c)) {
-               String hexCode = Integer.toHexString(c).toUpperCase();
-               buffer.append("\\x");
-               int paddingCount = 4 - hexCode.length();
-               while (paddingCount-- > 0) {
-                 buffer.append(0);
-               }
-               buffer.append(hexCode);
-             }
-             else {
-               buffer.append(c);
-             }
-      }
-    }
-
-    buffer.append(quote);
-    return buffer.toString();
   }
 
   public boolean hasInitializer() {

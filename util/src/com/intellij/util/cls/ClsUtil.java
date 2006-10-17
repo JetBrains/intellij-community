@@ -15,6 +15,7 @@
  */
 package com.intellij.util.cls;
 
+import org.jetbrains.annotations.NonNls;
 
 
 public class ClsUtil {
@@ -126,11 +127,11 @@ public class ClsUtil {
     return readUtf8(bytes, offset, offset + length);
   }
 
-  public static String readUtf8(byte[] bytes, int startOffset, int endOffset) throws ClsFormatException {
+  private static String readUtf8(byte[] bytes, int startOffset, int endOffset) throws ClsFormatException {
     return readUtf8(bytes, startOffset, endOffset, -1, -1);
   }
 
-  public static String readUtf8(byte[] bytes, int startOffset, int endOffset, int oldChar, int newChar) throws ClsFormatException {
+  private static String readUtf8(byte[] bytes, int startOffset, int endOffset, int oldChar, int newChar) throws ClsFormatException {
     char[] buffer = new char[endOffset - startOffset];
     int bOffset = 0;
     int offset = startOffset;
@@ -363,5 +364,59 @@ public class ClsUtil {
 
   public static boolean isStatic(int flags) {
     return (ACC_STATIC & flags) != 0;
+  }
+
+  public static String literalToString(CharSequence value, char quote) {
+    int length = value.length();
+    @NonNls StringBuffer buffer = new StringBuffer(length + 3);
+    buffer.append(quote);
+
+    for (int i = 0; i < length; i++) {
+      char c = value.charAt(i);
+      if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+        buffer.append(c);
+      continue;
+      }
+
+      switch (c) {
+      case '\b':
+             buffer.append("\\b");
+             break;
+      case '\t':
+             buffer.append("\\t");
+             break;
+      case '\n':
+             buffer.append("\\n");
+             break;
+      case '\f':
+             buffer.append("\\f");
+             break;
+      case '\r':
+             buffer.append("\\r");
+             break;
+      case '\\':
+             buffer.append("\\\\");
+             break;
+      default:
+             if (c == quote) {
+               buffer.append("\\" + quote);
+             }
+             else if (Character.isISOControl(c)) {
+               String hexCode = Integer.toHexString(c).toUpperCase();
+               buffer.append("\\x");
+               int paddingCount = 4 - hexCode.length();
+               while (paddingCount-- > 0) {
+                 buffer.append(0);
+               }
+               buffer.append(hexCode);
+             }
+             else {
+               buffer.append(c);
+             }
+      }
+    }
+
+    buffer.append(quote);
+    return buffer.toString();
   }
 }

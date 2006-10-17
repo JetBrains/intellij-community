@@ -20,7 +20,7 @@ public class CharArrayCharSequence implements CharSequence {
   private final int myStart;
   private final int myEnd;
 
-  public CharArrayCharSequence(char[] chars) {
+  public CharArrayCharSequence(char... chars) {
     this(chars, 0, chars.length);
   }
 
