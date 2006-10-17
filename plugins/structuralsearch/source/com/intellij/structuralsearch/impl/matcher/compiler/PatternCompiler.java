@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.structuralsearch.MalformedPatternException;
@@ -241,6 +242,9 @@ public class PatternCompiler {
             continue;
           }
 
+          if (file instanceof PsiFileImpl) {
+            ((PsiFileImpl)file).clearCaches();
+          }
           filesToScan.add(file);
         }
 

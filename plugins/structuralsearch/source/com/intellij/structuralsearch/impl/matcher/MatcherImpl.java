@@ -406,10 +406,6 @@ public class MatcherImpl {
       tasks.add(runnable);
     }
 
-    void addNestedTasks(List<Runnable> list) {
-      tasks.addAll(0,list);
-    }
-
     private void executeNext() {
       while(!suspended && !ended) {
         if (tasks.size() == 0) {
