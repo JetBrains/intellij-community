@@ -6,6 +6,7 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.event.IMessageListener;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -39,9 +40,6 @@ public class UpdatedFilesManager implements IMessageListener {
     private final List<String> myRevisions = new ArrayList<String>();
     private Entry myCurrentRevision;
 
-    public CurrentMergedFileInfo() {
-    }
-
     public void addRevisions(final String firstRevision, final String secondRevision) {
       addRevision(firstRevision);
       addRevision(secondRevision);
@@ -66,9 +64,6 @@ public class UpdatedFilesManager implements IMessageListener {
     public Entry getOriginalEntry() {
       return myCurrentRevision;
     }
-  }
-
-  public UpdatedFilesManager() {
   }
 
   public void setCvsFileSystem(ICvsFileSystem cvsFileSystem) {
@@ -109,7 +104,7 @@ public class UpdatedFilesManager implements IMessageListener {
     }
   }
 
-  private String normalizePath(final String pathInRepository) {
+  private static String normalizePath(final String pathInRepository) {
     return pathInRepository.replace(File.separatorChar, '/');
   }
 
@@ -130,13 +125,14 @@ public class UpdatedFilesManager implements IMessageListener {
     }
   }
 
-  private String removeModuleNameFrom(String relativeRepositoryPath) {
+  private static String removeModuleNameFrom(String relativeRepositoryPath) {
     String moduleName = getModuleNameFor(relativeRepositoryPath);
     if (moduleName == null) return relativeRepositoryPath;
     return relativeRepositoryPath.substring(moduleName.length() + 1);
   }
 
-  private String getModuleNameFor(String relativeRepositoryPath) {
+  @Nullable
+  private static String getModuleNameFor(String relativeRepositoryPath) {
     File file = new File(relativeRepositoryPath);
     if (file.getParentFile() == null) return null;
     while (file.getParentFile() != null) file = file.getParentFile();

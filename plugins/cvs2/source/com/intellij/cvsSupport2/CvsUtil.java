@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -374,15 +375,12 @@ public class CvsUtil {
     });
   }
 
-  public static void saveRevisionForMergedFile(VirtualFile parent,
-                                               final Entry previousEntry,
+  public static void saveRevisionForMergedFile(@NotNull VirtualFile parent,
+                                               @NotNull final Entry previousEntry,
                                                List<String> revisions) {
-    LOG.assertTrue(parent != null);
-    LOG.assertTrue(previousEntry != null);
     File conflictsFile = getConflictsFile(new File(CvsVfsUtil.getFileFor(parent), previousEntry.getFileName()));
     try {
       Conflicts conflicts = Conflicts.readFrom(conflictsFile);
-      LOG.assertTrue(conflicts != null);
       Date lastModified = previousEntry.getLastModified();
       conflicts.setRevisionAndDateForFile(previousEntry.getFileName(),
                                           previousEntry.getRevision(),
@@ -676,12 +674,12 @@ public class CvsUtil {
   private static class Conflicts {
     private final Map<String, Conflict> myNameToConflict = new com.intellij.util.containers.HashMap<String, Conflict>();
 
+    @NotNull
     public static Conflicts readFrom(File file) throws IOException {
       Conflicts result = new Conflicts();
       if (!file.exists()) return result;
-      List lines = CvsFileUtil.readLinesFrom(file);
-      for (final Object line1 : lines) {
-        String line = (String)line1;
+      List<String> lines = CvsFileUtil.readLinesFrom(file);
+      for (final String line : lines) {
         Conflict conflict = Conflict.readFrom(line);
         if (conflict != null) {
           result.addConflict(conflict);
@@ -695,7 +693,7 @@ public class CvsUtil {
       CvsFileUtil.storeLines(getConflictLines(), file);
     }
 
-    private List getConflictLines() {
+    private List<String> getConflictLines() {
       ArrayList<String> result = new ArrayList<String>();
       for (final Conflict conflict : myNameToConflict.values()) {
         result.add((conflict).toString());
