@@ -245,9 +245,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       TextRange range = anchor.getTextRange();
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
-      Document document = documentManager.getDocument(myFile);
-      LOG.assertTrue(!documentManager.isUncommited(document));
-      myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+      myMarker = documentManager.getDocument(myFile).createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
 
       mySyncStartOffset = range.getStartOffset();
       mySyncEndOffset = range.getEndOffset();
