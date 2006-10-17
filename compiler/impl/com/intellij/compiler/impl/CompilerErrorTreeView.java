@@ -10,15 +10,14 @@ import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
-import com.intellij.openapi.roots.ProjectRootManager;
 
 public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   public CompilerErrorTreeView(Project project) {

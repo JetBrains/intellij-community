@@ -15,6 +15,7 @@
  */
 package com.intellij.rt.compiler;
 
+import java.text.MessageFormat;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -34,6 +35,7 @@ public class JavacResourcesReader {
   public static final String MSG_WARNING = "MSG_WARNING";
   public static final String MSG_NOTE = "MSG_WARNING";
   public static final String MSG_STATISTICS = "MSG_STATISTICS";
+  public static final String MSG_IGNORED = "MSG_IGNORED";
 
   private static final String[] BUNDLE_NAMES = new String[] {
     "com.sun.tools.javac.resources.compiler",    // v1.5
@@ -65,6 +67,8 @@ public class JavacResourcesReader {
     new BundleKey(MSG_STATISTICS,"main.warnings"), //jdk 1.1 - 1.2
     new BundleKey(MSG_STATISTICS,"main.1error"), //jdk 1.1 - 1.2
     new BundleKey(MSG_STATISTICS,"main.1warning"), //jdk 1.1 - 1.2
+    new IgnoredWarningBundleKey("compiler.warn.dir.path.element.not.found"), //jdk 1.5
+    new IgnoredWarningBundleKey("compiler.warn.path.element.not.found"), //jdk 1.5
   };
 
   public static final String CATEGORY_VALUE_DIVIDER = "=";
@@ -103,9 +107,9 @@ public class JavacResourcesReader {
     return null;
   }
 
-  private static final class BundleKey {
+  private static class BundleKey {
     public final String category;
-    private final String[] keys;
+    public final String[] keys;
 
     public BundleKey(final String category, final String key) {
       this(category, new String[] {key});
@@ -128,4 +132,13 @@ public class JavacResourcesReader {
     }
   }
 
+  private static class IgnoredWarningBundleKey extends BundleKey {
+    public IgnoredWarningBundleKey(final String messageKey) {
+      super(JavacResourcesReader.MSG_IGNORED, new String[]{"compiler.warn.warning", messageKey});
+    }
+
+    public String getCategoryValue(ResourceBundle messagesBundle) {
+      return messagesBundle.getString(keys[0]) + MessageFormat.format(messagesBundle.getString(keys[1]), new Object[] {""});
+    }
+  }
 }
