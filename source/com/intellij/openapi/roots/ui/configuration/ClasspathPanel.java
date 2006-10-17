@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog;
@@ -45,6 +46,8 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.EventDispatcher;
@@ -480,7 +483,29 @@ public class ClasspathPanel extends JPanel {
           }
 
           protected ChooserDialog<Library> createChooserDialog() {
-            return new ChooseModuleLibrariesDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable());
+            return new ChooseModuleLibrariesDialog(ClasspathPanel.this, myRootModel.getModuleLibraryTable(), getFileToSelect());
+          }
+
+          private @Nullable VirtualFile getFileToSelect() {
+            final int selectedRow = myEntryTable.getSelectedRow();
+            if (selectedRow < 0) {
+              return null;
+            }
+            final OrderEntry entry = myModel.getItemAt(selectedRow).getEntry();
+            if (!(entry instanceof LibraryOrderEntry)) {
+              return null;
+            }
+            final LibraryOrderEntry libraryOrderEntry = ((LibraryOrderEntry)entry);
+            if (!LibraryTableImplUtil.MODULE_LEVEL.equals(libraryOrderEntry.getLibraryLevel())) {
+              return null;  
+            }
+            final VirtualFile[] files = libraryOrderEntry.getLibrary().getFiles(OrderRootType.CLASSES);
+            final VirtualFile file = files.length == 0? null : files[0];
+            if (file == null) {
+              return null;
+            }
+            // the following will switch from the JarFileSystem to the LocalFileSystem
+            return LocalFileSystem.getInstance().findFileByIoFile(VfsUtil.virtualToIoFile(file));
           }
         },
         new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), projectRootConfigurable.getProjectLibrariesProvider()),
@@ -882,10 +907,12 @@ public class ClasspathPanel extends JPanel {
   private static class ChooseModuleLibrariesDialog extends LibraryFileChooser implements ChooserDialog<Library> {
     private Pair<String, VirtualFile[]> myLastChosen;
     private final LibraryTable myLibraryTable;
+    private final @Nullable VirtualFile myFileToSelect;
 
-    public ChooseModuleLibrariesDialog(Component parent, final LibraryTable libraryTable) {
+    public ChooseModuleLibrariesDialog(Component parent, final LibraryTable libraryTable, final VirtualFile fileToSelect) {
       super(createFileChooserDescriptor(parent), parent, false, null);
       myLibraryTable = libraryTable;
+      myFileToSelect = fileToSelect;
     }
 
     private static FileChooserDescriptor createFileChooserDescriptor(Component parent) {
@@ -933,7 +960,7 @@ public class ClasspathPanel extends JPanel {
     }
 
     public void doChoose() {
-      myLastChosen = chooseNameAndFiles();
+      myLastChosen = chooseNameAndFiles(myFileToSelect);
     }
   }
 

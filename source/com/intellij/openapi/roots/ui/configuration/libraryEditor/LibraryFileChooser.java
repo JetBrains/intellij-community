@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -143,8 +144,12 @@ public class LibraryFileChooser extends FileChooserDialogImpl {
     }
   }
 
-  public Pair<String, VirtualFile[]> chooseNameAndFiles() {
-    VirtualFile[] chosenFiles = choose(null, null);
+  public Pair<String, VirtualFile[]> chooseNameAndFiles(@Nullable VirtualFile toSelect) {
+    VirtualFile[] chosenFiles = choose(toSelect, null);
     return new Pair<String, VirtualFile[]>(getName(), chosenFiles);
+  }
+
+  public Pair<String, VirtualFile[]> chooseNameAndFiles() {
+    return chooseNameAndFiles(null);
   }
 }
