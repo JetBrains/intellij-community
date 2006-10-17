@@ -17,7 +17,6 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +33,6 @@ public class ActionStub extends AnAction{
   private final String myText;
   private final ClassLoader myLoader;
   private final PluginId myPluginId;
-  @NonNls protected static final String INTERNAL_EXCEPTION_TEXT = "targetAction cannot be null";
 
   public ActionStub(@NotNull String actionClass, @NotNull String id, @NotNull String text, ClassLoader loader, PluginId pluginId) {
     myLoader = loader;
