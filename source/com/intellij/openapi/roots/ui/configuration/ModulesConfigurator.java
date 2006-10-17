@@ -53,6 +53,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       return myModulesComparator.compare(editor1.getModule(), editor2.getModule());
     }
 
+    @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
     public boolean equals(Object o) {
       return false;
     }
@@ -65,16 +66,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myProjectConfigurable = new ProjectConfigurable(project, this, configurable.getProjectJdksModel());
   }
 
-  public void disposeUIResources() {
-    synchronized (myModuleEditors) {
-      for (final ModuleEditor moduleEditor : myModuleEditors) {
-        final ModifiableRootModel model = moduleEditor.dispose();
-        if (model != null) {
-          model.dispose();
-        }
+  public synchronized void disposeUIResources() {
+    for (final ModuleEditor moduleEditor : myModuleEditors) {
+      final ModifiableRootModel model = moduleEditor.dispose();
+      if (model != null) {
+        model.dispose();
       }
-      myModuleEditors.clear();
     }
+    myModuleEditors.clear();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myModuleModel.dispose();
@@ -87,16 +86,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myProjectConfigurable;
   }
 
-  public Module[] getModules() {
+  public synchronized Module[] getModules() {
     return myModuleModel.getModules();
   }
 
   @Nullable
-  public Module getModule(String name) {
+  public synchronized Module getModule(String name) {
     return myModuleModel.findModuleByName(name);
   }
 
-  public ModuleEditor getModuleEditor(Module module) {
+  @Nullable
+  public synchronized ModuleEditor getModuleEditor(Module module) {
     for (final ModuleEditor moduleEditor : myModuleEditors) {
       if (module.equals(moduleEditor.getModule())) {
         return moduleEditor;
@@ -119,30 +119,27 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  public void resetModuleEditors() {
+  public synchronized void resetModuleEditors() {
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
 
-    synchronized (myModuleEditors) {
-      for (final ModuleEditor moduleEditor : myModuleEditors) {
-        moduleEditor.removeChangeListener(this);
+    for (final ModuleEditor moduleEditor : myModuleEditors) {
+      moduleEditor.removeChangeListener(this);
+    }
+    myModuleEditors.clear();
+    final Module[] modules = myModuleModel.getModules();
+    if (modules.length > 0) {
+      for (Module module : modules) {
+        createModuleEditor(module, null);
       }
-      myModuleEditors.clear();
-      final Module[] modules = myModuleModel.getModules();
-      if (modules.length > 0) {
-        for (Module module : modules) {
-          createModuleEditor(module, null);
-        }
-        Collections.sort(myModuleEditors, myModuleEditorComparator);
-      }
+      Collections.sort(myModuleEditors, myModuleEditorComparator);
     }
     myModified = false;
   }
 
-  private ModuleEditor createModuleEditor(final Module module, ModuleBuilder moduleBuilder) {
+  private void createModuleEditor(final Module module, ModuleBuilder moduleBuilder) {
     final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, module.getName(), moduleBuilder);
     myModuleEditors.add(moduleEditor);
     moduleEditor.addChangeListener(this);
-    return moduleEditor;
   }
 
   public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
@@ -174,7 +171,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }));
   }
 
-  public void apply() throws ConfigurationException {
+  public synchronized void apply() throws ConfigurationException {
     final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
 
     final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
@@ -219,11 +216,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModified = false;
   }
 
-  public void setModified(final boolean modified) {
+  public synchronized void setModified(final boolean modified) {
     myModified = modified;
   }
 
-  public ModifiableModuleModel getModuleModel() {
+  public synchronized ModifiableModuleModel getModuleModel() {
     return myModuleModel;
   }
 
@@ -233,24 +230,23 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  public Module addModule(Component parent) {
+  public synchronized Module addModule(Component parent) {
     if (myProject.isDefault()) return null;
     final ModuleBuilder builder = runModuleWizard(parent);
     if (builder != null) {
       final Module module = createModule(builder);
       if (module != null) {
-        synchronized (myModuleEditors) {
-          createModuleEditor(module, builder);
-        }
+        createModuleEditor(module, builder);
       }
       return module;
     }
     return null;
   }
 
-  private Module createModule(final ModuleBuilder builder) {
+  private synchronized Module createModule(final ModuleBuilder builder) {
     final Exception[] ex = new Exception[]{null};
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
+      @SuppressWarnings({"ConstantConditions"})
       public Module compute() {
         try {
           return builder.createModule(myModuleModel);
@@ -268,18 +264,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return module;
   }
 
-  @Nullable
-  Module addModule(final ModuleBuilder moduleBuilder) {
+  synchronized void addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
-      synchronized (myModuleEditors) {
-        createModuleEditor(module, moduleBuilder);
-        Collections.sort(myModuleEditors, myModuleEditorComparator);
-      }
+      createModuleEditor(module, moduleBuilder);
+      Collections.sort(myModuleEditors, myModuleEditorComparator);
       processModuleCountChanged(myModuleEditors.size() - 1, myModuleEditors.size());
-      return module;
     }
-    return null;
   }
 
   @Nullable
@@ -293,7 +284,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private boolean doRemoveModule(ModuleEditor selectedEditor) {
+  private synchronized boolean doRemoveModule(ModuleEditor selectedEditor) {
 
     String question;
     if (myModuleEditors.size() == 1) {
@@ -308,9 +299,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       return false;
     }
     // do remove
-    synchronized (myModuleEditors) {
-      myModuleEditors.remove(selectedEditor);
-    }
+    myModuleEditors.remove(selectedEditor);
+
     // destroyProcess removed module
     final Module moduleToRemove = selectedEditor.getModule();
     // remove all dependencies on the module that is about to be removed
@@ -334,7 +324,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  public boolean isModified() {
+  public synchronized boolean isModified() {
     if (myModuleModel.isChanged()) {
       return true;
     }
