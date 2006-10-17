@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -13,6 +14,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -31,6 +33,7 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Iterator;
@@ -87,13 +90,12 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   protected void reload(PsiFile psiFile) {
     myMethodName = null;
     mySignature = null;
-    if(psiFile instanceof PsiJavaFile){
-      MethodDescriptor descriptor = getMethodDescriptor(myProject, (PsiJavaFile)psiFile, getHighlighter().getDocument().getLineNumber(getHighlighter().getStartOffset()));
-      if (descriptor != null) {
-        myMethodName = descriptor.methodName;
-        mySignature = descriptor.methodSignature;
-        myIsStatic = descriptor.isStatic;
-      }
+
+    MethodDescriptor descriptor = getMethodDescriptor(myProject, psiFile, getSourcePosition());
+    if (descriptor != null) {
+      myMethodName = descriptor.methodName;
+      mySignature = descriptor.methodSignature;
+      myIsStatic = descriptor.isStatic;
     }
     if (myIsStatic) {
       INSTANCE_FILTERS_ENABLED = false;
@@ -233,25 +235,32 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   }
 
 
+  public boolean canMoveTo(final SourcePosition position) {
+    return super.canMoveTo(position) && PositionUtil.getPsiElementAt(getProject(), PsiMethod.class, position) != null;
+  }
+
   /**
    * finds FQ method's class name and method's signature
    */
-  private static MethodDescriptor getMethodDescriptor(final Project project, final PsiJavaFile psiJavaFile, final int line) {
+  @Nullable
+  private static MethodDescriptor getMethodDescriptor(final Project project, final PsiFile psiJavaFile, final SourcePosition sourcePosition) {
     final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
     final Document document = docManager.getDocument(psiJavaFile);
     if(document == null) {
       return null;
     }
-    final int endOffset = document.getLineEndOffset(line);
+    //final int endOffset = document.getLineEndOffset(sourcePosition);
     final MethodDescriptor descriptor = docManager.commitAndRunReadAction(new Computable<MethodDescriptor>() {
       public MethodDescriptor compute() {
         try {
-          PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
-          if (method == null || document.getLineNumber(method.getTextOffset()) < line) {
+          //PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
+          PsiMethod method = PositionUtil.getPsiElementAt(project, PsiMethod.class, sourcePosition);
+          if (method == null || document.getLineNumber(method.getTextOffset()) < sourcePosition.getLine()) {
             return null;
           }
 
-          int methodNameOffset = method.getNameIdentifier().getTextOffset();
+          final PsiIdentifier identifier = method.getNameIdentifier();
+          int methodNameOffset = identifier != null? identifier.getTextOffset() : method.getTextOffset();
           final MethodDescriptor descriptor =
             new MethodDescriptor();
           //noinspection HardCodedStringLiteral

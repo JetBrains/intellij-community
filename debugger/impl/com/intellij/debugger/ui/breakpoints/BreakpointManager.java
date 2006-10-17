@@ -32,6 +32,8 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -184,7 +186,10 @@ public class BreakpointManager implements JDOMExternalizable {
         }
         final Document document = editor.getDocument();
         final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (!DebuggerUtils.supportsJVMDebugging(psiFile.getFileType())) {
+
+        final FileType fileType = psiFile.getFileType();
+        boolean isInsideCompiledClass = StdFileTypes.CLASS.equals(fileType);
+        if (!isInsideCompiledClass && !DebuggerUtils.supportsJVMDebugging(fileType)) {
           return null;
         }
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
@@ -200,12 +205,12 @@ public class BreakpointManager implements JDOMExternalizable {
 
         Breakpoint breakpoint = findBreakpoint(document, offset);
         if (breakpoint == null) {
-          if(mostSuitingBreakpoint) {
+          if(mostSuitingBreakpoint || isInsideCompiledClass) {
             breakpoint = addFieldBreakpoint(document, offset);
             if (breakpoint == null) {
               breakpoint = addMethodBreakpoint(document, line);
             }
-            if (breakpoint == null) {
+            if (breakpoint == null && !isInsideCompiledClass) {
               breakpoint = addLineBreakpoint(document, line);
             }
           }

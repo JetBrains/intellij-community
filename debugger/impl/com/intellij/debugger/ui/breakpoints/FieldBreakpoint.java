@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -104,32 +105,12 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     if (field != null) {
       return field;
     }
-    return getPsiFieldAt(sourcePosition);
-  }
-
-  protected PsiField getPsiFieldAt(final SourcePosition sourcePosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
-      public PsiField compute() {
-        PsiFile psiFile = sourcePosition.getFile();
-        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-
-        if(document == null) {
-          return null;
-        }
-
-        final int spOffset = sourcePosition.getOffset();
-        if (spOffset < 0) {
-          return null;
-        }
-        final int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), spOffset, " \t");
-        return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), PsiField.class, false);
-      }
-    });
+    return PositionUtil.getPsiElementAt(getProject(), PsiField.class, sourcePosition);
   }
 
   protected void reload(PsiFile psiFile) {
     super.reload(psiFile);
-    PsiField field = getPsiFieldAt(getSourcePosition());
+    PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, getSourcePosition());
     if(field != null) {
       myFieldName = field.getName();
       myIsStatic = field.hasModifierProperty(PsiModifier.STATIC);
@@ -140,7 +121,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected boolean moveTo(SourcePosition position) {
-    final PsiField field = getPsiFieldAt(position);
+    final PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, position);
     if (field == null) {
       return false;
     }
@@ -235,7 +216,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
   public boolean canMoveTo(final SourcePosition position) {
-    return super.canMoveTo(position) && getPsiFieldAt(position) != null;
+    return super.canMoveTo(position) && PositionUtil.getPsiElementAt(getProject(), PsiField.class, position) != null;
   }
 
   public boolean isValid() {
