@@ -1054,12 +1054,25 @@ public class XmlUtil {
 
 
   public static String escapeString(String str) {
+    return escapeString(str, false);
+  }
+
+  public static String escapeString(String str, final boolean escapeWhiteSpace) {
     if (str == null) return null;
     StringBuffer buffer = null;
     for (int i = 0; i < str.length(); i++) {
       @NonNls String entity;
       char ch = str.charAt(i);
       switch (ch) {
+        case '\n':
+          entity = escapeWhiteSpace ? "&#10;" : null;
+          break;
+        case '\r':
+          entity = escapeWhiteSpace ? "&#13;" : null;
+          break;
+        case '\t':
+          entity = escapeWhiteSpace ? "&#9;" : null;
+          break;
         case'\"':
           entity = "&quot;";
           break;

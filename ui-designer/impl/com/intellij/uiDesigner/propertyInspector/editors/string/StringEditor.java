@@ -3,18 +3,19 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -33,6 +34,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   /* Initial value of string property that was passed into getComponent() method */
   private StringDescriptor myValue;
   private Project myProject;
+  private boolean myTextFieldModified = false;
 
   public StringEditor(Project project){
     myProject = project;
@@ -51,6 +53,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
       new DocumentAdapter() {
         protected void textChanged(final DocumentEvent e) {
           preferredSizeChanged();
+          myTextFieldModified = true;
         }
       }
     );
@@ -82,6 +85,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
         textField.setEditable(true);
         textField.setText(value);
         textField.selectAll();
+        myTextFieldModified = false;
       }
       else{ // bundled value
         textField.setEditable(false);
@@ -95,8 +99,7 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     }
   }
 
-  public JComponent getPreferredFocusedComponent(final JComponent component) {
-    LOG.assertTrue(component != null);
+  public JComponent getPreferredFocusedComponent(@NotNull final JComponent component) {
     return ((TextFieldWithBrowseButton)component).getTextField();
   }
 
@@ -109,7 +112,8 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
   }
 
   public StringDescriptor getValue(){
-    if(myValue == null || myValue.getValue() != null){ // editor is for "trivial" StringDescriptor
+    if(myValue == null || (myValue.getValue() != null && myTextFieldModified)) {
+      // editor is for "trivial" StringDescriptor
       final String value = myTfWithButton.getText();
       if (myValue == null && value.length() == 0) {
         return null;
