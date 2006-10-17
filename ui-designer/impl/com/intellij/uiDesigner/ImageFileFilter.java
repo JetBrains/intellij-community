@@ -24,7 +24,11 @@ public class ImageFileFilter implements TreeFileChooser.PsiFileFilter {
   private GlobalSearchScope myModuleScope;
 
   public ImageFileFilter(@Nullable Module module) {
-    myExtensions = new HashSet<String>(Arrays.asList(ImageIO.getReaderFormatNames()));
+    final String[] formatNames = ImageIO.getReaderFormatNames();
+    for(int i=0; i<formatNames.length; i++) {
+      formatNames [i] = formatNames [i].toLowerCase();
+    }
+    myExtensions = new HashSet<String>(Arrays.asList(formatNames));
     if (module != null) {
       myModuleScope = module.getModuleWithDependenciesAndLibrariesScope(true);
     }
@@ -32,8 +36,12 @@ public class ImageFileFilter implements TreeFileChooser.PsiFileFilter {
 
   public boolean accept(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile != null &&
-           myExtensions.contains(virtualFile.getExtension()) &&
-           (myModuleScope == null || myModuleScope.contains(virtualFile));
+    if (virtualFile != null) {
+      String extension = virtualFile.getExtension();
+      return extension != null &&
+             myExtensions.contains(extension.toLowerCase()) &&
+             (myModuleScope == null || myModuleScope.contains(virtualFile));
+    }
+    return false;
   }
 }
