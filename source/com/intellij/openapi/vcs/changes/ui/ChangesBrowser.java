@@ -31,6 +31,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private ChangesTreeList myViewer;
   private ChangeList mySelectedChangeList;
   private Collection<Change> myAllChanges;
+  private Collection<Change> myChangesToDisplay;
   private final Map<Change, LocalChangeList> myChangeListsMap = new HashMap<Change, LocalChangeList>();
   private Project myProject;
   private EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
@@ -42,6 +43,7 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   private boolean myShowingAllChangeLists;
 
   public void setChangesToDisplay(final List<Change> changes) {
+    myChangesToDisplay = changes;
     myViewer.setChangesToDisplay(changes);
   }
 
@@ -321,7 +323,13 @@ public class ChangesBrowser extends JPanel implements DataProvider {
   }
 
   public List<Change> getCurrentDisplayedChanges() {
-    final List<Change> list = filterBySelectedChangeList(myAllChanges);
+    final List<Change> list;
+    if (myChangesToDisplay != null) {
+      list = new ArrayList<Change>(myChangesToDisplay);
+    }
+    else {
+      list = filterBySelectedChangeList(myAllChanges);
+    }
     Collections.sort(list, new Comparator<Change>() {
       public int compare(final Change o1, final Change o2) {
         return ChangesUtil.getFilePath(o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath(o2).getName());
