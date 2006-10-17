@@ -32,6 +32,7 @@ import org.apache.xerces.util.XMLGrammarPoolImpl;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.helpers.DefaultHandler;
 import org.jetbrains.annotations.NonNls;
 
@@ -420,17 +421,22 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       
       parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, grammarPool);
 
-      if (schemaChecking) {
-        parser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE,JAXPConstants.W3C_XML_SCHEMA);
-        parser.getXMLReader().setFeature(SCHEMA_FULL_CHECKING_FEATURE_ID, true);
+      try {
+        if (schemaChecking) {
+          parser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE,JAXPConstants.W3C_XML_SCHEMA);
+          parser.getXMLReader().setFeature(SCHEMA_FULL_CHECKING_FEATURE_ID, true);
 
-        parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-undeclared-elemdef",Boolean.TRUE);
-        parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-duplicate-attdef",Boolean.TRUE);
+          parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-undeclared-elemdef",Boolean.TRUE);
+          parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/warn-on-duplicate-attdef",Boolean.TRUE);
+        }
+
+        parser.getXMLReader().setFeature("http://apache.org/xml/features/warn-on-duplicate-entitydef",Boolean.TRUE);
+        parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/unparsed-entity-checking",Boolean.FALSE);
+        parser.getXMLReader().setFeature("http://apache.org/xml/features/xinclude",Boolean.TRUE);
+      } catch(SAXNotRecognizedException ex) {
+        // it is possible to continue work with configured parser
+        LOG.warn("Xml parser installation seems screwed", ex);
       }
-
-      parser.getXMLReader().setFeature("http://apache.org/xml/features/warn-on-duplicate-entitydef",Boolean.TRUE);
-      parser.getXMLReader().setFeature("http://apache.org/xml/features/validation/unparsed-entity-checking",Boolean.FALSE);
-      parser.getXMLReader().setFeature("http://apache.org/xml/features/xinclude",Boolean.TRUE);
 
       return parser;
     }
