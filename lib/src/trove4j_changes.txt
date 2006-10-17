@@ -1,3 +1,7 @@
+Date: 17 Oct 2006
+  Changed classes:
+    gnu.trove.T*ArrayList - fixed bug in set() method
+
 Date: 31 Jan 2006
   Changed classes:
     gnu.trove.THash
