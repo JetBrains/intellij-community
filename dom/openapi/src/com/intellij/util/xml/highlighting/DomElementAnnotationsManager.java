@@ -17,17 +17,16 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.EventListener;
+import java.util.List;
 
 public abstract class DomElementAnnotationsManager {
 
@@ -40,15 +39,13 @@ public abstract class DomElementAnnotationsManager {
   @NotNull
   public abstract DomElementsProblemsHolder getCachedProblemHolder(DomElement element);
 
-  public abstract List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity);
-
   public abstract List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor);
 
   public abstract boolean isHighlightingFinished(final DomElement[] domElements);
 
   public abstract void addHighlightingListener(DomHighlightingListener listener, Disposable parentDisposable);
 
-  public abstract void registerDomElementsAnnotator(DomElementsAnnotator annotator, Class<? extends DomElement> aClass);
+  public abstract DomHighlightingHelper getHighlightingHelper();
 
   public interface DomHighlightingListener extends EventListener {
     void highlightingFinished(DomFileElement element);

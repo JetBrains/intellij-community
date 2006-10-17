@@ -4,18 +4,9 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * User: Sergey.Vasiliev
@@ -26,20 +17,29 @@ public abstract class BasicDomElementsInspection<T extends DomElement> extends D
     super(domClass, additionalClasses);
   }
 
-  @Nullable
-  protected ProblemDescriptor[] checkDomFile(@NotNull final DomFileElement<T> domFileElement,
-                                             @NotNull final InspectionManager manager,
-                                             final boolean isOnTheFly) {
-
-    final Project project = manager.getProject();
-    final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(project);
-    final DomElementsProblemsHolder problemsHolder = annotationsManager.getProblemHolder(domFileElement);
-    List<ProblemDescriptor> problems =
-      ContainerUtil.concat(problemsHolder.getProblems(domFileElement, true, true), new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
-        public Collection<ProblemDescriptor> fun(final DomElementProblemDescriptor s) {
-          return annotationsManager.createProblemDescriptors(manager, s);
-        }
-      });
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+  protected boolean shouldCheckResolveProblems(GenericDomValue value) {
+    return true;
   }
+
+  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+    final int oldSize = holder.getSize();
+    if (element instanceof GenericDomValue) {
+      final GenericDomValue genericDomValue = (GenericDomValue)element;
+      if (shouldCheckResolveProblems(genericDomValue)) {
+        helper.checkResolveProblems(genericDomValue, holder);
+      }
+    }
+    for (final Class<? extends T> aClass : getDomClasses()) {
+      helper.runAnnotators(element, holder, aClass);
+    }
+    if (oldSize != holder.getSize()) return;
+
+    if (!helper.checkRequired(element, holder).isEmpty()) return;
+    if (element instanceof GenericDomValue) {
+      helper.checkExtendClass((GenericDomValue)element, holder);
+    } else {
+      helper.checkNameIdentity(element, holder);
+    }
+  }
+
 }

@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -241,6 +242,10 @@ public class ContainerUtil {
     return findAll(collection, Condition.NOT_NULL);
   }
 
+  public static <T,V> List<V> findAll(T[] collection, Class<V> instanceOf) {
+    return findAll(Arrays.asList(collection), instanceOf);
+  }
+
   public static <T,V> List<V> findAll(Collection<? extends T> collection, Class<V> instanceOf) {
     final ArrayList<V> result = new ArrayList<V>();
     for (final T t : collection) {
@@ -318,6 +323,14 @@ public class ContainerUtil {
 
   public static <T,V> List<T> concat(V[] array, Function<V,Collection<? extends T>> fun) {
     return concat(Arrays.asList(array), fun);
+  }
+
+  public static <T> List<T> concat(Iterable<? extends Collection<T>> list) {
+    final ArrayList<T> result = new ArrayList<T>();
+    for (final Collection<T> ts : list) {
+      result.addAll(ts);
+    }
+    return result;
   }
 
   public static <T,V> List<T> concat(Iterable<V> list, Function<V,Collection<? extends T>> fun) {
@@ -406,4 +419,11 @@ public class ContainerUtil {
     return element == null ? Collections.<T>emptyList() : Arrays.asList(element);
   }
 
+  public static <T,V> V getOrCreate(final Map<T, V> result, final T key, final Factory<V> factory) {
+    V list = result.get(key);
+    if (list == null) {
+      result.put(key, list = factory.create());
+    }
+    return list;
+  }
 }

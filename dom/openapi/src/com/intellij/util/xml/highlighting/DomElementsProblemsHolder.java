@@ -49,5 +49,7 @@ public interface DomElementsProblemsHolder {
                                                 HighlightSeverity minSeverity);
 
   List<DomElementProblemDescriptor> getAllProblems();
-  
+
+  List<DomElementProblemDescriptor> getAllProblems(DomElementsInspection inspection);
+
 }

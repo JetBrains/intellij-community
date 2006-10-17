@@ -11,8 +11,10 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -20,8 +22,12 @@ import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.EventDispatcher;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.profile.Profile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -64,8 +70,31 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       return Collections.emptyList();
     }
 
+    public List<DomElementProblemDescriptor> getAllProblems(DomElementsInspection inspection) {
+      return Collections.emptyList();
+    }
+
   };
-  private final AnnotationBasedDomElementsAnnotator myAnnotationBasedDomElementsAnnotator = new AnnotationBasedDomElementsAnnotator();
+  private final DomHighlightingHelperImpl myHighlightingHelper = new DomHighlightingHelperImpl(this);
+  private final ModificationTracker myModificationTracker;
+
+  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager manager) {
+    final int[] modCount = new int[]{0};
+    myModificationTracker = new ModificationTracker() {
+      public long getModificationCount() {
+        return modCount[0];
+      }
+    };
+    manager.addProfileChangeListener(new ProfileChangeAdapter() {
+      public void profileActivated(@Nullable NamedScope scope, Profile oldProfile, Profile profile) {
+        modCount[0]++;
+      }
+
+      public void profileChanged(Profile profile) {
+        modCount[0]++;
+      }
+    }, project);
+  }
 
   @NotNull
   public DomElementsProblemsHolder getProblemHolder(DomElement element) {
@@ -90,7 +119,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
         myReadyHolders.put(fileElement, holder);
         final CachedValue<Boolean> cachedValue = cachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
           public Result<Boolean> compute() {
-            return new Result<Boolean>(Boolean.FALSE, fileElement, ProjectRootManager.getInstance(project));
+            return new Result<Boolean>(Boolean.FALSE, fileElement, ProjectRootManager.getInstance(project), myModificationTracker);
           }
         }, false);
         myCachedValues.put(fileElement, cachedValue);
@@ -130,8 +159,6 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       for (DomElementsAnnotator annotator : list) {
         annotator.annotate(element, holder);
       }
-    } else {
-      myAnnotationBasedDomElementsAnnotator.annotate(element, holder);
     }
   }
 
@@ -143,9 +170,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private List<DomElementsAnnotator> getOrCreateAnnotators(final Class aClass) {
     List<DomElementsAnnotator> annotators = myClass2Annotator.get(aClass);
     if (annotators == null) {
-      annotators = new ArrayList<DomElementsAnnotator>();
-      annotators.add(myAnnotationBasedDomElementsAnnotator);
-      myClass2Annotator.put(aClass, annotators);
+      myClass2Annotator.put(aClass, annotators = new ArrayList<DomElementsAnnotator>());
     }
     return annotators;
   }
@@ -169,6 +194,10 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   public void addHighlightingListener(DomHighlightingListener listener, Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
+  }
+
+  public DomHighlightingHelper getHighlightingHelper() {
+    return myHighlightingHelper;
   }
 
 

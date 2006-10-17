@@ -16,6 +16,7 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,8 @@ public abstract class ApplicationProfileManager implements ProfileManager{
   public abstract Profile createProfile();
 
   public abstract void addProfileChangeListener(ProfileChangeAdapter listener);
+
+  public abstract void addProfileChangeListener(ProfileChangeAdapter listener, Disposable parentDisposable);
 
   public abstract void removeProfileChangeListener(ProfileChangeAdapter listener);
 
