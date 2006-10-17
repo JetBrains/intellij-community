@@ -6,6 +6,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.ant.validation.AntDuplicateImportedTargetsInspection;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
+import com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -54,7 +55,9 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   public void disposeComponent() {
   }
 
-  public static void markFileAsAntFile(final VirtualFile file, final FileViewProvider viewProvider, final boolean isAntFile) {
+  public static void markFileAsAntFile(final VirtualFile file,
+                                       final FileViewProvider viewProvider,
+                                       final boolean isAntFile) {
     Boolean oldValue = file.getUserData(AntLanguageExtension.ANT_FILE_SIGN);
     if (oldValue == null) {
       oldValue = false;
@@ -66,6 +69,7 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   }
 
   public Class[] getInspectionClasses() {
-    return new Class[]{AntDuplicateTargetsInspection.class, AntDuplicateImportedTargetsInspection.class};
+    return new Class[]{AntDuplicateTargetsInspection.class, AntDuplicateImportedTargetsInspection.class,
+      AntMissingPropertiesFileInspection.class};
   }
 }
