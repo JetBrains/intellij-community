@@ -59,10 +59,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
   }
 
   private void fastenBeltsInSingleFile(final PsiFile file) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    //Document document = documentManager.getDocument(file);
-    //LOG.assertTrue(!documentManager.isUncommited(document));
-
     synchronized (file) {
       file.putUserData(BELTS_ARE_FASTEN_KEY, Boolean.TRUE);
 
