@@ -240,6 +240,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void execute(final CommitExecutor commitExecutor) {
+    if (!checkComment()) {
+      return;
+    }
+
+    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
+
     saveState();
     final CommitSession session = commitExecutor.createCommitSession();
     boolean isOK = true;
