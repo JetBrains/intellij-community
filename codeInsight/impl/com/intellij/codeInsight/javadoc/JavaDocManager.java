@@ -26,10 +26,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -583,7 +580,11 @@ public class JavaDocManager implements ProjectComponent {
                   component.setData(provider.getElement(), text);
                 }
 
-                final Dimension dimension = component.getPreferredSize();
+                Dimension dimension = component.getPreferredSize();
+                final Dimension storedSize = DimensionService.getInstance().getSize(JAVADOC_LOCATION_AND_SIZE, myProject);
+                if (storedSize != null) {
+                  dimension = storedSize;
+                }
                 final Window window = SwingUtilities.getWindowAncestor(component);
                 if (window != null) {
                   window.setBounds(window.getX(),
