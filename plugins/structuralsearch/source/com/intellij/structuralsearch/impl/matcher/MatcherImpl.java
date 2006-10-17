@@ -295,8 +295,9 @@ public class MatcherImpl {
       final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
       totalFilesToScan = elementsToScan.length;
 
-      for (PsiElement anElementsToScan : elementsToScan) {
-        scheduler.addOneTask(new MatchOneFile(anElementsToScan));
+      for (int i = 0; i < elementsToScan.length; ++i) {
+        scheduler.addOneTask(new MatchOneFile(elementsToScan[i]));
+        elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }
 
@@ -444,27 +445,7 @@ public class MatcherImpl {
     }
   }
 
-  class ScanSelectedFiles implements Runnable {
-    private LocalSearchScope scope;
-
-    ScanSelectedFiles(LocalSearchScope scope) {
-      this.scope = scope;
-    }
-
-    public void run() {
-      final LinkedList<Runnable> tempList = scheduler.getTempList();
-      final PsiElement[] elementsToScan = scope.getScope();
-      totalFilesToScan = elementsToScan.length;
-
-      for (PsiElement anElementsToScan : elementsToScan) {
-        tempList.add(new MatchOneFile(anElementsToScan));
-      }
-      scheduler.addNestedTasks(tempList);
-      tempList.clear();
-    }
-  }
-
-  class MatchOneFile implements Runnable {
+  private class MatchOneFile implements Runnable {
     private PsiElement file;
 
     MatchOneFile(PsiElement file) {
