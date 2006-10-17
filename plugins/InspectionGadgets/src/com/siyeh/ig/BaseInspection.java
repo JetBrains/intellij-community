@@ -197,7 +197,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
         return super.checkField(field, manager, isOnTheFly);
     }
 
-    protected BaseInspectionVisitor createVisitor(
+    protected final BaseInspectionVisitor createVisitor(
             InspectionManager inspectionManager, boolean onTheFly) {
         final BaseInspectionVisitor visitor = buildVisitor();
         visitor.setOnTheFly(onTheFly);
