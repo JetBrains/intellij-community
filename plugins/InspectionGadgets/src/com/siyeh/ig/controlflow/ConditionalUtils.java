@@ -23,9 +23,9 @@ public class ConditionalUtils{
         super();
     }
 
-    public static PsiStatement stripBraces(PsiStatement branch){
-        if(branch instanceof PsiBlockStatement){
-            final PsiBlockStatement block = (PsiBlockStatement) branch;
+    public static PsiStatement stripBraces(PsiStatement statement){
+        if(statement instanceof PsiBlockStatement){
+            final PsiBlockStatement block = (PsiBlockStatement) statement;
             final PsiCodeBlock codeBlock = block.getCodeBlock();
             final PsiStatement[] statements = codeBlock.getStatements();
             if(statements.length == 1){
@@ -34,7 +34,7 @@ public class ConditionalUtils{
                 return block;
             }
         } else{
-            return branch;
+            return statement;
         }
     }
 

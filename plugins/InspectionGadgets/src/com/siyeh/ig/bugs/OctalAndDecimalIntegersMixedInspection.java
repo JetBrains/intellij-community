@@ -36,7 +36,7 @@ public class OctalAndDecimalIntegersMixedInspection
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     @NotNull

@@ -35,7 +35,7 @@ public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.ASSIGNMENT_GROUP_NAME;
     }
 
     @NotNull

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DoubleNegationInspection extends StatementInspection {
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("double.negation.display.name");
     }
