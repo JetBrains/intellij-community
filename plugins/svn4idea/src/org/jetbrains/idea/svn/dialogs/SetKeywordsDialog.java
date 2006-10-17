@@ -3,7 +3,7 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.internal.wc.SVNTranslator;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 
 import javax.swing.*;
 import java.awt.*;
