@@ -124,15 +124,15 @@ public class ExpressionParsing extends Parsing {
   private static final int PARSE_ARRAY_INITIALIZER = 17;
   private static final int PARSE_TYPE = 18;
 
-  private static final TokenSet COND_OR_SIGN_BIT_SET = TokenSet.create(new IElementType[]{OROR});
-  private static final TokenSet COND_AND_SIGN_BIT_SET = TokenSet.create(new IElementType[]{ANDAND});
-  private static final TokenSet OR_SIGN_BIT_SET = TokenSet.create(new IElementType[]{OR});
-  private static final TokenSet XOR_SIGN_BIT_SET = TokenSet.create(new IElementType[]{XOR});
-  private static final TokenSet AND_SIGN_BIT_SET = TokenSet.create(new IElementType[]{AND});
-  private static final TokenSet EQUALITY_SIGN_BIT_SET = TokenSet.create(new IElementType[]{EQEQ, NE});
-  private static final TokenSet SHIFT_SIGN_BIT_SET = TokenSet.create(new IElementType[]{LTLT, GTGT, GTGTGT});
-  private static final TokenSet ADDITIVE_SIGN_BIT_SET = TokenSet.create(new IElementType[]{PLUS, MINUS});
-  private static final TokenSet MULTIPLICATIVE_SIGN_BIT_SET = TokenSet.create(new IElementType[]{ASTERISK, DIV, PERC});
+  private static final TokenSet COND_OR_SIGN_BIT_SET = TokenSet.create(OROR);
+  private static final TokenSet COND_AND_SIGN_BIT_SET = TokenSet.create(ANDAND);
+  private static final TokenSet OR_SIGN_BIT_SET = TokenSet.create(OR);
+  private static final TokenSet XOR_SIGN_BIT_SET = TokenSet.create(XOR);
+  private static final TokenSet AND_SIGN_BIT_SET = TokenSet.create(AND);
+  private static final TokenSet EQUALITY_SIGN_BIT_SET = TokenSet.create(EQEQ, NE);
+  private static final TokenSet SHIFT_SIGN_BIT_SET = TokenSet.create(LTLT, GTGT, GTGTGT);
+  private static final TokenSet ADDITIVE_SIGN_BIT_SET = TokenSet.create(PLUS, MINUS);
+  private static final TokenSet MULTIPLICATIVE_SIGN_BIT_SET = TokenSet.create(ASTERISK, DIV, PERC);
 
   private CompositeElement parseConstruct(FilterLexer lexer, int number) {
     switch (number) {
@@ -143,34 +143,34 @@ public class ExpressionParsing extends Parsing {
         return parseConditionalExpression(lexer);
 
       case PARSE_COND_OR:
-        return parseBinaryExpression(lexer, PARSE_COND_AND, COND_OR_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_COND_AND, COND_OR_SIGN_BIT_SET);
 
       case PARSE_COND_AND:
-        return parseBinaryExpression(lexer, PARSE_OR, COND_AND_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_OR, COND_AND_SIGN_BIT_SET);
 
       case PARSE_OR:
-        return parseBinaryExpression(lexer, PARSE_XOR, OR_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_XOR, OR_SIGN_BIT_SET);
 
       case PARSE_XOR:
-        return parseBinaryExpression(lexer, PARSE_AND, XOR_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_AND, XOR_SIGN_BIT_SET);
 
       case PARSE_AND:
-        return parseBinaryExpression(lexer, PARSE_EQUALITY, AND_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_EQUALITY, AND_SIGN_BIT_SET);
 
       case PARSE_EQUALITY:
-        return parseBinaryExpression(lexer, PARSE_RELATIONAL, EQUALITY_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_RELATIONAL, EQUALITY_SIGN_BIT_SET);
 
       case PARSE_RELATIONAL:
         return parseRelationalExpression(lexer);
 
       case PARSE_SHIFT:
-        return parseBinaryExpression(lexer, PARSE_ADDITIVE, SHIFT_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_ADDITIVE, SHIFT_SIGN_BIT_SET);
 
       case PARSE_ADDITIVE:
-        return parseBinaryExpression(lexer, PARSE_MULTIPLICATIVE, ADDITIVE_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_MULTIPLICATIVE, ADDITIVE_SIGN_BIT_SET);
 
       case PARSE_MULTIPLICATIVE:
-        return parseBinaryExpression(lexer, PARSE_UNARY, MULTIPLICATIVE_SIGN_BIT_SET, BINARY_EXPRESSION);
+        return parseBinaryExpression(lexer, PARSE_UNARY, MULTIPLICATIVE_SIGN_BIT_SET);
 
       case PARSE_UNARY:
         return parseUnaryExpression(lexer);
@@ -199,7 +199,7 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  private CompositeElement parseBinaryExpression(FilterLexer lexer, int argNumber, TokenSet opSignBitSet, IElementType elementType) {
+  private CompositeElement parseBinaryExpression(FilterLexer lexer, int argNumber, TokenSet opSignBitSet) {
     CompositeElement element = parseConstruct(lexer, argNumber);
     if (element == null) return null;
 
@@ -208,7 +208,7 @@ public class ExpressionParsing extends Parsing {
       if (tokenType == null) break;
       if (!opSignBitSet.contains(tokenType)) break;
 
-      CompositeElement result = Factory.createCompositeElement(elementType);
+      CompositeElement result = Factory.createCompositeElement(BINARY_EXPRESSION);
       TreeUtil.addChildren(result, element);
       TreeUtil.addChildren(result, GTTokens.createTokenElementAndAdvance(tokenType, lexer, myContext.getCharTable()));
 
