@@ -35,6 +35,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -55,6 +56,8 @@ public class ValueHint {
   public final static int MOUSE_OVER_HINT       = 0;
   public final static int MOUSE_ALT_OVER_HINT   = 1;
   public final static int MOUSE_CLICK_HINT      = 2;
+
+  @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
 
   private static final int HINT_TIMEOUT = 7000; // ms
 
@@ -237,6 +240,7 @@ public class ValueHint {
           .setTitle(title)
           .setResizable(true)
           .setMovable(true)
+          .setDimensionServiceKey(DIMENSION_SERVICE_KEY)
           .createPopup();
 
         //Editor may be disposed before later invokator process this action
