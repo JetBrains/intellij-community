@@ -581,6 +581,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
         myFileDescriptions.remove(description);
+        myRootTagName2FileDescription.get(description.getRootTagName()).remove(description);
       }
     });
   }
