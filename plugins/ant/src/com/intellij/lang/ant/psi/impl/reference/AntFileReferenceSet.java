@@ -35,9 +35,4 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
   public boolean isAbsolutePathReference() {
     return super.isAbsolutePathReference() || new File(getPathString()).isAbsolute();
   }
-
-  /*@NotNull
-  public Collection<PsiElement> getDefaultContexts(PsiElement element) {
-    return Collections.emptyList();
-  }*/
 }

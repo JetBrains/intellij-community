@@ -150,7 +150,13 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     if (resultCount > 0) {
       return result.toArray(new ResolveResult[resultCount]);
     }
+>>>> ORIGINAL FileReference.java#27
+    if (myFileReferenceSet.isAbsolutePathReference()) {
+==== THEIRS FileReference.java#28
     if (myFileReferenceSet.isAbsolutePathReference() && text.length() > 0) {
+==== YOURS FileReference.java
+    if (text.length() > 0 && myFileReferenceSet.isAbsolutePathReference()) {
+<<<<
       final VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(text);
       if (dir != null) {
         final PsiDirectory psiDir = getElement().getManager().findDirectory(dir);
