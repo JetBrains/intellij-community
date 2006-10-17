@@ -11,7 +11,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -137,7 +136,7 @@ public class SettingsImpl implements EditorSettings {
 
   public boolean isUseTabCharacter(Project project) {
     VirtualFile file = myEditor.getVirtualFile();
-    FileType fileType = file == null ? null : FileTypeManager.getInstance().getFileTypeByFile(file);
+    FileType fileType = file == null ? null : file.getFileType();
     return myUseTabCharacter != null ? myUseTabCharacter.booleanValue() : CodeStyleSettingsManager.getSettings(project)
       .useTabCharacter(fileType);
   }
@@ -156,7 +155,7 @@ public class SettingsImpl implements EditorSettings {
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
 
     VirtualFile file = myEditor.getVirtualFile();
-    FileType fileType = file == null ? null : FileTypeManager.getInstance().getFileTypeByFile(file);
+    FileType fileType = file == null ? null : file.getFileType();
     int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(fileType);
     myCachedTabSize = new Integer(tabSize);
     return tabSize;

@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.VetoDocumentReloadException;
 import com.intellij.openapi.fileEditor.VetoDocumentSavingException;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -108,7 +107,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       final CharSequence text = LoadTextUtil.loadText(file);
       document = (DocumentEx)createDocument(text);
       document.setModificationStamp(file.getModificationStamp());
-      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+      final FileType fileType = file.getFileType();
       document.setReadOnly(!file.isWritable() || fileType.isBinary());
       file.putUserData(DOCUMENT_KEY, new WeakReference<Document>(document));
       document.putUserData(FILE_KEY, file);
@@ -165,7 +164,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private static boolean isFileBecameBinary(VirtualFile file) {
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    final FileType fileType = file.getFileType();
     return fileType.isBinary() && !fileType.equals(StdFileTypes.CLASS);
   }
 
@@ -429,7 +428,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       public void actionPerformed(ActionEvent e) {
         String windowtitle = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
         SimpleDiffRequest request = new SimpleDiffRequest(getDummyProject(), windowtitle);
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+        FileType fileType = file.getFileType();
         String fsContent = LoadTextUtil.loadText(file).toString();
         request.setContents(new SimpleContent(fsContent, fileType),
                             new DocumentContent(myDummyProject, document, fileType));

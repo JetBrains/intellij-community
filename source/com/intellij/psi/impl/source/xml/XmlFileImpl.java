@@ -1,26 +1,25 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.html.ScriptSupportUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.lang.jsp.JspxFileViewProvider;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -75,7 +74,8 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
         myType = originalFile.getFileType();
       }
       else {
-        myType = FileTypeManager.getInstance().getFileTypeByFileName(getName());
+        VirtualFile virtualFile = getVirtualFile();
+        myType = virtualFile == null ? FileTypeManager.getInstance().getFileTypeByFileName(getName()) : virtualFile.getFileType();
       }
     }
     return myType;

@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -37,30 +36,27 @@ public final class TextEditorProvider implements FileEditorProvider, Application
   @NonNls private static final String TYPE_ID = "text-editor";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorProvider");
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
-  @NonNls public static final String LINE_ATTR = "line";
-  @NonNls public static final String COLUMN_ATTR = "column";
-  @NonNls public static final String SELECTION_START_ATTR = "selection-start";
-  @NonNls public static final String SELECTION_END_ATTR = "selection-end";
-  @NonNls public static final String VERTICAL_SCROLL_PROPORTION_ATTR = "vertical-scroll-proportion";
-  @NonNls public static final String FOLDING_ELEMENT = "folding";
+  @NonNls private static final String LINE_ATTR = "line";
+  @NonNls private static final String COLUMN_ATTR = "column";
+  @NonNls private static final String SELECTION_START_ATTR = "selection-start";
+  @NonNls private static final String SELECTION_END_ATTR = "selection-end";
+  @NonNls private static final String VERTICAL_SCROLL_PROPORTION_ATTR = "vertical-scroll-proportion";
+  @NonNls private static final String FOLDING_ELEMENT = "folding";
 
   public static TextEditorProvider getInstance() {
     return ApplicationManager.getApplication().getComponent(TextEditorProvider.class);
   }
 
-  public boolean accept(Project project, VirtualFile file) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory() || !file.isValid()) {
       return false;
     }
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+    FileType fileType = file.getFileType();
     return !fileType.isBinary() || fileType == StdFileTypes.CLASS;
   }
 
   @NotNull
-  public FileEditor createEditor(Project project, @NotNull final VirtualFile file) {
+  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
     LOG.assertTrue(accept(project, file));
     return new TextEditorImpl(project, file);
   }
@@ -70,7 +66,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
   }
 
   @NotNull
-  public FileEditorState readState(Element element, Project project, VirtualFile file) {
+  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = new TextEditorState();
 
     try {
@@ -99,7 +95,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     return state;
   }
 
-  public void writeState(FileEditorState _state, Project project, Element element) {
+  public void writeState(@NotNull FileEditorState _state, @NotNull Project project, @NotNull Element element) {
     TextEditorState state = (TextEditorState)_state;
 
     element.setAttribute(LINE_ATTR, Integer.toString(state.LINE));
@@ -130,6 +126,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     return FileEditorPolicy.NONE;
   }
 
+  @NotNull
   public String getComponentName() {
     return "textEditorProvider";
   }
@@ -158,7 +155,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     }
 
     if (editor instanceof DocumentsEditor) {
-      DocumentsEditor documentsEditor = ((DocumentsEditor)editor);
+      DocumentsEditor documentsEditor = (DocumentsEditor)editor;
       Document[] documents = documentsEditor.getDocuments();
       if (documents.length > 0) {
         return documents;
@@ -209,6 +206,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
       return myEditor;
     }
 
+    @NotNull
     public JComponent getComponent() {
       return myEditor.getComponent();
     }
@@ -230,13 +228,13 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     }
 
     @NotNull
-    public FileEditorState getState(FileEditorStateLevel level) {
+    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
       TextEditorState state = new TextEditorState();
       TextEditorImpl.getStateImpl(null, myEditor, state, level);
       return state;
     }
 
-    public void setState(FileEditorState state) {
+    public void setState(@NotNull FileEditorState state) {
       TextEditorImpl.setStateImpl(null, myEditor, (TextEditorState)state);
     }
 
@@ -252,9 +250,9 @@ public final class TextEditorProvider implements FileEditorProvider, Application
 
     public void deselectNotify() { }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) { }
+    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) { }
+    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
       return myBackgroundHighlighter;
