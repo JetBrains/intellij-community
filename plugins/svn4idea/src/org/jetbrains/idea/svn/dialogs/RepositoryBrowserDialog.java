@@ -771,7 +771,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     // generate Map of path->Change
     SvnDiffEditor diffEditor = new SvnDiffEditor(myVCS.createRepository(sourceURL.toString()),
             myVCS.createRepository(targetURL.toString()));
-    repository.diff(targetURL, rev, rev, null, true, true, new ISVNReporterBaton() {
+    repository.diff(targetURL, rev, rev, null, true, true, false, new ISVNReporterBaton() {
       public void report(ISVNReporter reporter) throws SVNException {
         reporter.setPath("", null, rev, false);
         reporter.finishReport();

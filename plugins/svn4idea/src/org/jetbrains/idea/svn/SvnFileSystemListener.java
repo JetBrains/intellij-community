@@ -137,7 +137,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
     else {
         try {
-        if (SVNWCUtil.isWorkingCopyRoot(ioFile, true)) {
+        if (SVNWCUtil.isWorkingCopyRoot(ioFile)) {
           return false;
         }
         } catch (SVNException e) {
