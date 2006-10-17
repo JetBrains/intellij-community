@@ -5,6 +5,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
@@ -49,7 +50,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
       if (metaData != null) text = metaData.getName();
     }
 
-    if (text == null) return true;
+    if (StringUtil.isEmpty(text)) return true;
 
     SearchScope searchScope = p.getEffectiveSearchScope();
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
