@@ -96,6 +96,59 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return node.getText();
   }
 
+  @Nullable
+  public String getUnescapedValue() {
+    String s = getValue();
+    if (s == null) {
+      return null;
+    }
+    int off = 0;
+    int len = s.length();
+    char aChar;
+    StringBuilder out = new StringBuilder();
+
+    while (off < len) {
+        aChar = s.charAt(off++);
+        if (aChar == '\\') {
+            aChar = s.charAt(off++);
+            if(aChar == 'u') {
+                // Read the xxxx
+                int value=0;
+                for (int i=0; i<4; i++) {
+                    aChar = s.charAt(off++);
+                    switch (aChar) {
+                      case '0': case '1': case '2': case '3': case '4':
+                      case '5': case '6': case '7': case '8': case '9':
+                         value = (value << 4) + aChar - '0';
+                         break;
+                      case 'a': case 'b': case 'c':
+                      case 'd': case 'e': case 'f':
+                         value = (value << 4) + 10 + aChar - 'a';
+                         break;
+                      case 'A': case 'B': case 'C':
+                      case 'D': case 'E': case 'F':
+                         value = (value << 4) + 10 + aChar - 'A';
+                         break;
+                      default:
+                          throw new IllegalArgumentException(
+                                       "Malformed \\uxxxx encoding.");
+                    }
+                }
+                out.append((char) value);
+            } else {
+                if (aChar == 't') aChar = '\t';
+                else if (aChar == 'r') aChar = '\r';
+                else if (aChar == 'n') aChar = '\n';
+                else if (aChar == 'f') aChar = '\f';
+                out.append(aChar);
+            }
+        } else {
+            out.append(aChar);
+        }
+    }
+    return out.toString();
+  }
+
   public @Nullable String getKeyValueSeparator() {
     final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
     if (node == null) {

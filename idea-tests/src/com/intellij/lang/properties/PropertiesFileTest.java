@@ -55,10 +55,16 @@ public class PropertiesFileTest extends LightIdeaTestCase {
     assertEquals(1, propertiesAfter.size());
     assertPropertyEquals(propertiesAfter.get(0), "xxx", "yyy");
   }
+
   public void testAddToEnd() throws IncorrectOperationException {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nccc");
     assertEquals(1,propertiesFile.getProperties().size());
     propertiesFile.addProperty(myPropertyToAdd);
     assertEquals("a=b\\nccc"+"\nkkk=vvv", propertiesFile.getText());
+  }
+
+  public void testUnescapedValue() {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a=b\\nc\\u0063c");
+    assertEquals("b\nccc", propertiesFile.getProperties().get(0).getUnescapedValue());
   }
 }

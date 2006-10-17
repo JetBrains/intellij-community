@@ -16,6 +16,15 @@ import org.jetbrains.annotations.Nullable;
 public interface Property extends PsiNamedElement {
   @Nullable String getKey();
   @Nullable String getValue();
+
+  /**
+   * Returns the value with \n, \r, \t, \f and Unicode escape characters converted to their
+   * character equivalents.
+   *
+   * @return unescaped value, or null if no value is specified for this property.
+   */
+  @Nullable String getUnescapedValue();
+
   @Nullable String getKeyValueSeparator();
 
   void setValue(@NonNls @NotNull String value) throws IncorrectOperationException;

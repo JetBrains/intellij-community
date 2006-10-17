@@ -75,7 +75,7 @@ public class StringDescriptorManager implements ModuleComponent {
 
     Property prop = resolveToProperty(descriptor, locale);
     if (prop != null) {
-      final String value = prop.getValue();
+      final String value = prop.getUnescapedValue();
       if (value != null) {
         return value;
       }

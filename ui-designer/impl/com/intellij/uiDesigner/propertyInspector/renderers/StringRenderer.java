@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,12 +11,10 @@ import org.jetbrains.annotations.NotNull;
 public final class StringRenderer extends LabelPropertyRenderer<StringDescriptor> {
 
   protected void customize(@NotNull final StringDescriptor value) {
-    final String resolvedValue = value.getResolvedValue();
-    if (resolvedValue != null) {
-      setText(resolvedValue);
+    String resolvedValue = value.getResolvedValue();
+    if (resolvedValue == null) {
+      resolvedValue = value.getValue();
     }
-    else {
-      setText(value.getValue());
-    }
+    setText(StringUtil.escapeStringCharacters(resolvedValue));
   }
 }
