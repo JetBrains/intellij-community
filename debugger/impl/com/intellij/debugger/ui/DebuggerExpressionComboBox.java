@@ -58,11 +58,16 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   public void setText(TextWithImports item) {
-    item.setText(item.getText().replace('\n', ' '));
-    if(myComboBox.getItemCount() == 0 || !item.equals(myComboBox.getItemAt(0))) {
-      myComboBox.insertItemAt(item, 0);
+    final String itemText = item.getText().replace('\n', ' ');
+    item.setText(itemText);
+    if (!"".equals(itemText)) {
+      if(myComboBox.getItemCount() == 0 || !item.equals(myComboBox.getItemAt(0))) {
+        myComboBox.insertItemAt(item, 0);
+      }
     }
-    myComboBox.setSelectedIndex(0);
+    if (myComboBox.getItemCount() > 0) {
+      myComboBox.setSelectedIndex(0);
+    }
     if(myComboBox.isEditable()) {
       myComboBox.getEditor().setItem(item);
     }
