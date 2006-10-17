@@ -124,7 +124,7 @@ public class CommonRefactoringUtil {
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(readonly.toArray(new VirtualFile[readonly.size()]));
     failed.addAll(Arrays.asList(status.getReadonlyFiles()));
-    if (notifyOnFail && !failed.isEmpty()) {
+    if (notifyOnFail && (!failed.isEmpty() || readonly.isEmpty())) {
       StringBuilder message = new StringBuilder(messagePrefix);
       message.append('\n');
       for (VirtualFile virtualFile : failed) {
