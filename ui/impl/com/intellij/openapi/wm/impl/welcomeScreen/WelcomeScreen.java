@@ -636,12 +636,10 @@ public class WelcomeScreen {
       learnMore.setupWithinPanel(myPluginsPanel, PLUGINS_GROUP, myPluginsButtonsCount, 0);
       myPluginsButtonsCount++;
     }
-    else {
-      gBC = new GridBagConstraints(2, y, 2, 2, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0);
-      JPanel emptyPane = new JPanel();
-      emptyPane.setBackground(PLUGINS_PANEL_COLOR);
-      panel.add(emptyPane, gBC);
-    }
+    gBC = new GridBagConstraints(2, y, 2, 2, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0);
+    JPanel emptyPane = new JPanel();
+    emptyPane.setBackground(PLUGINS_PANEL_COLOR);
+    panel.add(emptyPane, gBC);
   }
 
   /**
