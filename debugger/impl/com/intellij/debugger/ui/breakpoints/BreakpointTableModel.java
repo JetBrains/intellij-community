@@ -4,14 +4,16 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.util.ui.ItemRemovable;
-import com.intellij.ui.TableUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.ItemRemovable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class BreakpointTableModel extends AbstractTableModel implements ItemRemovable {
   public static final int ENABLED_STATE = 0;
@@ -107,7 +109,7 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
     if (rowIndex < 0 || rowIndex >= myBreakpoints.size()) {
       return;
     }
-    Breakpoint breakpoint = (Breakpoint)myBreakpoints.get(rowIndex);
+    Breakpoint breakpoint = myBreakpoints.get(rowIndex);
 /*
     if (columnIndex == NAME) {
       breakpoint.setDisplayName((aValue != null)? aValue.toString() : "");
@@ -115,8 +117,12 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
     else
 */
     if (columnIndex == ENABLED_STATE) {
-      boolean value = aValue != null? ((Boolean)aValue).booleanValue() : true;
-      breakpoint.ENABLED = value;
+      final boolean isEnabled = aValue == null || ((Boolean)aValue).booleanValue();
+      final boolean valueChanged = isEnabled != breakpoint.ENABLED;
+      breakpoint.ENABLED = isEnabled;
+      if (valueChanged) {
+        breakpoint.updateUI();
+      }
     }
     fireTableRowsUpdated(rowIndex, rowIndex);
   }

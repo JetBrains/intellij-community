@@ -4,11 +4,14 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.util.ui.Table;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.Table;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -31,7 +34,9 @@ public class BreakpointTable extends Table {
     }
     actionMap.put(o, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        if (isEditing()) return;
+        if (isEditing()) {
+          return;
+        }
         int[] indices = getSelectedRows();
         boolean currentlyMarked = true;
         for (int i = 0; i < indices.length; i++) {

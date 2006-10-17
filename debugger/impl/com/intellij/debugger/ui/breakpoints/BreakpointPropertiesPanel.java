@@ -104,17 +104,15 @@ public abstract class BreakpointPropertiesPanel {
     }
 
     public JToolTip createToolTip() {
-      JToolTip toolTip = new JToolTip(){
-        {
-          setUI(new MultiLineTooltipUI());
-        }
-      };
+      JToolTip toolTip = new JToolTip(){{
+        setUI(new MultiLineTooltipUI());
+      }};
       toolTip.setComponent(this);
       return toolTip;
     }
   }
 
-  private void insert(JPanel panel, JComponent component) {
+  private static void insert(JPanel panel, JComponent component) {
     panel.setLayout(new BorderLayout());
     panel.add(component, BorderLayout.CENTER);
   }
