@@ -57,8 +57,7 @@ public class SelectTemplateDialog extends DialogWrapper{
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     FileTemplate[] allTemplates = FileTemplateManager.getInstance().getAllTemplates();
     PsiDirectory[] dirs = {myDirectory};
-    for (int i = 0; i < allTemplates.length; i++) {
-      FileTemplate template = allTemplates[i];
+    for (FileTemplate template : allTemplates) {
       if (FileTemplateUtil.canCreateFromTemplate(dirs, template)) {
         model.addElement(template);
       }

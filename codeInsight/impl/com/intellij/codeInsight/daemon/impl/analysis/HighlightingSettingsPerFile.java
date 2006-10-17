@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NonNls;import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +29,6 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
   }
 
   private Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
-  private Map<Language, FileHighlighingSetting[]> myHighlightDefaults = new HashMap<Language, FileHighlighingSetting[]>();
 
   public FileHighlighingSetting getHighlightingSettingForRoot(PsiElement root){
     final PsiFile containingFile = root.getContainingFile();
@@ -44,7 +43,6 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
   }
 
   public FileHighlighingSetting[] getDefaults(Language lang){
-    if(myHighlightDefaults.containsKey(lang)) return myHighlightDefaults.get(lang);
     final FileHighlighingSetting[] fileHighlighingSettings = new FileHighlighingSetting[PsiUtil.getRootsCount(lang)];
     for (int i = 0; i < fileHighlighingSettings.length; i++) {
       fileHighlighingSettings[i] = FileHighlighingSetting.FORCE_HIGHLIGHTING;
@@ -69,7 +67,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
 
   public void projectOpened() {}
   public void projectClosed() {}
-  public String getComponentName() {
+  @NotNull public String getComponentName() {
     return "HighlightingSettingsPerFile";
   }
 

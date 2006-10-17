@@ -124,14 +124,6 @@ public class CreateFromTemplateGroup extends ActionGroup{
       PsiDirectory dir = PackageUtil.getOrChooseDirectory(view);
       if (dir == null) return;
 
-      FileTemplate[] allTemplates = FileTemplateManager.getInstance().getAllTemplates();
-      List<FileTemplate> available = new ArrayList<FileTemplate>();
-      for (FileTemplate template : allTemplates) {
-        if (canCreateFromTemplate(e, template)) {
-          available.add(template);
-        }
-      }
-
       SelectTemplateDialog dialog = new SelectTemplateDialog(project, dir);
       dialog.show();
       FileTemplate selectedTemplate = dialog.getSelectedTemplate();

@@ -19,13 +19,11 @@ import com.intellij.util.containers.HashMap;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Stack;
 
 public class ControlFlow {
   private final ArrayList<Instruction> myInstructions = new ArrayList<Instruction>();
   private final HashMap<PsiElement,Integer> myElementToStartOffsetMap = new HashMap<PsiElement, Integer>();
   private final HashMap<PsiElement,Integer> myElementToEndOffsetMap = new HashMap<PsiElement, Integer>();
-  private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
   private DfaVariableValue[] myFields;
   private DfaValueFactory myFactory;
 
@@ -43,7 +41,6 @@ public class ControlFlow {
   }
 
   public void startElement(PsiElement psiElement) {
-    myElementStack.push(psiElement);
     myElementToStartOffsetMap.put(psiElement, new Integer(myInstructions.size()));
   }
 
@@ -92,7 +89,7 @@ public class ControlFlow {
 
     for (int i = 0; i < instructions.length; i++) {
       Instruction instruction = instructions[i];
-      result.append(Integer.toString(i) + ": " + instruction.toString());
+      result.append(Integer.toString(i)).append(": ").append(instruction.toString());
       result.append("\n");
     }
     return result.toString();

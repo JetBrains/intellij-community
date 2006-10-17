@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -37,7 +36,6 @@ public class LayeredLexer extends LexerBase {
   private Lexer myBaseLexer;
   private Map<IElementType, Lexer> myStartTokenToLayerLexer = new HashMap<IElementType, Lexer>();
   private Lexer myCurrentLayerLexer;
-  private ArrayList<Lexer> myLayerLexers = new ArrayList<Lexer>(1);
   private HashSet<Lexer> mySelfStoppingLexers = new HashSet<Lexer>(1);
   private HashMap<Lexer, IElementType[]> myStopTokens = new HashMap<Lexer,IElementType[]>(1);
 
@@ -53,12 +51,10 @@ public class LayeredLexer extends LexerBase {
   }
 
   public void registerLayer(Lexer Lexer, IElementType[] startTokens) {
-    for (int i = 0; i < startTokens.length; i++) {
-      LOG.assertTrue(!myStartTokenToLayerLexer.containsKey(startTokens[i]));
-      myStartTokenToLayerLexer.put(startTokens[i], Lexer);
+    for (IElementType startToken : startTokens) {
+      LOG.assertTrue(!myStartTokenToLayerLexer.containsKey(startToken));
+      myStartTokenToLayerLexer.put(startToken, Lexer);
     }
-
-    myLayerLexers.add(Lexer);
   }
 
   private void activateLayerIfNecessary() {
@@ -146,8 +142,7 @@ public class LayeredLexer extends LexerBase {
   private boolean isStopToken(Lexer lexer, IElementType tokenType) {
     final IElementType[] stopTokens = myStopTokens.get(lexer);
     if (stopTokens == null) return false;
-    for (int i = 0; i < stopTokens.length; i++) {
-      IElementType stopToken = stopTokens[i];
+    for (IElementType stopToken : stopTokens) {
       if (stopToken == tokenType) return true;
     }
     return false;

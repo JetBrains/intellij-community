@@ -378,7 +378,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) return;
-        if (filter.accepts((RefElement)refEntity) && !myProcessedSuspicious.contains(refEntity)) {
+        RefElement refElement=(RefElement)refEntity;
+        if (filter.accepts(refElement) && !myProcessedSuspicious.contains(refElement)) {
           refEntity.accept(new RefVisitor() {
             public void visitField(final RefField refField) {
               myProcessedSuspicious.add(refField);

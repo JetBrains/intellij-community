@@ -18,7 +18,6 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 class ToolsPanel extends JPanel {
@@ -144,11 +143,8 @@ class ToolsPanel extends JPanel {
     // unregister removed tools
     ToolManager toolManager = ToolManager.getInstance();
 
-    ArrayList tools = new ArrayList();
     for (int i = 0; i < myModel.getRowCount(); i++) {
       ToolWrapper wrapper = myModel.getToolWrapper(i);
-      Tool tool = wrapper.getTool();
-      tools.add(tool);
       wrapper.commit();
     }
     toolManager.setTools(getTools());

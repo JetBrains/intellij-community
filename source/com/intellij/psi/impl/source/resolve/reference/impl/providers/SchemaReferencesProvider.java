@@ -410,7 +410,6 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
       CompletionProcessor processor = new CompletionProcessor();
       processor.tag = tag;
-      HashSet<String> visitedNamespaces = new HashSet<String>(1);
 
       XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
       final XmlTag rootTag = document.getRootTag();
@@ -423,7 +422,6 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
         if (nsDescriptor instanceof XmlNSDescriptorImpl) {
           processNamespace(namespace, processor, nsDescriptor, tagNames);
-          visitedNamespaces.add(namespace);
         }
       }
 
