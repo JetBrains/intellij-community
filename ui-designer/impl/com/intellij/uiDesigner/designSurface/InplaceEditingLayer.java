@@ -7,18 +7,17 @@ import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditorAdapter;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 /**
@@ -194,12 +193,6 @@ public final class InplaceEditingLayer extends JComponent{
     enableEvents(MouseEvent.MOUSE_EVENT_MASK);
 
     repaint();
-  }
-
-  public void dispatchEditorEvent(KeyEvent event) {
-    if (myInplaceEditorComponent != null) {
-      myInplaceEditorComponent.dispatchEvent(event);
-    }
   }
 
   private void adjustEditorComponentSize(){

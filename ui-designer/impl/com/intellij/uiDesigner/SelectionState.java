@@ -26,11 +26,6 @@ public final class SelectionState{
     editor.addComponentSelectionListener(new MyComponentSelectionListener());
   }
 
-  public boolean isInsideChange(){
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myInsideChange;
-  }
-
   public void setInsideChange(final boolean insideChange){
     ApplicationManager.getApplication().assertIsDispatchThread();
     myInsideChange = insideChange;

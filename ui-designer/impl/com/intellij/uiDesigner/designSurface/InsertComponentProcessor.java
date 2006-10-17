@@ -72,10 +72,6 @@ public final class InsertComponentProcessor extends EventProcessor {
     myPaletteManager = PaletteManager.getInstance(editor.getProject());
   }
 
-  public boolean isSticky() {
-    return mySticky;
-  }
-
   public void setSticky(final boolean sticky) {
     mySticky = sticky;
   }
