@@ -184,7 +184,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         if (builder.length() > 0) {
           builder.insert(0, "\">");
           builder.insert(0, getBaseDir());
-          builder.insert(0, "<project name=\"tags resolved as entity references\" basedir=\"");
+          builder.insert(0, "<project basedir=\"");
           builder.append("</project>");
           final PsiElementFactory elementFactory = getManager().getElementFactory();
           final XmlFile xmlFile = (XmlFile)elementFactory
