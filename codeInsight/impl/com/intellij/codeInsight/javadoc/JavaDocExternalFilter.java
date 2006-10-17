@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.javadoc;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,7 +20,6 @@ import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
@@ -59,6 +58,8 @@ public class JavaDocExternalFilter {
   @NonNls private static final String H2 = "</H2>";
   @NonNls private static final String HTML_CLOSE = "</HTML>";
   @NonNls private static final String HTML = "<HTML>";
+  @NonNls private static final String BR = "<BR>";
+  @NonNls private static final String DT = "<DT>";
 
   private static abstract class RefConvertor {
     private Pattern mySelector;
@@ -155,13 +156,7 @@ public class JavaDocExternalFilter {
     boolean runMe();
   }
 
-  public static boolean isJavaDocURL(String url) {
-    final Reader stream = getReaderByUrl(url);
-
-    if (stream == null) {
-      return false;
-    }
-
+  public static boolean isJavaDocURL(final String url) throws Exception {
     final Waiter waiter = new Waiter(){
       Boolean key = Boolean.FALSE;
       final Object LOCK = new Object();
@@ -187,8 +182,21 @@ public class JavaDocExternalFilter {
       }
     };
 
+    final boolean[] fail = new boolean[1];
+    final Exception [] ex = new Exception[1];
     new Thread(new Runnable() {
       public void run() {
+        Reader stream = null;
+        try {
+          stream = getReaderByUrl(url, ProgressManager.getInstance().getProgressIndicator());
+        }
+        catch (IOException e) {
+          ex[0] = e;
+        }
+        if (stream == null) {
+          fail[0] = true;
+          return;
+        }
         try {
           BufferedReader reader = null;
           try {
@@ -212,12 +220,15 @@ public class JavaDocExternalFilter {
 
         }
         catch (final Exception e) {
-          showErrorMessage(e);
+          ex[0] = e;
         }
       }
     }).start();
 
-    return waiter.runMe();
+    if (ex[0] != null) {
+      throw ex[0];
+    }
+    return !fail[0] && waiter.runMe();
   }
 
   private String correctRefs(String root, String read) {
@@ -249,63 +260,109 @@ public class JavaDocExternalFilter {
 
 
   @Nullable
-  private static Reader getReaderByUrl(final String surl) {
-    try {
-      if (surl.startsWith(JAR_PROTOCOL)) {
-        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(BrowserUtil.getDocURL(surl));
+  private static Reader getReaderByUrl(final String surl, final ProgressIndicator pi) throws IOException {
+    if (surl.startsWith(JAR_PROTOCOL)) {
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(BrowserUtil.getDocURL(surl));
 
-        if (file == null) {
-          return null;
-        }
-
-        return new StringReader(VfsUtil.loadText(file));
+      if (file == null) {
+        return null;
       }
 
-      URL url = BrowserUtil.getURL(surl);
-      HttpConfigurable.getInstance().prepareURL(url.toString());
-      final URLConnection urlConnection = url.openConnection();
-      final String contentEncoding = urlConnection.getContentEncoding();
-      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-      final InputStream inputStream = pi != null ? UrlConnectionUtil.getConnectionInputStreamWithException(urlConnection, pi) : urlConnection.getInputStream();
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      return contentEncoding != null ? new InputStreamReader(inputStream, contentEncoding) : new InputStreamReader(inputStream);
-    }
-    catch (final IOException e) {
-      showErrorMessage(e);
+      return new StringReader(VfsUtil.loadText(file));
     }
 
-    return null;
-  }
-
-  private static void showErrorMessage(final Exception e) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(CodeInsightBundle.message("javadoc.external.fetch.error.message", e.getLocalizedMessage()),
-                                   CodeInsightBundle.message("javadoc.external.fetch.error.title"),
-                                   Messages.getErrorIcon());
-      }
-    });
+    URL url = BrowserUtil.getURL(surl);
+    HttpConfigurable.getInstance().prepareURL(url.toString());
+    final URLConnection urlConnection = url.openConnection();
+    final String contentEncoding = urlConnection.getContentEncoding();
+    final InputStream inputStream =
+      pi != null ? UrlConnectionUtil.getConnectionInputStreamWithException(urlConnection, pi) : urlConnection.getInputStream();
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    return contentEncoding != null ? new InputStreamReader(inputStream, contentEncoding) : new InputStreamReader(inputStream);
   }
 
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public String getExternalDocInfo(final String surl) {
-    if (surl == null) {
-      return null;
+  public String getExternalDocInfo(final String surl) throws Exception {
+    if (surl == null) return null;    
+    if (MyJavadocFetcher.isFree()) {
+      final MyJavadocFetcher fetcher = new MyJavadocFetcher(surl);
+      fetcher.start();
+      try {
+        fetcher.join();
+      }
+      catch (InterruptedException e) {
+        return null;
+      }
+      final Exception exception = fetcher.getException();
+      if (exception != null) {
+        fetcher.cleanup();
+        throw exception;
+      }
+
+      final String docText = correctRefs(ourAnchorsuffix.matcher(surl).replaceAll(""), fetcher.getData());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Filtered JavaDoc: " + docText + "\n");
+      }
+      return JavaDocUtil.fixupText(docText);
+    }
+    return null;
+  }
+
+  @Nullable
+   public String getExternalDocInfoForElement(final String docURL, final PsiElement element) throws Exception {
+     String externalDoc = getExternalDocInfo(docURL);
+     if (externalDoc != null) {
+       if (element instanceof PsiMethod) {
+         String className = ((PsiMethod) element).getContainingClass().getQualifiedName();
+         Matcher matcher = ourMethodHeading.matcher(externalDoc);
+         //noinspection HardCodedStringLiteral
+         return matcher.replaceFirst("<H3>" + className + "</H3>");
+      }
+    }
+    return externalDoc;
+  }
+
+  private static class MyJavadocFetcher extends Thread {
+    private static boolean ourFree = true;
+    private final StringBuffer data = new StringBuffer();
+    private final String surl;
+    private final Exception [] myExceptions = new Exception[1];
+
+    @SuppressWarnings({"HardCodedStringLiteral"})
+    public MyJavadocFetcher(final String surl) {
+      super("External Javadoc Fetcher");
+      this.surl = surl;
+      ourFree = false;
     }
 
-    final String root = ourAnchorsuffix.matcher(surl).replaceAll("");
+    public static boolean isFree() {
+      return ourFree;
+    }
 
-    final StringBuffer data = new StringBuffer();
+    public String getData() {
+      return data.toString();
+    }
 
-    final Runnable process = new Runnable() {
+    public void run() {
+      try {
+        if (surl == null) {
+          return;
+        }
 
-      public void run() {
-
-        final Reader stream = getReaderByUrl(surl);
+        Reader stream = null;
+        try {
+          stream = getReaderByUrl(surl, new ProgressIndicatorBase());
+        }
+        catch (ProcessCanceledException e) {
+          return;
+        }
+        catch (IOException e) {
+          myExceptions[0] = e;
+        }
 
         if (stream == null) {
-            return;
+          return;
         }
 
         Matcher anchorMatcher = ourAnchorsuffix.matcher(surl);
@@ -321,12 +378,11 @@ public class JavaDocExternalFilter {
 
         final BufferedReader buf = new BufferedReader(stream);
 
-        data.append(HTML + "\n");
+        data.append(HTML);
         try {
           String read;
 
           do {
-            ProgressManager.getInstance().checkCanceled();
             read = buf.readLine();
           }
           while (read != null && read.toUpperCase().indexOf(startSection) == -1);
@@ -343,47 +399,40 @@ public class JavaDocExternalFilter {
             boolean skip = false;
 
             while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(DL)) {
-              ProgressManager.getInstance().checkCanceled();
               if (read.toUpperCase().indexOf(H2) != -1) { // read=class name in <H2>
-                data.append(H2 + "\n");
+                data.append(H2);
                 skip = true;
               }
               else if (!skip) data.append(read); //correctRefs(root, read));
             }
 
-            data.append(DL + "\n");
+            data.append(DL);
 
             StringBuffer classDetails = new StringBuffer();
 
             while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(HR)) {
-              ProgressManager.getInstance().checkCanceled();
               classDetails.append(read); //correctRefs(root, read));
-              classDetails.append("\n");
             }
 
             while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(P)) {
-              ProgressManager.getInstance().checkCanceled();
-              data.append(read); //correctRefs(root, read));
-              data.append("\n");
+              data.append(read.replaceAll(DT, DT + BR)); //correctRefs(root, read));
             }
 
             data.append(classDetails);
-            data.append(P + "\n");
+            data.append(P);
           }
 
           while (((read = buf.readLine()) != null) && read.indexOf(endSection) == -1) {
-            ProgressManager.getInstance().checkCanceled();
             if (read.toUpperCase().indexOf(HR) == -1) {
               data.append(read); //correctRefs(root, read));
-              data.append("\n");
             }
           }
 
-          data.append(HTML_CLOSE + "\n");
+          data.append(HTML_CLOSE);
 
         }
         catch (final IOException e) {
-          showErrorMessage(e);
+          myExceptions[0] = e;
         }
         finally {
           if (buf != null) {
@@ -391,36 +440,22 @@ public class JavaDocExternalFilter {
               buf.close();
             }
             catch (IOException e) {
-              showErrorMessage(e);
+              myExceptions[0] = e;
             }
           }
         }
       }
-    };
-
-    final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Fetch external javadoc", true, myProject);
-    if (ok) {
-      final String docText = correctRefs(root, data.toString());
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Filtered JavaDoc: " + docText + "\n");
-      }
-      return JavaDocUtil.fixupText(docText);
-    }
-    return null;
-  }
-
-  @Nullable
-  public String getExternalDocInfoForElement(final String docURL, final PsiElement element) {
-    String externalDoc = getExternalDocInfo(docURL);
-    if (externalDoc != null) {
-      if (element instanceof PsiMethod) {
-        String className = ((PsiMethod) element).getContainingClass().getQualifiedName();
-        Matcher matcher = ourMethodHeading.matcher(externalDoc);
-        //noinspection HardCodedStringLiteral
-        return matcher.replaceFirst("<H3>" + className + "</H3>");
-
+      finally {
+        ourFree = true;
       }
     }
-    return externalDoc;
+
+    public Exception getException() {
+      return myExceptions[0];
+    }
+
+    public void cleanup() {
+      myExceptions[0] = null;
+    }
   }
 }

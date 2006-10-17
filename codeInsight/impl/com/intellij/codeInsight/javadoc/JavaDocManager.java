@@ -10,6 +10,11 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
@@ -55,7 +60,7 @@ public class JavaDocManager implements ProjectComponent {
   private final Project myProject;
   private Editor myEditor = null;
   private ParameterInfoController myParameterInfoController;
-  private Alarm myUpdateDocAlarm = new Alarm();
+  private Alarm myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
   private HashMap<FileType,DocumentationProvider> documentationProviders = new HashMap<FileType, DocumentationProvider>();
@@ -64,6 +69,26 @@ public class JavaDocManager implements ProjectComponent {
   public static final @NonNls String PACKAGE_SUMMARY_FILE = "package-summary.html";
   public static final @NonNls String PSI_ELEMENT_PROTOCOL = "psi_element://";
   public static final @NonNls String DOC_ELEMENT_PROTOCOL = "doc_element://";
+
+  private ActionManagerEx myActionManagerEx;
+  private AnActionListener myActionListener = new AnActionListener() {
+    public void beforeActionPerformed(AnAction action, DataContext dataContext) {
+      if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
+      if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
+      cancelJavadoc();
+    }
+
+    public void beforeEditorTyping(char c, DataContext dataContext) {
+      cancelJavadoc();
+    }
+
+    private void cancelJavadoc() {
+      final JBPopup hint = getDocInfoHint();
+      if (hint != null) {
+        hint.cancel();
+      }
+    }
+  };
 
   public DocumentationProvider getProvider(FileType fileType) {
     return documentationProviders.get(fileType);
@@ -87,8 +112,9 @@ public class JavaDocManager implements ProjectComponent {
     return project.getComponent(JavaDocManager.class);
   }
 
-  public JavaDocManager(Project project) {
+  public JavaDocManager(Project project, ActionManagerEx managerEx) {
     myProject = project;
+    myActionManagerEx = managerEx;
 
     registerDocumentationProvider(StdFileTypes.HTML, new HtmlDocumentationProvider(project));
     registerDocumentationProvider(StdFileTypes.XHTML, new XHtmlDocumentationProvider(project));
@@ -104,9 +130,12 @@ public class JavaDocManager implements ProjectComponent {
     return "JavaDocManager";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+    myActionManagerEx.addAnActionListener(myActionListener);
+  }
 
   public void disposeComponent() {
+    myActionManagerEx.removeAnActionListener(myActionListener);
   }
 
   public void projectOpened() {
@@ -332,7 +361,7 @@ public class JavaDocManager implements ProjectComponent {
     return new JavaDocProvider() {
       private SmartPsiElementPointer element = SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element);
 
-      public String getJavaDoc() {
+      public String getJavaDoc() throws Exception {
         return getDocInfo(element.getElement());
       }
 
@@ -519,38 +548,60 @@ public class JavaDocManager implements ProjectComponent {
     if (cancelRequests) {
       myUpdateDocAlarm.cancelAllRequests();
     }
-    myUpdateDocAlarm.addRequest(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (component.isEmpty()) {
-              component.setText(CodeInsightBundle.message("javadoc.fetching.progress"));
-            }
-          }
-        });
+        if (component.isEmpty()) {
+          component.setText(CodeInsightBundle.message("javadoc.fetching.progress"));
+        }
       }
-    }, 600);
+    });
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            final String text = provider.getJavaDoc();
-            if (text == null) {
-              component.setText(CodeInsightBundle.message("no.documentation.found"), true);
+            final String text;
+            try {
+              text = provider.getJavaDoc();
             }
-            else if (text.length() == 0) {
-              component.setText(component.getText(), true);
+            catch (final Exception e) {
+              SwingUtilities.invokeLater(new Runnable(){
+                public void run() {
+                  component.setText(CodeInsightBundle.message("javadoc.external.fetch.error.message", e.getLocalizedMessage()), true);
+                }
+              });
+              return;
             }
-            else {
-              component.setData(provider.getElement(), text);
-            }
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                if (text == null) {
+                  component.setText(CodeInsightBundle.message("no.documentation.found"), true);
+                }
+                else if (text.length() == 0) {
+                  component.setText(component.getText(), true);
+                }
+                else {
+                  component.setData(provider.getElement(), text);
+                }
+
+                final Dimension dimension = component.getPreferredSize();
+                final Window window = SwingUtilities.getWindowAncestor(component);
+                if (window != null) {
+                  window.setBounds(window.getX(),
+                                   window.getY(),
+                                   dimension.width,
+                                   dimension.height);
+                  window.validate();
+                  window.repaint();
+                }
+              }
+            });
           }
         });
       }
     }, 10);
   }
 
-  public String getDocInfo(PsiElement element) {
+  private String getDocInfo(PsiElement element) throws Exception {
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo(((PsiMethodCallExpression)element));
     }
@@ -667,7 +718,7 @@ public class JavaDocManager implements ProjectComponent {
             return null;
           }
 
-          public String getJavaDoc() {
+          public String getJavaDoc() throws Exception {
             String url = getElementLocator(docUrl);
             if (url != null && JavaDocExternalFilter.isJavaDocURL(url)) {
               String text = new JavaDocExternalFilter(myProject).getExternalDocInfo(url);
