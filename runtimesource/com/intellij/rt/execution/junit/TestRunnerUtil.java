@@ -4,7 +4,6 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import junit.runner.BaseTestRunner;
-import junit.textui.TestRunner;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -188,11 +187,6 @@ public class TestRunnerUtil {
       String message = MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{e.toString()});
       return new FailedTestCase(testClass, methodName, message, e);
     }
-  }
-
-  private static void runFailed(String message) {
-    System.err.println(message);
-    System.exit(TestRunner.FAILURE_EXIT);
   }
 
   public static String testsFoundInPackageMesage(int testCount, String name) {

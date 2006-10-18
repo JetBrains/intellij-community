@@ -23,12 +23,11 @@ public class TestAllInPackage2 extends TestSuite {
     System.out.println(message);
   }
 
-  private static Test attachSuiteInfo(Test test, String name) {
+  private static void attachSuiteInfo(Test test, String name) {
     if (test instanceof TestSuite) {
       TestSuite testSuite = (TestSuite)test;
       if (testSuite.getName() == null)
         testSuite.setName(name);
     }
-    return test;
   }
 }
