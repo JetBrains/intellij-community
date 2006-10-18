@@ -82,7 +82,14 @@ public class DomElementsHighlightingUtil {
       final PsiReference reference = ((DomElementResolveProblemDescriptor)problemDescriptor).getPsiReference();
       final PsiElement element = reference.getElement();
       final int startOffset = element.getTextRange().getStartOffset();
-      descritors.add(creator.fun(Pair.create(reference.getRangeInElement().shiftRight(startOffset), element)));
+      final TextRange referenceRange = reference.getRangeInElement();
+      final TextRange errorRange;
+      if (referenceRange.getStartOffset() == referenceRange.getEndOffset()) {
+        errorRange = element.getTextRange();
+      } else {
+        errorRange = referenceRange.shiftRight(startOffset);
+      }
+      descritors.add(creator.fun(Pair.create(errorRange, element)));
       return descritors;
     }
 
