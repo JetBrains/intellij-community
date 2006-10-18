@@ -233,7 +233,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   private void processFileChange(final PsiFile file) {
-    if (file != null && StdFileTypes.XML.equals(file.getFileType())) {
+    if (file != null && StdFileTypes.XML.equals(file.getFileType()) && file instanceof XmlFile) {
       final XmlFile xmlFile = (XmlFile)file;
       updateFileDomness(xmlFile, null);
       updateDependantFiles(xmlFile);
