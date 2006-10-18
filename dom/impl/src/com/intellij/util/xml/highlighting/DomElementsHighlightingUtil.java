@@ -16,11 +16,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
@@ -28,6 +27,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericValue;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -89,17 +89,19 @@ public class DomElementsHighlightingUtil {
     final DomElement domElement = problemDescriptor.getDomElement();
     final PsiElement psiElement = getPsiElement(domElement);
     if (psiElement != null && StringUtil.isNotEmpty(psiElement.getText())) {
-      final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
-      if (tag != null && tag.getSubTags().length > 0) {
-        addDescriptionsToTagEnds(tag, descritors, creator);
-      } else {
-        descritors.add(creator.fun(Pair.create(psiElement.getTextRange(), psiElement)));
+      if (psiElement instanceof XmlTag) {
+        final XmlTag tag = (XmlTag)psiElement;
+        if (tag.getSubTags().length > 0) {
+          addDescriptionsToTagEnds(tag, descritors, creator);
+          return descritors;
+        }
       }
-    } else {
-      final XmlTag tag = getParentXmlTag(domElement);
-      if (tag != null) {
-        addDescriptionsToTagEnds(tag, descritors, creator);
-      }
+      return Arrays.asList(creator.fun(Pair.create(psiElement.getTextRange(), psiElement)));
+    }
+
+    final XmlTag tag = getParentXmlTag(domElement);
+    if (tag != null) {
+      addDescriptionsToTagEnds(tag, descritors, creator);
     }
     return descritors;
   }
