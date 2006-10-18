@@ -116,6 +116,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
+    XmlElementChangeUtil.doNameReplacement(this, getNameElement(), name);
     return null;
   }
 

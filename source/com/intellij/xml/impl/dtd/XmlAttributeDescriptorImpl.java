@@ -1,10 +1,13 @@
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.xml.XmlAttributeDecl;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +15,7 @@ import java.util.List;
 /**
  * @author Mike
  */
-public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
+public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor implements PsiWritableMetaData {
   private XmlAttributeDecl myDecl;
   private boolean myRequired;
   private boolean myEnumerated;
@@ -95,5 +98,10 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
 
   public String getQualifiedName() {
     return getName();
+  }
+
+  public void setName(String name) throws IncorrectOperationException {
+    myName = name;
+    ((PsiNamedElement)getDeclaration()).setName(name);
   }
 }

@@ -1,13 +1,8 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
@@ -67,21 +62,9 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
-    if (isWritable() && isInProjectContent(getProject(),getContainingFile().getVirtualFile())) {
-      final XmlElement nameElement = getNameElement();
-
-      if (nameElement!=null) {
-        nameElement.replace(
-          SourceTreeToPsiMap.treeElementToPsi(Factory.createSingleLeafElement(XmlTokenType.XML_NAME,name.toCharArray(),0, name.length(),null,getManager()))
-        );
-      }
-    }
+    XmlElementChangeUtil.doNameReplacement(this, getNameElement(), name);
 
     return null;
-  }
-
-  private static boolean isInProjectContent(Project project, VirtualFile vfile) {
-    return vfile== null || ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vfile)!=null;
   }
 
   public String getName() {
