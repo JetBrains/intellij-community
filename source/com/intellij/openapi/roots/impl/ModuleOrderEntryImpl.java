@@ -1,10 +1,12 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -15,6 +17,7 @@ import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -117,7 +120,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
 
   public boolean isValid() {
-    return !isDisposed() && myModule != null;
+    return !isDisposed() && getModule() != null;
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
@@ -137,8 +140,16 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     return false;
   }
 
+  @Nullable
   public Module getModule() {
-    return myModule;
+    if (!myRootModel.isWritable() || ApplicationManager.getApplication().isUnitTestMode()) {
+      return myModule;
+    }
+    final Module[] modules = ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).getModules();
+    for (Module module : modules) {
+      if (Comparing.strEqual(module.getName(), myModuleName)) return module;
+    }
+    return null;
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {

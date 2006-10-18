@@ -91,7 +91,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  public synchronized Module getModule(String name) {
+  public Module getModule(String name) {
     return myModuleModel.findModuleByName(name);
   }
 
