@@ -106,11 +106,15 @@ public class ReflectionCache {
   }
 
   public static boolean isInterface(Class aClass) {
-    return ourIsInterfaces.get(aClass);
+    synchronized (ourIsInterfaces) {
+      return ourIsInterfaces.get(aClass);
+    }
   }
 
   public static <T> TypeVariable<Class<T>>[] getTypeParameters(Class<T> aClass) {
-    return ourTypeParameters.get(aClass);
+    synchronized (ourTypeParameters) {
+      return ourTypeParameters.get(aClass);
+    }
   }
 
   public static Type[] getGenericInterfaces(Class aClass) {
