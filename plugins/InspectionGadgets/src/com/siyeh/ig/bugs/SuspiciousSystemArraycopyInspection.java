@@ -1,5 +1,5 @@
 /*
- * Copyright 20050-2006 Bas Leijdekkers
+ * Copyright 2005-2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

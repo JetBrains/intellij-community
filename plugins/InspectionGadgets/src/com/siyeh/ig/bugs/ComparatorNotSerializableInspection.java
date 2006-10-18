@@ -18,7 +18,7 @@ public class ComparatorNotSerializableInspection extends ClassInspection {
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
     @NotNull
