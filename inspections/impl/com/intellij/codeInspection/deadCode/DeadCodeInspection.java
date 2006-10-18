@@ -181,14 +181,17 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return ADD_NONJAVA_TO_ENTRIES;
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
@@ -862,10 +865,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public void updateContent() {
     checkForReachables();
     super.updateContent();
-  }
-
-  protected void resetFilter() {
-    myFilter = null;
   }
 
 }

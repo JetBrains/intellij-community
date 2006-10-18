@@ -8,6 +8,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.util.RefFilter;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -28,26 +29,26 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     return myFilter;
   }
 
-  protected void resetFilter() {
-    myFilter = null;
-  }
-
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {}
 
   public void exportResults(Element parentNode) {}
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
     return new JobDescriptor[0];
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.dead.code.entry.points.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getShortName() {
     return "";
   }

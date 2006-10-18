@@ -63,7 +63,6 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   }
 
   public void updateContent() {
-    resetFilter();
     myPackageContents = new HashMap<String, Set<RefElement>>();
     getContext().getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
@@ -81,8 +80,6 @@ public abstract class FilteringInspectionTool extends InspectionTool {
       }
     });
   }
-
-  protected abstract void resetFilter();
 
   public boolean hasReportedProblems() {
     final GlobalInspectionContextImpl context = getContext();

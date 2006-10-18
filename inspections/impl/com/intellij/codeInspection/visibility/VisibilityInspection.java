@@ -101,14 +101,17 @@ public class VisibilityInspection extends FilteringInspectionTool {
     return new OptionsPanel();
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
@@ -119,10 +122,6 @@ public class VisibilityInspection extends FilteringInspectionTool {
 
     }
     return myFilter;
-  }
-
-  protected void resetFilter() {
-    myFilter = null;
   }
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {

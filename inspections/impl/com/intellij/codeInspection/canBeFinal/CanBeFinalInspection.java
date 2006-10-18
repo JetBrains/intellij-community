@@ -179,10 +179,6 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     return myFilter;
   }
 
-  protected void resetFilter() {
-    myFilter = null;
-  }
-
   public HTMLComposer getComposer() {
     if (myComposer == null) {
       myComposer = new CanBeFinalComposer(this);

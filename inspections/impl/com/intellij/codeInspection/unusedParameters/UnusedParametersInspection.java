@@ -102,10 +102,6 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     return myFilter;
   }
 
-  protected void resetFilter() {
-    myFilter = null;
-  }
-
   public void exportResults(final Element parentNode) {
     final UnusedParametersFilter filter = getFilter();
     getRefManager().iterate(new RefVisitor() {
@@ -171,14 +167,17 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     }
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.unused.parameter.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getShortName() {
     return "UnusedParameters";
   }
