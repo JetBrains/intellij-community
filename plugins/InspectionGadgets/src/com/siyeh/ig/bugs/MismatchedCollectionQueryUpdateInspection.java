@@ -83,6 +83,9 @@ public class MismatchedCollectionQueryUpdateInspection
             if(CollectionUtils.isCollectionClassOrInterface(argType)){
                 return false;
             }
+            if(argType instanceof PsiArrayType){
+                return false;
+            }
         }
         return true;
     }

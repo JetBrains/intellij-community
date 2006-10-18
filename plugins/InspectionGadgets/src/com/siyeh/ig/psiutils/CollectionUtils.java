@@ -330,14 +330,14 @@ public class CollectionUtils{
 
     public static boolean isArrayOrCollectionField(@NotNull PsiField field) {
         final PsiType type = field.getType();
-        if (!isCollectionClassOrInterface(type)) {
-            if (type instanceof PsiArrayType) {
-                // constants empty arrays are ignored.
-                return !isConstantEmptyArray(field);
-            }
+        if (isCollectionClassOrInterface(type)) {
+            return true;
+        }
+        if (!(type instanceof PsiArrayType)) {
             return false;
         }
-        return true;
+        // constant empty arrays are ignored.
+        return !isConstantEmptyArray(field);
 
     }
 
