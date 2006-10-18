@@ -25,12 +25,12 @@ public class PopupToolbarAction extends AnAction {
       return;
     }
     final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    if (editor != null){
-      final NavigationToolbarPanel toolbarPanel = new NavigationToolbarPanel(project){
+    if (editor != null) {
+      final NavigationToolbarPanel toolbarPanel = new NavigationToolbarPanel(project) {
+
         public Dimension getPreferredSize() {
           final Dimension dimension = super.getPreferredSize();
-          int width = Math.min(editor.getComponent().getWidth(), getPreferredWidth());
-          return new Dimension(width, dimension.height);
+          return new Dimension(getPreferredWidth(), dimension.height);
         }
 
       };
