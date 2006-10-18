@@ -76,6 +76,6 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
         }
       }
     }
-    return ResolveResult.EMPTY_ARRAY;
+    return resolveResult;
   }
 }
