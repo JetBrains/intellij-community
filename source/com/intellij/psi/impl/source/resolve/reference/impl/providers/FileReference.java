@@ -8,7 +8,6 @@ import com.intellij.javaee.web.WebModuleProperties;
 import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -86,7 +85,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return innerResolve();
   }
 
-  private ResolveResult[] innerResolve() {
+  protected ResolveResult[] innerResolve() {
     final String text = getText();
     final Collection<PsiElement> contexts = getContexts();
     final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
@@ -149,15 +148,6 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     final int resultCount = result.size();
     if (resultCount > 0) {
       return result.toArray(new ResolveResult[resultCount]);
-    }
-    if (text.length() > 0 && myFileReferenceSet.isAbsolutePathReference()) {
-      final VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(text);
-      if (dir != null) {
-        final PsiDirectory psiDir = getElement().getManager().findDirectory(dir);
-        if (psiDir != null) {
-          return new ResolveResult[] { new PsiElementResolveResult(psiDir) };
-        }
-      }
     }
     return ResolveResult.EMPTY_ARRAY;
   }

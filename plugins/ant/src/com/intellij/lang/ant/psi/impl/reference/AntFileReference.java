@@ -6,6 +6,11 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
 import org.jetbrains.annotations.NotNull;
@@ -51,9 +56,26 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
   public String getCanonicalRepresentationText() {
     final AntElement element = getElement();
     final String value = getCanonicalText();
-    if( element instanceof AntStructuredElement) {
+    if (element instanceof AntStructuredElement) {
       return ((AntStructuredElement)element).computeAttributeValue(value);
     }
     return element.getAntProject().computeAttributeValue(value);
+  }
+
+  protected ResolveResult[] innerResolve() {
+    final ResolveResult[] resolveResult = super.innerResolve();
+    if (resolveResult.length == 0) {
+      final String text = getText();
+      if (text != null && text.length() > 0 && getFileReferenceSet().isAbsolutePathReference()) {
+        final VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(text);
+        if (dir != null) {
+          final PsiDirectory psiDir = getElement().getManager().findDirectory(dir);
+          if (psiDir != null) {
+            return new ResolveResult[]{new PsiElementResolveResult(psiDir)};
+          }
+        }
+      }
+    }
+    return ResolveResult.EMPTY_ARRAY;
   }
 }
