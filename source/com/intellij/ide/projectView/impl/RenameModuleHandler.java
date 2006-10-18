@@ -66,7 +66,7 @@ public class RenameModuleHandler implements RenameHandler {
     }
 
     public boolean checkInput(String inputString) {
-      return true;
+      return inputString != null && inputString.length() > 0;
     }
 
     public boolean canClose(final String inputString) {
