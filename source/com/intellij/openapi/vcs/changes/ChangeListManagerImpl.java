@@ -464,6 +464,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return myUnversionedFilesHolder.containsFile(file);
   }
 
+  @Nullable
   public LocalChangeList findChangeList(final String name) {
     LocalChangeList result = null;
     final List<LocalChangeList> changeLists = getChangeLists();
@@ -476,6 +477,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   public LocalChangeList addChangeList(@NotNull String name, final String comment) {
+    LOG.assertTrue(findChangeList(name) == null, "Attempt to create duplicate changelist " + name);
     final LocalChangeList list = LocalChangeList.createEmptyChangeList(name);
     list.setComment(comment);
     synchronized (myChangeLists) {
@@ -696,7 +698,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void readExternal(Element element) throws InvalidDataException {
     final List<Element> listNodes = (List<Element>)element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
-      LocalChangeList list = addChangeList(listNode.getAttributeValue(ATT_NAME), listNode.getAttributeValue(ATT_COMMENT));
+      // workaround for loading incorrect settings (with duplicate changelist names)
+      final String changeListName = listNode.getAttributeValue(ATT_NAME);
+      LocalChangeList list = findChangeList(changeListName);
+      if (list == null) {
+        list = addChangeList(changeListName, listNode.getAttributeValue(ATT_COMMENT));
+      }
       final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
       for (Element changeNode : changeNodes) {
         try {
