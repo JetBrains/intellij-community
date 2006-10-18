@@ -31,7 +31,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   private final Alarm myUpdateEditorAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-  private DocumentAdapter myDocumentsListener;
 
   public StructureTreeBuilder(Project project,
                               JTree tree,
@@ -59,7 +58,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     initRootNode();
     myStructureModel.addModelListener(myModelListener);
-    myDocumentsListener = new DocumentAdapter() {
+    final DocumentAdapter documentsListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         if (myProject.isDisposed()) return;
         if (PsiDocumentManager.getInstance(myProject).isUncommited(e.getDocument())) {
@@ -78,7 +77,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
         }
       }
     };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentsListener, this);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentsListener, this);
   }
 
   public void dispose() {
@@ -170,5 +169,4 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     ((SmartTreeStructure)getTreeStructure()).rebuildTree();
     myUpdater.addSubtreeToUpdate(myRootNode);
   }
-
 }

@@ -31,7 +31,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
 
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-    return ((AbstractTreeNode)element);
+    return (AbstractTreeNode)element;
   }
 
   public Object[] getChildElements(Object element) {
@@ -51,7 +51,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   }
 
   private TreeElementWrapper createTree() {
-      return new TreeElementWrapper(myProject, myModel.getRoot(), myModel);
+    return new TreeElementWrapper(myProject, myModel.getRoot(), myModel);
   }
 
   public boolean hasSomethingToCommit() {
