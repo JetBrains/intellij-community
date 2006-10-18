@@ -5,7 +5,9 @@ import com.intellij.xml.util.XmlUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.HashSet;
 
@@ -14,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author Mike
  */
-public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
+public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor implements PsiWritableMetaData {
   private XmlTag myTag;
   String myUse;
   @NonNls
@@ -149,5 +151,9 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     }
 
     return name;
+  }
+
+  public void setName(String name) throws IncorrectOperationException {
+    NamedObjectDescriptor.setName(myTag, name);
   }
 }
