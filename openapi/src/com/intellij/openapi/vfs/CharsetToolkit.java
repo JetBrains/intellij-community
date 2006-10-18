@@ -168,7 +168,7 @@ public class CharsetToolkit {
   public Charset guessEncoding( int guess_length ) {
     // if the file has a Byte Order Marker, we can assume the file is in UTF-xx
     // otherwise, the file would not be human readable
-    if (hasUTF8Bom(buffer)) return Charset.forName("UTF-8");
+    if (hasUTF8Bom(buffer)) return Charset.forName(UTF8);
     if (hasUTF16LEBom(buffer)) return Charset.forName("UTF-16LE");
     if (hasUTF16BEBom(buffer)) return Charset.forName("UTF-16BE");
 
@@ -256,7 +256,7 @@ public class CharsetToolkit {
     }
     // if no invalid UTF-8 were encountered, we can assume the encoding is UTF-8,
     // otherwise the file would not be human readable
-    if (validU8Char) return Charset.forName("UTF-8");
+    if (validU8Char) return Charset.forName(UTF8);
     // finally, if it's not UTF-8 nor US-ASCII, let's assume the encoding is the default encoding
     return defaultCharset;
   }
