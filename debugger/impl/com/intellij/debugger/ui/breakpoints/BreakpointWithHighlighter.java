@@ -509,7 +509,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if (!highlighter.isValid()) {
       return null;
     }
-    highlighter.setErrorStripeTooltip(DebuggerBundle.message("breakpoint.tooltip.text", lineIndex));
+    highlighter.setErrorStripeTooltip(DebuggerBundle.message("breakpoint.tooltip.text", lineIndex+1));
     return highlighter;
   }
 
