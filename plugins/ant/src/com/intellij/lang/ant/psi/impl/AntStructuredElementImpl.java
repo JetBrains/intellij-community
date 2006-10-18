@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -183,7 +182,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   @Nullable
   public PsiFile findFileByName(final String name, @Nullable final String baseDir) {
     if (name == null) return null;
-    final AntFileImpl antFile = PsiTreeUtil.getParentOfType(this, AntFileImpl.class);
+    final AntFile antFile = getAntFile();
     if (antFile == null) return null;
     VirtualFile vFile = antFile.getContainingPath();
     if (vFile == null) return null;

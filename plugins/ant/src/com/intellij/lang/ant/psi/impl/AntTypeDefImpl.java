@@ -264,7 +264,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   private void loadFile(final String file) {
-    final PsiFile psiFile = findFileByName(file);
+    final PsiFile psiFile = findFileByName(file, null);
     if (psiFile != null) {
       final VirtualFile vf = psiFile.getVirtualFile();
       if (vf != null) {
