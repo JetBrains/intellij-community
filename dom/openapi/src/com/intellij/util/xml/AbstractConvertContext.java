@@ -8,6 +8,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,11 @@ public abstract class AbstractConvertContext extends ConvertContext {
 
   public final XmlTag getTag() {
     return getInvocationElement().getXmlTag();
+  }
+
+  @Nullable
+  public XmlElement getXmlElement() {
+    return getInvocationElement().getXmlElement();
   }
 
   @NotNull

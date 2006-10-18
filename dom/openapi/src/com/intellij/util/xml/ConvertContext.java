@@ -8,6 +8,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,9 @@ public abstract class ConvertContext {
 
   @Nullable
   public abstract XmlTag getTag();
+
+  @Nullable
+  public abstract XmlElement getXmlElement();
 
   @NotNull
   public abstract XmlFile getFile();
