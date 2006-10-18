@@ -18,10 +18,10 @@ public class SortedIntSet extends TIntArrayList implements Comparable<SortedIntS
   }
 
   public void add(int val) {
-    int idx = indexOf(val);
-    if (idx != -1) return;
-    for(idx = 0; idx < size(); idx++) {
-      if (get(idx) > val) {
+    for(int idx = 0; idx < size(); idx++) {
+      int data = get(idx);
+      if (data == val) return;
+      if (data > val) {
         insert(idx, val);
         return;
       }

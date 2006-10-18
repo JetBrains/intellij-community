@@ -26,6 +26,7 @@ public class DfaBoxedValue extends DfaValue {
 
   public static class Factory {
     private final Map<Object, DfaBoxedValue> cachedValues = new HashMap<Object, DfaBoxedValue>();
+    private final Map<Object, DfaBoxedValue> cachedNegatedValues = new HashMap<Object, DfaBoxedValue>();
     private final DfaValueFactory myFactory;
 
     public Factory(DfaValueFactory factory) {
@@ -33,19 +34,22 @@ public class DfaBoxedValue extends DfaValue {
     }
 
     public DfaValue createBoxed(DfaValue valueToWrap) {
+      if (valueToWrap instanceof DfaUnboxedValue) return ((DfaUnboxedValue)valueToWrap).getVariable();
       Object o = valueToWrap instanceof DfaConstValue
                  ? ((DfaConstValue)valueToWrap).getValue()
                  : valueToWrap instanceof DfaVariableValue ? ((DfaVariableValue)valueToWrap).getPsiVariable() : null;
       if (o == null) return null;
-      DfaBoxedValue boxedValue = cachedValues.get(o);
+      Map<Object, DfaBoxedValue> map = valueToWrap instanceof DfaVariableValue && ((DfaVariableValue)valueToWrap).isNegated() ? cachedNegatedValues : cachedValues;
+      DfaBoxedValue boxedValue = map.get(o);
       if (boxedValue == null) {
         boxedValue = new DfaBoxedValue(valueToWrap, myFactory);
-        cachedValues.put(o, boxedValue);
+        map.put(o, boxedValue);
       }
       return boxedValue;
     }
 
     private final Map<PsiVariable, DfaUnboxedValue> cachedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
+    private final Map<PsiVariable, DfaUnboxedValue> cachedNegatedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
 
     public DfaValue createUnboxed(DfaValue value) {
       if (value instanceof DfaBoxedValue) {
@@ -58,10 +62,11 @@ public class DfaBoxedValue extends DfaValue {
       DfaValue result;
       if (value instanceof DfaVariableValue) {
         PsiVariable var = ((DfaVariableValue)value).getPsiVariable();
-        result = cachedUnboxedValues.get(var);
+        Map<PsiVariable, DfaUnboxedValue> map = ((DfaVariableValue)value).isNegated() ? cachedNegatedUnboxedValues : cachedUnboxedValues;
+        result = map.get(var);
         if (result == null) {
           result = new DfaUnboxedValue((DfaVariableValue)value, myFactory);
-          cachedUnboxedValues.put(var, (DfaUnboxedValue)result);
+          map.put(var, (DfaUnboxedValue)result);
         }
       }
       else {

@@ -1,10 +1,6 @@
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.PsiVariable;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Map;
 
 public class DfaUnboxedValue extends DfaValue {
   private final DfaVariableValue myVariable;
@@ -19,35 +15,17 @@ public class DfaUnboxedValue extends DfaValue {
     return "Unboxed "+myVariable.toString();
   }
 
-  public DfaValue getVariable() {
+  public DfaVariableValue getVariable() {
     return myVariable;
   }
 
-  public static class Factory {
-    private final Map<PsiVariable, DfaUnboxedValue> cachedUnboxedValues = new THashMap<PsiVariable, DfaUnboxedValue>();
-    private final DfaValueFactory myFactory;
 
-    public Factory(DfaValueFactory factory) {
-      myFactory = factory;
-    }
+  public boolean isNegated() {
+    return myVariable.isNegated();
+  }
 
-    public DfaValue create(DfaValue valueToWrap) {
-      if (valueToWrap instanceof DfaBoxedValue) {
-        return ((DfaBoxedValue)valueToWrap).getWrappedValue();
-      }
-      DfaValue result;
-      if (valueToWrap instanceof DfaVariableValue) {
-        PsiVariable var = ((DfaVariableValue)valueToWrap).getPsiVariable();
-        result = cachedUnboxedValues.get(var);
-        if (result == null) {
-          result = new DfaUnboxedValue((DfaVariableValue)valueToWrap, myFactory);
-          cachedUnboxedValues.put(var, (DfaUnboxedValue)result);
-        }
-      }
-      else {
-        result = DfaUnknownValue.getInstance();
-      }
-      return result;
-    }
+  public DfaValue createNegated() {
+    DfaVariableValue negVar = myFactory.getVarFactory().create(myVariable.getPsiVariable(), !myVariable.isNegated());
+    return myFactory.getBoxedFactory().createUnboxed(negVar);
   }
 }

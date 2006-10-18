@@ -175,6 +175,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     final PsiExpression description = statement.getAssertDescription();
     if (condition != null) {
       condition.accept(this);
+      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, condition));
       if (description != null) {
         description.accept(this);
@@ -293,6 +294,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       PsiExpression condition = statement.getCondition();
       if (condition != null) {
         condition.accept(this);
+        generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
         addInstruction(new ConditionalGotoInstruction(getStartOffset(statement), false, condition));
       }
     }
@@ -381,6 +383,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     PsiExpression condition = statement.getCondition();
     if (condition != null) {
       condition.accept(this);
+      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
     }
     else {
       addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue()));
@@ -424,6 +427,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     if (condition != null) {
       condition.accept(this);
+      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       addInstruction(new ConditionalGotoInstruction(offset, true, condition));
     }
 
@@ -743,6 +747,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     if (condition != null) {
       condition.accept(this);
+      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
     }
 
@@ -1177,7 +1182,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       for (final PsiExpression dimension : dimensions) {
         dimension.accept(this);
       }
-      for (int i = 0; i < dimensions.length; i++) {
+      for (PsiExpression dimension : dimensions) {
         addInstruction(new PopInstruction());
       }
       final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
@@ -1259,7 +1264,9 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       }
       else {
         operand.accept(this);
-        generateBoxingUnboxingInstructionFor(operand, PsiType.INT);
+        PsiType type = expression.getType();
+        PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
+        generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
         if (expression.getOperationSign().getTokenType() == JavaTokenType.EXCL) {
           addInstruction(new NotInstruction());
         }

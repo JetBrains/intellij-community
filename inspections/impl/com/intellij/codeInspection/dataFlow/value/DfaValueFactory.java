@@ -54,7 +54,7 @@ public class DfaValueFactory {
 
       if (psiSource != null) {
         if (psiSource instanceof PsiVariable) {
-          DfaConstValue constValue = getConstFactory().create((PsiVariable)psiSource);
+          DfaValue constValue = getConstFactory().create((PsiVariable)psiSource);
           if (constValue != null) return constValue;
         }
 

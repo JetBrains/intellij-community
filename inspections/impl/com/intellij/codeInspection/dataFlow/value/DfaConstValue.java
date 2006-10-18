@@ -8,11 +8,10 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
@@ -32,7 +31,7 @@ public class DfaConstValue extends DfaValue {
       dfaTrue = new DfaConstValue(Boolean.TRUE, factory);
     }
 
-    public DfaConstValue create(PsiLiteralExpression expr) {
+    public DfaValue create(PsiLiteralExpression expr) {
       PsiType type = expr.getType();
       if (type == PsiType.NULL) return dfaNull;
       Object value = expr.getValue();
@@ -40,10 +39,27 @@ public class DfaConstValue extends DfaValue {
       return createFromValue(value, type);
     }
 
-    public DfaConstValue create(PsiVariable variable) {
+    public DfaValue create(PsiVariable variable) {
       Object value = variable.computeConstantValue();
-      if (value == null) return null;
-      return createFromValue(value, variable.getType());
+      PsiType type = variable.getType();
+      if (value == null) {
+        Boolean boo = computeJavaLangBooleanFieldReference(variable);
+        if (boo != null) {
+          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN);
+          DfaValue boxed = myFactory.getBoxedFactory().createBoxed(unboxed);
+          return boxed;
+        }
+        return null;
+      }
+      return createFromValue(value, type);
+    }
+
+    private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
+      if (!(variable instanceof PsiField)) return null;
+      PsiClass psiClass = ((PsiField)variable).getContainingClass();
+      if (psiClass == null || !"java.lang.Boolean".equals(psiClass.getQualifiedName())) return null;
+      @NonNls String name = variable.getName();
+      return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
     }
 
     public DfaConstValue createFromValue(Object value, final PsiType type) {

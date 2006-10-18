@@ -11,11 +11,14 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntStack;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -311,6 +314,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return cacheable((DfaConstValue)valueToWrap);
     }
     else if (valueToWrap instanceof DfaVariableValue) {
+      if (((DfaVariableValue)valueToWrap).getPsiVariable().getType() == PsiType.BOOLEAN) return true;
       DfaValue[] values = ((DfaMemoryStateImpl)memoryState).getEqClassesFor(valueToWrap);
       for (DfaValue value : values) {
         if (value instanceof DfaConstValue && cacheable((DfaConstValue)value)) return true;
@@ -342,22 +346,27 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     SortedIntSet c1 = myEqClasses.get(c1Index);
     SortedIntSet c2 = myEqClasses.get(c2Index);
 
+    Set<PsiVariable> vars = new THashSet<PsiVariable>();
+    Set<PsiVariable> negatedvars = new THashSet<PsiVariable>();
+    int[] cs = new int[c1.size() + c2.size()];
+    c1.set(0, cs, 0, c1.size());
+    c2.set(0, cs, c1.size(), c2.size());
+
     int nConst = 0;
-    int[] c1s = c1.toNativeArray();
-    for (int c11 : c1s) {
-      DfaValue dfaValue = myFactory.getValue(c11);
+    for (int c : cs) {
+      DfaValue dfaValue = myFactory.getValue(c);
+      if (dfaValue instanceof DfaBoxedValue) dfaValue = ((DfaBoxedValue)dfaValue).getWrappedValue();
+      if (dfaValue instanceof DfaUnboxedValue) dfaValue = ((DfaUnboxedValue)dfaValue).getVariable();
       if (dfaValue instanceof DfaConstValue) nConst++;
-      if (dfaValue instanceof DfaBoxedValue && ((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue) nConst++;
+      if (dfaValue instanceof DfaVariableValue) {
+        DfaVariableValue variableValue = (DfaVariableValue)dfaValue;
+        PsiVariable variable = variableValue.getPsiVariable();
+        Set<PsiVariable> set = variableValue.isNegated() ? negatedvars : vars;
+        set.add(variable);
+      }
+      if (nConst > 1) return false;
     }
-
-    int[] c2s = c2.toNativeArray();
-    for (int c21 : c2s) {
-      DfaValue dfaValue = myFactory.getValue(c21);
-      if (dfaValue instanceof DfaConstValue) nConst++;
-      if (dfaValue instanceof DfaBoxedValue && ((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue) nConst++;
-    }
-
-    if (nConst > 1) return false;
+    if (ContainerUtil.intersects(vars, negatedvars)) return false;
 
     TLongArrayList c2Pairs = new TLongArrayList();
     long[] distincts = myDistinctClasses.toArray();
@@ -458,6 +467,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   public boolean applyCondition(DfaValue dfaCond) {
     if (dfaCond instanceof DfaUnknownValue) return true;
+    if (dfaCond instanceof DfaUnboxedValue) {
+      DfaVariableValue dfaVar = ((DfaUnboxedValue)dfaCond).getVariable();
+      boolean isNegated = dfaVar.isNegated();
+      DfaVariableValue dfaNormalVar = isNegated ? (DfaVariableValue)dfaVar.createNegated() : dfaVar;
+      DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
+      final DfaValue boxedTrue = myFactory.getBoxedFactory().createBoxed(dfaTrue);
+      DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().create(dfaNormalVar, boxedTrue, "==", isNegated);
+
+      return applyCondition(dfaEqualsTrue);
+    }
     if (dfaCond instanceof DfaVariableValue) {
       DfaVariableValue dfaVar = (DfaVariableValue)dfaCond;
       boolean isNegated = dfaVar.isNegated();
@@ -508,6 +527,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
 
     boolean result = applyRelation(dfaLeft, dfaRight, isNegated);
+    if (dfaRight instanceof DfaConstValue) {
+      Object constVal = ((DfaConstValue)dfaRight).getValue();
+      if (constVal instanceof Boolean) {
+        boolean neg = !((Boolean)constVal).booleanValue();
+        DfaConstValue negVal = myFactory.getConstFactory().createFromValue(Boolean.valueOf(neg), PsiType.BOOLEAN);
+        result &= applyRelation(dfaLeft, negVal, !isNegated);
+      }
+    }
     if (dfaLeft instanceof DfaVariableValue) {
       PsiVariable psiVariable = ((DfaVariableValue)dfaLeft).getPsiVariable();
       if (TypeConversionUtil.isPrimitiveWrapper(psiVariable.getType())
@@ -528,6 +555,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
+
     return result;
   }
 
@@ -573,8 +601,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public boolean applyNotNull(DfaValue value) {
-    if (!checkNotNullable(value)) return false;
-    return applyCondition(compareToNull(value, true));
+    return checkNotNullable(value) && applyCondition(compareToNull(value, true));
   }
 
   private DfaRelationValue compareToNull(DfaValue dfaVar, boolean negated) {
