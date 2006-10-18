@@ -145,11 +145,13 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     if (!myRootModel.isWritable() || ApplicationManager.getApplication().isUnitTestMode()) {
       return myModule;
     }
-    final Module[] modules = ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).getModules();
-    for (Module module : modules) {
-      if (Comparing.strEqual(module.getName(), myModuleName)) return module;
+    if (myModule == null) {
+      final Module[] modules = ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).getModules();
+      for (Module module : modules) {
+        if (Comparing.strEqual(module.getName(), myModuleName)) return module;
+      }
     }
-    return null;
+    return myModule;
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
