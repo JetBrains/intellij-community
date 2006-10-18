@@ -57,6 +57,7 @@ public class CommonRefactoringUtil {
     final List<VirtualFile> readonly = new ArrayList<VirtualFile>();
     //Those located in jars
     final List<VirtualFile> failed = new ArrayList<VirtualFile>();
+    boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
       if (element.isWritable()) continue;
@@ -116,6 +117,8 @@ public class CommonRefactoringUtil {
           final VirtualFile vFile = file.getVirtualFile();
           if (vFile != null) {
             readonly.add(vFile);
+          } else {
+            seenNonWritablePsiFilesWithoutVirtualFile = true;
           }
         }
       }
@@ -124,7 +127,7 @@ public class CommonRefactoringUtil {
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(readonly.toArray(new VirtualFile[readonly.size()]));
     failed.addAll(Arrays.asList(status.getReadonlyFiles()));
-    if (notifyOnFail && (!failed.isEmpty() || readonly.isEmpty())) {
+    if (notifyOnFail && (!failed.isEmpty() || (seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty()))) {
       StringBuilder message = new StringBuilder(messagePrefix);
       message.append('\n');
       for (VirtualFile virtualFile : failed) {
