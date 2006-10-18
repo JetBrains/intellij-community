@@ -358,7 +358,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
   private String fetchOneFile(final ProgressIndicator indicator,
                               final String resourceUrl,
-                              Project project,
+                              final Project project,
                               String extResourcesPath,
                               String refname) throws IOException {
     SwingUtilities.invokeLater(
@@ -369,8 +369,24 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       }
     );
 
-    byte[] bytes = fetchData(project, resourceUrl, indicator);
-    if (bytes == null) return null;
+    FetchResult result = fetchData(project, resourceUrl, indicator);
+    if (result == null) return null;
+
+    if (!ApplicationManager.getApplication().isUnitTestMode() &&
+          result.contentType != null &&
+          result.contentType.indexOf(HTML_MIME) != -1 &&
+          (new String(result.bytes)).indexOf("<html") != -1) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showMessageDialog(project,
+                                       QuickFixBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
+                                       QuickFixBundle.message("invalid.url.title"),
+                                       Messages.getErrorIcon());
+          }
+        }, indicator.getModalityState());
+        return null;
+      }
+
     int slashIndex = resourceUrl.lastIndexOf('/');
     String resPath = extResourcesPath + File.separatorChar;
 
@@ -393,7 +409,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
     FileOutputStream out = new FileOutputStream(res);
     try {
-      out.write(bytes);
+      out.write(result.bytes);
     }
     finally {
       out.close();
@@ -477,7 +493,12 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return Collections.emptyList();
   }
 
-  private byte[] fetchData(final Project project, final String dtdUrl, ProgressIndicator indicator) throws IOException {
+  static class FetchResult {
+    byte[] bytes;
+    String contentType;
+  }
+
+  private static FetchResult fetchData(final Project project, final String dtdUrl, ProgressIndicator indicator) throws IOException {
 
     try {
       URL url = new URL(dtdUrl);
@@ -489,20 +510,6 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       InputStream in = urlConnection.getInputStream();
       String contentType = urlConnection.getContentType();
-
-      if (!ApplicationManager.getApplication().isUnitTestMode() &&
-          contentType != null &&
-          contentType.indexOf(HTML_MIME) != -1) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showMessageDialog(project,
-                                       QuickFixBundle.message("invalid.url.no.xml.file.at.location", dtdUrl),
-                                       QuickFixBundle.message("invalid.url.title"),
-                                       Messages.getErrorIcon());
-          }
-        }, indicator.getModalityState());
-        return null;
-      }
 
       byte[] buffer = new byte[256];
 
@@ -518,7 +525,11 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       in.close();
       out.close();
 
-      return out.toByteArray();
+      FetchResult result = new FetchResult();
+      result.bytes = out.toByteArray();
+      result.contentType = contentType;
+
+      return result;
     }
     catch (MalformedURLException e) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
