@@ -47,19 +47,19 @@ import java.util.*;
 public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
 
-  private Project myProject;
-  private PsiFile myFile;
-  private Document myDocument;
-  private int myStartOffset;
-  private int myEndOffset;
+  private final Project myProject;
+  private final PsiFile myFile;
+  private final Document myDocument;
+  private final int myStartOffset;
+  private final int myEndOffset;
   @NotNull private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
   @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
 
-  public LocalInspectionsPass(Project project,
-                              PsiFile file,
-                              Document document,
+  public LocalInspectionsPass(@NotNull Project project,
+                              @NotNull PsiFile file,
+                              @NotNull Document document,
                               int startOffset,
                               int endOffset) {
     super(project, document);
@@ -71,16 +71,16 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
-    inspectRoot(myFile, iManager);
+    inspectRoot();
   }
 
-  private void inspectRoot(final PsiFile file, final InspectionManagerEx iManager) {
-    final Set<PsiElement> workSet = getWorkSet(file, myStartOffset, myEndOffset);
+  private void inspectRoot() {
+    if (!HighlightUtil.shouldInspect(myFile)) return;
+    final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
+    final Set<PsiElement> workSet = getWorkSet(myFile, myStartOffset, myEndOffset);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
 
