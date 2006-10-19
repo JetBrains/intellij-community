@@ -66,10 +66,6 @@ public abstract class AbstractVcsHelper {
    */
   public abstract String getUpToDateFilePath(VirtualFile file);
 
-  public abstract List<VcsException> doCheckinProject(CheckinProjectPanel checkinProjectPanel,
-                                                      Object checkinParameters,
-                                                      AbstractVcs abstractVcs);
-
   public abstract void optimizeImportsAndReformatCode(Collection<VirtualFile> files,
                                                       VcsConfiguration configuration,
                                                       Runnable finishAction,

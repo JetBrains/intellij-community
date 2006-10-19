@@ -17,11 +17,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RollbackProvider;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.checkin.RevisionsFactory;
-import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
@@ -29,7 +30,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.ColumnInfo;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -138,30 +138,6 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
 
   public String getHelpId() {
     return "cvs.commitProject";
-  }
-
-  public java.util.List<VcsException> commit(CheckinProjectDialogImplementer dialog, Project project) {
-    CheckinProjectPanel checkinProjectPanel = dialog.getCheckinProjectPanel();
-
-    java.util.List<CvsCheckinFile> cvsCommitOprtations = new ArrayList<CvsCheckinFile>();
-
-    java.util.List<VcsOperation> vcsOperations = checkinProjectPanel.getCheckinOperations(CvsVcs2.getInstance(myProject).getCheckinEnvironment());
-    for (final VcsOperation vcsOperation : vcsOperations) {
-      cvsCommitOprtations.add((CvsCheckinFile)vcsOperation);
-    }
-
-    CvsCheckinFile[] checkinOperations = cvsCommitOprtations.toArray(new CvsCheckinFile[cvsCommitOprtations.size()]);
-
-
-    CvsHandler checkinHandler = getCheckinHandler(checkinOperations,
-                                                 myProject,
-                                                 dialog.getPreparedComment(CvsVcs2.getInstance(myProject)
-                                                   .getCheckinEnvironment()));
-
-    final CvsOperationExecutor executor = new CvsOperationExecutor(project);
-    executor.setShowErrors(false);
-    executor.performActionSync(checkinHandler, new MyCvsOperationExecutorCallback(checkinHandler));
-    return executor.getResult().getErrorsAndWarnings();
   }
 
   public List<VcsException> commit(FilePath[] roots, Project project, String preparedComment) {

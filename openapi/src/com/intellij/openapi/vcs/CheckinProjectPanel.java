@@ -34,7 +34,6 @@ import java.util.List;
  * {@link com.intellij.openapi.actionSystem.DataContext} using the {@link Refreshable#PANEL} data ID.
  *
  * @see com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#createHandler(CheckinProjectPanel)
- * @see CheckinProjectDialogImplementer#getCheckinProjectPanel()
  */
 public interface CheckinProjectPanel extends Refreshable {
   /**

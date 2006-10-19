@@ -38,16 +38,13 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
-import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.*;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
@@ -472,32 +469,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void disposeComponent() {
-  }
-
-  public List<VcsException> doCheckinProject(final CheckinProjectPanel checkinProjectPanel,
-                                             final Object checkinParameters,
-                                             final AbstractVcs abstractVcs) {
-
-    final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
-
-    performCheckingIn(checkinProjectPanel, abstractVcs, checkinParameters, exceptions);
-
-    return exceptions;
-  }
-
-  private void performCheckingIn(final CheckinProjectPanel checkinProjectPanel,
-                                 final AbstractVcs abstractVcs,
-                                 final Object checkinParameters,
-                                 final ArrayList<VcsException> exceptions) {
-    final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations =
-      ((CheckinProjectPanelImpl)checkinProjectPanel).getCheckinOperations();
-
-    final CheckinHandler checkinHandler = new CheckinHandler(myProject, abstractVcs);
-    Collection<VcsOperation> vcsOperations = checkinOperations.get(abstractVcs.getCheckinEnvironment());
-    if (vcsOperations == null) vcsOperations = new ArrayList<VcsOperation>();
-    final List<VcsException> abstractVcsExceptions =
-      checkinHandler.checkin(vcsOperations.toArray(new VcsOperation[vcsOperations.size()]), checkinParameters);
-    exceptions.addAll(abstractVcsExceptions);
   }
 
   public void optimizeImportsAndReformatCode(final Collection<VirtualFile> files,

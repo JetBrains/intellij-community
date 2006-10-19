@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CheckinProjectDialogImplementer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RollbackProvider;
 import com.intellij.openapi.vcs.VcsException;
@@ -66,8 +65,6 @@ public interface CheckinEnvironment {
   @Nullable
   @NonNls
   String getHelpId();
-
-  List<VcsException> commit(CheckinProjectDialogImplementer dialog, Project project);
 
   List<VcsException> commit(FilePath[] roots, Project project, String preparedComment);
 
