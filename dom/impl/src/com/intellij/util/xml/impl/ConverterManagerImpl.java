@@ -27,7 +27,9 @@ class ConverterManagerImpl implements ConverterManager {
     mySimpleConverters.put(Boolean.class, ResolvingConverter.BOOLEAN_CONVERTER);
     mySimpleConverters.put(String.class, Converter.EMPTY_CONVERTER);
     mySimpleConverters.put(PsiClass.class, Converter.PSI_CLASS_CONVERTER);
-    mySimpleConverters.put(PsiType.class, Converter.PSI_TYPE_CONVERTER);
+    mySimpleConverters.put(PsiType.class, new CanonicalPsiTypeConverterImpl());
+    registerConverterImplementation(JvmPsiTypeConverter.class, new JvmPsiTypeConverterImpl());
+    registerConverterImplementation(CanonicalPsiTypeConverter.class, new CanonicalPsiTypeConverterImpl());
   }
 
   public void addConverter(Class clazz, Converter converter) {

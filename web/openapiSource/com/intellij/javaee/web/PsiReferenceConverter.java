@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Can be implemented by {@link com.intellij.util.xml.Converter} instance
  *
+ * @deprecated use {@link com.intellij.util.xml.CustomReferenceConverter} instead
  * @author Dmitry Avdeev
  */
 public interface PsiReferenceConverter {

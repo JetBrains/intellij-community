@@ -130,10 +130,10 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   @NotNull
-  public List<DomElementResolveProblemDescriptor> checkResolveProblems(GenericDomValue element, final DomElementAnnotationHolder holder) {
+  public List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, final DomElementAnnotationHolder holder) {
     final XmlElement valueElement = DomUtil.getValueElement(element);
     if (valueElement != null && !isSoftReference(element)) {
-      final SmartList<DomElementResolveProblemDescriptor> list = new SmartList<DomElementResolveProblemDescriptor>();
+      final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       for (final PsiReference reference : myProvider.getReferencesByElement(valueElement)) {
         if (hasBadResolve(element, reference)) {
           list.add(holder.createResolveProblem(element, reference));

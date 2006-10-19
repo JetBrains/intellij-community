@@ -22,7 +22,7 @@ public abstract class DomHighlightingHelper {
   public abstract List<DomElementProblemDescriptor> checkExtendClass(GenericDomValue element, DomElementAnnotationHolder holder);
 
   @NotNull
-  public abstract List<DomElementResolveProblemDescriptor> checkResolveProblems(GenericDomValue element, DomElementAnnotationHolder holder);
+  public abstract List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, DomElementAnnotationHolder holder);
 
   @NotNull
   public abstract List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, DomElementAnnotationHolder holder);

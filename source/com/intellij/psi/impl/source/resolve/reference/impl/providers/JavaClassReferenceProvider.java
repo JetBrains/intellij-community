@@ -5,39 +5,41 @@ import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.JavaClassReferenceQuickFixProvider;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxStaticImportStatement;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.ClassCandidateInfo;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
-import gnu.trove.THashMap;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -59,9 +61,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));
 
-  public static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
-  public static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
-  public static final CustomizationKey<Boolean> RESOLVE_ONLY_CLASSES = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
+  private static final CustomizationKey<String[]> EXTEND_CLASS_NAMES = new CustomizationKey<String[]>("EXTEND_CLASS_NAMES");
+  private static final CustomizationKey<Boolean> INSTANTIATABLE = new CustomizationKey<Boolean>("INSTANTIATABLE");
+  private static final CustomizationKey<Boolean> RESOLVE_ONLY_CLASSES = new CustomizationKey<Boolean>("RESOLVE_ONLY_CLASSES");
+  private static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
 
 
   public JavaClassReferenceProvider(String extendClassName, boolean instantiatable) {
@@ -69,10 +72,19 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable) {
+    this(extendClassNames, instantiatable, false);
+  }
+
+  public JavaClassReferenceProvider(String[] extendClassNames, boolean instantiatable, boolean jvmFormat) {
     myOptions = new THashMap<CustomizationKey, Object>();
     EXTEND_CLASS_NAMES.putValue(myOptions, extendClassNames);
     INSTANTIATABLE.putValue(myOptions, instantiatable);
     RESOLVE_ONLY_CLASSES.putValue(myOptions, Boolean.TRUE);
+    JVM_FORMAT.putValue(myOptions, jvmFormat);
+  }
+
+  public JavaClassReferenceProvider(boolean jvmFormat) {
+    this(ArrayUtil.EMPTY_STRING_ARRAY, false, jvmFormat);
   }
 
   public JavaClassReferenceProvider(@NotNull String extendClassName) {
@@ -228,7 +240,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
               }
             }
 
-            if (!recognized) nextDotOrDollar = -1; // nonsensible characters anyway, don't do resolve
+            final Boolean aBoolean = JVM_FORMAT.getValue(myOptions);
+            if (aBoolean == null || !aBoolean) {
+              if (!recognized) nextDotOrDollar = -1; // nonsensible characters anyway, don't do resolve
+            }
           }
         }
 

@@ -32,6 +32,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class ResolvingConverter<T> extends Converter<T> {
+  @Deprecated
   public static final ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
     public Collection getVariants(final ConvertContext context) {
       return Collections.emptyList();
@@ -46,6 +47,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     }
   };
 
+  @Deprecated
   public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
     public Boolean fromString(final String s, final ConvertContext context) {
       if ("true".equalsIgnoreCase(s)) {

@@ -3,13 +3,13 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.IdeBundle;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -22,6 +22,7 @@ public abstract class Converter<T> {
     return CodeInsightBundle.message("error.cannot.convert.default.message", s);
   }
 
+  @Deprecated
   public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
     public Integer fromString(final String s, final ConvertContext context) {
       if (s == null) return null;
@@ -42,6 +43,7 @@ public abstract class Converter<T> {
     }
   };
 
+  @Deprecated
   public static final Converter<String> EMPTY_CONVERTER = new Converter<String>() {
     public String fromString(final String s, final ConvertContext context) {
       return s;
@@ -53,6 +55,7 @@ public abstract class Converter<T> {
 
   };
 
+  @Deprecated
   public static final Converter<PsiClass> PSI_CLASS_CONVERTER = new Converter<PsiClass>() {
     public PsiClass fromString(final String s, final ConvertContext context) {
       return s == null? null:context.findClass(s, null);
@@ -64,6 +67,7 @@ public abstract class Converter<T> {
 
   };
 
+  @Deprecated
   public static final Converter<PsiType> PSI_TYPE_CONVERTER = new Converter<PsiType>() {
     public PsiType fromString(final String s, final ConvertContext context) {
       if (s == null) return null;
