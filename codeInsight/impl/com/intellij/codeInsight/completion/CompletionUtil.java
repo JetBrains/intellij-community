@@ -81,6 +81,7 @@ public class CompletionUtil {
     completionDatas = new HashMap<FileType, CompletionData>();
     registerCompletionData(StdFileTypes.HTML, new HtmlCompletionData());
     registerCompletionData(StdFileTypes.XHTML, new XHtmlCompletionData());
+    registerCompletionData(StdFileTypes.DTD, new DtdCompletionData());
   }
 
   public static final @NonNls String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
