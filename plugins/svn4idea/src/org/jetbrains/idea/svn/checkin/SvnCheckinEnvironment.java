@@ -179,11 +179,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
-  public List<VcsException> commit(CheckinProjectDialogImplementer dialog, Project project) {
-    return commitInt(collectFilePaths(dialog.getCheckinProjectPanel().getCheckinOperations(this)), dialog.getPreparedComment(this), true,
-                     false);
-  }
-
   public List<VcsException> commit(FilePath[] roots, Project project, String preparedComment) {
     // files commit, should not be recursive.
     return commitInt(collectPaths(roots), preparedComment, true, false);
