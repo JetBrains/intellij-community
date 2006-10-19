@@ -17,13 +17,14 @@
 
 package com.intellij.testFramework.builders;
 
+import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author mike
  */
-public interface JavaModuleFixtureBuilder extends ModuleFixtureBuilder {
+public interface JavaModuleFixtureBuilder<T extends ModuleFixture> extends ModuleFixtureBuilder<T> {
 
   JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel);
 
@@ -32,4 +33,5 @@ public interface JavaModuleFixtureBuilder extends ModuleFixtureBuilder {
   JavaModuleFixtureBuilder addLibraryJars(@NonNls String libraryName, @NonNls String basePath, @NonNls String... jarNames);
 
   JavaModuleFixtureBuilder addJdk(@NonNls String jdkPath);
+
 }

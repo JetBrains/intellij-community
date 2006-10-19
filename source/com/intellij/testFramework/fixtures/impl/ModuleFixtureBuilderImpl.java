@@ -9,9 +9,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -29,10 +29,11 @@ import java.util.List;
 abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements ModuleFixtureBuilder<T> {
   private static int ourIndex;
 
-  private final List<String> myContentRoots = new ArrayList<String>();
-  private final List<String> mySourceRoots = new ArrayList<String>();
   private final ModuleType myModuleType;
+  protected final List<String> myContentRoots = new ArrayList<String>();
+  protected final List<String> mySourceRoots = new ArrayList<String>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
+  private T myModuleFixture;
 
   public ModuleFixtureBuilderImpl(@NotNull final ModuleType moduleType, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     myModuleType = moduleType;
@@ -61,8 +62,11 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
   }
 
 
-  public T getFixture() {
-    return instantiateFixture();
+  public synchronized T getFixture() {
+    if (myModuleFixture == null) {
+      myModuleFixture = instantiateFixture();
+    }
+    return myModuleFixture;
   }
 
   protected abstract T instantiateFixture();
@@ -103,4 +107,5 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
 
     rootModel.commit();
   }
+
 }

@@ -40,6 +40,7 @@ public interface ModuleFixtureBuilder<T extends ModuleFixture> {
    * @return current builder
    */
   ModuleFixtureBuilder<T> addSourceRoot(String sourceRootPath);
-
+  
   T getFixture();
+
 }

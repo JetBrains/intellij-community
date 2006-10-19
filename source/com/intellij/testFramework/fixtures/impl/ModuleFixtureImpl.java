@@ -11,15 +11,15 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
  * @author mike
  */
 class ModuleFixtureImpl implements ModuleFixture {
-  private Module myModule;
-  private final ModuleFixtureBuilderImpl myBuilder;
 
+  private Module myModule;
+  protected final ModuleFixtureBuilderImpl myBuilder;
 
   public ModuleFixtureImpl(final ModuleFixtureBuilderImpl builder) {
     myBuilder = builder;
   }
 
-  public Module getModule() throws Exception {
+  public Module getModule() {
     if (myModule != null) return myModule;
     myModule = myBuilder.buildModule();
     return myModule;

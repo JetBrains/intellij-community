@@ -12,6 +12,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.builders.WebModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.ModuleFixture;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -28,7 +29,11 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
   public HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture) {
     myFixture = fixture;
 
-    myModuleFixtureBuilderFactory.put(JavaModuleFixtureBuilder.class, new JavaModuleFixtureBuilderImpl(this));
+    myModuleFixtureBuilderFactory.put(JavaModuleFixtureBuilder.class, new JavaModuleFixtureBuilderImpl<ModuleFixture>(this) {
+      protected ModuleFixture instantiateFixture() {
+        return new ModuleFixtureImpl(this);
+      }
+    });
     myModuleFixtureBuilderFactory.put(WebModuleFixtureBuilder.class, new WebModuleFixtureBuilderImpl(this));
   }
 
