@@ -2,17 +2,18 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,11 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
 
   public AntStructuredElement getElement() {
     return (AntStructuredElement)super.getElement();
+  }
+
+  @NotNull
+  public AntFileReferenceSet getFileReferenceSet() {
+    return (AntFileReferenceSet)super.getFileReferenceSet();
   }
 
   public ReferenceType getSoftenType() {
@@ -54,12 +60,17 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
 
   @Nullable
   public String getCanonicalRepresentationText() {
-    final AntElement element = getElement();
+    final AntStructuredElement element = getElement();
     final String value = getCanonicalText();
-    if (element instanceof AntStructuredElement) {
-      return ((AntStructuredElement)element).computeAttributeValue(value);
-    }
-    return element.getAntProject().computeAttributeValue(value);
+    return element.computeAttributeValue(value);
+  }
+
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    final PsiElement element = getManipulatorElement();
+    final AntStructuredElement antElement = getElement();
+    getManipulator(element).handleContentChange(element, getRangeInElement().shiftRight(
+      antElement.getTextRange().getStartOffset() - element.getTextRange().getStartOffset()), newElementName);
+    return antElement;
   }
 
   protected ResolveResult[] innerResolve() {
@@ -77,5 +88,9 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
       }
     }
     return resolveResult;
+  }
+
+  private PsiElement getManipulatorElement() {
+    return getFileReferenceSet().getManipulatorElement();
   }
 }

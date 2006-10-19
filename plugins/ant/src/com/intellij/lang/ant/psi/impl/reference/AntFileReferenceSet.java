@@ -18,9 +18,12 @@ import java.util.Collections;
 
 public class AntFileReferenceSet extends FileReferenceSetBase {
 
+  private final XmlAttributeValue myValue;
+
   public AntFileReferenceSet(final AntStructuredElement element, final XmlAttributeValue value, final GenericReferenceProvider provider) {
     super(StringUtil.stripQuotesAroundValue(value.getText()), element,
           value.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1, provider, true);
+    myValue = value;
   }
 
   protected AntFileReference createFileReference(final TextRange range, final int index, final String text) {
@@ -65,5 +68,9 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
       }
     }
     return super.getDefaultContexts(element);
+  }
+
+  XmlAttributeValue getManipulatorElement() {
+    return myValue;
   }
 }
