@@ -68,7 +68,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
     final AntProject project = element.getAntProject();
     final String value = attr.getValue();
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
-    if (xmlAttributeValue != null) {
+    if (xmlAttributeValue != null && value.indexOf("@{") < 0) {
       final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
       int startIndex;
       int endIndex = -1;
