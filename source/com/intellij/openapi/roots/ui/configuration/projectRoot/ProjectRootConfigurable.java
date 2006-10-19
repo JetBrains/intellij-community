@@ -560,7 +560,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myGlobalLibrariesProvider = new LibrariesModifiableModel(tablesRegistrar.getLibraryTable().getModifiableModel());
     myApplicationServerLibrariesProvider =
       new LibrariesModifiableModel(ApplicationServersManager.getInstance().getLibraryTable().getModifiableModel());
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    final Module[] modules = myModulesConfigurator.getModules();
     for (Module module : modules) {
       final ModifiableRootModel modelProxy = myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy();
       myModule2LibrariesMap.put(module, new LibrariesModifiableModel(modelProxy.getModuleLibraryTable().getModifiableModel()));
@@ -828,16 +828,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     } else {
       myUpdateDependenciesAlarm.addRequest(new Runnable(){
         public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+          final Set<String> dep = dependencies.compute();
+          SwingUtilities.invokeLater(new Runnable(){
             public void run() {
-              final Set<String> dep = dependencies.compute();
-              SwingUtilities.invokeLater(new Runnable(){
-                public void run() {
-                  if (dep != null && dep.size() == 0 && !myDisposed){
-                    myTree.repaint();
-                  }
-                }
-              });
+              if (dep != null && dep.size() == 0 && !myDisposed){
+                myTree.repaint();
+              }
             }
           });
         }
@@ -883,29 +879,26 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return null;
   }
 
-  private Set<String> getDependencies(Condition<OrderEntry> condition) {
+  private Set<String> getDependencies(final Condition<OrderEntry> condition) {
     final Set<String> result = new TreeSet<String>();
     final Module[] modules = myModulesConfigurator.getModules();
-    for (Module module : modules) {
-      final ModifiableRootModel rootModel = myModulesConfigurator.getModuleEditor(module).getModifiableRootModel();
-      final OrderEntry[] entries = rootModel.getOrderEntries();
-      for (OrderEntry entry : entries) {
-        if (condition.value(entry)) {
-          result.add(module.getName());
-          break;
-        }
+    for (final Module module : modules) {
+      final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
+      if (moduleEditor != null) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            final OrderEntry[] entries = moduleEditor.getModifiableRootModel().getOrderEntries();
+            for (OrderEntry entry : entries) {
+              if (condition.value(entry)) {
+                result.add(module.getName());
+                break;
+              }
+            }
+          }
+        });
       }
     }
     return result;
-  }
-
-  @Nullable
-  public ProjectJdk getSelectedJdk() {
-    final Object object = getSelectedObject();
-    if (object instanceof ProjectJdk){
-      return myJdksTreeModel.findSdk((ProjectJdk)object);
-    }
-    return null;
   }
 
   public void setStartModuleWizard(final boolean show) {
