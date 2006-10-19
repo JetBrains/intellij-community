@@ -35,13 +35,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -103,12 +103,13 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   private String getCheckinActionName(VcsContext dataContext) {
     Project project = dataContext.getProject();
     if (project == null) return VcsBundle.message("vcs.command.name.checkin");
-    CheckinEnvironment env = getCommonEnvironmentFor(getRoots(dataContext), project);
-    if (env == null) {
+
+    AbstractVcs vcs = getCommonVcsFor(getRoots(dataContext), project);
+    if (vcs == null) {
       return VcsBundle.message("vcs.command.name.checkin");
     }
     else {
-      return env.getCheckinOperationName();
+      return vcs.getCheckinOperationName();
     }
   }
 

@@ -325,14 +325,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String getCommitActionName() {
     String name = null;
     for (AbstractVcs vcs : getAffectedVcses()) {
-      final CheckinEnvironment env = vcs.getCheckinEnvironment();
-      if (env != null) {
-        if (name == null) {
-          name = env.getCheckinOperationName();
-        }
-        else {
-          name = VcsBundle.message("commit.dialog.default.commit.operation.name");
-        }
+      if (name == null) {
+        name = vcs.getCheckinOperationName();
+      }
+      else {
+        name = VcsBundle.message("commit.dialog.default.commit.operation.name");
       }
     }
     return name != null ? name : VcsBundle.message("commit.dialog.default.commit.operation.name");

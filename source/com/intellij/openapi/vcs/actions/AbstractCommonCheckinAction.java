@@ -97,22 +97,19 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   }
 
   @Nullable
-  protected static CheckinEnvironment getCommonEnvironmentFor(FilePath[] roots, Project project) {
+  protected static AbstractVcs getCommonVcsFor(FilePath[] roots, Project project) {
     if (roots.length == 0) return null;
     AbstractVcs firstVcs = VcsUtil.getVcsFor(project, roots[0]);
     if (firstVcs == null) return null;
-    CheckinEnvironment firstEnv = firstVcs.getCheckinEnvironment();
-    if (firstEnv == null) return null;
 
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs == null) return null;
-      CheckinEnvironment env = vcs.getCheckinEnvironment();
-      if (firstEnv != env) {
+      if (firstVcs != vcs) {
         return null;
       }
     }
-    return firstEnv;
+    return firstVcs;
   }
 
   protected static int getCheckinType(FilePath[] roots) {
@@ -168,8 +165,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       }
     }
     else {
-      CheckinEnvironment commonEnvironmentFor = getCommonEnvironmentFor(roots, project);
-      if (commonEnvironmentFor == null) {
+      AbstractVcs commonVcsFor = getCommonVcsFor(roots, project);
+      if (commonVcsFor == null) {
         presentation.setEnabled(false);
         presentation.setVisible(false);
         return;
