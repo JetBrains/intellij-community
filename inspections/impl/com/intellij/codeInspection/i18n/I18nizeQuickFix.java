@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -161,7 +162,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
       TextRange intersection = literalRange.intersection(mySelectionRange);
       value = literalExpression.getText().substring(intersection.getStartOffset() - literalRange.getStartOffset(), intersection.getEndOffset() - literalRange.getStartOffset());
     }
-    value = value.replaceAll("\n", "\\n");
+    value = StringUtil.escapeStringCharacters(value);
     return new I18nizeQuickFixDialog(project, context, literalExpression, value, true, true);
   }
 
