@@ -7,10 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.impl.DebugUtil;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class InitialInfoBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
@@ -25,6 +22,8 @@ class InitialInfoBuilder {
   private LeafBlockWrapper myLastTokenBlock;
   private SpacingImpl myCurrentSpaceProperty;
   private final CodeStyleSettings.IndentOptions myOptions;
+  
+  private final Set<Block> myRightBlocks = new HashSet<Block>();
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              final TextRange affectedRange,
@@ -43,6 +42,7 @@ class InitialInfoBuilder {
                                                final CodeStyleSettings.IndentOptions options,
                                                final boolean processHeadingWhitespace) {
     final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRange, options, processHeadingWhitespace);
+    builder.myRightBlocks.add(root);
     final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, root.getTextRange());
     wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
     return builder;
@@ -81,7 +81,7 @@ class InitialInfoBuilder {
     }
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
-    boolean isReadOnly = isReadOnly(textRange);
+    boolean isReadOnly = isReadOnly(textRange, rootBlock);
 
     if (isReadOnly) {
       return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index);
@@ -117,6 +117,9 @@ class InitialInfoBuilder {
         myCurrentSpaceProperty = (SpacingImpl)rootBlock.getSpacing(previous, block);
       }
       final TextRange blockRange = block.getTextRange();
+      if (i == subBlocks.size() - 1 && myRightBlocks.contains(rootBlock)) {
+        myRightBlocks.add(subBlocks.get(subBlocks.size() - 1));
+      }      
       final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, blockRange);
       list.add(wrapper);
       final IndentImpl indent = (IndentImpl)block.getIndent();
@@ -195,8 +198,11 @@ class InitialInfoBuilder {
     }
   }
 
-  private boolean isReadOnly(final TextRange textRange) {
+  private boolean isReadOnly(final TextRange textRange, final Block rootBlock) {
     if (myAffectedRange == null) return false;
+    if (myRightBlocks.contains(rootBlock) && myAffectedRange.getStartOffset() >= textRange.getEndOffset()) {
+      return false;
+    }
     if (textRange.getStartOffset() > myAffectedRange.getEndOffset()) return true;
     return textRange.getEndOffset() < myAffectedRange.getStartOffset();
   }

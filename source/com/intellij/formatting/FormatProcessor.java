@@ -772,7 +772,9 @@ class FormatProcessor {
     if (current.getParent() == null) return null;
 
     if (current.getTextRange().getEndOffset() <= offset) {
-      while (!current.getBlock().isIncomplete() && current.getParent() != null && current.getParent().getTextRange().getEndOffset() <= offset) {
+      while (!current.getBlock().isIncomplete() && 
+             current.getParent() != null && 
+             current.getParent().getTextRange().getEndOffset() <= offset) {
         current = current.getParent();
       }
       if (current.getBlock().isIncomplete()) return current.getBlock();
