@@ -38,6 +38,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -230,7 +231,10 @@ public class AnalysisScope {
           }
         }
         if (onlyPackLocalClasses) {
-          return new AnalysisScope[]{new AnalysisScope(psiJavaFile.getContainingDirectory().getPackage())};
+          final PsiDirectory psiDirectory = psiJavaFile.getContainingDirectory();
+          if (psiDirectory != null) {
+            return new AnalysisScope[]{new AnalysisScope(psiDirectory.getPackage())};
+          }
         }
       }
       final VirtualFile vFile = ((PsiFile)myElement).getVirtualFile();
@@ -384,12 +388,30 @@ public class AnalysisScope {
       PsiPackage pack = (PsiPackage)myElement;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject()));
       for (PsiDirectory dir : dirs) {
-        dir.accept(visitor);
+        accept(dir, visitor);
       }
     }
     else {
       myElement.accept(visitor);
     }
+  }
+
+  private void accept(@NotNull final PsiDirectory dir, @NotNull final PsiElementVisitor visitor) {
+    final Project project = dir.getProject();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    index.iterateContentUnderDirectory(dir.getVirtualFile(), new ContentIterator() {
+      public boolean processFile(VirtualFile fileOrDir) {
+        if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
+        if (!fileOrDir.isDirectory()) {
+          final PsiFile psiFile = psiManager.findFile(fileOrDir);
+          if (psiFile != null) {
+            psiFile.accept(visitor);
+          }
+        }
+        return true;
+      }
+    });
   }
 
   public boolean isValid() {
@@ -577,5 +599,24 @@ public class AnalysisScope {
       dirs[i++] = psiManager.findDirectory(file);
     }
     processDirectories(dirs, result, profileManager);
+  }
+
+  public boolean containsSources(boolean isTest) {
+    if (myElement != null) {
+      final Project project = myElement.getProject();
+      final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+      if (myElement instanceof PsiDirectory) {
+        final VirtualFile directory = ((PsiDirectory)myElement).getVirtualFile();
+        if (index.isInSourceContent(directory)) {
+          return isTest ? index.isInTestSourceContent(directory) : !index.isInTestSourceContent(directory);
+        }
+      } else if (myElement instanceof PsiFile) {
+        final VirtualFile file = ((PsiFile)myElement).getVirtualFile();
+        if (file != null) {
+          return isTest ? index.isInTestSourceContent(file) : !index.isInTestSourceContent(file);
+        }
+      }
+    }
+    return true;
   }
 }

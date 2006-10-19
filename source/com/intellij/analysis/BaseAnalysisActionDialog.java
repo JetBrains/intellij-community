@@ -44,23 +44,40 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private Project myProject;
   private boolean myRememberScope;
   private String myAnalysisNoon;
-  private ButtonGroup myGroup = new ButtonGroup();
+  private ButtonGroup myGroup;
+
   private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommited.files.all.changelists.choice");
 
-  public BaseAnalysisActionDialog(String title,
-                                  String analysisNoon,
-                                  Project project,
-                                  String fileName,
-                                  String moduleName,
-                                  boolean rememberScope) {
+  public BaseAnalysisActionDialog(final String title,
+                                  final String analysisNoon,
+                                  final Project project,
+                                  final AnalysisScope scope,
+                                  final String moduleName,
+                                  final boolean rememberScope) {
     super(true);
     myProject = project;
-    myFileName = fileName;
+    myFileName = scope.getShortenName();
     myModuleName = moduleName;
     myRememberScope = rememberScope;
     myAnalysisNoon = analysisNoon;
+    myFileButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        validateTestSourcesCombo(scope);
+      }
+    });
     init();
     setTitle(title);
+    validateTestSourcesCombo(scope);
+  }
+
+  private void validateTestSourcesCombo(final AnalysisScope scope) {
+    myInspectTestSource.setEnabled(true);
+    if (myFileButton.isSelected()) {
+      if (!(scope.containsSources(true) && scope.containsSources(false))) {
+        myInspectTestSource.setSelected(scope.containsSources(true));
+        myInspectTestSource.setEnabled(false);
+      }
+    }
   }
 
   public void setOKActionEnabled(boolean isEnabled) {
@@ -119,12 +136,13 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
 
-    compoundGroup();
-
     final ActionListener updater = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
         myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
+        if (!myFileButton.isSelected()) {
+          myInspectTestSource.setEnabled(true);
+        }
       }
     };
     final Enumeration<AbstractButton> enumeration = myGroup.getElements();
@@ -140,14 +158,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       wholePanel.add(additionalPanel, BorderLayout.CENTER);
     }
     return wholePanel;
-  }
-
-  private void compoundGroup() {
-    myGroup.add(myProjectButton);
-    myGroup.add(myModuleButton);
-    myGroup.add(myFileButton);
-    myGroup.add(myCustomScopeButton);
-    myGroup.add(myUncommitedFilesButton);
   }
 
   @Nullable
@@ -167,6 +177,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return myUncommitedFilesButton != null && myUncommitedFilesButton.isSelected();
   }
 
+  @Nullable
   public SearchScope getCustomScope(){
     if (myCustomScopeButton.isSelected()){
       return myScopeCombo.getSelectedScope();

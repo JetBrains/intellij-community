@@ -18,10 +18,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -34,10 +34,12 @@ public class RunInspectionIntention implements IntentionAction {
     myTool = tool;
   }
 
+  @NotNull
   public String getText() {
     return InspectionsBundle.message("run.inspection.on.file.intention.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
@@ -61,10 +63,8 @@ public class RunInspectionIntention implements IntentionAction {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
                                                                       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-                                                                      project, AnalysisScopeBundle.message("scope.file",
-                                                                                                           VfsUtil.calcRelativeToProjectPath(
-                                                                                                             file.getVirtualFile(),
-                                                                                                             file.getProject())),
+                                                                      project,
+                                                                      new AnalysisScope(file),
                                                                       module != null ? module.getName() : null,
                                                                       true);
     AnalysisScope scope = new AnalysisScope(file);

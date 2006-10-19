@@ -62,7 +62,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
                                                                   AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                   project,
-                                                                  scope.getShortenName(),
+                                                                  scope,
                                                                   module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil
                                                                     .getModuleNameInReadAction(module) : null,
                                                                   rememberScope){

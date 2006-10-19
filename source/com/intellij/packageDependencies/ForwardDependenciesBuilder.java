@@ -40,6 +40,9 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     try {
       getScope().accept(new PsiRecursiveElementVisitor() {
         public void visitFile(final PsiFile file) {
+          final FileViewProvider viewProvider = file.getViewProvider();
+          if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
+
           ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           if (indicator != null) {
             if (indicator.isCanceled()) {
@@ -50,11 +53,10 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             if (virtualFile != null) {
               indicator.setText2(VfsUtil.calcRelativeToProjectPath(virtualFile, getProject()));
             }
-            indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);
+            if (myTotalFileCount > 0) {
+              indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);
+            } 
           }
-
-          final FileViewProvider viewProvider = file.getViewProvider();
-          if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
 
           final Set<PsiFile> fileDeps = new HashSet<PsiFile>();
           getDependencies().put(file, fileDeps);

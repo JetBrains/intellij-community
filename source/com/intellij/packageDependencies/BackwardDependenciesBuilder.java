@@ -71,7 +71,10 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
             if (virtualFile != null) {
               indicator.setText2(VfsUtil.calcRelativeToProjectPath(virtualFile, getProject()));
             }
-            indicator.setFraction(((double) ++myFileCount) / getScope().getFileCount());
+            final int fileCount = getScope().getFileCount();
+            if (fileCount > 0) {
+              indicator.setFraction(((double) ++myFileCount) / fileCount);
+            }
           }
           for (DependenciesBuilder builder : builders) {
             final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
