@@ -28,11 +28,12 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class CompareToAndEqualsNotPairedInspection extends ClassInspection {
+public class ComparableImplementedButEqualsNotOverriddenInspection
+        extends ClassInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "compareto.and.equals.not.paired.display.name");
+                "comparable.implemented.but.equals.not.overridden.display.name");
     }
 
     @Nls
@@ -44,7 +45,7 @@ public class CompareToAndEqualsNotPairedInspection extends ClassInspection {
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "compareto.and.equals.not.paired.problem.descriptor");
+                "comparable.implemented.but.equals.not.overridden.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

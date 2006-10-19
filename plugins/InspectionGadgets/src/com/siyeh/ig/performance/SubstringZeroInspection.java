@@ -33,7 +33,7 @@ public class SubstringZeroInspection extends ExpressionInspection {
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "substring.zero.problem.descriptor");
+                "substring.zero.display.name");
     }
 
     @NotNull
