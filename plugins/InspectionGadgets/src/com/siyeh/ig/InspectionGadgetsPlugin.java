@@ -476,6 +476,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CastConflictsWithInstanceofInspection.class);
         m_inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
         m_inspectionClasses.add(CollectionAddedToSelfInspection.class);
+        m_inspectionClasses.add(ComparableImplementedButEqualsNotOverriddenInspection.class);
         m_inspectionClasses.add(CompareToUsesNonFinalVariableInspection.class);
         m_inspectionClasses.add(CovariantCompareToInspection.class);
         m_inspectionClasses.add(CovariantEqualsInspection.class);
