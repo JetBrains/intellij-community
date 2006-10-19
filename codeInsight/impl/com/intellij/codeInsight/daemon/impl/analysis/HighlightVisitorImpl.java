@@ -438,10 +438,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     final PsiElement psiElement = nextSibling == null ? null : PsiTreeUtil.findCommonParent(nextSibling, element);
-    if ((nextSibling instanceof OuterLanguageElement ||
-         nextSibling instanceof JspExpression ||
-         nextSibling instanceof ELExpressionHolder
-        ) && psiElement != null && !(psiElement instanceof PsiFile) // error is not inside jsp text
+    final boolean nextIsOuterLanguageElement =
+      (nextSibling instanceof OuterLanguageElement || nextSibling instanceof JspExpression || nextSibling instanceof ELExpressionHolder);
+    if (nextIsOuterLanguageElement && psiElement != null && !(psiElement instanceof PsiFile) // error is not inside jsp text
        ) {
       return true;
     }
@@ -462,7 +461,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       return true;
     }
 
-    return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null;
+    return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null || (nextIsOuterLanguageElement && prevLeaf == null);
   }
 
   public void visitEnumConstant(PsiEnumConstant enumConstant) {

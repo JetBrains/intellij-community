@@ -406,7 +406,7 @@ public class PsiTreeUtil {
     final PsiElement prevSibling = current.getPrevSibling();
     if(prevSibling != null) return lastChild(prevSibling);
     final PsiElement parent = current.getParent();
-    if(parent == null) return null;
+    if(parent == null || parent instanceof PsiFile) return null;
     return prevLeaf(parent);
   }
 
@@ -414,7 +414,7 @@ public class PsiTreeUtil {
     final PsiElement nextSibling = current.getNextSibling();
     if(nextSibling != null) return firstChild(nextSibling);
     final PsiElement parent = current.getParent();
-    if(parent == null) return null;
+    if(parent == null || parent instanceof PsiFile) return null;
     return nextLeaf(parent);
   }
 
