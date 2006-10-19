@@ -87,7 +87,9 @@ public final class PropertyInspector extends JPanel{
         if (myPropertiesPanelContainer != null) {
           myPropertiesPanelContainer.revalidate();
         }
-        myEditor.refreshAndSave(true);
+        if (myEditor.ensureEditable()) {
+          myEditor.refreshAndSave(true);
+        }
       }
     };
   }
