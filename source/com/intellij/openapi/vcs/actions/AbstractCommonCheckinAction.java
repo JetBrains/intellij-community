@@ -34,36 +34,24 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.localVcs.LocalVcs;
-import com.intellij.openapi.localVcs.LvcsAction;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.openapi.vcs.checkin.VcsOperation;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
-import com.intellij.openapi.vcs.ui.CheckinDialog;
-import com.intellij.openapi.vcs.ui.CheckinFileDialog;
-import com.intellij.openapi.vcs.ui.Refreshable;
-import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
@@ -82,23 +70,10 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       ApplicationManager.getApplication().saveAll();
     }
 
-    boolean enforceOldCommit = false;
-    final AbstractVcs[] activeVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    for (AbstractVcs activeVcs : activeVcss) {
-      if (activeVcs.getChangeProvider() == null) {
-        enforceOldCommit = true;
-      }
-    }
+    if (ChangeListManager.getInstance(project).ensureUpToDate(true)) {
+      ChangeList initialSelection = getInitiallySelectedChangeList(context, project);
 
-    if (enforceOldCommit) {
-      oldActionPerformed(roots, project, context);
-    }
-    else {
-      if (ChangeListManager.getInstance(project).ensureUpToDate(true)) {
-        ChangeList initialSelection = getInitiallySelectedChangeList(context, project);
-
-        CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection);
-      }
+      CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection);
     }
   }
 
@@ -121,28 +96,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return initialSelection;
   }
 
-  private void oldActionPerformed(final FilePath[] roots, final Project project, final VcsContext context) {
-    int ciType = getCheckinType(roots);
-
-    if (ciType == MIXED) {
-      return;
-    }
-    if (ciType == DIRECTORIES) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        ApplicationManager.getApplication().saveAll();
-      }
-      checkinDirectories(project, context, roots);
-    }
-    else {
-      CheckinEnvironment env = getCommonEnvironmentFor(roots, project);
-      if (env == null) return;
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        ApplicationManager.getApplication().saveAll();
-      }
-      checkinFiles(project, context, roots, env);
-    }
-  }
-
   @Nullable
   protected static CheckinEnvironment getCommonEnvironmentFor(FilePath[] roots, Project project) {
     if (roots.length == 0) return null;
@@ -162,250 +115,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return firstEnv;
   }
 
-  private void checkinFiles(final Project project, final VcsContext context, FilePath[] roots, CheckinEnvironment checkinEnvironment) {
-    final boolean showDialog = ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.CHECKIN)
-      .getValue() || OptionsDialog.shiftIsPressed(context.getModifiers());
-
-    if (showDialog) {
-
-      CheckinFileDialog dialog = new CheckinFileDialog(project, getActionName(context), checkinEnvironment, roots);
-      dialog.show();
-      if (!dialog.isOK()) return;
-
-      checkinFiles(checkinEnvironment, roots, project, dialog.getPreparedComment(checkinEnvironment), context, dialog.getHandlers());
-
-    }
-    else {
-      final List<CheckinHandler> handlers = new ArrayList<CheckinHandler>();
-      final List<CheckinHandlerFactory> factories = ProjectLevelVcsManager.getInstance(project).getRegisteredCheckinHandlerFactories();
-
-      final CheckinProjectPanel checkinPanel = createMockPanel(getVirtualFiles(roots), getFiles(roots), project,
-                                                               checkinEnvironment.prepareCheckinMessage(
-                                                                 CheckinDialog.getInitialMessage(roots, project)),
-                                                               getVcs(checkinEnvironment, project));
-
-      for (CheckinHandlerFactory factory : factories) {
-        handlers.add(factory.createHandler(checkinPanel));
-      }
-
-
-      for (CheckinHandler handler : handlers) {
-        final CheckinHandler.ReturnResult returnResult = handler.beforeCheckin();
-        if (returnResult != CheckinHandler.ReturnResult.COMMIT) {
-          return;
-        }
-      }
-
-      checkinFiles(checkinEnvironment, roots, project, checkinPanel.getCommitMessage(), context, handlers);
-    }
-
-  }
-
-  @Nullable
-  private static AbstractVcs getVcs(final CheckinEnvironment checkinEnvironment, final Project project) {
-    final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    for (AbstractVcs vcs : abstractVcses) {
-      if (vcs.getCheckinEnvironment() == checkinEnvironment) {
-        return vcs;
-      }
-    }
-
-    return null;
-  }
-
-  private static Collection<File> getFiles(final FilePath[] roots) {
-    final ArrayList<File> result = new ArrayList<File>();
-    for (FilePath root : roots) {
-      result.add(root.getIOFile());
-    }
-    return result;
-  }
-
-  private static CheckinProjectPanel createMockPanel(final Collection<VirtualFile> virtualFiles,
-                                                     final Collection<File> files,
-                                                     final Project project,
-                                                     final String message,
-                                                     final AbstractVcs abstractVcs) {
-    return new MockCheckinProjectPanel(virtualFiles, files, project, message, abstractVcs);
-  }                                  
-
-  private void checkinFiles(final CheckinEnvironment checkinEnvironment,
-                            final FilePath[] roots,
-                            final Project project,
-                            final String message,
-                            final VcsContext context,
-                            final List<CheckinHandler> handlers) {
-    Runnable checkinFilesAction = new Runnable() {
-      public void run() {
-        List<VcsException> vcsExceptions = checkinEnvironment.commit(roots, project, message);
-
-        try {
-          if (!vcsExceptions.isEmpty()) {
-            AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
-          }
-
-          final LvcsAction lvcsAction = LocalVcs.getInstance(project).startAction(getActionName(context), "", true);
-          VcsUtil.refreshFiles(roots, new Runnable() {
-            public void run() {
-              lvcsAction.finish();
-              FileStatusManager.getInstance(project).fileStatusesChanged();
-              final Refreshable refreshablePanel = context.getRefreshableDialog();
-              if (refreshablePanel != null) {
-                refreshablePanel.refresh();
-              }
-              refreshFileView(project);
-            }
-          });
-        }
-        finally {
-          commitCompleted(vcsExceptions, VcsConfiguration.getInstance(project), handlers);
-        }
-
-
-      }
-    };
-
-    AbstractVcsHelper.getInstance(project)
-      .optimizeImportsAndReformatCode(getVirtualFiles(roots), VcsConfiguration.getInstance(project), checkinFilesAction, true);
-
-
-  }
-
-  private static Collection<VirtualFile> getVirtualFiles(final FilePath[] roots) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (FilePath root : roots) {
-      final VirtualFile virtualFile = root.getVirtualFile();
-      if (virtualFile != null) {
-        result.add(virtualFile);
-      }
-    }
-    return result;
-  }
-
-  private void checkinDirectories(final Project project, final VcsContext context, FilePath[] roots) {
-    final CheckinProjectDialogImplementer dialog =
-      AbstractVcsHelper.getInstance(project).createCheckinProjectDialog(getActionName(context), true, asPathList(roots));
-
-    final Refreshable refreshablePanel = context.getRefreshableDialog();
-
-    final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
-
-    Runnable actionAfterDialogWasShown = new Runnable() {
-      public void run() {
-        try {
-          if (!shouldCheckin(dialog, project)) {
-            return;
-          }
-
-          final Runnable checkinAction = new Runnable() {
-            public void run() {
-              CheckinProjectPanelImpl checkinProjectPanel = (CheckinProjectPanelImpl)dialog.getCheckinProjectPanel();
-              final Map<CheckinEnvironment, List<VcsOperation>> checkinOperations = checkinProjectPanel.getCheckinOperations();
-              Runnable checkinAction = new Runnable() {
-                public void run() {
-
-                  try {
-                    for (CheckinEnvironment checkinEnvironment : checkinOperations.keySet()) {
-                      vcsExceptions.addAll(checkinEnvironment.commit(dialog, project));
-                    }
-
-                    final LvcsAction lvcsAction = LocalVcs.getInstance(project).startAction(getActionName(context), "", true);
-                    VirtualFileManager.getInstance().refresh(true, new Runnable() {
-                      public void run() {
-                        lvcsAction.finish();
-                        FileStatusManager.getInstance(project).fileStatusesChanged();
-                        if (refreshablePanel != null) {
-                          refreshablePanel.refresh();
-                        }
-                        refreshFileView(project);
-                      }
-                    });
-                    AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
-                  }
-                  finally {
-                    commitCompleted(vcsExceptions, VcsConfiguration.getInstance(project), dialog.getHandlers());
-                  }
-                }
-              };
-              ProgressManager.getInstance().runProcessWithProgressSynchronously(checkinAction, getActionName(context), true, project);
-            }
-          };
-
-          AbstractVcsHelper.getInstance(project).optimizeImportsAndReformatCode(dialog.getCheckinProjectPanel().getVirtualFiles(),
-                                                                                VcsConfiguration.getInstance(project), checkinAction, true);
-
-
-        }
-        finally {
-          dialog.dispose();
-        }
-
-      }
-    };
-
-    try {
-      dialog.analyzeChanges(true, actionAfterDialogWasShown);
-    }
-    catch (VcsException e) {
-      Messages.showErrorDialog(VcsBundle.message("message.text.cannot.analyze.changes", e.getLocalizedMessage()),
-                               VcsBundle.message("message.title.analizing.changes"));
-    }
-
-  }
-
-  private static void commitCompleted(final List<VcsException> allExceptions,
-                                      VcsConfiguration config,
-                                      final List<CheckinHandler> checkinHandlers) {
-
-
-    final List<VcsException> errors = collectErrors(allExceptions);
-    final int errorsSize = errors.size();
-    final int warningsSize = allExceptions.size() - errorsSize;
-
-    if (errorsSize == 0) {
-      for (CheckinHandler handler : checkinHandlers) {
-        handler.checkinSuccessful();
-      }
-    }
-    else {
-      for (CheckinHandler handler : checkinHandlers) {
-        handler.checkinFailed(errors);
-      }
-    }
-
-
-    config.ERROR_OCCURED = errorsSize > 0;
-
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (errorsSize > 0 && warningsSize > 0) {
-          Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors.and.warnings"),
-                                   VcsBundle.message("message.title.commit"));
-        }
-        else if (errorsSize > 0) {
-          Messages.showErrorDialog(VcsBundle.message("message.text.commit.failed.with.errors"), VcsBundle.message("message.title.commit"));
-        }
-        else if (warningsSize > 0) {
-          Messages
-            .showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
-        }
-
-      }
-    }, ModalityState.NON_MODAL);
-
-  }
-
-  private static List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
-    final ArrayList<VcsException> result = new ArrayList<VcsException>();
-    for (VcsException vcsException : vcsExceptions) {
-      if (!vcsException.isWarning()) {
-        result.add(vcsException);
-      }
-    }
-    return result;
-  }
-
   protected static int getCheckinType(FilePath[] roots) {
     if (roots.length == 0) return MIXED;
     FilePath file = roots[0];
@@ -423,14 +132,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return file.isDirectory() ? DIRECTORIES : FILES;
   }
 
-  private static Collection<String> asPathList(FilePath[] roots) {
-    ArrayList<String> result = new ArrayList<String>();
-    for (FilePath root : roots) {
-      result.add(root.getPath());
-    }
-    return result;
-  }
-
   protected abstract String getActionName(VcsContext dataContext);
 
   protected abstract FilePath[] getRoots(VcsContext project);
@@ -438,16 +139,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   protected static void refreshFileView(Project project) {
     if (project == null) return;
     FileViewManagerImpl.getInstance(project).refreshFileView();
-  }
-
-  private static boolean shouldCheckin(CheckinProjectDialogImplementer d, Project project) {
-    if (!d.hasDiffs()) {
-      Messages.showMessageDialog(project, VcsBundle.message("message.text.nothing.was.found.to.commit"),
-                                 VcsBundle.message("message.title.nothing.was.found.to.commit"), Messages.getInformationIcon());
-      return false;
-    }
-    d.show();
-    return d.isOK();
   }
 
   protected void update(VcsContext vcsContext, Presentation presentation) {
@@ -529,83 +220,4 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   protected abstract boolean filterRootsBeforeAction();
 
-  private static class MockCheckinProjectPanel implements CheckinProjectPanel {
-    private String myMessage;
-    private final Project myProject;
-    private final Collection<VirtualFile> myVirtualFiles;
-    private final Collection<File> myFiles;
-    private final AbstractVcs myVcs;
-
-
-    public MockCheckinProjectPanel(final Collection<VirtualFile> virtualFiles,
-                                   final Collection<File> files,
-                                   final Project project,
-                                   final String message,
-                                   AbstractVcs vcs) {
-      myMessage = message;
-      myProject = project;
-      myVirtualFiles = virtualFiles;
-      myFiles = files;
-      myVcs = vcs;
-    }
-
-    public JComponent getComponent() {
-      return null;
-    }
-
-    public JComponent getPreferredFocusedComponent() {
-      return null;
-    }
-
-    public List<AbstractVcs> getAffectedVcses() {
-      return Collections.singletonList(myVcs);
-    }
-
-    public boolean hasDiffs() {
-      return true;
-    }
-
-    public void addSelectionChangeListener(SelectionChangeListener listener) {
-    }
-
-    public void removeSelectionChangeListener(SelectionChangeListener listener) {
-    }
-
-    public Collection<VirtualFile> getVirtualFiles() {
-      return myVirtualFiles;
-    }
-
-    public Collection<File> getFiles() {
-      return myFiles;
-    }
-
-    public Project getProject() {
-      return myProject;
-    }
-
-    public List<VcsOperation> getCheckinOperations(CheckinEnvironment checkinEnvironment) {
-      return null;
-    }
-
-    public Collection<VirtualFile> getRoots() {
-      return myVirtualFiles;
-    }
-
-    public void setCommitMessage(final String currentDescription) {
-      myMessage = currentDescription;
-    }
-
-    public String getCommitMessage() {
-      return myMessage;
-    }
-
-    public void refresh() {
-    }
-
-    public void saveState() {
-    }
-
-    public void restoreState() {
-    }
-  }
 }

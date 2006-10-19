@@ -46,11 +46,10 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
-import com.intellij.openapi.vcs.versionBrowser.*;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
+import com.intellij.openapi.vcs.versionBrowser.*;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vcs.versions.VersionRevisions;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -66,13 +65,13 @@ import com.intellij.util.ContentsUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
-import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -397,10 +396,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     return lastUpToDateRevision.getAbsolutePath().replace('/', File.separatorChar);
   }
 
-  public Refreshable createCheckinProjectPanel(Project project) {
-    return new CheckinProjectPanelImpl(project, Arrays.asList(LocalVcs.getInstance(myProject).getRootPaths()), new JPanel(), null);
-  }
-
   public void prepareFileForCheckin(final VirtualFile file) {
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
       final PsiImportList[] resultList = new PsiImportList[1];
@@ -505,42 +500,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     exceptions.addAll(abstractVcsExceptions);
   }
 
-  public void doCheckinFiles(VirtualFile[] files, Object checkinParameters) {
-
-    Map<AbstractVcs, List<VirtualFile>> vcsToFileMap = new HashMap<AbstractVcs, List<VirtualFile>>();
-
-    for (VirtualFile file : files) {
-      AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-      if (activeVcs == null) continue;
-      if (!vcsToFileMap.containsKey(activeVcs)) vcsToFileMap.put(activeVcs, new ArrayList<VirtualFile>());
-      vcsToFileMap.get(activeVcs).add(file);
-    }
-
-    for (AbstractVcs abstractVcs : vcsToFileMap.keySet()) {
-      doCheckinFiles(abstractVcs, vcsToFileMap.get(abstractVcs), checkinParameters);
-    }
-  }
-
-  private void doCheckinFiles(AbstractVcs abstractVcs, List<VirtualFile> virtualFiles, Object checkinParameters) {
-    final LocalVcs lvcs = LocalVcs.getInstance(myProject);
-
-    List<LvcsObject> objects = new ArrayList<LvcsObject>();
-    for (VirtualFile file : virtualFiles) {
-      LvcsFile lvcsFile = lvcs.findFile(file.getPath());
-      if (lvcsFile != null) {
-        objects.add(lvcsFile);
-      }
-    }
-
-    if (objects.isEmpty()) return;
-
-    final CheckinHandler checkinHandler = new CheckinHandler(myProject, abstractVcs);
-    List<VcsException> exceptions = checkinHandler.checkin(objects.toArray(new LvcsObject[objects.size()]), checkinParameters);
-    showErrors(exceptions, VcsBundle.message("message.title.check.in"));
-
-
-  }
-
   public void optimizeImportsAndReformatCode(final Collection<VirtualFile> files,
                                              final VcsConfiguration configuration,
                                              final Runnable finishAction,
@@ -571,10 +530,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       reformatCodeAndPerformCheckout.run();
     }
 
-  }
-
-  public CheckinProjectDialogImplementer createCheckinProjectDialog(String title, boolean requestComments, Collection<String> roots) {
-    return new CheckinProjectDialogImplementerImpl(myProject, title, requestComments, roots);
   }
 
   public void showAnnotation(FileAnnotation annotation, VirtualFile file) {

@@ -21,15 +21,14 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
@@ -67,23 +66,14 @@ public abstract class AbstractVcsHelper {
    */
   public abstract String getUpToDateFilePath(VirtualFile file);
 
-  public abstract Refreshable createCheckinProjectPanel(Project project);
-
   public abstract List<VcsException> doCheckinProject(CheckinProjectPanel checkinProjectPanel,
                                                       Object checkinParameters,
                                                       AbstractVcs abstractVcs);
 
-  public abstract void doCheckinFiles(VirtualFile[] files, Object checkinParameters);
-
-  
   public abstract void optimizeImportsAndReformatCode(Collection<VirtualFile> files,
                                                       VcsConfiguration configuration,
                                                       Runnable finishAction,
                                                       boolean checkinProject);
-
-  public abstract CheckinProjectDialogImplementer createCheckinProjectDialog(String title,
-                                                                             boolean requestComments,
-                                                                             Collection<String> roots);
 
   public void showError(final VcsException e, final String s) {
     showErrors(Arrays.asList(e), s);
