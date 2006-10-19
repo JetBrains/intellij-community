@@ -1,9 +1,6 @@
 package com.intellij.lang.ant.psi.impl;
 
-import com.intellij.lang.ant.psi.AntElement;
-import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.AntStructuredElement;
-import com.intellij.lang.ant.psi.AntTypeDef;
+import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
@@ -17,6 +14,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -198,6 +196,11 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
                 file.registerCustomType(def);
               }
             }
+            if (element instanceof AntTypeDefImpl) {
+              final AntTypeDefImpl td = ((AntTypeDefImpl)element);
+              td.myNewDefinitions = ArrayUtil.append(td.myNewDefinitions, def);
+              ((AntTypeDefinitionImpl)def).setDefiningElement(td);
+            }
           }
         }
       }
@@ -253,6 +256,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     if (loader != null) {
       final InputStream stream = loader.getResourceAsStream(resource);
       if (stream != null) {
+        myClassesLoaded = true;
         if (!isXmlFormat(resource)) {
           loadPropertiesStream(stream, this);
         }
@@ -271,6 +275,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         try {
           final InputStream stream = vf.getInputStream();
           if (stream != null) {
+            myClassesLoaded = true;
             if (!isXmlFormat(file)) {
               loadPropertiesStream(stream, this);
             }
@@ -289,7 +294,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   private void loadClass(@Nullable final String classname, @Nullable final String name, @Nullable final String uri) {
     final AntTypeDefinitionImpl def = loadClassAndCreateDefinition(classname, name, uri);
     if (def == null) return;
-    myNewDefinitions = new AntTypeDefinition[]{def};
+    myNewDefinitions = ArrayUtil.append(myNewDefinitions, def);
     def.setDefiningElement(this);
     final AntStructuredElement parent = getAntParent();
     if (parent != null) {
@@ -359,6 +364,21 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   private URL[] getClassPathUrls() {
+    URL[] urls = getClassPathLocalUrls();
+    AntElement parent = getAntParent();
+    while (parent != null && !(parent instanceof AntProject)) {
+      if (parent instanceof AntTypeDefImpl) {
+        final URL[] localUrls = ((AntTypeDefImpl)parent).getClassPathLocalUrls();
+        if (localUrls.length > 0) {
+          urls = ArrayUtil.mergeArrays(urls, localUrls, URL.class);
+        }
+      }
+      parent = parent.getAntParent();
+    }
+    return urls;
+  }
+
+  private URL[] getClassPathLocalUrls() {
     URL[] urls = ClassEntry.EMPTY_URL_ARRAY;
     final String classpath = getClassPath();
     if (classpath != null) {
