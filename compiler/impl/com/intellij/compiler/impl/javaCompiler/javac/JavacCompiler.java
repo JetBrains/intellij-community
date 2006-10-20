@@ -20,8 +20,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.rt.compiler.JavacRunner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -157,6 +157,7 @@ public class JavacCompiler extends ExternalCompiler {
     final boolean isVersion1_3 = CompilerUtil.isOfVersion(versionString, "1.3");
     final boolean isVersion1_4 = CompilerUtil.isOfVersion(versionString, "1.4");
     final boolean isVersion1_5 = CompilerUtil.isOfVersion(versionString, "1.5") || CompilerUtil.isOfVersion(versionString, "5.0");
+    final boolean isVersion1_5_or_higher = isVersion1_5 || !(isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4);
 
     final JavacSettings javacSettings = JavacSettings.getInstance(myProject);
 
@@ -260,7 +261,7 @@ public class JavacCompiler extends ExternalCompiler {
         for (final VirtualFile file : files) {
           // Important: should use "/" slashes!
           // but not for JDK 1.5 - see SCR 36673
-          final String path = isVersion1_5 ? file.getPath().replace('/', File.separatorChar) : file.getPath();
+          final String path = isVersion1_5_or_higher ? file.getPath().replace('/', File.separatorChar) : file.getPath();
           if (LOG.isDebugEnabled()) {
             LOG.debug("Adding path for compilation " + path);
           }
