@@ -56,10 +56,10 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
    */
   public final PsiElement getTargetElement() {
     final PsiClass aClass = getPsiClass();
-    if (aClass == null) return null;
+    if (aClass == null || !aClass.isValid()) return null;
     final PsiMethod method = getMethod(aClass, false);
     if (method != null) return method;
-    return getPsiClass();
+    return aClass;
   }
 
   public final boolean isValid() {
@@ -148,13 +148,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     // was it implemented is in superclasses?
     final PsiMethod baseClassMethod = getMethod(psiClass, true);
 
-    final boolean hasBaseImplementation;
-    if (baseClassMethod == null) {
-      hasBaseImplementation = false;
-    }
-    else {
-      hasBaseImplementation = !baseClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
-    }
+    final boolean hasBaseImplementation = baseClassMethod != null && !baseClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (hasBaseImplementation || isAbstractClass) {
       return METHOD_NOT_DEFINED_ICON;
