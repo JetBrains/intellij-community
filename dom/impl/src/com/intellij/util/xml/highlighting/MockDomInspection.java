@@ -16,7 +16,11 @@ public class MockDomInspection extends BasicDomElementsInspection{
   public static final MockDomInspection INSTANCE = new MockDomInspection();
 
   public MockDomInspection() {
-    super(DomElement.class);
+    this(DomElement.class);
+  }
+
+  public MockDomInspection(final Class<? extends DomElement> domClass) {
+    super(domClass);
   }
 
   @Nls

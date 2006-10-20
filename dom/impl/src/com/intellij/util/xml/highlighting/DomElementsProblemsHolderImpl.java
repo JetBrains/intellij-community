@@ -45,7 +45,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
   private final DomFileElement myElement;
 
-  private final Class<?> myRootType;
+  private final Class<? extends DomElement> myRootType;
   private static final Factory<Map<Class<? extends DomElementsInspection>,List<DomElementProblemDescriptor>>> CONCURRENT_HASH_MAP_FACTORY = new Factory<Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>>() {
     public Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> create() {
       return new ConcurrentHashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
@@ -59,7 +59,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
   public DomElementsProblemsHolderImpl(final DomFileElement element) {
     myElement = element;
-    myRootType = DomReflectionUtil.getRawType(myElement.getRootElement().getDomElementType());
+    myRootType = (Class<? extends DomElement>)DomReflectionUtil.getRawType(myElement.getRootElement().getDomElementType());
   }
 
   public final void calculateAllProblems() {
@@ -70,7 +70,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       hasInspections |= processProfileEntry(profile.isToolEnabled(HighlightDisplayKey.find(profileEntry.getShortName())), profileEntry);
     }
     if (!hasInspections) {
-      runInspection(MockDomInspection.INSTANCE);
+      runInspection(new MockDomInspection(myRootType));
     }
   }
 

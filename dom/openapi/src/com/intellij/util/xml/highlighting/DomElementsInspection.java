@@ -8,24 +8,23 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.Function;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Set;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -39,26 +38,27 @@ public abstract class DomElementsInspection<T extends DomElement> extends LocalI
     myDomClasses.add(domClass);
   }
 
+  /**
+   * This method is called internally in {@link com.intellij.util.xml.highlighting.DomElementAnnotationsManager#getProblemHolder(com.intellij.util.xml.DomElement)},
+   * it should add some problems to the annotation holder. The default implementation performs recursive tree traversal, and calls
+   * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} for each element. 
+   * @param domFileElement file element to check
+   * @param holder the place to store problems
+   */
   public void checkFileElement(DomFileElement<T> domFileElement, final DomElementAnnotationHolder holder) {
     final DomHighlightingHelper helper =
       DomElementAnnotationsManager.getInstance(domFileElement.getManager().getProject()).getHighlightingHelper();
-    final Ref<Boolean> ref = new Ref<Boolean>(Boolean.FALSE);
     domFileElement.accept(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
-        final Boolean old = ref.get();
-        ref.set(Boolean.FALSE);
         element.acceptChildren(this);
-        if (ref.get().booleanValue()) {
-          ref.set(old);
-          return;
-        }
-        final int oldSize = holder.getSize();
         checkDomElement(element, holder, helper);
-        ref.set(oldSize != holder.getSize());
       }
     });
   }
 
+  /**
+   * @return the classes passed earlier to the constructor
+   */
   public final Set<Class<? extends T>> getDomClasses() {
     return myDomClasses;
   }
@@ -108,6 +108,14 @@ public abstract class DomElementsInspection<T extends DomElement> extends LocalI
     return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
+  /**
+   * Check particular DOM element for problems. The inspection implementor should focus on this method.
+   * The default implementation throws {@link UnsupportedOperationException}.
+   * See {@link com.intellij.util.xml.highlighting.BasicDomElementsInspection}
+   * @param element element to check
+   * @param holder a place to add problems to
+   * @param helper helper object
+   */
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
     throw new UnsupportedOperationException();
   }
