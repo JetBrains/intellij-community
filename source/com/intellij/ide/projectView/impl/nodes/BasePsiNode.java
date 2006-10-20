@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
 
   protected abstract Collection<AbstractTreeNode> getChildrenImpl();
 
-  protected boolean isMarkReadOnly() {
+  private boolean isMarkReadOnly() {
     final Object parentValue = getParentValue();
     return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement || parentValue instanceof Module
            || getValue() instanceof PsiClass; // class in default package has project as its parent
@@ -130,4 +131,11 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     return getValue() instanceof NavigationItem && ((NavigationItem)getValue()).canNavigateToSource();
   }
 
+  protected String getToolTip() {
+    T t = getValue();
+    if (t instanceof PsiModifierListOwner && t.isValid()) {
+      return ElementBase.getDescription((PsiModifierListOwner)t);
+    }
+    return null;
   }
+}

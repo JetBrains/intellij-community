@@ -10,6 +10,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -17,6 +18,7 @@ import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
@@ -145,8 +147,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return flags;
   }
 
-
-
   private static final Icon ABSTRACT_EXCEPTION_CLASS_ICON = IconLoader.getIcon("/nodes/abstractException.png");
 
   private static final int CLASS_KIND_INTERFACE     = 10;
@@ -159,7 +159,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   public static final int CLASS_KIND_EXCEPTION = 80;
   private static final int CLASS_KIND_JUNIT_TEST = 90;
 
-  public static final int FLAGS_ABSTRACT = 0x100;
+  private static final int FLAGS_ABSTRACT = 0x100;
   public static final int FLAGS_STATIC = 0x200;
   public static final int FLAGS_FINAL = 0x400;
   public static final int FLAGS_LOCKED = 0x800;
@@ -245,4 +245,49 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     final boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT);
     return BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
   }
+
+  public static String getDescription(PsiModifierListOwner member) {
+    String noun;
+    if (member instanceof PsiClass) noun = getClassNoun((PsiClass)member);
+    else if (member instanceof PsiMethod) noun = "Method";
+    else if (member instanceof PsiField) noun = "Field";
+    else return null;
+    String adj = getFlagsDescription(member);
+    String text = adj + " " + noun;
+    return "<html><body>"+text+"</body></html>";
+  }
+
+  private static String getClassNoun(final PsiClass aClass) {
+    String noun;
+    int kind = getClassKind(aClass);
+    switch (kind) {
+      case CLASS_KIND_ANNOTATION: noun =  "Annotation"; break;
+      case CLASS_KIND_ANONYMOUS: noun =  "Anonymous Class"; break;
+      case CLASS_KIND_ENUM: noun =  "Enum"; break;
+      case CLASS_KIND_EXCEPTION: noun =  "Exception"; break;
+      case CLASS_KIND_INTERFACE: noun =  "Interface"; break;
+      case CLASS_KIND_JUNIT_TEST: noun =  "JUnit Test"; break;
+      default:
+      case CLASS_KIND_CLASS: noun =  "Class"; break;
+    }
+    return noun;
+  }
+
+  public static String getFlagsDescription(final PsiModifierListOwner aClass) {
+    int flags = getFlags(aClass, false);
+    String adj = "";
+    if ((flags & FLAGS_EXCLUDED) != 0) adj += " Excluded";
+    if ((flags & FLAGS_ABSTRACT) != 0) adj += " Abstract";
+    if ((flags & FLAGS_FINAL) != 0) adj += " Final";
+    if ((flags & FLAGS_STATIC) != 0) adj += " Static";
+    PsiModifierList list = aClass.getModifierList();
+    if (list != null) {
+      int level = PsiUtil.getAccessLevel(list);
+      if (level != PsiUtil.ACCESS_LEVEL_PUBLIC) {
+        adj += " " + StringUtil.capitalize(PsiUtil.getAccessModifier(level));
+      }
+    }
+    return adj.trim();
+  }
+
 }

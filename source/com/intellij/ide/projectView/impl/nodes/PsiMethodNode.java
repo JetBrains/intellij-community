@@ -15,10 +15,6 @@ public class PsiMethodNode extends BasePsiNode<PsiMethod>{
     super(project, value, viewSettings);
   }
 
-  public PsiMethodNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (PsiMethod)value, viewSettings);
-  }
-
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return null;
   }
@@ -37,9 +33,7 @@ public class PsiMethodNode extends BasePsiNode<PsiMethod>{
   }
 
   public boolean isConstructor() {
-    final PsiMethod psiMethod = (getValue());
-    if (psiMethod == null) return false;
-    return psiMethod.isConstructor();
+    final PsiMethod psiMethod = getValue();
+    return psiMethod != null && psiMethod.isConstructor();
   }
-
 }

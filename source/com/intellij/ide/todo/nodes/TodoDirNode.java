@@ -46,7 +46,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
     return myHighlightedRegions;
   }
 
-  public void updateImpl(PresentationData data) {
+  protected void updateImpl(PresentationData data) {
     super.updateImpl(data);
     int fileCount = getStructure().getFileCount(getValue());
     if (getValue() == null || !getValue().isValid() || fileCount == 0) {
@@ -139,7 +139,6 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
           TodoDirNode todoDirNode = new TodoDirNode(getProject(), _dir, myBuilder);
           if (PsiTreeUtil.isAncestor(psiDirectory, _dir, true) && !children.contains(todoDirNode) && !myBuilder.isDirectoryEmpty(_dir)) {
             children.add(todoDirNode);
-            continue;
           }
         }
       }

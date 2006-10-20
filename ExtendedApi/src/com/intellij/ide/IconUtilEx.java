@@ -88,7 +88,7 @@ public class IconUtilEx {
     }
   }
 
-  public static void setVisibilityIcon(int accessLevel, RowIcon baseIcon) {
+  private static void setVisibilityIcon(int accessLevel, RowIcon baseIcon) {
     Icon icon;
     switch (accessLevel) {
       case PsiUtil.ACCESS_LEVEL_PUBLIC:
@@ -121,7 +121,6 @@ public class IconUtilEx {
   public static Icon getModuleTypeIcon(final ModuleType moduleType, int flags) {
     return moduleType.getNodeIcon((flags & Iconable.ICON_FLAG_OPEN) != 0);
   }
-
 
   public static Icon createLayeredIcon(final Icon backgroundIcon, final Icon foregroundIcon) {
     final LayeredIcon layeredIcon = new LayeredIcon(2);

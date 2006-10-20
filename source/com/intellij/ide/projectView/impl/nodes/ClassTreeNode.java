@@ -1,12 +1,12 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.PsiClassChildrenSource;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.coverage.CoverageDataManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,10 +14,6 @@ import java.util.Collection;
 public class ClassTreeNode extends BasePsiNode<PsiClass>{
   public ClassTreeNode(Project project, PsiClass value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public ClassTreeNode(Project project, Object value, ViewSettings viewSettings) {
-    this(project, (PsiClass)value, viewSettings);
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {

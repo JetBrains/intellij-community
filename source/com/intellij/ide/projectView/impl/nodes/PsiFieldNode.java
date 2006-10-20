@@ -11,13 +11,8 @@ import com.intellij.psi.util.PsiFormatUtil;
 import java.util.Collection;
 
 public class PsiFieldNode extends BasePsiNode<PsiField>{
-
   public PsiFieldNode(Project project, PsiField value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public PsiFieldNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (PsiField)value, viewSettings);
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {
@@ -25,8 +20,7 @@ public class PsiFieldNode extends BasePsiNode<PsiField>{
   }
 
   public void updateImpl(PresentationData data) {
-    String name = PsiFormatUtil.formatVariable(
-      (PsiField)getValue(),
+    String name = PsiFormatUtil.formatVariable(getValue(),
       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_INITIALIZER,
         PsiSubstitutor.EMPTY);
     int c = name.indexOf('\n');

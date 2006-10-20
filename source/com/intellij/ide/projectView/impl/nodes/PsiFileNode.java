@@ -20,10 +20,6 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
     super(project, value, viewSettings);
   }
 
-  public PsiFileNode(Project project, Object value, ViewSettings viewSettings) {
-    this(project, (PsiFile)value, viewSettings);
-  }
-
   public Collection<AbstractTreeNode> getChildrenImpl() {
     if (getSettings().isStructureView() && getValue() instanceof PsiJavaFile){
       PsiClass[] classes = ((PsiJavaFile)getValue()).getClasses();
@@ -37,7 +33,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
     }
   }
 
-  public void updateImpl(PresentationData data) {
+  protected void updateImpl(PresentationData data) {
     data.setPresentableText(getValue().getName());
     data.setIcons(IconUtilEx.getIcon(getValue(), Iconable.ICON_FLAG_READ_STATUS, getProject()));
   }

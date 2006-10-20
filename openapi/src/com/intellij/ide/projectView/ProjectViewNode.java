@@ -107,9 +107,22 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
                                                                               InstantiationException,
                                                                               IllegalAccessException,
                                                                               InvocationTargetException {
-    Constructor<? extends AbstractTreeNode> constructor = nodeClass.getConstructor(
-      Project.class, Object.class, ViewSettings.class);
-    return constructor.newInstance(project, value, settings);
+    Object[] parameters = new Object[]{project, value, settings};
+    for (Constructor<? extends AbstractTreeNode> constructor : nodeClass.getConstructors()) {
+      if (constructor.getParameterTypes().length != 3) continue;
+      try {
+        return constructor.newInstance(parameters);
+      }
+      catch (InstantiationException e) {
+      }
+      catch (IllegalAccessException e) {
+      }
+      catch (IllegalArgumentException e) {
+      }
+      catch (InvocationTargetException e) {
+      }
+    }
+    throw new InstantiationException("no constructor found in " + nodeClass);
   }
 
   public boolean someChildContainsFile(final VirtualFile file) {

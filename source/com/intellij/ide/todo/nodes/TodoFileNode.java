@@ -6,7 +6,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -26,8 +25,6 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
   private final TodoTreeBuilder myBuilder;
   private final ArrayList<HighlightedRegion> myHighlightedRegions;
   private final boolean mySingleFileMode;
-
-  static private final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.nodes.TodoFileNode");
 
   public TodoFileNode(Project project,
                       PsiFile file,
@@ -102,7 +99,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     return myBuilder.getTodoTreeStructure().getTodoFilter();
   }
 
-  public void updateImpl(PresentationData data) {
+  protected void updateImpl(PresentationData data) {
     super.updateImpl(data);
     String newName;
     if(myBuilder.getTodoTreeStructure().isPackagesShown()){

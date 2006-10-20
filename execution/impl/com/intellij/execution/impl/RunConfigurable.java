@@ -105,7 +105,7 @@ class RunConfigurable extends BaseConfigurable {
             RunConfiguration configuration = null;
             String name = null;
             if (userObject instanceof SingleConfigurationConfigurable){
-              final SingleConfigurationConfigurable settings = ((SingleConfigurationConfigurable)userObject);
+              final SingleConfigurationConfigurable settings = (SingleConfigurationConfigurable)userObject;
               configuration = settings.getConfiguration();
               setIcon(ExecutionUtil.getConfigurationIcon(getProject(), configuration, !settings.isValid()));
               name = settings.getNameText();
@@ -149,7 +149,7 @@ class RunConfigurable extends BaseConfigurable {
           } else if (userObject instanceof SingleConfigurationConfigurable){
             updateRightPanel((SingleConfigurationConfigurable<RunConfiguration>)userObject);
           } else if (userObject instanceof ConfigurationType){
-            drawPressAddButtonMessage(((ConfigurationType)userObject));
+            drawPressAddButtonMessage((ConfigurationType)userObject);
           }
         }
         updateDialog();
@@ -267,7 +267,7 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.repaint();
   }
 
-  public JPanel createLeftPanel() {
+  private JPanel createLeftPanel() {
     final JPanel leftPanel = new JPanel(new BorderLayout());
     myToolbarComponent = ActionManager.getInstance().
       createActionToolbar(ActionPlaces.UNKNOWN,
@@ -372,7 +372,7 @@ class RunConfigurable extends BaseConfigurable {
     setModified(false);
   }
 
-  public Project getProject() {
+  private Project getProject() {
     return myProject;
   }
 
@@ -395,7 +395,7 @@ class RunConfigurable extends BaseConfigurable {
     setModified(false);
   }
 
-  public void applyByType(ConfigurationType type) throws ConfigurationException {
+  private void applyByType(ConfigurationType type) throws ConfigurationException {
     DefaultMutableTreeNode typeNode = getConfigurationTypeNode(type);
     final RunManagerImpl manager = getRunManager();
     final ArrayList<RunConfigurationBean> stableConfigurations = new ArrayList<RunConfigurationBean>();
@@ -413,7 +413,7 @@ class RunConfigurable extends BaseConfigurable {
             stableConfigurations.add(new RunConfigurationBean(configurable));
           }
         } else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
-          RunnerAndConfigurationSettingsImpl settings = ((RunnerAndConfigurationSettingsImpl)userObject);
+          RunnerAndConfigurationSettingsImpl settings = (RunnerAndConfigurationSettingsImpl)userObject;
           if (manager.isTemporary(settings)) {
             tempConfiguration = settings;
           } else {
@@ -448,7 +448,7 @@ class RunConfigurable extends BaseConfigurable {
   @Nullable
   private DefaultMutableTreeNode getConfigurationTypeNode(final ConfigurationType type) {
     for (int i = 0; i < myRoot.getChildCount(); i++){
-      final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)myRoot.getChildAt(i));
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       if (node.getUserObject() == type) return node;
     }
     return null;
@@ -460,7 +460,7 @@ class RunConfigurable extends BaseConfigurable {
     }
     catch (ConfigurationException e) {
       for (int i = 0 ; i < typeNode.getChildCount(); i++){
-        final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)typeNode.getChildAt(i));
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)typeNode.getChildAt(i);
         if (Comparing.equal(configurable, node.getUserObject())){
           TreeUtil.selectNode(myTree, node);
           break;
@@ -526,9 +526,9 @@ class RunConfigurable extends BaseConfigurable {
     myPanel.dispose();
   }
 
-  void updateDialog() {
+  private void updateDialog() {
     if (myRunDialog == null) return;
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     buffer.append(myRunDialog.getRunnerInfo().getId());
     final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
     if (configuration != null) {
@@ -560,7 +560,7 @@ class RunConfigurable extends BaseConfigurable {
     return null;
   }
 
-  public static boolean canRunConfiguration(SingleConfigurationConfigurable<RunConfiguration> configuration) {
+  private static boolean canRunConfiguration(SingleConfigurationConfigurable<RunConfiguration> configuration) {
     try {
       return configuration != null && RunManagerImpl.canRunConfiguration(configuration.getSnapshot().getConfiguration());
     }
@@ -577,7 +577,7 @@ class RunConfigurable extends BaseConfigurable {
     return "project.propRunDebug";
   }
 
-  public void clickDefaultButton() {
+  private void clickDefaultButton() {
     if (myRunDialog != null) myRunDialog.clickDefaultButton();
   }
 
@@ -875,7 +875,7 @@ class RunConfigurable extends BaseConfigurable {
     public RunConfigurationBean(final SingleConfigurationConfigurable configurable) {
       myConfigurable = configurable;
       mySettings = (RunnerAndConfigurationSettingsImpl)myConfigurable.getSettings();
-      final ConfigurationSettingsEditorWrapper editorWrapper = ((ConfigurationSettingsEditorWrapper)myConfigurable.getEditor());
+      final ConfigurationSettingsEditorWrapper editorWrapper = (ConfigurationSettingsEditorWrapper)myConfigurable.getEditor();
       myShared = editorWrapper.isStoreProjectConfiguration();
       myStepsBeforeLaunch = editorWrapper.getStepsBeforeLaunch();
     }

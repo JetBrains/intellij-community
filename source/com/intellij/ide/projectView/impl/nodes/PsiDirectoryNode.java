@@ -25,11 +25,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     super(project, value, viewSettings);
   }
 
-  public PsiDirectoryNode(Project project, Object value, ViewSettings viewSettings) {
-    this(project, (PsiDirectory)value, viewSettings);
-  }
-
-  public void updateImpl(PresentationData data) {
+  protected void updateImpl(PresentationData data) {
     PackageUtil.updatePsiDirectoryData(data, getProject(), getValue(), getSettings(), getParentValue(), this);
   }
 
@@ -39,10 +35,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
 
   public String getTestPresentation() {
     return "PsiDirectory: " + getValue().getName();
-  }
-
-  protected String getRootName() {
-    return getValue().getVirtualFile().getPresentableUrl();
   }
 
   public boolean isFQNameShown() {
