@@ -11,6 +11,7 @@ public class HelpID {
   private static final String RENAME_FIELD     = "refactoring.renameField";
   private static final String RENAME_VARIABLE  = "refactoring.renameVariable";
   private static final String RENAME_PARAMETER = "refactoring.renameParameter";
+  private static final String RENAME_DIRECTORY = "reference.refactoring.rename.dir";
   private static final String RENAME_FILE      = "refactoring.renameFile";
 
   private static final String MOVE_PACKAGE = "refactoring.movePackage";
@@ -37,7 +38,7 @@ public class HelpID {
   public static final String INLINE_FIELD       = "reference.refactoring.inline.field";
   public static final String INLINE_INCLUDE     = "refactoring.inlineInclude";
 
-  public static final String MIGRATION          = "refactoring.migration";
+  public static final String MIGRATION          = "refactoring.migrate";
 
   public static final String COPY_CLASS         = "refactoring.copyClass";
 
@@ -63,7 +64,7 @@ public class HelpID {
 
   public static String getRenameHelpID(PsiElement element) {
     String helpID = null;
-    if ((element instanceof PsiDirectory) || (element instanceof PsiPackage)){
+    if (element instanceof PsiPackage){
       helpID = HelpID.RENAME_PACKAGE;
     }
     else if (element instanceof PsiClass){
@@ -80,6 +81,9 @@ public class HelpID {
     }
     else if (element instanceof PsiParameter){
       helpID = HelpID.RENAME_PARAMETER;
+    }
+    else if (element instanceof PsiDirectory){
+      helpID = HelpID.RENAME_DIRECTORY;
     }
     else if (element instanceof PsiFile) {
       helpID = HelpID.RENAME_FILE;
