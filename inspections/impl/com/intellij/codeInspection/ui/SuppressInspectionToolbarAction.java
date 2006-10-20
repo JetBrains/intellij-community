@@ -24,6 +24,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -241,7 +242,7 @@ class SuppressInspectionToolbarAction extends AnAction {
     if (module != null) {
       final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
       if (jdk != null) {
-        isSuppressWarnings = DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && jdk.getVersionString().indexOf("1.5") > 0 &&
+        isSuppressWarnings = DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && JavaSdk.getInstance().compareTo(jdk.getVersionString(), "1.5") >= 0 &&
                              LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(context)) <= 0;
       }
     }

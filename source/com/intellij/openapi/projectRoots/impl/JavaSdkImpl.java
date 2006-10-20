@@ -136,33 +136,36 @@ public class JavaSdkImpl extends JavaSdk {
     else {
       String versionString = getVersionString(sdkHome);
       if (versionString != null) {
-        if (versionString.startsWith(JAVA_VERSION_PREFIX)) {
-          versionString = versionString.substring(JAVA_VERSION_PREFIX.length());
-          if (versionString.startsWith("\"") && versionString.endsWith("\"")) {
-            versionString = versionString.substring(1, versionString.length() - 1);
-          }
-          int dotIdx = versionString.indexOf('.');
-          if (dotIdx > 0) {
-            try {
-              int major = Integer.parseInt(versionString.substring(0, dotIdx));
-              int minorDot = versionString.indexOf('.', dotIdx + 1);
-              if (minorDot > 0) {
-                int minor = Integer.parseInt(versionString.substring(dotIdx + 1, minorDot));
-                versionString = String.valueOf(major) + "." + String.valueOf(minor);
-              }
-            }
-            catch (NumberFormatException e) {
-              // Do nothing. Use original version string if failed to parse according to major.minor pattern.
-            }
-          }
-        }
-        suggestedName = versionString;
-      }
-      else {
+        suggestedName = getVersionNumber(versionString);
+      } else {
         suggestedName = ProjectBundle.message("sdk.java.unknown.name");
       }
     }
     return suggestedName;
+  }
+
+  private static String getVersionNumber(String versionString) {
+    if (versionString.startsWith(JAVA_VERSION_PREFIX)) {
+      versionString = versionString.substring(JAVA_VERSION_PREFIX.length());
+      if (versionString.startsWith("\"") && versionString.endsWith("\"")) {
+        versionString = versionString.substring(1, versionString.length() - 1);
+      }
+      int dotIdx = versionString.indexOf('.');
+      if (dotIdx > 0) {
+        try {
+          int major = Integer.parseInt(versionString.substring(0, dotIdx));
+          int minorDot = versionString.indexOf('.', dotIdx + 1);
+          if (minorDot > 0) {
+            int minor = Integer.parseInt(versionString.substring(dotIdx + 1, minorDot));
+            versionString = String.valueOf(major) + "." + String.valueOf(minor);
+          }
+        }
+        catch (NumberFormatException e) {
+          // Do nothing. Use original version string if failed to parse according to major.minor pattern.
+        }
+      }
+    }
+    return versionString;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -235,6 +238,10 @@ public class JavaSdkImpl extends JavaSdk {
   public void initComponent() { }
 
   public void disposeComponent() {
+  }
+
+  public int compareTo(String versionString, String versionNumber) {
+    return getVersionNumber(versionString).compareTo(versionNumber);
   }
 
   public ProjectJdk createJdk(final String jdkName, final String home, final boolean isJre) {

@@ -35,6 +35,8 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
     return createJdk(jdkName, jreHome, true);
   }
 
+  public abstract int compareTo(String versionString, String versionNumber);
+
   public abstract ProjectJdk createJdk(@NonNls String jdkName, String home, boolean isJre);
 
   @SuppressWarnings({"HardCodedStringLiteral"})

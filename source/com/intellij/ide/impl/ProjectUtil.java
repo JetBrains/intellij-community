@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -154,19 +155,19 @@ public class ProjectUtil {
   }
 
   private static LanguageLevel getDefaultLanguageLevel(String versionString) {
-    if (isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0")) {
+    if (isOfVersionOrHigher(versionString, "1.5") || isOfVersionOrHigher(versionString, "5.0")) {
       return LanguageLevel.JDK_1_5;
     }
 
-    if (isOfVersion(versionString, "1.4")) {
+    if (isOfVersionOrHigher(versionString, "1.4")) {
       return LanguageLevel.JDK_1_4;
     }
 
     return LanguageLevel.JDK_1_3;
   }
 
-  private static boolean isOfVersion(String versionString, String checkedVersion) {
-    return versionString.indexOf(checkedVersion) > -1;
+  private static boolean isOfVersionOrHigher(String versionString, String checkedVersion) {
+    return JavaSdk.getInstance().compareTo(versionString, checkedVersion) >= 0;
   }
 
   private static void updateLastProjectLocation(final String projectFilePath) {

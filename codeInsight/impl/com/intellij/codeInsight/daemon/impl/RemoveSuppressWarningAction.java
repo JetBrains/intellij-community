@@ -12,14 +12,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -63,7 +64,7 @@ public class RemoveSuppressWarningAction implements IntentionAction, LocalQuickF
     if (module == null) return false;
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
     if (jdk == null) return false;
-    final boolean is_1_5 = jdk.getVersionString().indexOf("1.5") > 0;
+    final boolean is_1_5 = JavaSdk.getInstance().compareTo(jdk.getVersionString(), "1.5") >= 0;
     return  DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(myContext)) <= 0 &&
             myContext.isValid() && myContext.getManager().isInProject(myContext);
   }
