@@ -8,8 +8,6 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -17,7 +15,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.diff.impl.FrameWrapper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -46,7 +43,9 @@ import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
-import com.intellij.openapi.vcs.versionBrowser.*;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
+import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vcs.versions.VersionRevisions;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -59,23 +58,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
@@ -634,41 +629,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     catch (VcsException e) {
       Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", e.getMessage()),
                                VcsBundle.message("browse.changes.error.title"));
-    }
-  }
-
-  public void showRevisions(List<AbstractRevisions> revisions, final String title, String commitMessage, String commitMessageTitle) {
-    final TreeTable directoryDiffTree = PeerFactory.getInstance().getUIHelper()
-      .createDirectoryDiffTree(myProject, revisions.toArray(new AbstractRevisions[revisions.size()]));
-    new ShowRevisionChangesAction(myProject).registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, directoryDiffTree);
-
-    FrameWrapper frameWrapper = new FrameWrapper("vcs.showRevisions");
-    frameWrapper.setTitle(title);
-    frameWrapper.setComponent(createChangeBrowsePanel(directoryDiffTree, commitMessage, commitMessageTitle));
-    frameWrapper.setData(DataConstants.PROJECT, myProject);
-    frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
-    frameWrapper.closeOnEsc();
-    frameWrapper.show();
-  }
-
-  private static JComponent createChangeBrowsePanel(final TreeTable directoryDiffTree,
-                                                    final String commitMessage,
-                                                    final String commitMessageTitle) {
-    if (commitMessage == null || commitMessageTitle == null) {
-      return new JScrollPane(directoryDiffTree);
-    }
-    else {
-      final JPanel result = new JPanel(new BorderLayout());
-      result.add(new JScrollPane(directoryDiffTree), BorderLayout.CENTER);
-      final JTextArea textArea = new JTextArea(commitMessage);
-      textArea.setEditable(false);
-      textArea.setLineWrap(true);
-      textArea.setWrapStyleWord(true);
-      textArea.setColumns(5);
-      final JScrollPane textAreaScrollPane = new JScrollPane(textArea);
-      textAreaScrollPane.setBorder(BorderFactory.createTitledBorder(commitMessageTitle));
-      result.add(textAreaScrollPane, BorderLayout.SOUTH);
-      return result;
     }
   }
 

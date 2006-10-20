@@ -99,21 +99,6 @@ public abstract class AbstractVcsHelper {
 
   @Nullable public abstract RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider);
 
-  /**
-   * Shows the list of files changed in the specified changeset, as two side-by-side
-   * folder trees, with an additional text message at the bottom.
-   *
-   * @param revisions          the list of changed files to show.
-   * @param title              the title of the dialog.
-   * @param commitMessage      the message to show at the bottom of the dialog.
-   * @param commitMessageTitle the title of the frame around the message shown at the bottom of the dialog.
-   * @since 5.1
-   */
-  public abstract void showRevisions(List<AbstractRevisions> revisions,
-                                     final String title,
-                                     String commitMessage,
-                                     final String commitMessageTitle);
-
   public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
 
   /**
