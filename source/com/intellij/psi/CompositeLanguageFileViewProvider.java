@@ -12,6 +12,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.LightPsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.codeStyle.TooComplexPSIModificationException;
 import com.intellij.psi.impl.source.jsp.CompositeLanguageParsingUtil;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspWhileStatement;
@@ -376,6 +377,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
         message += "\n     jspText:\n" + getPsi(getBaseLanguage()).getNode().getText();
       }
       LOG.assertTrue(false, message);
+      assert false;
     }
   }
 
@@ -401,7 +403,38 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       super.rootChanged(psiFile);
       // rest of sync mechanism is now handled by JspxAspect
     }
-    else if (!myRootsInUpdate.contains(getPsi(getBaseLanguage()))) doHolderToXmlChanges(psiFile);
+    else if (!myRootsInUpdate.contains(getPsi(getBaseLanguage()))) {
+      try {
+        doHolderToXmlChanges(psiFile);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        emergencyReparse();
+      }
+    }
+  }
+
+  private volatile boolean myInEmergencyReparse = false;
+  public void emergencyReparse() {
+    if (myInEmergencyReparse) return;
+    myInEmergencyReparse = true;
+    try {
+      myRootsInUpdate.addAll(myRoots.values());
+      for (final Language lang : getRelevantLanguages()) {
+        final PsiFile cachedRoot = myRoots.get(lang);
+        if (cachedRoot != null) {
+          reparseRoot(lang, cachedRoot);
+        }
+      }
+    }
+    catch (Throwable e) {
+      throw new TooComplexPSIModificationException();
+      // We've already logged all important stuff.
+    }
+    finally {
+      myRootsInUpdate.clear();
+      myInEmergencyReparse = false;
+    }
   }
 
   private void doHolderToXmlChanges(final PsiFile psiFile) {
