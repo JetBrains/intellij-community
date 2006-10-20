@@ -21,22 +21,22 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.checkin.*;
-import com.intellij.openapi.vcs.checkin.changeListBasedCheckin.CommitChangeOperation;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.checkin.DiffTreeNode;
+import com.intellij.openapi.vcs.checkin.RevisionsFactory;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -68,18 +68,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return new SvnRevisionsFactory(mySvnVcs);
   }
 
-  public RollbackProvider createRollbackProviderOn(AbstractRevisions[] selectedRevisions, final boolean containsExcluded) {
-    return new SvnRollbackProvider(selectedRevisions, mySvnVcs);
-  }
-
-  public DifferenceType[] getAdditionalDifferenceTypes() {
-    return new DifferenceType[0];
-  }
-
-  public ColumnInfo[] getAdditionalColumns(int index) {
-    return new ColumnInfo[0];
-  }
-
   public RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel) {
     return new KeepLocksComponent(panel, true);
   }
@@ -102,10 +90,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public void onRefreshStarted() {
-  }
-
-  public AnAction[] getAdditionalActions(int index) {
-    return new AnAction[]{new MarkResolvedAction()};
   }
 
   private class MarkResolvedAction extends AnAction {
@@ -179,13 +163,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
-  public List<VcsException> commit(FilePath[] roots, Project project, String preparedComment) {
-    // files commit, should not be recursive.
-    return commitInt(collectPaths(roots), preparedComment, true, false);
-  }
 
-
-  private List<VcsException> commitInt(List<String> paths, final String comment, final boolean force, final boolean recursive) {
+  public List<VcsException> commitInt(List<String> paths, final String comment, final boolean force, final boolean recursive) {
     final List<VcsException> exception = new ArrayList<VcsException>();
     final Collection<File> committables = getCommitables(paths);
 
@@ -355,21 +334,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private static List<String> collectPaths(FilePath[] roots) {
+  public static List<String> collectPaths(FilePath[] roots) {
     ArrayList<String> result = new ArrayList<String>();
     for (FilePath file : roots) {
       // if file is scheduled for addition[r] and its parent is also scheduled for additio[r] ->
       // then add parents till versioned file is met. same for 'copied' files.
       result.add(file.getPath());
-    }
-    return result;
-  }
-
-  private static List<String> collectFilePaths(List<VcsOperation> checkinOperations) {
-    ArrayList<String> result = new ArrayList<String>();
-    for (final VcsOperation checkinOperation : checkinOperations) {
-      CommitChangeOperation<SVNStatus> operation = (CommitChangeOperation<SVNStatus>)checkinOperation;
-      result.add(operation.getFile().getAbsolutePath());
     }
     return result;
   }

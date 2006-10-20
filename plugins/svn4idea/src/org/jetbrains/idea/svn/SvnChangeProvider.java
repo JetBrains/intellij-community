@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -51,7 +52,8 @@ public class SvnChangeProvider implements ChangeProvider {
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     final List<FilePath> paths = ChangesUtil.getPaths(changes);
     FilePath[] arrayed = paths.toArray(new FilePath[paths.size()]);
-    return myVcs.getCheckinEnvironment().commit(arrayed, myVcs.getProject(), preparedComment);
+    final SvnCheckinEnvironment svnCheckinEnvironment = ((SvnCheckinEnvironment)myVcs.getCheckinEnvironment());
+    return svnCheckinEnvironment.commitInt(SvnCheckinEnvironment.collectPaths(arrayed), preparedComment, true, false);
   }
 
   public List<VcsException> rollbackChanges(List<Change> changes) {
