@@ -151,4 +151,6 @@ public abstract class AbstractVcsHelper {
    * @param changes the changes to show in the dialog.
    */
   public abstract void showRollbackChangesDialog(List<Change> changes);
+
+  public abstract List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions);
 }

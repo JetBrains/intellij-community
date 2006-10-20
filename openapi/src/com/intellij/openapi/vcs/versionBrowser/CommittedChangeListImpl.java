@@ -1,0 +1,67 @@
+/*
+ * Copyright 2000-2006 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+/*
+ * Created by IntelliJ IDEA.
+ * User: yole
+ * Date: 20.10.2006
+ * Time: 17:18:38
+ */
+package com.intellij.openapi.vcs.versionBrowser;
+
+import com.intellij.openapi.vcs.changes.Change;
+
+import java.util.Date;
+import java.util.Collection;
+
+public class CommittedChangeListImpl implements CommittedChangeList {
+  private String myCommitterName;
+  private Date myCommitDate;
+  private String myName;
+  private String myComment;
+  private Collection<Change> myChanges;
+
+
+  public CommittedChangeListImpl(final String name, final String comment, final String committerName,
+                                 final Date commitDate, final Collection<Change> changes) {
+    myCommitterName = committerName;
+    myCommitDate = commitDate;
+    myName = name;
+    myComment = comment;
+    myChanges = changes;
+  }
+
+  public String getCommitterName() {
+    return myCommitterName;
+  }
+
+  public Date getCommitDate() {
+    return myCommitDate;
+  }
+
+  public Collection<Change> getChanges() {
+    return myChanges;
+  }
+
+  public String getName() {
+    return myName;
+  }
+
+  public String getComment() {
+    return myComment;
+  }
+}

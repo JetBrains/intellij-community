@@ -179,7 +179,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
     }
 
-  public static List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
+  public List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
     List<Change> result = new ArrayList<Change>();
     for (AbstractRevisions revision : revisions) {
       final DifferenceType type = revision.getDifference();
@@ -628,7 +628,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           return;
         }
 
-        showChangesBrowser(new RepositoryVersionTableModel(provider, versions), provider, title, filterUI != null);        
+        showChangesBrowser(new RepositoryVersionTableModel(myProject, provider, versions), provider, title, filterUI != null);        
       }
     }
     catch (VcsException e) {
