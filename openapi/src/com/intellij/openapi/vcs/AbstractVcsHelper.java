@@ -100,15 +100,6 @@ public abstract class AbstractVcsHelper {
   @Nullable public abstract RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider);
 
   /**
-   * Shows a dialog with the list of files changed in the specified changeset, displayed as two
-   * side-by-side folder trees.
-   *
-   * @param revisions the list of changed files to show.
-   * @param title     the title of the dialog.
-   */
-  public abstract void showRevisions(List<AbstractRevisions> revisions, final String title);
-
-  /**
    * Shows the list of files changed in the specified changeset, as two side-by-side
    * folder trees, with an additional text message at the bottom.
    *

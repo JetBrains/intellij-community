@@ -637,10 +637,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     }
   }
 
-  public void showRevisions(List<AbstractRevisions> revisions, final String title) {
-    showRevisions(revisions, title, null, null);
-  }
-
   public void showRevisions(List<AbstractRevisions> revisions, final String title, String commitMessage, String commitMessageTitle) {
     final TreeTable directoryDiffTree = PeerFactory.getInstance().getUIHelper()
       .createDirectoryDiffTree(myProject, revisions.toArray(new AbstractRevisions[revisions.size()]));
