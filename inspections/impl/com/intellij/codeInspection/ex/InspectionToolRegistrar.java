@@ -107,13 +107,13 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     final int withLocal = ordinaryToolsSize + myLocalInspectionTools.size();
     InspectionTool[] tools = new InspectionTool[withLocal + myGlobalInspectionTools.size()];
     for (int i = 0; i < ordinaryToolsSize; i++) {
-      tools[i] = instantiateTool(myInspectionTools.get(i));
+      tools[i] = (InspectionTool)instantiateTool(myInspectionTools.get(i));
     }
     for(int i = ordinaryToolsSize; i < withLocal; i++){
-      tools[i] = new LocalInspectionToolWrapper((LocalInspectionTool)instantiateWrapper(myLocalInspectionTools.get(i - ordinaryToolsSize)));
+      tools[i] = new LocalInspectionToolWrapper((LocalInspectionTool)instantiateTool(myLocalInspectionTools.get(i - ordinaryToolsSize)));
     }
     for(int i = withLocal; i < tools.length; i++){
-      tools[i] = new GlobalInspectionToolWrapper((GlobalInspectionTool)instantiateWrapper(myGlobalInspectionTools.get(i - withLocal)));
+      tools[i] = new GlobalInspectionToolWrapper((GlobalInspectionTool)instantiateTool(myGlobalInspectionTools.get(i - withLocal)));
     }
 
     buildInspectionIndex(tools);
@@ -121,32 +121,11 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     return tools;
   }
 
-  private static Object instantiateWrapper(Class toolClass) {
-    try {
-      Constructor constructor = toolClass.getDeclaredConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
-      Object[] args = ArrayUtil.EMPTY_OBJECT_ARRAY;
-      return constructor.newInstance(args);
-    } catch (NoSuchMethodException e) {
-      LOG.error(e);
-    } catch (SecurityException e) {
-      LOG.error(e);
-    } catch (InstantiationException e) {
-      LOG.error(e);
-    } catch (IllegalAccessException e) {
-      LOG.error(e);
-    } catch (IllegalArgumentException e) {
-      LOG.error(e);
-    } catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-    return null;
-  }
-
-  private static InspectionTool instantiateTool(Class toolClass) {
+  private static Object instantiateTool(Class toolClass) {
     try {
       Constructor constructor = toolClass.getDeclaredConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
       constructor.setAccessible(true);
-      return (InspectionTool) constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
+      return constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
     } catch (SecurityException e) {
       LOG.error(e);
     } catch (NoSuchMethodException e) {

@@ -16,7 +16,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.util.ArrayUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Stack;
-
-import gnu.trove.THashSet;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
   private static final ArrayList<RefElement> EMPTY_REFERNCES_LIST = new ArrayList<RefElement>(0);
@@ -167,6 +166,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return getName();
   }
 
+  @Nullable
   public PsiElement getElement() {
     return myID.getElement();
   }
@@ -386,13 +386,16 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
+  @Nullable
   public URL getURL() {
     try {
-      final PsiFile containingFile = getElement().getContainingFile();
+      final PsiElement element = getElement();
+      if (element == null) return null;
+      final PsiFile containingFile = element.getContainingFile();
       if (containingFile == null) return null;
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       if (virtualFile == null) return null;
-      return new URL(virtualFile.getUrl() + "#" + getElement().getTextRange().getStartOffset());
+      return new URL(virtualFile.getUrl() + "#" + element.getTextRange().getStartOffset());
     } catch (MalformedURLException e) {
       LOG.error(e);
     }
@@ -408,8 +411,10 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   public boolean isSuppressed(final String toolId) {
     if (mySuppressions != null) {
-      if (ArrayUtil.find(mySuppressions, toolId) != -1) {
-        return true;
+      for (@NonNls String suppression : mySuppressions) {
+        if (suppression.equals(toolId) || suppression.equals("ALL")){
+          return true;
+        }
       }
     }
     final RefEntity entity = getOwner();
