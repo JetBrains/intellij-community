@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
-import com.intellij.openapi.vcs.ui.CheckinDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +28,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +134,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.addToolbarActions(CommitMessage.getToolbarActions());
 
     myCommitMessageArea = new CommitMessage(false);
-    setCommitMessage(CheckinDialog.getInitialMessage(getPaths(), project));
+    setCommitMessage(getInitialMessage(getPaths(), project));
     myCommitMessageArea.init();
 
     updateComment();
@@ -293,6 +293,33 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     else {
       session.executionCanceled();
+    }
+  }
+
+  public static String getInitialMessage(FilePath[] filesToCheckin, Project project) {
+    if (filesToCheckin != null) {
+      for (FilePath virtualFile : filesToCheckin) {
+        AbstractVcs activeVcs = VcsUtil.getVcsFor(project, virtualFile);
+        if (activeVcs == null) continue;
+        CheckinEnvironment checkinEnvironment = activeVcs.getCheckinEnvironment();
+        if (checkinEnvironment != null) {
+          String defaultMessage = checkinEnvironment.getDefaultMessageFor(filesToCheckin);
+          if (defaultMessage != null) return defaultMessage;
+        }
+
+      }
+    }
+
+    VcsConfiguration config = VcsConfiguration.getInstance(project);
+
+    if (config.SAVE_LAST_COMMIT_MESSAGE) {
+      return config.getLastNonEmptyCommitMessage();
+    }
+    else if (config.ERROR_OCCURED) {
+      return config.LAST_COMMIT_MESSAGE;
+    }
+    else {
+      return "";
     }
   }
 
