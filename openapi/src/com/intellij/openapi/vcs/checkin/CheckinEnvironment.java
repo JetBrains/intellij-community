@@ -15,19 +15,11 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.RollbackProvider;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vcs.versions.AbstractRevisions;
-import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Interface for performing VCS checkin / commit / submit operations.
@@ -37,12 +29,6 @@ import java.util.List;
  */
 public interface CheckinEnvironment {
   RevisionsFactory getRevisionsFactory();
-
-  RollbackProvider createRollbackProviderOn(AbstractRevisions[] selectedRevisions, final boolean containsExcluded);
-
-  DifferenceType[] getAdditionalDifferenceTypes();
-
-  ColumnInfo[] getAdditionalColumns(int index);
 
   RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel);
 
@@ -58,15 +44,11 @@ public interface CheckinEnvironment {
 
   void onRefreshStarted();
 
-  AnAction[] getAdditionalActions(int index);
-
   String prepareCheckinMessage(String text);
 
   @Nullable
   @NonNls
   String getHelpId();
-
-  List<VcsException> commit(FilePath[] roots, Project project, String preparedComment);
 
   String getCheckinOperationName();
 

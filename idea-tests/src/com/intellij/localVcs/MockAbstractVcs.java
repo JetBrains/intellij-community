@@ -55,7 +55,7 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
   }
 
   public ChangeProvider getChangeProvider() {
-    return LocalVcsServices.getInstance(myProject).createChangeProvider(this);
+    return null;
   }
 
   public boolean markExternalChangesAsUpToDate() {

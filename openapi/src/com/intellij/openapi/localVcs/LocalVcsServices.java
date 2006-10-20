@@ -31,5 +31,4 @@ public abstract class LocalVcsServices{
   public abstract UpToDateRevisionProvider getUpToDateRevisionProvider();
   public abstract FileStatusProvider getFileStatusProvider();
   public abstract CheckinEnvironment createCheckinEnvironment(AbstractVcs vcs);
-  public abstract ChangeProvider createChangeProvider(AbstractVcs vcs);
 }
