@@ -207,7 +207,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public void setupSdkPaths(Sdk sdk) {
     final Sandbox additionalData = (Sandbox)sdk.getSdkAdditionalData();
     if (additionalData != null) {    
-      additionalData.cleanupWatchedWoots();
+      additionalData.cleanupWatchedRoots();
     }
 
     final SdkModificator sdkModificator = sdk.getSdkModificator();

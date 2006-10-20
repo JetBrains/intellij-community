@@ -99,7 +99,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     mySandboxHome.addCurrentTextToHistory();
     final Sandbox additionalData = (Sandbox)myIdeaJdk.getSdkAdditionalData();
     if (additionalData != null) {
-      additionalData.cleanupWatchedWoots();
+      additionalData.cleanupWatchedRoots();
     }
     Sandbox sandbox = new Sandbox(mySandboxHome.getText());
     final SdkModificator modificator = myIdeaJdk.getSdkModificator();
