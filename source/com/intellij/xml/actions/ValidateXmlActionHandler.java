@@ -352,6 +352,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
                 myXmlResourceResolver
               );
             }
+
+
           });
           
           final String[] resourcePaths = myXmlResourceResolver.getResourcePaths();
@@ -397,29 +399,32 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       if (needsSchemaChecking()) {
         factory.setValidating(true);
         factory.setNamespaceAware(true);
+        factory.setXIncludeAware(true);
         schemaChecking = true;
       }
       
       SAXParser parser = factory.newSAXParser();
 
       parser.setProperty(ENTITY_RESOLVER_PROPERTY_NAME, myXmlResourceResolver);
-      
-      final XMLGrammarPoolImpl previousGrammarPool = myFile.getUserData(GRAMMAR_POOL_KEY);
-      XMLGrammarPoolImpl grammarPool = null;
-      
-      // check if the pool is valid
-      if (!myForceChecking && 
-          !isValidationDependentFilesOutOfDate(myFile)
-         ) {
-        grammarPool = previousGrammarPool;
-      }
 
-      if (grammarPool == null) {
-        grammarPool = new XMLGrammarPoolImpl();
-        myFile.putUserData(GRAMMAR_POOL_KEY,grammarPool);
+      if (schemaChecking) { // when dtd checking schema refs could not be validated @see http://marc.theaimsgroup.com/?l=xerces-j-user&m=112504202423704&w=2
+        final XMLGrammarPoolImpl previousGrammarPool = myFile.getUserData(GRAMMAR_POOL_KEY);
+        XMLGrammarPoolImpl grammarPool = null;
+
+        // check if the pool is valid
+        if (!myForceChecking &&
+            !isValidationDependentFilesOutOfDate(myFile)
+           ) {
+          grammarPool = previousGrammarPool;
+        }
+
+        if (grammarPool == null) {
+          grammarPool = new XMLGrammarPoolImpl();
+          myFile.putUserData(GRAMMAR_POOL_KEY,grammarPool);
+        }
+
+        parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, grammarPool);
       }
-      
-      parser.getXMLReader().setProperty(GRAMMAR_FEATURE_ID, grammarPool);
 
       try {
         if (schemaChecking) {
