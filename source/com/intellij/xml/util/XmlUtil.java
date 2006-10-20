@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
@@ -116,6 +117,7 @@ public class XmlUtil {
   public static final @NonNls String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
   public static final @NonNls String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
   public static final @NonNls String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
+  @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
 
   private XmlUtil() {
   }
@@ -317,6 +319,14 @@ public class XmlUtil {
 
   public static boolean attributeFromTemplateFramework(@NonNls final String name, final XmlTag tag) {
     return "jsfc".equals(name) && tag.getNSDescriptor(JSF_HTML_URI, true) != null;
+  }
+
+  public static @Nullable String getTargetSchemaNsFromTag(@Nullable final XmlTag xmlTag) {
+    if (xmlTag == null) return null;
+    String targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI);
+    if (targetNamespace == null) targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI2);
+    if (targetNamespace == null) targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI3);
+    return targetNamespace;
   }
 
   private static class XmlElementProcessor {

@@ -154,7 +154,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
     else if(namespace != null && namespace != XmlUtil.EMPTY_URI
             && (doctype == null || !namespace.equals(doctype.getDtdUri()))){
-      final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile,
+      boolean documentIsSchemaThatDefinesNs = namespace.equals(XmlUtil.getTargetSchemaNsFromTag(getRootTag()));
+
+      final XmlFile xmlFile = documentIsSchemaThatDefinesNs ? containingFile:XmlUtil.findXmlFile(containingFile,
                                                   ExternalResourceManager.getInstance().getResourceLocation(namespace));
       if(xmlFile != null){
         final XmlNSDescriptor descriptor = (XmlNSDescriptor)xmlFile.getDocument().getMetaData();

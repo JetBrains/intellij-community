@@ -140,6 +140,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           // XSD aware attributes processing
           final String noNamespaceDeclaration = getAttributeValue("noNamespaceSchemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
           final String schemaLocationDeclaration = getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
+
           if(noNamespaceDeclaration != null){
             initializeSchema(XmlUtil.EMPTY_URI, noNamespaceDeclaration);
           }
@@ -157,11 +158,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           // namespace attributes processing (XSD declaration via ExternalResourceManager)
           if(hasNamespaceDeclarations()){
             final XmlAttribute[] attributes = getAttributes();
+
             for (final XmlAttribute attribute : attributes) {
               if (attribute.isNamespaceDeclaration()) {
                 String ns = attribute.getValue();
                 if (ns == null) ns = XmlUtil.EMPTY_URI;
-                if (myNSDescriptorsMap == null || !myNSDescriptorsMap.containsKey(ns)) initializeSchema(ns, ns);
+
+                if (myNSDescriptorsMap == null || !myNSDescriptorsMap.containsKey(ns)) {
+                  initializeSchema(ns, ns);
+                }
               }
             }
           }
@@ -206,14 +211,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   private XmlFile retrieveFile(final String fileLocation) {
-    return XmlUtil.findXmlFile(XmlUtil.getContainingFile(this),
-                               ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
+    final String targetNs = XmlUtil.getTargetSchemaNsFromTag(this);
+    return fileLocation.equals(targetNs) ? null : XmlUtil.findXmlFile(XmlUtil.getContainingFile(this),ExternalResourceManager.getInstance().getResourceLocation(fileLocation));
   }
 
   private PsiMetaBaseOwner retrieveOwner(final XmlFile file, final String namespace) {
     final PsiMetaBaseOwner owner;
     if (file == null) {
-      final String attributeValue = getAttributeValue("targetNamespace");
+      final String attributeValue = XmlUtil.getTargetSchemaNsFromTag(this);
+      
       if (namespace.equals(attributeValue)) {
         owner = this;
       } else {
