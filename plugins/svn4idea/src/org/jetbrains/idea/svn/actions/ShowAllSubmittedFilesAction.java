@@ -82,7 +82,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
     return SvnBundle.message("dialog.title.affected.paths", revisionNumber);
   }
 
-  private ArrayList<AbstractRevisions> loadRevisions(final Project project, final SvnFileRevision svnRevision) {
+  private static ArrayList<AbstractRevisions> loadRevisions(final Project project, final SvnFileRevision svnRevision) {
     final SvnRevisionNumber number = ((SvnRevisionNumber)svnRevision.getRevisionNumber());
     final ArrayList<AbstractRevisions> revisions = new ArrayList<AbstractRevisions>();
 
