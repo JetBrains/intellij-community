@@ -1222,12 +1222,6 @@
 
 
     <group id="Vcs.CheckinProjectPopup">
-      <action id="Vcs.ShowDiffAction" class="com.intellij.openapi.vcs.actions.ShowDiffAction" icon="/actions/diff.png"/>
-      <action id="Vcs.RollbackChanges" class="com.intellij.openapi.vcs.actions.RollbackChangesAction" icon="/actions/rollback.png"/>
-      <action id="Vcs.EditSourceAction" class="com.intellij.openapi.vcs.actions.EditSourceAction" icon="/actions/editSource.png"/>
-      <separator/>
-      <action id="Vcs.ExcludeAction" class="com.intellij.openapi.vcs.actions.ExcludeAction" icon="/actions/exclude.png"/>
-      <action id="Vcs.IncludeAction" class="com.intellij.openapi.vcs.actions.IncludeAction" icon="/actions/include.png"/>
       <separator/>
     </group>
 
@@ -1251,12 +1245,6 @@
     </group>
 
     <group id="Vcs.CheckinProjectToolbar">
-      <reference ref="Vcs.ShowDiffAction"/>
-      <reference ref="Vcs.ExcludeAction"/>
-      <reference ref="Vcs.IncludeAction"/>
-      <reference ref="Vcs.RollbackChanges"/>
-      <separator/>
-      <reference ref="Vcs.EditSourceAction"/>
     </group>
 
     <group id="UpdateActionGroup">
