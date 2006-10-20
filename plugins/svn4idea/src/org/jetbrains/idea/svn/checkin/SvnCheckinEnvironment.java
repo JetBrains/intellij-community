@@ -15,28 +15,19 @@
  */
 package org.jetbrains.idea.svn.checkin;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.DiffTreeNode;
 import com.intellij.openapi.vcs.checkin.RevisionsFactory;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -90,68 +81,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public void onRefreshStarted() {
-  }
-
-  private class MarkResolvedAction extends AnAction {
-    public MarkResolvedAction() {
-      super(SvnBundle.message("action.name.mark.resolved"), SvnBundle.message("mark.resolved.action.description"),
-            IconLoader.getIcon("/actions/submit2.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      final VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createContextOn(e);
-
-      final Refreshable refreshableDialog = context.getRefreshableDialog();
-      if (refreshableDialog != null) {
-        refreshableDialog.saveState();
-      }
-
-      final FilePath[] pathsArray = context.getSelectedFilePaths();
-
-      try {
-        SVNWCClient wcClient = mySvnVcs.createWCClient();
-        for (FilePath aPathsArray : pathsArray) {
-          wcClient.doResolve(aPathsArray.getIOFile(), false);
-        }
-      }
-      catch (SVNException svnEx) {
-        Messages.showErrorDialog(SvnBundle.message("cannot.mark.file.as.resolved.error.message", svnEx.getLocalizedMessage()),
-                                 SvnBundle.message("mark.resolved.dialog.title"));
-      }
-      finally {
-        FileStatusManager.getInstance(mySvnVcs.getProject()).fileStatusesChanged();
-
-        if (refreshableDialog != null) {
-          refreshableDialog.refresh();
-        }
-
-      }
-
-    }
-
-    public void update(AnActionEvent e) {
-      DiffTreeNode[] presentableElements = (DiffTreeNode[])e.getDataContext().getData(DiffTreeNode.TREE_NODES);
-
-      Presentation presentation = e.getPresentation();
-
-      if ((presentableElements == null) || (presentableElements.length == 0)) {
-        presentation.setEnabled(false);
-        presentation.setVisible(false);
-        return;
-      }
-
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
-
-      for (DiffTreeNode presentableElement : presentableElements) {
-        if (presentableElement.getDifference() != SvnRevisions.CONFLICTED_DIFF_TYPE) {
-          presentation.setEnabled(false);
-          presentation.setVisible(false);
-          return;
-        }
-      }
-
-    }
   }
 
   public String prepareCheckinMessage(String text) {
