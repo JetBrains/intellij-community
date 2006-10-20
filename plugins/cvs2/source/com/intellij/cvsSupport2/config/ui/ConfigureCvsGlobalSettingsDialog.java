@@ -37,7 +37,7 @@ public class ConfigureCvsGlobalSettingsDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("cvs.globalSettings");
+    HelpManager.getInstance().invokeHelp("dialogs.globalCvsSettings");
   }
 
   protected Action[] createActions() {

@@ -295,13 +295,13 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
   @NonNls
   public Object getData(String dataId) {
     if (DataConstants.HELP_ID.equals(dataId)){
-      return "cvs.configureRoots";
+      return "vcs.cvs.configure";
     }
     return null;
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("cvs.configureRoots");
+    HelpManager.getInstance().invokeHelp("vcs.cvs.configure");
   }
 
   protected Action[] createActions() {
