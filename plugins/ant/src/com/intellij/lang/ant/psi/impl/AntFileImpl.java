@@ -242,8 +242,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
         }
         final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
-        project.loadPredefinedProperties(myProjectProperties, myExternalProperties);
         myProject = project;
+        project.loadPredefinedProperties(myProjectProperties, myExternalProperties);
       }
       return myProject;
     }
