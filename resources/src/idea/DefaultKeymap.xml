@@ -829,7 +829,7 @@
     <action id="AddToFavoritesPopup">
       <keyboard-shortcut first-keystroke="alt shift F"/>
     </action>
-    <action id="InspectCodeWithEditorProfile">
+    <action id="CodeInspection.OnEditor">
       <keyboard-shortcut first-keystroke="alt shift I"/>
     </action>
     <action id="RemoveFromFavorites">
