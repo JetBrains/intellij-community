@@ -25,6 +25,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsDataConstants;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -40,10 +42,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class ShowAllSubmittedFilesAction extends AnAction {
   public ShowAllSubmittedFilesAction() {
@@ -72,7 +71,13 @@ public class ShowAllSubmittedFilesAction extends AnAction {
 
       if (revisions != null) {
         long revNumber = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision().getNumber();
-        AbstractVcsHelper.getInstance(project).showRevisions(revisions, getTitle(revNumber));
+        final List<Change> changes = AbstractVcsHelper.getInstance(project).createChangeFromAbstractRevisions(revisions);
+        CommittedChangeListImpl changeList = new CommittedChangeListImpl(String.valueOf(revNumber),
+                                                                         svnRevision.getCommitMessage(),
+                                                                         svnRevision.getAuthor(),
+                                                                         svnRevision.getRevisionDate(),
+                                                                         changes);
+        AbstractVcsHelper.getInstance(project).showChangesBrowser(changeList, getTitle(revNumber));
       }
 
     }
@@ -145,14 +150,6 @@ public class ShowAllSubmittedFilesAction extends AnAction {
         result.put(new File(logPath), changedPaths.get(logPath));
       }
       return result;
-    }
-
-    protected String getPath(final SVNLogEntryPath svnStatus) {
-      return svnStatus.getPath();
-    }
-
-    protected boolean shouldAddChange(final SVNLogEntryPath svnStatus) {
-      return true;
     }
 
     protected AbstractRevisions createRevisions(final File file) {
