@@ -68,7 +68,7 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  void cleanupWatchedWoots() {
+  void cleanupWatchedRoots() {
     if (mySandboxRoot != null) {
       LocalFileSystem.getInstance().removeWatchedRoot(mySandboxRoot);
     }
