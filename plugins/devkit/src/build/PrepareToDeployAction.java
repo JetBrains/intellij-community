@@ -145,7 +145,7 @@ public class PrepareToDeployAction extends AnAction {
             if (progressIndicator != null) {
               progressIndicator.setText2("");
             }
-            return !myFileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getPath()));
+            return !myFileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getName()));
           }
         });
         Set<String> names = new HashSet<String>();
@@ -183,7 +183,7 @@ public class PrepareToDeployAction extends AnAction {
           if (progressIndicator != null) {
             progressIndicator.setText2("");
           }
-          return !myFileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getPath()));
+          return !myFileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getName()));
         }
       }, new HashSet<String>());
     }
@@ -202,7 +202,7 @@ public class PrepareToDeployAction extends AnAction {
                                     }, new HashSet<String>());
   }
 
-  private String getLibraryJarName(Library library, Set<String> names, final VirtualFile virtualFile) {
+  private static String getLibraryJarName(Library library, Set<String> names, final VirtualFile virtualFile) {
     final String name = library.getName();
     if (name != null && !names.contains(name)) return name;
     String libraryName = virtualFile.getName();
@@ -220,11 +220,11 @@ public class PrepareToDeployAction extends AnAction {
     return libraryName;
   }
 
-  private void addLibraryJar(final VirtualFile virtualFile,
-                             final File zipFile,
-                             final String name,
-                             final ZipOutputStream zos,
-                             final ProgressIndicator progressIndicator
+  private static void addLibraryJar(final VirtualFile virtualFile,
+                                    final File zipFile,
+                                    final String name,
+                                    final ZipOutputStream zos,
+                                    final ProgressIndicator progressIndicator
   ) throws IOException {
     File ioFile = VfsUtil.virtualToIoFile(virtualFile);
     final FileFilter filter = new FileFilter() {
@@ -238,7 +238,7 @@ public class PrepareToDeployAction extends AnAction {
     ZipUtil.addFileOrDirRecursively(zos, zipFile, ioFile, "/" + name + MIDDLE_LIB_DIR + ioFile.getName(), filter, null);
   }
 
-  private void addStructure(@NonNls final String relativePath, final ZipOutputStream zos) throws IOException {
+  private static void addStructure(@NonNls final String relativePath, final ZipOutputStream zos) throws IOException {
     ZipEntry e = new ZipEntry(relativePath + "/");
     e.setMethod(ZipEntry.STORED);
     e.setSize(0);
@@ -292,7 +292,7 @@ public class PrepareToDeployAction extends AnAction {
     return jarFile;
   }
 
-  private Manifest createOrFindManifest(final PluginModuleBuildProperties pluginModuleBuildProperties) throws IOException {
+  private static Manifest createOrFindManifest(final PluginModuleBuildProperties pluginModuleBuildProperties) throws IOException {
     final Manifest manifest = new Manifest();
     final VirtualFile vManifest = pluginModuleBuildProperties.getManifest();
     if (pluginModuleBuildProperties.isUseUserManifest() && vManifest != null) {
