@@ -122,6 +122,7 @@ public class InlineMethodDialog extends RefactoringDialog implements InlineOptio
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.INLINE_METHOD);
+    if (myMethod.isConstructor()) HelpManager.getInstance().invokeHelp(HelpID.INLINE_CONSTRUCTOR);
+    else HelpManager.getInstance().invokeHelp(HelpID.INLINE_METHOD);
   }
 }

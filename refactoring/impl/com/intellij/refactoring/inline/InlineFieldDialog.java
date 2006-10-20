@@ -2,12 +2,14 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
 
@@ -106,4 +108,7 @@ public class InlineFieldDialog extends RefactoringDialog implements InlineOption
     }
   }
 
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.INLINE_FIELD);
+  }
 }

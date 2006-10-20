@@ -45,12 +45,12 @@ class InlineMethodHandler {
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_CONSTRUCTOR, project);
         return;
       }
       if (!checkChainingConstructor(method)) {
         String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_METHOD, project);
+        CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_CONSTRUCTOR, project);
         return;
       }
       if (reference != null) {
