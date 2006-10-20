@@ -19,8 +19,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.HelpID;
 import com.sun.jdi.*;
 
 import javax.swing.*;
@@ -61,7 +63,11 @@ public class ExportDialog extends DialogWrapper {
   }
 
   protected Action[] createActions(){
-    return new Action[]{getOKAction(), myCopyToClipboardAction, getCancelAction()};
+    return new Action[]{getOKAction(), myCopyToClipboardAction, getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.EXPORT_THREADS);
   }
 
   protected JComponent createNorthPanel() {

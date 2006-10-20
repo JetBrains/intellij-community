@@ -13,4 +13,5 @@ public interface HelpID {
   @NonNls String EXCEPTION_BREAKPOINTS = "debugging.exceptionBreakpoint";
   @NonNls String FIELD_WATCHPOINTS = "debugging.fieldWatchpoint";
   @NonNls String EVALUATE = "debugging.debugMenu.evaluate";
+  @NonNls String EXPORT_THREADS = "reference.run.export.thread";
 }
