@@ -556,16 +556,6 @@ public class CvsUtil {
   }
 
 
-  public static String getOriginalRevisionForFile(VirtualFile file) {
-    try {
-      return Conflicts.readFrom(getConflictsFile(CvsVfsUtil.getFileFor(file))).getOriginalRevisionFor(file.getName());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
   public static boolean storedVersionExists(final String original, final VirtualFile file) {
     File ioFile = CvsVfsUtil.getFileFor(file);
     File storedRevisionFile = new File(ioFile.getParentFile(), ".#" + ioFile.getName() + "." + original);

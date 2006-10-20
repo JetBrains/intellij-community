@@ -135,15 +135,6 @@
       <action id="Cvs.ToggleOffline" class="com.intellij.cvsSupport2.actions.ToggleOfflineAction"/>
       <add-to-group group-id="UpdateActionGroup" anchor="last"/>
 
-      <action id="Cvs.CheckinProjectPanel.Add" class="com.intellij.cvsSupport2.checkinProject.AddUnknownFileToCvsAction"
-        >
-        <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
-      </action>
-
-      <action id="Cvs.CheckinProjectPanel.Delete" class="com.intellij.cvsSupport2.actions.RemoveLocallyDeletedFilesAction">
-        <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
-      </action>
-
       <separator/>
 
       <action id="Cvs.BrowseChanges" class="com.intellij.cvsSupport2.actions.BrowseChangesAction"/>

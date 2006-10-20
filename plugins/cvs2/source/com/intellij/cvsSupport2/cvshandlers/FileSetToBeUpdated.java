@@ -1,14 +1,10 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.CvsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.CvsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 
 
 /**
@@ -47,39 +43,6 @@ public abstract class FileSetToBeUpdated {
 
   public abstract void refreshFilesAsync(Runnable postRunnable);
   public abstract void refreshFilesSync();
-
-  public void refreshSync() {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          refreshFilesSync();
-        }
-      });
-    }
-    else {
-      ModalityState modalityState = ModalityState.NON_MODAL;
-      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      if (progressIndicator != null) {
-        setSynchronizingFilesTextToProgress(progressIndicator);
-        modalityState = progressIndicator.getModalityState();
-      }
-
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          LOG.info("refreshFilesAsync, modalityState=" + ModalityState.current());
-
-          refreshFilesAsync(new Runnable() {
-            public void run() {
-              semaphore.up();
-            }
-          });
-        }
-      }, modalityState);
-      semaphore.waitFor();
-    }
-  }
 
   protected void setSynchronizingFilesTextToProgress(ProgressIndicator progressIndicator) {
     progressIndicator.setText(CvsBundle.message("progress.text.synchronizing.files"));
