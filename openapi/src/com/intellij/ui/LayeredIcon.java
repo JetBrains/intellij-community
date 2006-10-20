@@ -64,11 +64,20 @@ public class LayeredIcon implements Icon {
   }
 
   public void setIcon(Icon icon, int layer, int hShift, int vShift) {
-    LOG.assertTrue(icon != this);
+    if (icon instanceof LayeredIcon) {
+      ((LayeredIcon)icon).checkIHaventIconInsideMe(this);
+    }
     myIcons[layer] = icon;
     myHShifts[layer] = hShift;
     myVShifts[layer] = vShift;
     recalculateSize();
+  }
+
+  private void checkIHaventIconInsideMe(final Icon icon) {
+    LOG.assertTrue(icon != this);
+    for (Icon child : myIcons) {
+      if (child instanceof LayeredIcon) ((LayeredIcon)child).checkIHaventIconInsideMe(icon);
+    }
   }
 
   public void paintIcon(Component c, Graphics g, int x, int y) {

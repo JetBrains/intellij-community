@@ -42,14 +42,16 @@ public interface PsiShortNamesCache {
    * @param name the name of the files to find.
    * @return the list of files in the project which have the specified name.
    */
-  @NotNull PsiFile[] getFilesByName(String name);
+  @NotNull
+  PsiFile[] getFilesByName(String name);
 
   /**
    * Returns the list of names of all files in the project.
    *
    * @return the list of all file names in the project.
    */
-  @NotNull String [] getAllFileNames();
+  @NotNull
+  String[] getAllFileNames();
 
   /**
    * Returns the list of all classes with the specified name in the specified scope.
@@ -58,7 +60,8 @@ public interface PsiShortNamesCache {
    * @param scope the scope in which classes are searched.
    * @return the list of found classes.
    */
-  @NotNull PsiClass[] getClassesByName(String name, GlobalSearchScope scope);
+  @NotNull
+  PsiClass[] getClassesByName(String name, GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all classes in the project and
@@ -68,7 +71,8 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @return the list of all class names.
    */
-  @NotNull String[] getAllClassNames(boolean searchInLibraries);
+  @NotNull
+  String[] getAllClassNames(boolean searchInLibraries);
 
   /**
    * Adds the names of all classes in the project and (optionally) libraries
@@ -78,7 +82,7 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @param dest              the set to add the names to.
    */
-  void       getAllClassNames(boolean searchInLibraries, HashSet<String> dest);
+  void getAllClassNames(boolean searchInLibraries, HashSet<String> dest);
 
   /**
    * Returns the list of all methods with the specified name in the specified scope.
@@ -87,7 +91,8 @@ public interface PsiShortNamesCache {
    * @param scope the scope in which methods are searched.
    * @return the list of found methods.
    */
-  @NotNull PsiMethod[] getMethodsByName(@NonNls String name, GlobalSearchScope scope);
+  @NotNull
+  PsiMethod[] getMethodsByName(@NonNls String name, GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all methods in the project and
@@ -97,7 +102,8 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @return the list of all method names.
    */
-  @NotNull String   [] getAllMethodNames(boolean searchInLibraries);
+  @NotNull
+  String[] getAllMethodNames(boolean searchInLibraries);
 
   /**
    * Adds the names of all methods in the project and (optionally) libraries
@@ -107,7 +113,7 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @param set               the set to add the names to.
    */
-  void        getAllMethodNames(boolean searchInLibraries, HashSet<String> set);
+  void getAllMethodNames(boolean searchInLibraries, HashSet<String> set);
 
   /**
    * Returns the list of all fields with the specified name in the specified scope.
@@ -116,7 +122,8 @@ public interface PsiShortNamesCache {
    * @param scope the scope in which fields are searched.
    * @return the list of found fields.
    */
-  @NotNull PsiField[] getFieldsByName (String name, GlobalSearchScope scope);
+  @NotNull
+  PsiField[] getFieldsByName(String name, GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all fields in the project and
@@ -126,7 +133,8 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @return the list of all field names.
    */
-  @NotNull String  [] getAllFieldNames(boolean searchInLibraries);
+  @NotNull
+  String[] getAllFieldNames(boolean searchInLibraries);
 
   /**
    * Adds the names of all methods in the project and (optionally) libraries
@@ -136,5 +144,5 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @param set               the set to add the names to.
    */
-  void       getAllFieldNames(boolean searchInLibraries, HashSet<String> set);
+  void getAllFieldNames(boolean searchInLibraries, HashSet<String> set);
 }
