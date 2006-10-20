@@ -59,19 +59,20 @@ public class DiffHyperlink implements Printable {
   public void printOn(final Printer printer) {
     if (hasMoreThanOneLine(myActual) || hasMoreThanOneLine(myExpected)) {
       printer.print(" ", ConsoleViewContentType.ERROR_OUTPUT);
-      printer.printHyperLink(ExecutionBundle.message("juni.click.to.see.diff.link"), myDiffHyperlink);
+      printer.printHyperLink(ExecutionBundle.message("junit.click.to.see.diff.link"), myDiffHyperlink);
       printer.print(TestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-    } else {
+    }
+    else {
       printer.print(TestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
       printer.print(ExecutionBundle.message("diff.content.expected.for.file.title"), ConsoleViewContentType.SYSTEM_OUTPUT);
       printer.print(myExpected + TestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-      printer.print(ExecutionBundle.message("juni.actual.text.label"), ConsoleViewContentType.SYSTEM_OUTPUT);
+      printer.print(ExecutionBundle.message("junit.actual.text.label"), ConsoleViewContentType.SYSTEM_OUTPUT);
       printer.print(myActual + TestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     }
   }
 
   private static boolean hasMoreThanOneLine(final String string) {
-    return string.indexOf('\n') != -1;
+    return string.indexOf('\n') != -1 || string.indexOf('\r') != -1;
   }
 
   public static DiffHyperlink readFrom(final ObjectReader reader) {
