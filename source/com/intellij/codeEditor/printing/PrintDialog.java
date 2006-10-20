@@ -2,6 +2,7 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ui.MappingListCellRenderer;
@@ -625,9 +626,13 @@ class PrintDialog extends DialogWrapper {
   }
 
   protected Action[] createActions() {
-    return new Action[]{getOKAction(),getCancelAction(), new ApplyAction()};
+    return new Action[]{getOKAction(),getCancelAction(), new ApplyAction(), getHelpAction()};
   }
 
+  public void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.PRINT);
+  }
+  
   class ApplyAction extends AbstractAction{
     public ApplyAction(){
       putValue(Action.NAME, CodeEditorBundle.message("print.apply.button"));

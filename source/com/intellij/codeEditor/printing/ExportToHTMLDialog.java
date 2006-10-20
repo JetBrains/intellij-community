@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ide.IdeBundle;
 
@@ -140,5 +141,13 @@ public class ExportToHTMLDialog extends DialogWrapper {
     exportToHTMLSettings.OPEN_IN_BROWSER = myCbOpenInBrowser.isSelected();
     exportToHTMLSettings.OUTPUT_DIRECTORY = myTargetDirectoryField.getText();
     exportToHTMLSettings.setGenerateHyperlinksToClasses(myCbGenerateHyperlinksToClasses.isSelected());
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(),getCancelAction(), getHelpAction()};
+  }
+
+  public void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.EXPORT_TO_HTML);
   }
 }
