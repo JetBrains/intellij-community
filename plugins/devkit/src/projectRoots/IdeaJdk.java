@@ -47,13 +47,12 @@ import java.util.ArrayList;
  * Date: Nov 22, 2004
  */
 public class IdeaJdk extends SdkType implements ApplicationComponent {
-  public static final Icon ADD_SDK = IconLoader.getIcon("/add_sdk.png");
-  public static final Icon SDK_OPEN = IconLoader.getIcon("/sdk_open.png");
-  public static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
+  private static final Icon ADD_SDK = IconLoader.getIcon("/add_sdk.png");
+  private static final Icon SDK_OPEN = IconLoader.getIcon("/sdk_open.png");
+  private static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
   @NonNls private static final String JAVA_HOME_PROPERTY = "java.home";
-  @NonNls private static final String BIN_DIR_NAME = "bin";
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
   @NonNls private static final String JRE_DIR_NAME = "jre";
@@ -206,6 +205,11 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
 
   public void setupSdkPaths(Sdk sdk) {
+    final Sandbox additionalData = (Sandbox)sdk.getSdkAdditionalData();
+    if (additionalData != null) {    
+      additionalData.cleanupWatchedWoots();
+    }
+
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     final File home = new File(sdk.getHomePath());
 
@@ -240,7 +244,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return defaultSandbox;
   }
 
-  public static void addSources(File file, SdkModificator sdkModificator) {
+  private static void addSources(File file, SdkModificator sdkModificator) {
     final File src = new File(new File(file, LIB_DIR_NAME), SRC_DIR_NAME);
     if (!src.exists()) return;
     File[] srcs = src.listFiles(new FileFilter() {
@@ -263,7 +267,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
-  public static void addDocs(File file, final SdkModificator sdkModificator) {
+  private static void addDocs(File file, final SdkModificator sdkModificator) {
     @NonNls final String help = "help";
     @NonNls final String openapi = "openapi";
     final File docFile = new File(new File(file, help), openapi);

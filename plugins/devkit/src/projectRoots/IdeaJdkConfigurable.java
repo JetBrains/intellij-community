@@ -97,6 +97,10 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }*/
     mySandboxHome.addCurrentTextToHistory();
+    final Sandbox additionalData = (Sandbox)myIdeaJdk.getSdkAdditionalData();
+    if (additionalData != null) {
+      additionalData.cleanupWatchedWoots();
+    }
     Sandbox sandbox = new Sandbox(mySandboxHome.getText());
     final SdkModificator modificator = myIdeaJdk.getSdkModificator();
     modificator.setSdkAdditionalData(sandbox);
