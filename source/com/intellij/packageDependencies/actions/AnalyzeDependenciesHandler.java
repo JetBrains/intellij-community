@@ -34,6 +34,7 @@ public class AnalyzeDependenciesHandler {
                                                                                       "package.dependencies.toolwindow.title",
                                                                                       forwardBuilder.getScope().getDisplayName()),
                                                                                     false);
+      content.setDisposer(panel);
       panel.setContent(content);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
     }

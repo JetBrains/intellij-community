@@ -1,11 +1,13 @@
 package com.intellij.ui.content.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.*;
 
@@ -122,6 +124,13 @@ public class ContentManagerImpl implements ContentManager {
       }
       fireContentRemoved(content, indexToBeRemoved);
       ((ContentImpl)content).setManager(null);
+
+      final Disposable disposer = content.getDisposer();
+      if (disposer != null) {
+        Disposer.dispose(disposer);
+      }
+
+      myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
 
       return true;
     } finally {

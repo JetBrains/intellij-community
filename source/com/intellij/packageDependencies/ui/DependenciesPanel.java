@@ -3,6 +3,7 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -11,6 +12,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -35,7 +37,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
 
-public class DependenciesPanel extends JPanel {
+public class DependenciesPanel extends JPanel implements Disposable {
   private Map<PsiFile, Set<PsiFile>> myDependencies;
   private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private MyTree myLeftTree = new MyTree();
@@ -63,12 +65,23 @@ public class DependenciesPanel extends JPanel {
     myIllegalDependencies = myBuilder.getIllegalDependencies();
     myProject = project;
     myUsagesPanel = new UsagesPanel(myProject, myBuilder);
+    Disposer.register(this, myUsagesPanel);
 
-    Splitter treeSplitter = new Splitter();
+    final Splitter treeSplitter = new Splitter();
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        treeSplitter.dispose();
+      }
+    });
     treeSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
     treeSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myRightTree));
 
-    Splitter splitter = new Splitter(true);
+    final Splitter splitter = new Splitter(true);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        splitter.dispose();
+      }
+    });
     splitter.setFirstComponent(treeSplitter);
     splitter.setSecondComponent(myUsagesPanel);
     add(splitter, BorderLayout.CENTER);
@@ -152,8 +165,7 @@ public class DependenciesPanel extends JPanel {
       PsiElement childPsiElement = ((PackageDependenciesNode)enumeration.nextElement()).getPsiElement();
       if (myIllegalDependencies.containsKey(childPsiElement)) {
         final Map<DependencyRule, Set<PsiFile>> illegalDeps = myIllegalDependencies.get(childPsiElement);
-        for (Iterator<DependencyRule> iterator = illegalDeps.keySet().iterator(); iterator.hasNext();) {
-          final DependencyRule rule = iterator.next();
+        for (final DependencyRule rule : illegalDeps.keySet()) {
           if (rule.isDenyRule()) {
             if (denyRules.indexOf(rule.getDisplayText()) == -1) {
               denyRules.append(rule.getDisplayText());
@@ -219,12 +231,10 @@ public class DependenciesPanel extends JPanel {
     Set<PsiFile> deps = new HashSet<PsiFile>();
     Set<PsiFile> scope = getSelectedScope(myLeftTree);
     myIllegalsInRightTree = new HashSet<PsiFile>();
-    for (Iterator<PsiFile> iterator = scope.iterator(); iterator.hasNext();) {
-      PsiFile psiFile = iterator.next();
+    for (PsiFile psiFile : scope) {
       Map<DependencyRule, Set<PsiFile>> illegalDeps = myIllegalDependencies.get(psiFile);
       if (illegalDeps != null) {
-        for (Iterator<DependencyRule> iterator1 = illegalDeps.keySet().iterator(); iterator1.hasNext();) {
-          final DependencyRule rule = iterator1.next();
+        for (final DependencyRule rule : illegalDeps.keySet()) {
           myIllegalsInRightTree.addAll(illegalDeps.get(rule));
         }
       }
@@ -282,7 +292,7 @@ public class DependenciesPanel extends JPanel {
     tree.expandPath(new TreePath(node.getPath()));
   }
 
-  private Set<PsiFile> getSelectedScope(final Tree tree) {
+  private static Set<PsiFile> getSelectedScope(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length != 1) return EMPTY_FILE_SET;
     PackageDependenciesNode node = (PackageDependenciesNode)paths[0].getLastPathComponent();
@@ -302,6 +312,9 @@ public class DependenciesPanel extends JPanel {
 
   public JTree getRightTree() {
     return myRightTree;
+  }
+
+  public void dispose() {
   }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -561,8 +574,7 @@ public class DependenciesPanel extends JPanel {
           else if (elt instanceof PsiPackage) {
             Set<PsiFile> files = myDependencies.keySet();
             String packageName = ((PsiPackage)elt).getQualifiedName();
-            for (Iterator<PsiFile> iterator = files.iterator(); iterator.hasNext();) {
-              PsiFile file = iterator.next();
+            for (PsiFile file : files) {
               if (file instanceof PsiJavaFile && Comparing.equal(packageName, ((PsiJavaFile)file).getPackageName())) {
                 enabled = true;
                 break;

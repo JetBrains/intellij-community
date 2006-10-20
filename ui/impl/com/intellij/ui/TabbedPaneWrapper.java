@@ -584,6 +584,11 @@ public class TabbedPaneWrapper {
     public final boolean requestFocusInWindow() {
       return requestDefaultFocus();
     }
+
+    public void updateUI() {
+      super.updateUI();
+      myTabbedPane.updateUI();
+    }
   }
 
   private static class UnregisterCommand {

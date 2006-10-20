@@ -14,6 +14,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.ide.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -66,7 +67,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class InspectionResultsView extends JPanel implements OccurenceNavigator, DataProvider {
+public class InspectionResultsView extends JPanel implements Disposable, OccurenceNavigator, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.InspectionResultsView");
 
   public static final RefElement[] EMPTY_ELEMENTS_ARRAY = new RefElement[0];

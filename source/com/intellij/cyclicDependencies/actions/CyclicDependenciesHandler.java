@@ -35,6 +35,7 @@ public class CyclicDependenciesHandler {
       Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
                                                                                     AnalysisScopeBundle.message("action.analyzing.cyclic.dependencies.in.scope", builder.getScope().getDisplayName()),
                                                                                     false);
+      content.setDisposer(panel);
       panel.setContent(content);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
     }

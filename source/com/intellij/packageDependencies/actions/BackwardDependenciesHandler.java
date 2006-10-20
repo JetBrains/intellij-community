@@ -39,6 +39,7 @@ public class BackwardDependenciesHandler {
                                                                                       "backward.dependencies.toolwindow.title",
                                                                                       builder.getScope().getDisplayName()),
                                                                                     false);
+      content.setDisposer(panel);
       panel.setContent(content);
       ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
 

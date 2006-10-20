@@ -4,10 +4,12 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.actions.CyclicDependenciesHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -32,14 +34,16 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
  * Date: Jan 31, 2005
  */
-public class CyclicDependenciesPanel extends JPanel {
+public class CyclicDependenciesPanel extends JPanel implements Disposable {
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
 
   private HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
@@ -65,13 +69,25 @@ public class CyclicDependenciesPanel extends JPanel {
     myUsagesPanel =
     new UsagesPanel(myProject, builder.getForwardBuilder());
 
+    Disposer.register(this, myUsagesPanel);
+
     mySettings.UI_SHOW_MODULES = false; //exist without modules - and doesn't with
 
-    Splitter treeSplitter = new Splitter();
+    final Splitter treeSplitter = new Splitter();
+    Disposer.register(this, new Disposable(){
+      public void dispose() {
+        treeSplitter.dispose();
+      }
+    });
     treeSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
     treeSplitter.setSecondComponent(ScrollPaneFactory.createScrollPane(myRightTree));
 
-    Splitter splitter = new Splitter(true);
+    final Splitter splitter = new Splitter(true);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        splitter.dispose();
+      }
+    });
     splitter.setFirstComponent(treeSplitter);
     splitter.setSecondComponent(myUsagesPanel);
     add(splitter, BorderLayout.CENTER);
@@ -103,9 +119,9 @@ public class CyclicDependenciesPanel extends JPanel {
             Set<PsiFile> searchFor = new HashSet<PsiFile>();
             Set<PackageNode> packNodes = new HashSet<PackageNode>();
             getPackageNodesHierarchy(selectedPackageNode, packNodes);
-            for (Iterator<PackageNode> iterator = packNodes.iterator(); iterator.hasNext();) {
-              PackageNode packageNode = iterator.next();
-              searchFor.addAll(myBuilder.getDependentFilesInPackage((PsiPackage)packageNode.getPsiElement(), ((PsiPackage)nextPackageNode.getPsiElement())));
+            for (PackageNode packageNode : packNodes) {
+              searchFor.addAll(myBuilder.getDependentFilesInPackage((PsiPackage)packageNode.getPsiElement(),
+                                                                    ((PsiPackage)nextPackageNode.getPsiElement())));
             }
             if (searchIn.isEmpty() || searchFor.isEmpty()) {
               myUsagesPanel.setToInitialPosition();
@@ -128,7 +144,7 @@ public class CyclicDependenciesPanel extends JPanel {
     TreeUtil.selectFirstNode(myLeftTree);
   }
 
-  private void getPackageNodesHierarchy(PackageNode node, Set<PackageNode> result){
+  private static void getPackageNodesHierarchy(PackageNode node, Set<PackageNode> result){
     result.add(node);
     for (int i = 0; i < node.getChildCount(); i++){
       final TreeNode child = node.getChildAt(i);
@@ -142,7 +158,7 @@ public class CyclicDependenciesPanel extends JPanel {
   }
 
   @Nullable
-  private PackageDependenciesNode getNextPackageNode(DefaultMutableTreeNode node) {
+  private static PackageDependenciesNode getNextPackageNode(DefaultMutableTreeNode node) {
     DefaultMutableTreeNode child = node;
     while (node != null) {
       if (node instanceof CycleNode) {
@@ -162,9 +178,9 @@ public class CyclicDependenciesPanel extends JPanel {
     return null;
   }
 
-  private PackageDependenciesNode hideEmptyMiddlePackages(PackageDependenciesNode node, StringBuffer result){
+  private static PackageDependenciesNode hideEmptyMiddlePackages(PackageDependenciesNode node, StringBuffer result){
     if (node.getChildCount() == 0 || node.getChildCount() > 1 || (node.getChildCount() == 1 && node.getChildAt(0) instanceof FileNode)){
-      result.append((result.length() != 0 ? ".":"") + (node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString()));//toString()
+      result.append(result.length() != 0 ? "." : "").append(node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString());//toString()
     } else {
       if (node.getChildCount() == 1){
         PackageDependenciesNode child = (PackageDependenciesNode)node.getChildAt(0);
@@ -175,7 +191,8 @@ public class CyclicDependenciesPanel extends JPanel {
         } else {
           if (child instanceof PackageNode){
             node.removeAllChildren();
-            result.append((result.length() != 0 ? ".":"") + (node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString()));
+            result.append(result.length() != 0 ? "." : "")
+              .append(node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString());
             node = hideEmptyMiddlePackages(child, result);
             ((PackageNode)node).setPackageName(result.toString());//toString()
           }
@@ -202,7 +219,7 @@ public class CyclicDependenciesPanel extends JPanel {
     updateRightTreeModel();
   }
 
-  private void initTree(final MyTree tree) {
+  private static void initTree(final MyTree tree) {
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
@@ -223,8 +240,7 @@ public class CyclicDependenciesPanel extends JPanel {
   private void updateLeftTreeModel() {
     final Set<PsiPackage> psiPackages = myDependencies.keySet();
     final Set<PsiFile> psiFiles = new HashSet<PsiFile>();
-    for (Iterator<PsiPackage> iterator = psiPackages.iterator(); iterator.hasNext();) {
-      PsiPackage psiPackage = iterator.next();
+    for (PsiPackage psiPackage : psiPackages) {
       psiFiles.addAll(getPackageFiles(psiPackage));
     }
     boolean showFiles = mySettings.UI_SHOW_FILES; //do not show files in the left tree
@@ -242,7 +258,7 @@ public class CyclicDependenciesPanel extends JPanel {
     mySettings.UI_FLATTEN_PACKAGES = false;
   }
 
-  private ActionGroup createTreePopupActions() {
+  private static ActionGroup createTreePopupActions() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
@@ -257,16 +273,16 @@ public class CyclicDependenciesPanel extends JPanel {
       mySettings.UI_GROUP_BY_SCOPE_TYPE = false;
       final PsiPackage aPackage = (PsiPackage)packageNode.getPsiElement();
       final Set<List<PsiPackage>> cyclesOfPackages = myDependencies.get(aPackage);
-      for (Iterator<List<PsiPackage>> iterator = cyclesOfPackages.iterator(); iterator.hasNext();) {
-        List<PsiPackage> packCycle = iterator.next();
+      for (List<PsiPackage> packCycle : cyclesOfPackages) {
         PackageDependenciesNode[] nodes = new PackageDependenciesNode[packCycle.size()];
-        for (int i = packCycle.size() - 1; i >=0; i--) {
+        for (int i = packCycle.size() - 1; i >= 0; i--) {
           final PsiPackage psiPackage = packCycle.get(i);
           PsiPackage nextPackage = packCycle.get(i == 0 ? packCycle.size() - 1 : i - 1);
           PsiPackage prevPackage = packCycle.get(i == packCycle.size() - 1 ? 0 : i + 1);
           final Set<PsiFile> dependentFilesInPackage = myBuilder.getDependentFilesInPackage(prevPackage, psiPackage, nextPackage);
 
-          final PackageDependenciesNode pack = (PackageDependenciesNode)TreeModelBuilder.createTreeModel(myProject, false, dependentFilesInPackage, new TreeModelBuilder.Marker() {
+          final PackageDependenciesNode pack = (PackageDependenciesNode)TreeModelBuilder
+            .createTreeModel(myProject, false, dependentFilesInPackage, new TreeModelBuilder.Marker() {
               public boolean isMarked(PsiFile file) {
                 return false;
               }
@@ -275,9 +291,9 @@ public class CyclicDependenciesPanel extends JPanel {
         }
 
         PackageDependenciesNode cycleNode = new CycleNode();
-        for (int i = 0; i < nodes.length; i++) {
-          nodes[i].setEquals(true);
-          cycleNode.insert(nodes[i], 0);
+        for (PackageDependenciesNode node : nodes) {
+          node.setEquals(true);
+          cycleNode.insert(node, 0);
         }
         root.add(cycleNode);
       }
@@ -292,10 +308,9 @@ public class CyclicDependenciesPanel extends JPanel {
   private HashSet<PsiFile> getPackageFiles(final PsiPackage psiPackage) {
     final HashSet<PsiFile> psiFiles = new HashSet<PsiFile>();
     final PsiClass[] classes = psiPackage.getClasses();
-    for (int i = 0; i < classes.length; i++) {
-      PsiClass aClass = classes[i];
+    for (PsiClass aClass : classes) {
       final PsiFile file = aClass.getContainingFile();
-      if (myBuilder.getScope().contains(file)){
+      if (myBuilder.getScope().contains(file)) {
         psiFiles.add(file);
       }
     }
@@ -320,7 +335,7 @@ public class CyclicDependenciesPanel extends JPanel {
   }
 
   @Nullable
-  private PackageNode getSelectedPackage(final Tree tree) {
+  private static PackageNode getSelectedPackage(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length != 1) return null;
     PackageDependenciesNode node = (PackageDependenciesNode)paths[0].getLastPathComponent();
@@ -337,7 +352,7 @@ public class CyclicDependenciesPanel extends JPanel {
     return null;
   }
 
-  private Set<PsiFile> getSelectedScope(final Tree tree) {
+  private static Set<PsiFile> getSelectedScope(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length != 1) return EMPTY_FILE_SET;
     PackageDependenciesNode node = (PackageDependenciesNode)paths[0].getLastPathComponent();
@@ -349,6 +364,9 @@ public class CyclicDependenciesPanel extends JPanel {
 
   public void setContent(Content content) {
     myContent = content;
+  }
+
+  public void dispose() {    
   }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -460,6 +478,7 @@ public class CyclicDependenciesPanel extends JPanel {
       return null;
     }
 
+    @Nullable
     public PackageDependenciesNode getSelectedNode() {
       TreePath[] paths = getSelectionPaths();
       if (paths == null || paths.length != 1) return null;

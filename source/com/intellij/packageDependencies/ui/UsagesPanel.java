@@ -1,6 +1,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.FindDependencyUtil;
 import com.intellij.psi.PsiElement;
@@ -21,7 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 
-public class UsagesPanel extends JPanel {
+public class UsagesPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.UsagesPanel");
 
   private Project myProject;
@@ -142,7 +144,7 @@ public class UsagesPanel extends JPanel {
 
   public void dispose(){
     if (myCurrentUsageView != null){
-      myCurrentUsageView.dispose();
+      Disposer.dispose(myCurrentUsageView);
     }
   }
 

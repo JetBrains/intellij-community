@@ -175,6 +175,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                                                                               view.getCurrentProfileName()),
                                                                             false);
 
+    myContent.setDisposer(myView);
     contentManager.addContent(myContent);
     contentManager.setSelectedContent(myContent);
 
@@ -957,10 +958,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       }
     }
     cleanup();
-    if (myView != null) {
-      myView.dispose();
-      myView = null;
-    }
+    myView = null;
   }
 
   public void refreshViews() {
