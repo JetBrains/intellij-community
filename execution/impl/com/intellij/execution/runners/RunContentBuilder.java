@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.actions.CommonActionsFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -188,6 +189,7 @@ public class RunContentBuilder implements LogConsoleManager {
     final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
     actionGroup.add(stopAction);
     actionGroup.add(new CloseAction(myRunner, contentDescriptor, myProject));
+    actionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(myRunner.getInfo().getHelpId()));
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false).getComponent();
   }
 
