@@ -28,7 +28,7 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
   private static final Icon TOOLWINDOW_ICON = IconLoader.getIcon("/general/toolWindowDebugger.png");
 
   public static final Icon RERUN_ICON = ICON;
-  private static final @NonNls String HELP_ID = "debugging";
+  private static final @NonNls String HELP_ID = "debugging.debugWindow";
   private static final RunnerInfo DEBUGGER_INFO = new RunnerInfo(ToolWindowId.DEBUG,
                                                                  DebuggerBundle.message("string.debugger.runner.description"),
                                                                  ICON,
