@@ -3,6 +3,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -72,6 +73,7 @@ public class JavaDocManager implements ProjectComponent {
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
       if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
       if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
+      if (action instanceof HintManager.ActionToIgnore) return;
       cancelJavadoc();
     }
 
@@ -128,17 +130,18 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   public void initComponent() {
-    myActionManagerEx.addAnActionListener(myActionListener);
   }
 
   public void disposeComponent() {
-    myActionManagerEx.removeAnActionListener(myActionListener);
   }
 
   public void projectOpened() {
+    myActionManagerEx.addAnActionListener(myActionListener);
   }
 
   public void projectClosed() {
+    myActionManagerEx.removeAnActionListener(myActionListener);
+    documentationProviders.clear();
   }
 
   public JBPopup showJavaDocInfo(@NotNull PsiElement element) {
@@ -164,6 +167,8 @@ public class JavaDocManager implements ProjectComponent {
           if (fromQuickSearch()) {
             ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
           }
+
+          Disposer.dispose(component);
 
           myEditor = null;
           myPreviouslyFocused = null;
@@ -283,7 +288,7 @@ public class JavaDocManager implements ProjectComponent {
       oldHint.cancel();
     }
 
-    JavaDocInfoComponent component = new JavaDocInfoComponent(this);
+    final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
     try {
       element.putUserData(
         ORIGINAL_ELEMENT_KEY,
@@ -322,6 +327,7 @@ public class JavaDocManager implements ProjectComponent {
             ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
           }
 
+          Disposer.dispose(component);
           myEditor = null;
           myPreviouslyFocused = null;
           myParameterInfoController = null;

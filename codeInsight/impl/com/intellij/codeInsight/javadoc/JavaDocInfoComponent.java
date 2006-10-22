@@ -8,8 +8,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.*;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.util.containers.HashMap;
@@ -24,14 +26,14 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.Stack;
 
-public class JavaDocInfoComponent extends JPanel {
+public class JavaDocInfoComponent extends JPanel implements Disposable{
     private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
 
     private static final int MAX_WIDTH = 500;
     private static final int MAX_HEIGHT = 300;
     private static final int MIN_HEIGHT = 45;
 
-    private final JavaDocManager myManager;
+    private JavaDocManager myManager;
     private SmartPsiElementPointer myElement;
 
     private Stack<Context> myBackStack = new Stack<Context>();
@@ -113,20 +115,33 @@ public class JavaDocInfoComponent extends JPanel {
       myScrollPane = new JScrollPane(myEditorPane);
       myScrollPane.setBorder(null);
 
-      myEditorPane.addMouseListener(new MouseAdapter() {
-          public void mousePressed(MouseEvent e) {
-              myManager.requestFocus();
-          }
+      final MouseAdapter mouseAdapter = new MouseAdapter() {
+        public void mousePressed(MouseEvent e) {
+          myManager.requestFocus();
+        }
+      };
+      myEditorPane.addMouseListener(mouseAdapter);
+      Disposer.register(this, new Disposable() {
+        public void dispose() {
+          myEditorPane.removeMouseListener(mouseAdapter);
+        }
       });
 
-      myEditorPane.addFocusListener(new FocusAdapter() {
-          public void focusLost(FocusEvent e) {
-              Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject());
+      final FocusAdapter focusAdapter = new FocusAdapter() {
+        public void focusLost(FocusEvent e) {
+          Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject());
 
-              if (!(previouslyFocused == myEditorPane)) {
-                  myHint.cancel();
-              }
+          if (!(previouslyFocused == myEditorPane)) {
+            myHint.cancel();
           }
+        }
+      };
+      myEditorPane.addFocusListener(focusAdapter);
+
+      Disposer.register(this, new Disposable() {
+        public void dispose() {
+          myEditorPane.removeFocusListener(focusAdapter);
+        }
       });
 
       setLayout(new BorderLayout());
@@ -155,17 +170,25 @@ public class JavaDocInfoComponent extends JPanel {
       myControlPanel.add(dummyPanel, BorderLayout.CENTER);
       myControlPanelVisible = false;
 
-      myEditorPane.addHyperlinkListener(new HyperlinkListener() {
-          public void hyperlinkUpdate(HyperlinkEvent e) {
-              HyperlinkEvent.EventType type = e.getEventType();
-              if (type == HyperlinkEvent.EventType.ACTIVATED) {
-                  manager.navigateByLink(JavaDocInfoComponent.this, e.getDescription());
-              } else if (type == HyperlinkEvent.EventType.ENTERED) {
-                  myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-              } else if (type == HyperlinkEvent.EventType.EXITED) {
-                  myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-              }
+      final HyperlinkListener hyperlinkListener = new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          HyperlinkEvent.EventType type = e.getEventType();
+          if (type == HyperlinkEvent.EventType.ACTIVATED) {
+            manager.navigateByLink(JavaDocInfoComponent.this, e.getDescription());
           }
+          else if (type == HyperlinkEvent.EventType.ENTERED) {
+            myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          }
+          else if (type == HyperlinkEvent.EventType.EXITED) {
+            myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        }
+      };
+      myEditorPane.addHyperlinkListener(hyperlinkListener);
+      Disposer.register(this, new Disposable() {
+        public void dispose() {
+          myEditorPane.removeHyperlinkListener(hyperlinkListener);
+        }
       });
 
       registerActions();
@@ -484,5 +507,14 @@ public class JavaDocInfoComponent extends JPanel {
 
     public String getText() {
         return myText;
+    }
+  
+    public void dispose() {
+      myBackStack = null;
+      myForwardStack = null;
+      myKeyboardActions = null;
+      myElement = null;
+      myManager = null;
+      myHint = null;
     }
 }

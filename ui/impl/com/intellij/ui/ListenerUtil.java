@@ -77,4 +77,14 @@ public class ListenerUtil {
       }
     }
   }
+
+  public static void removeMouseMotionListener(final Component component, final MouseMotionListener motionListener) {
+    component.removeMouseMotionListener(motionListener);
+    if (component instanceof Container) {
+      Container container = (Container)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        removeMouseMotionListener(container.getComponent(i), motionListener);
+      }
+    }
+  }
 }
