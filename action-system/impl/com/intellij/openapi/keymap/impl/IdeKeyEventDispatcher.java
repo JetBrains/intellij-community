@@ -112,7 +112,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Window focusedWindow = focusManager.getFocusedWindow();
     boolean isModalContext = focusedWindow != null && isModalContext(focusedWindow);
 
-    DataContext dataContext = DataManager.getInstance().getDataContext();
+    final DataManager dataManager = DataManager.getInstance();
+    if (dataManager == null) return false;
+
+    DataContext dataContext = dataManager.getDataContext();
 
     if (myState == STATE_INIT) {
       return inInitState(focusOwner, e, isModalContext, dataContext);
