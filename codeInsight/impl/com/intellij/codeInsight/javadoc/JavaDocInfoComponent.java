@@ -510,9 +510,9 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
     }
   
     public void dispose() {
-      myBackStack = null;
-      myForwardStack = null;
-      myKeyboardActions = null;
+      myBackStack.clear();
+      myForwardStack.clear();
+      myKeyboardActions.clear();
       myElement = null;
       myManager = null;
       myHint = null;

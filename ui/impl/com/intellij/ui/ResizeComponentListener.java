@@ -21,12 +21,14 @@ import java.awt.event.MouseMotionListener;
  */
 public class ResizeComponentListener extends MouseAdapter implements MouseMotionListener {
   private static final int SENSITIVITY = 4;
+  private final JBPopupImpl myPopup;
   private final JBPopupImpl.MyContentPanel myComponent;
   private Point myStartPoint = null;
   private int myDirection = -1;
 
-  public ResizeComponentListener(final JBPopupImpl.MyContentPanel component) {
-    myComponent = component;
+  public ResizeComponentListener(final JBPopupImpl popup) {
+    myPopup = popup;
+    myComponent = (JBPopupImpl.MyContentPanel)popup.getContent();
   }
 
   public void mousePressed(MouseEvent e) {
@@ -70,6 +72,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       popupWindow.validate();
       popupWindow.repaint();
       popupWindow.setCursor(Cursor.getDefaultCursor());
+      myPopup.storeDimensionSize(popupWindow.getSize());
     }
     myStartPoint = null;
     myDirection = -1;
