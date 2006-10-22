@@ -452,22 +452,25 @@ public class MatcherImpl {
       final PsiFile psiFile = file.getContainingFile();
 
       if (psiFile!=null) {
-        ApplicationManager.getApplication().invokeAndWait(
-          new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(
-                new Runnable() {
-                  public void run() {
-                    final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-                    manager.commitDocument( manager.getDocument( psiFile ) );
-                  }
-                }
-              );
-            }
-          },
-          ModalityState.defaultModalityState()
-        );
+        final Runnable action = new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+                manager.commitDocument(manager.getDocument(psiFile));
+              }
+            });
+          }
+        };
 
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          action.run();
+        } else {
+          ApplicationManager.getApplication().invokeAndWait(
+            action,
+            ModalityState.defaultModalityState()
+          );
+        }
       }
 
       if (file instanceof PsiFile) {
