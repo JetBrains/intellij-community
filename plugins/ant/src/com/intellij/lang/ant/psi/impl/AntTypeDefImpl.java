@@ -152,7 +152,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   public boolean typesLoaded() {
-    return myClassesLoaded;
+    return myClassesLoaded || !isSupported();
   }
 
   @Nullable
@@ -418,6 +418,10 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
 
   private boolean isTask() {
     return "taskdef".equals(getSourceElement().getName());
+  }
+
+  private boolean isSupported() {
+    return getSourceElement().findFirstSubTag("classpath") == null;
   }
 
   private static PsiFile createDummyFile(@NonNls final String name,
