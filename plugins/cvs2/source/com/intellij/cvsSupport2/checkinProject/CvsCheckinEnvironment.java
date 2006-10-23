@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.RevisionsFactory;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.util.SystemProperties;
@@ -25,11 +24,6 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   public CvsCheckinEnvironment(Project project) {
     myProject = project;
   }
-
-  public RevisionsFactory getRevisionsFactory() {
-    return new CvsRevisionsFactory(myProject);
-  }
-
 
   public RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(final Refreshable panel) {
     return null;

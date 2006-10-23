@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -747,26 +746,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       }
     }
     return result.toArray(new PsiFile[result.size()]);
-  }
-
-  public List<VcsException> doCheckinFiles(AbstractVcs vcs, FilePath[] roots, String preparedComment) {
-    final LocalVcs lvcs = LocalVcs.getInstance(myProject);
-
-    List<LvcsObject> objects = new ArrayList<LvcsObject>();
-
-    for (FilePath file : roots) {
-      LvcsFile lvcsFile = lvcs.findFile(file.getPath());
-      if (lvcsFile != null) {
-        objects.add(lvcsFile);
-      }
-
-    }
-
-    if (objects.isEmpty()) return new ArrayList<VcsException>();
-
-    final CheckinHandler checkinHandler = new CheckinHandler(myProject, vcs);
-    return checkinHandler.checkin(objects.toArray(new LvcsObject[objects.size()]), preparedComment);
-
   }
 
   private static class MyContentDisposer implements ContentManagerListener {

@@ -15,7 +15,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -39,9 +38,6 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vcs.impl.FileStatusFactoryImpl;
-import com.intellij.openapi.vcs.ui.impl.CheckinPanelRootNode;
-import com.intellij.openapi.vcs.ui.impl.checkinProjectPanel.CheckinPanelTreeTable;
-import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -57,10 +53,8 @@ import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.ui.errorView.impl.ErrorViewFactoryImpl;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -196,14 +190,6 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
 
     public void installSelectionSaver(JTree tree) {
       SelectionSaver.installOn(tree);
-    }
-
-    public TreeTable createDirectoryDiffTree(Project project, AbstractRevisions[] roots) {
-      final CheckinPanelTreeTable result = CheckinPanelTreeTable.createOn(project, CheckinPanelRootNode.create(project, roots),
-                                                                          new ColumnInfo[0], new ColumnInfo[0],
-                                                                          new AnAction[0], new AnAction[0]);
-      TreeUtil.expandAll(result.getTree());
-      return result;
     }
 
     public TextComponent createTypedTextField(final String text, PsiType type, PsiElement context, final Project project) {

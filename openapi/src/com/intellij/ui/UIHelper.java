@@ -22,7 +22,6 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ui.Table;
@@ -61,8 +60,6 @@ public interface UIHelper {
   void installSmartExpander(JTree tree);
 
   void installSelectionSaver(JTree tree);
-
-  TreeTable createDirectoryDiffTree(Project project, AbstractRevisions[] roots);
 
   /**
    * @param text

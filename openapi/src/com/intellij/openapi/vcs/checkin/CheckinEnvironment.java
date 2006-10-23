@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
 public interface CheckinEnvironment {
-  RevisionsFactory getRevisionsFactory();
-
   RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel);
 
   RefreshableOnComponent createAdditionalOptionsPanelForCheckinFile(Refreshable panel);
