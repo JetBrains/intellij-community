@@ -249,7 +249,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return CvsBundle.message("message.text.edit.file.request");
   }
 
-  public LocalVcsItemsLocker getUpToDateRevisionProvider() {
+  public LocalVcsItemsLocker getItemsLocker() {
     return myUpToDateRevisionProvider;
   }
 

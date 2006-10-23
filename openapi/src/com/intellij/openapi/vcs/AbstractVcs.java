@@ -88,7 +88,7 @@ public abstract class AbstractVcs {
     return false;
   }
 
-  public LocalVcsItemsLocker getUpToDateRevisionProvider() {
+  public LocalVcsItemsLocker getItemsLocker() {
     return null;
   }
 

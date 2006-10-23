@@ -64,7 +64,7 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
     myUpToDateRevisionProvider = upToDateRevisionProvider;
   }
 
-  public LocalVcsItemsLocker getUpToDateRevisionProvider() {
+  public LocalVcsItemsLocker getItemsLocker() {
     return myUpToDateRevisionProvider;
   }
 
