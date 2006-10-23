@@ -108,6 +108,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private boolean myStoppingEditing;
   private final Project myProject;
 
+  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.inspector";
+
   PropertyInspectorTable(Project project, @NotNull final ComponentTree componentTree) {
     myProject = project;
     myClassToBindProperty = new ClassToBindProperty(project);
@@ -222,6 +224,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     }
     else if (DataConstants.FILE_EDITOR.equals(dataId)) {
       return UIDesignerToolWindowManager.getInstance(myProject).getActiveFormFileEditor();
+    }
+    else if (DataConstants.HELP_ID.equals(dataId)) {
+      return ourHelpID;
     }
     else {
       return null;

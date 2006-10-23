@@ -75,6 +75,8 @@ public final class ComponentTree extends Tree implements DataProvider {
   private Icon myButtonGroupIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/buttonGroup.png");
   private Icon myInspectionSuppressionIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/inspectionSuppression.png");
 
+  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
+
   public ComponentTree() {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
 
@@ -225,6 +227,10 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (LwInspectionSuppression.class.getName().equals(dataId)) {
       Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
       return elements.size() == 0 ? null : elements.toArray(new LwInspectionSuppression[elements.size()]);
+    }
+
+    if (DataConstants.HELP_ID.equals(dataId)) {
+      return ourHelpID;
     }
 
     if (!DataConstants.NAVIGATABLE.equals(dataId)) {

@@ -183,6 +183,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
    */
   private Object myNextSaveGroupId = new Object();
 
+  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.workspace";
+
   /**
    * @param file file to be edited
    * @throws java.lang.IllegalArgumentException
@@ -440,6 +442,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   public Object getData(final String dataId) {
+    if (DataConstants.HELP_ID.equals(dataId)) {
+      return ourHelpID;
+    }
+
     // Standard Swing cut/copy/paste actions should work if user is editing something inside property inspector
     final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
     if (manager.getPropertyInspector().isEditing()) {

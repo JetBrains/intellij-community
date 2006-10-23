@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -33,6 +34,8 @@ public class PaletteWindow extends JPanel implements DataProvider {
   private JScrollPane myScrollPane = new JScrollPane();
   private MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
   private PaletteGroupHeader myLastFocusedGroup;
+
+  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.palette";
 
   public PaletteWindow(Project project) {
     myProject = project;
@@ -170,6 +173,9 @@ public class PaletteWindow extends JPanel implements DataProvider {
   }
 
   @Nullable public Object getData(String dataId) {
+    if (dataId.equals(DataConstants.HELP_ID)) {
+      return ourHelpID;
+    }
     if (dataId.equals(DataConstants.PROJECT)) {
       return myProject;
     }
