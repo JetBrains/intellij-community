@@ -61,7 +61,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
-  public PsiFile[] getFilesByName(String name) {
+  public PsiFile[] getFilesByName(@NotNull String name) {
     Merger<PsiFile> merger = new Merger<PsiFile>();
     for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getFilesByName(name));
@@ -81,7 +81,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
   }
 
   @NotNull
-  public PsiClass[] getClassesByName(String name, GlobalSearchScope scope) {
+  public PsiClass[] getClassesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiClass> merger = new Merger<PsiClass>();
     for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getClassesByName(name, scope));
@@ -100,14 +100,14 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllClassNames(boolean searchInLibraries, HashSet<String> dest) {
+  public void getAllClassNames(boolean searchInLibraries, @NotNull HashSet<String> dest) {
     for (PsiShortNamesCache cache : myCaches) {
       cache.getAllClassNames(searchInLibraries, dest);
     }
   }
 
   @NotNull
-  public PsiMethod[] getMethodsByName(String name, GlobalSearchScope scope) {
+  public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiMethod> merger = new Merger<PsiMethod>();
     for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getMethodsByName(name, scope));
@@ -126,14 +126,14 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllMethodNames(boolean searchInLibraries, HashSet<String> set) {
+  public void getAllMethodNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
     for (PsiShortNamesCache cache : myCaches) {
       cache.getAllMethodNames(searchInLibraries, set);
     }
   }
 
   @NotNull
-  public PsiField[] getFieldsByName(String name, GlobalSearchScope scope) {
+  public PsiField[] getFieldsByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     Merger<PsiField> merger = new Merger<PsiField>();
     for (PsiShortNamesCache cache : myCaches) {
       merger.add(cache.getFieldsByName(name, scope));
@@ -152,7 +152,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
     return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public void getAllFieldNames(boolean searchInLibraries, HashSet<String> set) {
+  public void getAllFieldNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
     for (PsiShortNamesCache cache : myCaches) {
       cache.getAllFieldNames(searchInLibraries, set);
     }

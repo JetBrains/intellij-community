@@ -12,6 +12,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -19,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 public class AddOnDemandStaticImportAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction");
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.add.on.demand.static.import.family");
   }

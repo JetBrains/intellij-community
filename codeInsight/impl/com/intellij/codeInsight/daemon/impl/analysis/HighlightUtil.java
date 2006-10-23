@@ -6,6 +6,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -1464,7 +1465,7 @@ public class HighlightUtil {
     // 'this' can be used as an (implicit) super() qualifier
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
-      TextRange range = com.intellij.codeInsight.ClassUtil.getClassDeclarationTextRange(aClass);
+      TextRange range = ClassUtil.getClassDeclarationTextRange(aClass);
       return createMemberReferencedError(aClass.getName()+".this", range);
     }
     for (PsiMethod constructor : constructors) {
@@ -1856,7 +1857,6 @@ public class HighlightUtil {
           return null;
         }
 
-        PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
         QuickFixAction.registerQuickFixAction(info, new ImportClassAction(ref));
         QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
@@ -1877,6 +1877,7 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.CLASS));
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.INTERFACE));
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.ENUM));
+        PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
         if (parent instanceof PsiNewExpression) {
           QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewAction((PsiNewExpression)parent));
         }
@@ -2029,19 +2030,6 @@ public class HighlightUtil {
       }
     }
     return info;
-  }
-
-  public static PsiElement findPsiAtOffset(final PsiFile psiFile, final int textOffset) {
-    PsiElement psiElem = psiFile.findElementAt(textOffset);
-
-    while (psiElem != null) {
-      if (psiElem instanceof PsiClass || psiElem instanceof PsiMethod || psiElem instanceof PsiField || psiElem instanceof PsiParameter) {
-        return psiElem.getTextOffset() == textOffset ? psiElem : null;
-      }
-
-      psiElem = psiElem.getParent();
-    }
-    return null;
   }
 
   private static HighlightInfoType convertType(Annotation annotation) {

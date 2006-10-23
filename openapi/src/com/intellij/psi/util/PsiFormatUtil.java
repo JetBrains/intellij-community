@@ -128,7 +128,7 @@ public class PsiFormatUtil {
   }
 
   public static String formatMethod(PsiMethod method, PsiSubstitutor substitutor, int options, int parameterOptions, int paramsToShow){
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       buffer.append(formatModifiers(method, options));
     }

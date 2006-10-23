@@ -43,7 +43,7 @@ public interface PsiShortNamesCache {
    * @return the list of files in the project which have the specified name.
    */
   @NotNull
-  PsiFile[] getFilesByName(String name);
+  PsiFile[] getFilesByName(@NotNull String name);
 
   /**
    * Returns the list of names of all files in the project.
@@ -61,7 +61,7 @@ public interface PsiShortNamesCache {
    * @return the list of found classes.
    */
   @NotNull
-  PsiClass[] getClassesByName(String name, GlobalSearchScope scope);
+  PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all classes in the project and
@@ -82,7 +82,7 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @param dest              the set to add the names to.
    */
-  void getAllClassNames(boolean searchInLibraries, HashSet<String> dest);
+  void getAllClassNames(boolean searchInLibraries, @NotNull HashSet<String> dest);
 
   /**
    * Returns the list of all methods with the specified name in the specified scope.
@@ -92,7 +92,7 @@ public interface PsiShortNamesCache {
    * @return the list of found methods.
    */
   @NotNull
-  PsiMethod[] getMethodsByName(@NonNls String name, GlobalSearchScope scope);
+  PsiMethod[] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all methods in the project and
@@ -113,7 +113,7 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @param set               the set to add the names to.
    */
-  void getAllMethodNames(boolean searchInLibraries, HashSet<String> set);
+  void getAllMethodNames(boolean searchInLibraries, @NotNull HashSet<String> set);
 
   /**
    * Returns the list of all fields with the specified name in the specified scope.
@@ -123,7 +123,7 @@ public interface PsiShortNamesCache {
    * @return the list of found fields.
    */
   @NotNull
-  PsiField[] getFieldsByName(String name, GlobalSearchScope scope);
+  PsiField[] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
 
   /**
    * Returns the list of names of all fields in the project and
@@ -144,5 +144,5 @@ public interface PsiShortNamesCache {
    *                          otherwise, only the project is searched.
    * @param set               the set to add the names to.
    */
-  void getAllFieldNames(boolean searchInLibraries, HashSet<String> set);
+  void getAllFieldNames(boolean searchInLibraries, @NotNull HashSet<String> set);
 }

@@ -34,8 +34,8 @@ public class FQNameCellRenderer extends SimpleColoredComponent implements ListCe
     if (value instanceof PsiClass) {
       PsiClass aClass = (PsiClass)value;
       setIcon(aClass.getIcon(0));
-      SimpleTextAttributes attributes;
       if (aClass.getQualifiedName() != null) {
+        SimpleTextAttributes attributes;
         if (aClass.isDeprecated()) {
           attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
         }
@@ -44,7 +44,8 @@ public class FQNameCellRenderer extends SimpleColoredComponent implements ListCe
         }
         append(aClass.getQualifiedName(), attributes);
       }
-    } else {
+    }
+    else {
       LOG.assertTrue(value instanceof String);
       String qName = (String)value;
       append(qName, SimpleTextAttributes.REGULAR_ATTRIBUTES);

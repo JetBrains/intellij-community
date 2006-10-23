@@ -38,6 +38,7 @@ import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -491,7 +492,7 @@ public class CompletionUtil {
     return result.result;
   }
 
-  public static boolean isInExcludedPackage(final PsiClass psiClass) {
+  public static boolean isInExcludedPackage(@NotNull final PsiClass psiClass) {
     final String name = psiClass.getQualifiedName();
     if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
@@ -502,7 +503,6 @@ public class CompletionUtil {
         isExcluded = true;
       }
     }
-    if (isExcluded) return true;
-    return false;
+    return isExcluded;
   }
 }

@@ -47,11 +47,8 @@ public class ImportClassAction implements IntentionAction {
 
     PsiManager manager = file.getManager();
 
-    //[ven] show intention action always
-    //if (DaemonCodeAnalyzer.getInstance(project).isImportHintsEnabled(file)) return false;
-
     List<PsiClass> classesToImport = getClassesToImport(manager);
-    return classesToImport.size() != 0;
+    return !classesToImport.isEmpty();
   }
 
   private List<PsiClass> getClassesToImport(PsiManager manager) {

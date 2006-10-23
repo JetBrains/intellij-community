@@ -46,7 +46,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   @NotNull
-  public PsiFile[] getFilesByName(String name) {
+  public PsiFile[] getFilesByName(@NotNull String name) {
     synchronized (PsiLock.LOCK) {
       fillCache();
       VirtualFile[] vFiles = getFiles(myFileNameToFilesMap, name);
@@ -82,7 +82,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   @NotNull
-  public PsiClass[] getClassesByName(String name, final GlobalSearchScope scope) {
+  public PsiClass[] getClassesByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
     long[] classIds = getRepositoryIndex().getClassesByShortName(name, filter);
 
@@ -124,13 +124,13 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     return getRepositoryIndex().getAllClassNames(filter);
   }
 
-  public void getAllClassNames(boolean searchInLibraries, HashSet<String> set) {
+  public void getAllClassNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
     VirtualFileFilter filter = createFilter(searchInLibraries);
     getRepositoryIndex().getAllClassNames(filter, set);
   }
 
   @NotNull
-  public PsiMethod[] getMethodsByName(String name, final GlobalSearchScope scope) {
+  public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
     long[] methodIds = getRepositoryIndex().getMethodsByName(name, filter);
 
@@ -146,13 +146,13 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     return getRepositoryIndex().getAllMethodNames(filter);
   }
 
-  public void getAllMethodNames(boolean searchInLibraries, HashSet<String> set) {
+  public void getAllMethodNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
     VirtualFileFilter filter = createFilter(searchInLibraries);
     getRepositoryIndex().getAllMethodNames(filter, set);
   }
 
   @NotNull
-  public PsiField[] getFieldsByName(String name, final GlobalSearchScope scope) {
+  public PsiField[] getFieldsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     VirtualFileFilter filter = getRepositoryIndex().rootFilterBySearchScope(scope);
     long[] fieldIds = getRepositoryIndex().getFieldsByName(name, filter);
 
@@ -168,7 +168,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     return getRepositoryIndex().getAllFieldNames(filter);
   }
 
-  public void getAllFieldNames(boolean searchInLibraries, HashSet<String> set) {
+  public void getAllFieldNames(boolean searchInLibraries, @NotNull HashSet<String> set) {
     VirtualFileFilter filter = createFilter(searchInLibraries);
     getRepositoryIndex().getAllFieldNames(filter, set);
   }
@@ -302,7 +302,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
       map.put(key, files[0]);
     }
     else if (files.length == 2) {
-      map.put(key, new Pair(files[0], files[1]));
+      map.put(key, Pair.create(files[0], files[1]));
     }
     else {
       map.put(key, files);
@@ -325,7 +325,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
         cacheFilesInDirectory(vFile);
       }
       else if (child instanceof PsiFile) {
-        final PsiFile psiFile = ((PsiFile)child);
+        final PsiFile psiFile = (PsiFile)child;
         if(psiFile.isPhysical()){
           VirtualFile vFile = psiFile.getVirtualFile();
           assert vFile != null;
@@ -344,7 +344,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
         cacheFilesInDirectory(vFile);
       }
       else if (child instanceof PsiFile) {
-        final PsiFile psiFile = ((PsiFile)child);
+        final PsiFile psiFile = (PsiFile)child;
         if(psiFile.isPhysical()){
           VirtualFile vFile = ((PsiFile)child).getVirtualFile();
           assert vFile != null;

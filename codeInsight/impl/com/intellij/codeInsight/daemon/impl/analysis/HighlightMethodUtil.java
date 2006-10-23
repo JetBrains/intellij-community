@@ -353,10 +353,6 @@ public class HighlightMethodUtil {
         }
       }
     }
-   /* if (highlightInfo == null) {
-      highlightInfo =
-      DeprecationInspection.checkDeprecated(element, referenceToMethod.getReferenceNameElement());
-    }*/
     if (highlightInfo == null) {
       highlightInfo =
       GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(element, referenceToMethod, resolveResult.getSubstitutor());
@@ -470,6 +466,7 @@ public class HighlightMethodUtil {
     ChangeMethodSignatureFromUsageFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
     ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
+    QuickFixAction.registerQuickFixAction(highlightInfo, new StaticImportMethodFix(methodCall));
   }
 
   private static void registerMethodAccessLevelIntentions(CandidateInfo[] methodCandidates,
@@ -793,24 +790,19 @@ public class HighlightMethodUtil {
                             ? null
                             : MethodSignatureUtil.findMethodBySignature(superClass, method, true);
 
-    HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, superClass, superMethod, true);
+    HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, superClass, superMethod);
     if (highlightInfo != null) return highlightInfo;
     PsiClass[] interfaces = aClass.getInterfaces();
     for (PsiClass aInterfaces : interfaces) {
       superClass = aInterfaces;
       superMethod = MethodSignatureUtil.findMethodBySignature(superClass, method, true);
-      highlightInfo = checkStaticMethodOverride(aClass, method, superClass, superMethod, true);
+      highlightInfo = checkStaticMethodOverride(aClass, method, superClass, superMethod);
       if (highlightInfo != null) return highlightInfo;
     }
     return highlightInfo;
   }
 
-  //@top
-  public static HighlightInfo checkStaticMethodOverride(PsiClass aClass,
-                                                        PsiMethod method,
-                                                        PsiClass superClass,
-                                                        PsiMethod superMethod,
-                                                        boolean includeRealPositionInfo) {
+  private static HighlightInfo checkStaticMethodOverride(PsiClass aClass, PsiMethod method, PsiClass superClass, PsiMethod superMethod) {
     if (superMethod == null) return null;
     PsiManager manager = superMethod.getManager();
     PsiModifierList superModifierList = superMethod.getModifierList();
@@ -823,7 +815,7 @@ public class HighlightMethodUtil {
     boolean isMethodStatic = modifierList.hasModifierProperty(PsiModifier.STATIC);
     boolean isSuperMethodStatic = superModifierList.hasModifierProperty(PsiModifier.STATIC);
     if (isMethodStatic != isSuperMethodStatic) {
-      TextRange textRange = includeRealPositionInfo ? HighlightUtil.getMethodDeclarationTextRange(method) : new TextRange(0, 0);
+      TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
       @NonNls final String messageKey = isMethodStatic
                                 ? "static.method.cannot.override.instance.method"
                                 : "instance.method.cannot.override.static.method";

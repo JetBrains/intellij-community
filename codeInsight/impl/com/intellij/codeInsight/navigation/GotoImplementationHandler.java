@@ -189,13 +189,13 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
       }
     }
     else {
-      PsiElementListCellRenderer renderer;
       boolean onlyMethods = true;
       boolean onlyClasses = true;
       for (PsiElement element : elements) {
         if (!(element instanceof PsiMethod)) onlyMethods = false;
         if (!(element instanceof PsiClass)) onlyClasses = false;
       }
+      PsiElementListCellRenderer renderer;
       if (onlyMethods) {
         renderer = new MethodCellRenderer(!PsiUtil.allMethodsHaveSameSignature(Arrays.asList(elements).toArray(PsiMethod.EMPTY_ARRAY)));
       }
