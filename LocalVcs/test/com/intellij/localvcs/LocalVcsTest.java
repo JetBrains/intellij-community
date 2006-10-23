@@ -137,4 +137,25 @@ public class LocalVcsTest {
     myVcs.commit();
     assertTrue(myVcs.isClean());
   }
+
+  @Test
+  public void testAddingAndDeletingSameFileBeforeCommit() {
+    myVcs.addFile("file", "");
+    myVcs.deleteFile("file");
+    myVcs.commit();
+
+    assertFalse(myVcs.hasFile("file"));
+  }
+
+  @Test
+  public void testDeletingAndAddingSameFileBeforeCommit() {
+    myVcs.addFile("file", "");
+    myVcs.commit();
+
+    myVcs.deleteFile("file");
+    myVcs.addFile("file", "");
+    myVcs.commit();
+
+    //assertTrue(myVcs.hasFile("file"));
+  }
 }
