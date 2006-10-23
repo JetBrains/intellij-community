@@ -42,10 +42,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,8 +102,10 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
 
     renewFile();
     if (myFile == null) return new TextEditorHighlightingPass[0];
-
-    if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
+    if (myCompiled && myFile instanceof PsiJavaFile) {
+      appendPass(passes, Pass.UPDATE_OVERRIDEN_MARKERS); // show overridden markers in compiled classes
+    }
+    else if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       for (int aPassesToPerform : passesToPerform) {
         appendPass(passes, aPassesToPerform);
@@ -200,8 +199,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     }
 
     Document document = editor.getDocument();
-    int startOffset;
-    int endOffset;
 
     int part;
     if (pass == Pass.UPDATE_OVERRIDEN_MARKERS) {
@@ -215,6 +212,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     }
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(myProject).getFileStatusMap().getFileDirtyScope(document, part);
+    int startOffset;
+    int endOffset;
     if (dirtyScope != null && dirtyScope.isValid()) {
       if (pass != Pass.POST_UPDATE_ALL) {
         PsiFile file = dirtyScope.getContainingFile();

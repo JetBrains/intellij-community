@@ -27,7 +27,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class LineMarkerInfo {
-  public static final LineMarkerInfo[] EMPTY_ARRAY = new LineMarkerInfo[0];
 
   public enum MarkerType {
     OVERRIDING_METHOD,
