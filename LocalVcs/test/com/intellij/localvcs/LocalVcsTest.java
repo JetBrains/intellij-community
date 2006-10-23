@@ -27,14 +27,14 @@ public class LocalVcsTest extends TempDirTestCase {
 
   @Test
   public void testClearingUncommittedFiles() {
-    assertFalse(myVcs.isDirty());
+    assertTrue(myVcs.isClean());
 
     myVcs.addFile(myFile, "");
-    assertTrue(myVcs.isDirty());
+    assertFalse(myVcs.isClean());
 
     myVcs.commit();
 
-    assertFalse(myVcs.isDirty());
+    assertTrue(myVcs.isClean());
   }
 
   @Test
@@ -45,5 +45,36 @@ public class LocalVcsTest extends TempDirTestCase {
     myVcs.addFile(myFile, "new content");
 
     assertEquals("content", myVcs.getFileContent(myFile));
+  }
+
+  @Test
+  public void testContentOnUnknownFile() {
+    assertNull(myVcs.getFileContent(myFile));
+  }
+
+  @Test
+  public void testDelete() {
+    myVcs.addFile(myFile, "content");
+    myVcs.commit();
+
+    myVcs.deleteFile(myFile);
+    assertEquals("content", myVcs.getFileContent(myFile));
+
+    myVcs.commit();
+    assertNull(myVcs.getFileContent(myFile));
+  }
+
+  @Test
+  public void testClearingDeletetFiles() {
+    myVcs.addFile(myFile, "content");
+    myVcs.commit();
+
+    assertTrue(myVcs.isClean());
+
+    myVcs.deleteFile(myFile);
+    assertFalse(myVcs.isClean());
+
+    myVcs.commit();
+    assertTrue(myVcs.isClean());
   }
 }
