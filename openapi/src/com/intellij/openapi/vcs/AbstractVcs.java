@@ -70,10 +70,6 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public FileStatusProvider getFileStatusProvider() {
-    return null;
-  }
-
   public final VcsConfiguration getConfiguration() {
     return VcsConfiguration.getInstance(myProject);
   }

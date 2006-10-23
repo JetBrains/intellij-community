@@ -2,11 +2,9 @@ package com.intellij.localVcs;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
-import com.intellij.openapi.localVcs.LocalVcsServices;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatusProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
@@ -48,10 +46,6 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
   public void initComponent() { }
 
   public void disposeComponent() {
-  }
-
-  public FileStatusProvider getFileStatusProvider() {
-    return LocalVcsServices.getInstance(myProject).getFileStatusProvider();
   }
 
   public ChangeProvider getChangeProvider() {

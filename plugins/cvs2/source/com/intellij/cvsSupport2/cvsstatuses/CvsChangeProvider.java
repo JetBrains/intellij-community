@@ -318,7 +318,7 @@ public class CvsChangeProvider implements ChangeProvider {
   private String loadContentFromCvs(final VirtualFile vFile) throws VcsException {
     try {
       final GetFileContentOperation operation = GetFileContentOperation.createForFile(vFile);
-      CvsVcs2.executeQuietOperation(com.intellij.CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
+      CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
       final byte[] fileBytes = operation.getFileBytes();
       return fileBytes == null ? null : new String(fileBytes, vFile.getCharset().name());
     }
@@ -346,7 +346,7 @@ public class CvsChangeProvider implements ChangeProvider {
         try {
           VirtualFile virtualFile = myPath.getVirtualFile();
           if (virtualFile != null) {
-            myContent = myVcs.getUpToDateRevisionProvider().getLastUpToDateContentFor(virtualFile, true);
+            myContent = getLastUpToDateContentFor(virtualFile, true);
           }
           if (myContent == null) {
             final GetFileContentOperation operation;

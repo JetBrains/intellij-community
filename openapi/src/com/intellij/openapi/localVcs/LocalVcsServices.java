@@ -17,7 +17,6 @@ package com.intellij.openapi.localVcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatusProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
 public abstract class LocalVcsServices{
@@ -27,6 +26,6 @@ public abstract class LocalVcsServices{
   }
 
   public abstract LocalVcsItemsLocker getUpToDateRevisionProvider();
-  public abstract FileStatusProvider getFileStatusProvider();
+
   public abstract CheckinEnvironment createCheckinEnvironment(AbstractVcs vcs);
 }

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author mike
@@ -40,8 +39,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private final ProjectLevelVcsManager myVcsManager;
   private List<FileStatusListener> myListeners = new ArrayList<FileStatusListener>();
   private MyDocumentAdapter myDocumentListener;
-
-  private final Map<VirtualFileSystem, FileStatusProvider> myVFSToProviderMap = new HashMap<VirtualFileSystem, FileStatusProvider>();
 
   public FileStatusManagerImpl(Project project,
                                StartupManager startupManager,
@@ -95,12 +92,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     if (fileSystem == LocalFileSystem.getInstance()) {
       return calcLocalFileStatus(virtualFile);
     } else {
-      final FileStatusProvider fileStatusProvider = myVFSToProviderMap.get(fileSystem);
-      if (fileStatusProvider!= null) {
-        return fileStatusProvider.getStatus(virtualFile);
-      } else {
-        return FileStatus.NOT_CHANGED;
-      }
+      return FileStatus.NOT_CHANGED;
     }
   }
 
@@ -140,7 +132,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   public void disposeComponent() {
     myCachedStatuses.clear();
-    myVFSToProviderMap.clear();
   }
 
   @NotNull
@@ -213,17 +204,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
 
     return status;
-  }
-
-  public void registerProvider(FileStatusProvider provider, VirtualFileSystem fileSystem) {
-    myVFSToProviderMap.put(fileSystem, provider);
-  }
-
-  public void unregisterProvider(FileStatusProvider provider, VirtualFileSystem fileSystem) {
-    final FileStatusProvider currentProvider = myVFSToProviderMap.get(fileSystem);
-    if (currentProvider == provider) {
-      myVFSToProviderMap.remove(fileSystem);
-    }
   }
 
   private FileStatus getCachedStatus(final VirtualFile file) {

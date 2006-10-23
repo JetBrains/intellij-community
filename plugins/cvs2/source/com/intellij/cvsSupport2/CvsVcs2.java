@@ -20,13 +20,13 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
 import com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
-import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
 import com.intellij.cvsSupport2.fileView.CvsFileViewEnvironment;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.cvsIntegration.CvsResult;
+import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
@@ -43,7 +43,6 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +61,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
 
 
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
-  private MyFileStatusProvider myFileStatusProvider = new MyFileStatusProvider();
   private final CvsHistoryProvider myCvsHistoryProvider;
   private boolean myProjectIsOpened = false;
   private final CvsCheckinEnvironment myCvsCheckinEnvironment;
@@ -199,10 +197,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return project.getComponent(CvsVcs2.class);
   }
 
-  public FileStatusProvider getFileStatusProvider() {
-    return myFileStatusProvider;
-  }
-
   public int getFilesToProcessCount() {
     return myCvsStandardOperationsProvider.getFilesToProcessCount();
   }
@@ -233,12 +227,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
 
   public VcsShowSettingOption getCheckoutOptions() {
     return myCheckoutOptions;
-  }
-
-  private static class MyFileStatusProvider implements FileStatusProvider {
-    public FileStatus getStatus(VirtualFile virtualFile) {
-      return CvsStatusProvider.getStatus(virtualFile);
-    }
   }
 
   public EditFileProvider getEditFileProvider() {

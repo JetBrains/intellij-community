@@ -32,9 +32,6 @@ public abstract class FileStatusManager {
 
   public abstract FileStatus getStatus(VirtualFile virtualFile);
 
-  public abstract void registerProvider(FileStatusProvider provider, VirtualFileSystem fileSystem);
-  public abstract void unregisterProvider(FileStatusProvider provider, VirtualFileSystem fileSystem);
-
   public abstract void fileStatusesChanged();
   public abstract void fileStatusChanged(VirtualFile file);
 
