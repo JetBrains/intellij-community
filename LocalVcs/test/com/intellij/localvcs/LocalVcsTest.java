@@ -22,6 +22,18 @@ public class LocalVcsTest {
   }
 
   @Test
+  public void testAddingTwoFiles() {
+    myVcs.addFile("file1", "");
+    myVcs.addFile("file2", "");
+    myVcs.commit();
+
+    assertTrue(myVcs.hasFile("file1"));
+    assertTrue(myVcs.hasFile("file2"));
+
+    assertFalse(myVcs.hasFile("unknown file"));
+  }
+
+  @Test
   public void testClearingAddedFiles() {
     assertTrue(myVcs.isClean());
 
@@ -45,6 +57,24 @@ public class LocalVcsTest {
   }
 
   @Test
+  public void testContentOfUnknownFile() {
+    assertNull(myVcs.getFileContent("unknown file"));
+  }
+
+  @Test
+  public void testChangingOnlyOneFile() {
+    myVcs.addFile("file1", "content1");
+    myVcs.addFile("file2", "content2");
+    myVcs.commit();
+
+    myVcs.changeFile("file1", "new content");
+    myVcs.commit();
+
+    assertEquals("new content", myVcs.getFileContent("file1"));
+    assertEquals("content2", myVcs.getFileContent("file2"));
+  }
+
+  @Test
   public void testDoesNotChangeContentBeforeCommit() {
     myVcs.addFile("file", "content");
     myVcs.commit();
@@ -52,11 +82,6 @@ public class LocalVcsTest {
     myVcs.changeFile("file", "new content");
 
     assertEquals("content", myVcs.getFileContent("file"));
-  }
-
-  @Test
-  public void testContentOfUnknownFile() {
-    assertNull(myVcs.getFileContent("file"));
   }
 
   @Test
@@ -74,7 +99,7 @@ public class LocalVcsTest {
   }
 
   @Test
-  public void testDelete() {
+  public void testDeleting() {
     myVcs.addFile("file", "content");
     myVcs.commit();
 
@@ -84,6 +109,19 @@ public class LocalVcsTest {
     myVcs.commit();
     assertFalse(myVcs.hasFile("file"));
     assertNull(myVcs.getFileContent("file"));
+  }
+
+  @Test
+  public void testDeletingOnlyOneFile() {
+    myVcs.addFile("file1", "");
+    myVcs.addFile("file2", "");
+    myVcs.commit();
+
+    myVcs.deleteFile("file2");
+    myVcs.commit();
+
+    assertTrue(myVcs.hasFile("file1"));
+    assertFalse(myVcs.hasFile("file2"));
   }
 
   @Test
