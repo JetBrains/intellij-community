@@ -80,7 +80,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   @Nullable private InspectionProfile myInspectionProfile;
   private AnalysisScope myScope;
   @NonNls
-  public static final String HELP_ID = "codeInspection";
+  public static final String HELP_ID = "ideaInterface.codeInspection";
   public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
 
   private Splitter mySplitter;
@@ -559,6 +559,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public Object getData(String dataId) {
+    if (dataId.equals(DataConstants.HELP_ID)) return HELP_ID;
     if (dataId.equals(DataConstantsEx.INSPECTION_VIEW)) return this;
     TreePath[] paths = myTree.getSelectionPaths();
 
