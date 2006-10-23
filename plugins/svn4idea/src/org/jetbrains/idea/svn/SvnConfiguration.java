@@ -57,6 +57,9 @@ import java.util.*;
 public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
 
+  public static final String UPGRADE_AUTO = "auto";
+  public static final String UPGRADE_NONE = "none"; 
+
   public String USER = "";
   public String PASSWORD = "";
   public String[] ADD_PATHS = null;
@@ -69,6 +72,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
   private String myLastSelectedCheckoutURL;
   private boolean myRemoteStatus;
   private ISVNAuthenticationManager myAuthManager;
+  private String myUpgradeMode;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public boolean PROCESS_UNRESOLVED = false;
@@ -130,6 +134,14 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
     return myAuthManager;
   }
 
+  public String getUpgradeMode() {
+    return myUpgradeMode;
+  }
+
+  public void setUpgradeMode(String upgradeMode) {
+    myUpgradeMode = upgradeMode;
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -165,6 +177,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
     }
     myIsKeepLocks = element.getChild("keepLocks") != null;
     myRemoteStatus = element.getChild("remoteStatus") != null;
+    myUpgradeMode = element.getChild("upgradeMode") != null ? element.getChild("upgradeMode").getText() : null;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -198,6 +211,9 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
     }
     if (myRemoteStatus) {
       element.addContent(new Element("remoteStatus"));
+    }
+    if (myUpgradeMode != null) {
+      element.addContent(new Element("upgradeMode").setText(myUpgradeMode));
     }
   }
 
