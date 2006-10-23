@@ -23,6 +23,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -31,6 +32,8 @@ import org.jetbrains.idea.devkit.DevKitBundle;
  * Date: Nov 22, 2004
  */
 public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.Sandbox");
+
   @SuppressWarnings({"WeakerAccess"})
   public String mySandboxHome;
 
@@ -38,7 +41,9 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
 
   public Sandbox(String sandboxHome) {
     mySandboxHome = sandboxHome;
-    mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
+    if (mySandboxHome != null) {
+      mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
+    }
   }
 
   //readExternal()
@@ -61,7 +66,10 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
-    mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
+    LOG.assertTrue(mySandboxRoot == null);
+    if (mySandboxHome != null) {
+      mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
