@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -218,17 +217,12 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     if (dataId.equals(DataConstants.PROJECT)){
       return myProject;
     }
-    if (dataId.equals(DataConstants.MODULE)){
+    if (dataId.equals(DataConstants.MODULE_CONTEXT)){
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null){
         PackageDependenciesNode node = (PackageDependenciesNode)selectionPath.getLastPathComponent();
         if (node instanceof ModuleNode){
           return ((ModuleNode)node).getModule();
-        } else {
-          final PsiElement psiElement = node.getPsiElement();
-          if (psiElement != null){
-            return ModuleUtil.findModuleForPsiElement(psiElement);
-          }
         }
       }
     }
@@ -502,6 +496,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
           DirectoryNode directoryNode = (DirectoryNode)node;
           while (directoryNode.getCompactedDirNode() != null){
             directoryNode = directoryNode.getCompactedDirNode();
+            LOG.assertTrue(directoryNode != null);
           }
           return (PsiDirectory)directoryNode.getPsiElement();
         }
