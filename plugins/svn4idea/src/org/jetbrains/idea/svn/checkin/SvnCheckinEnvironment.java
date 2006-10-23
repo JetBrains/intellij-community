@@ -55,10 +55,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     mySvnVcs = svnVcs;
   }
 
-  public RevisionsFactory getRevisionsFactory() {
-    return new SvnRevisionsFactory(mySvnVcs);
-  }
-
   public RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel) {
     return new KeepLocksComponent(panel, true);
   }
