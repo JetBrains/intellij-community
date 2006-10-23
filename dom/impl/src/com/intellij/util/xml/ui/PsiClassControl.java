@@ -49,6 +49,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
   protected static <T extends JPanel> T initReferenceEditorWithBrowseButton(final T boundedComponent,
                                                                             final ReferenceEditorWithBrowseButton editor,
                                                                             final EditorTextFieldControl control) {
+    boundedComponent.removeAll();
     boundedComponent.add(editor);
     final GlobalSearchScope resolveScope = control.getDomWrapper().getResolveScope();
     editor.addActionListener(new ActionListener() {

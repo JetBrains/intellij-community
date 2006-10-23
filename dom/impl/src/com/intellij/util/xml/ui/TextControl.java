@@ -46,6 +46,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     if (boundedComponent == null) {
       boundedComponent = new TextPanel();
     }
+    boundedComponent.removeAll();
     final Function<String, Document> factory = new Function<String, Document>() {
       public Document fun(final String s) {
         return PsiDocumentManager.getInstance(project).getDocument(new PsiCodeFragmentImpl(project, ElementType.PLAIN_TEXT, true, "a.txt", s));
