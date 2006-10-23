@@ -413,7 +413,13 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
                                  final Factory<Converter> continuation) {
     final Resolve resolveAnnotation = annotationProvider.getAnnotation(Resolve.class);
     if (resolveAnnotation != null) {
-      return DomResolveConverter.createConverter(resolveAnnotation.value());
+      final Class<? extends DomElement> aClass = resolveAnnotation.value();
+      if (!DomElement.class.equals(aClass)) {
+        return DomResolveConverter.createConverter(aClass);
+      } else {
+        LOG.assertTrue(parameter != null, "You should specify @Resolve#value() parameter");
+        return DomResolveConverter.createConverter(parameter);
+      }
     }
 
     final Convert convertAnnotation = annotationProvider.getAnnotation(Convert.class);

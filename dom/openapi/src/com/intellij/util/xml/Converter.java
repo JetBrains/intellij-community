@@ -12,12 +12,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Base DOM class to convert objects of a definite type into {@ink String} and back. Most often used with
+ * {@link @com.intellij.util.xml.Convert()} annotation with methods returning {@link com.intellij.util.xml.GenericDomValue}<T>.
+ *
  * @author peter
  */
 public abstract class Converter<T> {
   public abstract @Nullable T fromString(@Nullable @NonNls String s, final ConvertContext context);
   public abstract @Nullable String toString(@Nullable T t, final ConvertContext context);
 
+  /**
+   * @param s string value that couldn't be resolved
+   * @param context context
+   * @return error message used to highlight the errors somewhere in the UI, most often - like unresolved references in XML
+   */
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
     return CodeInsightBundle.message("error.cannot.convert.default.message", s);
   }

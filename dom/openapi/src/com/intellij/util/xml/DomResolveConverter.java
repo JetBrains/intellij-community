@@ -33,6 +33,9 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
+ * Converter which resolves {@link com.intellij.util.xml.DomElement}s by name in a defined scope. The scope is taken
+ * from corresponding {@link com.intellij.util.xml.DomFileDescription#getResolveScope(GenericDomValue)}.
+ *
  * @author peter
  */
 public class DomResolveConverter<T extends DomElement> extends ResolvingConverter<T>{
@@ -53,7 +56,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
           scope.acceptChildren(new DomElementVisitor() {
             public void visitDomElement(DomElement element) {
               if (myClass.isInstance(element)) {
-                final String name = element.getGenericInfo().getElementName(element);
+                final String name = ElementPresentationManager.getElementName(element);
                 if (name != null && !map.containsKey(name)) {
                   map.put(name, element);
                 }
@@ -103,7 +106,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
 
   public final String toString(final T t, final ConvertContext context) {
     if (t == null) return null;
-    return t.getGenericInfo().getElementName(t);
+    return ElementPresentationManager.getElementName(t);
   }
 
   @NotNull

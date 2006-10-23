@@ -20,10 +20,22 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
+ * A special case of {@link @com.intellij.util.xml.Convert} annotation, used to convert
+ * {@link com.intellij.util.xml.DomElement} instances to and from string. Converter here is an
+ * instance of {@link com.intellij.util.xml.DomResolveConverter}.
+ * Uses {@link @com.intellij.util.xml.NameValue} annotation to retrieve the DOM element's name.
+ *
  * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Resolve {
-  Class<? extends DomElement> value();
+  /**
+   * @return Class of target element. May be omitted, then the class from the annotated method return type is taken
+   */
+  Class<? extends DomElement> value() default DomElement.class;
+
+  /**
+   * @return whether the corresponding XML reference to be soft. Soft references are not highlighted as errors, if unresolved.
+   */
   boolean soft() default false;
 }

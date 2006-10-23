@@ -3,11 +3,11 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -15,10 +15,11 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.Type;
 
 /**
+ * Base interface for DOM elements. Every DOM interface should extend this one.
+ *
  * @author peter
  */
 public interface DomElement extends AnnotatedElement{
-
   DomElement[] EMPTY_ARRAY = new DomElement[0];
 
   @Nullable
@@ -32,11 +33,17 @@ public interface DomElement extends AnnotatedElement{
 
   XmlTag ensureTagExists();
 
+  /**
+   * @return XmlFile, XmlTag or XmlAttribute
+   */
   @Nullable
   XmlElement getXmlElement();
 
   XmlElement ensureXmlElementExists();
 
+  /**
+   * Removes all corresponding XML content. In case of being collection member, invalidates the element.
+   */
   void undefine();
 
   boolean isValid();
