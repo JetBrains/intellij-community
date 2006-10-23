@@ -20,7 +20,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Base component to be associated with (bound to) controls that have {@link com.intellij.openapi.editor.Editor}
+ * Base component to be associated with (bound to) DOM controls (see {@link com.intellij.util.xml.ui.DomUIControl})
+ * that have {@link com.intellij.openapi.editor.Editor}
  * as their part. This includes simple text, PSI class, PSI type editing, etc. The controls themselves
  * can be created in {@link com.intellij.util.xml.ui.DomUIFactory}.
  *
