@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +92,7 @@ public abstract class AbstractVcs {
     return false;
   }
 
-  public UpToDateRevisionProvider getUpToDateRevisionProvider() {
+  public LocalVcsItemsLocker getUpToDateRevisionProvider() {
     return null;
   }
 

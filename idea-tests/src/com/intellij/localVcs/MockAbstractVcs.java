@@ -1,18 +1,18 @@
 package com.intellij.localVcs;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.localVcs.LocalVcsServices;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatusProvider;
-import com.intellij.openapi.vcs.UpToDateRevisionProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
 public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
   private boolean myMarkExternalChangesAsCurrent = false;
-  private UpToDateRevisionProvider myUpToDateRevisionProvider;
+  private LocalVcsItemsLocker myUpToDateRevisionProvider;
   private CheckinEnvironment myCheckinEnvironment;
 
   public MockAbstractVcs(Project project){
@@ -66,11 +66,11 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
     myMarkExternalChangesAsCurrent = value;
   }
 
-  public void setUpToDateRevisionProvider(UpToDateRevisionProvider upToDateRevisionProvider) {
+  public void setUpToDateRevisionProvider(LocalVcsItemsLocker upToDateRevisionProvider) {
     myUpToDateRevisionProvider = upToDateRevisionProvider;
   }
 
-  public UpToDateRevisionProvider getUpToDateRevisionProvider() {
+  public LocalVcsItemsLocker getUpToDateRevisionProvider() {
     return myUpToDateRevisionProvider;
   }
 

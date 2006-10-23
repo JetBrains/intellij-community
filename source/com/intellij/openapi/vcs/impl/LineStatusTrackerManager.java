@@ -233,8 +233,6 @@ public class LineStatusTrackerManager implements ProjectComponent {
 
       if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return;
 
-      final UpToDateRevisionProvider upToDateRevisionProvider = activeVcs.getUpToDateRevisionProvider();
-      if (upToDateRevisionProvider == null) return;
       if (System.getProperty(IGNORE_CHANGEMARKERS_KEY) != null) return;
 
       final Alarm alarm;

@@ -2,6 +2,8 @@ package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
+import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction;
 import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -27,6 +29,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.localVcs.LvcsFile;
+import com.intellij.openapi.localVcs.LocalVcs;
+import com.intellij.openapi.localVcs.LvcsRevision;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +40,11 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Date;
 
 /**
  * @author max
@@ -46,9 +53,11 @@ public class CvsChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider");
 
   private CvsVcs2 myVcs;
+  private final CvsEntriesManager myEntriesManager;
 
-  public CvsChangeProvider(final CvsVcs2 vcs) {
+  public CvsChangeProvider(final CvsVcs2 vcs, CvsEntriesManager entriesManager) {
     myVcs = vcs;
+    myEntriesManager = entriesManager;
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress) {
@@ -245,6 +254,79 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     else if (status == FileStatus.UNKNOWN) {
       builder.processUnversionedFile(filePath.getVirtualFile());
+    }
+  }
+
+  @Nullable
+  public String getLastUpToDateContentFor(VirtualFile vFile, boolean quietly) throws VcsException {
+    if (!myEntriesManager.isActive()) return null;
+    try {
+      LvcsFile file = LocalVcs.getInstance(myVcs.getProject()).findFile(CvsVfsUtil.getPathFor(vFile));
+      if (file != null) {
+        LvcsRevision revision = file.getRevision();
+        long upToDateTime = getUpToDateTimeForFile(vFile);
+        while (revision != null) {
+          if (CvsStatusProvider.timeStampsAreEqual(upToDateTime, revision.getDate())) {
+            LvcsFile lvcsFile = (LvcsFile)revision.getObject();
+            byte[] byteContent = lvcsFile.getByteContent(revision.getImplicitLabel());
+            if (byteContent == null) return null;
+            return new String(byteContent, vFile.getCharset().name());
+          }
+          revision = revision.getPrevRevision();
+        }
+
+        if (quietly) {
+          return null;
+        } else {
+          return loadContentFromCvs(vFile);
+        }
+      }
+      else {
+        if (quietly) {
+          return null;
+        } else {
+          return loadContentFromCvs(vFile);
+        }
+      }
+    }
+    catch (IOException e) {
+      if (!quietly) {
+        LOG.error(e);
+        return loadContentFromCvs(vFile);
+      } else {
+        return null;
+      }
+    }
+  }
+
+  long getUpToDateTimeForFile(VirtualFile vFile) {
+    Entry entry = myEntriesManager.getEntryFor(CvsVfsUtil.getParentFor(vFile), vFile.getName());
+    if (entry == null) return -1;
+    if (entry.isResultOfMerge()) {
+      long resultForMerge = CvsUtil.getUpToDateDateForFile(vFile);
+      if (resultForMerge > 0) {
+        return resultForMerge;
+      }
+    }
+
+    Date lastModified = entry.getLastModified();
+    if (lastModified == null) return -1;
+    return lastModified.getTime();
+  }
+
+  @Nullable
+  private String loadContentFromCvs(final VirtualFile vFile) throws VcsException {
+    try {
+      final GetFileContentOperation operation = GetFileContentOperation.createForFile(vFile);
+      CvsVcs2.executeQuietOperation(com.intellij.CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
+      final byte[] fileBytes = operation.getFileBytes();
+      return fileBytes == null ? null : new String(fileBytes, vFile.getCharset().name());
+    }
+    catch (CannotFindCvsRootException e) {
+      throw new VcsException(e);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new VcsException(e);
     }
   }
 

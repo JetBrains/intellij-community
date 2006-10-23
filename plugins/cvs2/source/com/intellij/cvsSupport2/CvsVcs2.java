@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
@@ -44,6 +43,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,14 +90,14 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     myCvsStandardOperationsProvider = new CvsStandardOperationsProvider(project);
     myCvsUpdateEnvironment = new CvsUpdateEnvironment(project);
     myCvsStatusEnvironment = new CvsStatusEnvironment(myProject);
-    myUpToDateRevisionProvider = new CvsUpToDateRevisionProvider(myProject, CvsEntriesManager.getInstance());
 
     myConfigurable = new Cvs2Configurable(getProject());
     myStorageComponent = cvsStorageComponent;
     myFileViewEnvironment = new CvsFileViewEnvironment(getProject());
     myCvsAnnotationProvider = new CvsAnnotationProvider(myProject);
     myDiffProvider = new CvsDiffProvider(myProject);
-    myChangeProvider = new CvsChangeProvider(this);
+    myChangeProvider = new CvsChangeProvider(this, CvsEntriesManager.getInstance());
+    myUpToDateRevisionProvider = new CvsUpToDateRevisionProvider(myChangeProvider);
   }
 
   /* ======================================= ProjectComponent */
@@ -261,12 +261,12 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return CvsBundle.message("message.text.edit.file.request");
   }
 
-  public UpToDateRevisionProvider getUpToDateRevisionProvider() {
+  public LocalVcsItemsLocker getUpToDateRevisionProvider() {
     return myUpToDateRevisionProvider;
   }
 
 
-  public ChangeProvider getChangeProvider() {
+  public CvsChangeProvider getChangeProvider() {
     return myChangeProvider;
   }
 
