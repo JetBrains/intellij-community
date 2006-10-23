@@ -93,7 +93,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor != null){
       String s = editor.getSelectionModel().getSelectedText();
-      if (s != null && (s.indexOf("\r") == -1) && (s.indexOf("\n") == -1)){
+      if (s != null && !s.contains("\r") && !s.contains("\n")){
         findModel.setStringToFind(s);
       }
     }
@@ -107,57 +107,58 @@ public class ReplaceInProjectManager implements ProjectComponent {
 
     UsageViewManager manager = myProject.getComponent(UsageViewManager.class);
 
-    if (manager!=null) {
-      findManager.getFindInProjectModel().copyFrom(findModel);
-      final FindModel findModelCopy = (FindModel)findModel.clone();
+    if (manager == null) {
+      return;
+    }
+    findManager.getFindInProjectModel().copyFrom(findModel);
+    final FindModel findModelCopy = (FindModel)findModel.clone();
 
-      final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
-      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(
-        myProject, true, presentation
-      );
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(
+      myProject, true, presentation
+    );
 
-      final ReplaceContext[] context = new ReplaceContext[1];
+    final ReplaceContext[] context = new ReplaceContext[1];
 
-      manager.searchAndShowUsages(
+    manager.searchAndShowUsages(
         new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModelCopy.getStringToFind()) },
-        new Factory<UsageSearcher>() {
-          public UsageSearcher create() {
-            return new UsageSearcher() {
+      new Factory<UsageSearcher>() {
+        public UsageSearcher create() {
+          return new UsageSearcher() {
 
-            public void generate(final Processor<Usage> processor) {
-              myIsFindInProgress = true;
+          public void generate(final Processor<Usage> processor) {
+            myIsFindInProgress = true;
 
-              FindInProjectUtil.findUsages(
-                findModelCopy,
-                psiDirectory,
-                myProject,
-                new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor)
-              );
-              myIsFindInProgress = false;
+            FindInProjectUtil.findUsages(
+              findModelCopy,
+              psiDirectory,
+              myProject,
+              new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor)
+            );
+            myIsFindInProgress = false;
+          }
+        };
+        }
+      },
+      processPresentation,
+      presentation,
+      new UsageViewManager.UsageViewStateListener() {
+        public void usageViewCreated(UsageView usageView) {
+          context[0] = new ReplaceContext(usageView,findModelCopy);
+          addReplaceActions(context[0]);
+        }
+
+      public void findingUsagesFinished(final UsageView usageView) {
+        if (context[0]!=null && findManager.getFindInProjectModel().isPromptOnReplace()){
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              replaceWithPrompt(context[0]);
             }
-          };
-          }
-        },
-        processPresentation,
-        presentation,
-        new UsageViewManager.UsageViewStateListener() {
-          public void usageViewCreated(UsageView usageView) {
-            context[0] = new ReplaceContext(usageView,findModelCopy);
-            addReplaceActions(context[0]);
-          }
-
-        public void findingUsagesFinished(final UsageView usageView) {
-          if (context[0]!=null && findManager.getFindInProjectModel().isPromptOnReplace()){
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                replaceWithPrompt(context[0]);
-              }
-            });
-          }
+          });
         }
       }
-      );
     }
+    );
   }
 
   private void replaceWithPrompt(final ReplaceContext replaceContext) {
@@ -205,7 +206,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
 
       CommandProcessor.getInstance().executeCommand(myProject, selectOnEditorRunnable,
                                                     FindBundle.message("find.replace.select.on.editor.command"), null);
-      String title = FindBundle.message("find.replace.found.usage.title", (i + 1), usages.length);
+      String title = FindBundle.message("find.replace.found.usage.title", i + 1, usages.length);
       int result = FindManager.getInstance(myProject).showPromptDialog(replaceContext.getFindModel(), title);
 
       if (result == FindManager.PromptResult.CANCEL){
@@ -224,7 +225,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
           }
         };
         CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
-        if ((i + 1) == usages.length){
+        if (i + 1 == usages.length){
           replaceContext.getUsageView().close();
           return;
         }
@@ -381,7 +382,7 @@ public class ReplaceInProjectManager implements ProjectComponent {
             replaceContext.getUsageView().removeUsage(selectedUsage);
           }
 
-          if (replaceContext.getUsageView().getUsages().size() == 0){
+          if (replaceContext.getUsageView().getUsages().isEmpty()){
             replaceContext.getUsageView().close();
             return;
           }

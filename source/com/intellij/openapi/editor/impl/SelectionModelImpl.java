@@ -155,11 +155,9 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       endOffset = tmp;
     }
 
-    {
-      Clipboard clip = myEditor.getComponent ().getToolkit ().getSystemSelection();
-      if (clip != null) {
-        clip.setContents(new StringSelection(getSelectedText()), defaultClipboardOwner);
-      }
+    Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
+    if (clip != null) {
+      clip.setContents(new StringSelection(getSelectedText()), defaultClipboardOwner);
     }
 
     int oldSelectionStart;
@@ -384,12 +382,11 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return text.subSequence(selectionStart, selectionEnd).toString();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private void appendCharSequence(StringBuffer buf, CharSequence s, int srcOffset, int len) {
+  private static void appendCharSequence(StringBuffer buf, CharSequence s, int srcOffset, int len) {
     if (s == null){
       s = "null";
     }
-    if ((srcOffset < 0) || (len < 0) || (srcOffset > s.length() - len)) {
+    if (srcOffset < 0 || len < 0 || srcOffset > s.length() - len) {
       throw new IndexOutOfBoundsException("srcOffset " + srcOffset + ", len " + len + ", s.length() " + s.length());
     }
     if (len == 0) {
