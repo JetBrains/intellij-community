@@ -79,6 +79,7 @@ public class CompileDriver {
   private static final @NonNls String LOCK_FILE_NAME = "in_progress.dat";
   private final FileProcessingCompilerAdapterFactory myProcessingCompilerAdapterFactory;
   private final FileProcessingCompilerAdapterFactory myPackagingCompilerAdapterFactory;
+  private final FileProcessingCompilerAdapterFactory myFixedTimestampCompilerAdapterFactory;
   final ProjectCompileScope myProjectCompileScope;
 
   public CompileDriver(Project project) {
@@ -119,6 +120,11 @@ public class CompileDriver {
     myPackagingCompilerAdapterFactory = new FileProcessingCompilerAdapterFactory() {
       public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
         return new PackagingCompilerAdapter(context, (PackagingCompiler)compiler);
+      }
+    };
+    myFixedTimestampCompilerAdapterFactory = new FileProcessingCompilerAdapterFactory() {
+      public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
+        return new FixedTimestampCompilerAdapter(context, compiler);
       }
     };
     myProjectCompileScope = new ProjectCompileScope(myProject);
@@ -447,12 +453,12 @@ public class CompileDriver {
 
         didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, outputDirectories);
 
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild, false);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class, myFixedTimestampCompilerAdapterFactory, isRebuild, false);
 
         // explicitly passing forceCompile = false because in scopes that is narrower than ProjectScope it is impossible
         // to understand whether the class to be processed is in scope or not. Otherwise compiler may process its items even if
         // there were changes in completely independent files.
-        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myProcessingCompilerAdapterFactory, isRebuild, false);
+        didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassPostProcessingCompiler.class, myFixedTimestampCompilerAdapterFactory, isRebuild, false);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, PackagingCompiler.class, myPackagingCompilerAdapterFactory, isRebuild, true);
 
