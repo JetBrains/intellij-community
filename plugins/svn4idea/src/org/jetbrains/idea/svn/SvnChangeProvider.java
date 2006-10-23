@@ -9,6 +9,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +18,10 @@ import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -204,9 +210,9 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private static void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) {
-    SvnFileStatusProvider.loadEntriesFile(filePath);
+    loadEntriesFile(filePath);
     if (status != null) {
-      FileStatus fStatus = SvnFileStatusProvider.convertStatus(status, filePath.getIOFile());
+      FileStatus fStatus = convertStatus(status, filePath.getIOFile());
 
       final SVNStatusType statusType = status.getContentsStatus();
       final SVNStatusType propStatus = status.getPropertiesStatus();
@@ -258,6 +264,112 @@ public class SvnChangeProvider implements ChangeProvider {
     catch (IOException e) {
       return null;
     }
+  }
+
+  public static FileStatus convertStatus(final SVNStatus status, final File file) {
+    if (status == null) {
+      return FileStatus.UNKNOWN;
+    }
+    if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED) {
+      return FileStatus.UNKNOWN;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_MISSING) {
+      return FileStatus.DELETED_FROM_FS;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL) {
+      return SvnFileStatus.EXTERNAL;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED) {
+      return SvnFileStatus.OBSTRUCTED;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED) {
+      return FileStatus.IGNORED;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
+      return FileStatus.ADDED;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
+      return FileStatus.DELETED;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_REPLACED) {
+      return SvnFileStatus.REPLACED;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
+             status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
+      return FileStatus.MERGED_WITH_CONFLICTS;
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_MODIFIED ||
+             status.getPropertiesStatus() == SVNStatusType.STATUS_MODIFIED) {
+      return FileStatus.MODIFIED;
+    }
+    else if (status.isSwitched()) {
+      return SvnFileStatus.SWITCHED;
+    }
+    else if (status.isCopied()) {
+      return FileStatus.ADDED;
+    }
+    if (file.isDirectory() && file.getParentFile() != null) {
+      String childURL = null;
+      String parentURL = null;
+      SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+      try {
+        wcAccess.open(file, false, 0);
+        SVNAdminArea parentDir = wcAccess.open(file.getParentFile(), false, 0);
+        if (wcAccess.getEntry(file, false) != null) {
+          childURL = wcAccess.getEntry(file, false).getURL();
+        }
+        if (parentDir != null) {
+          parentURL = parentDir.getEntry("", false).getURL();
+        }
+      }
+      catch (SVNException e) {
+        //
+      } finally {
+        try {
+          wcAccess.close();
+        } catch (SVNException e) {
+          //
+        }
+      }
+        try {
+            if (parentURL != null && !SVNWCUtil.isWorkingCopyRoot(file)) {
+              parentURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(file.getName()));
+              if (childURL != null && !parentURL.equals(childURL)) {
+                return SvnFileStatus.SWITCHED;
+              }
+            }
+        } catch (SVNException e) {
+            //
+        }
+    }
+    return FileStatus.NOT_CHANGED;
+  }
+
+  public static void loadEntriesFile(final FilePath filePath) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            if (filePath.getParentPath() == null) {
+              return;
+            }
+            File svnSubdirectory = new File(filePath.getParentPath().getIOFile(), SvnUtil.SVN_ADMIN_DIR_NAME);
+            LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+            VirtualFile file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
+            if (file != null) {
+              localFileSystem.refreshAndFindFileByIoFile(new File(svnSubdirectory, SvnUtil.ENTRIES_FILE_NAME));
+            }
+            if (filePath.isDirectory()) {
+              svnSubdirectory = new File(filePath.getPath(), SvnUtil.SVN_ADMIN_DIR_NAME);
+              file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
+              if (file != null) {
+                localFileSystem.refreshAndFindFileByIoFile(new File(svnSubdirectory, SvnUtil.ENTRIES_FILE_NAME));
+              }
+            }
+          }
+        });
+      }
+    });
   }
 
   private static class SvnUpToDateRevision implements ContentRevision {

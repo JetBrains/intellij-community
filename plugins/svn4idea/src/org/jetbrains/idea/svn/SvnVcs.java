@@ -85,7 +85,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private SvnEntriesFileListener myEntriesFileListener;
   private Project myProject;
 
-  private final SvnFileStatusProvider myFileStatusProvider;
   private final SvnCheckinEnvironment myCheckinEnvironment;
   private final AbstractSvnUpdateIntegrateEnvironment mySvnUpdateEnvironment;
   private final AbstractSvnUpdateIntegrateEnvironment mySvnIntegrateEnvironment;
@@ -131,7 +130,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     dumpFileStatus(SvnFileStatus.EXTERNAL);
     dumpFileStatus(SvnFileStatus.OBSTRUCTED);
 
-    myFileStatusProvider = new SvnFileStatusProvider(this);
     myCheckinEnvironment = new SvnCheckinEnvironment(this);
 
     mySvnUpdateEnvironment = new SvnUpdateEnvironment(this);
@@ -261,10 +259,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public static SvnVcs getInstance(Project project) {
     return project.getComponent(SvnVcs.class);
-  }
-
-  public FileStatusProvider getFileStatusProvider() {
-    return myFileStatusProvider;
   }
 
   @NotNull
