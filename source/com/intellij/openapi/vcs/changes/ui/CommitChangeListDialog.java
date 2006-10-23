@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, DataProvider {
+public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
   private CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
   private JPanel myAdditionalOptionsPanel;
@@ -615,12 +615,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  @Nullable
-  public Object getData(String dataId) {
-    if (CheckinProjectPanel.PANEL.equals(dataId)) {
-      return this;
+  public void calcData(DataKey key, DataSink sink) {
+    if (key == CheckinProjectPanel.PANEL_KEY) {
+      sink.put(CheckinProjectPanel.PANEL_KEY, this);
     }
-    return myBrowser.getData(dataId);
+    else {
+      myBrowser.calcData(key, sink);
+    }
   }
 
   private class EditSourceAction extends AnAction {
@@ -631,7 +632,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final Navigatable[] navigatableArray = (Navigatable[]) e.getDataContext().getData(DataConstants.NAVIGATABLE_ARRAY);
+      final Navigatable[] navigatableArray = e.getDataContext().getData(DataKeys.NAVIGATABLE_ARRAY);
       if (navigatableArray != null && navigatableArray.length > 0) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {

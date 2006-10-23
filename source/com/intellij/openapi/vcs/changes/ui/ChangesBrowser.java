@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangesBrowser extends JPanel implements DataProvider {
+public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   private ChangesTreeList myViewer;
   private ChangeList mySelectedChangeList;
   private Collection<Change> myAllChanges;
@@ -152,26 +152,23 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     return myAllChanges;
   }
 
-  public Object getData(final String dataId) {
-    if (DataConstants.CHANGES.equals(dataId)) {
-      return myViewer.getSelectedChanges();
+  public void calcData(DataKey key, DataSink sink) {
+    if (key == DataKeys.CHANGES) {
+      sink.put(DataKeys.CHANGES, myViewer.getSelectedChanges());
     }
-    else if (DataConstants.CHANGE_LISTS.equals(dataId)) {
-      return getSelectedChangeLists();
+    else if (key == DataKeys.CHANGE_LISTS) {
+      sink.put(DataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
-    else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
-      return getSelectedFiles();
+    else if (key == DataKeys.VIRTUAL_FILE_ARRAY) {
+      sink.put(DataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
-    else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
-      return ChangesUtil.getNavigatableArray(myProject, getSelectedFiles());
+    else if (key == DataKeys.NAVIGATABLE_ARRAY) {
+      sink.put(DataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     }
-
-    return null;
   }
 
   private class MoveAction extends MoveChangesToAnotherListAction {
     private final Change myChange;
-
 
     public MoveAction(final Change change) {
       myChange = change;
@@ -407,14 +404,14 @@ public class ChangesBrowser extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      Change[] changes = e.getDataContext().getData(DataKeys.CHANGES);
       RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes), true);
       ChangeListManager.getInstance(myProject).ensureUpToDate(false);
       rebuildList();
     }
 
     public void update(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      Change[] changes = e.getDataContext().getData(DataKeys.CHANGES);
       e.getPresentation().setEnabled(changes != null);
     }
   }

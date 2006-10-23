@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ui;
 
 import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.actionSystem.DataKey;
 
 /**
  * Base interface for user interface objects which can be refreshed and can save/restore
@@ -31,6 +32,7 @@ public interface Refreshable {
    * @see com.intellij.openapi.actionSystem.DataContext#getData(String)
    */
   @NonNls String PANEL = "Panel";
+  DataKey<Refreshable> PANEL_KEY = DataKey.create(PANEL);
 
   void refresh();
 
