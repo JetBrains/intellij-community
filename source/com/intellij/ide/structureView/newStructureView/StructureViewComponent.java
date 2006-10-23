@@ -2,6 +2,7 @@ package com.intellij.ide.structureView.newStructureView;
 
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
@@ -33,6 +34,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -45,6 +47,7 @@ import java.util.List;
 
 public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
+  @NonNls private static final String ourHelpID = "viewingStructure.fileStructureView";
 
   private AbstractTreeBuilder myAbstractTreeBuilder;
 
@@ -346,6 +349,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       result.add(myAutoScrollToSourceHandler.createToggleAction());
       result.add(myAutoScrollFromSourceHandler.createToggleAction());
     }
+    result.addSeparator();
+    result.add(new ContextHelpAction(ourHelpID));
     return result;
   }
 
@@ -653,6 +658,9 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       if (selectedElements[0] instanceof Navigatable) {
         return selectedElements[0];
       }
+    }
+    if (DataConstants.HELP_ID.equals(dataId)) {
+      return ourHelpID;
     }
     return null;
   }
