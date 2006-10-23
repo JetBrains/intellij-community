@@ -36,12 +36,14 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
 public class GotoClassModel2 extends ContributorsBasedGotoByModel {
   public GotoClassModel2(Project project) {
     super(project, ChooseByNameRegistry.getInstance().getClassModelContributors());
   }
 
+  @Nullable
   public String getPromptText() {
     return IdeBundle.message("prompt.gotoclass.enter.class.name");
   }
@@ -66,12 +68,8 @@ public class GotoClassModel2 extends ContributorsBasedGotoByModel {
 
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))){
-      return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.includeLibraries"));
-    }
-    else{
-      return false;
-    }
+    return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries")) &&
+           Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.includeLibraries"));
   }
 
   public void saveInitialCheckBoxState(boolean state) {

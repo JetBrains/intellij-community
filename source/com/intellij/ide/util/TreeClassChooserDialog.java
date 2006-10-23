@@ -28,6 +28,8 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -274,11 +276,11 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     return mySelectedClass;
   }
 
-  public void selectClass(final PsiClass aClass) {
+  public void selectClass(@NotNull final PsiClass aClass) {
     selectElementInTree(aClass);
   }
 
-  public void selectDirectory(final PsiDirectory directory) {
+  public void selectDirectory(@NotNull final PsiDirectory directory) {
     selectElementInTree(directory);
   }
 
@@ -300,10 +302,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
   }
 
 
-  private void selectElementInTree(final PsiElement element) {
-    if (element == null) {
-      throw new IllegalArgumentException("aClass cannot be null");
-    }
+  private void selectElementInTree(@NotNull final PsiElement element) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myBuilder == null) return;
@@ -317,6 +316,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     return ModalityState.stateForComponent(getRootPane());
   }
 
+  @Nullable
   private PsiClass calcSelectedClass() {
     if (myTabbedPane.getSelectedIndex() == 0) {
       return (PsiClass)myGotoByNamePanel.getChosenElement();
@@ -367,6 +367,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       return list.toArray(new PsiClass[list.size()]);
     }
 
+    @Nullable
     public String getPromptText() {
       return null;
     }
@@ -429,6 +430,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
       myBase = base;
     }
 
+    @SuppressWarnings({"SimplifiableIfStatement"})
     public boolean isAccepted(PsiClass aClass) {
       if (!myAcceptsInner && !(aClass.getParent() instanceof PsiJavaFile)) return false;
       if (!myAddtionalCondition.value(aClass)) return false;
