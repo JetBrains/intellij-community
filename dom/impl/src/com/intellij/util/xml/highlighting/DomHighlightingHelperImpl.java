@@ -45,18 +45,18 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   @NotNull
   public List<DomElementProblemDescriptor> checkRequired(DomElement element, final DomElementAnnotationHolder holder) {
     final Required required = element.getAnnotation(Required.class);
-    if (required == null) return Collections.emptyList();
-
-    final XmlElement xmlElement = element.getXmlElement();
-    if (required.value()) {
-      if (xmlElement == null) {
-        if (element instanceof GenericAttributeValue) {
-          return Arrays.asList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", element.getXmlElementName())));
+    if (required != null) {
+      final XmlElement xmlElement = element.getXmlElement();
+      if (required.value()) {
+        if (xmlElement == null) {
+          if (element instanceof GenericAttributeValue) {
+            return Arrays.asList(holder.createProblem(element, IdeBundle.message("attribute.0.should.be.defined", element.getXmlElementName())));
+          }
+          return Arrays.asList(holder.createProblem(element, IdeBundle.message("child.tag.0.should.be.defined", element.getXmlElementName())));
         }
-        return Arrays.asList(holder.createProblem(element, IdeBundle.message("child.tag.0.should.be.defined", element.getXmlElementName())));
-      }
-      if (element instanceof GenericDomValue) {
-        return ContainerUtil.createMaybeSingletonList(checkRequiredGenericValue((GenericDomValue)element, required, holder));
+        if (element instanceof GenericDomValue) {
+          return ContainerUtil.createMaybeSingletonList(checkRequiredGenericValue((GenericDomValue)element, required, holder));
+        }
       }
     }
 
