@@ -130,8 +130,6 @@ public class ContentManagerImpl implements ContentManager {
         Disposer.dispose(disposer);
       }
 
-      myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
-
       return true;
     } finally {
       removeProjectManagerListener();
@@ -146,9 +144,12 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   private void removeProjectManagerListener() {
-    if (myListenerAdded && myContents.size()==0) {
-      ProjectManager.getInstance().removeProjectManagerListener(myProjectManagerListener);
-      myListenerAdded = false;
+    if (myContents.size() == 0) {
+      myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
+      if (myListenerAdded) {
+        ProjectManager.getInstance().removeProjectManagerListener(myProjectManagerListener);
+        myListenerAdded = false;
+      }
     }
   }
 
