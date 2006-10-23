@@ -60,7 +60,7 @@ public class MacroFactory {
     register(new DescendantClassesEnumMacro());
   }
 
-  private static void register(Macro macro) {
+  public static void register(Macro macro) {
     myMacroTable.put(macro.getName(), macro);
   }
 }
