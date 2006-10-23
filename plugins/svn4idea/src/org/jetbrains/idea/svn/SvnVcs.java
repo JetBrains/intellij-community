@@ -60,8 +60,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -91,7 +91,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private final AbstractSvnUpdateIntegrateEnvironment mySvnIntegrateEnvironment;
   private final SvnHistoryProvider mySvnHistoryProvider;
   private final SvnStatusEnvironment mySvnStatusEnvironment;
-  private final SvnUpToDateRevisionProvider mySvnUpToDateRevisionProvider;
   private final SvnAnnotationProvider myAnnotationProvider;
   private final SvnDiffProvider mySvnDiffProvider;
   private VcsShowConfirmationOption myAddConfirmation;
@@ -139,7 +138,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     mySvnIntegrateEnvironment = new SvnIntegrateEnvironment(this);
     mySvnHistoryProvider = new SvnHistoryProvider(this);
     mySvnStatusEnvironment = new SvnStatusEnvironment(this);
-    mySvnUpToDateRevisionProvider = new SvnUpToDateRevisionProvider();
     myEntriesFileListener = new SvnEntriesFileListener(project);
     myAnnotationProvider = new SvnAnnotationProvider(this);
     mySvnDiffProvider = new SvnDiffProvider(this);
@@ -284,10 +282,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public UpdateEnvironment getStatusEnvironment() {
     return mySvnStatusEnvironment;
-  }
-
-  public UpToDateRevisionProvider getUpToDateRevisionProvider() {
-    return mySvnUpToDateRevisionProvider;
   }
 
   public AnnotationProvider getAnnotationProvider() {

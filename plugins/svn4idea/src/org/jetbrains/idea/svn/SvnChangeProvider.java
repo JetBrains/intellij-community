@@ -19,6 +19,9 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -234,6 +237,29 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
+  private static String getLastUpToDateContentFor(final File file, final String charset) {
+    SVNWCClient wcClient = new SVNWCClient(null, null);
+    try {
+      File lock = new File(file.getParentFile(), SvnUtil.PATH_TO_LOCK_FILE);
+      if (lock.exists()) {
+        return null;
+      }
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      wcClient.doGetFileContents(file, SVNRevision.UNDEFINED, SVNRevision.BASE, true, buffer);
+      buffer.close();
+      return new String(buffer.toByteArray(), charset);
+    }
+    catch (SVNException e) {
+      return null;
+    }
+    catch (UnsupportedEncodingException e) {
+      return null;
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
   private static class SvnUpToDateRevision implements ContentRevision {
     private final FilePath myFile;
     private String myContent = null;
@@ -247,7 +273,7 @@ public class SvnChangeProvider implements ChangeProvider {
     @Nullable
     public String getContent() {
       if (myContent == null) {
-        myContent = SvnUpToDateRevisionProvider.getLastUpToDateContentFor(myFile.getIOFile(), myFile.getCharset().name());
+        myContent = getLastUpToDateContentFor(myFile.getIOFile(), myFile.getCharset().name());
       }
       return myContent;
     }
