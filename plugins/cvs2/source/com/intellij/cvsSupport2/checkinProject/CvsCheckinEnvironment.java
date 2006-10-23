@@ -1,7 +1,6 @@
 package com.intellij.cvsSupport2.checkinProject;
 
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.FilePath;
@@ -31,14 +30,6 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     /*return new CvsProjectAdditionalPanel(panel, myProject);*/
   }
 
-  public RefreshableOnComponent createAdditionalOptionsPanel(Refreshable panel, final boolean checkinProject) {
-    return null;
-  }
-
-  public RefreshableOnComponent createAdditionalOptionsPanelForCheckinFile(Refreshable panel) {
-    return null;
-  }
-
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     if (filesToCheckin == null) {
       return null;
@@ -47,14 +38,6 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
       return null;
     }
     return CvsUtil.getTemplateFor(filesToCheckin[0]);
-  }
-
-  public void onRefreshFinished() {
-    CvsEntriesManager.getInstance().unlockSynchronizationActions();
-  }
-
-  public void onRefreshStarted() {
-    CvsEntriesManager.getInstance().lockSynchronizationActions();
   }
 
   public String prepareCheckinMessage(String text) {

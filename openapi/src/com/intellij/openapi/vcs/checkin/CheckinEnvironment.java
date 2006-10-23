@@ -30,17 +30,8 @@ import org.jetbrains.annotations.Nullable;
 public interface CheckinEnvironment {
   RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel);
 
-  RefreshableOnComponent createAdditionalOptionsPanelForCheckinFile(Refreshable panel);
-
-  @Nullable
-  RefreshableOnComponent createAdditionalOptionsPanel(Refreshable panel, boolean checkinProject);
-
   @Nullable
   String getDefaultMessageFor(FilePath[] filesToCheckin);
-
-  void onRefreshFinished();
-
-  void onRefreshStarted();
 
   String prepareCheckinMessage(String text);
 
