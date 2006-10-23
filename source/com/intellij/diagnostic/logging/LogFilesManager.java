@@ -28,6 +28,7 @@ public class LogFilesManager {
     myManager = manager;
     myUpdateRequest = new Runnable() {
       public void run() {
+        if (project.isDisposed()) return;
         myUpdateAlarm.cancelAllRequests();
         for (LogFileOptions logFile : myLogFileManagerMap.keySet()) {
           Set<String> oldFiles = myLogFileManagerMap.get(logFile);
