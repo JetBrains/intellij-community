@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.RevisionsFactory;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,24 +58,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return new KeepLocksComponent(panel, true);
   }
 
-  public RefreshableOnComponent createAdditionalOptionsPanelForCheckinFile(Refreshable panel) {
-    return new KeepLocksComponent(panel, false);
-  }
-
-  @Nullable
-  public RefreshableOnComponent createAdditionalOptionsPanel(Refreshable panel, boolean checkinProject) {
-    return null;
-  }
-
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     return null;
-  }
-
-  public void onRefreshFinished() {
-  }
-
-  public void onRefreshStarted() {
   }
 
   public String prepareCheckinMessage(String text) {
