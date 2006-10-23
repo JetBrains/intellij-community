@@ -88,7 +88,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
               }
 
             });
-            if (vf != null) {
+            if (vf != null && !vf.getFileType().isBinary()) {
               vfFiles.add(vf);
             }
           }

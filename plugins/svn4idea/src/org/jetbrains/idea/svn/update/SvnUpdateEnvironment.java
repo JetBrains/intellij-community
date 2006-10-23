@@ -99,6 +99,10 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       return rev;
     }
 
+    protected boolean isMerge() {
+      return false;
+    }
+
     private SVNURL getSourceUrl(final File root) {
       try {
         SVNWCClient wcClient = myVcs.createWCClient();

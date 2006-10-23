@@ -98,6 +98,10 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       SvnConfiguration.getInstance(myVcs.getProject()).LAST_MERGED_REVISION = getLastMergedRevision(info.getRevision2(), info.getUrl2());
       return info.getResultRevision();
     }
+
+    protected boolean isMerge() {
+      return true;
+    }
   }
 
   private String getLastMergedRevision(final SVNRevision rev2, final SVNURL svnURL2) {
