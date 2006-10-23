@@ -986,6 +986,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         return provideVirtualFileArray((usages != null) ? usages.toArray(new Usage[usages.size()]) : null, getSelectedUsageTargets());
       }
 
+      if (dataId.equals(DataConstants.HELP_ID)) {
+        return "ideaInterface.find";
+      }
+
       if (node != null) {
         Object userObject = node.getUserObject();
         if (userObject instanceof DataProvider) {
