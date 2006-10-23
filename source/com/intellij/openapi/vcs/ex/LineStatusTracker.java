@@ -265,7 +265,6 @@ public class LineStatusTracker {
     private int myFirstChangedLine;
     private int myUpToDateFirstLine;
     private int myUpToDateLastLine;
-    Range myRange;
     private int myLastChangedLine;
     private int myLinesBeforeChange;
 
@@ -501,13 +500,11 @@ public class LineStatusTracker {
   public static abstract class MyAction extends AnAction {
     protected final LineStatusTracker myLineStatusTracker;
     protected final Range myRange;
-    protected final Editor myEditor;
 
-    protected MyAction(String text, Icon icon, LineStatusTracker lineStatusTracker, Range range, Editor editor) {
+    protected MyAction(String text, Icon icon, LineStatusTracker lineStatusTracker, Range range) {
       super(text, null, icon);
       myLineStatusTracker = lineStatusTracker;
       myRange = range;
-      myEditor = editor;
     }
 
     public void update(AnActionEvent e) {
@@ -530,7 +527,7 @@ public class LineStatusTracker {
 
   public static class RollbackAction extends LineStatusTracker.MyAction {
     public RollbackAction(LineStatusTracker lineStatusTracker, Range range, Editor editor) {
-      super(VcsBundle.message("action.name.rollback"), IconLoader.getIcon("/actions/reset.png"), lineStatusTracker, range, editor);
+      super(VcsBundle.message("action.name.rollback"), IconLoader.getIcon("/actions/reset.png"), lineStatusTracker, range);
     }
 
     public boolean isEnabled() {
@@ -588,7 +585,7 @@ public class LineStatusTracker {
 
   public class ShowDiffAction extends LineStatusTracker.MyAction {
     public ShowDiffAction(LineStatusTracker lineStatusTracker, Range range, Editor editor) {
-      super(VcsBundle.message("action.name.show.difference"), IconLoader.getIcon("/actions/diff.png"), lineStatusTracker, range, editor);
+      super(VcsBundle.message("action.name.show.difference"), IconLoader.getIcon("/actions/diff.png"), lineStatusTracker, range);
     }
 
     public boolean isEnabled() {

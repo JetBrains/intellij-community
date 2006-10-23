@@ -9,8 +9,6 @@ import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,11 +51,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.MessageCategory;
@@ -385,67 +383,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     if (lvcsFile == null) return null;
     LvcsRevision lastUpToDateRevision = StatusUtil.findLastUpToDateRevision(lvcsFile);
     return lastUpToDateRevision.getAbsolutePath().replace('/', File.separatorChar);
-  }
-
-  public void prepareFileForCheckin(final VirtualFile file) {
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      final PsiImportList[] resultList = new PsiImportList[1];
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
-      final boolean[] writable = new boolean[1];
-      writable[0] = true;
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          if (!file.isWritable()) {
-            writable[0] = false;
-            return;
-          }
-          final PsiFile psiFile = psiManager.findFile(file);
-          if (psiFile instanceof PsiJavaFile) {
-            resultList[0] = CodeStyleManager.getInstance(myProject).prepareOptimizeImportsResult((PsiJavaFile)psiFile);
-          }
-        }
-      });
-
-      if (!writable[0]) return;
-
-      if (resultList[0] != null) {
-        Runnable runnable = new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    try {
-                      final PsiFile psiFile = psiManager.findFile(file);
-                      if (psiFile != null) {
-                        final PsiImportList importList = ((PsiJavaFile)psiFile).getImportList();
-                        if (importList != null) {
-                          importList.replace(resultList[0]);
-                        }
-                      }
-                      final Document document = FileDocumentManager.getInstance().getDocument(file);
-                      if (document != null) {
-                        FileDocumentManager.getInstance().saveDocument(document);
-                      }
-                    }
-                    catch (IncorrectOperationException e) {
-                      LOG.error(e);
-                    }
-                  }
-                });
-              }
-            }, VcsBundle.message("process.title.optimize.imports"), null);
-          }
-        };
-
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          runnable.run();
-        }
-        else {
-          ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.NON_MODAL);
-        }
-      }
-    }
   }
 
   public void projectOpened() {

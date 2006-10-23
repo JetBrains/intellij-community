@@ -44,7 +44,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
@@ -132,11 +131,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   protected abstract String getActionName(VcsContext dataContext);
 
   protected abstract FilePath[] getRoots(VcsContext project);
-
-  protected static void refreshFileView(Project project) {
-    if (project == null) return;
-    FileViewManagerImpl.getInstance(project).refreshFileView();
-  }
 
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();

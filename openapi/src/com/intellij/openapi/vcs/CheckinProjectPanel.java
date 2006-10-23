@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -36,13 +35,6 @@ import java.util.List;
  * @see com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#createHandler(CheckinProjectPanel)
  */
 public interface CheckinProjectPanel extends Refreshable {
-  /**
-   * The data ID that can be used to retrieve the list of revisions in the check-in as an
-   * array of {@link com.intellij.openapi.vcs.versions.AbstractRevisions} objects. The data provider
-   * to which the ID can be passed is the component returned from {@link #getComponent()}.
-   */
-  @NonNls String REVISIONS = "Revisions";
-
   JComponent getComponent();
 
   JComponent getPreferredFocusedComponent();

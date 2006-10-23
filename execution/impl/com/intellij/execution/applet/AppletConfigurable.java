@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ui.exclude.ComparablesComparator;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
@@ -263,8 +262,6 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private static abstract class MyColumnInfo extends ColumnInfo<AppletConfiguration.AppletParameter, String> {
-    private static final ComparablesComparator<String> COMPARATOR = new ComparablesComparator<String>();
-
     public MyColumnInfo(final String name) {
       super(name);
     }
@@ -273,7 +270,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
       return new Comparator<AppletConfiguration.AppletParameter>() {
         public int compare(final AppletConfiguration.AppletParameter parameter1,
                            final AppletConfiguration.AppletParameter parameter2) {
-          return COMPARATOR.compare(valueOf(parameter1), valueOf(parameter2));
+          return valueOf(parameter1).compareTo(valueOf(parameter2));
         }
       };
     }

@@ -9,9 +9,15 @@ import junit.framework.TestCase;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.util.Iterator;
+import java.util.Comparator;
 
 public class SortedListModelTest extends TestCase {
-  private SortedListModel myModel = new SortedListModel(new ComparablesComparator());
+  private SortedListModel myModel = new SortedListModel(new Comparator() {
+    public int compare(final Object o1, final Object o2) {
+      return ((Comparable) o1).compareTo((Comparable) o2);
+    }
+  }
+  );
   private Assertion CHECK = new Assertion();
 
   public void testAdding() {
