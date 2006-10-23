@@ -6,7 +6,6 @@ import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.annotate.CvsFileAnnotation;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
-import com.intellij.cvsSupport2.changeBrowser.CvsVersionsProvider;
 import com.intellij.cvsSupport2.checkinProject.AdditionalOptionsPanel;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinFile;
@@ -44,7 +43,6 @@ import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -397,10 +395,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   @Nullable
   public RevisionSelector getRevisionSelector() {
     return new CvsRevisionSelector(myProject);
-  }
-
-  public VersionsProvider getVersionsProvider(VirtualFile root) {
-    return new CvsVersionsProvider(root, myProject);
   }
 
   public String getCheckinOperationName() {
