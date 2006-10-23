@@ -44,7 +44,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -53,7 +52,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.jetbrains.idea.svn.history.SvnVersionsProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.update.AbstractSvnUpdateIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
@@ -521,24 +519,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       SvnFileStatus.OBSTRUCTED,
       SvnFileStatus.REPLACED,
       SvnFileStatus.SWITCHED};
-  }
-
-  public VersionsProvider getVersionsProvider(VirtualFile root) {
-    try {
-      SVNWCClient wcClient = createWCClient();
-      SVNInfo info = wcClient.doInfo(new File(root.getPath()), SVNRevision.WORKING);
-      if (info != null) {
-        final SVNURL url = info.getURL();
-        if (url != null) {
-          return new SvnVersionsProvider(myProject, url.toString());
-        }
-      }
-
-      return null;
-    }
-    catch (Throwable e) {
-      return null;
-    }
   }
 
   @Override
