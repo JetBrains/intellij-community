@@ -162,7 +162,7 @@ public class LocalVcsTest {
   @Test
   public void testAddingAndChangingSameFileBeforeCommit() {
     myVcs.addFile("file", "content");
-    myVcs.addFile("file", "new content");
+    myVcs.changeFile("file", "new content");
     myVcs.commit();
 
     assertEquals("new content", myVcs.getFileContent("file"));
