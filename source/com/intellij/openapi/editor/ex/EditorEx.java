@@ -4,19 +4,18 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.TypeSafeDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-
-import org.jetbrains.annotations.NonNls;
 
 public interface EditorEx extends Editor {
   @NonNls String PROP_INSERT_MODE = "insertMode";
@@ -83,7 +82,7 @@ public interface EditorEx extends Editor {
 
   void setFile(VirtualFile vFile);
 
-  DataContext getDataContext();
+  TypeSafeDataContext getDataContext();
 
   boolean processKeyTyped(KeyEvent e);
 

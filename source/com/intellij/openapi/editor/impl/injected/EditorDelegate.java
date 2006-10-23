@@ -6,6 +6,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.TypeSafeDataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -425,7 +426,7 @@ public class EditorDelegate implements EditorEx {
     return new LogicalPosition(pos.line, pos.column);
   }
 
-  public DataContext getDataContext() {
+  public TypeSafeDataContext getDataContext() {
     return myDelegate.getDataContext();
   }
 

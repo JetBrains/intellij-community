@@ -34,7 +34,7 @@ import java.util.Map;
 public final class AnActionEvent {
   private final InputEvent myInputEvent;
   private final ActionManager myActionManager;
-  @NotNull private final DataContext myDataContext;
+  @NotNull private final TypeSafeDataContext myDataContext;
   @NotNull private final String myPlace;
   @NotNull private final Presentation myPresentation;
   private final int myModifiers;
@@ -57,7 +57,12 @@ public final class AnActionEvent {
     // TODO[vova,anton] make this constructor package local. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
     myActionManager = actionManager;
-    myDataContext = dataContext;
+    if (dataContext instanceof TypeSafeDataContext) {
+      myDataContext = (TypeSafeDataContext) dataContext;
+    }
+    else {
+      myDataContext = new TypeSafeDataContextAdapter(dataContext);
+    }
     myPlace = place;
     myPresentation = presentation;
     myModifiers = modifiers;
@@ -97,17 +102,32 @@ public final class AnActionEvent {
    */
   @NotNull
   public DataContext getDataContext() {
+    return getTypeSafeDataContext();
+  }
+
+  public TypeSafeDataContext getTypeSafeDataContext() {
     if (!myWorksInInjected) {
       return myDataContext;
     }
-    return new DataContext() {
+    return new TypeSafeDataContext() {
       @Nullable
       public Object getData(@NonNls String dataId) {
         Object injected = myDataContext.getData(injectedId(dataId));
         if (injected != null) return injected;
         return myDataContext.getData(dataId);
       }
+
+      @Nullable
+      public <T> T getData(@NotNull DataKey<T> key) {
+        //noinspection unchecked
+        return (T)getData(key.getName());
+      }
     };
+  }
+
+  @Nullable
+  public <T> T getData(@NotNull DataKey<T> key) {
+    return getTypeSafeDataContext().getData(key);
   }
 
   /**
@@ -150,5 +170,24 @@ public final class AnActionEvent {
 
   public boolean isInInjectedContext() {
     return myWorksInInjected;
+  }
+
+  private static class TypeSafeDataContextAdapter implements TypeSafeDataContext {
+    private DataContext myBaseContext;
+
+    public TypeSafeDataContextAdapter(final DataContext baseContext) {
+      myBaseContext = baseContext;
+    }
+
+    @Nullable
+    public <T> T getData(@NotNull DataKey<T> key) {
+      //noinspection unchecked
+      return (T) myBaseContext.getData(key.getName());
+    }
+
+    @Nullable
+    public Object getData(@NonNls String dataId) {
+      return myBaseContext.getData(dataId);
+    }
   }
 }

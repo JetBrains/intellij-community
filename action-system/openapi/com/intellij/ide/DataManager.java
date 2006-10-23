@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.TypeSafeDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,12 +32,12 @@ public abstract class DataManager {
   /**
    * @return {@link DataContext} constructed by the current focused component
    */
-  public abstract DataContext getDataContext();
+  public abstract TypeSafeDataContext getDataContext();
 
   /**
    * @return {@link DataContext} constructed by the specified <code>component</code>
    */
-  public abstract DataContext getDataContext(Component component);
+  public abstract TypeSafeDataContext getDataContext(Component component);
 
   /**
    * @return {@link DataContext} constructed be the specified <code>component</code>
@@ -46,5 +47,5 @@ public abstract class DataManager {
    * @exception java.lang.IllegalArgumentException if point <code>(x, y)</code> is not inside
    * component's bounds
    */
-  public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
+  public abstract TypeSafeDataContext getDataContext(@NotNull Component component, int x, int y);
 }

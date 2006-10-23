@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows an action to retrieve information about the context in which it was invoked.
@@ -26,19 +25,14 @@ import org.jetbrains.annotations.NotNull;
  * @see DataConstants
  * @see DataProvider
  */
-public abstract class DataContext {
+public interface DataContext {
   /**
    * Returns the object corresponding to the specified data identifier. Some of the supported
    * data identifiers are defined in the {@link DataConstants} class.
    *
    * @param dataId the data identifier for which the value is requested.
    * @return the value, or null if no value is available in the current context for this identifier.
-   * @deprecated Use {@link #getData(DataKey)} instead.
+   * @deprecated Use {@link TypeSafeDataContext#getData(DataKey)} instead.
    */
-  @Nullable public abstract Object getData(@NonNls String dataId);
-
-  @Nullable public <T> T getData(@NotNull DataKey<T> key) {
-    //noinspection unchecked
-    return (T) getData(key.getName());
-  }
+  @Nullable Object getData(@NonNls String dataId);
 }

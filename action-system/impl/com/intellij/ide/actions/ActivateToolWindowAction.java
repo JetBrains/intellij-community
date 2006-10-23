@@ -26,7 +26,7 @@ public class ActivateToolWindowAction extends AnAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = event.getDataContext().getData(DataKeys.PROJECT);
+    Project project = event.getData(DataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
@@ -38,7 +38,7 @@ public class ActivateToolWindowAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e){
-    Project project = e.getDataContext().getData(DataKeys.PROJECT);
+    Project project = e.getData(DataKeys.PROJECT);
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
       windowManager.getToolWindow(myToolWindowId).activate(null);

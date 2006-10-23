@@ -6,10 +6,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.*;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -2357,19 +2354,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  public DataContext getDataContext() {
+  public TypeSafeDataContext getDataContext() {
     return getProjectAwareDataContext(DataManager.getInstance().getDataContext(getContentComponent()));
   }
 
-  private DataContext getProjectAwareDataContext(final DataContext original) {
+  private TypeSafeDataContext getProjectAwareDataContext(final TypeSafeDataContext original) {
     if (original.getData(DataConstants.PROJECT) == myProject) return original;
 
-    return new DataContext() {
+    return new TypeSafeDataContext() {
       public Object getData(String dataId) {
         if (DataConstants.PROJECT.equals(dataId)) {
           return myProject;
         }
         return original.getData(dataId);
+      }
+
+      @Nullable
+      public <T> T getData(@NotNull DataKey<T> key) {
+        //noinspection unchecked
+        return (T) getData(key.getName());
       }
     };
   }

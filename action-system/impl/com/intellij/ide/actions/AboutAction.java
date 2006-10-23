@@ -34,7 +34,7 @@ public class AboutAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Window window = WindowManager.getInstance().suggestParentWindow(e.getDataContext().getData(DataKeys.PROJECT));
+    Window window = WindowManager.getInstance().suggestParentWindow(e.getData(DataKeys.PROJECT));
 
     showAboutDialog(window);
   }

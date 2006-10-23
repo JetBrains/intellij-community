@@ -130,11 +130,11 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return data;
   }
 
-  public DataContext getDataContext(Component component) {
+  public TypeSafeDataContext getDataContext(Component component) {
     return new MyDataContext(component);
   }
 
-  public DataContext getDataContext(@NotNull Component component, int x, int y) {
+  public TypeSafeDataContext getDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
       throw new IllegalArgumentException("wrong point: x=" + x + "; y=" + y);
     }
@@ -155,12 +155,12 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myWindowManager = windowManager;
   }
 
-  public DataContext getDataContext() {
+  public TypeSafeDataContext getDataContext() {
     return getDataContext(getFocusedComponent());
   }
 
-  public DataContext getDataContextTest(Component component) {
-    DataContext dataContext = getDataContext(component);
+  public TypeSafeDataContext getDataContextTest(Component component) {
+    TypeSafeDataContext dataContext = getDataContext(component);
     if (myWindowManager == null) {
       return dataContext;
     }
@@ -218,7 +218,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return "DataManager";
   }
 
-  public class MyDataContext extends DataContext {
+  public class MyDataContext implements TypeSafeDataContext {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
     // the weak reference. For example, Swing often remembers menu items
@@ -270,6 +270,12 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     @NonNls
     public String toString() {
       return "component=" + String.valueOf(myRef.get());
+    }
+
+    @Nullable
+    public <T> T getData(@NotNull DataKey<T> key) {
+      //noinspection unchecked
+      return (T) getData(key.getName());
     }
   }
 

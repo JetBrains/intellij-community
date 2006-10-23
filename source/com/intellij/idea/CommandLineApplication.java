@@ -1,11 +1,14 @@
 package com.intellij.idea;
 
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.TypeSafeDataContext;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -47,19 +50,25 @@ public class CommandLineApplication {
 
   public static class MyDataManagerImpl extends DataManagerImpl {
     
-    public DataContext getDataContext() {
-      return new DataContext() {
+    public TypeSafeDataContext getDataContext() {
+      return new TypeSafeDataContext() {
         public Object getData(String dataId) {
           return ourInstance.getData(dataId);
+        }
+
+        @Nullable
+        public <T> T getData(@NotNull DataKey<T> key) {
+          //noinspection unchecked
+          return (T) getData(key.getName());
         }
       };
     }
 
-    public DataContext getDataContext(Component component) {
+    public TypeSafeDataContext getDataContext(Component component) {
       return getDataContext();
     }
 
-    public DataContext getDataContext(Component component, int x, int y) {
+    public TypeSafeDataContext getDataContext(Component component, int x, int y) {
       return getDataContext();
     }
   }

@@ -404,14 +404,14 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Change[] changes = e.getDataContext().getData(DataKeys.CHANGES);
+      Change[] changes = e.getData(DataKeys.CHANGES);
       RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes), true);
       ChangeListManager.getInstance(myProject).ensureUpToDate(false);
       rebuildList();
     }
 
     public void update(AnActionEvent e) {
-      Change[] changes = e.getDataContext().getData(DataKeys.CHANGES);
+      Change[] changes = e.getData(DataKeys.CHANGES);
       e.getPresentation().setEnabled(changes != null);
     }
   }
