@@ -1,35 +1,33 @@
 package com.intellij.localvcs;
 
-import java.io.File;
-
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
-public class LocalVcsTest extends TempDirTestCase {
-  private File myFile;
+public class LocalVcsTest {
+  private String myFileName;
   private LocalVcs myVcs;
 
   @Before
   public void setUp() {
-    myFile = createFile("file");
+    myFileName = "file";
     myVcs = new LocalVcs();
   }
 
   @Test
   public void testCommitting() {
-    myVcs.addFile(myFile, "");
-    assertFalse(myVcs.hasFile(myFile));
+    myVcs.addFile(myFileName, "");
+    assertFalse(myVcs.hasFile(myFileName));
 
     myVcs.commit();
-    assertTrue(myVcs.hasFile(myFile));
+    assertTrue(myVcs.hasFile(myFileName));
   }
 
   @Test
-  public void testClearingUncommittedFiles() {
+  public void testClearingAddedFiles() {
     assertTrue(myVcs.isClean());
 
-    myVcs.addFile(myFile, "");
+    myVcs.addFile(myFileName, "");
     assertFalse(myVcs.isClean());
 
     myVcs.commit();
@@ -38,40 +36,45 @@ public class LocalVcsTest extends TempDirTestCase {
   }
 
   @Test
-  public void testContent() {
-    myVcs.addFile(myFile, "content");
+  public void testContentBeforeCommit() {
+    myVcs.addFile(myFileName, "content");
     myVcs.commit();
 
-    myVcs.addFile(myFile, "new content");
+    myVcs.addFile(myFileName, "new content");
 
-    assertEquals("content", myVcs.getFileContent(myFile));
+    assertEquals("content", myVcs.getFileContent(myFileName));
   }
+
+  //@Test
+  //public void testChangingContent() {
+  //
+  //}
 
   @Test
   public void testContentOnUnknownFile() {
-    assertNull(myVcs.getFileContent(myFile));
+    assertNull(myVcs.getFileContent(myFileName));
   }
 
   @Test
   public void testDelete() {
-    myVcs.addFile(myFile, "content");
+    myVcs.addFile(myFileName, "content");
     myVcs.commit();
 
-    myVcs.deleteFile(myFile);
-    assertEquals("content", myVcs.getFileContent(myFile));
+    myVcs.deleteFile(myFileName);
+    assertEquals("content", myVcs.getFileContent(myFileName));
 
     myVcs.commit();
-    assertNull(myVcs.getFileContent(myFile));
+    assertNull(myVcs.getFileContent(myFileName));
   }
 
   @Test
-  public void testClearingDeletetFiles() {
-    myVcs.addFile(myFile, "content");
+  public void testClearingDeletedFiles() {
+    myVcs.addFile(myFileName, "content");
     myVcs.commit();
 
     assertTrue(myVcs.isClean());
 
-    myVcs.deleteFile(myFile);
+    myVcs.deleteFile(myFileName);
     assertFalse(myVcs.isClean());
 
     myVcs.commit();
