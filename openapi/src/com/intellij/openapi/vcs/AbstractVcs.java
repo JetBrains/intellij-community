@@ -61,26 +61,6 @@ public abstract class AbstractVcs {
 
   public abstract Configurable getConfigurable();
 
-  public StandardOperationsProvider getStandardOperationsProvider() {
-    return null;
-  }
-
-  public FileRenameProvider getFileRenamer() {
-    return null;
-  }
-
-  public DirectoryRenameProvider getDirectoryRenamer() {
-    return null;
-  }
-
-  public FileMoveProvider getFileMover() {
-    return null;
-  }
-
-  public DirectoryMoveProvider getDirectoryMover() {
-    return null;
-  }
-
   public TransactionProvider getTransactionProvider() {
     return null;
   }

@@ -189,7 +189,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return myCvsStandardOperationsProvider.getFileContent(path);
   }
 
-  public StandardOperationsProvider getStandardOperationsProvider() {
+  public CvsStandardOperationsProvider getStandardOperationsProvider() {
     return myCvsStandardOperationsProvider;
   }
   /* =========================================================*/

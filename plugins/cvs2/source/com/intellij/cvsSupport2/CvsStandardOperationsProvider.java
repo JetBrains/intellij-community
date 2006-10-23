@@ -40,14 +40,13 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.StandardOperationsProvider;
 import com.intellij.openapi.vcs.VcsException;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
 import java.util.Map;
 
-public class CvsStandardOperationsProvider implements StandardOperationsProvider{
+public class CvsStandardOperationsProvider {
 
   private RepositoryModificationOperation myCurrentTransaction;
   private final Project myProject;
