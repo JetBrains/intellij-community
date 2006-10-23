@@ -35,8 +35,7 @@ public class ContextHelpAction extends AnAction {
     Presentation presentation = event.getPresentation();
     if (ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
       DataContext dataContext = event.getDataContext();
-      String helpId = myHelpID == null ? (String)dataContext.getData(DataConstantsEx.HELP_ID) : myHelpID;
-      presentation.setEnabled(helpId != null);
+      presentation.setEnabled(dataContext.getData(DataConstantsEx.HELP_ID) != null || myHelpID != null);
     }
     else {
       presentation.setIcon(myIcon);
