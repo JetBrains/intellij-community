@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicGraphUtil;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
@@ -52,6 +53,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   private Module[] myModules;
 
   private Splitter mySplitter;
+  @NonNls private static String ourHelpID = "module.dependencies.tool.window";
+
   public ModulesDependenciesPanel(final Project project, final Module[] modules) {
     super(new BorderLayout());
     myProject = project;
@@ -118,6 +121,9 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
         e.getPresentation().setIcon(isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png"));
       }
     });
+
+    group.add(new ContextHelpAction(ourHelpID));
+
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
   }
@@ -408,6 +414,9 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
             return ((MyUserObject)node.getUserObject()).getModule();
           }
         }
+      }
+      if (DataConstants.HELP_ID.equals(dataId)) {
+        return ModulesDependenciesPanel.ourHelpID;
       }
       return null;
     }
