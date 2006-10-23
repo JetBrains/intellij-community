@@ -23,12 +23,14 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
     super(CODE_BLOCK);
   }
 
-  public synchronized void clearCaches() {
+  public void clearCaches() {
     super.clearCaches();
-    myProcessed = false;
-    myConflict = false;
-    myVariablesSet = null;
-    myClassesSet = null;
+    synchronized (PsiLock.LOCK) {
+      myProcessed = false;
+      myConflict = false;
+      myVariablesSet = null;
+      myClassesSet = null;
+    }
   }
 
   @NotNull
@@ -63,44 +65,49 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
   private boolean myConflict = false;
   private boolean myProcessed = false;
 
-  private synchronized void buildMaps(){
-    if(myProcessed) return;
-    myProcessed = true;
+  private void buildMaps() {
+    synchronized (PsiLock.LOCK) {
+      if (myProcessed) return;
+      myProcessed = true;
+    }
     PsiScopesUtil.walkChildrenScopes(this, new BaseScopeProcessor() {
       public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-        if(element instanceof PsiLocalVariable){
-          final PsiLocalVariable variable = (PsiLocalVariable)element;
-          final String name = variable.getName();
-          Set<String> localsSet = myVariablesSet;
-          if(localsSet != null && localsSet.contains(name)){
-            myConflict = true;
-            myVariablesSet = null;
-            myClassesSet = null;
+        synchronized (PsiLock.LOCK) {
+          if (element instanceof PsiLocalVariable) {
+            final PsiLocalVariable variable = (PsiLocalVariable)element;
+            final String name = variable.getName();
+            Set<String> localsSet = myVariablesSet;
+            if (localsSet != null && localsSet.contains(name)) {
+              myConflict = true;
+              myVariablesSet = null;
+              myClassesSet = null;
+            }
+            else {
+              if (localsSet == null) localsSet = new HashSet<String>();
+              localsSet.add(name);
+              myVariablesSet = localsSet;
+            }
           }
-          else {
-            if (localsSet == null) localsSet = new HashSet<String>();
-            localsSet.add(name);
-            myVariablesSet = localsSet;
+          else if (element instanceof PsiClass) {
+            final PsiClass psiClass = (PsiClass)element;
+            final String name = psiClass.getName();
+            Set<String> classesSet = myClassesSet;
+            if (classesSet != null && classesSet.contains(name)) {
+              myConflict = true;
+              myVariablesSet = null;
+              myClassesSet = null;
+            }
+            else {
+              if (classesSet == null) classesSet = new HashSet<String>();
+              classesSet.add(name);
+              myClassesSet = classesSet;
+            }
           }
+          return !myConflict;
         }
-        else if(element instanceof PsiClass){
-          final PsiClass psiClass = (PsiClass)element;
-          final String name = psiClass.getName();
-          Set<String> classesSet = myClassesSet;
-          if(classesSet != null && classesSet.contains(name)){
-            myConflict = true;
-            myVariablesSet = null;
-            myClassesSet = null;
-          }
-          else {
-            if (classesSet == null) classesSet = new HashSet<String>();
-            classesSet.add(name);
-            myClassesSet = classesSet;
-          }
-        }
-        return !myConflict;
       }
     }, PsiSubstitutor.EMPTY, this, this);
+
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
@@ -161,29 +168,26 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    if (lastParent == null)
-    // Parent element should not see our vars
+    if (lastParent == null) {
+      // Parent element should not see our vars
       return true;
+    }
     buildMaps();
     final NameHint hint = processor.getHint(NameHint.class);
     if (hint != null && !myConflict) {
       final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.class);
       final String name = hint.getName();
-      if (myClassesSet != null && (elementClassHint == null || elementClassHint.shouldProcess(PsiClass.class))) {
-        if (myClassesSet.contains(name)) {
-          return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
-        }
-      }
-      if (myVariablesSet != null && (elementClassHint == null || elementClassHint.shouldProcess(PsiVariable.class))) {
-        if (myVariablesSet.contains(name)) {
-          return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
-        }
-      }
-    }
-    else {
-      if (myConflict || (myVariablesSet != null || myClassesSet != null)) {
+      final Set<String> classesSet = myClassesSet;
+      if (classesSet != null && (elementClassHint == null || elementClassHint.shouldProcess(PsiClass.class)) && classesSet.contains(name)) {
         return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
       }
+      final Set<String> variablesSet = myVariablesSet;
+      if (variablesSet != null && (elementClassHint == null || elementClassHint.shouldProcess(PsiVariable.class)) && variablesSet.contains(name)) {
+        return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+      }
+    }
+    else if (myConflict || myVariablesSet != null || myClassesSet != null) {
+      return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
     }
     return true;
   }
