@@ -18,10 +18,10 @@
  * Created by IntelliJ IDEA.
  * User: yole
  * Date: 23.10.2006
- * Time: 17:05:00
+ * Time: 18:40:56
  */
 package com.intellij.openapi.actionSystem;
 
-public interface TypeSafeDataProvider {
-  void calcData(DataKey key, DataSink sink);
+public interface DataSink {
+  <T> void put(DataKey<T> key, T data); 
 }

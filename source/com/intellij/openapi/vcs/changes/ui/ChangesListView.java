@@ -5,7 +5,6 @@ import com.intellij.ide.dnd.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -50,7 +49,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class ChangesListView extends Tree implements DataProvider, DeleteProvider, AdvancedDnDSource {
+public class ChangesListView extends Tree implements TypeSafeDataProvider, DeleteProvider, AdvancedDnDSource {
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
@@ -60,6 +59,8 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
 
   @NonNls public static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
   @NonNls public static final String MISSING_FILES_KEY = "ChangeListView.MissingFiles";
+  @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create(UNVERSIONED_FILES_KEY);
+  @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create(MISSING_FILES_KEY);
 
   public ChangesListView(final Project project) {
     myProject = project;
@@ -141,37 +142,34 @@ public class ChangesListView extends Tree implements DataProvider, DeleteProvide
     restoreState();
   }
 
-  @Nullable
-  public Object getData(String dataId) {
-    if (DataConstants.CHANGES.equals(dataId)) {
-      return getSelectedChanges();
+  public void calcData(DataKey key, DataSink sink) {
+    if (key == DataKeys.CHANGES) {
+      sink.put(DataKeys.CHANGES, getSelectedChanges());
     }
-    else if (DataConstants.CHANGE_LISTS.equals(dataId)) {
-      return getSelectedChangeLists();
+    else if (key == DataKeys.CHANGE_LISTS) {
+      sink.put(DataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
-    else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
-      return getSelectedFiles();
+    else if (key == DataKeys.VIRTUAL_FILE_ARRAY) {
+      sink.put(DataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
-    else if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    else if (key == DataKeys.NAVIGATABLE) {
       final VirtualFile[] files = getSelectedFiles();
       if (files.length == 1) {
-        return new OpenFileDescriptor(myProject, files[0], 0);
+        sink.put(DataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, files[0], 0));
       }
     }
-    else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
-      return ChangesUtil.getNavigatableArray(myProject, getSelectedFiles());
+    else if (key == DataKeys.NAVIGATABLE_ARRAY) {
+      sink.put(DataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     }
-    else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
-      return this;
+    else if (key == DataKeys.DELETE_ELEMENT_PROVIDER) {
+      sink.put(DataKeys.DELETE_ELEMENT_PROVIDER, this);
     }
-    else if (UNVERSIONED_FILES_KEY.equals(dataId)) {
-      return getSelectedUnversionedFiles();
+    else if (key == UNVERSIONED_FILES_DATA_KEY) {
+      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
     }
-    else if (MISSING_FILES_KEY.equals(dataId)) {
-      return getSelectedMissingFiles();
+    else if (key == MISSING_FILES_DATA_KEY) {
+      sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles());
     }
-
-    return null;
   }
 
   private List<VirtualFile> getSelectedUnversionedFiles() {
