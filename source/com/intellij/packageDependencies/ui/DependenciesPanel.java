@@ -37,7 +37,10 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
 
-public class DependenciesPanel extends JPanel implements Disposable {
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+
+public class DependenciesPanel extends JPanel implements Disposable, DataProvider {
   private Map<PsiFile, Set<PsiFile>> myDependencies;
   private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private MyTree myLeftTree = new MyTree();
@@ -317,6 +320,15 @@ public class DependenciesPanel extends JPanel implements Disposable {
   public void dispose() {
   }
 
+  @Nullable
+  @NonNls
+  public Object getData(@NonNls String dataId) {
+    if (dataId.equals(DataConstants.HELP_ID)) {
+      return "dependency.viewer.tool.window";
+    }
+    return null;
+  }
+
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(
     JTree tree,
@@ -483,7 +495,7 @@ public class DependenciesPanel extends JPanel implements Disposable {
     }
 
     public void actionPerformed(AnActionEvent event) {
-      HelpManager.getInstance().invokeHelp("editing.analyzeDependencies");
+      HelpManager.getInstance().invokeHelp("dependency.viewer.tool.window");
     }
   }
 

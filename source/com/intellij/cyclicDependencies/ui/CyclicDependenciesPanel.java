@@ -25,6 +25,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -43,7 +44,7 @@ import java.util.Set;
  * User: anna
  * Date: Jan 31, 2005
  */
-public class CyclicDependenciesPanel extends JPanel implements Disposable {
+public class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
 
   private HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
@@ -369,6 +370,15 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable {
   public void dispose() {    
   }
 
+  @Nullable
+  @NonNls
+  public Object getData(@NonNls String dataId) {
+    if (dataId.equals(DataConstants.HELP_ID)) {
+      return "dependency.viewer.tool.window";
+    }
+    return null;
+  }
+
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     public void customizeCellRenderer(JTree tree,
                                       Object value,
@@ -465,7 +475,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable {
     }
 
     public void actionPerformed(AnActionEvent event) {
-      HelpManager.getInstance().invokeHelp("editing.analyzeDependencies");//todo
+      HelpManager.getInstance().invokeHelp("dependency.viewer.tool.window");//todo
     }
   }
 

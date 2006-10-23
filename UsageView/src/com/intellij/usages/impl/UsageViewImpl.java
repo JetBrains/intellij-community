@@ -327,7 +327,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       actionsManager.createNextOccurenceAction(myRootPanel),
       actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider()),
       actionsManager.createExportToTextFileAction(myTextFileExporter),
-      actionsManager.createHelpAction(null)
+      actionsManager.createHelpAction("ideaInterface.find")
     };
   }
 

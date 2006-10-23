@@ -2,6 +2,8 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +25,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 
-public class UsagesPanel extends JPanel implements Disposable {
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+
+public class UsagesPanel extends JPanel implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.UsagesPanel");
 
   private Project myProject;
@@ -154,4 +159,12 @@ public class UsagesPanel extends JPanel implements Disposable {
     return label;
   }
 
+  @Nullable
+  @NonNls
+  public Object getData(@NonNls String dataId) {
+    if (dataId.equals(DataConstants.HELP_ID)) {
+      return "ideaInterface.find";
+    }
+    return null;
+  }
 }
