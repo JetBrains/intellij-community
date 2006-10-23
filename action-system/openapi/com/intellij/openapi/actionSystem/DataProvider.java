@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
  * {@link DataConstants#NAVIGATABLE_ARRAY} can be generated from it automatically.
  *
  * @see DataContext
+ * @deprecated TypeSafeDataProvider should be used instead
  */
 public interface DataProvider {
   /**

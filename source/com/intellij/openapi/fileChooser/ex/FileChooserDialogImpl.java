@@ -371,7 +371,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  private final class MyPanel extends JPanel implements DataContext{
+  private final class MyPanel extends JPanel implements DataProvider {
     public MyPanel() {
       super(new BorderLayout());
     }

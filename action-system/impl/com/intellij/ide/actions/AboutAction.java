@@ -8,10 +8,9 @@ import com.intellij.ide.license.LicenseManager;
 import com.intellij.ide.license.ui.LicenseUrls;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,9 +22,11 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
-import java.util.List;
 import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Properties;
 
 public class AboutAction extends AnAction {
   public void update(AnActionEvent e) {
@@ -33,14 +34,14 @@ public class AboutAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Window window = WindowManager.getInstance().suggestParentWindow((Project)e.getDataContext().getData(DataConstants.PROJECT));
+    Window window = WindowManager.getInstance().suggestParentWindow(e.getDataContext().getData(DataKeys.PROJECT));
 
     showAboutDialog(window);
   }
 
   public static void showAbout() {
     Window window = WindowManager.getInstance().suggestParentWindow(
-      (Project)DataManager.getInstance().getDataContext().getData(DataConstants.PROJECT));
+      DataManager.getInstance().getDataContext().getData(DataKeys.PROJECT));
 
     showAboutDialog(window);
   }

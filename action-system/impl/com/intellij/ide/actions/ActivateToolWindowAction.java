@@ -1,18 +1,17 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ActivateToolWindowAction extends AnAction {
   private String myToolWindowId;
@@ -27,7 +26,7 @@ public class ActivateToolWindowAction extends AnAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    Project project = event.getDataContext().getData(DataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
@@ -39,7 +38,7 @@ public class ActivateToolWindowAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e){
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = e.getDataContext().getData(DataKeys.PROJECT);
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
       windowManager.getToolWindow(myToolWindowId).activate(null);

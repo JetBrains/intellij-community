@@ -3,10 +3,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.dataRules.*;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -89,6 +86,9 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     DataProvider dataProvider = null;
     if (c instanceof DataProvider) {
       dataProvider = (DataProvider)c;
+    }
+    else if (c instanceof TypeSafeDataProvider) {
+      dataProvider = new TypeSafeDataProviderAdapter((TypeSafeDataProvider) c);
     }
     else if (c instanceof JComponent) {
       JComponent component = (JComponent)c;
@@ -218,7 +218,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return "DataManager";
   }
 
-  public class MyDataContext implements DataContext {
+  public class MyDataContext extends DataContext {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
     // the weak reference. For example, Swing often remembers menu items
@@ -270,6 +270,19 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     @NonNls
     public String toString() {
       return "component=" + String.valueOf(myRef.get());
+    }
+  }
+
+  private static class TypeSafeDataProviderAdapter implements DataProvider {
+    private TypeSafeDataProvider myProvider;
+
+    public TypeSafeDataProviderAdapter(final TypeSafeDataProvider provider) {
+      myProvider = provider;
+    }
+
+    @Nullable
+    public Object getData(@NonNls String dataId) {
+      return myProvider.getData(DataKey.create(dataId));
     }
   }
 }
