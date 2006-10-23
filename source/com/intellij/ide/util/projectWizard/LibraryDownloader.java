@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,13 +67,14 @@ public class LibraryDownloader {
     final List<Pair<LibraryInfo, File>> downloadedFiles = new ArrayList<Pair<LibraryInfo, File>>();
     final List<VirtualFile> existingFiles = new ArrayList<VirtualFile>();
     final Exception[] exception = new Exception[]{null};
-
+    final Ref<LibraryInfo> currentLibrary = new Ref<LibraryInfo>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         try {
           for (int i = 0; i < myLibraryInfos.length; i++) {
             LibraryInfo info = myLibraryInfos[i];
+            currentLibrary.set(info);
             if (indicator != null) {
               indicator.checkCanceled();
               indicator.setText(J2EEBundle.message("progress.0.of.1.file.downloaded.text", i, myLibraryInfos.length));
@@ -113,9 +115,12 @@ public class LibraryDownloader {
 
     deleteFiles(downloadedFiles);
     if (exception[0] instanceof IOException) {
+      String message = J2EEBundle.message("error.library.download.failed");
+      if (currentLibrary.get() != null) {
+        message += ": " + currentLibrary.get().getDownloadingUrl();
+      }
       final boolean tryAgain = IOExceptionDialog.showErrorDialog((IOException)exception[0],
-                                                                 J2EEBundle.message("progress.download.libraries.title"),
-                                                                 J2EEBundle.message("error.library.download.failed"));
+                                                                 J2EEBundle.message("progress.download.libraries.title"), message);
       if (tryAgain) {
         return doDownload(dir);
       }
