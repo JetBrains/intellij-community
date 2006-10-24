@@ -5,7 +5,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
-import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -108,8 +107,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   public String getCanonicalText() {
-    String value = getStringValue();
-    return value != null ? value : J2EEBundle.message("unknown.j2ee.reference.canonical.text");
+    return getStringValue();
   }
 
   public String getUnresolvedMessagePattern() {
