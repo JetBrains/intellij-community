@@ -18,12 +18,11 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.MarkupModelImpl");
@@ -78,23 +77,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       }
     }
     return offset;
-  }
-
-  public RangeHighlighter addLineHighliterAtOffset(int startOffset,
-                                                   int endOffset,
-                                                   int layer,
-                                                   TextAttributes textAttributes) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    RangeHighlighterImpl highlighter = new RangeHighlighterImpl(this, startOffset, endOffset, layer,
-                                                                HighlighterTargetArea.LINES_IN_RANGE, textAttributes,
-                                                                false);
-
-    myHighlighters.add(highlighter);
-    myCachedHighlighters = null;
-    myHighlighterList.addSegmentHighlighter(highlighter);
-    fireSegmentHighlighterChanged(highlighter);
-    return highlighter;
   }
 
   @NotNull

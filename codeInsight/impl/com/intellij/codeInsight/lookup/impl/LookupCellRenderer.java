@@ -9,8 +9,8 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesHighlighter;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -152,7 +152,7 @@ class LookupCellRenderer implements ListCellRenderer {
            o instanceof LookupValueWithUIHint && ((LookupValueWithUIHint)o).isBold();
   }
 
-  private JLabel getLabel0(LookupItem item, final Color background, final boolean selected){
+  private void getLabel0(LookupItem item, final Color background, final boolean selected){
     Object o = item.getObject();
     final String prefix = myLookup.getPrefix();
     String name = getName(item);
@@ -177,10 +177,9 @@ class LookupCellRenderer implements ListCellRenderer {
     label.setStrikeout(strikeout);
     label.setBackground(background);
     label.setForeground(selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
-    return label;
   }
 
-  private JLabel getLabel1(LookupItem item, final Color background, final Color foreground){
+  private void getLabel1(LookupItem item, final Color background, final Color foreground){
     Object o = item.getObject();
     final String prefix = myLookup.getPrefix();
     String name = getName(item);
@@ -205,10 +204,9 @@ class LookupCellRenderer implements ListCellRenderer {
     label.setStrikeout(overstrike);
     label.setBackground(background);
     label.setForeground(foreground);
-    return label;
   }
 
-  private JLabel getLabel2(final LookupItem item, Color background, Color foreground, final boolean selected){
+  private void getLabel2(final LookupItem item, Color background, Color foreground, final boolean selected){
     String text = getText2(item, false);
 
     StrikeoutLabel label = myLabel2;
@@ -244,7 +242,6 @@ class LookupCellRenderer implements ListCellRenderer {
     if (isSmall){
       label.setForeground(selected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR);
     }
-    return label;
   }
 
   private String getText2(final LookupItem item, final boolean trim) {
@@ -298,7 +295,7 @@ class LookupCellRenderer implements ListCellRenderer {
     return SHOW_SIGNATURES || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
   }
 
-  private JLabel getLabel3(LookupItem item, final Color background, Color foreground){
+  private void getLabel3(LookupItem item, final Color background, Color foreground){
     myLabel3.setHorizontalTextPosition(SwingConstants.RIGHT);
 
     String text = getText3(item);
@@ -325,7 +322,6 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     label.setBackground(sampleBackground);
     label.setForeground(foreground);
-    return label;
   }
 
   private String getText3(final LookupItem item) {
@@ -368,7 +364,7 @@ class LookupCellRenderer implements ListCellRenderer {
             else if (o instanceof Property) {
               Property property = (Property)o;
               text = property.getContainingFile().getResourceBundle().getBaseName();
-              myLabel3.setIcon(ResourceBundle.ICON);
+              myLabel3.setIcon(PropertiesFileType.FILE_ICON);
             }
           }
         }

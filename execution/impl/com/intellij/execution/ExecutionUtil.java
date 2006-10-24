@@ -155,7 +155,6 @@ public class ExecutionUtil {
     if (aClass.isInterface()) return false;
     if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) return false;
-    return true;
+    return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
   }
 }

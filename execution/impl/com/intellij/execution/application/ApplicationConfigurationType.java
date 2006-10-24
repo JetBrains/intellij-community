@@ -9,17 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
-
-import javax.swing.*;
-
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class ApplicationConfigurationType implements LocatableConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/application.png");
-  @NonNls
-  protected static final String STRING_CLASS = "java.lang.String";
 
   /**reflection*/
   public ApplicationConfigurationType() {
@@ -88,9 +85,8 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     return findMainMethod(mainMethods);
   }
 
-  public static PsiMethod findMainMethod(final PsiMethod[] mainMethods) {
-    for (int i = 0; i < mainMethods.length; i++) {
-      final PsiMethod mainMethod = mainMethods[i];
+  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods) {
+    for (final PsiMethod mainMethod : mainMethods) {
       if (isMainMethod(mainMethod)) return mainMethod;
     }
     return null;
@@ -106,7 +102,7 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     final PsiType type = parameters[0].getType();
     if (!(type instanceof PsiArrayType)) return false;
     final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return componentType.equalsToText(STRING_CLASS);
+    return componentType.equalsToText("java.lang.String");
   }
 
 

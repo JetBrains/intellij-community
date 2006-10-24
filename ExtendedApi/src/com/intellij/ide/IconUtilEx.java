@@ -80,12 +80,10 @@ public class IconUtilEx {
         baseIcon.setIcon(emptyIcon, 1);
       }
     }
-    else {
-      if (Icons.PUBLIC_ICON != null) {
+    else if (Icons.PUBLIC_ICON != null) {
         Icon emptyIcon = new EmptyIcon(Icons.PUBLIC_ICON.getIconWidth(), Icons.PUBLIC_ICON.getIconHeight());
         baseIcon.setIcon(emptyIcon, 1);
       }
-    }
   }
 
   private static void setVisibilityIcon(int accessLevel, RowIcon baseIcon) {

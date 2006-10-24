@@ -37,11 +37,7 @@ public class ConfigurationUtil {
     public boolean value(final PsiClass psiClass) {
       if (psiClass instanceof PsiAnonymousClass) return false;
       if (psiClass.isInterface()) return false;
-      if (psiClass.getContainingClass() != null &&
-          !psiClass.hasModifierProperty(PsiModifier.STATIC)) {
-        return false;
-      }
-      return true;
+      return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
     }
   };
 }

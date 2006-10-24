@@ -2,6 +2,8 @@ package com.intellij.psi.impl;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.project.Project;
@@ -21,14 +23,23 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.RowIcon;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.SmartList;
+import com.intellij.codeInsight.CodeInsightBundle;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
+  private static final Icon STATIC_MARK_ICON = IconLoader.getIcon("/nodes/staticMark.png");
+  private static final Icon FINAL_MARK_ICON = IconLoader.getIcon("/nodes/finalMark.png");
+  private static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
+  private static final Icon RUNNABLE_MARK = IconLoader.getIcon("/nodes/runnableMark.png");
+
   @Nullable
   public Icon getIcon(int flags) {
     if (!(this instanceof PsiElement)) return null;
@@ -55,10 +66,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       final VirtualFile vFile = psiDirectory.getVirtualFile();
       final Project project = psiDirectory.getProject();
       boolean isExcluded = isExcluded(vFile, project);
-      baseIcon = RowIcon.createLayeredIcon(symbolIcon, elementFlags | (isExcluded ? FLAGS_EXCLUDED : 0));
+      baseIcon = createLayeredIcon(symbolIcon, elementFlags | (isExcluded ? FLAGS_EXCLUDED : 0));
     }
     else if (element instanceof PsiPackage) {
-      baseIcon = RowIcon.createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
+      baseIcon = createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
     }
     else if (element instanceof PsiFile) {
       PsiFile file = (PsiFile)element;
@@ -71,26 +82,26 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       else {
         fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
       }
-      baseIcon = RowIcon.createLayeredIcon(fileTypeIcon, elementFlags);
+      baseIcon = createLayeredIcon(fileTypeIcon, elementFlags);
     }
     else if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
       Icon symbolIcon = getClassBaseIcon(aClass);
-      baseIcon = RowIcon.createLayeredIcon(symbolIcon, getFlags(aClass, isLocked));
+      baseIcon = createLayeredIcon(symbolIcon, getFlags(aClass, isLocked));
     }
     else if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       Icon methodIcon = method.hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
-      baseIcon = RowIcon.createLayeredIcon(methodIcon, getFlags(method, false));
+      baseIcon = createLayeredIcon(methodIcon, getFlags(method, false));
     }
     else if (element instanceof PsiField) {
-      baseIcon = RowIcon.createLayeredIcon(Icons.FIELD_ICON, getFlags((PsiField)element, false));
+      baseIcon = createLayeredIcon(Icons.FIELD_ICON, getFlags((PsiField)element, false));
     }
     else if (element instanceof PsiParameter) {
-      baseIcon = RowIcon.createLayeredIcon(Icons.PARAMETER_ICON, 0);
+      baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
     }
     else if (element instanceof PsiVariable) {
-      baseIcon = RowIcon.createLayeredIcon(Icons.VARIABLE_ICON, getFlags((PsiVariable)element, false));
+      baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags((PsiVariable)element, false));
     }
     else if (element instanceof XmlTag) {
       return Icons.XML_TAG_ICON;
@@ -102,7 +113,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return Icons.DIRECTORY_CLOSED_ICON;
     }
     else if (element instanceof PsiClassObjectAccessExpression) {
-      final RowIcon rowIcon = RowIcon.createLayeredIcon(Icons.FIELD_ICON, 0);
+      final RowIcon rowIcon = createLayeredIcon(Icons.FIELD_ICON, 0);
       rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
       return rowIcon;
     }
@@ -143,6 +154,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (kind == CLASS_KIND_JUNIT_TEST) {
         flags |= FLAGS_JUNIT_TEST;
       }
+      else if (kind == CLASS_KIND_RUNNABLE) {
+        flags |= FLAGS_RUNNABLE;
+      }
     }
     return flags;
   }
@@ -158,13 +172,15 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final int CLASS_KIND_JSP           = 70;
   public static final int CLASS_KIND_EXCEPTION = 80;
   private static final int CLASS_KIND_JUNIT_TEST = 90;
+  private static final int CLASS_KIND_RUNNABLE = 100;
 
   private static final int FLAGS_ABSTRACT = 0x100;
-  public static final int FLAGS_STATIC = 0x200;
-  public static final int FLAGS_FINAL = 0x400;
-  public static final int FLAGS_LOCKED = 0x800;
-  public static final int FLAGS_EXCLUDED = 0x1000;
-  public static final int FLAGS_JUNIT_TEST = 0x2000;
+  private static final int FLAGS_STATIC = 0x200;
+  private static final int FLAGS_FINAL = 0x400;
+  private static final int FLAGS_LOCKED = 0x800;
+  private static final int FLAGS_EXCLUDED = 0x1000;
+  private static final int FLAGS_JUNIT_TEST = 0x2000;
+  private static final int FLAGS_RUNNABLE = 0x4000;
 
   private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<CachedValue<Integer>>("CLASS_KIND_KEY");
 
@@ -215,6 +231,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (JUnitUtil.isTestClass(aClass)) {
       return CLASS_KIND_JUNIT_TEST;
     }
+    if (ExecutionUtil.isRunnableClass(aClass) && ApplicationConfigurationType.findMainMethod(aClass) != null) {
+      return CLASS_KIND_RUNNABLE;
+    }
     return CLASS_KIND_CLASS;
   }
 
@@ -238,6 +257,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     BASE_ICON.put(CLASS_KIND_JSP | FLAGS_ABSTRACT, Icons.JSP_ICON);
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST, Icons.CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, Icons.ABSTRACT_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_RUNNABLE, Icons.CLASS_ICON);
   }
 
   private static Icon getClassBaseIcon(final PsiClass aClass) {
@@ -249,37 +269,37 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   public static String getDescription(PsiModifierListOwner member) {
     String noun;
     if (member instanceof PsiClass) noun = getClassNoun((PsiClass)member);
-    else if (member instanceof PsiMethod) noun = "Method";
-    else if (member instanceof PsiField) noun = "Field";
+    else if (member instanceof PsiMethod) noun = CodeInsightBundle.message("node.method.tooltip");
+    else if (member instanceof PsiField) noun = CodeInsightBundle.message("node.field.tooltip");
     else return null;
     String adj = getFlagsDescription(member);
-    String text = adj + " " + noun;
-    return "<html><body>"+text+"</body></html>";
+    return (adj + " " + noun).trim();
   }
 
   private static String getClassNoun(final PsiClass aClass) {
     String noun;
     int kind = getClassKind(aClass);
     switch (kind) {
-      case CLASS_KIND_ANNOTATION: noun =  "Annotation"; break;
-      case CLASS_KIND_ANONYMOUS: noun =  "Anonymous Class"; break;
-      case CLASS_KIND_ENUM: noun =  "Enum"; break;
-      case CLASS_KIND_EXCEPTION: noun =  "Exception"; break;
-      case CLASS_KIND_INTERFACE: noun =  "Interface"; break;
-      case CLASS_KIND_JUNIT_TEST: noun =  "JUnit Test"; break;
+      case CLASS_KIND_ANNOTATION: noun = CodeInsightBundle.message("node.annotation.tooltip"); break;
+      case CLASS_KIND_ANONYMOUS: noun = CodeInsightBundle.message("node.anonymous.class.tooltip"); break;
+      case CLASS_KIND_ENUM: noun = CodeInsightBundle.message("node.enum.tooltip"); break;
+      case CLASS_KIND_EXCEPTION: noun = CodeInsightBundle.message("node.exception.tooltip"); break;
+      case CLASS_KIND_INTERFACE: noun = CodeInsightBundle.message("node.interface.tooltip"); break;
+      case CLASS_KIND_JUNIT_TEST: noun = CodeInsightBundle.message("node.junit.test.tooltip"); break;
+      case CLASS_KIND_RUNNABLE: noun = CodeInsightBundle.message("node.runnable.class.tooltip"); break;
       default:
-      case CLASS_KIND_CLASS: noun =  "Class"; break;
+      case CLASS_KIND_CLASS: noun = CodeInsightBundle.message("node.class.tooltip"); break;
     }
     return noun;
   }
 
-  public static String getFlagsDescription(final PsiModifierListOwner aClass) {
+  private static String getFlagsDescription(final PsiModifierListOwner aClass) {
     int flags = getFlags(aClass, false);
     String adj = "";
-    if ((flags & FLAGS_EXCLUDED) != 0) adj += " Excluded";
-    if ((flags & FLAGS_ABSTRACT) != 0) adj += " Abstract";
-    if ((flags & FLAGS_FINAL) != 0) adj += " Final";
-    if ((flags & FLAGS_STATIC) != 0) adj += " Static";
+    if ((flags & FLAGS_EXCLUDED) != 0) adj += " " + CodeInsightBundle.message("node.excluded.flag.tooltip");
+    if ((flags & FLAGS_ABSTRACT) != 0) adj += " " + CodeInsightBundle.message("node.abstract.flag.tooltip");
+    if ((flags & FLAGS_FINAL) != 0) adj += " " + CodeInsightBundle.message("node.final.flag.tooltip");
+    if ((flags & FLAGS_STATIC) != 0) adj += " " + CodeInsightBundle.message("node.static.flag.tooltip");
     PsiModifierList list = aClass.getModifierList();
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
@@ -287,7 +307,41 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         adj += " " + StringUtil.capitalize(PsiUtil.getAccessModifier(level));
       }
     }
-    return adj.trim();
+    return adj;
   }
 
+  public static RowIcon createLayeredIcon(Icon icon, int flags) {
+    if (flags != 0) {
+      List<Icon> iconLayers = new SmartList<Icon>();
+      if ((flags & FLAGS_STATIC) != 0) {
+        iconLayers.add(STATIC_MARK_ICON);
+      }
+      if ((flags & FLAGS_LOCKED) != 0) {
+        iconLayers.add(Icons.LOCKED_ICON);
+      }
+      if ((flags & FLAGS_EXCLUDED) != 0) {
+        iconLayers.add(Icons.EXCLUDED_FROM_COMPILE_ICON);
+      }
+      final boolean isFinal = (flags & FLAGS_FINAL) != 0;
+      if (isFinal) {
+        iconLayers.add(FINAL_MARK_ICON);
+      }
+      if ((flags & FLAGS_JUNIT_TEST) != 0) {
+        iconLayers.add(JUNIT_TEST_MARK);
+      }
+      if ((flags & FLAGS_RUNNABLE) != 0) {
+        iconLayers.add(RUNNABLE_MARK);
+      }
+      LayeredIcon layeredIcon = new LayeredIcon(1 + iconLayers.size());
+      layeredIcon.setIcon(icon, 0);
+      for (int i = 0; i < iconLayers.size(); i++) {
+        Icon icon1 = iconLayers.get(i);
+        layeredIcon.setIcon(icon1, i+1);
+      }
+      icon = layeredIcon;
+    }
+    RowIcon baseIcon = new RowIcon(2);
+    baseIcon.setIcon(icon, 0);
+    return baseIcon;
+  }
 }
