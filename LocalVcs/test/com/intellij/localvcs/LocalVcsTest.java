@@ -124,7 +124,7 @@ public class LocalVcsTest extends Assert {
     myVcs.renameFile("file", "new file");
     myVcs.commit();
 
-    List<LocalVcs.Revision> revs = myVcs.getFileRevisions("new file");
+    List<Revision> revs = myVcs.getFileRevisions("new file");
 
     assertEquals(2, revs.size());
 
@@ -229,14 +229,14 @@ public class LocalVcsTest extends Assert {
   }
 
   private void assertRevisionContent(String expectedContent,
-                                     LocalVcs.Revision actualRevision) {
+                                     Revision actualRevision) {
     assertEquals(expectedContent, actualRevision.getContent());
   }
 
   private void assertRevisionsContent(String[] expectedContents,
-                                      Collection<LocalVcs.Revision> actualRevisions) {
+                                      Collection<Revision> actualRevisions) {
     List<String> actualContents = new ArrayList<String>();
-    for (LocalVcs.Revision rev : actualRevisions) {
+    for (Revision rev : actualRevisions) {
       actualContents.add(rev.getContent());
     }
     assertEquals(expectedContents, actualContents.toArray(new Object[0]));
