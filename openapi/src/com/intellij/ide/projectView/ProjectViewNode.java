@@ -108,7 +108,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
                                                                               IllegalAccessException,
                                                                               InvocationTargetException {
     Object[] parameters = new Object[]{project, value, settings};
-    for (Constructor<? extends AbstractTreeNode> constructor : nodeClass.getConstructors()) {
+    for (Constructor<? extends AbstractTreeNode> constructor : ((Constructor<? extends AbstractTreeNode>[])nodeClass.getConstructors())) {
       if (constructor.getParameterTypes().length != 3) continue;
       try {
         return constructor.newInstance(parameters);
