@@ -62,17 +62,20 @@ public class ProjectUtil {
 
     final ProjectJdk jdk = dialog.getNewProjectJdk();
     if (jdk != null) {
-      CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
-              projectRootManager.setProjectJdk(jdk);
-              projectRootManager.setLanguageLevel(getDefaultLanguageLevel(jdk.getVersionString()));
-            }
-          });
-        }
-      }, null, null);
+      final String versionString = jdk.getVersionString();
+      if (versionString != null) { //jdk is valid
+        CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
+                projectRootManager.setProjectJdk(jdk);
+                projectRootManager.setLanguageLevel(getDefaultLanguageLevel(versionString));
+              }
+            });
+          }
+        }, null, null);
+      }
     }
 
     final String compileOutput = dialog.getNewCompileOutput();
@@ -155,7 +158,7 @@ public class ProjectUtil {
     projectManager.openProject(newProject);
   }
 
-  private static LanguageLevel getDefaultLanguageLevel(String versionString) {
+  private static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
     if (isOfVersionOrHigher(versionString, "1.5") || isOfVersionOrHigher(versionString, "5.0")) {
       return LanguageLevel.JDK_1_5;
     }
@@ -167,7 +170,7 @@ public class ProjectUtil {
     return LanguageLevel.JDK_1_3;
   }
 
-  private static boolean isOfVersionOrHigher(String versionString, String checkedVersion) {
+  private static boolean isOfVersionOrHigher(@NotNull String versionString, String checkedVersion) {
     return JavaSdk.getInstance().compareTo(versionString, checkedVersion) >= 0;
   }
 

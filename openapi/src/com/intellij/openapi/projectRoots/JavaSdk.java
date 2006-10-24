@@ -18,6 +18,7 @@ package com.intellij.openapi.projectRoots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -35,7 +36,7 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
     return createJdk(jdkName, jreHome, true);
   }
 
-  public abstract int compareTo(String versionString, String versionNumber);
+  public abstract int compareTo(@NotNull String versionString, @NotNull String versionNumber);
 
   public abstract ProjectJdk createJdk(@NonNls String jdkName, String home, boolean isJre);
 
