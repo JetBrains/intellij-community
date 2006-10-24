@@ -28,4 +28,14 @@ public final class SshTypesToUse {
   public String toString() {
     return name;
   }
+
+  public static SshTypesToUse fromName(final String sshType) {
+    if (FORCE_SSH1.name.equals(sshType)) {
+      return FORCE_SSH1;
+    }
+    if (FORCE_SSH2.name.equals(sshType)) {
+      return FORCE_SSH2;
+    }
+    return ALLOW_BOTH;
+  }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -20,14 +21,18 @@ public class SshSettings implements JDOMExternalizable, Cloneable {
   public String PORT = "";
 
   public SshTypesToUse SSH_TYPE = SshTypesToUse.ALLOW_BOTH;
+  @NonNls private static final String SSH_TYPE_ATTRIBUTE = "SSH_TYPE";
 
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    String sshType = element.getAttributeValue(SSH_TYPE_ATTRIBUTE);
+    SSH_TYPE = SshTypesToUse.fromName(sshType);
   }
-
+  
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+    element.setAttribute(SSH_TYPE_ATTRIBUTE, SSH_TYPE.toString());
   }
 
   public SshSettings clone() {
