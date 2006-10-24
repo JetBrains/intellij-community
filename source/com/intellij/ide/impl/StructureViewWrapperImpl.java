@@ -138,10 +138,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
     }
   }
 
-  public FileEditor getFileEditor() {
-    return myFileEditor;
-  }
-
   // -------------------------------------------------------------------------
   // Helper methods
   // -------------------------------------------------------------------------
@@ -152,7 +148,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
     if (fileChanged) {
       myFileEditor = fileEditor;      
     }
-    if (fileChanged || (isStructureViewShowing() && myPanel.getComponentCount() == 0 && myFileEditor != null)) {
+    if (fileChanged ||
+        isStructureViewShowing() && myPanel.getComponentCount() == 0 && myFileEditor != null) {
       rebuild();
     }
   }
@@ -178,14 +175,17 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
         myStructureView = structureViewBuilder.createStructureView(myFileEditor, myProject);
         myPanel.add(myStructureView.getComponent(), BorderLayout.CENTER);
         if (hadFocus) {
-          IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent()).requestFocus();
+          JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent());
+          if (focusedComponent != null) {
+            focusedComponent.requestFocus();
+          }
         }
         myStructureView.restoreState();
         myStructureView.centerSelectedRow();
       }
     }
     if (myStructureView == null) {
-      myPanel.add(new JLabel(IdeBundle.message("message.nothing.to.show.in.structure.view"), JLabel.CENTER), BorderLayout.CENTER);
+      myPanel.add(new JLabel(IdeBundle.message("message.nothing.to.show.in.structure.view"), SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
     myPanel.validate();
@@ -195,10 +195,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
   protected boolean isStructureViewShowing() {
     ToolWindowManager windowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow=windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW);
-    if (toolWindow!=null) { // it means that window is registered
-      return toolWindow.isVisible();
-    }
-    return false;
+    // it means that window is registered
+    return toolWindow != null && toolWindow.isVisible();
   }
-
 }
