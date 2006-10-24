@@ -117,6 +117,25 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
+  public void testRenamingKeepsOldNameAndContent() {
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+
+    myVcs.renameFile("file", "new file");
+    myVcs.commit();
+
+    List<LocalVcs.Revision> revs = myVcs.getFileRevisions("new file");
+
+    assertEquals(2, revs.size());
+
+    assertEquals("file", revs.get(0).getName());
+    assertEquals("content", revs.get(0).getContent());
+
+    assertEquals("new file", revs.get(1).getName());
+    assertEquals("content", revs.get(1).getContent());
+  }
+
+  @Test
   public void testDeleting() {
     myVcs.addFile("file", "content");
     myVcs.commit();
