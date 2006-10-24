@@ -17,7 +17,6 @@ import javax.swing.*;
 public class PropertiesFileType extends LanguageFileType {
   public static final Icon FILE_ICON = IconLoader.getIcon("/fileTypes/properties.png");
   public static final LanguageFileType FILE_TYPE = new PropertiesFileType();
-  @NonNls public static final String DEFAULT_EXTENSION = "properties";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".properties";
 
   private PropertiesFileType() {

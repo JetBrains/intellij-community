@@ -4,9 +4,9 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,12 +26,12 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
   }
 
   public Icon getIcon() {
-    return ResourceBundle.ICON;
+    return ResourceBundle.ICON_CLOSED;
   }
 
   @NotNull
   public VirtualFileSystem getFileSystem() {
-    return DummyFileSystem.getInstance();
+    return LocalFileSystem.getInstance();
   }
 
   public String getPath() {
@@ -58,7 +58,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     return myResourceBundle.hashCode();
   }
 
-  public void rename(Object requestor, String newName) throws IOException {
+  public void rename(Object requestor, @NotNull String newName) throws IOException {
   }
 
   public boolean isWritable() {
@@ -85,7 +85,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     throw new UnsupportedOperationException();
   }
 
-  public VirtualFile createChildData(Object requestor, String name) throws IOException {
+  public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     throw new UnsupportedOperationException();
   }
 
