@@ -101,6 +101,20 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
+  public void testRenaming() {
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+
+    myVcs.renameFile("file", "new file");
+    myVcs.commit();
+
+    assertFalse(myVcs.hasFile("file"));
+    assertTrue(myVcs.hasFile("new file"));
+
+    assertEquals("content", myVcs.getFileContent("new file"));
+  }
+
+  @Test
   public void testDeleting() {
     myVcs.addFile("file", "content");
     myVcs.commit();
@@ -180,6 +194,16 @@ public class LocalVcsTest extends Assert {
 
     assertEquals(new String[]{"content", "new content" },
                  myVcs.getFileContents("file"));
+  }
+
+  @Test
+  public void testDoesNotKeepUncommittedChanges() {
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+
+    myVcs.changeFile("file", "new content");
+
+    assertEquals(new String[]{"content" }, myVcs.getFileContents("file"));
   }
 
   @SuppressWarnings("unchecked")
