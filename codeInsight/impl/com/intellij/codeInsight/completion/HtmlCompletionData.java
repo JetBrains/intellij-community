@@ -73,6 +73,11 @@ public class HtmlCompletionData extends XmlCompletionData {
         String name = ((XmlTag)context).getName();
         if (name == null) return true;
 
+        if (element instanceof PsiElement && 
+            ((PsiElement)element).getParent() == context) {
+          return true;
+        }
+
         if (equalNames(name, STYLE_TAG) ||
             equalNames(name,SCRIPT_TAG)) {
           return false;

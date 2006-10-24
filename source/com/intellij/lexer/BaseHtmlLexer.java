@@ -4,6 +4,7 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.codeInsight.completion.CompletionUtil;
 
 import java.util.HashMap;
 
@@ -209,8 +210,8 @@ abstract class BaseHtmlLexer extends LexerBase {
           if (caseInsensitive) name = name.toLowerCase();
 
           if((hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
-             (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name))
-             ) {
+             (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name)) ||
+             CompletionUtil.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name)) {
             break; // really found end
           }
         }
