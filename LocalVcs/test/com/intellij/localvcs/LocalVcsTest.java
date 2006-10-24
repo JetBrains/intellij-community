@@ -1,6 +1,8 @@
 package com.intellij.localvcs;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,12 +57,12 @@ public class LocalVcsTest extends Assert {
     myVcs.changeFile("file", "new content");
     myVcs.commit();
 
-    assertEquals("new content", myVcs.getFileContent("file"));
+    assertRevisionContent("new content", myVcs.getFileRevision("file"));
   }
 
   @Test
   public void testContentOfUnknownFile() {
-    assertNull(myVcs.getFileContent("unknown file"));
+    assertNull(myVcs.getFileRevision("unknown file"));
   }
 
   @Test
@@ -72,8 +74,8 @@ public class LocalVcsTest extends Assert {
     myVcs.changeFile("file1", "new content");
     myVcs.commit();
 
-    assertEquals("new content", myVcs.getFileContent("file1"));
-    assertEquals("content2", myVcs.getFileContent("file2"));
+    assertRevisionContent("new content", myVcs.getFileRevision("file1"));
+    assertRevisionContent("content2", myVcs.getFileRevision("file2"));
   }
 
   @Test
@@ -83,7 +85,7 @@ public class LocalVcsTest extends Assert {
 
     myVcs.changeFile("file", "new content");
 
-    assertEquals("content", myVcs.getFileContent("file"));
+    assertRevisionContent("content", myVcs.getFileRevision("file"));
   }
 
   @Test
@@ -111,7 +113,7 @@ public class LocalVcsTest extends Assert {
     assertFalse(myVcs.hasFile("file"));
     assertTrue(myVcs.hasFile("new file"));
 
-    assertEquals("content", myVcs.getFileContent("new file"));
+    assertRevisionContent("content", myVcs.getFileRevision("new file"));
   }
 
   @Test
@@ -120,11 +122,11 @@ public class LocalVcsTest extends Assert {
     myVcs.commit();
 
     myVcs.deleteFile("file");
-    assertEquals("content", myVcs.getFileContent("file"));
+    assertRevisionContent("content", myVcs.getFileRevision("file"));
 
     myVcs.commit();
     assertFalse(myVcs.hasFile("file"));
-    assertNull(myVcs.getFileContent("file"));
+    assertNull(myVcs.getFileRevision("file"));
   }
 
   @Test
@@ -181,7 +183,7 @@ public class LocalVcsTest extends Assert {
     myVcs.changeFile("file", "new content");
     myVcs.commit();
 
-    assertEquals("new content", myVcs.getFileContent("file"));
+    assertRevisionContent("new content", myVcs.getFileRevision("file"));
   }
 
   @Test
@@ -192,8 +194,8 @@ public class LocalVcsTest extends Assert {
     myVcs.changeFile("file", "new content");
     myVcs.commit();
 
-    assertEquals(new String[]{"content", "new content" },
-                 myVcs.getFileContents("file"));
+    assertRevisionsContent(new String[]{"content", "new content" },
+                           myVcs.getFileRevisions("file"));
   }
 
   @Test
@@ -203,11 +205,21 @@ public class LocalVcsTest extends Assert {
 
     myVcs.changeFile("file", "new content");
 
-    assertEquals(new String[]{"content" }, myVcs.getFileContents("file"));
+    assertRevisionsContent(new String[]{"content" },
+                           myVcs.getFileRevisions("file"));
   }
 
-  @SuppressWarnings("unchecked")
-  private void assertEquals(Object[] expected, Collection actual) {
-    assertEquals(expected, actual.toArray(new Object[0]));
+  private void assertRevisionContent(String expectedContent,
+                                     LocalVcs.Revision actualRevision) {
+    assertEquals(expectedContent, actualRevision.getContent());
+  }
+
+  private void assertRevisionsContent(String[] expectedContents,
+                                      Collection<LocalVcs.Revision> actualRevisions) {
+    List<String> actualContents = new ArrayList<String>();
+    for (LocalVcs.Revision rev : actualRevisions) {
+      actualContents.add(rev.getContent());
+    }
+    assertEquals(expectedContents, actualContents.toArray(new Object[0]));
   }
 }
