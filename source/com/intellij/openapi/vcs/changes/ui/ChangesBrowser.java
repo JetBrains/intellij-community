@@ -90,7 +90,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
           break;
         }
       }
-      if (initialListSelection == null) {
+      if (initialListSelection == null && !changeLists.isEmpty()) {
         initialListSelection = changeLists.get(0);
       }
     }
@@ -142,10 +142,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public JPanel getHeaderPanel() {
     return myHeaderPanel;
-  }
-
-  public JComponent getContentComponent() {
-    return this;
   }
 
   public Collection<Change> getAllChanges() {
