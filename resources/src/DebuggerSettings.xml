@@ -10,6 +10,7 @@
   <option name="SKIP_CONSTRUCTORS" value="false" />
   <option name="STEP_THREAD_SUSPEND_POLICY" value="SuspendThread" />
   <option name="RUN_HOTSWAP_AFTER_COMPILE" value="RunHotswapAsk" />
+  <option name="COMPILE_BEFORE_HOTSWAP" value="true" />
   <default_breakpoint_settings>
     <option name="ENABLED" value="true" />
     <option name="SUSPEND_VM" value="true" />

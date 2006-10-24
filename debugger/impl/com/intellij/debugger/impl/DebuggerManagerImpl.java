@@ -131,10 +131,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   public DebuggerSession attachVirtualMachine(String sessionName,
                                               RunProfileState state,
                                               RemoteConnection remoteConnection,
-                                              boolean pollConnection,
-                                              boolean compileBeforeRunning) throws ExecutionException {
+                                              boolean pollConnection
+  ) throws ExecutionException {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    DebuggerSession session = new DebuggerSession(sessionName, new DebugProcessEvents(myProject), compileBeforeRunning);
+    DebuggerSession session = new DebuggerSession(sessionName, new DebugProcessEvents(myProject));
 
     final ExecutionResult executionResult = session.attach(state, remoteConnection, pollConnection);
     if (executionResult == null) {

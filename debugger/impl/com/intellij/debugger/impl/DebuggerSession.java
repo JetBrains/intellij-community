@@ -75,7 +75,6 @@ public class DebuggerSession {
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
   private Set<ThreadReferenceProxyImpl> mySteppingThroughThreads = new HashSet<ThreadReferenceProxyImpl>();
-  private boolean myCompileBeforeRunning;
 
   public boolean isSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
     return mySteppingThroughThreads.contains(threadProxy);
@@ -138,14 +137,9 @@ public class DebuggerSession {
     }
   }
 
-  public boolean isCompileBeforeRunning() {
-    return myCompileBeforeRunning;
-  }
-
-  protected DebuggerSession(String sessionName, final DebugProcessImpl debugProcess, boolean compileBeforeRunning) {
+  protected DebuggerSession(String sessionName, final DebugProcessImpl debugProcess) {
     mySessionName  = sessionName;
     myDebugProcess = debugProcess;
-    myCompileBeforeRunning = compileBeforeRunning;
     SESSION_EMPTY_CONTEXT = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, null, null, null);
     myContextManager = new MyDebuggerStateManager();
     myState = new DebuggerSessionState(STATE_STOPPED, null);

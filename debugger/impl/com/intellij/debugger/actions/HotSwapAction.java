@@ -2,6 +2,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.HotSwapUI;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,7 +30,7 @@ public class HotSwapAction extends AnAction{
     DebuggerSession session = debuggerManager.getContext().getDebuggerSession();
 
     if(session != null && session.isAttached()) {
-      HotSwapUI.getInstance(project).reloadChangedClasses(session, session.isCompileBeforeRunning());
+      HotSwapUI.getInstance(project).reloadChangedClasses(session, DebuggerSettings.getInstance().COMPILE_BEFORE_HOTSWAP);
     }
   }
 

@@ -43,6 +43,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public String EVALUATION_DIALOG_TYPE;
   public String STEP_THREAD_SUSPEND_POLICY;
   public String RUN_HOTSWAP_AFTER_COMPILE;
+  public boolean COMPILE_BEFORE_HOTSWAP;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
@@ -123,6 +124,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
+      COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters);
   }

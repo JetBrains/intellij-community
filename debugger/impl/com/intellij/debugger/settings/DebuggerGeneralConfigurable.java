@@ -9,6 +9,7 @@ import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,6 +22,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
   private JCheckBox myCbSkipConstructors;
   private JCheckBox myCbSkipClassLoaders;
   private JCheckBox myHideDebuggerCheckBox;
+  private JCheckBox myCbCompileBeforeHotswap;
   private JRadioButton myRbAlways;
   private JRadioButton myRbNever;
   private JRadioButton myRbAsk;
@@ -58,6 +60,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     myCbSkipClassLoaders.setSelected(settings.SKIP_CLASSLOADERS);
     myValueTooltipDelayField.setText(Integer.toString(settings.VALUE_LOOKUP_DELAY));
     myHideDebuggerCheckBox.setSelected(settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
+    myCbCompileBeforeHotswap.setSelected(settings.COMPILE_BEFORE_HOTSWAP);
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
 
     myCbStepInfoFiltersEnabled.setSelected(settings.TRACING_FILTERS_ENABLED);
@@ -98,6 +101,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     catch (NumberFormatException e) {
     }
     settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION = myHideDebuggerCheckBox.isSelected();
+    settings.COMPILE_BEFORE_HOTSWAP = myCbCompileBeforeHotswap.isSelected();
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.TRACING_FILTERS_ENABLED = myCbStepInfoFiltersEnabled.isSelected();
 
@@ -159,15 +163,26 @@ public class DebuggerGeneralConfigurable implements Configurable{
     panel.setBorder(IdeBorderFactory.createTitledBorder(getDisplayName()));
 
     myHideDebuggerCheckBox = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.hide.window"));
+    int leftInset = 0;
+    final Border border = myHideDebuggerCheckBox.getBorder();
+    if (border != null) {
+      final Insets insets = border.getBorderInsets(myHideDebuggerCheckBox);
+      if (insets != null) {
+        leftInset = insets.left;
+      }
+    }
     panel.add(myHideDebuggerCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
-    panel.add(tooltipLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(tooltipLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, leftInset, 0, 0), 0, 0));
     myValueTooltipDelayField = new JTextField(10);
     panel.add(myValueTooltipDelayField, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     tooltipLabel.setLabelFor(myValueTooltipDelayField);
 
-    panel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.reload.classes")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myCbCompileBeforeHotswap = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.compile.before.hotswap"));
+    panel.add(myCbCompileBeforeHotswap, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    panel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.reload.classes")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, leftInset, 0, 0), 0, 0));
     myRbAlways = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.always"));
     myRbNever = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.never"));
     myRbAsk = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.ask"));

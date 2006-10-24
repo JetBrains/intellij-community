@@ -36,7 +36,7 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
   public abstract DebuggerSession attachVirtualMachine(String sessionName,
                                                        RunProfileState state,
                                                        RemoteConnection connection,
-                                                       boolean pollConnection,
-                                                       boolean compileBeforeRunning) throws ExecutionException;
+                                                       boolean pollConnection
+  ) throws ExecutionException;
 
 }
