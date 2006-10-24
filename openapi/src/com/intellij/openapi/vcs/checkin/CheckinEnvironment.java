@@ -16,10 +16,15 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Interface for performing VCS checkin / commit / submit operations.
@@ -28,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
 public interface CheckinEnvironment {
+  @Nullable
   RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel);
 
   @Nullable
@@ -45,4 +51,10 @@ public interface CheckinEnvironment {
    * @return true if check in dialog should be shown even if there are no files to check in
    */
   boolean showCheckinDialogInAnyCase();
+
+  List<VcsException> commit(List<Change> changes, String preparedComment);
+  List<VcsException> rollbackChanges(List<Change> changes);
+  List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);
+  List<VcsException> rollbackMissingFileDeletion(List<FilePath> files);
+  List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
 }

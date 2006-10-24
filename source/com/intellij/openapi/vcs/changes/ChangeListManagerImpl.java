@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -626,9 +627,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     ChangesUtil.processVirtualFilesByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
-        final ChangeProvider provider = vcs.getChangeProvider();
-        if (provider != null) {
-          exceptions.addAll(provider.scheduleUnversionedFilesForAddition(files));
+        final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+        if (environment != null) {
+          exceptions.addAll(environment.scheduleUnversionedFilesForAddition(files));
         }
       }
     });

@@ -26,6 +26,4 @@ public abstract class LocalVcsServices{
   }
 
   public abstract LocalVcsItemsLocker getUpToDateRevisionProvider();
-
-  public abstract CheckinEnvironment createCheckinEnvironment(AbstractVcs vcs);
 }

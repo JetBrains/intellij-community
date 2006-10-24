@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
@@ -98,11 +99,11 @@ public class CommitHelper {
       final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
       ChangesUtil.processChangesByVcs(myProject, myIncludedChanges, new ChangesUtil.PerVcsProcessor<Change>() {
         public void process(AbstractVcs vcs, List<Change> changes) {
-          final ChangeProvider provider = vcs.getChangeProvider();
-          if (provider != null) {
+          final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+          if (environment != null) {
             List<FilePath> paths = ChangesUtil.getPaths(changes);
             pathsToRefresh.addAll(paths);
-            final List<VcsException> exceptions = provider.commit(changes, myCommitMessage);
+            final List<VcsException> exceptions = environment.commit(changes, myCommitMessage);
             if (exceptions.size() > 0) {
               vcsExceptions.addAll(exceptions);
               changesFailedToCommit.addAll(changes);

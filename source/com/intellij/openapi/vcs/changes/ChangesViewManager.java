@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -559,9 +560,9 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
       ChangesUtil.processFilePathsByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
         public void process(final AbstractVcs vcs, final List<FilePath> items) {
-          final ChangeProvider provider = vcs.getChangeProvider();
-          if (provider != null) {
-            processFiles(provider, files);
+          final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+          if (environment != null) {
+            processFiles(environment, files);
           }
         }
       });
@@ -572,7 +573,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
       scheduleRefresh();
     }
 
-    protected abstract void processFiles(final ChangeProvider provider, final List<FilePath> files);
+    protected abstract void processFiles(final CheckinEnvironment environment, final List<FilePath> files);
   }
 
   public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
@@ -581,8 +582,8 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
             IconLoader.getIcon("/actions/exclude.png"));
     }
 
-    protected void processFiles(final ChangeProvider provider, final List<FilePath> files) {
-      provider.scheduleMissingFileForDeletion(files);
+    protected void processFiles(final CheckinEnvironment environment, final List<FilePath> files) {
+      environment.scheduleMissingFileForDeletion(files);
     }
   }
 
@@ -593,8 +594,8 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
             IconLoader.getIcon("/actions/rollback.png"));
     }
 
-    protected void processFiles(final ChangeProvider provider, final List<FilePath> files) {
-      provider.rollbackMissingFileDeletion(files);
+    protected void processFiles(final CheckinEnvironment environment, final List<FilePath> files) {
+      environment.rollbackMissingFileDeletion(files);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           LocalFileSystem.getInstance().refreshIoFiles(ChangesUtil.filePathsToFiles(files));

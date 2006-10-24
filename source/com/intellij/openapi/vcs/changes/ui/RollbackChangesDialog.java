@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -121,7 +122,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       public void run() {
         ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
           public void process(AbstractVcs vcs, List<Change> changes) {
-            final ChangeProvider environment = vcs.getChangeProvider();
+            final CheckinEnvironment environment = vcs.getCheckinEnvironment();
             if (environment != null) {
               pathsToRefresh.addAll(getFilePaths(changes));
 
