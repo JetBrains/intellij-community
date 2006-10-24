@@ -16,13 +16,14 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ide.actions.CommonActionsFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,10 +76,7 @@ public class RunContentBuilder implements LogConsoleManager {
     }
   }
 
-  public void addAction(final AnAction action) {
-    if (action == null) {
-      throw new IllegalArgumentException("action");
-    }
+  public void addAction(@NotNull final AnAction action) {
     myRunnerActions.add(action);
   }
 

@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MethodCellRenderer;
@@ -35,7 +36,7 @@ public class StaticImportMethodFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    String text = "Static Import Method";
+    String text = QuickFixBundle.message("static.import.method.text");
     if (candidates.size() == 1) {
       final int options = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS  | PsiFormatUtil.SHOW_FQ_NAME;
       text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, options, 0)+"'";
@@ -68,9 +69,10 @@ public class StaticImportMethodFix implements IntentionAction {
     PsiReferenceExpression reference = myMethodCall.getMethodExpression();
     PsiExpressionList argumentList = myMethodCall.getArgumentList();
     String name = reference.getReferenceName();
+    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    if (name == null) return list;
     GlobalSearchScope scope = myMethodCall.getResolveScope();
     PsiMethod[] methods = cache.getMethodsByName(name, scope);
-    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
     ArrayList<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
       PsiClass aClass = method.getContainingClass();
@@ -123,7 +125,7 @@ public class StaticImportMethodFix implements IntentionAction {
     final JList list = new JList(new Vector<PsiMethod>(candidates));
     list.setCellRenderer(new MethodCellRenderer(true));
     new PopupChooserBuilder(list).
-      setTitle("Choose Method to Import").
+      setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
       setMovable(true).
       setItemChoosenCallback(new Runnable() {
         public void run() {

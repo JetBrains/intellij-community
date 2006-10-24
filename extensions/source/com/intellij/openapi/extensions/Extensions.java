@@ -18,6 +18,7 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import org.apache.commons.collections.MultiHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -85,10 +86,7 @@ public abstract class Extensions {
     ourAreaInstance2class = null;
   }
 
-  public static void instantiateArea(@NonNls String areaClass, AreaInstance areaInstance, AreaInstance parentAreaInstance) {
-    if (areaClass == null) {
-      throw new IllegalArgumentException("Should not try to instantiate the root area");
-    }
+  public static void instantiateArea(@NonNls @NotNull String areaClass, AreaInstance areaInstance, AreaInstance parentAreaInstance) {
     init();
     if (!ourAreaClass2Configuration.containsKey(areaClass)) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);
@@ -133,11 +131,8 @@ public abstract class Extensions {
     ourAreaClass2Configuration.put(areaClass, configuration);
   }
 
-  public static void disposeArea(AreaInstance areaInstance) {
+  public static void disposeArea(@NotNull AreaInstance areaInstance) {
     assert ourAreaInstance2area.containsKey(areaInstance);
-    if (areaInstance == null) {
-      throw new IllegalArgumentException("Cannot dispose root area");
-    }
 
     AreaListener[] listeners = getAreaListeners();
     String areaClass = ourAreaInstance2class.get(areaInstance);
