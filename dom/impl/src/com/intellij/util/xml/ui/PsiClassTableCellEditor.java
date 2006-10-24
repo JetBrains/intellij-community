@@ -61,6 +61,17 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
       protected boolean shouldHaveBorder() {
         return false;
       }
+
+      public void addNotify() {
+        super.addNotify();
+        final JComponent editorComponent = getEditor().getContentComponent();
+        editorComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
+        editorComponent.getActionMap().put("ENTER", new AbstractAction() {
+          public void actionPerformed(ActionEvent e) {
+            stopCellEditing();
+          }
+        });
+      }
     };
     final JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());

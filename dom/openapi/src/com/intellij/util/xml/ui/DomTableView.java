@@ -22,14 +22,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -38,11 +32,18 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
 
 /**
  * @author peter
  */
-public class DomTableView extends JPanel implements DataProvider{
+public class DomTableView<T> extends JPanel implements DataProvider{
   @NonNls private static final String TREE = "Tree";
   @NonNls private static final String EMPTY_PANE = "EmptyPane";
   private final EventDispatcher<ChangeListener> myDispatcher = EventDispatcher.create(ChangeListener.class);
@@ -240,7 +241,7 @@ public class DomTableView extends JPanel implements DataProvider{
     myDispatcher.addListener(listener);
   }
 
-  public final void reset(ColumnInfo[] columnInfos, List data) {
+  public final void reset(ColumnInfo[] columnInfos, List<T> data) {
     final boolean columnsChanged = myTableModel.setColumnInfos(columnInfos);
     final boolean dataChanged = !data.equals(myTableModel.getItems());
     final int oldRowCount = myTableModel.getRowCount();
@@ -250,7 +251,7 @@ public class DomTableView extends JPanel implements DataProvider{
 
     if (dataChanged) {
       final int selectedRow = myTable.getSelectedRow();
-      myTableModel.setItems(new ArrayList(data));
+      myTableModel.setItems(new ArrayList<T>(data));
       if (selectedRow >= 0 && selectedRow < myTableModel.getRowCount()) {
         myTable.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
       }
@@ -269,9 +270,18 @@ public class DomTableView extends JPanel implements DataProvider{
     if (columnsChanged || oldRowCount == 0 && rowCount != 0) {
       adjustColumnWidths();
     }
+
+    myTable.revalidate();
+    myTable.repaint();
   }
 
-  private class MyListTableModel extends ListTableModel {
+  @Nullable
+  protected DomElement getDomElement(@NotNull final T element) {
+    return (DomElement)element;
+  }
+
+  private class MyListTableModel extends ListTableModel<T> {
+
     private Object[][] myTableData;
 
     public MyListTableModel() {
@@ -298,8 +308,8 @@ public class DomTableView extends JPanel implements DataProvider{
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       final Object oldValue = getValueAt(rowIndex, columnIndex);
       if (!Comparing.equal(oldValue, aValue)) {
-        final DomElement domElement = (DomElement)getItems().get(rowIndex);
-        if (domElement.isValid()) {
+        final DomElement domElement = getDomElement(getItems().get(rowIndex));
+        if (domElement != null && domElement.isValid()) {
           new WriteCommandAction(myProject, domElement.getRoot().getFile()) {
             protected void run(final Result result) throws Throwable {
               MyListTableModel.super.setValueAt("".equals(aValue) ? null : aValue, rowIndex, columnIndex);

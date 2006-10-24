@@ -49,6 +49,7 @@ public abstract class ColumnInfo <Item, Aspect> {
     return getName();
   }
 
+  @Nullable
   public abstract Aspect valueOf(Item item);
 
   public final boolean isSortable() {
@@ -84,6 +85,7 @@ public abstract class ColumnInfo <Item, Aspect> {
 
   }
 
+  @Nullable
   public TableCellRenderer getRenderer(Item item) {
     return null;
   }
@@ -92,10 +94,12 @@ public abstract class ColumnInfo <Item, Aspect> {
     return renderer;
   }
 
+  @Nullable
   public TableCellEditor getEditor(Item o) {
     return null;
   }
 
+  @Nullable
   public String getMaxStringValue() {
     return null;
   }
