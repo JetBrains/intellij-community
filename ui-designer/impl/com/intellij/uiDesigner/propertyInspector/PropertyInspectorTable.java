@@ -1090,10 +1090,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final class MyCellEditor extends AbstractCellEditor implements TableCellEditor{
     private PropertyEditor myEditor;
 
-    public void setEditor(final PropertyEditor editor){
-      if (editor == null) {
-        throw new IllegalArgumentException("editor cannot be null");
-      }
+    public void setEditor(@NotNull final PropertyEditor editor){
       myEditor = editor;
     }
 

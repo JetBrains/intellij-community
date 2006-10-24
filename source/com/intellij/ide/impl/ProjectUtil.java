@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -192,11 +193,7 @@ public class ProjectUtil {
   /**
    * @param project cannot be null
    */
-  public static boolean closeProject(Project project) {
-    if (project == null) {
-      throw new IllegalArgumentException("project cannot be null");
-    }
-
+  public static boolean closeProject(@NotNull Project project) {
     if (!ProjectManagerEx.getInstanceEx().closeProject(project)) return false;
     Disposer.dispose(project);
     return true;

@@ -29,13 +29,14 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,18 +76,9 @@ final class TextEditorComponent extends JPanel implements DataProvider{
    */
   private boolean myValid;
 
-  TextEditorComponent(final Project project, final VirtualFile file, final TextEditorImpl textEditor) {
+  TextEditorComponent(@NotNull final Project project, @NotNull final VirtualFile file, @NotNull final TextEditorImpl textEditor) {
     super(new BorderLayout (), true);
 
-    if(project==null){
-      throw new IllegalArgumentException("project cannot be null");
-    }
-    if(file==null){
-      throw new IllegalArgumentException("file cannot be null");
-    }
-    if (textEditor == null) {
-      throw new IllegalArgumentException("textEditor cannot be null");
-    }
     assertThread();
 
     myProject = project;

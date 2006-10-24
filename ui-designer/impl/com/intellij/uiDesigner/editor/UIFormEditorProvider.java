@@ -19,35 +19,29 @@ import org.jetbrains.annotations.NotNull;
 public final class UIFormEditorProvider implements FileEditorProvider, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.editor.UIFormEditorProvider");
 
-  public boolean accept(final Project project, final VirtualFile file){
+  public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file){
     return
       FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.GUI_DESIGNER_FORM &&
       !StdFileTypes.GUI_DESIGNER_FORM.isBinary() &&
       VfsUtil.getModuleForFile(project, file) != null;
   }
 
-  @NotNull public FileEditor createEditor(final Project project, final VirtualFile file){
-    if (file == null){
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  @NotNull public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file){
     LOG.assertTrue(accept(project, file));
     return new UIFormEditor(project, file);
   }
 
-  public void disposeEditor(final FileEditor editor){
-    if (editor == null){
-      throw new IllegalArgumentException("editor cannot be null");
-    }
+  public void disposeEditor(@NotNull final FileEditor editor){
     ((UIFormEditor)editor).dispose();
   }
 
   @NotNull
-  public FileEditorState readState(final Element element, final Project project, final VirtualFile file){
+  public FileEditorState readState(@NotNull final Element element, @NotNull final Project project, @NotNull final VirtualFile file){
     //TODO[anton,vova] implement
     return new MyEditorState(-1, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  public void writeState(final FileEditorState state, final Project project, final Element element){
+  public void writeState(@NotNull final FileEditorState state, @NotNull final Project project, @NotNull final Element element){
     //TODO[anton,vova] implement
   }
 

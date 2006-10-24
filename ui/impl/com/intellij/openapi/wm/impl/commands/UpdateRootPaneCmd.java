@@ -1,5 +1,7 @@
 package com.intellij.openapi.wm.impl.commands;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 /**
@@ -8,11 +10,8 @@ import javax.swing.*;
 public final class UpdateRootPaneCmd extends FinalizableCommand{
   private final JRootPane myRootPane;
 
-  public UpdateRootPaneCmd(final JRootPane rootPane, final Runnable finishCallBack){
+  public UpdateRootPaneCmd(@NotNull final JRootPane rootPane, final Runnable finishCallBack){
     super(finishCallBack);
-    if(rootPane==null){
-      throw new IllegalArgumentException("rootPane cannot be null");
-    }
     myRootPane=rootPane;
   }
 

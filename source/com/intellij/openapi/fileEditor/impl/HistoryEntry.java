@@ -76,20 +76,11 @@ final class HistoryEntry{
     }
   }
 
-  public FileEditorState getState(FileEditorProvider provider) {
-    if (provider == null){
-      throw new IllegalArgumentException("provider cannot be null");
-    }
+  public FileEditorState getState(@NotNull FileEditorProvider provider) {
     return myProvider2State.get(provider);
   }
 
-  public void putState(FileEditorProvider provider, FileEditorState state) {
-    if (provider == null){
-      throw new IllegalArgumentException("provider cannot be null");
-    }
-    if (state == null){
-      throw new IllegalArgumentException("state cannot be null");
-    }
+  public void putState(@NotNull FileEditorProvider provider, @NotNull FileEditorState state) {
     myProvider2State.put(provider, state);
   }
 

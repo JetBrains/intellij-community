@@ -5,6 +5,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +33,7 @@ public abstract class WindowManagerEx extends WindowManager {
    * @return focus owner of the specified window.
    * @exception IllegalArgumentException if <code>window</code> is <code>null</code>.
    */
-  public abstract Component getFocusedComponent(Window window);
+  public abstract Component getFocusedComponent(@NotNull Window window);
 
   /**
    * @param project may be <code>null</code> when no project is opened.

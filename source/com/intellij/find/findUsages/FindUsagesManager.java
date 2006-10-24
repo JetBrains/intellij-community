@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import static com.intellij.find.findUsages.FindUsagesManager.FileSearchScope.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,6 +35,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -119,14 +119,6 @@ public class FindUsagesManager implements JDOMExternalizable {
     });
   }
 
-  public static FindUsagesProvider getFindHandler(PsiElement elt) {
-    return elt.getLanguage().getFindUsagesProvider();
-  }
-
-  public Project getProject() {
-    return myProject;
-  }
-
   public void registerFindUsagesHandler(Function<PsiElement,Factory<FindUsagesHandler>> handler) {
     myHandlers.add(0, handler);
   }
@@ -160,11 +152,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     JDOMExternalizer.write(element, "OPEN_NEW_TAB", myToOpenInNewTab);
   }
 
-  private boolean findUsageInFile(FileEditor editor, FileSearchScope direction) {
-    if (editor == null) {
-      throw new IllegalArgumentException("editor cannot be null");
-    }
-
+  private boolean findUsageInFile(@NotNull FileEditor editor, FileSearchScope direction) {
     SmartPsiElementPointer[] lastSearchElements = myLastSearchData.myLastSearchElements;
     if (lastSearchElements == null) return false;
     List<PsiElement> elements = new ArrayList<PsiElement>();

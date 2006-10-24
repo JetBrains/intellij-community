@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class ResoureBundleEditorProvider implements FileEditorProvider, ApplicationComponent {
   private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
-  public static ResoureBundleEditorProvider getInstance() {
-    return ApplicationManager.getApplication().getComponent(ResoureBundleEditorProvider.class);
-  }
 
   public ResoureBundleEditorProvider(Application application, final FileTypeManagerEx fileTypeManagerEx) {
     application.runWriteAction(new Runnable() {
@@ -31,17 +28,14 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
     });
   }
 
-  public boolean accept(Project project, VirtualFile file){
+  public boolean accept(@NotNull Project project, @NotNull VirtualFile file){
     if (file instanceof ResourceBundleAsVirtualFile) return true;
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     return psiFile instanceof PropertiesFile && ((PropertiesFile)psiFile).getResourceBundle().getPropertiesFiles(project).size() > 1;
   }
 
   @NotNull
-  public FileEditor createEditor(Project project, final VirtualFile file){
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file){
     ResourceBundle resourceBundle;
     if (file instanceof ResourceBundleAsVirtualFile) {
       resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle();
@@ -57,16 +51,16 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
     return new ResourceBundleEditor(project, resourceBundle);
   }
 
-  public void disposeEditor(FileEditor editor) {
+  public void disposeEditor(@NotNull FileEditor editor) {
     ((ResourceBundleEditor)editor).dispose();
   }
 
   @NotNull
-  public FileEditorState readState(Element element, Project project, VirtualFile file){
+  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file){
     return new ResourceBundleEditor.ResourceBundleEditorState(null);
   }
 
-  public void writeState(FileEditorState state, Project project, Element element){
+  public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element element){
   }
 
   @NotNull

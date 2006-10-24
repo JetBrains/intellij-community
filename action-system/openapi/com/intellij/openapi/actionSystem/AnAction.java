@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -151,10 +152,7 @@ public abstract class AnAction {
    *
    * @param sourceAction cannot be <code>null</code>
    */
-  public final void copyFrom(AnAction sourceAction){
-    if (sourceAction == null) {
-      throw new IllegalArgumentException("sourceAction cannot be null");
-    }
+  public final void copyFrom(@NotNull AnAction sourceAction){
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
     presentation.setIcon(sourcePresentation.getIcon());

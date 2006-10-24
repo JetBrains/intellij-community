@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -80,20 +81,12 @@ public class DefaultActionGroup extends ActionGroup {
    * <li>constraint is null
    * <li>action is already in the group
    */
-  public final void add(AnAction action, Constraints constraint){
+  public final void add(@NotNull AnAction action, @NotNull Constraints constraint){
     add(action, constraint, ActionManager.getInstance());
   }
 
-  public final void add(AnAction action, Constraints constraint, ActionManager actionManager){
-    if (action == null) {
-      throw new IllegalArgumentException("action cannot be null");
-    }
-    if (constraint == null) {
-      throw new IllegalArgumentException("constraint cannot be null");
-    }
-
+  public final void add(@NotNull AnAction action, @NotNull Constraints constraint, ActionManager actionManager){
     // Check that action isn't already registered
-
     if (!(action instanceof Separator)) {
       if (mySortedChildren.contains(action)){
         throw new IllegalArgumentException("cannot add an action twice");

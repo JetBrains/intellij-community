@@ -52,7 +52,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    *
    * @param file file to be closed. Cannot be null.
    */
-  public abstract void closeFile(VirtualFile file, EditorWindow window);
+  public abstract void closeFile(@NotNull VirtualFile file, EditorWindow window);
 
   /**
    * @return <code>true</code> if there are two tab groups, othrwise the

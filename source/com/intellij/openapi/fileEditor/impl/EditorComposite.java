@@ -72,20 +72,10 @@ public abstract class EditorComposite{
    * arrays is empty
    */
   EditorComposite(
-    final VirtualFile file,
-    final FileEditor[] editors,
-    final FileEditorManager fileEditorManager
+    @NotNull final VirtualFile file,
+    @NotNull final FileEditor[] editors,
+    @NotNull final FileEditorManager fileEditorManager
   ){
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
-    if(editors==null){
-      throw new IllegalArgumentException("editors cannot be null");
-    }
-    if (fileEditorManager == null) {
-      throw new IllegalArgumentException("fileEditorManager cannot be null");
-    }
-
     myFile = file;
     myEditors = editors;
     myFileEditorManager = fileEditorManager;
@@ -162,17 +152,11 @@ public abstract class EditorComposite{
     myPinned = pinned;
   }
 
-  void addEditorManagerListener(final FileEditorManagerListener listener){
-    if (listener == null) {
-      throw new IllegalArgumentException("listener cannot be null");
-    }
+  void addEditorManagerListener(@NotNull final FileEditorManagerListener listener){
     myEventDispatcher.addListener(listener);
   }
 
-  public void removeEditorManagerListener(final FileEditorManagerListener listener){
-    if (listener == null) {
-      throw new IllegalArgumentException("listener cannot be null");
-    }
+  public void removeEditorManagerListener(@NotNull final FileEditorManagerListener listener){
     myEventDispatcher.removeListener(listener);
   }
 

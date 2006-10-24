@@ -1,20 +1,18 @@
 package com.intellij.ui;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.Enumeration;
-import javax.swing.DefaultListModel;
-import javax.swing.JFrame;
-import javax.swing.JList;
-import javax.swing.ListModel;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Enumeration;
 
 /**
  * @author Eugene Belyaev
@@ -70,7 +68,7 @@ public class TreeList extends JList implements TreeModelListener {
    *   attribute: visualUpdate true
    * description: The object that contains the data to be drawn by this JList.
    */
-  public void setModel(ListModel model) {
+  public void setModel(@NotNull ListModel model) {
     throw new UnsupportedOperationException("TreeList accepts only TreeModel as a model");
   }
 

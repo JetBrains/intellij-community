@@ -1,6 +1,7 @@
 package com.intellij.help.impl;
 
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.help.*;
 import javax.help.Map.ID;
@@ -501,11 +502,11 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    *
    * @see javax.swing.AbstractButton
    * @see java.awt.Button
-   * @throws IllegalArgumentException if comp is null.
+   * @throws IllegalArgumentException if comp is not a button.
    */
   public void enableHelpOnButton(Component comp,String id,HelpSet hs){
     if(!(comp instanceof AbstractButton)&&!(comp instanceof Button)){
-      throw new IllegalArgumentException("Invalid Component");
+      throw new IllegalArgumentException("Invalid Component. comp must be either a javax.swing.AbstractButton or a java.awt.Button");
     }
     if(id==null){
       throw new NullPointerException("id");
@@ -537,13 +538,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @see java.awt.MenuItem
    * @throws IllegalArgumentException if comp is null.
    */
-  public void enableHelpOnButton(MenuItem comp,String id,HelpSet hs){
-    if(comp==null){
-      throw new IllegalArgumentException("Invalid Component");
-    }
-    if(id==null){
-      throw new NullPointerException("id");
-    }
+  public void enableHelpOnButton(@NotNull MenuItem comp,@NotNull String id,HelpSet hs){
     CSH.setHelpIDString(comp,id);
     if(hs!=null){
       CSH.setHelpSet(comp,hs);

@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -503,10 +504,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     revalidate();
   }
 
-  public void setMinimumButtonSize(final Dimension size) {
-    if (size == null) {
-      throw new IllegalArgumentException("size cannot be null");
-    }
+  public void setMinimumButtonSize(@NotNull final Dimension size) {
     myMinimumButtonSize = size;
     for (int i = getComponentCount() - 1; i >= 0; i--) {
       final Component component = getComponent(i);

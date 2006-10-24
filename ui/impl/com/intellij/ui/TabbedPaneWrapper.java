@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -265,11 +266,8 @@ public class TabbedPaneWrapper {
   private static final class TabWrapper extends JPanel implements DataProvider{
     private final JComponent myComponent;
 
-    public TabWrapper(final JComponent component) {
+    public TabWrapper(@NotNull final JComponent component) {
       super(new BorderLayout());
-      if (component == null) {
-        throw new IllegalArgumentException("component cannot be null");
-      }
       myComponent = component;
       add(component, BorderLayout.CENTER);
     }

@@ -31,6 +31,7 @@ import org.apache.velocity.runtime.parser.node.Node;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.apache.velocity.runtime.resource.loader.FileResourceLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -206,10 +207,7 @@ public class FileTemplateUtil{
     return result[0];
   }
 
-  public static boolean createFromTemplate(final PsiElement[] myCreatedElement, final FileTemplate template, final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
-    if (template == null){
-      throw new IllegalArgumentException("template cannot be null");
-    }
+  public static boolean createFromTemplate(final PsiElement[] myCreatedElement, @NotNull final FileTemplate template, final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
     if (props == null) {
       props = FileTemplateManager.getInstance().getDefaultProperties();
     }

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,13 +23,7 @@ final class LightBulbComponentImpl extends JComponent{
   private final QuickFixManager myManager;
   private final BufferedImage myBackgroundImage;
 
-  public LightBulbComponentImpl(final QuickFixManager manager, final BufferedImage backgroundImage) {
-    if(manager == null){
-      throw new IllegalArgumentException();
-    }
-    if (backgroundImage == null) {
-      throw new IllegalArgumentException("backgroundImage cannot be null");
-    }
+  public LightBulbComponentImpl(@NotNull final QuickFixManager manager, @NotNull final BufferedImage backgroundImage) {
     myManager = manager;
     myBackgroundImage = backgroundImage;
 

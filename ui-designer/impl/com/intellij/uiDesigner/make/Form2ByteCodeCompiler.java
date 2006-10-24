@@ -55,10 +55,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   }
 
   @NotNull
-  public static URLClassLoader createClassLoader(final String classPath){
-    if (classPath == null) {
-      throw new IllegalArgumentException("classPath cannot be null");
-    }
+  public static URLClassLoader createClassLoader(@NotNull final String classPath){
     final ArrayList<URL> urls = new ArrayList<URL>();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();

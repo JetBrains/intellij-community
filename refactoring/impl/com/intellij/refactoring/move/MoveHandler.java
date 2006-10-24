@@ -25,11 +25,10 @@ import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandle
 import com.intellij.refactoring.move.moveMembers.MoveMembersImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MoveHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.MoveHandler");
@@ -226,10 +225,7 @@ public class MoveHandler implements RefactoringActionHandler {
    * Must be invoked in AtomicAction
    * target container can be null => means that container is not determined yet and must be spacify by the user
    */
-  public static boolean canMove(PsiElement[] elements, PsiElement targetContainer) {
-    if (elements == null) {
-      throw new IllegalArgumentException("elements cannot be null");
-    }
+  public static boolean canMove(@NotNull PsiElement[] elements, PsiElement targetContainer) {
     int moveType = getMoveType(elements);
     if (moveType == NOT_SUPPORTED) {
       return false;
@@ -263,10 +259,7 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * Must be invoked in AtomicAction
    */
-  private static int getMoveType(PsiElement[] elements) {
-    if (elements == null) {
-      throw new IllegalArgumentException("elements cannot be null");
-    }
+  private static int getMoveType(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (element instanceof JspClass || element instanceof JspHolderMethod) return NOT_SUPPORTED;
     }

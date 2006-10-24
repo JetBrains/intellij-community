@@ -93,10 +93,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
   /**
    * Makes file most recent one
    */
-  private void fileOpenedImpl(final VirtualFile file){
-    if (file == null){
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  private void fileOpenedImpl(@NotNull final VirtualFile file){
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
@@ -216,10 +213,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
    * @exception java.lang.IllegalArgumentException if <code>file</code>
    * is <code>null</code>
    */
-  public void removeFile(final VirtualFile file){
-    if (file == null){
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  public void removeFile(@NotNull final VirtualFile file){
     final HistoryEntry entry = getEntry(file);
     if(entry != null){
       myEntriesList.remove(entry);

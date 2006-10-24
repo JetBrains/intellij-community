@@ -1,6 +1,7 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,10 +15,7 @@ public class ProgressBar extends JComponent {
     updateUI();
   }
 
-  public void setProgressIcon(Icon progressIcon){
-    if (progressIcon == null) {
-      throw new IllegalArgumentException("progressIcon cannot be null");
-    }
+  public void setProgressIcon(@NotNull Icon progressIcon){
     myProgressIcon = progressIcon;
     repaint();
   }

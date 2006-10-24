@@ -5,6 +5,7 @@ package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,11 +17,8 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
   private final FileEditorManagerEx myEditorManager;
   private final JComponent myComponent;
 
-  public RequestFocusInEditorComponentCmd(final FileEditorManagerEx editorManager, final Runnable finishCallBack){
+  public RequestFocusInEditorComponentCmd(@NotNull final FileEditorManagerEx editorManager, final Runnable finishCallBack){
     super(finishCallBack);
-    if(editorManager == null){
-      throw new IllegalArgumentException("component cannot be null");
-    }
     myEditorManager = editorManager;
     myComponent = myEditorManager.getPreferredFocusedComponent();
   }

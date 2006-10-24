@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.quickFixes;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -13,13 +14,7 @@ import javax.swing.*;
 final class ShowHintAction extends AnAction{
   private final QuickFixManager myManager;
 
-  public ShowHintAction(final QuickFixManager manager, final JComponent component) {
-    if(manager == null){
-      throw new IllegalArgumentException();
-    }
-    if(component == null){
-      throw new IllegalArgumentException();
-    }
+  public ShowHintAction(@NotNull final QuickFixManager manager, @NotNull final JComponent component) {
     myManager = manager;
     registerCustomShortcutSet(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcutSet(),

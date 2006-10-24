@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,8 +19,6 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Anton Katilin
@@ -169,11 +169,8 @@ final class WindowWatcher implements PropertyChangeListener{
   }
 
 
-  public final Component getFocusedComponent(final Window window){
+  public final Component getFocusedComponent(@NotNull final Window window){
     synchronized(myLock){
-      if(window==null){
-        throw new IllegalArgumentException("window is null");
-      }
       final WindowInfo info=myWindow2Info.get(window);
       if(info==null){ // it means that we don't manage this window, so just return standard focus owner
         // return window.getFocusOwner();

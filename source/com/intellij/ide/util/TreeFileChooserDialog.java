@@ -32,6 +32,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -249,10 +250,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     return mySelectedFile;
   }
 
-  public void selectFile(final PsiFile file) {
-    if (file == null) {
-      throw new IllegalArgumentException();
-    }
+  public void selectFile(@NotNull final PsiFile file) {
     // Select element in the tree
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {

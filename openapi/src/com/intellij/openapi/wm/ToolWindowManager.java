@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -37,15 +38,15 @@ public abstract class ToolWindowManager {
    * @exception java.lang.IllegalArgumentException if the same window is already installed or one
    * of the parameters is <code>null</code>.
    */
-  public abstract ToolWindow registerToolWindow(String id,JComponent component,ToolWindowAnchor anchor);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor);
 
-  public abstract ToolWindow registerToolWindow(String id,JComponent component,ToolWindowAnchor anchor, Disposable parentDisposable);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,@NotNull JComponent component,@NotNull ToolWindowAnchor anchor, Disposable parentDisposable);
 
   /**
    * @exception java.lang.IllegalArgumentException if tool window with specified isn't
    * registered.
    */
-  public abstract void unregisterToolWindow(String id);
+  public abstract void unregisterToolWindow(@NotNull String id);
 
   /**
    */

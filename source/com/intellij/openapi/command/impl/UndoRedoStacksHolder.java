@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -27,11 +28,7 @@ class UndoRedoStacksHolder {
     return getStack(DocumentReferenceByDocument.createDocumentReference(document));
   }
 
-  public LinkedList<UndoableGroup> getStack(DocumentReference docRef) {
-    if (docRef == null) {
-      throw new IllegalArgumentException("docRef cannot be null");
-    }
-
+  public LinkedList<UndoableGroup> getStack(@NotNull DocumentReference docRef) {
     LinkedList<UndoableGroup> result;
     if (docRef.getFile() != null) {
       result = myStackOwnerToStack.get(docRef);

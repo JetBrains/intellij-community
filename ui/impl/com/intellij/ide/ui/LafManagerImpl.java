@@ -97,20 +97,14 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Adds specified listener
    */
-  public void addLafManagerListener(final LafManagerListener l){
-    if (l == null) {
-      throw new IllegalArgumentException("l cannot be null");
-    }
+  public void addLafManagerListener(@NotNull final LafManagerListener l){
     myListenerList.add(LafManagerListener.class, l);
   }
 
   /**
    * Removes specified listener
    */
-  public void removeLafManagerListener(final LafManagerListener l){
-    if (l == null) {
-      throw new IllegalArgumentException("l cannot be null");
-    }
+  public void removeLafManagerListener(@NotNull final LafManagerListener l){
     myListenerList.remove(LafManagerListener.class, l);
   }
 

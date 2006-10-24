@@ -1,5 +1,6 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -15,7 +16,7 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.ChangeContextUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -159,10 +160,7 @@ public class MoveFilesOrDirectoriesUtil {
     }
   }
 
-  public static boolean canMoveFiles(PsiElement[] elements) {
-    if (elements == null) {
-      throw new IllegalArgumentException("elements cannot be null");
-    }
+  public static boolean canMoveFiles(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(PsiUtil.isInJspFile(element)))) {
         return false;
@@ -206,10 +204,7 @@ public class MoveFilesOrDirectoriesUtil {
     return true;
   }
 
-  public static boolean canMoveDirectories(PsiElement[] elements) {
-    if (elements == null) {
-      throw new IllegalArgumentException("elements cannot be null");
-    }
+  public static boolean canMoveDirectories(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiDirectory)) {
         return false;

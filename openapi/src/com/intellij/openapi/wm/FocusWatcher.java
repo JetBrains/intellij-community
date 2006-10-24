@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.wm;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
@@ -105,10 +107,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     return myNearestFocusableComponent;
   }
 
-  public final void install(Component component){
-    if (component == null) {
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public final void install(@NotNull Component component){
     myTopComponent = component;
     installImpl(component);
   }

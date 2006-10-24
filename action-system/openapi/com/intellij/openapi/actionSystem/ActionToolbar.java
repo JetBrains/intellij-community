@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -71,7 +73,7 @@ public interface ActionToolbar {
    *          if <code>size</code>
    *          is <code>null</code>
    */
-  void setMinimumButtonSize(Dimension size);
+  void setMinimumButtonSize(@NotNull Dimension size);
 
   /**
    * Sets toolbar orientation

@@ -323,10 +323,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private final class MyShowHintRequest implements Runnable{
     private final QuickFixManager myManager;
 
-    public MyShowHintRequest(final QuickFixManager manager) {
-      if(manager == null){
-        throw new IllegalArgumentException();
-      }
+    public MyShowHintRequest(@NotNull final QuickFixManager manager) {
       myManager = manager;
     }
 

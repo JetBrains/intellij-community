@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -135,10 +136,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * modal context.
    * @throws IllegalArgumentException if <code>component</code> is <code>null</code>.
    */
-  public static boolean isModalContext(Component component) {
-    if(component==null){
-      throw new IllegalArgumentException("component cannot be null");
-    }
+  public static boolean isModalContext(@NotNull Component component) {
     Window window;
     if (component instanceof Window) {
       window = (Window)component;

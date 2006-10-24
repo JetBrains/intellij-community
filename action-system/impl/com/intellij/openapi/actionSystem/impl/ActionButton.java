@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,20 +30,16 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   protected AnAction myAction;
   private String myPlace;
   private ActionButtonLook myLook = ActionButtonLook.IDEA_LOOK;
-  protected boolean myMouseDown;
-  protected boolean myRollover;
+  private boolean myMouseDown;
+  private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
 
   public ActionButton(
     final AnAction action,
     final Presentation presentation,
     final String place,
-    final Dimension minimumSize
+    @NotNull final Dimension minimumSize
     ) {
-    if (minimumSize == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("minimumSize cannot be null");
-    }
     setMinimumButtonSize(minimumSize);
     myRollover = false;
     myMouseDown = false;
@@ -54,11 +51,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     myMinimumButtonSize = minimumSize;
   }
 
-  public void setMinimumButtonSize(Dimension size) {
-    if (size == null) {
-      //noinspection HardCodedStringLiteral
-      throw new IllegalArgumentException("size cannot be null");
-    }
+  public void setMinimumButtonSize(@NotNull Dimension size) {
     myMinimumButtonSize = size;
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -497,20 +498,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandList);
   }
 
-  public ToolWindow registerToolWindow(final String id, final JComponent component, final ToolWindowAnchor anchor) {
+  public ToolWindow registerToolWindow(@NotNull final String id, @NotNull final JComponent component, @NotNull final ToolWindowAnchor anchor) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (id == null) {
-      throw new IllegalArgumentException("window id cannot be null");
-    }
-    if (component == null) {
-      throw new IllegalArgumentException("component cannot be null");
-    }
-    if (anchor == null) {
-      throw new IllegalArgumentException("anchor cannot be null");
-    }
     if (myLayout.isToolWindowRegistered(id)) {
       throw new IllegalArgumentException("window with id=\"" + id + "\" is already registered");
     }
@@ -559,7 +551,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return toolWindow;
   }
 
-  public ToolWindow registerToolWindow(final String id, JComponent component, ToolWindowAnchor anchor, Disposable parentDisposable) {
+  public ToolWindow registerToolWindow(@NotNull final String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable) {
     final ToolWindow window = registerToolWindow(id, component, anchor);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -569,7 +561,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return window;
   }
 
-  public void unregisterToolWindow(final String id) {
+  public void unregisterToolWindow(@NotNull final String id) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: unregisterToolWindow(" + id + ")");
     }
@@ -1244,6 +1236,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "ToolWindowManager";
   }

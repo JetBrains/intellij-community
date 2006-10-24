@@ -135,11 +135,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
 
   public void disposeComponent() {}
 
-  @NotNull public TextEditor getTextEditor(Editor editor) {
-    if (editor == null) {
-      throw new IllegalArgumentException("editor cannot be null");
-    }
-
+  @NotNull public TextEditor getTextEditor(@NotNull Editor editor) {
     TextEditor textEditor = editor.getUserData(TEXT_EDITOR_KEY);
     if (textEditor == null) {
       textEditor = new DummyTextEditor(editor);
@@ -149,11 +145,7 @@ public final class TextEditorProvider implements FileEditorProvider, Application
     return textEditor;
   }
 
-  public static Document[] getDocuments(FileEditor editor) {
-    if (editor == null) {
-      throw new IllegalArgumentException("editor cannot be null");
-    }
-
+  public static Document[] getDocuments(@NotNull FileEditor editor) {
     if (editor instanceof DocumentsEditor) {
       DocumentsEditor documentsEditor = (DocumentsEditor)editor;
       Document[] documents = documentsEditor.getDocuments();

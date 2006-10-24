@@ -45,7 +45,7 @@ import com.intellij.tools.ToolManager;
 import com.intellij.util.containers.HashMap;
 
 import org.jetbrains.annotations.NonNls;
-
+import org.jetbrains.annotations.NotNull;
 
 
 import javax.swing.*;
@@ -808,14 +808,7 @@ public class ActionsTreeUtil {
 
 
 
-  private static void filterOutGroup(ArrayList<String> actions, String groupId) {
-
-    if (groupId == null) {
-
-      throw new IllegalArgumentException();
-
-    }
-
+  private static void filterOutGroup(ArrayList<String> actions, @NotNull String groupId) {
     ActionManager actionManager = ActionManager.getInstance();
 
     AnAction action = actionManager.getActionOrStub(groupId);

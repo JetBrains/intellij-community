@@ -83,10 +83,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
   }
 
   @Nullable
-  public synchronized Point getLocation(String key, Project project) {
-    if(key==null){
-      throw new IllegalArgumentException("key cannot be null");
-    }
+  public synchronized Point getLocation(@NotNull String key, Project project) {
     key = realKey(key, project);
 
     Point point=myKey2Location.get(key);
@@ -114,10 +111,7 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
     setLocation(key, point, guessProject());
   }
 
-  public synchronized void setLocation(String key, Point point, Project project){
-    if(key==null){
-      throw new IllegalArgumentException("key cannot be null");
-    }
+  public synchronized void setLocation(@NotNull String key, Point point, Project project){
     key = realKey(key, project);
 
     if (point != null) {
@@ -134,15 +128,12 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   @Nullable
-  public synchronized Dimension getSize(@NonNls String key) {
+  public synchronized Dimension getSize(@NotNull @NonNls String key) {
     return getSize(key, guessProject());
   }
 
   @Nullable
-  public synchronized Dimension getSize(@NonNls String key, Project project) {
-    if(key==null){
-      throw new IllegalArgumentException("key cannot be null");
-    }
+  public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
     key = realKey(key, project);
 
     Dimension size=myKey2Size.get(key);
@@ -160,14 +151,11 @@ public class DimensionService implements JDOMExternalizable, ApplicationComponen
    * @param size a Size to save.
    * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
-  public synchronized void setSize(@NonNls String key, Dimension size){
+  public synchronized void setSize(@NotNull @NonNls String key, Dimension size){
     setSize(key, size, guessProject());
   }
 
-  public synchronized void setSize(@NonNls String key, Dimension size, Project project){
-    if(key==null){
-      throw new IllegalArgumentException("key cannot be null");
-    }
+  public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project){
     key = realKey(key, project);
 
     if (size != null) {

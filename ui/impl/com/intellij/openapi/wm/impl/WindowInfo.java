@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -248,10 +249,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
   /**
    * Sets new anchor.
    */
-  void setAnchor(final ToolWindowAnchor anchor){
-    if(anchor==null){
-      throw new IllegalArgumentException("anchor cannot be null");
-    }
+  void setAnchor(@NotNull final ToolWindowAnchor anchor){
     myAnchor=anchor;
   }
 
@@ -267,10 +265,7 @@ public final class WindowInfo implements Cloneable,JDOMExternalizable{
     myFloatingBounds=floatingBounds;
   }
 
-  void setType(final ToolWindowType type){
-    if(type==null){
-      throw new IllegalArgumentException("type cannot be null");
-    }
+  void setType(@NotNull final ToolWindowType type){
     if(ToolWindowType.DOCKED==type||ToolWindowType.SLIDING==type){
       myInternalType=type;
     }

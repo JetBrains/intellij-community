@@ -328,10 +328,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     mySplitters.setCurrentWindow(window, true);
   }
 
-  public void closeFile(final VirtualFile file, final EditorWindow window) {
-    if (file == null) {
-      throw new IllegalArgumentException("file cannot be null");
-    }
+  public void closeFile(@NotNull final VirtualFile file, final EditorWindow window) {
     assertThread();
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
