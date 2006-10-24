@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ScopeProvider {
   /**
-   * @param element
+   * @param element element
    * @return scope to search within.
    * For uniqueness checking should return element, whose direct children names will be compared. Basically it's parameter element's parent: ParentScopeProvider.
    * For resolving should return element, whose all children will be searched  

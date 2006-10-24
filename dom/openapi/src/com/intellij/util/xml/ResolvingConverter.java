@@ -29,6 +29,9 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
+ * If converter extends this class, the corresponding XML {@link com.intellij.psi.PsiReference}
+ * will take completion variants from {@link #getVariants(ConvertContext)} method
+ *
  * @author peter
  */
 public abstract class ResolvingConverter<T> extends Converter<T> {
@@ -73,13 +76,28 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     return CodeInsightBundle.message("error.cannot.resolve.default.message", s);
   }
 
+  /**
+   * @param context context
+   * @return reference completion variants
+   */
   @NotNull
   public abstract Collection<? extends T> getVariants(final ConvertContext context);
 
+  /**
+   * Additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
+   * They will also appear in the completion dropdown.
+   * @return
+   */
   public Set<String> getAdditionalVariants() {
     return Collections.emptySet();
   }
 
+  /**
+   * Delegate from {@link com.intellij.psi.PsiReference#bindToElement(com.intellij.psi.PsiElement)}
+   * @param genericValue generic value
+   * @param context context
+   * @param newTarget new target
+   */
   public void bindReference(final GenericDomValue<T> genericValue, final ConvertContext context, final PsiElement newTarget) {
     if (newTarget instanceof XmlTag) {
       DomElement domElement = genericValue.getManager().getDomElement((XmlTag) newTarget);
@@ -89,6 +107,10 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     }
   }
 
+  /**
+   * @param resolvedValue {@link #fromString(String, ConvertContext)} result
+   * @return the PSI element to which the {@link com.intellij.psi.PsiReference} will resolve
+   */
   @Nullable
   public PsiElement getPsiElement(@Nullable T resolvedValue) {
     if (resolvedValue instanceof PsiElement) {
@@ -100,11 +122,25 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     return null;
   }
 
+  /**
+   * Delegate from {@link com.intellij.psi.PsiReference#isReferenceTo(com.intellij.psi.PsiElement)}
+   * @param element element
+   * @param stringValue string value
+   * @param resolveResult resolve result
+   * @param context context
+   * @return is reference to?
+   */
   public boolean isReferenceTo(@NotNull PsiElement element, final String stringValue, @Nullable T resolveResult,
                                final ConvertContext context) {
     return element.getManager().areElementsEquivalent(element, resolveResult == null ? null : getPsiElement(resolveResult));
   }
 
+  /**
+   * Delegate from {@link com.intellij.psi.PsiReference#resolve()}
+   * @param o {@link #fromString(String, ConvertContext)} result
+   * @param context context
+   * @return PSI element to resolve to. By default calls {@link #getPsiElement(Object)} method
+   */
   @Nullable
   public PsiElement resolve(final T o, final ConvertContext context) {
     final PsiElement psiElement = getPsiElement(o);
@@ -119,6 +155,9 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     return new LocalQuickFix[0];
   }
 
+  /**
+   * Adds {@link #getVariants(ConvertContext)} functionality to an existing converter 
+   */
   public static abstract class WrappedResolvingConverter<T> extends ResolvingConverter<T> {
 
     private final Converter<T> myWrappedConverter;
