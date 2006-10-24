@@ -79,6 +79,10 @@ public final class SearchContext implements DataProvider, Cloneable {
     return selectedEditor().getSelectionModel().getSelectionEnd();
   }
 
+  public Editor getEditor() {
+    return selectedEditor();
+  }
+
   protected Object clone() {
     try {
       return super.clone();

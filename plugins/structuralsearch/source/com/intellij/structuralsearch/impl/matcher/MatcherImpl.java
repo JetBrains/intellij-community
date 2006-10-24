@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,6 +29,8 @@ import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.Language;
+import com.intellij.lang.jsp.JspxFileViewProvider;
 
 import java.util.*;
 
@@ -225,6 +228,7 @@ public class MatcherImpl {
       return;
     }
 
+    final Language ourPatternLanguage = ((LanguageFileType)options.getFileType()).getLanguage();
     SearchScope searchScope = compiledPattern.getScope();
     if (searchScope==null) searchScope = options.getScope();
 
@@ -238,11 +242,12 @@ public class MatcherImpl {
             if ((options.getFileType() == StdFileTypes.JAVA && file instanceof PsiJavaFile) ||
                 (options.getFileType() != StdFileTypes.JAVA && file instanceof XmlFile)
                ) {
-              final PsiFile[] psiRoots = file.getPsiRoots();
+              final FileViewProvider viewProvider = file.getViewProvider();
 
-              for(PsiFile root:psiRoots) {
+              for(Language lang: viewProvider.getPrimaryLanguages()) {
+                if (lang != ourPatternLanguage) continue;
                 ++totalFilesToScan;
-                scheduler.addOneTask( new MatchOneFile(root) );
+                scheduler.addOneTask( new MatchOneFile(viewProvider.getPsi(lang)) );
               }
             }
           }
@@ -251,14 +256,24 @@ public class MatcherImpl {
       };
 
       final ProjectRootManager instance = ProjectRootManager.getInstance(project);
-      ProjectFileIndex projectFileIndex = instance.getFileIndex();
+      final ProjectFileIndex projectFileIndex = instance.getFileIndex();
 
       final VirtualFile[] rootFiles = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
         public VirtualFile[] compute() {
-          return (options.getFileType() == StdFileTypes.JAVA)?
-                 instance.getRootFiles(ProjectRootType.SOURCE):
-                 instance.getContentRoots()
-          ;
+          // We search from content roots even for java files due to jsps
+          final VirtualFile[] contentRoots = instance.getContentRoots();
+          List<VirtualFile> result = new ArrayList<VirtualFile>(contentRoots.length);
+          for(VirtualFile file:contentRoots) result.add(file);
+
+          if (scope.isSearchInLibraries()) {
+
+            for(VirtualFile file: instance.getRootFiles(ProjectRootType.SOURCE)) {
+              if (projectFileIndex.isInLibrarySource(file)) {
+                result.add(file);
+              }
+            }
+          }
+          return result.toArray(VirtualFile.EMPTY_ARRAY);
         }
       });
 
@@ -272,9 +287,6 @@ public class MatcherImpl {
 
       for (final VirtualFile rootFile : rootFiles) {
         if (visited.contains(rootFile)) continue;
-        if (projectFileIndex.isInLibrarySource(rootFile) && !scope.isSearchInLibraries()) {
-          continue;
-        }
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
@@ -288,15 +300,17 @@ public class MatcherImpl {
 
         visited.add(rootFile);
       }
-
-      /* @ todo factor out handlers, etc*/
     }
     else {
       final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
       totalFilesToScan = elementsToScan.length;
 
       for (int i = 0; i < elementsToScan.length; ++i) {
-        scheduler.addOneTask(new MatchOneFile(elementsToScan[i]));
+        final Language language = elementsToScan[i].getLanguage();
+
+        if (language != JspxFileViewProvider.JAVA_HOLDER_METHOD_TREE_LANGUAGE && language == ourPatternLanguage) { // prevent duplicated usages
+          scheduler.addOneTask(new MatchOneFile(elementsToScan[i]));
+        }
         elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }

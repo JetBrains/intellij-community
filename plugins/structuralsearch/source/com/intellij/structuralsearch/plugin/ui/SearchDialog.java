@@ -36,6 +36,8 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -263,10 +265,24 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     final PsiFile file = searchContext.getFile();
     if (file != null) {
-      if (file.getFileType() == StdFileTypes.HTML || file.getFileType() == StdFileTypes.JSP) {
+      Language contextLanguage = null;
+
+      if (searchContext.getEditor() != null) {
+        final PsiElement psiElement = file.findElementAt(searchContext.getEditor().getCaretModel().getOffset());
+        contextLanguage = psiElement != null ? psiElement.getParent().getLanguage():null;
+      }
+
+      if (file.getFileType() == StdFileTypes.HTML ||
+          ( file.getFileType() == StdFileTypes.JSP &&
+            contextLanguage == StdLanguages.HTML
+          )
+         ) {
         ourFileType = "html";
       }
-      else if (file.getFileType() == StdFileTypes.XHTML || file.getFileType() == StdFileTypes.JSPX) {
+      else if (file.getFileType() == StdFileTypes.XHTML ||
+               ( file.getFileType() == StdFileTypes.JSPX &&
+                 contextLanguage == StdLanguages.HTML
+               )) {
         ourFileType = "xml";
       }
       else {
