@@ -32,7 +32,6 @@ public interface DataContext {
    *
    * @param dataId the data identifier for which the value is requested.
    * @return the value, or null if no value is available in the current context for this identifier.
-   * @deprecated Use {@link TypeSafeDataContext#getData(DataKey)} instead.
    */
   @Nullable Object getData(@NonNls String dataId);
 }
