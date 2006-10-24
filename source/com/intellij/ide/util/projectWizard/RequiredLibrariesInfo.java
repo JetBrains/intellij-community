@@ -4,16 +4,14 @@
 
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.ide.util.projectWizard.LibraryInfo;
+import java.util.List;
 
 /**
  * @author nik
@@ -38,9 +36,9 @@ public class RequiredLibrariesInfo {
 
   public void addLibraryInfoForRepository(@NonNls String expectedJarName,
                                           @Nullable @NonNls String version,
-                             @Nullable @NonNls String downloadingUrl,
-                             @Nullable String repositoryUrl,
-                             @NonNls String... requiredClasses) {
+                                          @Nullable @NonNls String downloadingUrl,
+                                          @Nullable String repositoryUrl,
+                                          @NonNls String... requiredClasses) {
 
     myLibraryInfos.add(new LibraryInfoImpl(expectedJarName, version, downloadingUrl, repositoryUrl, requiredClasses));
   }
