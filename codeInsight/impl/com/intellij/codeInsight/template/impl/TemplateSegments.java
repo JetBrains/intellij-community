@@ -63,4 +63,17 @@ public class TemplateSegments {
     rangeMarker.setGreedyToRight(true);
     mySegments.set(index, rangeMarker);
   }
+
+  public void setNeighboursGreedy(final int segmentNumber, final boolean greedy) {
+    if (segmentNumber > 0) {
+      final RangeMarker left = mySegments.get(segmentNumber - 1);
+      left.setGreedyToLeft(greedy);
+      left.setGreedyToRight(greedy);
+    }
+    if (segmentNumber + 1 < mySegments.size()) {
+      final RangeMarker right = mySegments.get(segmentNumber + 1);
+      right.setGreedyToLeft(greedy);
+      right.setGreedyToRight(greedy);
+    }
+  }
 }
