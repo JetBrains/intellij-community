@@ -105,8 +105,10 @@ public class TemplateImpl implements Template {
   }
 
   public void addVariable(String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
-    Segment segment = new Segment(name, myTemplateText.length());
-    mySegments.add(segment);
+    if (mySegments != null) {
+      Segment segment = new Segment(name, myTemplateText.length());
+      mySegments.add(segment);
+    }
     Variable variable = new Variable(name, expression, defaultValueExpression, isAlwaysStopAt);
     myVariables.add(variable);
   }
