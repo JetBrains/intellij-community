@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class BraceHighlightingHandler {
   private FileType myFileType;
   private CodeInsightSettings myCodeInsightSettings;
 
-  public BraceHighlightingHandler(Project project, Editor editor, Alarm alarm) {
+  public BraceHighlightingHandler(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {
     myProject = project;
 
     Document document = editor.getDocument();
@@ -131,7 +132,9 @@ public class BraceHighlightingHandler {
     final int _offset = offset;
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        highlightScope(_offset);
+        if (!myProject.isDisposed() && !myEditor.isDisposed()) {
+          highlightScope(_offset);
+        }
       }
     }, 300);
   }
@@ -181,16 +184,16 @@ public class BraceHighlightingHandler {
       if (offset > 0) {
         iterator = getEditorHighlighter().createIterator(offset - 1);
         if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
-          highlightRightBrace(iterator, false);
+          highlightRightBrace(iterator);
         }
       }
     }
     else if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
-      highlightRightBrace(iterator, false);
+      highlightRightBrace(iterator);
     }
   }
 
-  private void highlightRightBrace(HighlighterIterator iterator, boolean autoMarking) {
+  private void highlightRightBrace(HighlighterIterator iterator) {
     int brace1End = iterator.getEnd();
 
     boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), myFileType, iterator, false);
@@ -204,7 +207,7 @@ public class BraceHighlightingHandler {
       brace2Start = -1;
     }
 
-    highlightBraces(brace2Start, brace1End - 1, matched, autoMarking);
+    highlightBraces(brace2Start, brace1End - 1, matched, false);
   }
 
   private void highlightLeftBrace(HighlighterIterator iterator, boolean scopeHighlighting) {
@@ -248,6 +251,7 @@ public class BraceHighlightingHandler {
       if (endLine - startLine > 0) {
         final Runnable runnable = new Runnable() {
           public void run() {
+            if (myProject.isDisposed() || myEditor.isDisposed()) return;
             Color color = attributes.getBackgroundColor();
             if (color == null) return;
             color = color.darker();
