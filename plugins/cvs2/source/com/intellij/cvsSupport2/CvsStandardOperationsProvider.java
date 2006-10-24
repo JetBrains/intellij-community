@@ -32,9 +32,7 @@
 package com.intellij.cvsSupport2;
 
 import com.intellij.CvsBundle;
-import com.intellij.cvsSupport2.checkinProject.CvsCheckinFile;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.RepositoryModificationOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
@@ -111,15 +109,5 @@ public class CvsStandardOperationsProvider {
     catch (CannotFindCvsRootException cannotFindCvsRootException) {
       throw new VcsException(cannotFindCvsRootException);
     }
-  }
-
-  public CvsOperation getTransactionForOperation(CvsCheckinFile[] operations, String message) throws VcsException {
-    RepositoryModificationOperation result = RepositoryModificationOperation.createGlobalTransactionOperation(null, CvsConfiguration.getInstance(myProject));
-    for (int i = 0; i < operations.length; i++) {
-      CvsCheckinFile operation = operations[i];
-      result.commitFile(operation.getPath());
-    }
-    result.setMessage(message);
-    return result;
   }
 }

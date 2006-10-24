@@ -8,7 +8,6 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
 import com.intellij.cvsSupport2.checkinProject.AdditionalOptionsPanel;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
-import com.intellij.cvsSupport2.checkinProject.CvsCheckinFile;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -139,6 +138,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   public void initComponent() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "CvsVcs2";
   }
@@ -258,10 +258,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return myChangeProvider;
   }
 
-  public CvsOperation getTransactionForOperations(CvsCheckinFile[] operations, String message) throws VcsException {
-    return myCvsStandardOperationsProvider.getTransactionForOperation(operations, message);
-  }
-
   protected void activate() {
     super.activate();
     myStorageComponent.init(getProject(), false);
@@ -278,14 +274,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
       FileStatusManager.getInstance(getProject()).fileStatusesChanged();
       VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
     }
-  }
-
-  public void start() throws VcsException {
-    super.start();
-  }
-
-  public void shutdown() throws VcsException {
-    super.shutdown();
   }
 
   public void entriesChanged(VirtualFile parent) {

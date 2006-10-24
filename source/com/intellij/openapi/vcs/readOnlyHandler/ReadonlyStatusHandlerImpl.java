@@ -45,6 +45,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.io.IOException;
@@ -93,7 +94,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     return createResultStatus(files, modificationStamps);
   }
 
-  private OperationStatus createResultStatus(final VirtualFile[] files, final long[] modificationStamps) {
+  private static OperationStatus createResultStatus(final VirtualFile[] files, final long[] modificationStamps) {
     List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
     List<VirtualFile> updatedFiles = new ArrayList<VirtualFile>();
     for (int i = 0; i < files.length; i++) {
@@ -114,8 +115,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   private FileInfo[] createFileInfos(VirtualFile[] files) {
     List<FileInfo> fileInfos = new ArrayList<FileInfo>();
-    for (int i = 0; i < files.length; i++) {
-      final VirtualFile file = files[i];
+    for (final VirtualFile file : files) {
       if (file != null && !file.isWritable() && isLocal(file)) {
         fileInfos.add(new FileInfo(file, myProject));
       }
@@ -123,7 +123,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     return fileInfos.toArray(new FileInfo[fileInfos.size()]);
   }
 
-  private boolean isLocal(final VirtualFile file) {
+  private static boolean isLocal(final VirtualFile file) {
     return file.getFileSystem() == LocalFileSystem.getInstance();
   }
 
@@ -135,6 +135,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "ReadonlyStatusHandler";
   }
@@ -157,23 +158,22 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     FileInfo[] copy = fileInfos.toArray(new FileInfo[fileInfos.size()]);
     MultiValuesMap<EditFileProvider, VirtualFile> providerToFile = new MultiValuesMap<EditFileProvider, VirtualFile>();
     final List<VirtualFile> unknown = new ArrayList<VirtualFile>();
-    for (int i = 0; i < copy.length; i++) {
-      FileInfo fileInfo = copy[i];
+    for (FileInfo fileInfo : copy) {
       if (fileInfo.getUseVersionControl()) {
         providerToFile.put(fileInfo.getEditFileProvider(), fileInfo.getFile());
-      } else {
+      }
+      else {
         unknown.add(fileInfo.getFile());
       }
     }
-    
+
     if (!unknown.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            for (Iterator<VirtualFile> iterator = unknown.iterator(); iterator.hasNext();) {
-              VirtualFile file = iterator.next();
+            for (VirtualFile file : unknown) {
               ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
-              file.refresh(false, false);              
+              file.refresh(false, false);
             }
           }
           catch (IOException e) {
@@ -183,8 +183,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       });      
     }
 
-    for (Iterator<EditFileProvider> iterator = providerToFile.keySet().iterator(); iterator.hasNext();) {
-      EditFileProvider editFileProvider = iterator.next();
+    for (EditFileProvider editFileProvider : providerToFile.keySet()) {
       final Collection<VirtualFile> files = providerToFile.get(editFileProvider);
       try {
         editFileProvider.editFiles(files.toArray(new VirtualFile[files.size()]));
@@ -195,17 +194,16 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          for (Iterator<VirtualFile> iterator1 = files.iterator(); iterator1.hasNext();) {
-            iterator1.next().refresh(false, false);
+          for (final VirtualFile file : files) {
+            file.refresh(false, false);
           }
-          
+
         }
       });
-      
+
     }
-    
-    for (int i = 0; i < copy.length; i++) {
-      FileInfo fileInfo = copy[i];
+
+    for (FileInfo fileInfo : copy) {
       if (fileInfo.getFile().isWritable()) {
         fileInfos.remove(fileInfo);
       }
