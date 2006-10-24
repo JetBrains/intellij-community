@@ -19,7 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -51,8 +53,13 @@ public class LocalSearchScope extends SearchScope {
 
     for (final PsiElement element : scope) {
       LOG.assertTrue(element.getContainingFile() != null);
+
       if (element instanceof PsiFile) {
-        localScope.addAll(Arrays.asList(((PsiFile)element).getPsiRoots()));
+        final FileViewProvider provider = ((PsiFile)element).getViewProvider();
+
+        for(Language lang:provider.getPrimaryLanguages()) {
+          localScope.add(provider.getPsi(lang));
+        }
       }
       else {
         localScope.add(element);
