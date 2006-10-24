@@ -22,13 +22,20 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
+  private static final Map<String, String> ourPrimitiveTypeMapping = new HashMap<String, String>() {{
+    put("boolean", "java.lang.Boolean");
+    put("byte", "java.lang.Byte");
+    put("char", "java.lang.Character");
+    put("double", "java.lang.Double");
+    put("float", "java.lang.Float");
+    put("int", "java.lang.Integer");
+    put("long", "java.lang.Long");
+    put("short", "java.lang.Short");
+  }};
 
   private EvaluatorBuilderImpl() {
   }
@@ -721,13 +728,20 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
       PsiType type = expression.getOperand().getType();
-      PsiClass psiClass = PsiUtil.resolveClassInType(type);
-      if (psiClass == null) {
-        throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("evaluation.error.cannot.resolve.class", type.getCanonicalText()))
-        );
+
+      if (type instanceof PsiPrimitiveType) {
+        final JVMName typeName = JVMNameUtil.getJVMRawText(ourPrimitiveTypeMapping.get(type.getCanonicalText()));
+        myResult = new FieldEvaluator(new TypeEvaluator(typeName), typeName, "TYPE");
       }
-      myResult = new ClassObjectEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(psiClass)));
+      else {
+        PsiClass psiClass = PsiUtil.resolveClassInType(type);
+        if (psiClass == null) {
+          throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
+            DebuggerBundle.message("evaluation.error.cannot.resolve.class", type.getCanonicalText()))
+          );
+        }
+        myResult = new ClassObjectEvaluator(new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(psiClass)));
+      }
     }
 
     public void visitNewExpression(PsiNewExpression expression) {
