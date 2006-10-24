@@ -24,10 +24,10 @@ public class ContextHelpAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Object helpIDObj = dataContext.getData(DataConstantsEx.HELP_ID);
-    if (helpIDObj != null) {
-      HelpManager.getInstance().invokeHelp(helpIDObj.toString());
-    } else if (myHelpID != null) {
+    if (myHelpID != null) {
       HelpManager.getInstance().invokeHelp(myHelpID);
+    } else if (helpIDObj != null) {
+      HelpManager.getInstance().invokeHelp(helpIDObj.toString());
     }
   }
 
