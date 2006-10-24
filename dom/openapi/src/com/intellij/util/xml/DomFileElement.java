@@ -14,7 +14,11 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public interface DomFileElement<T extends DomElement> extends DomElement, UserDataHolder, ModificationTracker {
+  @NotNull
   XmlFile getFile();
+
+  @NotNull
+  XmlFile getOriginalFile();
 
   @Nullable
   XmlTag getRootTag();

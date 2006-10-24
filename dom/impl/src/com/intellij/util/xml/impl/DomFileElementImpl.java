@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
@@ -18,11 +19,11 @@ import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
-import javax.swing.*;
 
 /**
  * @author peter
@@ -127,6 +128,15 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public final XmlFile getFile() {
+    return myFile;
+  }
+
+  @NotNull
+  public XmlFile getOriginalFile() {
+    final PsiFile originalFile = myFile.getOriginalFile();
+    if (originalFile != null) {
+      return (XmlFile)originalFile;
+    }
     return myFile;
   }
 
