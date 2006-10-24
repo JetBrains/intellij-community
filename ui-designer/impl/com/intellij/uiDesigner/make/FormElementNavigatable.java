@@ -30,6 +30,7 @@ public class FormElementNavigatable implements Navigatable {
   }
 
   public void navigate(boolean requestFocus) {
+    if (!myVirtualFile.isValid()) return;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, myVirtualFile);
     final List<FileEditor> fileEditors = FileEditorManager.getInstance(myProject).openEditor(descriptor, requestFocus);
     if (myComponentId != null) {
@@ -43,10 +44,10 @@ public class FormElementNavigatable implements Navigatable {
   }
 
   public boolean canNavigate() {
-    return true;
+    return myVirtualFile.isValid();
   }
 
   public boolean canNavigateToSource() {
-    return true;
+    return myVirtualFile.isValid();
   }
 }
