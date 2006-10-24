@@ -5,8 +5,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.ClassUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -321,7 +321,7 @@ public class HighlightMethodUtil {
           String methodName = HighlightMessageUtil.getSymbolName(element, resolveResult.getSubstitutor());
           PsiElement parent = element.getParent();
           String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, resolveResult.getSubstitutor());
-          String argTypes = HighlightUtil.buildArgTypesList(list);
+          String argTypes = buildArgTypesList(list);
           String description = JavaErrorMessages.message("wrong.method.arguments", methodName, containerName, argTypes);
           String toolTip = parent instanceof PsiClass ?
                            createMismatchedArgumentsHtmlTooltip(info, list) : description;
@@ -418,7 +418,7 @@ public class HighlightMethodUtil {
         elementToHighlight = referenceToMethod.getReferenceNameElement();
       }
       else {
-        String methodName = referenceToMethod.getReferenceName() + HighlightUtil.buildArgTypesList(list);
+        String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
         description = JavaErrorMessages.message("cannot.resolve.method", methodName);
         if (candidateList.isEmpty()) {
           elementToHighlight = referenceToMethod.getReferenceNameElement();
@@ -1043,7 +1043,7 @@ public class HighlightMethodUtil {
     if (constructors.length == 0) {
       if (list.getExpressions().length != 0) {
         String constructorName = aClass.getName();
-        String argTypes = HighlightUtil.buildArgTypesList(list);
+        String argTypes = buildArgTypesList(list);
         String description = JavaErrorMessages.message("wrong.constructor.arguments", constructorName+"()", argTypes);
         String tooltip = createMismatchedArgumentsHtmlTooltip(list, PsiParameter.EMPTY_ARRAY, constructorName, PsiSubstitutor.EMPTY, aClass);
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description, tooltip);
@@ -1069,7 +1069,7 @@ public class HighlightMethodUtil {
       PsiMethod constructor = result == null ? null : result.getElement();
       if (constructor == null) {
         String name = aClass.getName();
-        name += HighlightUtil.buildArgTypesList(list);
+        name += buildArgTypesList(list);
         String description = JavaErrorMessages.message("cannot.resolve.constructor", name);
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description);
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall), null, null);
@@ -1093,7 +1093,7 @@ public class HighlightMethodUtil {
         else if (!result.isApplicable()) {
           String constructorName = HighlightMessageUtil.getSymbolName(constructor, result.getSubstitutor());
           String containerName = HighlightMessageUtil.getSymbolName(constructor.getParent(), result.getSubstitutor());
-          String argTypes = HighlightUtil.buildArgTypesList(list);
+          String argTypes = buildArgTypesList(list);
           String description = JavaErrorMessages.message("wrong.method.arguments", constructorName, containerName, argTypes);
           String toolTip = createMismatchedArgumentsHtmlTooltip(result, list);
           PsiElement infoElement = list.getTextLength() > 0 ? list : constructorCall;
@@ -1172,5 +1172,20 @@ public class HighlightMethodUtil {
              && HighlightUtil.isSerializable(aClass);
     }
     return false;
+  }
+
+  private static String buildArgTypesList(PsiExpressionList list) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("(");
+    PsiExpression[] args = list.getExpressions();
+    for (int i = 0; i < args.length; i++) {
+      if (i > 0) {
+        builder.append(", ");
+      }
+      PsiType argType = args[i].getType();
+      builder.append(argType != null ? HighlightUtil.formatType(argType) : "?");
+    }
+    builder.append(")");
+    return builder.toString();
   }
 }

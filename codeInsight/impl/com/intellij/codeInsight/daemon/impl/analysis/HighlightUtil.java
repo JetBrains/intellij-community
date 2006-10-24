@@ -5,15 +5,15 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.ClassUtil;
-import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.Problem;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
@@ -40,16 +42,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.problems.Problem;
-import com.intellij.problems.WolfTheProblemSolver;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -560,19 +559,14 @@ public class HighlightUtil {
   }
 
   public static String getUnhandledExceptionsDescriptor(PsiClassType... unhandledExceptions) {
-    StringBuilder exceptionsText = StringBuilderSpinAllocator.alloc();
-    try {
-      for (int i = 0; i < unhandledExceptions.length; i++) {
-        PsiClassType unhandledException = unhandledExceptions[i];
-        if (i > 0) exceptionsText.append(", ");
-        exceptionsText.append(formatType(unhandledException));
-      }
+    StringBuilder exceptionsText = new StringBuilder();
+    for (int i = 0; i < unhandledExceptions.length; i++) {
+      PsiClassType unhandledException = unhandledExceptions[i];
+      if (i > 0) exceptionsText.append(", ");
+      exceptionsText.append(formatType(unhandledException));
+    }
 
-      return JavaErrorMessages.message("unhandled.exceptions", exceptionsText.toString(), unhandledExceptions.length);
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(exceptionsText);
-    }
+    return JavaErrorMessages.message("unhandled.exceptions", exceptionsText.toString(), unhandledExceptions.length);
   }
 
 
@@ -792,15 +786,13 @@ public class HighlightUtil {
 
       if (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
           PsiModifier.STRICTFP.equals(modifier) || PsiModifier.SYNCHRONIZED.equals(modifier)) {
-        boolean notInterface = modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
-        isAllowed &= notInterface;
+        isAllowed &= modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
       }
     }
     else if (modifierOwner instanceof PsiField) {
       if (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) || PsiModifier.TRANSIENT.equals(modifier) ||
           PsiModifier.STRICTFP.equals(modifier) || PsiModifier.SYNCHRONIZED.equals(modifier)) {
-        boolean isInterface = modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
-        isAllowed = isInterface;
+        isAllowed = modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
       }
     }
     else if (modifierOwner instanceof PsiClassInitializer) {
@@ -1033,27 +1025,6 @@ public class HighlightUtil {
       }
     }
   }
-
-  static String buildArgTypesList(PsiExpressionList list) {
-    StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("(");
-      PsiExpression[] args = list.getExpressions();
-      for (int i = 0; i < args.length; i++) {
-        if (i > 0) {
-          builder.append(", ");
-        }
-        PsiType argType = args[i].getType();
-        builder.append(argType != null ? formatType(argType) : "?");
-      }
-      builder.append(")");
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-  }
-
 
   @Nullable
   static HighlightInfo checkValidArrayAccessExpression(PsiExpression arrayExpression, PsiExpression indexExpression) {
@@ -1810,10 +1781,10 @@ public class HighlightUtil {
 
 
   @Nullable
-  private static HighlightInfo checkMustBeThrowable(PsiClass aClass, PsiElement context, boolean addCastIntention) {
+  private static HighlightInfo checkMustBeThrowable(PsiClass aClass, PsiElement context) {
     if (aClass == null) return null;
     PsiClassType type = aClass.getManager().getElementFactory().createType(aClass);
-    return checkMustBeThrowable(type, context, addCastIntention);
+    return checkMustBeThrowable(type, context, false);
   }
 
 
@@ -1948,7 +1919,7 @@ public class HighlightUtil {
       }
     }
     else if (refGrandParent instanceof PsiMethod && ((PsiMethod)refGrandParent).getThrowsList() == referenceList) {
-      highlightInfo = checkMustBeThrowable(resolved, ref, false);
+      highlightInfo = checkMustBeThrowable(resolved, ref);
     }
     return highlightInfo;
   }
@@ -1960,23 +1931,6 @@ public class HighlightUtil {
 
     final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
     return settingForRoot != FileHighlighingSetting.SKIP_HIGHLIGHTING;
-  }
-
-  public static void forceRootHighlighting(final PsiElement root, final boolean highlightFlag) {
-    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
-    if (component == null) return;
-    final PsiFile file = root.getContainingFile();
-    final FileHighlighingSetting highlightingLevel =
-      highlightFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING : FileHighlighingSetting.SKIP_HIGHLIGHTING;
-    if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
-      //highlight both java roots
-      final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
-      component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), highlightingLevel);
-      component.setHighlightingSettingForRoot(jspClass.getMethodDummyHolder(), highlightingLevel);
-    }
-    else {
-      component.setHighlightingSettingForRoot(root, highlightingLevel);
-    }
   }
 
   public static boolean shouldInspect(final PsiElement psiRoot) {
@@ -2089,13 +2043,13 @@ public class HighlightUtil {
     return problems;
   }
 
-  public static void addErrorsToWolf(final List<HighlightInfo> infos, final PsiFile psiFile, final boolean hasErrorElement) {
+  public static void addErrorsToWolf(final List<HighlightInfo> infos, final PsiFile psiFile) {
     if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
     Project project = psiFile.getProject();
     if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
     VirtualFile file = psiFile.getVirtualFile();
 
-    List<Problem> problems = convertToProblems(infos, file, hasErrorElement);
+    List<Problem> problems = convertToProblems(infos, file, false);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
     for (Problem problem : problems) {
       wolf.weHaveGotProblem(problem);

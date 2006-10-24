@@ -2,7 +2,10 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.HectorComponentPanel;
@@ -20,6 +23,8 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.DialogUtil;
@@ -223,7 +228,7 @@ public class HectorComponent extends JPanel {
       PsiElement root = viewProvider.getPsi(language);
       int value = slider.getValue();
       if (value == 1) {
-        HighlightUtil.forceRootHighlighting(root, false);
+        forceRootHighlighting(root, false);
       }
       else if (value == 2) {
         HighlightUtil.forceRootInspection(root, false);
@@ -266,5 +271,22 @@ public class HectorComponent extends JPanel {
       return 2;
     }
     return 3;
+  }
+
+  private static void forceRootHighlighting(final PsiElement root, final boolean highlightFlag) {
+    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
+    if (component == null) return;
+    final PsiFile file = root.getContainingFile();
+    final FileHighlighingSetting highlightingLevel =
+      highlightFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING : FileHighlighingSetting.SKIP_HIGHLIGHTING;
+    if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
+      //highlight both java roots
+      final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
+      component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), highlightingLevel);
+      component.setHighlightingSettingForRoot(jspClass.getMethodDummyHolder(), highlightingLevel);
+    }
+    else {
+      component.setHighlightingSettingForRoot(root, highlightingLevel);
+    }
   }
 }
