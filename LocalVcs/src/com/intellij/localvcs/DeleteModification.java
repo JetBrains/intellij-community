@@ -10,4 +10,7 @@ class DeleteModification implements Modification {
   public void applyTo(Snapshot snapshot) {
     snapshot.doDeleteFile(myName);
   }
+
+  public void revertOn(Snapshot snapshot) {
+  }
 }
