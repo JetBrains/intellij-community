@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -109,7 +110,11 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
       return VcsBundle.message("vcs.command.name.checkin");
     }
     else {
-      return vcs.getCheckinOperationName();
+      final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+      if (checkinEnvironment == null) {
+        return VcsBundle.message("vcs.command.name.checkin");
+      }
+      return checkinEnvironment.getCheckinOperationName();
     }
   }
 

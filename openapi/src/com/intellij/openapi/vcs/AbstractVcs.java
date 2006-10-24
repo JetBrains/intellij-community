@@ -226,15 +226,5 @@ public abstract class AbstractVcs {
   public UpdateEnvironment getIntegrateEnvironment() {
     return null;
   }
-
-  /**
-   * Returns the name of the "checkin" action.
-   *
-   * @return the name of the "checkin" action.
-   * @since 6.5
-   */
-  public String getCheckinOperationName() {
-    return VcsBundle.message("commit.dialog.default.commit.operation.name");
-  }
 }
 

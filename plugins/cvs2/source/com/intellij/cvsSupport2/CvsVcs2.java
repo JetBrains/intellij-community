@@ -373,8 +373,5 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return new CvsRevisionSelector(myProject);
   }
 
-  public String getCheckinOperationName() {
-    return com.intellij.CvsBundle.message("operation.name.checkin.project");
-  }
 }
 
