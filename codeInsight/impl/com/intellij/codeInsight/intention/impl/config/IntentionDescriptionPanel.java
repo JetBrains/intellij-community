@@ -12,14 +12,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.*;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -123,10 +124,10 @@ public class IntentionDescriptionPanel {
 
   private static void showUsages(final JPanel panel,
                                  final TitledSeparator separator,
-                                 List<IntentionUsagePanel> usagePanels,
-                                 URL[] exampleUsages) throws IOException {
+                                 final List<IntentionUsagePanel> usagePanels,
+                                 final @Nullable URL[] exampleUsages) throws IOException {
     GridBagConstraints gb = null;
-    boolean reuse = panel.getComponents().length == exampleUsages.length;
+    boolean reuse = exampleUsages != null && panel.getComponents().length == exampleUsages.length;
     if (!reuse) {
       disposeUsagePanels(usagePanels);
       panel.setLayout(new GridBagLayout());
@@ -145,33 +146,37 @@ public class IntentionDescriptionPanel {
       gb.weighty = 1;
     }
 
-    for (int i = 0; i < exampleUsages.length; i++) {
-      final URL exampleUsage = exampleUsages[i];
-      final String name = StringUtil.trimEnd(exampleUsage.getPath(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
-      final FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
-      final String extension = fileTypeManager.getExtension(name);
-      final FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
+    if (exampleUsages != null) {
+      for (int i = 0; i < exampleUsages.length; i++) {
+        final URL exampleUsage = exampleUsages[i];
+        final String name = StringUtil.trimEnd(exampleUsage.getPath(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
+        final FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
+        final String extension = fileTypeManager.getExtension(name);
+        final FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
 
-      IntentionUsagePanel usagePanel;
-      if (reuse) {
-        usagePanel = (IntentionUsagePanel)panel.getComponent(i);
-      }
-      else {
-        usagePanel = new IntentionUsagePanel();
-        usagePanels.add(usagePanel);
-      }
-      usagePanel.reset(ResourceUtil.loadText(exampleUsage), fileType);
-
-      String title = StringUtil.trimEnd(new File(exampleUsage.getFile()).getName(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
-      separator.setText(title);
-      if (!reuse) {
-        if (i == exampleUsages.length) {
-          gb.gridwidth = GridBagConstraints.REMAINDER;
+        IntentionUsagePanel usagePanel;
+        if (reuse) {
+          usagePanel = (IntentionUsagePanel)panel.getComponent(i);
         }
-        panel.add(usagePanel, gb);
-        gb.gridx++;
+        else {
+          usagePanel = new IntentionUsagePanel();
+          usagePanels.add(usagePanel);
+        }
+        usagePanel.reset(ResourceUtil.loadText(exampleUsage), fileType);
+
+        String title = StringUtil.trimEnd(new File(exampleUsage.getFile()).getName(), IntentionActionMetaData.EXAMPLE_USAGE_URL_SUFFIX);
+        separator.setText(title);
+        if (!reuse) {
+          if (i == exampleUsages.length) {
+            gb.gridwidth = GridBagConstraints.REMAINDER;
+          }
+          panel.add(usagePanel, gb);
+          gb.gridx++;
+        }
       }
     }
+    panel.revalidate();
+    panel.repaint();
   }
 
   public JPanel getComponent() {
