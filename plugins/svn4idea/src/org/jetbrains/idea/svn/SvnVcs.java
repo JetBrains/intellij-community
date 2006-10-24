@@ -511,8 +511,4 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       SvnFileStatus.SWITCHED};
   }
 
-  @Override
-  public String getCheckinOperationName() {
-    return SvnBundle.message("checkin.operation.name");
-  }
 }
