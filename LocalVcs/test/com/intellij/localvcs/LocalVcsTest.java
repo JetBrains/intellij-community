@@ -1,10 +1,12 @@
 package com.intellij.localvcs;
 
-import static org.junit.Assert.*;
+import java.util.Collection;
+
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class LocalVcsTest {
+public class LocalVcsTest extends Assert {
   private LocalVcs myVcs;
 
   @Before
@@ -166,5 +168,22 @@ public class LocalVcsTest {
     myVcs.commit();
 
     assertEquals("new content", myVcs.getFileContent("file"));
+  }
+
+  @Test
+  public void testKeepingOldVersions() {
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+
+    myVcs.changeFile("file", "new content");
+    myVcs.commit();
+
+    assertEquals(new String[]{"content", "new content" },
+                 myVcs.getFileContents("file"));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void assertEquals(Object[] expected, Collection actual) {
+    assertEquals(expected, actual.toArray(new Object[0]));
   }
 }
