@@ -1,8 +1,5 @@
 package com.intellij.ide;
 
-import com.intellij.javaee.model.common.ejb.CmpField;
-import com.intellij.javaee.model.common.ejb.CmrField;
-import com.intellij.javaee.model.common.ejb.EnterpriseBean;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -16,8 +13,8 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
-import com.intellij.util.JavaeeIcons;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.xml.ElementPresentationManager;
 
 import javax.swing.*;
 
@@ -37,28 +34,16 @@ public class IconUtilEx {
 
   public static Icon getIcon(Object object, int flags, Project project) {
     if (object instanceof PsiElement) {
-      PsiElement element = (PsiElement)object;
-      return element.getIcon(flags);
+      return ((PsiElement)object).getIcon(flags);
     }
-    else if (object instanceof VirtualFile) {
+    if (object instanceof Module) {
+      return getIcon((Module)object, flags);
+    }
+    if (object instanceof VirtualFile) {
       VirtualFile file = (VirtualFile)object;
       return IconUtil.getIcon(file, flags, project);
     }
-    else if (object instanceof Module) {
-      return getIcon((Module)object, flags);
-    }
-    else if (object instanceof EnterpriseBean) {
-      return JavaeeIcons.EJB_ICON;
-    }
-    else if (object instanceof CmpField) {
-      return JavaeeIcons.EJB_CMP_FIELD_ICON;
-    }
-    else if (object instanceof CmrField) {
-      return JavaeeIcons.EJB_CMP_FIELD_ICON;
-    }
-    else {
-      throw new IllegalArgumentException("Wrong object type");
-    }
+    return ElementPresentationManager.getIcon(object);
   }
 
   public static void setVisibilityIcon(PsiModifierList modifierList, RowIcon baseIcon) {
