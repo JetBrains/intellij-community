@@ -1,35 +1,30 @@
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.*;
 
-import java.io.File;
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.UnsupportedEncodingException;
 
 /**
  * @author max
@@ -55,109 +50,6 @@ public class SvnChangeProvider implements ChangeProvider {
     catch (SVNException e) {
       // Ignore
     }
-  }
-
-  // TODO: Get rid of CheckitEnvironment and move real commit code here.
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    final List<FilePath> paths = ChangesUtil.getPaths(changes);
-    FilePath[] arrayed = paths.toArray(new FilePath[paths.size()]);
-    final SvnCheckinEnvironment svnCheckinEnvironment = ((SvnCheckinEnvironment)myVcs.getCheckinEnvironment());
-    return svnCheckinEnvironment.commitInt(SvnCheckinEnvironment.collectPaths(arrayed), preparedComment, true, false);
-  }
-
-  public List<VcsException> rollbackChanges(List<Change> changes) {
-    final List<VcsException> exceptions = new ArrayList<VcsException>();
-    for (Change change : changes) {
-      final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
-      try {
-        SVNWCClient client = myVcs.createWCClient();
-        client.setEventHandler(new ISVNEventHandler() {
-          public void handleEvent(SVNEvent event, double progress) {
-            if (event.getAction() == SVNEventAction.FAILED_REVERT) {
-              exceptions.add(new VcsException("Revert failed"));
-            }
-          }
-
-          public void checkCancelled() {
-          }
-        });
-        client.doRevert(ioFile, false);
-      }
-      catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
-          // skip errors on unversioned resources.
-          exceptions.add(new VcsException(e));
-        }
-      }
-    }
-
-    return exceptions;
-  }
-
-  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
-    return processMissingFiles(files, true);
-  }
-
-  public List<VcsException> rollbackMissingFileDeletion(List<FilePath> files) {
-    return processMissingFiles(files, false);
-  }
-
-  private List<VcsException> processMissingFiles(final List<FilePath> filePaths, final boolean delete) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
-    final SVNWCClient wcClient;
-    try {
-      wcClient = myVcs.createWCClient();
-    }
-    catch (SVNException e) {
-      exceptions.add(new VcsException(e));
-      return exceptions;
-    }
-
-    List<File> files = ChangesUtil.filePathsToFiles(filePaths);
-    for (File file : files) {
-      try {
-        if (delete) {
-          wcClient.doDelete(file, true, false);
-        }
-        else {
-          SVNInfo info = wcClient.doInfo(file, SVNRevision.BASE);
-          if (info != null && info.getKind() == SVNNodeKind.FILE) {
-            wcClient.doRevert(file, false);
-          } else {
-            // do update to restore missing directory.
-            myVcs.createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
-          }
-        }
-      }
-      catch (SVNException e) {
-        exceptions.add(new VcsException(e));
-      }
-    }
-
-    return exceptions;
-  }
-
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    List<VcsException> exceptions = new ArrayList<VcsException>();
-    final SVNWCClient wcClient;
-    try {
-      wcClient = myVcs.createWCClient();
-    }
-    catch (SVNException e) {
-      exceptions.add(new VcsException(e));
-      return exceptions;
-    }
-
-    for (VirtualFile file : files) {
-      try {
-        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, true, true, false);
-      }
-      catch (SVNException e) {
-        exceptions.add(new VcsException(e));
-      }
-    }
-
-    return exceptions;
   }
 
   public boolean isModifiedDocumentTrackingRequired() {

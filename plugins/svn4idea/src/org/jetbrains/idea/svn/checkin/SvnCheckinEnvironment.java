@@ -19,8 +19,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -33,6 +36,8 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
@@ -255,6 +260,108 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   public String getCheckinOperationName() {
     return SvnBundle.message("checkin.operation.name");
+  }
+
+  // TODO: Get rid of CheckitEnvironment and move real commit code here.
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    final List<FilePath> paths = ChangesUtil.getPaths(changes);
+    FilePath[] arrayed = paths.toArray(new FilePath[paths.size()]);
+    return commitInt(SvnCheckinEnvironment.collectPaths(arrayed), preparedComment, true, false);
+  }
+
+  public List<VcsException> rollbackChanges(List<Change> changes) {
+    final List<VcsException> exceptions = new ArrayList<VcsException>();
+    for (Change change : changes) {
+      final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
+      try {
+        SVNWCClient client = mySvnVcs.createWCClient();
+        client.setEventHandler(new ISVNEventHandler() {
+          public void handleEvent(SVNEvent event, double progress) {
+            if (event.getAction() == SVNEventAction.FAILED_REVERT) {
+              exceptions.add(new VcsException("Revert failed"));
+            }
+          }
+
+          public void checkCancelled() {
+          }
+        });
+        client.doRevert(ioFile, false);
+      }
+      catch (SVNException e) {
+        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
+          // skip errors on unversioned resources.
+          exceptions.add(new VcsException(e));
+        }
+      }
+    }
+
+    return exceptions;
+  }
+
+  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
+    return processMissingFiles(files, true);
+  }
+
+  public List<VcsException> rollbackMissingFileDeletion(List<FilePath> files) {
+    return processMissingFiles(files, false);
+  }
+
+  private List<VcsException> processMissingFiles(final List<FilePath> filePaths, final boolean delete) {
+    List<VcsException> exceptions = new ArrayList<VcsException>();
+    final SVNWCClient wcClient;
+    try {
+      wcClient = mySvnVcs.createWCClient();
+    }
+    catch (SVNException e) {
+      exceptions.add(new VcsException(e));
+      return exceptions;
+    }
+
+    List<File> files = ChangesUtil.filePathsToFiles(filePaths);
+    for (File file : files) {
+      try {
+        if (delete) {
+          wcClient.doDelete(file, true, false);
+        }
+        else {
+          SVNInfo info = wcClient.doInfo(file, SVNRevision.BASE);
+          if (info != null && info.getKind() == SVNNodeKind.FILE) {
+            wcClient.doRevert(file, false);
+          } else {
+            // do update to restore missing directory.
+            mySvnVcs.createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
+          }
+        }
+      }
+      catch (SVNException e) {
+        exceptions.add(new VcsException(e));
+      }
+    }
+
+    return exceptions;
+  }
+
+  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+    List<VcsException> exceptions = new ArrayList<VcsException>();
+    final SVNWCClient wcClient;
+    try {
+      wcClient = mySvnVcs.createWCClient();
+    }
+    catch (SVNException e) {
+      exceptions.add(new VcsException(e));
+      return exceptions;
+    }
+
+    for (VirtualFile file : files) {
+      try {
+        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, true, true, false);
+      }
+      catch (SVNException e) {
+        exceptions.add(new VcsException(e));
+      }
+    }
+
+    return exceptions;
   }
 
   private class KeepLocksComponent implements RefreshableOnComponent {
