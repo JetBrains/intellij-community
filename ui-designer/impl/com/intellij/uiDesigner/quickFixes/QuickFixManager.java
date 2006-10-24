@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -8,7 +9,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -208,7 +208,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private static boolean haveFixes(final ErrorInfo[] errorInfos) {
     boolean haveFixes = false;
     for(ErrorInfo errorInfo: errorInfos) {
-      if (errorInfo.myFixes.length > 0) {
+      if (errorInfo.myFixes.length > 0 || errorInfo.getInspectionId() != null) {
         haveFixes = true;
         break;
       }
@@ -239,13 +239,35 @@ public abstract class QuickFixManager <T extends JComponent>{
 
     final ArrayList<ErrorWithFix> fixList = new ArrayList<ErrorWithFix>();
     for(ErrorInfo errorInfo: errorInfos) {
-      for (QuickFix fix: errorInfo.myFixes) {
-        fixList.add(new ErrorWithFix(errorInfo, fix));
+      final QuickFix[] quickFixes = errorInfo.myFixes;
+      if (quickFixes.length > 0) {
+        for (QuickFix fix: quickFixes) {
+          fixList.add(new ErrorWithFix(errorInfo, fix));
+        }
+      }
+      else if (errorInfo.getInspectionId() != null) {
+        buildSuppressFixes(errorInfo, fixList, true);
       }
     }
 
-    final ListPopup popup = JBPopupFactory.getInstance().createWizardStep(new QuickFixPopupStep(fixList, true));
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new QuickFixPopupStep(fixList, true));
     popup.showUnderneathOf(myHint.getComponent());
+  }
+
+  private void buildSuppressFixes(final ErrorInfo errorInfo, final ArrayList<ErrorWithFix> suppressList, boolean named) {
+    final String suppressName = named
+                                ? UIDesignerBundle.message("action.suppress.named.for.component", errorInfo.myDescription)
+                                : UIDesignerBundle.message("action.suppress.for.component");
+    final String suppressAllName = named
+                                ? UIDesignerBundle.message("action.suppress.named.for.all.components", errorInfo.myDescription)
+                                : UIDesignerBundle.message("action.suppress.for.all.components");
+
+    final SuppressFix suppressFix = new SuppressFix(myEditor, suppressName,
+                                                    errorInfo.getInspectionId(), errorInfo.getComponent());
+    final SuppressFix suppressAllFix = new SuppressFix(myEditor, suppressAllName,
+                                                       errorInfo.getInspectionId(), null);
+    suppressList.add(new ErrorWithFix(errorInfo, suppressFix));
+    suppressList.add(new ErrorWithFix(errorInfo, suppressAllFix));
   }
 
   private static class ErrorWithFix extends Pair<ErrorInfo, QuickFix> {
@@ -280,23 +302,18 @@ public abstract class QuickFixManager <T extends JComponent>{
         });
         return FINAL_CHOICE;
       }
-      if (selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null) {
+      if (selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
+        !(selectedValue.second instanceof SuppressFix)) {
         ArrayList<ErrorWithFix> suppressList = new ArrayList<ErrorWithFix>();
-        final SuppressFix suppressFix = new SuppressFix(selectedValue.second.myEditor,
-                                                        UIDesignerBundle.message("action.suppress.for.component"),
-                                                        selectedValue.first.getInspectionId(), selectedValue.second.myComponent);
-        final SuppressFix suppressAllFix = new SuppressFix(selectedValue.second.myEditor,
-                                                           UIDesignerBundle.message("action.suppress.for.all.components"),
-                                                           selectedValue.first.getInspectionId(), null);
-        suppressList.add(new ErrorWithFix(selectedValue.first, suppressFix));
-        suppressList.add(new ErrorWithFix(selectedValue.first, suppressAllFix));
+        buildSuppressFixes(selectedValue.first, suppressList, false);
         return new QuickFixPopupStep(suppressList, false);
       }
       return FINAL_CHOICE;
     }
 
     public boolean hasSubstep(final ErrorWithFix selectedValue) {
-      return myShowSuppresses && selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null;
+      return myShowSuppresses && selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
+        !(selectedValue.second instanceof SuppressFix);
     }
 
     @Override public boolean isAutoSelectionEnabled() {

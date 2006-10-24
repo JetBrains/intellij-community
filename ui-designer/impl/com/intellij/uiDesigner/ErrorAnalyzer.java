@@ -70,7 +70,7 @@ public final class ErrorAnalyzer {
       psiClass = FormEditingUtil.findClassToBind(module, classToBind);
       if(psiClass == null){
         final QuickFix[] fixes = editor != null ? new QuickFix[]{new CreateClassToBindFix(editor, classToBind)} : QuickFix.EMPTY_ARRAY;
-        final ErrorInfo errorInfo = new ErrorInfo(null, UIDesignerBundle.message("error.class.does.not.exist", classToBind),
+        final ErrorInfo errorInfo = new ErrorInfo(null, null, UIDesignerBundle.message("error.class.does.not.exist", classToBind),
                                                   HighlightDisplayLevel.ERROR, fixes);
         rootContainer.putClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR, errorInfo);
       }
@@ -109,7 +109,7 @@ public final class ErrorAnalyzer {
               component.putClientProperty(
                 CLIENT_PROP_BINDING_ERROR,
                 new ErrorInfo(
-                  null, UIDesignerBundle.message("error.binding.already.exists", binding),
+                  component, null, UIDesignerBundle.message("error.binding.already.exists", binding),
                   HighlightDisplayLevel.ERROR,
                   QuickFix.EMPTY_ARRAY
                 )
@@ -154,7 +154,7 @@ public final class ErrorAnalyzer {
             if(rootContainer.getComponentCount() > 1){
               // TODO[vova] implement
               putError(component, new ErrorInfo(
-                null, UIDesignerBundle.message("error.multiple.toplevel.components"),
+                component, null, UIDesignerBundle.message("error.multiple.toplevel.components"),
                 HighlightDisplayLevel.ERROR,
                 QuickFix.EMPTY_ARRAY
               ));
@@ -163,7 +163,7 @@ public final class ErrorAnalyzer {
           else if(container.isXY() && container.getComponentCount() > 0){
             // TODO[vova] implement
             putError(component, new ErrorInfo(
-                null, UIDesignerBundle.message("error.panel.not.laid.out"),
+                component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
                 HighlightDisplayLevel.ERROR,
                 QuickFix.EMPTY_ARRAY
               )
@@ -241,7 +241,7 @@ public final class ErrorAnalyzer {
       component.putClientProperty(
        CLIENT_PROP_BINDING_ERROR,
        new ErrorInfo(
-         null, UIDesignerBundle.message("error.no.field.in.class", fieldName, psiClass.getQualifiedName()),
+         component, null, UIDesignerBundle.message("error.no.field.in.class", fieldName, psiClass.getQualifiedName()),
          HighlightDisplayLevel.ERROR,
          fixes
        )
@@ -252,7 +252,7 @@ public final class ErrorAnalyzer {
       component.putClientProperty(
         CLIENT_PROP_BINDING_ERROR,
         new ErrorInfo(
-          null, UIDesignerBundle.message("error.cant.bind.to.static", fieldName),
+          component, null, UIDesignerBundle.message("error.cant.bind.to.static", fieldName),
           HighlightDisplayLevel.ERROR,
           QuickFix.EMPTY_ARRAY
         )
@@ -275,7 +275,7 @@ public final class ErrorAnalyzer {
         component.putClientProperty(
           CLIENT_PROP_BINDING_ERROR,
           new ErrorInfo(
-            null, UIDesignerBundle.message("error.bind.incompatible.types", fieldType.getPresentableText(), className),
+            component, null, UIDesignerBundle.message("error.bind.incompatible.types", fieldType.getPresentableText(), className),
             HighlightDisplayLevel.ERROR,
             fixes
           )
@@ -293,7 +293,7 @@ public final class ErrorAnalyzer {
       component.putClientProperty(
         CLIENT_PROP_BINDING_ERROR,
         new ErrorInfo(
-          "Custom Create",
+          component, "Custom Create",
           UIDesignerBundle.message("error.no.custom.create.method"), HighlightDisplayLevel.ERROR,
           fixes));
       return true;
