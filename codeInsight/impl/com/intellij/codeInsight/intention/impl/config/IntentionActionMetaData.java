@@ -53,6 +53,7 @@ public final class IntentionActionMetaData {
     return myFamily;
   }
 
+  @Nullable
   public URL[] getExampleUsagesBefore() {
     if(myExampleUsagesBefore == null){
       try {
@@ -65,6 +66,7 @@ public final class IntentionActionMetaData {
     return myExampleUsagesBefore;
   }
 
+  @Nullable
   public URL[] getExampleUsagesAfter() {
       if(myExampleUsagesAfter == null){
       try {
@@ -77,6 +79,7 @@ public final class IntentionActionMetaData {
     return myExampleUsagesAfter;
   }
 
+  @Nullable
   public URL getDescription() {
     if(myDescription == null){
       try {
@@ -91,6 +94,7 @@ public final class IntentionActionMetaData {
     return myDescription;
   }
 
+  @Nullable
   private static URL[] retrieveURLs(@NotNull URL descriptionDirectory, @NotNull String prefix, @NotNull String suffix) throws MalformedURLException {
     List<URL> urls = new ArrayList<URL>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
@@ -131,6 +135,7 @@ public final class IntentionActionMetaData {
     if (myDirURL == null) { //plugin compatibility
       myDirURL = getIntentionDescriptionDirURL(myIntentionLoader, myFamily);
     }
+    LOG.assertTrue(myDirURL != null, "Faulty intention: " + myFamily);
     return myDirURL;
   }
 
