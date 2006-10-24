@@ -471,16 +471,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       if (sourceRoot != null) {
         String relativePath = VfsUtil.getRelativePath(virtualFile.getParent(), sourceRoot, '/');
         LOG.assertTrue(relativePath != null);
-        final PsiClass[] classes = getClasses();
-        if (classes.length > 0) {
-          final String className = classes[0].getName();
-          relativePath = relativePath + "/" + className + ".class";
-          final VirtualFile[] files = index.getOrderEntriesForFile(virtualFile).get(0).getFiles(OrderRootType.CLASSES);
-          for (VirtualFile rootFile : files) {
-            final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
-            if (classFile != null) {
-              return getLanguageLevel(classFile);
-            }
+        final VirtualFile[] files = index.getOrderEntriesForFile(virtualFile).get(0).getFiles(OrderRootType.CLASSES);
+        for (VirtualFile rootFile : files) {
+          final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
+          if (classFile != null) {
+            return getLanguageLevel(classFile);
           }
         }
       }
