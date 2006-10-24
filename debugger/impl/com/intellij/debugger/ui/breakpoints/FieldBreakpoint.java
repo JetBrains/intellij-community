@@ -120,7 +120,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
-  protected boolean moveTo(SourcePosition position) {
+  public boolean moveTo(SourcePosition position) {
     final PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, position);
     if (field == null) {
       return false;

@@ -450,7 +450,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return isPositionValid(position);
   }
 
-  protected boolean moveTo(SourcePosition position) {
+  public boolean moveTo(SourcePosition position) {
     if (!canMoveTo(position)) {
       return false;
     }
