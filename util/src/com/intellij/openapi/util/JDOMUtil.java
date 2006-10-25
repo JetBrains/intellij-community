@@ -57,12 +57,8 @@ public class JDOMUtil {
     if (e1 == null && e2 == null) return true;
     if (e1 == null) return false;
 
-    if (!attListsEqual(e1.getAttributes(), e2.getAttributes())) {
-      return false;
-    }
-    if (!contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER))) return false;
-
-    return true;
+    return attListsEqual(e1.getAttributes(), e2.getAttributes()) &&
+           contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
   }
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
@@ -81,6 +77,7 @@ public class JDOMUtil {
       i = addToHash(i, attribute);
     }
 
+    //noinspection unchecked
     final List<Element> children = element.getChildren();
     for (Element child : children) { //iterator is used here which is more efficient than get(index)
       i = addToHash(i, child);
@@ -129,11 +126,8 @@ public class JDOMUtil {
       return c1.getValue().equals(c2.getValue());
     }
 
-    if (c1 instanceof Element && c2 instanceof Element) {
-      return areElementsEqual((Element)c1, (Element)c2);
-    }
+    return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2);
 
-    return false;
   }
 
   private static boolean attListsEqual(List a1, List a2) {
@@ -164,9 +158,8 @@ public class JDOMUtil {
       getLogger().error(e);
     }
 
-    if (w1.size() != w2.size()) return false;
+    return w1.size() == w2.size() && w1.toString().equals(w2.toString());
 
-    return w1.toString().equals(w2.toString());
   }
 
   public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
@@ -238,7 +231,7 @@ public class JDOMUtil {
   }
 
 
-  public static byte[] printDocument(Document document, String lineSeparator) throws UnsupportedEncodingException, IOException {
+  public static byte[] printDocument(Document document, String lineSeparator) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
     writeDocument(document, writer, lineSeparator);
 
@@ -375,10 +368,10 @@ public class JDOMUtil {
       System.err.println(prefix);
     }
 
-    List children = element.getChildren();
-    for (Iterator i = children.iterator(); i.hasNext();) {
-      Element e = (Element)i.next();
-      printDiagnostics(e, prefix);
+    //noinspection unchecked
+    List<Element> children = element.getChildren();
+    for (final Element child : children) {
+      printDiagnostics(child, prefix);
     }
   }
 
@@ -413,18 +406,16 @@ public class JDOMUtil {
     throws IOException {
     getLogger().assertTrue(newFilePaths.length == newFileDocuments.length);
 
-    ArrayList writtenFilesPaths = new ArrayList();
+    ArrayList<String> writtenFilesPaths = new ArrayList<String>();
 
     // check if files are writable
-    for (int i = 0; i < newFilePaths.length; i++) {
-      String newFilePath = newFilePaths[i];
+    for (String newFilePath : newFilePaths) {
       File file = new File(newFilePath);
       if (file.exists() && !file.canWrite()) {
         throw new IOException("File \"" + newFilePath + "\" is not writeable");
       }
     }
-    for (int i = 0; i < oldFiles.length; i++) {
-      File file = oldFiles[i];
+    for (File file : oldFiles) {
       if (file.exists() && !file.canWrite()) {
         throw new IOException("File \"" + file.getAbsolutePath() + "\" is not writeable");
       }
@@ -439,11 +430,11 @@ public class JDOMUtil {
 
     // delete files if necessary
 
-    outer: for (int i = 0; i < oldFiles.length; i++) {
-      File oldFile = oldFiles[i];
+    outer:
+    for (File oldFile : oldFiles) {
       String oldFilePath = oldFile.getAbsolutePath();
-      for (Iterator iterator = writtenFilesPaths.iterator(); iterator.hasNext();) {
-        if (oldFilePath.equals(iterator.next())) {
+      for (final String writtenFilesPath : writtenFilesPaths) {
+        if (oldFilePath.equals(writtenFilesPath)) {
           continue outer;
         }
       }
