@@ -1250,7 +1250,6 @@
     <group id="UpdateActionGroup">
       <reference ref="$Delete"/>
     </group>
-    
     <group id="TestTreePopupMenu">
       <action id="openAssertEqualsDiff" class="com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction"/>
       <separator/>
@@ -1509,6 +1508,10 @@
     <action id="Faces.Create.Model.Element" class="com.intellij.jsf.ui.actions.CreateFacesElementAction"
             text="Generate" use-shortcut-of="Generate"/>
 
+    <action id="Faces.Generate.From.Persistence" class="com.intellij.jsf.actions.GenerateFacesPagesAction"
+            text="Generate Faces Pages...">
+      <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
+            </action>
 
     <action id="Faces.User.Defined.Faces.Config"
             class="com.intellij.jsf.actions.UserDefinedFacesConfigAction"
@@ -1671,6 +1674,5 @@
       </action>
     </group>
 
-    
   </actions>
 </component>
