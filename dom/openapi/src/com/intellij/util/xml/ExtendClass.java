@@ -21,24 +21,29 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
+ * Annotates DOM methods that return either {@link com.intellij.psi.PsiClass} or
+ * {@link com.intellij.util.xml.GenericDomValue}<{@link com.intellij.psi.PsiClass}>.
+ * Specifies that the references class should extend some other class (or implement interface).
+ * If this doesn't happen, error will appear.
+ *
  * @author Dmitry Avdeev
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ExtendClass {
 
   /**
-   * Full name of the base class
+   * @return qualified name of the base class
    */
   String value() default "java.lang.Object";
 
   /**
-   * States that the class should be concrete and have public default constructor.
+   * @return states that the class should be concrete and have public default constructor.
    */
   boolean instantiatable() default true;
 
-/**
- * States that the class implements "decorator" pattern, i.e. it should have constructor with
- * one parameter of the same type  
- */
+  /**
+   * @return states that the class implements "decorator" pattern, i.e. it should have constructor with
+   * one parameter of the same type
+   */
   boolean canBeDecorator() default false;
 }

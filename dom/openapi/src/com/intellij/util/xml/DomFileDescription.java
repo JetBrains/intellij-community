@@ -133,6 +133,10 @@ public abstract class DomFileDescription<T> {
     return new THashSet<Class<? extends DomElement>>(Arrays.asList(classes));
   }
 
+  /**
+   * @param reference DOM reference
+   * @return element, whose all children will be searched for declaration
+   */
   @NotNull
   public DomElement getResolveScope(GenericDomValue<?> reference) {
     final DomElement annotation = getScopeFromAnnotation(reference);
@@ -141,6 +145,10 @@ public abstract class DomFileDescription<T> {
     return reference.getRoot();
   }
 
+  /**
+   * @param element DOM element
+   * @return element, whose direct children names will be compared by name. Basically it's parameter element's parent (see {@link ParentScopeProvider}).
+   */
   @NotNull
   public DomElement getIdentityScope(DomElement element) {
     final DomElement annotation = getScopeFromAnnotation(element);

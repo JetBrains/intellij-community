@@ -8,6 +8,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 
+/**
+ * Specifies DOM interface implementation. Implementation should be abstract class with only
+ * non-DOM methods defined, it should implement the annotated interface.  
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface Implementation {

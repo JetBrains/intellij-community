@@ -7,6 +7,9 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.openapi.util.text.StringUtil;
 
 /**
+ * This strategy splits property name into words, decapitalizes them and joins using hyphen as separator,
+ * e.g. getXmlElementName() will correspond to xml-element-name
+ *
  * @author peter
  */
 public class HyphenNameStrategy extends DomNameStrategy {
