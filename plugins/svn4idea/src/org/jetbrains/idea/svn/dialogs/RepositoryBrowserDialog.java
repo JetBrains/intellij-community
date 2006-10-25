@@ -714,12 +714,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected void doCheckout() {
     SVNURL url = getRepositoryBrowser().getSelectedNode().getURL();
-    final File dir = selectFile("Destination directory", "Select checkout destination directory");
+    File dir = selectFile("Destination directory", "Select checkout destination directory");
     if (dir == null) {
       return;
     }
     Project p = myProject;
     CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(p, url, dir);
+    dir = dialog.getTarget();
     dialog.show();
     if (dialog.isOK()) {
       SvnCheckoutProvider.doCheckout(myVCS.getProject(), dir, url.toString(), dialog.isRecursive(), dialog.isIgnoreExternals());
