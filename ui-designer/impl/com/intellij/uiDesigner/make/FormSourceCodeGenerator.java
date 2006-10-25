@@ -222,7 +222,9 @@ public final class FormSourceCodeGenerator {
       null
     );
 
-    final PsiMethod method = (PsiMethod) newClass.add(fakeClass.getMethods()[0]);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
+    PsiMethod method = (PsiMethod) newClass.add(fakeClass.getMethods()[0]);
+    method = (PsiMethod) codeStyleManager.reformat(method);
     PsiElement initializer = null;
 
     // don't generate initializer block if $$$setupUI$$$() is called explicitly from one of the constructors
@@ -236,6 +238,7 @@ public final class FormSourceCodeGenerator {
 
     if (needInitializer) {
       initializer = newClass.addBefore(fakeClass.getInitializers()[0], method);
+      initializer = codeStyleManager.reformat(initializer);
     }
 
     @NonNls final String grcMethodText = "/** @noinspection ALL */ public javax.swing.JComponent " +
@@ -248,13 +251,11 @@ public final class FormSourceCodeGenerator {
     final String loadLabelTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, JLabel.class, module);
     generateMethodIfRequired(newClass, method, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, loadLabelTextMethodText, myNeedLoadLabelText);
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
     codeStyleManager.shortenClassReferences(method);
     if (initializer != null) {
       codeStyleManager.shortenClassReferences(initializer);
     }
 
-    codeStyleManager.reformat(newClass);
     final String newText = newClass.getText();
     final String oldText = classToBind.getText();
     if (!newText.equals(oldText)) {
@@ -313,6 +314,7 @@ public final class FormSourceCodeGenerator {
     }
     if (newMethod != null) {
       CodeStyleManager csm = CodeStyleManager.getInstance(myProject);
+      newMethod = (PsiMethod)csm.reformat(newMethod);
       csm.shortenClassReferences(newMethod);
     }
   }
