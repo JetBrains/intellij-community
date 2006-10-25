@@ -13,6 +13,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
@@ -153,52 +154,56 @@ public abstract class HTMLComposer {
 
         appendClassOrInterface(buf, refClass, false);
         buf.append(NBSP).append(B_OPENING).append(CODE_OPENING);
-        buf.append(refClass.getName());
+        final String name = refClass.getName();
+        buf.append(refClass.isSyntheticJSP() ? XmlUtil.escapeString(name) : name);
         buf.append(CODE_CLOSING).append(B_CLOSING);
       }
 
       public void visitField(RefField field) {
-        PsiField psiField = (PsiField)field.getElement();
+        PsiField psiField = field.getElement();
+        if (psiField != null) {
+          if (field.isStatic()) {
+            buf.append(InspectionsBundle.message("inspection.export.results.static"));
+            buf.append(NBSP);
+          }
 
-        if (field.isStatic()) {
-          buf.append(InspectionsBundle.message("inspection.export.results.static"));
-          buf.append(NBSP);
+          buf.append(InspectionsBundle.message("inspection.export.results.field"));
+          buf.append(NBSP).append(CODE_OPENING);
+
+          buf.append(psiField.getType().getPresentableText());
+          buf.append(NBSP).append(B_OPENING);
+          buf.append(psiField.getName());
+          buf.append(B_CLOSING).append(CODE_CLOSING);
         }
-
-        buf.append(InspectionsBundle.message("inspection.export.results.field"));
-        buf.append(NBSP).append(CODE_OPENING);
-
-        buf.append(psiField.getType().getPresentableText());
-        buf.append(NBSP).append(B_OPENING);
-        buf.append(psiField.getName());
-        buf.append(B_CLOSING).append(CODE_CLOSING);
       }
 
       public void visitMethod(RefMethod method) {
         PsiMethod psiMethod = (PsiMethod)method.getElement();
-        PsiType returnType = psiMethod.getReturnType();
+        if (psiMethod != null) {
+          PsiType returnType = psiMethod.getReturnType();
 
-        if (method.isStatic()) {
-          buf.append(InspectionsBundle.message("inspection.export.results.static"));
-          buf.append(NBSP);
-        }
-        else if (method.isAbstract()) {
-          buf.append(InspectionsBundle.message("inspection.export.results.abstract"));
-          buf.append(NBSP);
-        }
-        buf.append(method.isConstructor() ? InspectionsBundle.message("inspection.export.results.constructor") : InspectionsBundle.message("inspection.export.results.method"));
-        buf.append(NBSP).append(CODE_OPENING);
+          if (method.isStatic()) {
+            buf.append(InspectionsBundle.message("inspection.export.results.static"));
+            buf.append(NBSP);
+          }
+          else if (method.isAbstract()) {
+            buf.append(InspectionsBundle.message("inspection.export.results.abstract"));
+            buf.append(NBSP);
+          }
+          buf.append(method.isConstructor() ? InspectionsBundle.message("inspection.export.results.constructor") : InspectionsBundle.message("inspection.export.results.method"));
+          buf.append(NBSP).append(CODE_OPENING);
 
-        if (returnType != null) {
-          buf.append(returnType.getPresentableText());
-          buf.append(NBSP);
-        }
+          if (returnType != null) {
+            buf.append(returnType.getPresentableText());
+            buf.append(NBSP);
+          }
 
-        buf.append(B_OPENING);
-        buf.append(psiMethod.getName());
-        buf.append(B_CLOSING);
-        appendMethodParameters(buf, psiMethod, true);
-        buf.append(CODE_CLOSING);
+          buf.append(B_OPENING);
+          buf.append(psiMethod.getName());
+          buf.append(B_CLOSING);
+          appendMethodParameters(buf, psiMethod, true);
+          buf.append(CODE_CLOSING);
+        }
       }
 
       public void visitFile(RefFile file) {
@@ -232,7 +237,9 @@ public abstract class HTMLComposer {
       if (qName.length() > 0) qName = "." + qName;
 
       final String name;
-      if (refEntity instanceof RefMethod) {
+      if (refEntity instanceof RefElement && ((RefElement)refEntity).isSyntheticJSP()) {
+        name = XmlUtil.escapeString(refEntity.getName());
+      } else if (refEntity instanceof RefMethod) {
         PsiMethod psiMethod = (PsiMethod)((RefMethod)refEntity).getElement();
         if (psiMethod != null) {
           name = psiMethod.getName();
@@ -341,6 +348,9 @@ public abstract class HTMLComposer {
 
     if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) {
       buf.append(InspectionsBundle.message("inspection.reference.anonymous"));
+    }
+    else if (refElement.isSyntheticJSP()) {
+      buf.append(XmlUtil.escapeString(refElement.getName()));
     }
     else if (refElement instanceof RefMethod) {
       PsiMethod psiMethod = (PsiMethod)refElement.getElement();
