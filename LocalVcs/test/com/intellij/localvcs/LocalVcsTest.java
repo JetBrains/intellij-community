@@ -38,7 +38,7 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
-  public void testClearingModificationsOnCommit() {
+  public void testClearingChangesOnCommit() {
     myVcs.addFile("file", "content");
     myVcs.changeFile("file", "new content");
     myVcs.renameFile("file", "new file");
@@ -222,7 +222,7 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
-  public void testRevertingClearsAllPendingModifications() {
+  public void testRevertingClearsAllPendingChanges() {
     myVcs.addFile("file1", "");
     myVcs.commit();
 
@@ -244,7 +244,7 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
-  public void testClearingModificationsAfterRevertWhenNoPreviousVersions() {
+  public void testClearingChangesAfterRevertWhenNoPreviousVersions() {
     myVcs.addFile("file", "");
     assertFalse(myVcs.isClean());
 

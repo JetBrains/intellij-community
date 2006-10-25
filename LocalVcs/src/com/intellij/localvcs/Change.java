@@ -1,6 +1,6 @@
 package com.intellij.localvcs;
 
-public interface Modification {
+public interface Change {
   void applyTo(Snapshot snapshot);
 
   void revertOn(Snapshot snapshot);

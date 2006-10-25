@@ -5,8 +5,7 @@ import java.util.List;
 
 public class LocalVcs {
   private Snapshot mySnapshot = new Snapshot();
-  private List<Modification> myPendingModifications
-      = new ArrayList<Modification>();
+  private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public boolean hasFile(String name) {
     return mySnapshot.hasFile(name);
@@ -34,39 +33,39 @@ public class LocalVcs {
   }
 
   public void addFile(String name, String content) {
-    myPendingModifications.add(new AddModification(name, content));
+    myPendingChanges.add(new AddFileChange(name, content));
   }
 
   public void changeFile(String name, String content) {
-    myPendingModifications.add(new ChangeModification(name, content));
+    myPendingChanges.add(new ChangeContentChange(name, content));
   }
 
   public void renameFile(String name, String newName) {
-    myPendingModifications.add(new RenameModification(name, newName));
+    myPendingChanges.add(new RenameFileChange(name, newName));
   }
 
   public void deleteFile(String name) {
-    myPendingModifications.add(new DeleteModification(name));
+    myPendingChanges.add(new DeleteFileChange(name));
   }
 
   public void commit() {
-    mySnapshot = mySnapshot.apply(myPendingModifications);
-    clearModifications();
+    mySnapshot = mySnapshot.apply(myPendingChanges);
+    clearPendingChanges();
   }
 
   public void revert() {
-    clearModifications();
+    clearPendingChanges();
 
     Snapshot reverted = mySnapshot.revert();
     if (reverted == null) return;
     mySnapshot = reverted;
   }
 
-  private void clearModifications() {
-    myPendingModifications = new ArrayList<Modification>();
+  private void clearPendingChanges() {
+    myPendingChanges = new ArrayList<Change>();
   }
 
   public boolean isClean() {
-    return myPendingModifications.isEmpty();
+    return myPendingChanges.isEmpty();
   }
 }
