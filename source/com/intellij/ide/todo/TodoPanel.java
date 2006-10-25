@@ -387,12 +387,11 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return false;
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
+      Object userObject = node.getUserObject();
       if (userObject == null) {
         return false;
       }
-      Object element = userObject.getElement();
-      if (element instanceof TodoItemNode) {
+      if (userObject instanceof NodeDescriptor && ((NodeDescriptor)userObject).getElement() instanceof TodoItemNode) {
         return myTree.getRowCount() != myTree.getRowForPath(path) + 1;
       }
       else {
@@ -406,8 +405,8 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return false;
       }
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
-      return userObject != null && !isFirst(node);
+      Object userObject = node.getUserObject();
+      return userObject instanceof NodeDescriptor && !isFirst(node);
     }
 
     private boolean isFirst(final TreeNode node) {
