@@ -67,7 +67,6 @@ public class ShowMessageHistoryAction extends AnAction {
 
         final ContentChooser<String> contentChooser = new ContentChooser<String>(project, VcsBundle.message("dialog.title.choose.commit.message.from.history"), false){
           protected void removeContentAt(final String content) {
-            configuration.removeMessage(content);
           }
 
           protected String getStringRepresentationFor(final String content) {
