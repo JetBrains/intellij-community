@@ -71,7 +71,7 @@ public final class CreateFieldFix extends QuickFix{
     }
 
     final PsiClass fieldClass = PsiManager.getInstance(project).findClass(
-      fieldClassName,
+      fieldClassName.replace('$', '.'),
       GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(rootContainer.getModule())
     );
     if(fieldClass == null){
