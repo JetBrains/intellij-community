@@ -392,14 +392,14 @@ public class TreeModelBuilder {
       node = getMap(myModuleDirNodes, ScopeType.SOURCE).get(directory);
       parent = directory;
     }
-    if (myCompactEmptyMiddlePackages && parentNode instanceof DirectoryNode && parentNode.getChildCount() == 1) { //compact
-      final TreeNode treeNode = parentNode.getChildAt(0);
+    if (myCompactEmptyMiddlePackages && node instanceof DirectoryNode && node.getChildCount() == 1) { //compact
+      final TreeNode treeNode = node.getChildAt(0);
       if (treeNode instanceof DirectoryNode){
-        parentNode.removeAllChildren();
+        node.removeAllChildren();
         for (int i = treeNode.getChildCount() - 1; i >= 0; i--){
-          parentNode.add((MutableTreeNode)treeNode.getChildAt(i));
+          node.add((MutableTreeNode)treeNode.getChildAt(i));
         }
-        ((DirectoryNode)parentNode).setCompactedDirNode((DirectoryNode)treeNode);
+        ((DirectoryNode)node).setCompactedDirNode((DirectoryNode)treeNode);
       }
     }
     if (parentNode instanceof ModuleNode && parentNode.getChildCount() == 0) {
