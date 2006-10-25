@@ -16,6 +16,7 @@ import org.jetbrains.idea.svn.dialogs.PropertiesComponent;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
@@ -27,15 +28,18 @@ public class ShowPropertiesAction extends BasicAction {
   }
 
   protected boolean needsAllFiles() {
-    return true;
+    return false;
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    return true;
+    if (!file.isDirectory()) {
+      file = file.getParent();
+    }
+    return file != null && file.getPath() != null && SVNWCUtil.isVersionedDirectory(new File(file.getPath()));
   }
 
   protected boolean needsFiles() {
-    return false;
+    return true;
   }
 
   protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)

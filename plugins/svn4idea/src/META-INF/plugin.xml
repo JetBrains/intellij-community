@@ -55,6 +55,7 @@
     </group>
 
     <group id="SubversionGroup">
+      <action id="Subversion.Share" class="org.jetbrains.idea.svn.actions.ShareProjectAction" text="_Share Directory..."/>
       <separator/>
       <action id="Subversion.Add" class="org.jetbrains.idea.svn.actions.AddAction"/>
       <reference id="CheckinFiles"/>

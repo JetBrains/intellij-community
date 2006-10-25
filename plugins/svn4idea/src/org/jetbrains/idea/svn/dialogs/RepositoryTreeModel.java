@@ -24,6 +24,10 @@ public class RepositoryTreeModel extends DefaultTreeModel {
     return myIsShowFiles;
   }
 
+  public void setShowFiles(boolean showFiles) {
+    myIsShowFiles = showFiles;
+  }
+
   public void setRoots(SVNURL[] urls) {
     setRoot(new RepositoryTreeRootNode(this, urls));
   }

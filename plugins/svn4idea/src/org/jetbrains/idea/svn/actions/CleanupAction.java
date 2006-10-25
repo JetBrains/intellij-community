@@ -38,10 +38,9 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -54,7 +53,7 @@ public class CleanupAction extends BasicAction {
   }
 
   protected boolean needsAllFiles() {
-    return false;
+    return true;
   }
 
   protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
@@ -72,11 +71,11 @@ public class CleanupAction extends BasicAction {
       }
       vcs.cacheInfo(file, info);
     }
-    return info != null && info.getKind() == SVNNodeKind.DIR;
+    return info != null && info.getURL() != null;
   }
 
   protected boolean needsFiles() {
-    return false;
+    return true;
   }
 
   protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)
