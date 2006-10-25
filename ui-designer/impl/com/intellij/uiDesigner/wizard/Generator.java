@@ -151,6 +151,11 @@ public final class Generator {
     if (data.myBindToNewBean) {
       data.myBeanClass = createBeanClass(data);
     }
+    else {
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(data.myBeanClass.getProject(), data.myBeanClass)) {
+        return;
+      }
+    }
 
     final HashMap<String, String> binding2beanGetter = new HashMap<String, String>();
     final HashMap<String, String> binding2beanSetter = new HashMap<String, String>();
