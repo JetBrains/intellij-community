@@ -28,7 +28,6 @@
     <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="library" name="Eclipse" level="project" />
     <orderEntry type="module" module-name="j2ee-openapi" />
-    <orderEntry type="module" module-name="web-openapi" />
     <orderEntry type="module" module-name="boot" />
     <orderEntryProperties />
   </component>
