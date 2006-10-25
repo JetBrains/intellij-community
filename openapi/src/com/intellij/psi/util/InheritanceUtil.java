@@ -39,8 +39,6 @@ public class InheritanceUtil {
    * @return true if aClass is the baseClass or baseClass inheritor
    */
   public static boolean isCorrectDescendant(PsiClass aClass, PsiClass baseClass, boolean checkDeep) {
-    if (aClass == null || baseClass == null) return false;
-    PsiManager manager = aClass.getManager();
-    return manager.areElementsEquivalent(baseClass, aClass) || aClass.isInheritor(baseClass, checkDeep);
+    return isInheritorOrSelf(aClass, baseClass, checkDeep);
   }
 }

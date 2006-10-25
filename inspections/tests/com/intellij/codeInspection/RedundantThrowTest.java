@@ -21,4 +21,5 @@ public class RedundantThrowTest extends InspectionTestCase {
   public void testSCR6858ByRange() throws Exception { doTest(true); }
 
   public void testSCR14543() throws Exception { doTest(); }
+  public void testRemote() throws Exception { doTest(); }
 }

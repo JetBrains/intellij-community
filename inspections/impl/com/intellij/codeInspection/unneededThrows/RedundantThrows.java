@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +30,9 @@ import java.util.List;
  */
 public class RedundantThrows extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
+  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
   private MyQuickFix myQuickFix;
-  @NonNls public static final String SHORT_NAME = "RedundantThrows";
+  @NonNls private static final String SHORT_NAME = "RedundantThrows";
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
@@ -68,6 +69,7 @@ public class RedundantThrows extends DescriptorProviderInspection {
       PsiClassType throwsType = throwsList[i];
       PsiJavaCodeReferenceElement throwsRef = throwsRefs[i];
       if (ExceptionUtil.isUncheckedException(throwsType)) continue;
+      if (declaredInRemotableMethod(psiMethod, throwsType)) continue;
 
       for (PsiClass s : unThrown) {
         final PsiClass throwsResolvedType = throwsType.resolve();
@@ -78,7 +80,7 @@ public class RedundantThrows extends DescriptorProviderInspection {
             problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
               "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
-          else if (refMethod.getDerivedMethods().size() > 0) {
+          else if (!refMethod.getDerivedMethods().isEmpty()) {
             problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
               "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
           }
@@ -97,6 +99,14 @@ public class RedundantThrows extends DescriptorProviderInspection {
     }
 
     return null;
+  }
+
+  private static boolean declaredInRemotableMethod(final PsiMethod psiMethod, final PsiClassType throwsType) {
+    if (!throwsType.equalsToText("java.rmi.RemoteException")) return false;
+    PsiClass aClass = psiMethod.getContainingClass();
+    if (aClass == null) return false;
+    PsiClass remote = aClass.getManager().findClass("java.rmi.Remote", GlobalSearchScope.allScope(aClass.getProject()));
+    return remote != null && aClass.isInheritor(remote, true);
   }
 
   public boolean queryExternalUsagesRequests(final InspectionManager manager) {
@@ -125,14 +135,17 @@ public class RedundantThrows extends DescriptorProviderInspection {
     return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
