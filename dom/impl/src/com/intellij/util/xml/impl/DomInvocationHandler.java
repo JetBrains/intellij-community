@@ -582,7 +582,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   final void checkInitialized(final String qname) {
-    assert isValid();
+    assert isValid(): "element " + this + " is not valid";
     checkParentInitialized();
     synchronized (PsiLock.LOCK) {
       if (myInitializedChildren.contains(qname)) {
