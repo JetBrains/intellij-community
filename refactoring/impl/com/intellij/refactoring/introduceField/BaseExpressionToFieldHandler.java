@@ -374,7 +374,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       inClass = (PsiMethod)field.getContainingClass().add(patternMethod);
     }
     else if (inClass.getBody() == null) {
-      inClass.replace(patternMethod);
+      inClass = (PsiMethod)inClass.replace(patternMethod);
     } else {
       if (PsiTreeUtil.isAncestor(inClass, initializer, true)) {
         anchor = replaceAll ?
@@ -390,8 +390,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     LOG.assertTrue(rExpression != null);
     rExpression.replace(initializer);
 
-    inClass.getBody().addBefore(expressionStatement, anchor);
-    manager.getCodeStyleManager().reformat(inClass.getBody());
+    final PsiCodeBlock body = inClass.getBody();
+    assert body != null;
+    body.addBefore(expressionStatement, anchor);
   }
 
   private void addInitializationToConstructors(PsiExpression initializerExpression, PsiField field, PsiMethod enclosingConstructor) {
