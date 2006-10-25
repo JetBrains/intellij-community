@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -14,13 +15,14 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super(userObject);
   }
 
+  @Nullable
   public abstract Icon getIcon(boolean expanded);
 
   public int getProblemCount() {
     int sum = 0;
-    Enumeration children = children();
-    while (children.hasMoreElements()) {
-      InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
+    Enumeration enumeration = children();
+    while (enumeration.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       sum += child.getProblemCount();
     }
     return sum;
@@ -36,10 +38,6 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
 
   public boolean appearsBold() {
     return false;
-  }
-
-  public boolean isWritable() {
-    return true;
   }
 
   public FileStatus getNodeStatus(){

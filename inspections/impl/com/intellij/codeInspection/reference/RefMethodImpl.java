@@ -483,7 +483,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
         public void run() {
           PsiMethod psiMethod = (PsiMethod) getElement();
           if (psiMethod instanceof JspHolderMethod) {
-            result[0] = RefMethodImpl.super.getName();
+            result[0] = psiMethod.getName();
           }
           else {
             result[0] = PsiFormatUtil.formatMethod(psiMethod,

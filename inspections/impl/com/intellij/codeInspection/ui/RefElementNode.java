@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
@@ -35,14 +37,21 @@ public class RefElementNode extends InspectionTreeNode {
     return (RefElement)getUserObject();
   }
 
+  @Nullable
   public Icon getIcon(boolean expanded) {
     final PsiElement element = getElement().getElement();
-    return element != null ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY) : null;
-  }
-
-  public boolean isWritable() {
-    final PsiElement element = getElement().getElement();
-    return element == null || element.isWritable();
+    if (element != null) {
+      final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
+      if (getElement().isSyntheticJSP()) {
+        return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
+                                flags,
+                                element.getProject());
+      }
+      return element.getIcon(flags);
+    }
+    else {
+      return null;
+    }
   }
 
   public int getProblemCount() {

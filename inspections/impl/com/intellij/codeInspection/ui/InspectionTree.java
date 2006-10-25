@@ -248,10 +248,6 @@ public class InspectionTree extends Tree {
                                       boolean hasFocus) {
       InspectionTreeNode node = (InspectionTreeNode)value;
 
-      if (!node.isWritable()) {
-        append(InspectionsBundle.message("inspection.read.only.node.prefix"), SimpleTextAttributes.ERROR_ATTRIBUTES);
-      }
-
       append(node.toString(), appearsBold(node)
                               ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
                               : getMainForegroundAttributes(node));
