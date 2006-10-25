@@ -238,7 +238,8 @@ public final class FormSourceCodeGenerator {
       initializer = newClass.addBefore(fakeClass.getInitializers()[0], method);
     }
 
-    @NonNls final String grcMethodText = "public javax.swing.JComponent " + AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME +
+    @NonNls final String grcMethodText = "/** @noinspection ALL */ public javax.swing.JComponent " +
+                                         AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME +
                                          "() { return " + topComponent.getBinding() + "; }";
     generateMethodIfRequired(newClass, method, AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME, grcMethodText, topComponent.getBinding() != null);
 
