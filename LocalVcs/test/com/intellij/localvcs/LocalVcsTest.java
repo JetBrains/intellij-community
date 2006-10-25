@@ -38,14 +38,15 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
-  public void testClearingAddedFiles() {
-    assertTrue(myVcs.isClean());
+  public void testClearingModificationsOnCommit() {
+    myVcs.addFile("file", "content");
+    myVcs.changeFile("file", "new content");
+    myVcs.renameFile("file", "new file");
+    myVcs.deleteFile("new file");
 
-    myVcs.addFile("file", "");
     assertFalse(myVcs.isClean());
 
     myVcs.commit();
-
     assertTrue(myVcs.isClean());
   }
 
@@ -112,20 +113,6 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
-  public void testClearingChangedFiles() {
-    myVcs.addFile("file", "content");
-    myVcs.commit();
-
-    assertTrue(myVcs.isClean());
-
-    myVcs.changeFile("file", "new content");
-    assertFalse(myVcs.isClean());
-
-    myVcs.commit();
-    assertTrue(myVcs.isClean());
-  }
-
-  @Test
   public void testRenaming() {
     myVcs.addFile("file", "content");
     myVcs.commit();
@@ -182,20 +169,6 @@ public class LocalVcsTest extends Assert {
 
     assertTrue(myVcs.hasFile("file1"));
     assertFalse(myVcs.hasFile("file2"));
-  }
-
-  @Test
-  public void testClearingDeletedFiles() {
-    myVcs.addFile("file", "content");
-    myVcs.commit();
-
-    assertTrue(myVcs.isClean());
-
-    myVcs.deleteFile("file");
-    assertFalse(myVcs.isClean());
-
-    myVcs.commit();
-    assertTrue(myVcs.isClean());
   }
 
   @Test
