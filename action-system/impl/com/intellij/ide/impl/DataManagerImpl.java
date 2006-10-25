@@ -279,27 +279,4 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
   }
 
-  private static class TypeSafeDataProviderAdapter implements DataProvider, DataSink {
-    private TypeSafeDataProvider myProvider;
-    private DataKey myLastKey = null;
-    private Object myValue = null;
-
-    public TypeSafeDataProviderAdapter(final TypeSafeDataProvider provider) {
-      myProvider = provider;
-    }
-
-    @Nullable
-    synchronized public Object getData(@NonNls String dataId) {
-      myValue = null;
-      myLastKey = DataKey.create(dataId);
-      myProvider.calcData(myLastKey, this);
-      return myValue;
-    }
-
-    public <T> void put(DataKey<T> key, T data) {
-      if (key == myLastKey) {
-        myValue = data;
-      }
-    }
-  }
 }

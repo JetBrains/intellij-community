@@ -1,6 +1,7 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -414,6 +415,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       final DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper instanceof DataProvider) {
         return ((DataProvider)wrapper).getData(dataId);
+      }
+      else if (wrapper instanceof TypeSafeDataProvider) {
+        TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter((TypeSafeDataProvider) wrapper);
+        return adapter.getData(dataId);
       }
       return null;
     }
