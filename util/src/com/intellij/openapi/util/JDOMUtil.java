@@ -81,9 +81,8 @@ public class JDOMUtil {
       i = addToHash(i, attribute);
     }
 
-    final List children = element.getChildren();
-    for (int j = 0; j < children.size(); j++) {
-      Element child = (Element)children.get(j);
+    final List<Element> children = element.getChildren();
+    for (Element child : children) { //iterator is used here which is more efficient than get(index)
       i = addToHash(i, child);
     }
 
