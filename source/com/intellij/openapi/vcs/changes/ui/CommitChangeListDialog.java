@@ -296,7 +296,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  public static String getInitialMessage(FilePath[] filesToCheckin, Project project) {
+  private static String getInitialMessage(FilePath[] filesToCheckin, Project project) {
     if (filesToCheckin != null) {
       for (FilePath virtualFile : filesToCheckin) {
         AbstractVcs activeVcs = VcsUtil.getVcsFor(project, virtualFile);
@@ -312,10 +312,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     VcsConfiguration config = VcsConfiguration.getInstance(project);
 
-    if (config.SAVE_LAST_COMMIT_MESSAGE) {
-      return config.getLastNonEmptyCommitMessage();
-    }
-    else if (config.ERROR_OCCURED) {
+    if (config.SAVE_LAST_COMMIT_MESSAGE || config.ERROR_OCCURED) {
       return config.LAST_COMMIT_MESSAGE;
     }
     else {
