@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -446,7 +445,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(getTestDataPath() + filePath);
+    SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(getTestDataPath() + "/" + filePath);
     String newFileText1 = loader.newFileText;
     if (stripTrailingSpaces) {
       Document document1 = EditorFactory.getInstance().createDocument(loader.newFileText);
