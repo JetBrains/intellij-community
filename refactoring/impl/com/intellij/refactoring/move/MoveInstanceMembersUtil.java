@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author ven
  */
@@ -61,6 +63,7 @@ public class MoveInstanceMembersUtil {
     members.add(member);
   }
 
+  @Nullable
   private static Pair<PsiMember, PsiClass> getMemberAndClassReferencedByThis(final PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       final PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
@@ -95,23 +98,27 @@ public class MoveInstanceMembersUtil {
     return null;
   }
 
+  @Nullable
   private static PsiClass getReferencedClass(final PsiMember member, final PsiExpression exprQualifier, final PsiExpression expression) {
-    PsiClass referencedClass = member.getContainingClass();
     if (exprQualifier != null) {
       final PsiType type = exprQualifier.getType();
       if (type instanceof PsiClassType) {
-        referencedClass = ((PsiClassType)type).resolve();
+        return ((PsiClassType)type).resolve();
       }
-    }
-    else {
+      return null;
+    } else {
+      PsiClass referencedClass = member.getContainingClass();
+      if (referencedClass == null) return null;
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      assert parentClass != null;
       if (!PsiTreeUtil.isAncestor(referencedClass, parentClass, false)) {
         referencedClass = parentClass;
       }
+      return referencedClass;
     }
-    return referencedClass;
   }
 
+  @Nullable
   public static PsiClass getClassReferencedByThis(final PsiExpression expression) {
     PsiClass enclosingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
     if (enclosingClass == null) return null;
