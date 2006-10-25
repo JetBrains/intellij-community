@@ -1,7 +1,6 @@
 package com.intellij.localvcs;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class LocalVcs {
@@ -21,15 +20,15 @@ public class LocalVcs {
     List<Revision> result = new ArrayList<Revision>();
 
     Snapshot s = mySnapshot;
+    Revision r = s.getFileRevision(name);
 
-    while (s != null) {
-      Revision rev = s.getFileRevision(name);
-      if (rev == null) break;
-      result.add(rev);
+    while (s != null && r != null) {
+      result.add(r);
+
       s = s.revert();
+      r = s.getFileRevision(r.getObjectId());
     }
 
-    Collections.reverse(result);
     return result;
   }
 

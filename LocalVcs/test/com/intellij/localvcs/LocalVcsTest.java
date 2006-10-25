@@ -68,7 +68,7 @@ public class LocalVcsTest extends Assert {
     myVcs.changeFile("file", "new content");
     myVcs.commit();
 
-    assertRevisionsContent(new String[]{"content", "new content" },
+    assertRevisionsContent(new String[]{"new content", "content"},
                            myVcs.getFileRevisions("file"));
   }
 
@@ -79,7 +79,7 @@ public class LocalVcsTest extends Assert {
 
     myVcs.changeFile("file", "new content");
 
-    assertRevisionsContent(new String[]{"content" },
+    assertRevisionsContent(new String[]{"content"},
                            myVcs.getFileRevisions("file"));
   }
 
@@ -151,10 +151,10 @@ public class LocalVcsTest extends Assert {
 
     assertEquals(2, revs.size());
 
-    assertEquals("file", revs.get(0).getName());
+    assertEquals("new file", revs.get(0).getName());
     assertEquals("content", revs.get(0).getContent());
 
-    assertEquals("new file", revs.get(1).getName());
+    assertEquals("file", revs.get(1).getName());
     assertEquals("content", revs.get(1).getContent());
   }
 
