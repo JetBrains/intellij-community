@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,10 +28,12 @@ public class RemoveNewQualifierFix implements IntentionAction {
     this.aClass = aClass;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("remove.qualifier.fix");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.qualifier.fix");
   }
@@ -39,9 +42,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
     return
         expression != null
         && expression.isValid()
-        && expression.getClassReference() != null
-        && aClass != null
-        && aClass.isValid()
+        && (aClass == null || aClass.isValid())
         && expression.getManager().isInProject(expression);
   }
 
@@ -49,7 +50,9 @@ public class RemoveNewQualifierFix implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(expression.getContainingFile())) return;
     PsiJavaCodeReferenceElement classReference = expression.getClassReference();
     expression.getQualifier().delete();
-    classReference.bindToElement(aClass);
+    if (aClass != null && classReference != null) {
+      classReference.bindToElement(aClass);
+    }
   }
 
   public boolean startInWriteAction() {

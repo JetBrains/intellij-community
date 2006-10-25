@@ -631,17 +631,24 @@ public class HighlightClassUtil {
     PsiExpression qualifier = expression.getQualifier();
     if (qualifier == null) return null;
     PsiType type = expression.getType();
+    if (type instanceof PsiArrayType) {
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                                      expression,
+                                                                      JavaErrorMessages.message("invalid.qualified.new"));
+      QuickFixAction.registerQuickFixAction(info, new RemoveNewQualifierFix(expression, null));
+      return info;
+    }
     PsiClass aClass = PsiUtil.resolveClassInType(type);
     if (aClass != null && aClass.hasModifierProperty(PsiModifier.STATIC)) {
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                       expression,
                                                                       JavaErrorMessages.message("qualified.new.of.static.class"));
       if (!aClass.isEnum()) {
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass.getModifierList(), PsiModifier.STATIC, false, false);
-        QuickFixAction.registerQuickFixAction(highlightInfo, fix);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveNewQualifierFix(expression, aClass));
+        QuickFixAction.registerQuickFixAction(info, fix);
       }
-      return highlightInfo;
+      QuickFixAction.registerQuickFixAction(info, new RemoveNewQualifierFix(expression, aClass));
+      return info;
     }
     return null;
   }
