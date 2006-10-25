@@ -302,6 +302,7 @@ public class VfsUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
   public static VirtualFile findRelativeFile(String uri, VirtualFile base) {
     if (base != null) {
       if (!base.isValid()){
