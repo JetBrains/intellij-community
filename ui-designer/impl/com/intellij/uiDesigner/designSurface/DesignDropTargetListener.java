@@ -271,7 +271,7 @@ class DesignDropTargetListener implements DropTargetListener {
 
     if (dropAction == DnDConstants.ACTION_COPY) {
       for (RadComponent component : droppedComponents) {
-        InsertComponentProcessor.createBindingWhenDrop(myEditor, component);
+        InsertComponentProcessor.createBindingWhenDrop(myEditor, component, false);
       }
       FormEditingUtil.selectComponents(myEditor, droppedComponents);
     }

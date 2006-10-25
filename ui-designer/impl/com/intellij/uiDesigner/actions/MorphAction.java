@@ -75,11 +75,15 @@ public class MorphAction extends AbstractGuiEditorAction {
     if (selection.size() == 1) {
       step.hideComponentClass(selection.get(0).getComponentClassName());
     }
-    final ListPopup listPopup = JBPopupFactory.getInstance().createWizardStep(step);
+    final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
     FormEditingUtil.showPopupUnderComponent(listPopup, selection.get(0));
   }
 
-  private static boolean morphComponent(final GuiEditor editor, final RadComponent oldComponent, final ComponentItem targetItem) {
+  private static boolean morphComponent(final GuiEditor editor, final RadComponent oldComponent, ComponentItem targetItem) {
+    targetItem = InsertComponentProcessor.replaceAnyComponentItem(editor, targetItem);
+    if (targetItem == null) {
+      return false;
+    }
     final RadComponent newComponent = InsertComponentProcessor.createInsertedComponent(editor, targetItem);
     if (newComponent == null) return false;
     newComponent.setBinding(oldComponent.getBinding());

@@ -164,10 +164,11 @@ public final class InsertComponentProcessor extends EventProcessor {
    * Tries to create binding for {@link #myInsertedComponent}
    * @param editor
    * @param insertedComponent
+   * @param forceBinding
    */
-  public static void createBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent) {
+  public static void createBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent, final boolean forceBinding) {
     final ComponentItem item = Palette.getInstance(editor.getProject()).getItem(insertedComponent.getComponentClassName());
-    if ((item != null && item.isAutoCreateBinding()) || insertedComponent.isCustomCreateRequired()) {
+    if ((item != null && item.isAutoCreateBinding()) || insertedComponent.isCustomCreateRequired() || forceBinding) {
       doCreateBindingWhenDrop(editor, insertedComponent);
     }
   }
@@ -247,7 +248,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     processComponentInsert(item, location);
   }
 
-  public void processComponentInsert(final ComponentItem item, final DropLocation location) {
+  public void processComponentInsert(ComponentItem item, final DropLocation location) {
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.setDesignTimeInsets(2);
 
@@ -263,6 +264,11 @@ public final class InsertComponentProcessor extends EventProcessor {
       return;
     }
 
+    item = replaceAnyComponentItem(myEditor, item);
+    if (item == null) {
+      return;
+    }
+    final boolean forceBinding = item.isAutoCreateBinding();
     myInsertedComponent = createInsertedComponent(myEditor, item);
     setCursor(Cursor.getDefaultCursor());
     if (myInsertedComponent == null) {
@@ -278,7 +284,7 @@ public final class InsertComponentProcessor extends EventProcessor {
         myEditor.getProject(),
         new Runnable(){
           public void run(){
-            createBindingWhenDrop(myEditor, myInsertedComponent);
+            createBindingWhenDrop(myEditor, myInsertedComponent, forceBinding);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
             location.processDrop(myEditor, components, null, dragObject);
@@ -413,7 +419,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   @Nullable
-  public static RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {
+  public static ComponentItem replaceAnyComponentItem(GuiEditor editor, ComponentItem item) {
     if (item.isAnyComponent()) {
       ComponentItem newItem = item.clone();
       ComponentItemDialog dlg = new ComponentItemDialog(editor.getProject(), editor, newItem, true);
@@ -423,9 +429,13 @@ public final class InsertComponentProcessor extends EventProcessor {
         return null;
       }
 
-      item = newItem;
+      return newItem;
     }
+    return item;
+  }
 
+  @Nullable
+  public static RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {
     RadComponent result;
     final String id = FormEditingUtil.generateId(editor.getRootContainer());
 
