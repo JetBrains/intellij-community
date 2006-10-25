@@ -330,7 +330,10 @@ public abstract class RadComponent implements IComponent {
 
   public void setDragging(final boolean dragging) {
     myDragging = dragging;
-    getDelegee().setVisible(!myDragging);
+    RadContainer parent = getParent();
+    if (parent != null) {
+      parent.getLayoutManager().setChildDragging(this, dragging);
+    }
   }
 
   public void setDragBorder(final boolean dragging) {

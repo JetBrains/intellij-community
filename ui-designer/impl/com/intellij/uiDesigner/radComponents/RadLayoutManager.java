@@ -94,4 +94,8 @@ public abstract class RadLayoutManager {
   public boolean areChildrenExclusive() {
     return false;
   }
+
+  public void setChildDragging(RadComponent child, boolean dragging) {
+    child.getDelegee().setVisible(!dragging);
+  }
 }

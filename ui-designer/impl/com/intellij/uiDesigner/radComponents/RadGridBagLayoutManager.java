@@ -228,6 +228,11 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   @Override
+  public void setChildDragging(RadComponent child, boolean dragging) {
+    // do nothing here - setting visible to false would cause exceptions
+  }
+
+  @Override
   public void createSnapshotLayout(final SnapshotContext context,
                                    final JComponent parent,
                                    final RadContainer container,
