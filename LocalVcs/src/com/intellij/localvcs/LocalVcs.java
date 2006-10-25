@@ -25,6 +25,7 @@ public class LocalVcs {
     while (s != null && r != null) {
       result.add(r);
 
+      // todo it's possibly bug here (NullPointerException)
       s = s.revert();
       r = s.getFileRevision(r.getObjectId());
     }
@@ -49,7 +50,6 @@ public class LocalVcs {
   }
 
   public void commit() {
-    // todo maby move parameter copy to cpply method? 
     mySnapshot = mySnapshot.apply(myPendingModifications);
     clearModifications();
   }
