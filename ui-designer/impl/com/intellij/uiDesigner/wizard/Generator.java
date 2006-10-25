@@ -25,6 +25,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -331,6 +332,10 @@ public final class Generator {
     LOG.assertTrue(module != null);
     final PsiClass boundClass = FormEditingUtil.findClassToBind(module, rootContainer[0].getClassToBind());
     LOG.assertTrue(boundClass != null);
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(module.getProject(), boundClass)) {
+      return;
+    }
 
     // todo: check that this method does not exist yet
 
