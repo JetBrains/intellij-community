@@ -61,7 +61,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
           nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
         }
         append(name, nameAttributes);
-        setIcon(element.getIcon(getIconFlags()));
+        setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
         String containerText = getContainerText(element, name + (myModuleName != null ? myModuleName + "        " : ""));
         if (containerText != null) {
