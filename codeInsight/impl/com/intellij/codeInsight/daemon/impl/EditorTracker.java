@@ -203,7 +203,7 @@ public class EditorTracker {
   }
 
   public void dispose() {
-    myEditorFactoryListener.dispose();
+    myEditorFactoryListener.dispose(null);
     EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
     if (myIdeFrame != null) {
       myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
@@ -263,12 +263,11 @@ public class EditorTracker {
   }
 
   private class MyEditorFactoryListener implements EditorFactoryListener {
-    private List<Runnable> myExecuteOnEditorRelease;
+    private Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<Editor, Runnable>();
     private final Project myProject;
 
     public MyEditorFactoryListener(final Project project) {
       myProject = project;
-      myExecuteOnEditorRelease = new ArrayList<Runnable>();
     }
 
     public void editorCreated(EditorFactoryEvent event) {
@@ -296,7 +295,7 @@ public class EditorTracker {
       };
       contentComponent.addFocusListener(focusListener);
 
-      myExecuteOnEditorRelease.add(new Runnable() {
+      myExecuteOnEditorRelease.put(event.getEditor(), new Runnable() {
         public void run() {
           component.removeHierarchyListener(hierarchyListener);
           contentComponent.removeFocusListener(focusListener);
@@ -305,15 +304,25 @@ public class EditorTracker {
     }
 
     public void editorReleased(EditorFactoryEvent event) {
-      unregisterEditor(event.getEditor());
-      dispose();
+      final Editor editor = event.getEditor();
+      unregisterEditor(editor);
+      dispose(editor);
     }
 
-    public void dispose() {
-      for (final Runnable aMyExecuteOnEditorRelease : myExecuteOnEditorRelease) {
-        aMyExecuteOnEditorRelease.run();
+    private void dispose(Editor editor) {
+      if (editor == null) {
+        for (Runnable r : myExecuteOnEditorRelease.values()) {
+          r.run();
+        }
+        myExecuteOnEditorRelease.clear();
       }
-      myExecuteOnEditorRelease.clear();
+      else {
+        final Runnable runnable = myExecuteOnEditorRelease.get(editor);
+        if (runnable != null) {
+          runnable.run();
+          myExecuteOnEditorRelease.remove(editor);
+        }
+      }
     }
   }
 }
