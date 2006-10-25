@@ -61,6 +61,29 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
+  public void testKeepingOldVersions() {
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+
+    myVcs.changeFile("file", "new content");
+    myVcs.commit();
+
+    assertRevisionsContent(new String[]{"content", "new content" },
+                           myVcs.getFileRevisions("file"));
+  }
+
+  @Test
+  public void testDoesNotKeepUncommittedChanges() {
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+
+    myVcs.changeFile("file", "new content");
+
+    assertRevisionsContent(new String[]{"content" },
+                           myVcs.getFileRevisions("file"));
+  }
+
+  @Test
   public void testContentOfUnknownFile() {
     assertNull(myVcs.getFileRevision("unknown file"));
   }
@@ -206,26 +229,54 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
-  public void testKeepingOldVersions() {
-    myVcs.addFile("file", "content");
+  public void testFileRevisions() {
+    assertTrue(myVcs.getFileRevisions("file").isEmpty());
+
+    myVcs.addFile("file", "");
     myVcs.commit();
 
-    myVcs.changeFile("file", "new content");
-    myVcs.commit();
-
-    assertRevisionsContent(new String[]{"content", "new content" },
-                           myVcs.getFileRevisions("file"));
+    assertEquals(1, myVcs.getFileRevisions("file").size());
   }
 
   @Test
-  public void testDoesNotKeepUncommittedChanges() {
-    myVcs.addFile("file", "content");
+  public void testRevertingToPreviousVersion() {
+    myVcs.addFile("file", "");
+    myVcs.commit();
+    assertTrue(myVcs.hasFile("file"));
+
+    myVcs.revert();
+    assertFalse(myVcs.hasFile("file"));
+  }
+
+  @Test
+  public void testRevertingClearsAllPendingModifications() {
+    myVcs.addFile("file1", "");
     myVcs.commit();
 
-    myVcs.changeFile("file", "new content");
+    myVcs.addFile("file2", "");
+    assertFalse(myVcs.isClean());
 
-    assertRevisionsContent(new String[]{"content" },
-                           myVcs.getFileRevisions("file"));
+    myVcs.revert();
+    assertTrue(myVcs.isClean());
+  }
+
+  @Test
+  public void testRevertingWhenNoPreviousVersions() {
+    try {
+      myVcs.revert();
+      myVcs.revert();
+    } catch (Exception e) {
+      fail(e.toString());
+    }
+  }
+
+  @Test
+  public void testClearingModificationsAfterRevertWhenNoPreviousVersions() {
+    myVcs.addFile("file", "");
+    assertFalse(myVcs.isClean());
+
+    myVcs.revert();
+    assertTrue(myVcs.isClean());
   }
 
   private void assertRevisionContent(String expectedContent,
