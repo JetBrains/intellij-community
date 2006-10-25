@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -24,9 +23,6 @@ import org.jetbrains.annotations.NonNls;
  */
 public final class ResourceBundleFileReference extends ReferenceInForm {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ResourceBundleFileReference");
-
-  @NonNls
-  static final String PROPERTIES_EXTENSION = ".properties";
 
   public ResourceBundleFileReference(final PsiPlainTextFile file, TextRange bundleNameRange) {
     super(file, bundleNameRange);
@@ -58,18 +54,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
   }
 
   public PsiElement handleElementRename(final String newElementName) {
-    final String currentName = getRangeText();
-    final String baseName = newElementName.endsWith(PROPERTIES_EXTENSION)?
-                            newElementName.substring(0, newElementName.length() - PROPERTIES_EXTENSION.length()) :
-                            newElementName;
-    final int slashIndex = currentName.lastIndexOf('/');
-    if (slashIndex >= 0) {
-      final String prefix = currentName.substring(0, slashIndex);
-      return super.handleElementRename(prefix + "/" + baseName);
-    }
-    else {
-      return super.handleElementRename(baseName);
-    }
+    return handleFileRename(newElementName, ".properties", false);
   }
 
   public PsiElement bindToElement(final PsiElement element) throws IncorrectOperationException {

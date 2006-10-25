@@ -53,4 +53,9 @@ public class NestedFormFileReference extends ReferenceInForm {
     updateRangeText(FormEditingUtil.buildResourceName((PsiPlainTextFile) element));
     return myFile;
   }
+
+  @Override
+  public PsiElement handleElementRename(final String newElementName) {
+    return handleFileRename(newElementName, ".form", true);
+  }
 }

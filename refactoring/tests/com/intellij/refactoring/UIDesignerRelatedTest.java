@@ -71,4 +71,15 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
     });
   }
 
+  public void testRenameNestedForm() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        PsiFile file = myPsiManager.findFile(rootDir.findChild("p1").findChild("Form1.form"));
+        assertNotNull(file);
+
+
+        new RenameProcessor(myProject, file, "Form2.form", true, true).run();
+      }
+    });
+  }
 }

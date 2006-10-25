@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -33,6 +34,10 @@ public abstract class ReferenceInForm implements PsiReference {
   }
 
   public PsiElement handleElementRename(final String newElementName){
+    return handleElementRenameBase(newElementName);
+  }
+
+  private PsiElement handleElementRenameBase(final String newElementName) {
     updateRangeText(newElementName);
     return myFile;
   }
@@ -65,5 +70,22 @@ public abstract class ReferenceInForm implements PsiReference {
 
   public boolean isSoft() {
     return true;
+  }
+
+  protected PsiElement handleFileRename(final String newElementName, @NonNls final String extension,
+                                        final boolean includeExtensionInReference) {
+    final String currentName = getRangeText();
+    final String baseName = newElementName.endsWith(extension)?
+                            newElementName.substring(0, newElementName.length() - extension.length()) :
+                            newElementName;
+    final int slashIndex = currentName.lastIndexOf('/');
+    final String extensionInReference = includeExtensionInReference ? extension : "";
+    if (slashIndex >= 0) {
+      final String prefix = currentName.substring(0, slashIndex);
+      return handleElementRenameBase(prefix + "/" + baseName + extensionInReference);
+    }
+    else {
+      return handleElementRenameBase(baseName + extensionInReference);
+    }
   }
 }
