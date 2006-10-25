@@ -94,9 +94,11 @@ public abstract class AbstractSvnUpdatePanel {
     configuration.UPDATE_RECURSIVELY = getRecursiveBox().isSelected();
 
     for (FilePath filePath : myRootToPanel.keySet()) {
-      myRootToPanel.get(filePath).apply(configuration);
+      final SvnPanel svnPanel = myRootToPanel.get(filePath);
+      if (svnPanel.canApply()) {
+        svnPanel.apply(configuration);
+      }
     }
-
   }
 
   private SVNURL getUrlFor(final FilePath root) {

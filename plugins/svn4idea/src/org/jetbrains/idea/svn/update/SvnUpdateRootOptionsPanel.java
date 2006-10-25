@@ -133,4 +133,8 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     }
     rootInfo.setRevision(revision);
   }
+
+  public boolean canApply() {
+    return true;
+  }
 }

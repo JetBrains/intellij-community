@@ -40,9 +40,6 @@ public class SvnRevisionPanel extends JPanel {
   public SvnRevisionPanel() {
     super(new BorderLayout());
     add(myPanel);
-    final ButtonGroup group = new ButtonGroup();
-    group.add(myHead);
-    group.add(mySpecified);
     myHead.setSelected(true);
     myRevisionField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -75,17 +72,14 @@ public class SvnRevisionPanel extends JPanel {
     myRevisionField.getTextField().setColumns(10);
   }
 
-  private boolean chooseRevision() {
+  private void chooseRevision() {
     if (myProject != null && myUrlProvider != null) {
       final RepositoryVersion version =
         AbstractVcsHelper.getInstance(myProject).chooseRepositoryVersion(new SvnVersionsProvider(myProject, myUrlProvider.getUrl()));
       if (version != null) {
         myRevisionField.setText(String.valueOf(version.getNumber()));
-        return true;
       }
     }
-
-    return false;
   }
 
   public void setProject(final Project project) {
@@ -115,9 +109,11 @@ public class SvnRevisionPanel extends JPanel {
   public void setRevision(final SVNRevision revision) {
     if (revision == SVNRevision.HEAD) {
       myHead.setSelected(true);
+      myRevisionField.setEnabled(false);
     } else {
       myRevisionField.setText(String.valueOf(revision.getNumber()));
       mySpecified.setSelected(true);
+      myRevisionField.setEnabled(true);
     }
   }
 

@@ -121,6 +121,10 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
 
   }
 
+  public boolean canApply() {
+    return !myMergeText1.getText().equals(myMergeText2.getText()) || !myRevision1.getRevisionText().equals(myRevision2.getRevisionText());
+  }
+
   public JPanel getPanel() {
     return myPanel;
   }

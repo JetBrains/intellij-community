@@ -88,6 +88,10 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       final SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
 
       MergeRootInfo info = svnConfig.getMergeRootInfo(root, myVcs);
+      if (info.getUrlString1().equals(info.getUrlString2()) &&
+        info.getRevision1().equals(info.getRevision2())) {
+        return 0;
+      }
 
       SVNDiffClient diffClient = myVcs.createDiffClient();
       diffClient.setEventHandler(myHandler);

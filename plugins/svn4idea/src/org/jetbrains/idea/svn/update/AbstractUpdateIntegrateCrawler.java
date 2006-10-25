@@ -55,8 +55,6 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
   public Collection<File> handleWorkingCopyRoot(File root, ProgressIndicator progress) {
     final Collection<File> result = new HashSet<File>();
 
-    long rev;
-
     if (progress != null) {
       showProgressMessage(progress, root);
     }
@@ -64,7 +62,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
       SVNUpdateClient client = myVcs.createUpdateClient();
       client.setEventHandler(myHandler);
 
-      rev = doUpdate(root, client);
+      long rev = doUpdate(root, client);
 
       if (rev < 0 && !isMerge()) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, SvnBundle.message("exception.text.root.was.not.properly.updated", root)));

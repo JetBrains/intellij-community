@@ -15,14 +15,14 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.idea.svn.SvnConfiguration;
 
 import javax.swing.*;
 
-import com.intellij.openapi.options.ConfigurationException;
-
 public interface SvnPanel {
   void reset(SvnConfiguration conf);
   void apply(SvnConfiguration conf) throws ConfigurationException;
+  boolean canApply();
   JPanel getPanel();
 }
