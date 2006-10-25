@@ -142,15 +142,17 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   @NotNull
   public String getName() {
-    if (myCachedName == null){
+    String name = myCachedName;
+    if (name == null){
       if (getTreeElement() != null){
-        myCachedName = getNameIdentifier().getText();
+        name = getNameIdentifier().getText();
       }
       else{
-        myCachedName = getRepositoryManager().getMethodView().getName(getRepositoryId());
+        name = getRepositoryManager().getMethodView().getName(getRepositoryId());
       }
+      myCachedName = name;
     }
-    return myCachedName;
+    return name;
   }
 
   @NotNull
@@ -269,8 +271,8 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public boolean isDeprecated() {
-    if (myCachedIsDeprecated == null){
-      boolean deprecated;
+    Boolean deprecated = myCachedIsDeprecated;
+    if (deprecated == null){
       if (getTreeElement() != null){
         PsiDocComment docComment = getDocComment();
         deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
@@ -285,9 +287,9 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
           deprecated = getModifierList().findAnnotation("java.lang.Deprecated") != null;
         }
       }
-      myCachedIsDeprecated = deprecated ? Boolean.TRUE : Boolean.FALSE;
+      myCachedIsDeprecated = deprecated;
     }
-    return myCachedIsDeprecated.booleanValue();
+    return deprecated.booleanValue();
   }
 
   public PsiDocComment getDocComment() {
@@ -295,22 +297,22 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public boolean isConstructor() {
-    if (myCachedIsConstructor == null){
-      boolean isConstructor;
+    Boolean isConstructor = myCachedIsConstructor;
+    if (isConstructor == null){
       if (getTreeElement() != null){
         isConstructor = calcTreeElement().findChildByRole(ChildRole.TYPE) == null;
       }
       else{
         isConstructor = getRepositoryManager().getMethodView().isConstructor(getRepositoryId());
       }
-      myCachedIsConstructor = isConstructor ? Boolean.TRUE : Boolean.FALSE;
+      myCachedIsConstructor = isConstructor;
     }
-    return myCachedIsConstructor.booleanValue();
+    return isConstructor.booleanValue();
   }
 
   public boolean isVarArgs() {
-    if (myCachedIsVarargs == null) {
-      boolean isVarArgs;
+    Boolean isVarArgs = myCachedIsVarargs;
+    if (isVarArgs == null) {
       if (getTreeElement() != null) {
         PsiParameter[] parameters = getParameterList().getParameters();
         isVarArgs = parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
@@ -319,10 +321,10 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
         isVarArgs = getRepositoryManager().getMethodView().isVarArgs(getRepositoryId());
       }
 
-      myCachedIsVarargs = isVarArgs ? Boolean.TRUE : Boolean.FALSE;
+      myCachedIsVarargs = isVarArgs;
     }
 
-    return myCachedIsVarargs.booleanValue();
+    return isVarArgs.booleanValue();
   }
 
   public void accept(PsiElementVisitor visitor) {
