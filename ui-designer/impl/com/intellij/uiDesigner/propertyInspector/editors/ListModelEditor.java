@@ -26,6 +26,7 @@ public class ListModelEditor extends PropertyEditor<String[]> {
   public ListModelEditor(final String propertyName) {
     myPropertyName = propertyName;
     myTextField.getTextField().setBorder(null);
+    myTextField.getTextField().setEditable(false);
     myTextField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         openListEditorDialog();
