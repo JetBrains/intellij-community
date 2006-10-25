@@ -28,7 +28,7 @@ import java.util.*;
  * @author yole
  */
 public class ColorEditor extends PropertyEditor<ColorDescriptor> {
-  private String myPropertyName;
+  private final String myPropertyName;
   private TextFieldWithBrowseButton myTextField = new TextFieldWithBrowseButton();
   private ColorDescriptor myValue;
   private Project myProject;
@@ -36,6 +36,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
   public ColorEditor(String propertyName) {
     myPropertyName = propertyName;
     myTextField.getTextField().setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+    myTextField.getTextField().setEditable(false);
     myTextField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         MyColorChooserDialog dialog = new MyColorChooserDialog(myProject);
