@@ -13,6 +13,7 @@ import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 /**
  * @author max
@@ -61,8 +62,12 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
       final FilePath filePath = ChangesUtil.getFilePath(change);
       append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
       if (myShowFlatten) {
-        append(" (" + filePath.getIOFile().getParentFile().getPath() + ", " + getChangeStatus(change).getText() + ")",
-               SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(" (", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        final File parentFile = filePath.getIOFile().getParentFile();
+        if (parentFile != null) {
+          append(parentFile.getPath() + ", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        append(change.getFileStatus().getText() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else if (node.getCount() != 1 || node.getDirectoryCount() != 0) {
         appendCount(node);
@@ -140,11 +145,7 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  private FileStatus getChangeStatus(Change change) {
-    return change.getFileStatus();
-  }
-
   private Color getColor(final Change change) {
-    return getChangeStatus(change).getColor();
+    return change.getFileStatus().getColor();
   }
 }
