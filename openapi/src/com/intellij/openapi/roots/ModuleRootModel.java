@@ -49,6 +49,7 @@ public interface ModuleRootModel {
    *
    * @return list of order entries for this module
    */
+  @NotNull
   OrderEntry[] getOrderEntries();
 
   /**

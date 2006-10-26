@@ -172,6 +172,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getContentEntries();
   }
 
+  @NotNull
   public OrderEntry[] getOrderEntries() {
     return myRootModel.getOrderEntries();
   }

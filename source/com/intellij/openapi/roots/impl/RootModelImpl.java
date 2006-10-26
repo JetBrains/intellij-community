@@ -347,6 +347,7 @@ class RootModelImpl implements ModifiableRootModel {
     return myContent.toArray(new ContentEntry[myContent.size()]);
   }
 
+  @NotNull
   public OrderEntry[] getOrderEntries() {
     OrderEntry[] cachedOrderEntries = myCachedOrderEntries;
     if (cachedOrderEntries == null) {
