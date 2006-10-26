@@ -28,15 +28,16 @@ import net.sf.cglib.proxy.Factory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.reflect.Method;
 import java.util.*;
-import javax.swing.*;
 
 /**
  * @author peter
  */
 public abstract class ElementPresentationManager {
   private static final WeakFactoryMap<Class,Method> ourNameValueMethods = new WeakFactoryMap<Class, Method>() {
+    @Nullable
     protected Method create(final Class key) {
       for (final Method method : ReflectionCache.getMethods(key)) {
       if (DomReflectionUtil.findAnnotationDFS(method, NameValue.class) != null) {
@@ -48,6 +49,7 @@ public abstract class ElementPresentationManager {
   };
 
   private final static Function<? extends DomElement, String> DEFAULT_NAMER = new Function<DomElement, String>() {
+    @Nullable
     public String fun(final DomElement element) {
       return element.getGenericInfo().getElementName(element);
     }
@@ -85,6 +87,7 @@ public abstract class ElementPresentationManager {
   public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
+  @Nullable
   public static String getElementName(Object element) {
     for (final Function<Object, String> function : ourNameProviders) {
       final String s = function.fun(element);
@@ -96,6 +99,7 @@ public abstract class ElementPresentationManager {
     return o == null || o instanceof String ? (String)o : ((GenericValue)o).getStringValue();
   }
 
+  @Nullable
   public static Object invokeNameValueMethod(final Object element) {
     final Method nameValueMethod = findNameValueMethod(element.getClass());
     if (nameValueMethod == null) {
@@ -138,6 +142,7 @@ public abstract class ElementPresentationManager {
     return StringUtil.capitalizeWords(StringUtil.join(NameUtil.nameToWords(simpleName),  " "), true);
   }
 
+  @Nullable
   private static <T> T getFromClassMap(Map<Class,T> map, Class value) {
     for (final Map.Entry<Class, T> entry : map.entrySet()) {
       if (entry.getKey().isAssignableFrom(value)) {
@@ -147,6 +152,7 @@ public abstract class ElementPresentationManager {
     return null;
   }
 
+  @Nullable
   private static String _getTypeName(final Class aClass) {
     for (final Function<Class, String> function : ourTypeProviders) {
       final String s = function.fun(aClass);
@@ -157,6 +163,7 @@ public abstract class ElementPresentationManager {
     return getFromClassMap(ourTypeNames, aClass);
   }
 
+  @Nullable
   public static Icon getIcon(Object o) {
     return getFirst(getIcons(o));
   }
@@ -209,6 +216,7 @@ public abstract class ElementPresentationManager {
     return result.toArray(new Icon[result.size()]);
   }
 
+  @Nullable
   public static Icon getIconForClass(Class clazz) {
     return getFirst(getIconsForClass(clazz));
   }
@@ -224,6 +232,7 @@ public abstract class ElementPresentationManager {
     }
   }
 
+  @Nullable
   public static <T> T findByName(Collection<T> collection, final String name) {
     return ContainerUtil.find(collection, new Condition<T>() {
       public boolean value(final T object) {
