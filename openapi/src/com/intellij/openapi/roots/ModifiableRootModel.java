@@ -107,6 +107,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    *
    * @return library table to be modified
    */
+  @NotNull
   LibraryTable getModuleLibraryTable();
 
   /**

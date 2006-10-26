@@ -456,6 +456,7 @@ class RootModelImpl implements ModifiableRootModel {
     myWritable = false;
   }
 
+  @NotNull
   public LibraryTable getModuleLibraryTable() {
     return myModuleLibraryTable;
   }
