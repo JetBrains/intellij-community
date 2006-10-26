@@ -76,9 +76,11 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
   public E getElement() {
     if (myElement != null) return myElement.isValid() ? myElement : null;
     if (myPointer != null) return (E) myPointer.getElement();
-    final PsiElement psiElement = myAnchor.retrieve();
-    if (psiElement != null) {
-      return ReflectionCache.isAssignable(myElementClass, psiElement.getClass()) ? (E) psiElement : null;
+    if (myAnchor != null) {
+      final PsiElement psiElement = myAnchor.retrieve();
+      if (psiElement != null) {
+        return ReflectionCache.isAssignable(myElementClass, psiElement.getClass()) ? (E) psiElement : null;
+      }
     }
 
     return null;

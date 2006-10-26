@@ -106,33 +106,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     });
   }
 
-  public void beforeChildReplacement(PsiTreeChangeEvent event) {
-    processBeforeEvent(event);
-  }
-
-  public void beforeChildAddition(PsiTreeChangeEvent event) {
-    processBeforeEvent(event);
-  }
-
-  public void beforeChildRemoval(PsiTreeChangeEvent event) {
-    processBeforeEvent(event);
-  }
-
-  public void beforeChildrenChange(PsiTreeChangeEvent event) {
-    processBeforeEvent(event);
-  }
-
-  private void processBeforeEvent(PsiTreeChangeEvent event) {
-    if (toProcessPsiEvent()) {
-      PsiFile psiFile = event.getParent().getContainingFile();
-      if (psiFile == null) return;
-
-      //TODO: get red of this?
-      mySmartPointerManager.fastenBelts(psiFile);
-      mySmartPointerManager.unfastenBelts(psiFile);
-    }
-  }
-
   private static boolean toProcessPsiEvent() {
     Application application = ApplicationManager.getApplication();
     return application.getCurrentWriteAction(CommitToPsiFileAction.class) == null
@@ -156,7 +129,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
-  public void deleteString(Document document, int startOffset, int endOffset){
+  private void deleteString(Document document, int startOffset, int endOffset){
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
     if(documentChangeTransaction != null){
       documentChangeTransaction.replace(startOffset, endOffset - startOffset, "");
@@ -243,7 +216,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   @Nullable
-  public DocumentChangeTransaction removeTransaction(Document doc) {
+  private DocumentChangeTransaction removeTransaction(Document doc) {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if(pair == null) return null;
     if(pair.getSecond().intValue() > 0){
