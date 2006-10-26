@@ -1,10 +1,11 @@
 package com.intellij.jar;
 
+import com.intellij.compiler.CompilerIOUtil;
+import com.intellij.javaee.make.BuildInstructionVisitor;
+import com.intellij.javaee.make.BuildRecipe;
+import com.intellij.javaee.make.FileCopyInstruction;
 import com.intellij.javaee.module.ModuleContainer;
 import com.intellij.javaee.module.ModuleLink;
-import com.intellij.javaee.make.BuildRecipe;
-import com.intellij.javaee.make.BuildInstructionVisitor;
-import com.intellij.javaee.make.FileCopyInstruction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -14,12 +15,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.THashSet;
@@ -115,17 +116,17 @@ public class JarCompiler implements PackagingCompiler {
     }
 
     public MyValState(final DataInputStream is) throws IOException {
-      myModuleName = IOUtil.readString(is);
+      myModuleName = CompilerIOUtil.readString(is);
       int size = is.readInt();
       sourceUrls = new String[size];
       timestamps = new long[size];
       for (int i=0;i<size;i++) {
-        String url = IOUtil.readString(is);
+        String url = CompilerIOUtil.readString(is);
         long timestamp = is.readLong();
         sourceUrls[i] = url;
         timestamps[i] = timestamp;
       }
-      outputJarUrl = IOUtil.readString(is);
+      outputJarUrl = CompilerIOUtil.readString(is);
       outputJarTimestamp = is.readLong();
     }
 
