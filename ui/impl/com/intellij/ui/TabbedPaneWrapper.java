@@ -264,7 +264,7 @@ public class TabbedPaneWrapper {
   }
 
   private static final class TabWrapper extends JPanel implements DataProvider{
-    private final JComponent myComponent;
+    private JComponent myComponent;
 
     public TabWrapper(@NotNull final JComponent component) {
       super(new BorderLayout());
@@ -287,7 +287,16 @@ public class TabbedPaneWrapper {
       return myComponent;
     }
 
+    /**
+     * TabWrappers are never reused so we can fix the leak in some LAF's TabbedPane UI by cleanuping ourselves.
+     */
+    public void removeNotify() {
+      remove(myComponent);
+      myComponent = null;
+    }
+
     public boolean requestDefaultFocus() {
+      if (myComponent == null) return false; // Just in case someone requests the focus when we're already removed from the Swing tree.
       final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myComponent);
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {

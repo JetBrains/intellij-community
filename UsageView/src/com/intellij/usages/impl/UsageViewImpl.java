@@ -47,6 +47,7 @@ import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -57,6 +58,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -95,7 +97,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private UsageModelTracker myModelTracker;
-  Set<Usage> myUsages = new HashSet<Usage>();
+  private Set<Usage> myUsages = new HashSet<Usage>();
   private Map<Usage, UsageNode> myUsageNodes = new HashMap<Usage, UsageNode>();
   private ButtonPanel myButtonPanel = new ButtonPanel();
 
@@ -668,9 +670,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       disposable.dispose();
     }
     myDisposables.clear();
+    myUsageNodes.clear();
     myModelTracker.removeListener(this);
     myModelTracker.dispose();
     myUpdateAlarm.cancelAllRequests();
+    myTargets = new UsageTarget[0];
+    myUsages.clear();
+    myRootPanel.dispose();
   }
 
   public boolean isSearchInProgress() {
@@ -913,7 +919,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private class MyPanel extends JPanel implements DataProvider, OccurenceNavigator {
-    private OccurenceNavigatorSupport mySupport;
+    private @Nullable OccurenceNavigatorSupport mySupport;
 
     public MyPanel(JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {
@@ -933,28 +939,32 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       };
     }
 
+    void dispose() {
+      mySupport = null;
+    }
+
     public boolean hasNextOccurence() {
-      return mySupport.hasNextOccurence();
+      return mySupport != null ? mySupport.hasNextOccurence() : false;
     }
 
     public boolean hasPreviousOccurence() {
-      return mySupport.hasPreviousOccurence();
+      return mySupport != null ? mySupport.hasPreviousOccurence() : false;
     }
 
     public OccurenceInfo goNextOccurence() {
-      return mySupport.goNextOccurence();
+      return mySupport != null ? mySupport.goNextOccurence() : null;
     }
 
     public OccurenceInfo goPreviousOccurence() {
-      return mySupport.goPreviousOccurence();
+      return mySupport != null ? mySupport.goPreviousOccurence() : null;
     }
 
     public String getNextOccurenceActionName() {
-      return mySupport.getNextOccurenceActionName();
+      return mySupport != null ? mySupport.getNextOccurenceActionName() : "";
     }
 
     public String getPreviousOccurenceActionName() {
-      return mySupport.getPreviousOccurenceActionName();
+      return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";
     }
 
     public Object getData(String dataId) {
