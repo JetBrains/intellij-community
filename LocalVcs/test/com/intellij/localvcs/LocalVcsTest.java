@@ -1,6 +1,7 @@
 package com.intellij.localvcs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -202,6 +203,35 @@ public class LocalVcsTest extends Assert {
   }
 
   @Test
+  public void testDeletingFileAndCreatingNewOneWithSameName() {
+    myVcs.addFile("file", "old");
+    myVcs.commit();
+
+    myVcs.deleteFile("file");
+    myVcs.addFile("file", "new");
+    myVcs.commit();
+
+    assertRevisionsContent(new String[]{"new"},
+                           myVcs.getFileRevisions("file"));
+  }
+
+  @Test
+  public void testRenamingFileAndCreatingNewOneWithSameName() {
+    myVcs.addFile("file1", "content1");
+    myVcs.commit();
+
+    myVcs.renameFile("file1", "file2");
+    myVcs.addFile("file1", "content2");
+    myVcs.commit();
+
+    assertRevisionsContent(new String[]{"content1", "content1"},
+                           myVcs.getFileRevisions("file2"));
+
+    assertRevisionsContent(new String[]{"content2"},
+                           myVcs.getFileRevisions("file1"));
+  }
+
+  @Test
   public void testFileRevisions() {
     assertTrue(myVcs.getFileRevisions("file").isEmpty());
 
@@ -209,6 +239,26 @@ public class LocalVcsTest extends Assert {
     myVcs.commit();
 
     assertEquals(1, myVcs.getFileRevisions("file").size());
+  }
+
+  @Test
+  public void testFileForUnknownFile() {
+    myVcs.addFile("file", "");
+    myVcs.commit();
+
+    assertTrue(myVcs.getFileRevisions("unknown file").isEmpty());
+  }
+
+  @Test
+  public void testFileRevisionsForDeletedFile() {
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+
+    myVcs.deleteFile("file");
+    myVcs.commit();
+
+    // todo what should we return? 
+    //myVcs.getFileRevisions()
   }
 
   @Test
@@ -252,6 +302,42 @@ public class LocalVcsTest extends Assert {
     assertTrue(myVcs.isClean());
   }
 
+  @Test
+  public void testGettingSnapshots() {
+    myVcs.addFile("file1", "content1");
+    myVcs.addFile("file2", "content2");
+    myVcs.commit();
+
+    myVcs.addFile("file3", "content3");
+    myVcs.changeFile("file1", "new content1");
+    myVcs.commit();
+
+    Integer id1 = myVcs.getFileRevision("file1").getObjectId();
+    Integer id2 = myVcs.getFileRevision("file2").getObjectId();
+    Integer id3 = myVcs.getFileRevision("file3").getObjectId();
+
+    List<Snapshot> snapshots = myVcs.getSnapshots();
+    assertEquals(2, snapshots.size());
+
+    assertElements(
+        new Object[]{
+            new Revision(id1, "file1", "new content1"),
+            new Revision(id2, "file2", "content2"),
+            new Revision(id3, "file3", "content3")},
+        snapshots.get(0).getRevisions());
+
+    assertElements(
+        new Object[]{
+            new Revision(id1, "file1", "content1"),
+            new Revision(id2, "file2", "content2")},
+        snapshots.get(1).getRevisions());
+  }
+
+  @Test
+  public void testGettingSnapshotsOnCleanVcs() {
+    assertTrue(myVcs.getSnapshots().isEmpty());
+  }
+
   private void assertRevisionContent(String expectedContent,
                                      Revision actualRevision) {
     assertEquals(expectedContent, actualRevision.getContent());
@@ -264,5 +350,10 @@ public class LocalVcsTest extends Assert {
       actualContents.add(rev.getContent());
     }
     assertEquals(expectedContents, actualContents.toArray(new Object[0]));
+  }
+
+  private void assertElements(Object[] expected, Collection actual) {
+    assertEquals(expected.length, actual.size());
+    assertTrue(actual.containsAll(Arrays.asList(expected)));
   }
 }

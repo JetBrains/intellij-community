@@ -18,15 +18,16 @@ public class LocalVcs {
   public List<Revision> getFileRevisions(String name) {
     List<Revision> result = new ArrayList<Revision>();
 
-    Snapshot s = mySnapshot;
-    Revision r = s.getFileRevision(name);
+    //todo clean up this mess
 
-    while (s != null && r != null) {
+    Revision r = mySnapshot.getFileRevision(name);
+    if (r == null) return result;
+
+    for (Snapshot snapshot : getSnapshots()) {
+      r = snapshot.getFileRevision(r.getObjectId());
+
+      if (r == null) break;
       result.add(r);
-
-      // todo it's possibly bug here (NullPointerException)
-      s = s.revert();
-      r = s.getFileRevision(r.getObjectId());
     }
 
     return result;
@@ -67,5 +68,20 @@ public class LocalVcs {
 
   public boolean isClean() {
     return myPendingChanges.isEmpty();
+  }
+
+  public List<Snapshot> getSnapshots() {
+    List<Snapshot> result = new ArrayList<Snapshot>();
+
+    Snapshot s = mySnapshot;
+    while (s != null) {
+      result.add(s);
+      s = s.revert();
+    }
+
+    // todo bad hack, maybe replace with EmptySnapshot class
+    result.remove(result.size() - 1);
+
+    return result;
   }
 }
