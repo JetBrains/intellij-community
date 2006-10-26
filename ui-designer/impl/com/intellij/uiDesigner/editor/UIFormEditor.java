@@ -42,6 +42,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     myEditor = new GuiEditor(module, file);
   }
 
+  @NotNull
   public JComponent getComponent(){
     return myEditor;
   }
@@ -64,8 +65,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   }
 
   public boolean isModified(){
-    //TODO[anton,vova]
-    return false;
+    return FileDocumentManager.getInstance().isFileModified(myFile);
   }
 
   public boolean isValid(){
