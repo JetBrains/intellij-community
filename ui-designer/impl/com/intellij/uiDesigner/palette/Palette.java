@@ -614,6 +614,12 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
               property = new IntroIntProperty(name, readMethod, writeMethod, storeAsClient);
             }
           }
+          else if (JTabbedPane.class.isAssignableFrom(aClass)) {
+            if (SwingProperties.SELECTED_INDEX.equals(name)) {
+              continue;
+            }
+            property = new IntroIntProperty(name, readMethod, writeMethod, storeAsClient);
+          }
           else {
             property = new IntroIntProperty(name, readMethod, writeMethod, storeAsClient);
           }
@@ -643,6 +649,10 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
           if (JSplitPane.class.isAssignableFrom(aClass) && (name.equals("leftComponent") || name.equals("rightComponent") ||
                                                             name.equals("topComponent") || name.equals("bottomComponent"))) {
             // these properties are set through layout
+            continue;
+          }
+          if (JTabbedPane.class.isAssignableFrom(aClass) && name.equals(SwingProperties.SELECTED_COMPONENT)) {
+            // can't set selectedComponent because of set property / add child sequence
             continue;
           }
           if (JMenuBar.class.isAssignableFrom(propertyType) || JPopupMenu.class.isAssignableFrom(propertyType)) {
