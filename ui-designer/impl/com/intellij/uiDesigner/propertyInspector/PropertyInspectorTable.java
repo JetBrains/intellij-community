@@ -1315,6 +1315,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       updateUI(PreferredSizeProperty.getInstance(myProject));
       updateUI(MaximumSizeProperty.getInstance(myProject));
       updateUI(myButtonGroupProperty);
+      updateUI(myLayoutManagerProperty);
       updateUI(SameSizeHorizontallyProperty.getInstance(myProject));
       updateUI(SameSizeVerticallyProperty.getInstance(myProject));
       updateUI(CustomCreateProperty.getInstance(myProject));
