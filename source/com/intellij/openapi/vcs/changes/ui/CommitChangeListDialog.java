@@ -426,6 +426,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
+  @Override
+  public void doCancelAction() {
+    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
+    super.doCancelAction();    //To change body of overridden methods use File | Settings | File Templates.
+  }
+
   private void doCommit() {
     new CommitHelper(
       myProject,
