@@ -154,7 +154,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
       final PsiType type = arg.getType();
       if (type instanceof PsiPrimitiveType && !type.equals(PsiType.NULL)) {
         final PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
-        final String boxedQName = PsiPrimitiveType.ourUnboxedToQName.get(primitiveType);
+        final String boxedQName = primitiveType.getBoxedTypeName();
         if (boxedQName != null) {
           final GlobalSearchScope resolveScope = arg.getResolveScope();
           final PsiJavaCodeReferenceElement ref = factory.createReferenceElementByFQClassName(boxedQName, resolveScope);

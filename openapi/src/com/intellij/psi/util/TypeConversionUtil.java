@@ -20,9 +20,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -163,7 +163,7 @@ public class TypeConversionUtil {
     if (!fromClass.isInterface()) {
       if (toClass.isInterface()) {
         if (fromClass.hasModifierProperty(PsiModifier.FINAL)) return false;
-        return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new HashSet<PsiClass>(),
+        return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new THashSet<PsiClass>(),
                                                          languageLevel);
       }
       else {
@@ -172,11 +172,11 @@ public class TypeConversionUtil {
         }
 
         if (toClass.isInheritor(fromClass, true)) {
-          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new HashSet<PsiClass>(),
+          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new THashSet<PsiClass>(),
                                                            languageLevel);
         }
         else if (fromClass.isInheritor(toClass, true)) {
-          return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new HashSet<PsiClass>(),
+          return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new THashSet<PsiClass>(),
                                                            languageLevel);
         }
 
@@ -186,7 +186,7 @@ public class TypeConversionUtil {
     else {
       if (!toClass.isInterface()) {
         if (!toClass.hasModifierProperty(PsiModifier.FINAL)) {
-          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new HashSet<PsiClass>(),
+          return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new THashSet<PsiClass>(),
                                                            languageLevel);
         }
         else {
@@ -219,11 +219,11 @@ public class TypeConversionUtil {
         else {
           //In jls3 check for super interface with distinct type arguments
           if (toClass.isInheritor(fromClass, true)) {
-            return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new HashSet<PsiClass>(),
+            return checkSuperTypesWithDifferentTypeArguments(fromResult, toClass, manager, toResult.getSubstitutor(), new THashSet<PsiClass>(),
                                                              languageLevel);
           }
           else {
-            return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new HashSet<PsiClass>(),
+            return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new THashSet<PsiClass>(),
                                                              languageLevel);
           }
         }
@@ -261,7 +261,7 @@ public class TypeConversionUtil {
     return true;
   }
 
-  public static boolean areDistinctParameterTypes(PsiClassType type1, PsiClassType type2) {
+  private static boolean areDistinctParameterTypes(PsiClassType type1, PsiClassType type2) {
     PsiClassType.ClassResolveResult resolveResult1 = type1.resolveGenerics();
     PsiClassType.ClassResolveResult resolveResult2 = type2.resolveGenerics();
     if (resolveResult1.getElement() == null || resolveResult2.getElement() == null) return true;
@@ -605,8 +605,7 @@ public class TypeConversionUtil {
       PsiType lCompType = ((PsiArrayType)left).getComponentType();
       PsiType rCompType = ((PsiArrayType)right).getComponentType();
       if (lCompType instanceof PsiPrimitiveType) {
-        if (!(rCompType instanceof PsiPrimitiveType)) return false;
-        return lCompType == rCompType;
+        return rCompType instanceof PsiPrimitiveType && lCompType == rCompType;
       }
       else if (rCompType instanceof PsiPrimitiveType) {
         return false;
@@ -619,10 +618,7 @@ public class TypeConversionUtil {
       if (left instanceof PsiArrayType) return false;
       if (right instanceof PsiPrimitiveType) {
         if (!(left instanceof PsiPrimitiveType)) {
-          if (left instanceof PsiClassType) {
-            return isBoxable((PsiClassType)left, (PsiPrimitiveType)right);
-          }
-          return false;
+          return left instanceof PsiClassType && isBoxable((PsiClassType)left, (PsiPrimitiveType)right);
         }
         if (left == right) return true;
         int leftTypeIndex = TYPE_TO_RANK_MAP.get(left) - 1;
@@ -648,11 +644,9 @@ public class TypeConversionUtil {
               lText.charAt(lText.length() - rText.length() - 1) == '.') {
             return true;
           }
-          if (rText.length() > lText.length() && rText.endsWith(lText) &&
-              rText.charAt(rText.length() - lText.length() - 1) == '.') {
-            return true;
-          }
-          return false;
+          return rText.length() > lText.length()
+                 && rText.endsWith(lText)
+                 && rText.charAt(rText.length() - lText.length() - 1) == '.';
         }
         return isClassAssignable(leftResult, rightResult, allowUncheckedConversion);
       }
@@ -679,12 +673,10 @@ public class TypeConversionUtil {
     if (left instanceof PsiPrimitiveType && !PsiType.NULL.equals(left)) {
       return right instanceof PsiClassType && left.isAssignableFrom(right);
     }
-    else if (left instanceof PsiClassType) {
-      return right instanceof PsiPrimitiveType && !PsiType.NULL.equals(right) && left.isAssignableFrom(right);
-    }
-    else {
-      return false;
-    }
+    else return left instanceof PsiClassType
+                && right instanceof PsiPrimitiveType
+                && !PsiType.NULL.equals(right)
+                && left.isAssignableFrom(right);
   }
 
   private static boolean isBoxable(final PsiClassType left, final PsiPrimitiveType right) {
@@ -819,7 +811,7 @@ public class TypeConversionUtil {
     }
 
     PsiSubstitutor substitutor;
-    final Set<PsiClass> visited = new HashSet<PsiClass>();
+    final Set<PsiClass> visited = new THashSet<PsiClass>();
     if (derivedClass instanceof PsiAnonymousClass) {
       final PsiClassType baseType = ((PsiAnonymousClass)derivedClass).getBaseClassType();
       final JavaResolveResult result = baseType.resolveGenerics();
@@ -917,7 +909,7 @@ public class TypeConversionUtil {
     return type;
   }
 
-  private static final Set<String> INTEGER_NUMBER_TYPES = new HashSet<String>();
+  private static final Set<String> INTEGER_NUMBER_TYPES = new THashSet<String>(5);
 
   static {
     INTEGER_NUMBER_TYPES.add(PsiType.BYTE.getCanonicalText());
@@ -927,7 +919,7 @@ public class TypeConversionUtil {
     INTEGER_NUMBER_TYPES.add(PsiType.SHORT.getCanonicalText());
   }
 
-  private static final Set<String> PRIMITIVE_TYPES = new HashSet<String>();
+  private static final Set<String> PRIMITIVE_TYPES = new THashSet<String>(9);
 
   static {
     PRIMITIVE_TYPES.add(PsiType.VOID.getCanonicalText());
@@ -941,7 +933,7 @@ public class TypeConversionUtil {
     PRIMITIVE_TYPES.add(PsiType.BOOLEAN.getCanonicalText());
   }
 
-  private static final Set<String> PRIMITIVE_WRAPPER_TYPES = new HashSet<String>();
+  private static final Set<String> PRIMITIVE_WRAPPER_TYPES = new THashSet<String>(8);
 
   static {
     PRIMITIVE_WRAPPER_TYPES.add("java.lang.Byte");
@@ -978,7 +970,7 @@ public class TypeConversionUtil {
     if (extendsList.length > 0) {
       final PsiClass psiClass = extendsList[0].resolve();
       if (psiClass instanceof PsiTypeParameter) {
-        Set<PsiClass> visited = new HashSet<PsiClass>();
+        Set<PsiClass> visited = new THashSet<PsiClass>();
         visited.add(psiClass);
         final PsiTypeParameter boundTypeParameter = (PsiTypeParameter)psiClass;
         if (beforeSubstitutor.getSubstitutionMap().containsKey(boundTypeParameter)) {
@@ -1362,5 +1354,4 @@ public class TypeConversionUtil {
   private static PsiType wrapperToPrimitive(Object o) {
     return WRAPPER_TO_PRIMITIVE.get(o.getClass());
   }
-
 }

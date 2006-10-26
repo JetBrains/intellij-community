@@ -1,10 +1,9 @@
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -48,7 +47,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
   }
 
   public boolean isApplicable(Type type) {
-    return (type == null) || (type instanceof PrimitiveType) || (type instanceof VoidType);
+    return type == null || type instanceof PrimitiveType || type instanceof VoidType;
   }
 
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
@@ -58,7 +57,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
       return "null";
     }
     else if (value instanceof PrimitiveValue) {
-      StringBuffer buf = new StringBuffer(16);
+      StringBuilder buf = new StringBuilder(16);
       if (value instanceof CharValue) {
         buf.append("'");
         buf.append(value.toString());
@@ -90,14 +89,6 @@ public class PrimitiveRenderer extends NodeRendererImpl {
 
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-  }
-
-  public ChildrenRenderer getChildrenRenderer() {
-    return this;
-  }
-
-  public ValueLabelRenderer getLabelRenderer() {
-    return this;
   }
 
   public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {

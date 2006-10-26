@@ -104,6 +104,10 @@ public class PsiPrimitiveType extends PsiType {
     return ourQNameToUnboxed.get(psiClass.getQualifiedName());
   }
 
+  public String getBoxedTypeName() {
+    return ourUnboxedToQName.get(this);
+  }
+
   /**
    * Returns a boxed class type corresponding to the primitive type.
    *
@@ -115,7 +119,7 @@ public class PsiPrimitiveType extends PsiType {
   public PsiClassType getBoxedType(PsiElement context) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(context);
     if (!languageLevel.hasEnumKeywordAndAutoboxing()) return null;
-    final String boxedQName = ourUnboxedToQName.get(this);
+    final String boxedQName = getBoxedTypeName();
 
     //[ven]previous call returns null for NULL, VOID
     if (boxedQName == null) return null;
@@ -128,7 +132,7 @@ public class PsiPrimitiveType extends PsiType {
 
   @Nullable
   public PsiClassType getBoxedType(final PsiManager manager, final GlobalSearchScope resolveScope) {
-    final String boxedQName = ourUnboxedToQName.get(this);
+    final String boxedQName = getBoxedTypeName();
 
     //[ven]previous call returns null for NULL, VOID
     if (boxedQName == null) return null;
@@ -139,10 +143,10 @@ public class PsiPrimitiveType extends PsiType {
   }
 
   @NonNls
-  public static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new HashMap<String, PsiPrimitiveType>();
+  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new HashMap<String, PsiPrimitiveType>();
 
   @NonNls
-  public static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new HashMap<PsiPrimitiveType, String>();
+  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new HashMap<PsiPrimitiveType, String>();
 
   static {
     ourQNameToUnboxed.put("java.lang.Boolean", BOOLEAN);

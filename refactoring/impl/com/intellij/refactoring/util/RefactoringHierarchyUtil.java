@@ -19,7 +19,7 @@ import java.util.*;
 public class RefactoringHierarchyUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringHierarchyUtil");
   private static final List<PsiType> PRIMITIVE_TYPES = Arrays.asList(
-      new PsiType[]{PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE, }
+      PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE
   );
 
   private RefactoringHierarchyUtil() {}
@@ -162,7 +162,7 @@ public class RefactoringHierarchyUtil {
   public static void processSuperTypes(PsiType type, SuperTypeVisitor visitor) {
     processSuperTypes(type, visitor, new HashSet<PsiType>());
   }
-  public static void processSuperTypes(PsiType type, SuperTypeVisitor visitor, Set<PsiType> visited) {
+  private static void processSuperTypes(PsiType type, SuperTypeVisitor visitor, Set<PsiType> visited) {
     if (visited.contains(type)) return;
     visited.add(type);
     if (type instanceof PsiPrimitiveType) {
