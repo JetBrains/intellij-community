@@ -6,6 +6,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -180,7 +181,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
       myCollectionPanel = boundComponent;
     }
     myCollectionPanel.setToolbarActions(myAddAction, myEditAction, myRemoveAction);
-    myCollectionPanel.installPopup(createPopupActionGroup());
+    myCollectionPanel.installPopup(ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, createPopupActionGroup());
     myCollectionPanel.initializeTable();
     myCollectionPanel.addChangeListener(new DomTableView.ChangeListener() {
       public void changed() {
