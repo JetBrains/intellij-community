@@ -169,7 +169,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return isPositionValid(getSourcePosition());
   }
 
-  protected static boolean isPositionValid(final SourcePosition sourcePosition) {
+  private static boolean isPositionValid(final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
       public Boolean compute() {
         return sourcePosition != null && sourcePosition.getFile().isValid()? Boolean.TRUE : Boolean.FALSE;
@@ -373,10 +373,11 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   public boolean isAt(Document document, int offset) {
-    if (getHighlighter() == null || !getHighlighter().isValid()) {
-      return false;
-    }
-    return document.equals(getHighlighter().getDocument()) && getSourcePosition().getLine() == document.getLineNumber(offset);
+    RangeHighlighter highlighter = getHighlighter();
+    return highlighter != null
+           && highlighter.isValid()
+           && document.equals(highlighter.getDocument())
+           && getSourcePosition().getLine() == document.getLineNumber(offset);
   }
 
   protected void reload(PsiFile psiFile) {

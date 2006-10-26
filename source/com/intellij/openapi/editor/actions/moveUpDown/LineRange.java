@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 class LineRange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.LineRange");
@@ -20,7 +21,7 @@ class LineRange {
       LOG.error("start > end: start=" + startLine+"; end="+endLine);
     }
   }
-  public LineRange(PsiElement startElement, PsiElement endElement, Document document) {
+  public LineRange(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull Document document) {
     this(document.getLineNumber(startElement.getTextRange().getStartOffset()),
          document.getLineNumber(endElement.getTextRange().getEndOffset()) + 1);
   }
