@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
@@ -917,26 +918,26 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     PsiMethod[] allBaseMethods = baseClass.getMethods();
     if(allBaseMethods.length == 0) return;
 
-    List<CandidateInfo> methods = new ArrayList<CandidateInfo>();
+    List<PsiMethodMember> methods = new ArrayList<PsiMethodMember>();
     for (final PsiMethod method : allBaseMethods) {
       if (OverrideImplementUtil.isOverridable(method)) {
-        methods.add(new CandidateInfo(method, PsiSubstitutor.UNKNOWN));
+        methods.add(new PsiMethodMember(method, PsiSubstitutor.UNKNOWN));
       }
     }
 
     boolean isJdk15Enabled = LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(aClass)) <= 0;
-    final MemberChooser chooser = new MemberChooser(methods.toArray(), false, true, project, isJdk15Enabled);
+    final PsiMethodMember[] array = methods.toArray(new PsiMethodMember[methods.size()]);
+    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(array, false, true, project, isJdk15Enabled);
     chooser.setTitle(CompletionBundle.message("completion.smarttype.select.methods.to.override"));
     chooser.setCopyJavadocVisible(true);
 
     chooser.show();
-    Object[] selectedElements = chooser.getSelectedElements();
-    if (selectedElements == null || selectedElements.length == 0) return;
+    List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+    if (selectedElements == null || selectedElements.size() == 0) return;
 
-    CandidateInfo[] selectedCandidates = new CandidateInfo[selectedElements.length];
 
     try{
-      System.arraycopy(selectedElements, 0, selectedCandidates, 0, selectedCandidates.length);
+      CandidateInfo[] selectedCandidates = (CandidateInfo[])selectedElements.toArray(new CandidateInfo[selectedElements.size()]);
       final PsiMethod[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selectedCandidates, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
 
       for (PsiMethod prototype : prototypes) {

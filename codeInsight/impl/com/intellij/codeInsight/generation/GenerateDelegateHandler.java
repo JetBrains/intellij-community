@@ -11,13 +11,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +41,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     final PsiElement target = chooseTarget(file, editor, project);
     if (target == null) return;
 
-    final CandidateInfo[] candidates = chooseMethods(target, file, editor, project);
+    final PsiMethodMember[] candidates = chooseMethods(target, file, editor, project);
     if (candidates == null || candidates.length == 0) return;
 
 
@@ -76,7 +76,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  private PsiMethod generateDelegatePrototype(CandidateInfo methodCandidate, PsiElement target) throws IncorrectOperationException {
+  private PsiMethod generateDelegatePrototype(PsiMethodMember methodCandidate, PsiElement target) throws IncorrectOperationException {
     PsiMethod method = GenerateMembersUtil.substituteGenericMethod((PsiMethod)methodCandidate.getElement(), methodCandidate.getSubstitutor());
     clearMethod(method);
 
@@ -137,7 +137,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     return method;
   }
 
-  private void clearMethod(PsiMethod method) throws IncorrectOperationException {
+  private static void clearMethod(PsiMethod method) throws IncorrectOperationException {
     LOG.assertTrue(!method.isPhysical());
     PsiCodeBlock codeBlock = method.getManager().getElementFactory().createCodeBlock();
     if (method.getBody() != null) {
@@ -153,14 +153,15 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void clearModifiers(PsiMethod method) throws IncorrectOperationException {
+  private static void clearModifiers(PsiMethod method) throws IncorrectOperationException {
     final PsiElement[] children = method.getModifierList().getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiKeyword) child.delete();
     }
   }
 
-  private CandidateInfo[] chooseMethods(PsiElement target, PsiFile file, Editor editor, Project project) {
+  @Nullable
+  private static PsiMethodMember[] chooseMethods(PsiElement target, PsiFile file, Editor editor, Project project) {
     PsiClassType.ClassResolveResult resolveResult = null;
 
     if (target instanceof PsiField) {
@@ -180,7 +181,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return null;
 
-    List<CandidateInfo> methodInstances = new ArrayList<CandidateInfo>();
+    List<PsiMethodMember> methodInstances = new ArrayList<PsiMethodMember>();
 
     final PsiMethod[] allMethods = targetClass.getAllMethods();
     final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
@@ -188,7 +189,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     PsiManager manager = targetClass.getManager();
     for (PsiMethod method : allMethods) {
       final PsiClass superClass = method.getContainingClass();
-      if (superClass.getQualifiedName().equals("java.lang.Object")) continue;
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) continue;
       if (method.isConstructor()) continue;
       PsiSubstitutor superSubstitutor = superSubstitutors.get(superClass);
       if (superSubstitutor == null) {
@@ -200,88 +201,88 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
       if (!signatures.contains(signature)) {
         signatures.add(signature);
         if (manager.getResolveHelper().isAccessible(method, target, aClass)) {
-          methodInstances
-            .add(new CandidateInfo(method, methodSubstitutor));
+          methodInstances.add(new PsiMethodMember(method, methodSubstitutor));
         }
       }
     }
 
-    CandidateInfo[] result;
+    PsiMethodMember[] result;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MemberChooser chooser = new MemberChooser(methodInstances.toArray(new Object[methodInstances.size()]), false, true, project);
+      MemberChooser<PsiElementClassMember> chooser = new MemberChooser<PsiElementClassMember>(methodInstances.toArray(new PsiMethodMember[methodInstances.size()]), false, true, project);
       chooser.setTitle(CodeInsightBundle.message("generate.delegate.method.chooser.title"));
       chooser.setCopyJavadocVisible(false);
       chooser.show();
 
       if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return null;
 
-      final Object[] selectedElements = chooser.getSelectedElements();
-      result = new CandidateInfo[selectedElements.length];
-      System.arraycopy(selectedElements, 0, result, 0, selectedElements.length);
+      final List<PsiElementClassMember> list = chooser.getSelectedElements();
+      result = list.toArray(new PsiMethodMember[list.size()]);
     }
     else {
-      result = new CandidateInfo[] {methodInstances.get(0)};
+      result = new PsiMethodMember[] {methodInstances.get(0)};
     }
 
     return result;
   }
 
-  public boolean isApplicable (PsiFile file, Editor editor) {
-    PsiMember[] targetElements = getTargetElements(file, editor);
+  public static boolean isApplicable(PsiFile file, Editor editor) {
+    ClassMember[] targetElements = getTargetElements(file, editor);
     return targetElements != null && targetElements.length > 0;
   }
 
-  private PsiElement chooseTarget(PsiFile file, Editor editor, Project project) {
+  @Nullable
+  private static PsiElement chooseTarget(PsiFile file, Editor editor, Project project) {
     PsiElement target = null;
-    final PsiMember[] targetElements = getTargetElements(file, editor);
+    final PsiElementClassMember[] targetElements = getTargetElements(file, editor);
     if (targetElements == null || targetElements.length == 0) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MemberChooser chooser = new MemberChooser(targetElements, false, false, project);
+      MemberChooser<PsiElementClassMember> chooser = new MemberChooser<PsiElementClassMember>(targetElements, false, false, project);
       chooser.setTitle(CodeInsightBundle.message("generate.delegate.target.chooser.title"));
       chooser.setCopyJavadocVisible(false);
       chooser.show();
 
       if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return null;
 
-      final Object[] selectedElements = chooser.getSelectedElements();
+      final List<PsiElementClassMember> selectedElements = chooser.getSelectedElements();
 
-      if (selectedElements != null && selectedElements.length > 0) target = (PsiElement)selectedElements[0];
+      if (selectedElements != null && selectedElements.size() > 0) target = selectedElements.get(0).getElement();
     }
     else {
-      target = targetElements[0];
+      target = targetElements[0].getElement();
     }
     return target;
   }
 
-  private PsiMember[] getTargetElements(PsiFile file, Editor editor) {
+  @Nullable
+  private static PsiElementClassMember[] getTargetElements(PsiFile file, Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return null;
 
-    List<PsiMember> result = new ArrayList<PsiMember>();
+    List<PsiElementClassMember> result = new ArrayList<PsiElementClassMember>();
 
     final PsiField[] fields = aClass.getAllFields();
     PsiResolveHelper helper = aClass.getManager().getResolveHelper();
     for (PsiField field : fields) {
       final PsiType type = field.getType();
       if (helper.isAccessible(field, aClass, aClass) && type instanceof PsiClassType) {
-        result.add(field);
+        result.add(new PsiFieldMember(field));
       }
     }
 
     final PsiMethod[] methods = aClass.getAllMethods();
     for (PsiMethod method : methods) {
-      if ("java.lang.Object".equals(method.getContainingClass().getQualifiedName())) continue;
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName())) continue;
       final PsiType returnType = method.getReturnType();
       if (returnType != null && PropertyUtil.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) &&
           returnType instanceof PsiClassType) {
-        result.add(method);
+        result.add(new PsiMethodMember(method));
       }
     }
 
-    return result.toArray(new PsiMember[result.size()]);
+    return result.toArray(new PsiElementClassMember[result.size()]);
   }
 
 }

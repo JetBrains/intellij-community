@@ -5,8 +5,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.codeInsight.generation.PsiFieldMember;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
@@ -15,12 +16,14 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 abstract class AddFieldBreakpointDialog extends DialogWrapper {
   private final Project myProject;
@@ -68,13 +71,17 @@ abstract class AddFieldBreakpointDialog extends DialogWrapper {
         PsiClass selectedClass = getSelectedClass();
         if (selectedClass != null) {
           PsiField[] fields = selectedClass.getFields();
-          MemberChooser chooser = new MemberChooser(fields, false, false, myProject);
+          MemberChooser<PsiFieldMember> chooser = new MemberChooser<PsiFieldMember>(ContainerUtil.map2Array(fields, PsiFieldMember.class, new Function<PsiField, PsiFieldMember>() {
+            public PsiFieldMember fun(final PsiField s) {
+              return new PsiFieldMember(s);
+            }
+          }), false, false, myProject);
           chooser.setTitle(DebuggerBundle.message("add.field.breakpoint.dialog.field.chooser.title", fields.length));
           chooser.setCopyJavadocVisible(false);
           chooser.show();
-          Object[] selectedElements = chooser.getSelectedElements();
-          if (selectedElements != null && selectedElements.length == 1) {
-            PsiField field = (PsiField)selectedElements[0];
+          List<PsiFieldMember> selectedElements = chooser.getSelectedElements();
+          if (selectedElements != null && selectedElements.size() == 1) {
+            PsiField field = selectedElements.get(0).getElement();
             myFieldChooser.setText(field.getName());
           }
         }

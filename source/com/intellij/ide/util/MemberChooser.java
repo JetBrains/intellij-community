@@ -1,34 +1,32 @@
 package com.intellij.ide.util;
 
-import com.intellij.ide.IconUtilEx;
+import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.PsiElementClassMember;
+import com.intellij.codeInsight.generation.MemberChooserObject;
+import com.intellij.codeInsight.generation.MemberChooserObjectBase;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.javaee.model.common.ejb.EntityBean;
-import com.intellij.javaee.model.common.ejb.CmpField;
-import com.intellij.javaee.model.common.ejb.CmrField;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -39,17 +37,16 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
-public class MemberChooser extends DialogWrapper {
+public class MemberChooser<T extends ClassMember> extends DialogWrapper {
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
   private JCheckBox myCopyJavadocCheckbox;
   private JCheckBox myInsertOverrideAnnotationCheckbox;
 
-  private ArrayList mySelectedNodes = new ArrayList();
+  private ArrayList<MemberNode<T>> mySelectedNodes = new ArrayList<MemberNode<T>>();
 
   private boolean mySorted = false;
   private boolean myShowClasses = true;
@@ -57,27 +54,25 @@ public class MemberChooser extends DialogWrapper {
   private boolean myAllowMultiSelection;
   private final boolean myIsInsertOverrideVisible;
 
-  protected Object[] myElements;
-  private HashMap<DefaultMutableTreeNode,DefaultMutableTreeNode> myNodeToParentMap = new HashMap<DefaultMutableTreeNode, DefaultMutableTreeNode>();
-  private HashMap myElementToNodeMap = new HashMap();
-  private ArrayList<ElementNode> myClassNodes = new ArrayList<ElementNode>();
-  private WeakReference[] mySelectedElements;
+  protected T[] myElements;
+  private HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<MemberNode, ParentNode>();
+  private HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<ClassMember, MemberNode>();
+  private ArrayList<ClassNode> myClassNodes = new ArrayList<ClassNode>();
+  private LinkedHashSet<T> mySelectedElements;
 
   @NonNls private final static String PROP_SORTED = "MemberChooser.sorted";
   @NonNls private final static String PROP_SHOWCLASSES = "MemberChooser.showClasses";
   @NonNls private final static String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
   @NonNls private final static String PROP_INSERT_OVERRIDE = "MemberChooser.insertOverride";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.MemberChooser");
-
-  public MemberChooser(Object[] elements,
+  public MemberChooser(T[] elements,
                        boolean allowEmptySelection,
                        boolean allowMultiSelection,
                        Project project) {
     this(elements, allowEmptySelection, allowMultiSelection, project, false);
   }
 
-  public MemberChooser(Object[] elements,
+  public MemberChooser(T[] elements,
                        boolean allowEmptySelection,
                        boolean allowMultiSelection,
                        Project project,
@@ -93,11 +88,10 @@ public class MemberChooser extends DialogWrapper {
   }
 
   protected void resetData() {
-    mySelectedNodes = new ArrayList();
-
-    myNodeToParentMap = new HashMap<DefaultMutableTreeNode, DefaultMutableTreeNode>();
-    myElementToNodeMap = new HashMap();
-    myClassNodes = new ArrayList<ElementNode>();
+    mySelectedNodes.clear();
+    myNodeToParentMap.clear();
+    myElementToNodeMap.clear();
+    myClassNodes.clear();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -105,7 +99,7 @@ public class MemberChooser extends DialogWrapper {
       }
     });
     myTree.setModel(myTreeModel);
-    expandAll();
+    TreeUtil.expandAll(myTree);
     myCopyJavadocCheckbox = new JCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
     if (myIsInsertOverrideVisible) {
       myInsertOverrideAnnotationCheckbox = new JCheckBox(IdeBundle.message("checkbox.insert.at.override"));
@@ -116,91 +110,38 @@ public class MemberChooser extends DialogWrapper {
    * should be invoked in read action
    */
   private DefaultTreeModel buildModel() {
-    DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
-    Map map = new HashMap();
-
-    for (int i = 0; i < myElements.length; i++) {
-      Object object = myElements[i];
-      if (object instanceof PsiElement) {
-        final PsiElement psiElement = (PsiElement)object;
-        LOG.assertTrue(psiElement instanceof PsiMember);
-        final PsiClass psiClass = ((PsiMember)psiElement).getContainingClass();
-        ElementNode classNode = (ElementNode)map.get(psiClass);
-        if (classNode == null) {
-          classNode = new ElementNode(psiClass, myClassNodes.size() * (i + 1));
-          formatNode(classNode);
-          rootNode.add(classNode);
-          map.put(psiClass, classNode);
-          myClassNodes.add(classNode);
+    final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
+    final Ref<Integer> count = new Ref<Integer>(0);
+    final FactoryMap<MemberChooserObject,ParentNode> map = new FactoryMap<MemberChooserObject,ParentNode>() {
+      protected ParentNode create(final MemberChooserObject key) {
+        ParentNode node = null;
+        if (key instanceof PsiElementClassMember) {
+          if (((PsiElementClassMember)key).getElement() instanceof PsiClass) {
+            final ClassNode classNode = new ClassNode(rootNode, key, count);
+            node = classNode;
+            myClassNodes.add(classNode);
+          }
         }
-        ElementNode memberNode = new ElementNode(psiElement, myClassNodes.size() * (i + 1) + classNode.getChildCount());
-        formatNode(memberNode);
-        classNode.add(memberNode);
-        myNodeToParentMap.put(memberNode, classNode);
-        myElementToNodeMap.put(psiElement, memberNode);
-      }
-      else if (object instanceof CandidateInfo) {
-        PsiElement element = ((CandidateInfo)object).getElement();
-        PsiClass aClass = (PsiClass)element.getParent();
-        //A class cannot inherit from the same class/interface twice with different substitutors
-        ElementNode classNode = (ElementNode)map.get(aClass);
-        if (classNode == null) {
-          PsiSubstitutor substitutor = ((CandidateInfo)object).getSubstitutor();
-          CandidateInfo info = new CandidateInfo(aClass, substitutor);
-          classNode = new GenericElementNode(info, myClassNodes.size() * (i + 1));
-          formatNode(classNode);
-          rootNode.add(classNode);
-          map.put(aClass, classNode);
-          myClassNodes.add(classNode);
+        if (node == null) {
+          node = new ParentNode(rootNode, key, count);
         }
-        ElementNode memberNode = new GenericElementNode((CandidateInfo)object,
-                                                        myClassNodes.size() * (i + 1) + classNode.getChildCount());
-        formatNode(memberNode);
-        classNode.add(memberNode);
-        myNodeToParentMap.put(memberNode, classNode);
-        myElementToNodeMap.put(object, memberNode);
+        return node;
       }
+    };
 
-      else if (object instanceof CmpField) {
-        CmpField field = (CmpField)object;
-        final EntityBean bean = field.getEntityBean();
-        EntityBeanNode beanNode = (EntityBeanNode)map.get(bean);
-
-        if (beanNode == null) {
-          beanNode = new EntityBeanNode(bean);
-          rootNode.add(beanNode);
-          map.put(bean, beanNode);
-        }
-
-        CmpFieldNode fieldNode = new CmpFieldNode(field);
-        beanNode.add(fieldNode);
-        myNodeToParentMap.put(fieldNode, beanNode);
-        myElementToNodeMap.put(field, fieldNode);
-      }
-      else if (object instanceof CmrField) {
-        CmrField field = (CmrField)object;
-        final EntityBean bean = field.getOppositeField().getOppositeEntity();
-        EntityBeanNode beanNode = (EntityBeanNode)map.get(bean);
-
-        if (beanNode == null) {
-          beanNode = new EntityBeanNode(bean);
-          rootNode.add(beanNode);
-          map.put(bean, beanNode);
-        }
-
-        CmrFieldNode fieldNode = new CmrFieldNode(field);
-        beanNode.add(fieldNode);
-        myNodeToParentMap.put(fieldNode, beanNode);
-        myElementToNodeMap.put(field, fieldNode);
-      }
+    for (T object : myElements) {
+      final ParentNode parentNode = map.get(object.getParentNodeDelegate());
+      final MemberNode elementNode = new MemberNode(parentNode, object, count);
+      myNodeToParentMap.put(elementNode, parentNode);
+      myElementToNodeMap.put(object, elementNode);
     }
     return new DefaultTreeModel(rootNode);
   }
 
-  public void selectElements(Object[] elements) {
+  public void selectElements(ClassMember[] elements) {
     ArrayList<TreePath> selectionPaths = new ArrayList<TreePath>();
-    for (Object element : elements) {
-      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)myElementToNodeMap.get(element);
+    for (ClassMember element : elements) {
+      MemberNode treeNode = myElementToNodeMap.get(element);
       if (treeNode != null) {
         selectionPaths.add(new TreePath(treeNode.getPath()));
       }
@@ -295,7 +236,15 @@ public class MemberChooser extends DialogWrapper {
 
     // Tree
 
-    myTree.setCellRenderer(new CellRenderer());
+    myTree.setCellRenderer(new ColoredTreeCellRenderer() {
+    public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded,
+                                      boolean leaf, int row, boolean hasFocus) {
+      if (value instanceof ElementNode) {
+        ((ElementNode) value).getDelegate().renderTreeNode(this, tree);
+      }
+    }
+  }
+);
     UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -306,21 +255,16 @@ public class MemberChooser extends DialogWrapper {
       myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     }
 
-    if (((DefaultMutableTreeNode)myTreeModel.getRoot()).getChildCount() > 0) {
+    if ((getRootNode()).getChildCount() > 0) {
       myTree.expandRow(0);
       myTree.setSelectionRow(1);
     }
-    expandAll();
+    TreeUtil.expandAll(myTree);
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Nullable
       public String convert(TreePath path) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)(path).getLastPathComponent();
-        if (node instanceof ElementNode) {
-          ElementNode elementNode = (ElementNode)node;
-          PsiElement psiElement = elementNode.getElement();
-          if (psiElement instanceof PsiClass) return null;
-          return elementNode.getText();
-        }
-        return null;
+        final MemberChooserObject delegate = ((ElementNode)path.getLastPathComponent()).getDelegate();
+        return delegate instanceof ClassMember ? null : delegate.getText();
       }
     });
     myTree.addMouseListener(
@@ -351,35 +295,26 @@ public class MemberChooser extends DialogWrapper {
     return myTree;
   }
 
-  private List getSelectedElementsList() {
-    if (getExitCode() != OK_EXIT_CODE) {
-      return null;
-    }
-    if (mySelectedElements == null) {
-      return null;
-    }
-    ArrayList arrayList = new ArrayList();
-    for (int i = 0; i < mySelectedElements.length; i++) {
-      Object element = mySelectedElements[i].get();
-      if (element != null) arrayList.add(element);
-    }
-    return arrayList;
+  @Nullable
+  private LinkedHashSet<T> getSelectedElementsList() {
+    return getExitCode() != OK_EXIT_CODE ? null : mySelectedElements;
   }
 
-  public Object[] getSelectedElements() {
-    List list = getSelectedElementsList();
-    if (list == null) return null;
-    return list.toArray(new Object[list.size()]);
+  @Nullable
+  public List<T> getSelectedElements() {
+    final LinkedHashSet<T> list = getSelectedElementsList();
+    return list == null ? null : new ArrayList<T>(list);
   }
 
-  public Object[] getSelectedElements(Object[] a) {
-    List list = getSelectedElementsList();
+  @Nullable
+  public T[] getSelectedElements(T[] a) {
+    LinkedHashSet<T> list = getSelectedElementsList();
     if (list == null) return null;
     return list.toArray(a);
   }
 
-  public boolean areElementsSelected() {
-    return mySelectedElements != null && mySelectedElements.length > 0;
+  protected final boolean areElementsSelected() {
+    return mySelectedElements != null && mySelectedElements.size() > 0;
   }
 
   public void setCopyJavadocVisible(boolean state) {
@@ -402,12 +337,11 @@ public class MemberChooser extends DialogWrapper {
     if (mySorted == sorted) return;
     mySorted = sorted;
 
-    Pair pair = storeSelection();
+    Pair<ElementNode,List<ElementNode>> pair = storeSelection();
 
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
-    Enumeration children = root.children();
+    Enumeration<ParentNode<T>> children = getRootNodeChildren();
     while (children.hasMoreElements()) {
-      DefaultMutableTreeNode classNode = (DefaultMutableTreeNode)children.nextElement();
+      ParentNode<T> classNode = children.nextElement();
       sortNode(classNode, sorted);
       myTreeModel.nodeStructureChanged(classNode);
     }
@@ -415,146 +349,113 @@ public class MemberChooser extends DialogWrapper {
     restoreSelection(pair);
   }
 
-  private void sortNode(DefaultMutableTreeNode node, boolean sorted) {
-    ArrayList<ElementNode> arrayList = new ArrayList<ElementNode>();
-    Enumeration children = node.children();
+  private void sortNode(ParentNode<T> node, boolean sorted) {
+    ArrayList<MemberNode<T>> arrayList = new ArrayList<MemberNode<T>>();
+    Enumeration<MemberNode<T>> children = node.children();
     while (children.hasMoreElements()) {
-      arrayList.add((ElementNode)children.nextElement());
+      arrayList.add(children.nextElement());
     }
 
     Collections.sort(arrayList, sorted ? new AlphaComparator() : new OrderComparator());
 
+    replaceChildren(node, arrayList);
+  }
+
+  private static void replaceChildren(final DefaultMutableTreeNode node, final Collection<? extends ElementNode> arrayList) {
     node.removeAllChildren();
-    for (int i = 0; i < arrayList.size(); i++) {
-      node.add(arrayList.get(i));
+    for (ElementNode child : arrayList) {
+      node.add(child);
     }
   }
 
   private void setShowClasses(boolean showClasses) {
     myShowClasses = showClasses;
 
-    Pair selection = storeSelection();
+    Pair<ElementNode,List<ElementNode>> selection = storeSelection();
 
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
+    DefaultMutableTreeNode root = getRootNode();
     if (!myShowClasses || myClassNodes.size() == 0) {
-      List<DefaultMutableTreeNode> otherObjects = new ArrayList<DefaultMutableTreeNode>();
-      Enumeration children = root.children();
-      ElementNode newRoot = new AllClassesNode();
+      List<ParentNode> otherObjects = new ArrayList<ParentNode>();
+      Enumeration<ParentNode<T>> children = getRootNodeChildren();
+      ParentNode<T> newRoot = new ParentNode<T>(root, new MemberChooserObjectBase(IdeBundle.message("node.memberchooser.all.classes")), new Ref<Integer>(0));
       while (children.hasMoreElements()) {
-        final DefaultMutableTreeNode nextElement = (DefaultMutableTreeNode)children.nextElement();
-        if (!(nextElement instanceof ElementNode)) {
+        final ParentNode nextElement = children.nextElement();
+        if (nextElement instanceof ClassNode) {
+          final ClassNode<T> classNode = (ClassNode<T>)nextElement;
+          Enumeration<MemberNode<T>> memberNodes = classNode.children();
+          while (memberNodes.hasMoreElements()) {
+            newRoot.add(memberNodes.nextElement());
+          }
+        } else {
           otherObjects.add(nextElement);
-          continue;
-        }
-        ElementNode classNode = (ElementNode)nextElement;
-        Enumeration memberNodes = classNode.children();
-        ArrayList memberNodesArray = new ArrayList();
-        while (memberNodes.hasMoreElements()) {
-          memberNodesArray.add(memberNodes.nextElement());
-        }
-        for (int i = 0; i < memberNodesArray.size(); i++) {
-          ElementNode memberNode = (ElementNode)memberNodesArray.get(i);
-          newRoot.add(memberNode);
         }
       }
-      root.removeAllChildren();
-      for (Iterator<DefaultMutableTreeNode> iterator = otherObjects.iterator(); iterator.hasNext();) {
-        DefaultMutableTreeNode node = iterator.next();
-        root.add(node);
-      }
+      replaceChildren(root, otherObjects);
       sortNode(newRoot, mySorted);
-      if (newRoot.children().hasMoreElements()) root.add(newRoot);
+      if (!newRoot.children().hasMoreElements()) root.remove(newRoot);
     }
     else {
-      Enumeration children = root.children();
+      Enumeration<ParentNode<T>> children = getRootNodeChildren();
       if (children.hasMoreElements()) {
-        DefaultMutableTreeNode allClassesNode = (DefaultMutableTreeNode)children.nextElement();
-        Enumeration memberNodes = allClassesNode.children();
-        ArrayList arrayList = new ArrayList();
+        ParentNode<T> allClassesNode = children.nextElement();
+        Enumeration<MemberNode<T>> memberNodes = allClassesNode.children();
+        ArrayList<MemberNode> arrayList = new ArrayList<MemberNode>();
         while (memberNodes.hasMoreElements()) {
           arrayList.add(memberNodes.nextElement());
         }
-        for (int i = 0; i < arrayList.size(); i++) {
-          DefaultMutableTreeNode memberNode = (DefaultMutableTreeNode)arrayList.get(i);
-          DefaultMutableTreeNode classNode = myNodeToParentMap.get(memberNode);
-          classNode.add(memberNode);
+        for (MemberNode memberNode : arrayList) {
+          myNodeToParentMap.get(memberNode).add(memberNode);
         }
       }
-      root.removeAllChildren();
-      for (int i = 0; i < myClassNodes.size(); i++) {
-        DefaultMutableTreeNode classNode = (DefaultMutableTreeNode)myClassNodes.get(i);
-        root.add(classNode);
-      }
+      replaceChildren(root, myClassNodes);
     }
     myTreeModel.nodeStructureChanged(root);
 
-    expandAll();
+    TreeUtil.expandAll(myTree);
 
     restoreSelection(selection);
   }
 
-  private Pair storeSelection() {
-    ArrayList selectedNodes = new ArrayList();
+  private Enumeration<ParentNode<T>> getRootNodeChildren() {
+    return getRootNode().children();
+  }
+
+  private DefaultMutableTreeNode getRootNode() {
+    return (DefaultMutableTreeNode)myTreeModel.getRoot();
+  }
+
+  private Pair<ElementNode,List<ElementNode>> storeSelection() {
+    List<ElementNode> selectedNodes = new ArrayList<ElementNode>();
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths != null) {
-      for (int i = 0; i < paths.length; i++) {
-        selectedNodes.add(paths[i].getLastPathComponent());
+      for (TreePath path : paths) {
+        selectedNodes.add((ElementNode)path.getLastPathComponent());
       }
     }
     TreePath leadSelectionPath = myTree.getLeadSelectionPath();
-    return new Pair(leadSelectionPath != null ? leadSelectionPath.getLastPathComponent() : null, selectedNodes);
+    return Pair.create(leadSelectionPath != null ? (ElementNode)leadSelectionPath.getLastPathComponent() : null, selectedNodes);
   }
 
 
-  private void restoreSelection(Pair pair) {
-    ArrayList selectedNodes = (ArrayList)pair.second;
+  private void restoreSelection(Pair<ElementNode,List<ElementNode>> pair) {
+    List<ElementNode> selectedNodes = pair.second;
 
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
+    DefaultMutableTreeNode root = getRootNode();
 
     ArrayList<TreePath> toSelect = new ArrayList<TreePath>();
-    for (int i = 0; i < selectedNodes.size(); i++) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectedNodes.get(i);
+    for (ElementNode node : selectedNodes) {
       if (root.isNodeDescendant(node)) {
         toSelect.add(new TreePath(node.getPath()));
       }
     }
 
     if (toSelect.size() > 0) {
-      myTree.setSelectionPaths((TreePath[])toSelect.toArray(new TreePath[toSelect.size()]));
+      myTree.setSelectionPaths(toSelect.toArray(new TreePath[toSelect.size()]));
     }
 
-    DefaultMutableTreeNode leadNode = (DefaultMutableTreeNode)pair.first;
+    ElementNode leadNode = pair.first;
     if (leadNode != null) {
       myTree.setLeadSelectionPath(new TreePath(leadNode.getPath()));
-    }
-  }
-
-  protected void doOKAction() {
-    super.doOKAction();
-  }
-
-  private void updateSelectedElements() {
-    Set set = new LinkedHashSet();
-    for (int i = 0; i < mySelectedNodes.size(); i++) {
-      final Object o = mySelectedNodes.get(i);
-      if (o instanceof GenericElementNode) {
-        set.add(((GenericElementNode)o).getCandidateInfo());
-      }
-      else if (o instanceof ElementNode) {
-        PsiElement element = ((ElementNode)o).getElement();
-        if (element != null) set.add(element);
-      }
-      else if (o instanceof CmpFieldNode) {
-        set.add(((CmpFieldNode)o).getField());
-      }
-      else if (o instanceof CmrFieldNode) {
-        set.add(((CmrFieldNode)o).getField());
-      }
-    }
-    mySelectedElements = new WeakReference[set.size()];
-    int i = 0;
-    for (Iterator it = set.iterator(); it.hasNext(); i++) {
-      mySelectedElements[i] = new WeakReference(it.next());
     }
   }
 
@@ -579,95 +480,38 @@ public class MemberChooser extends DialogWrapper {
       if (paths == null) return;
       for (int i = 0; i < paths.length; i++) {
         Object node = paths[i].getLastPathComponent();
-        if (node instanceof ElementNode && ((ElementNode)node).getElement() instanceof PsiClass) continue;
-        if (e.isAddedPath(i)) {
-          if (!mySelectedNodes.contains(node)) {
-            mySelectedNodes.add(node);
+        if (node instanceof MemberNode) {
+          final MemberNode<T> memberNode = (MemberNode<T>)node;
+          if (e.isAddedPath(i)) {
+            if (!mySelectedNodes.contains(memberNode)) {
+              mySelectedNodes.add(memberNode);
+            }
+          }
+          else {
+            mySelectedNodes.remove(memberNode);
           }
         }
-        else {
-          mySelectedNodes.remove(node);
-        }
       }
-      updateSelectedElements();
-
+      mySelectedElements = new LinkedHashSet<T>();
+      for (MemberNode<T> selectedNode : mySelectedNodes) {
+        mySelectedElements.add(selectedNode.getDelegate());
+      }
     }
   }
 
-  /**
-   * should be invoked in run action
-   */
-  private static void formatNode(ElementNode node) {
-    final PsiElement element = node.getElement();
-    if (element instanceof PsiClass) {
-      node.setText(PsiFormatUtil.formatClass((PsiClass)element, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_FQ_NAME));
-      node.setIcon(element.getIcon(0));
-    }
-    else if (element instanceof PsiMethod) {
-      int methodOptions = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER |
-                          PsiFormatUtil.SHOW_PARAMETERS;
-      int paramOptions = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER;
-      node.setText(PsiFormatUtil.formatMethod((PsiMethod)element, PsiSubstitutor.EMPTY, methodOptions, paramOptions));
-      node.setIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY));
-    }
-    else if (element instanceof PsiField) {
-      int options = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER;
-      node.setText(PsiFormatUtil.formatVariable((PsiField)element, options, PsiSubstitutor.EMPTY));
-      node.setIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY));
-    }
-  }
-
-  private void expandAll() {
-    Enumeration children = ((DefaultMutableTreeNode)myTreeModel.getRoot()).children();
-    while (children.hasMoreElements()) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)children.nextElement();
-      myTree.expandPath(new TreePath(child.getPath()));
-    }
-  }
-
-  private void collapseAll() {
-    Enumeration children = ((DefaultMutableTreeNode)myTreeModel.getRoot()).children();
-    while (children.hasMoreElements()) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)children.nextElement();
-      myTree.collapsePath(new TreePath(child.getPath()));
-    }
-  }
-
-  private static class ElementNode extends DefaultMutableTreeNode {
-    private Icon myIcon;
-    private String myText;
-    protected PsiElement myElement;
+  private abstract static class ElementNode extends DefaultMutableTreeNode {
     private int myOrder;
-    private boolean myIsDeprecated;
+    private final MemberChooserObject myDelegate;
 
-    private boolean isDeprecated() {
-      return myIsDeprecated;
+    public ElementNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
+      myOrder = order.get();
+      order.set(myOrder + 1);
+      myDelegate = delegate;
+      parent.add(this);
     }
 
-    public ElementNode(PsiElement element, int order) {
-      myElement = element;
-      myOrder = order;
-      myIsDeprecated = element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
-    }
-
-    public Icon getIcon() {
-      return myIcon;
-    }
-
-    public void setIcon(Icon icon) {
-      myIcon = icon;
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    public void setText(String text) {
-      myText = text;
-    }
-
-    public PsiElement getElement() {
-      return myElement;
+    public MemberChooserObject getDelegate() {
+      return myDelegate;
     }
 
     public int getOrder() {
@@ -675,149 +519,30 @@ public class MemberChooser extends DialogWrapper {
     }
   }
 
-  private static class GenericElementNode extends ElementNode {
-    public CandidateInfo getCandidateInfo() {
-      return myCandidate;
+  private static class MemberNode<T extends ClassMember> extends ElementNode {
+
+    public MemberNode(ParentNode parent, ClassMember delegate, Ref<Integer> order) {
+      super(parent, delegate, order);
     }
 
-    private CandidateInfo myCandidate;
-
-    public GenericElementNode(CandidateInfo info, int order) {
-      super(info.getElement(), order);
-      myCandidate = info;
-    }
-
-    public String getText() {
-      PsiSubstitutor substitutor = myCandidate.getSubstitutor();
-      if (substitutor == PsiSubstitutor.EMPTY) return super.getText();
-
-      if (myElement instanceof PsiClass) {
-        PsiType classType = myElement.getManager().getElementFactory().createType((PsiClass)myElement, substitutor);
-        return PsiFormatUtil.formatType(classType, 0, PsiSubstitutor.EMPTY);
-      }
-      else if (myElement instanceof PsiMethod) {
-        int methodOptions = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER |
-                            PsiFormatUtil.SHOW_PARAMETERS;
-        int paramOptions = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER;
-        return PsiFormatUtil.formatMethod((PsiMethod)myElement, substitutor, methodOptions, paramOptions);
-      }
-      else {
-        return super.getText();
-      }
+    public T getDelegate() {
+      return (T)super.getDelegate();
     }
   }
 
-  private static class EntityBeanNode extends DefaultMutableTreeNode {
-    private Icon myIcon;
-    private String myText;
-
-    public EntityBeanNode(EntityBean bean) {
-      myText = bean.getEjbName().getValue();
-      myIcon = IconUtilEx.getIcon(bean, 0, null);
+  private static class ParentNode<T extends ClassMember> extends ElementNode {
+    public ParentNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
+      super(parent, delegate, order);
     }
 
-    public Icon getIcon() {
-      return myIcon;
-    }
-
-    public String getText() {
-      return myText;
+    public Enumeration<MemberNode<T>> children() {
+      return super.children();
     }
   }
 
-  private static class CmpFieldNode extends DefaultMutableTreeNode {
-    private Icon myIcon;
-    private String myText;
-    private CmpField myField;
-
-    public CmpFieldNode(CmpField field) {
-      myField = field;
-      myText = field.getFieldName().getValue();
-      myIcon = IconUtilEx.getIcon(field, 0, null);
-    }
-
-    public Icon getIcon() {
-      return myIcon;
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    public CmpField getField() {
-      return myField;
-    }
-  }
-
-  private static class CmrFieldNode extends DefaultMutableTreeNode {
-    private Icon myIcon;
-    private String myText;
-    private CmrField myField;
-
-    public CmrFieldNode(CmrField field) {
-      myField = field;
-      myText = field.getCmrFieldName().getValue();
-      myIcon = IconUtilEx.getIcon(field, 0, null);
-    }
-
-    public Icon getIcon() {
-      return myIcon;
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    public CmrField getField() {
-      return myField;
-    }
-  }
-
-  private static class AllClassesNode extends ElementNode {
-    public AllClassesNode() {
-      super(null, 0);
-    }
-
-    public String getText() {
-      return IdeBundle.message("node.memberchooser.all.classes");
-    }
-
-    public PsiElement getElement() {
-      return null;
-    }
-  }
-
-  private class CellRenderer extends ColoredTreeCellRenderer {
-    public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded,
-                                      boolean leaf, int row, boolean hasFocus) {
-      SimpleTextAttributes attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
-                                                                 tree.getForeground());
-      if (value instanceof ElementNode) {
-        ElementNode node = (ElementNode)value;
-        if (node.isDeprecated()) {
-          attributes =
-          new SimpleTextAttributes(
-            node.isDeprecated() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
-            tree.getForeground());
-        }
-        append(node.getText(), attributes);
-        setIcon(node.getIcon());
-      }
-      else if (value instanceof CmpFieldNode) {
-        CmpFieldNode node = (CmpFieldNode)value;
-        append(node.getText(), attributes);
-        setIcon(node.getIcon());
-      }
-      else if (value instanceof CmrFieldNode) {
-        CmrFieldNode node = (CmrFieldNode)value;
-        append(node.getText(), attributes);
-        setIcon(node.getIcon());
-      }
-      else if (value instanceof EntityBeanNode) {
-        EntityBeanNode node = (EntityBeanNode)value;
-        append(node.getText(), attributes);
-        setIcon(node.getIcon());
-      }
+  private static class ClassNode<T extends ClassMember> extends ParentNode<T> {
+    public ClassNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
+      super(parent, delegate, order);
     }
   }
 
@@ -834,22 +559,17 @@ public class MemberChooser extends DialogWrapper {
 
   private class TreeKeyListener extends KeyAdapter {
     public void keyPressed(KeyEvent e) {
+      TreePath path = myTree.getLeadSelectionPath();
+      if (path == null) return;
+      final Object lastComponent = path.getLastPathComponent();
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-        TreePath path = myTree.getLeadSelectionPath();
-        if (path == null) return;
-        if (path.getLastPathComponent() instanceof ElementNode) {
-          ElementNode node = (ElementNode)path.getLastPathComponent();
-          if (node.getElement() instanceof PsiClass) return;
-        }
+        if (lastComponent instanceof ParentNode) return;
         doOKAction();
         e.consume();
       }
       else if (e.getKeyCode() == KeyEvent.VK_INSERT) {
-        TreePath path = myTree.getLeadSelectionPath();
-        if (path == null) return;
-        if (path.getLastPathComponent() instanceof ElementNode) {
-          ElementNode node = (ElementNode)path.getLastPathComponent();
-          if (node.getElement() instanceof PsiClass) return;
+        if (lastComponent instanceof ElementNode) {
+          final ElementNode node = (ElementNode)lastComponent;
           if (!mySelectedNodes.contains(node)) {
             if (node.getNextNode() != null) {
               myTree.setSelectionPath(new TreePath(node.getNextNode().getPath()));
@@ -910,7 +630,7 @@ public class MemberChooser extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      expandAll();
+      TreeUtil.expandAll(myTree);
     }
   }
 
@@ -921,13 +641,13 @@ public class MemberChooser extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      collapseAll();
+      TreeUtil.collapseAll(myTree, 1);
     }
   }
 
   private static class AlphaComparator implements Comparator<ElementNode> {
     public int compare(ElementNode n1, ElementNode n2) {
-      return n1.getText().compareToIgnoreCase(n2.getText());
+      return n1.getDelegate().getText().compareToIgnoreCase(n2.getDelegate().getText());
     }
   }
 

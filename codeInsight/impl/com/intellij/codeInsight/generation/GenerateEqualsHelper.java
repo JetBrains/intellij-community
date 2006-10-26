@@ -70,7 +70,7 @@ public class GenerateEqualsHelper implements Runnable {
     final PsiManager manager = PsiManager.getInstance(project);
 
     myFactory = manager.getElementFactory();
-    myJavaLangObject = manager.findClass("java.lang.Object", aClass.getResolveScope());
+    myJavaLangObject = manager.findClass(CommonClassNames.JAVA_LANG_OBJECT, aClass.getResolveScope());
     if (myJavaLangObject == null) {
       throw new NoObjectClassException();
     }
@@ -300,7 +300,7 @@ public class GenerateEqualsHelper implements Runnable {
     PsiMethod superEquals = MethodSignatureUtil.findMethodBySignature(myClass, methodSignature, true);
     if (superEquals == null) return true;
     if (superEquals.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    return !"java.lang.Object".equals(superEquals.getContainingClass().getQualifiedName());
+    return !CommonClassNames.JAVA_LANG_OBJECT.equals(superEquals.getContainingClass().getQualifiedName());
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -511,7 +511,7 @@ public class GenerateEqualsHelper implements Runnable {
     final PsiClass psiClass = PsiUtil.resolveClassInType(componentType);
     if (psiClass == null) return false;
     final String qName = psiClass.getQualifiedName();
-    return "java.lang.Object".equals(qName);
+    return CommonClassNames.JAVA_LANG_OBJECT.equals(qName);
   }
 
   public static MethodSignature getHashCodeSignature() {

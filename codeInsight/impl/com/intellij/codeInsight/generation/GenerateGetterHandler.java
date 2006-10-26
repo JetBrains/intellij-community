@@ -1,65 +1,31 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.javaee.model.common.ejb.CmpField;
 
 public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
   public GenerateGetterHandler() {
     super(CodeInsightBundle.message("generate.getter.fields.chooser.title"));
   }
 
-  protected Object[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     if (aClass.isInterface()) {
-      return PsiElement.EMPTY_ARRAY; // TODO
+      return ClassMember.EMPTY_ARRAY; // TODO
     }
     return super.chooseOriginalMembers(aClass, project);
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, Object original) throws IncorrectOperationException {
-    if (original instanceof PsiField) {
-      PsiField field = (PsiField)original;
-      PsiMethod getMethod = PropertyUtil.generateGetterPrototype(field);
-      PsiMethod existing = field.getContainingClass().findMethodBySignature(getMethod, false);
-      if (existing != null) {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
+    if (original instanceof EncapsulatableClassMember) {
+      final EncapsulatableClassMember encapsulatableClassMember = (EncapsulatableClassMember)original;
+      final Object getter = encapsulatableClassMember.generateGetter();
+      if (getter != null) {
+        return new Object[]{getter};
       }
-      return new Object[]{getMethod};
     }
-    else if (original instanceof CmpField) {
-      CmpField field = (CmpField)original;
-
-      final PsiManager psiManager = aClass.getManager();
-      final PsiElementFactory factory = psiManager.getElementFactory();
-
-      final PsiType objectType = PsiType.getJavaLangObject(psiManager, aClass.getResolveScope());
-      final String methodName = PropertyUtil.suggestGetterName(field.getFieldName().getValue(), objectType);
-
-      final PsiMethod[] methods = aClass.getMethods();
-      for (PsiMethod method : methods) {
-        if (method.getName().equals(methodName) &&
-            method.getParameterList().getParameters().length == 0) {
-          return ArrayUtil.EMPTY_OBJECT_ARRAY;
-        }
-      }
-
-      final PsiMethod method = factory.createMethod(methodName, objectType);
-      method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
-      method.getBody().delete();
-
-      TemplateBuilder builder = new TemplateBuilder(method);
-      final CmpFieldTypeExpression expression = new CmpFieldTypeExpression(psiManager);
-      builder.replaceElement(method.getReturnTypeElement(), expression);
-      TemplateGenerationInfo info = new TemplateGenerationInfo(builder.buildTemplate(), method);
-
-      return new Object[]{info};
-    }
-
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

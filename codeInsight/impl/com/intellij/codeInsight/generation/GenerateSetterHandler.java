@@ -1,14 +1,9 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.javaee.model.common.ejb.CmpField;
 
 public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
@@ -16,58 +11,14 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
     super(CodeInsightBundle.message("generate.setter.fields.chooser.title"));
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, Object original) throws IncorrectOperationException {
-    if (original instanceof PsiField) {
-      PsiField field = (PsiField)original;
-      if (field.hasModifierProperty(PsiModifier.FINAL)) {
-        return PsiElement.EMPTY_ARRAY;
+  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
+    if (original instanceof EncapsulatableClassMember) {
+      final EncapsulatableClassMember encapsulatableClassMember = (EncapsulatableClassMember)original;
+      final Object setter = encapsulatableClassMember.generateSetter();
+      if (setter != null) {
+        return new Object[]{setter};
       }
-
-      PsiMethod setMethod = PropertyUtil.generateSetterPrototype(field);
-      PsiMethod existing = field.getContainingClass().findMethodBySignature(setMethod, false);
-      if (existing != null) {
-        return PsiElement.EMPTY_ARRAY;
-      }
-      return new PsiElement[]{setMethod};
     }
-    else if (original instanceof CmpField) {
-      CmpField field = (CmpField)original;
-
-      final PsiManager psiManager = aClass.getManager();
-      final PsiElementFactory factory = psiManager.getElementFactory();
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager.getProject());
-
-      final PsiType objectType = PsiType.getJavaLangObject(psiManager, aClass.getResolveScope());
-
-      final String name = field.getFieldName().getValue();
-      final String methodName = PropertyUtil.suggestSetterName(name);
-
-      final PsiMethod[] methods = aClass.getMethods();
-      for (PsiMethod method : methods) {
-        if (method.getName().equals(methodName) &&
-            method.getParameterList().getParameters().length == 1 &&
-            method.getReturnType() == PsiType.VOID) {
-          return ArrayUtil.EMPTY_OBJECT_ARRAY;
-        }
-      }
-
-      final CmpFieldTypeExpression expression = new CmpFieldTypeExpression(psiManager);
-      String parameterName = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
-
-      final PsiMethod method = factory.createMethod(methodName, objectType);
-      method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
-      method.getBody().delete();
-      final PsiParameterList parameterList = method.getParameterList();
-      final PsiParameter parameter = (PsiParameter)parameterList.add(factory.createParameter(parameterName, objectType));
-      method.getReturnTypeElement().replace(factory.createTypeElement(PsiType.VOID));
-
-      TemplateBuilder builder = new TemplateBuilder(method);
-      builder.replaceElement(parameter.getTypeElement(), expression);
-      TemplateGenerationInfo info = new TemplateGenerationInfo(builder.buildTemplate(), method);
-
-      return new Object[]{info};
-    }
-
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

@@ -11,8 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  *
@@ -46,7 +49,7 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     LOG.assertTrue(aClass.isValid());
     LOG.assertTrue(aClass.getContainingFile() != null);
 
-    final Object[] members = chooseOriginalMembers(aClass, project);
+    final ClassMember[] members = chooseOriginalMembers(aClass, project);
     if (members == null) return;
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -56,7 +59,7 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     });
   }
 
-  private void doGenerate(final Project project, final Editor editor, PsiClass aClass, Object[] members) {
+  private void doGenerate(final Project project, final Editor editor, PsiClass aClass, ClassMember[] members) {
     int offset = editor.getCaretModel().getOffset();
 
     int col = editor.getCaretModel().getLogicalPosition().column;
@@ -90,36 +93,36 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  protected Object[] chooseOriginalMembers(PsiClass aClass, Project project) {
-    Object[] allMembers = getAllOriginalMembers(aClass);
+  @Nullable
+  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+    ClassMember[] allMembers = getAllOriginalMembers(aClass);
     return chooseMembers(allMembers, false, false, project);
   }
 
-  protected final Object[] chooseMembers(Object[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
-    MemberChooser chooser = new MemberChooser(members, allowEmptySelection, true, project);
+  protected final ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
+    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project);
     chooser.setTitle(myChooserTitle);
     chooser.setCopyJavadocVisible(copyJavadocCheckbox);
     chooser.show();
     myToCopyJavaDoc = chooser.isCopyJavadoc();
-    return chooser.getSelectedElements();
+    final List<ClassMember> list = chooser.getSelectedElements();
+    return list == null ? null : list.toArray(new ClassMember[list.size()]);
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, Object[] members) throws IncorrectOperationException {
+  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<Object> array = new ArrayList<Object>();
-    for (Object member : members) {
+    for (ClassMember member : members) {
       Object[] prototypes = generateMemberPrototypes(aClass, member);
       if (prototypes != null) {
-        for (Object prototype : prototypes) {
-          array.add(prototype);
-        }
+        array.addAll(Arrays.asList(prototypes));
       }
     }
     return array.toArray(new Object[array.size()]);
   }
 
-  protected abstract Object[] getAllOriginalMembers(PsiClass aClass);
+  protected abstract ClassMember[] getAllOriginalMembers(PsiClass aClass);
 
-  protected abstract Object[] generateMemberPrototypes(PsiClass aClass, Object originalMember) throws IncorrectOperationException;
+  protected abstract Object[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) throws IncorrectOperationException;
 
   protected void positionCaret(Editor editor, PsiElement firstMember) {
     GenerateMembersUtil.positionCaret(editor, firstMember, false);

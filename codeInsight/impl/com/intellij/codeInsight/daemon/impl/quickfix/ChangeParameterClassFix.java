@@ -11,6 +11,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -18,6 +19,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Function;
 
 public class ChangeParameterClassFix extends ExtendsListFix {
   private ChangeParameterClassFix(PsiClass aClassToExtend, PsiClassType parameterClass) {
@@ -58,11 +61,14 @@ public class ChangeParameterClassFix extends ExtendsListFix {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
-              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, toImplement,
-                                                                           false, false);
+              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, ContainerUtil.map2Array(toImplement,
+                                                                                                                     PsiMethodMember.class, new Function<CandidateInfo, PsiMethodMember>() {
+                public PsiMethodMember fun(final CandidateInfo s) {
+                  return new PsiMethodMember(s);
+                }
+              }), false, false);
             }
-          }
-        );
+          });
       }
       else {
         //SCR 12599

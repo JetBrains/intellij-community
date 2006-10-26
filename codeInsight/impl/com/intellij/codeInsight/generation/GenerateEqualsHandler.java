@@ -13,8 +13,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 
 /**
  * @author dsl
@@ -24,13 +24,13 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   private PsiField[] myEqualsFields = null;
   private PsiField[] myHashCodeFields = null;
   private PsiField[] myNonNullFields = null;
-  private static final PsiField[] DUMMY_RESULT = new PsiField[1]; //cannot return empty array, but this result won't be used anyway
+  private static final PsiElementClassMember[] DUMMY_RESULT = new PsiElementClassMember[1]; //cannot return empty array, but this result won't be used anyway
 
   public GenerateEqualsHandler() {
     super("");
   }
 
-  protected Object[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     myEqualsFields = null;
     myHashCodeFields = null;
     myNonNullFields = PsiField.EMPTY_ARRAY;
@@ -81,7 +81,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return DUMMY_RESULT;
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, Object[] originalMembers) throws IncorrectOperationException {
+  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     try {
       Project project = aClass.getProject();
       GenerateEqualsHelper helper = new GenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields);
@@ -98,11 +98,11 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     }
   }
 
-  protected Object[] getAllOriginalMembers(PsiClass aClass) {
+  protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     return null;
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, Object originalMember) {
+  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
     return null;
   }
 

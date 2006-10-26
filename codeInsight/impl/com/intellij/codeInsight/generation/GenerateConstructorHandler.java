@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -10,14 +10,17 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateConstructorHandler");
@@ -27,21 +30,22 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     super(CodeInsightBundle.message("generate.constructor.fields.chooser.title"));
   }
 
-  protected Object[] getAllOriginalMembers(PsiClass aClass) {
+  protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<ClassMember> array = new ArrayList<ClassMember>();
     final PsiSearchHelper searchHelper = aClass.getManager().getSearchHelper();
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
 
       if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) continue;
       if (searchHelper.isFieldBoundToForm(field)) continue;
-      array.add(field);
+      array.add(new PsiFieldMember(field));
     }
-    return array.toArray(new PsiElement[array.size()]);
+    return array.toArray(new ClassMember[array.size()]);
   }
 
-  protected Object[] chooseOriginalMembers(PsiClass aClass, Project project) {
+  @Nullable
+  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     if (aClass instanceof PsiAnonymousClass){
       Messages.showMessageDialog(project,
                                  CodeInsightBundle.message("error.attempt.to.generate.constructor.for.anonymous.class"),
@@ -68,63 +72,55 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           baseConstructors = new PsiMethod[]{array.get(0)};
         }
         else{
-          PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
-          Object[] constructors;
-          if (substitutor != PsiSubstitutor.EMPTY) {
-            constructors = new CandidateInfo[array.size()];
-            for (int i = 0; i < array.size(); i++) {
-              constructors[i] = new CandidateInfo(array.get(i), substitutor);
+          final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
+          PsiMethodMember[] constructors = ContainerUtil.map2Array(array, PsiMethodMember.class, new Function<PsiMethod, PsiMethodMember>() {
+            public PsiMethodMember fun(final PsiMethod s) {
+              return new PsiMethodMember(s, substitutor);
             }
-          } else {
-            constructors = array.toArray(new Object[array.size()]);
-          }
-          MemberChooser chooser = new MemberChooser(constructors, false, true, project);
+          });
+          MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(constructors, false, true, project);
           chooser.setTitle(CodeInsightBundle.message("generate.constructor.super.constructor.chooser.title"));
           chooser.show();
-          Object[] elements = chooser.getSelectedElements();
-          if (elements == null || elements.length == 0) return null;
-          baseConstructors = new PsiMethod[elements.length];
-          for(int i = 0; i < elements.length; i++){
-            if (elements[i] instanceof PsiMethod) {
-              baseConstructors[i] = (PsiMethod)elements[i];
-            }
-            else {
-              baseConstructors[i] = (PsiMethod)((CandidateInfo)elements[i]).getElement();
-            }
+          List<PsiMethodMember> elements = chooser.getSelectedElements();
+          if (elements == null || elements.size() == 0) return null;
+          baseConstructors = new PsiMethod[elements.size()];
+          for(int i = 0; i < elements.size(); i++){
+            final ClassMember member = elements.get(i);
+            baseConstructors[i] = ((PsiMethodMember)member).getElement();
           }
           myCopyJavadoc = chooser.isCopyJavadoc();
         }
       }
     }
 
-    Object[] allMembers = getAllOriginalMembers(aClass);
-    Object[] members;
+    ClassMember[] allMembers = getAllOriginalMembers(aClass);
+    ClassMember[] members;
     if (allMembers.length == 0) {
-      members = PsiElement.EMPTY_ARRAY;
+      members = ClassMember.EMPTY_ARRAY;
     }
     else{
       members = chooseMembers(allMembers, true, false, project);
       if (members == null) return null;
     }
     if (baseConstructors != null){
-      ArrayList<Object> array = new ArrayList<Object>();
+      ArrayList<ClassMember> array = new ArrayList<ClassMember>();
       for (PsiMethod baseConstructor : baseConstructors) {
-        array.add(baseConstructor);
+        array.add(new PsiMethodMember(baseConstructor));
       }
-      for (Object member : members) {
+      for (ClassMember member : members) {
         array.add(member);
       }
-      members = array.toArray(new PsiElement[array.size()]);
+      members = array.toArray(new ClassMember[array.size()]);
     }
 
     return members;
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, Object[] members) throws IncorrectOperationException {
+  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();
     ArrayList<PsiElement> fieldsVector = new ArrayList<PsiElement>();
-    for (Object member1 : members) {
-      PsiElement member = (PsiElement)member1;
+    for (ClassMember member1 : members) {
+      PsiElement member = ((PsiElementClassMember)member1).getElement();
       if (member instanceof PsiMethod) {
         baseConstructors.add((PsiMethod)member);
       }
@@ -237,7 +233,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return constructor;
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, Object originalMember) {
+  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
     LOG.assertTrue(false);
     return null;
   }

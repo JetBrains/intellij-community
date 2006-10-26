@@ -1,19 +1,19 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -51,32 +51,32 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
     PsiClass baseClass = myClass.getSuperClass();
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, myClass, PsiSubstitutor.EMPTY);
     LOG.assertTrue(baseClass != null && substitutor != null);
-    List<CandidateInfo> baseConstructors = new ArrayList<CandidateInfo>();
+    List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
     PsiMethod[] baseConstrs = baseClass.getConstructors();
     for (PsiMethod baseConstr : baseConstrs) {
-      if (PsiUtil.isAccessible(baseConstr, myClass, myClass)) baseConstructors.add(new CandidateInfo(baseConstr, substitutor));
+      if (PsiUtil.isAccessible(baseConstr, myClass, myClass)) baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
     }
 
-    CandidateInfo[] constructors = baseConstructors.toArray(new CandidateInfo[baseConstructors.size()]);
+    PsiMethodMember[] constructors = baseConstructors.toArray(new PsiMethodMember[baseConstructors.size()]);
     if (constructors.length == 0) {
-      constructors = new CandidateInfo[baseConstrs.length];
+      constructors = new PsiMethodMember[baseConstrs.length];
       for (int i = 0; i < baseConstrs.length; i++) {
-        constructors[i] = new CandidateInfo(baseConstrs[i], substitutor);
+        constructors[i] = new PsiMethodMember(baseConstrs[i], substitutor);
       }
     }
 
     LOG.assertTrue(constructors.length >=1); // Otherwise we won't have been messing with all this stuff
     boolean isCopyJavadoc = true;
     if (constructors.length > 1) {
-      MemberChooser chooser = new MemberChooser(constructors, false, true, project);
+      MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(constructors, false, true, project);
       chooser.setTitle(QuickFixBundle.message("super.class.constructors.chooser.title"));
       chooser.show();
       if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return;
-      constructors = (CandidateInfo[]) chooser.getSelectedElements(new CandidateInfo[0]);
+      constructors = chooser.getSelectedElements(new PsiMethodMember[0]);
       isCopyJavadoc = chooser.isCopyJavadoc();
     }
 
-    final CandidateInfo[] constructors1 = constructors;
+    final PsiMethodMember[] constructors1 = constructors;
     final boolean isCopyJavadoc1 = isCopyJavadoc;
     ApplicationManager.getApplication().runWriteAction (
       new Runnable() {
@@ -85,7 +85,7 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
             PsiElementFactory factory = myClass.getManager().getElementFactory();
             CodeStyleManager reformatter = CodeStyleManager.getInstance(project);
             PsiMethod derived = null;
-            for (CandidateInfo candidate : constructors1) {
+            for (PsiMethodMember candidate : constructors1) {
               PsiMethod base = (PsiMethod)candidate.getElement();
               derived = GenerateMembersUtil.substituteGenericMethod(base, candidate.getSubstitutor());
 

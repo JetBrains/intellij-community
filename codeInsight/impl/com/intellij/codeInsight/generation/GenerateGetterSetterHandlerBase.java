@@ -22,14 +22,14 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
     super(chooserTitle);
   }
 
-  protected Object[] getAllOriginalMembers(PsiClass aClass) {
-    ArrayList<Object> array = new ArrayList<Object>();
+  protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
+    ArrayList<ClassMember> array = new ArrayList<ClassMember>();
 
     try{
-      PsiField[] fields = aClass.getFields();
-      for (PsiField field : fields) {
-        if (generateMemberPrototypes(aClass, field).length > 0) {
-          array.add(field);
+      for (PsiField field : aClass.getFields()) {
+        final PsiElementClassMember member = new PsiFieldMember(field);
+        if (generateMemberPrototypes(aClass, member).length > 0) {
+          array.add(member);
         }
       }
 
@@ -39,10 +39,10 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
       LOG.error(e);
     }
 
-    return array.toArray(new Object[array.size()]);
+    return array.toArray(new ClassMember[array.size()]);
   }
 
-  private void getCmpFields(ArrayList<Object> list, PsiClass psiClass) throws IncorrectOperationException {
+  private void getCmpFields(ArrayList<ClassMember> list, PsiClass psiClass) throws IncorrectOperationException {
     final EjbClassRole classRole = EjbRolesUtil.getEjbRolesUtil().getEjbRole(psiClass);
     if (classRole == null || classRole.getType() != EjbClassRoleEnum.EJB_CLASS_ROLE_EJB_CLASS) return;
 
@@ -55,8 +55,9 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
 
 
     for (final CmpField field : ((EntityBean)classRole.getEnterpriseBean()).getCmpFields()) {
-      if (generateMemberPrototypes(psiClass, field).length > 0) {
-        list.add(field);
+      final CmpFieldClassMember fieldMember = new CmpFieldClassMember(psiClass, field);
+      if (generateMemberPrototypes(psiClass, fieldMember).length > 0) {
+        list.add(fieldMember);
       }
     }
   }
