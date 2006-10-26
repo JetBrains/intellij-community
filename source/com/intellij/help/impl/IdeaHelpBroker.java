@@ -397,10 +397,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param hs the default HelpSet to be displayed. If hs is null the default HelpSet
    * will be assumed.
    */
-  public void enableHelpKey(Component comp,String id,HelpSet hs){
-    if(id==null){
-      throw new NullPointerException("id");
-    }
+  public void enableHelpKey(Component comp,@NotNull String id,HelpSet hs){
     CSH.setHelpIDString(comp,id);
     if(hs!=null){
       CSH.setHelpSet(comp,hs);
@@ -458,10 +455,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param hs the HelpSet the id is in. If hs is null the default HelpSet
    * will be assumed.
    */
-  public void enableHelp(Component comp,String id,HelpSet hs){
-    if(id==null){
-      throw new NullPointerException("id");
-    }
+  public void enableHelp(Component comp,@NotNull String id,HelpSet hs){
     CSH.setHelpIDString(comp,id);
     if(hs!=null){
       CSH.setHelpSet(comp,hs);
@@ -477,10 +471,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @param hs the HelpSet the id is in. If hs is null the default HelpSet
    * will be assumed.
    */
-  public void enableHelp(MenuItem comp,String id,HelpSet hs){
-    if(id==null){
-      throw new NullPointerException("id");
-    }
+  public void enableHelp(MenuItem comp,@NotNull String id,HelpSet hs){
     CSH.setHelpIDString(comp,id);
     if(hs!=null){
       CSH.setHelpSet(comp,hs);
@@ -504,12 +495,9 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
    * @see java.awt.Button
    * @throws IllegalArgumentException if comp is not a button.
    */
-  public void enableHelpOnButton(Component comp,String id,HelpSet hs){
+  public void enableHelpOnButton(Component comp,@NotNull String id,HelpSet hs){
     if(!(comp instanceof AbstractButton)&&!(comp instanceof Button)){
       throw new IllegalArgumentException("Invalid Component. comp must be either a javax.swing.AbstractButton or a java.awt.Button");
-    }
-    if(id==null){
-      throw new NullPointerException("id");
     }
     CSH.setHelpIDString(comp,id);
     if(hs!=null){

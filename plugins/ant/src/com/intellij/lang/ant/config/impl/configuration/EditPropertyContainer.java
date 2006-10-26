@@ -3,6 +3,7 @@ package com.intellij.lang.ant.config.impl.configuration;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -19,9 +20,8 @@ public class EditPropertyContainer extends AbstractProperty.AbstractPropertyCont
     this(AbstractProperty.AbstractPropertyContainer.EMPTY, originals);
   }
 
-  private EditPropertyContainer(AbstractProperty.AbstractPropertyContainer parentEditor, AbstractProperty.AbstractPropertyContainer[] originals) {
+  private EditPropertyContainer(@NotNull AbstractProperty.AbstractPropertyContainer parentEditor, AbstractProperty.AbstractPropertyContainer[] originals) {
     myOriginals = originals;
-    if (parentEditor == null) throw new NullPointerException("parentEditor");
     myParent = parentEditor;
   }
 

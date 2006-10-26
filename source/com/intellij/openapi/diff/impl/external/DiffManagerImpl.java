@@ -20,6 +20,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.config.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -86,8 +87,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     return new CompositeDiffTool(allTools);
   }
 
-  public boolean registerDiffTool(DiffTool tool) throws NullPointerException {
-    if (tool == null) throw new NullPointerException("tool==null");
+  public boolean registerDiffTool(@NotNull DiffTool tool) throws NullPointerException {
     if (myAdditionTools.contains(tool)) return false;
     myAdditionTools.add(tool);
     return true;
