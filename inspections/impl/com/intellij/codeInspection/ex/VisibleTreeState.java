@@ -64,11 +64,11 @@ public class VisibleTreeState implements JDOMExternalizable{
     final Object userObject = root.getUserObject();
     final TreeNode[] rootPath = root.getPath();
     if (userObject instanceof Descriptor) {
-      final String displayName = ((Descriptor)userObject).getText();
-      if (mySelectedNodes.contains(displayName)) {
+      final String shortName = ((Descriptor)userObject).getKey().toString();
+      if (mySelectedNodes.contains(shortName)) {
         toSelect.add(new TreePath(rootPath));
       }
-      if (myExpandedNodes.contains(displayName)) {
+      if (myExpandedNodes.contains(shortName)) {
         pathsToExpand.add(new TreePath(rootPath));
       }
     }
@@ -96,7 +96,7 @@ public class VisibleTreeState implements JDOMExternalizable{
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
         String expandedNode;
         if (node.getUserObject() instanceof Descriptor) {
-          expandedNode = ((Descriptor)node.getUserObject()).getText();
+          expandedNode = ((Descriptor)node.getUserObject()).getKey().toString();
         }
         else {
           expandedNode = (String)node.getUserObject();
@@ -110,7 +110,7 @@ public class VisibleTreeState implements JDOMExternalizable{
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPaths[i].getLastPathComponent();
       String selectedNode;
       if (node.getUserObject() instanceof Descriptor) {
-        selectedNode = ((Descriptor)node.getUserObject()).getText();
+        selectedNode = ((Descriptor)node.getUserObject()).getKey().toString();
       }
       else {
         selectedNode = (String)node.getUserObject();
