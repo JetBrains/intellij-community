@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -215,11 +217,17 @@ public final class InplaceEditingLayer extends JComponent{
     try{
       // 1. Apply new value to the component
       LOG.assertTrue(myInplaceEditor != null);
-      try {
-        final Object value = myInplaceEditor.getValue();
-        myInplaceProperty.setValue(myInplaceComponent, value);
-      } catch (Exception ignored){}
-      myEditor.refreshAndSave(true);
+      CommandProcessor.getInstance().executeCommand(
+        myInplaceComponent.getProject(),
+        new Runnable() {
+          public void run() {
+            try {
+              final Object value = myInplaceEditor.getValue();
+              myInplaceProperty.setValue(myInplaceComponent, value);
+            } catch (Exception ignored){}
+            myEditor.refreshAndSave(true);
+          }
+        }, UIDesignerBundle.message("command.set.property.value"), null);
 
       // 2. Remove editor from the layer
 
