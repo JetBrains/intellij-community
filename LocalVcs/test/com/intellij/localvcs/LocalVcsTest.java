@@ -338,6 +338,26 @@ public class LocalVcsTest extends Assert {
     assertTrue(myVcs.getSnapshots().isEmpty());
   }
 
+  @Test
+  public void testGettingLabeledSnapshot() {
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+
+    myVcs.label("label");
+
+    myVcs.changeFile("file", "new content");
+    myVcs.commit();
+
+    Snapshot s = myVcs.getSnapshot("label");
+    assertNotNull(s);
+    assertRevisionContent("content", s.getFileRevision("file"));
+  }
+
+  @Test
+  public void testGettingSnapshotWithUnknownLabel() {
+    // todo    
+  }
+
   private void assertRevisionContent(String expectedContent,
                                      Revision actualRevision) {
     assertEquals(expectedContent, actualRevision.getContent());

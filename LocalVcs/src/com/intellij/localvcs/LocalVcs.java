@@ -19,7 +19,6 @@ public class LocalVcs {
     List<Revision> result = new ArrayList<Revision>();
 
     //todo clean up this mess
-
     Revision r = mySnapshot.getFileRevision(name);
     if (r == null) return result;
 
@@ -50,7 +49,7 @@ public class LocalVcs {
   }
 
   public void commit() {
-    mySnapshot = mySnapshot.apply(myPendingChanges);
+    mySnapshot = mySnapshot.apply(new ChangeSet(myPendingChanges));
     clearPendingChanges();
   }
 
@@ -68,6 +67,17 @@ public class LocalVcs {
 
   public boolean isClean() {
     return myPendingChanges.isEmpty();
+  }
+
+  public void label(String label) {
+    mySnapshot.setLabel(label);
+  }
+
+  public Snapshot getSnapshot(String label) {
+    for (Snapshot s : getSnapshots()) {
+      if (label.equals(s.getLabel())) return s;
+    }
+    return null;
   }
 
   public List<Snapshot> getSnapshots() {
