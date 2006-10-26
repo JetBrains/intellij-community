@@ -151,13 +151,19 @@ public class TabbedPaneWrapper {
     assertIsDispatchThread();
 
     final boolean hadFocus = IJSwingUtilities.hasFocus2(myTabbedPaneHolder);
-    myTabbedPane.removeTabAt(index);
-    if (myTabbedPane.getTabCount() == 0) {
-      // to clear BasicTabbedPaneUI.visibleComponent field
-      myTabbedPane.revalidate();
+    final TabWrapper wrapper = getWrapperAt(index);
+    try {
+      myTabbedPane.removeTabAt(index);
+      if (myTabbedPane.getTabCount() == 0) {
+        // to clear BasicTabbedPaneUI.visibleComponent field
+        myTabbedPane.revalidate();
+      }
+      if (hadFocus) {
+        myTabbedPaneHolder.requestFocus();
+      }
     }
-    if (hadFocus) {
-      myTabbedPaneHolder.requestFocus();
+    finally {
+      wrapper.dispose();
     }
   }
 
@@ -182,7 +188,11 @@ public class TabbedPaneWrapper {
    * @see javax.swing.JTabbedPane#setComponentAt(int, java.awt.Component)
    */
   public final synchronized JComponent getComponentAt(final int i) {
-    return ((TabWrapper)myTabbedPane.getComponentAt(i)).getComponent();
+    return (getWrapperAt(i)).getComponent();
+  }
+
+  private TabWrapper getWrapperAt(final int i) {
+    return (TabWrapper)myTabbedPane.getComponentAt(i);
   }
 
   public final void setTitleAt(final int index, final String title) {
@@ -221,7 +231,7 @@ public class TabbedPaneWrapper {
    */
   public final synchronized int indexOfComponent(final JComponent component) {
     for (int i=0; i < myTabbedPane.getTabCount(); i++) {
-      final JComponent c = ((TabWrapper)myTabbedPane.getComponentAt(i)).getComponent();
+      final JComponent c = getWrapperAt(i).getComponent();
       if (c == component) {
         return i;
       }
@@ -290,9 +300,11 @@ public class TabbedPaneWrapper {
     /**
      * TabWrappers are never reused so we can fix the leak in some LAF's TabbedPane UI by cleanuping ourselves.
      */
-    public void removeNotify() {
-      remove(myComponent);
-      myComponent = null;
+    public void dispose() {
+      if (myComponent != null) {
+        remove(myComponent);
+        myComponent = null;
+      }
     }
 
     public boolean requestDefaultFocus() {
