@@ -235,11 +235,14 @@ public class TemplateImpl implements Template {
     if(mySegments != null) {
       return;
     }
+
+    if (myString == null) myString = "";
     myString = StringUtil.convertLineSeparators(myString, "\n");
     mySegments = new ArrayList<Segment>();
     StringBuffer buffer = new StringBuffer("");
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(myString.toCharArray());
+
     while(true){
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
