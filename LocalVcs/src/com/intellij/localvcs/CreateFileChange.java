@@ -10,9 +10,6 @@ class CreateFileChange implements Change {
   }
 
   public void applyTo(Snapshot snapshot) {
-    if (snapshot.hasFile(myName)) {
-      throw new LocalVcsException();
-    }
     snapshot.createFile(myName, myContent);
   }
 

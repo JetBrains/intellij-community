@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 class ChangeContentChange implements Change {
   private String myName;
   private String myNewContent;
-  private String myOldContent;
+  private Revision myPreviousRevision;
 
   public ChangeContentChange(String name, String newContent) {
     myName = name;
@@ -11,11 +11,11 @@ class ChangeContentChange implements Change {
   }
 
   public void applyTo(Snapshot snapshot) {
-    myOldContent = snapshot.getFileRevision(myName).getContent();
+    myPreviousRevision = snapshot.getFileRevision(myName);
     snapshot.changeFile(myName, myNewContent);
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.changeFile(myName, myOldContent);
+    snapshot.changeFile(myName, myPreviousRevision.getContent());
   }
 }

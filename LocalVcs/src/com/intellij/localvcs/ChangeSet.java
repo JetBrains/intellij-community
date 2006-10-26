@@ -18,15 +18,16 @@ public class ChangeSet {
     myLabel = label;
   }
 
-  public void applyTo(Snapshot target) {
+  public void applyTo(Snapshot snapshot) {
     for (Change change : myChanges) {
-      change.applyTo(target);
+      change.applyTo(snapshot);
     }
   }
 
-  public void revertOn(Snapshot target) {
-    for (Change change : myChanges) {
-      change.revertOn(target);
+  public void revertOn(Snapshot snapshot) {
+    for (int i = myChanges.size() - 1; i >= 0; i--) {
+      Change change = myChanges.get(i);
+      change.revertOn(snapshot);
     }
   }
 }
