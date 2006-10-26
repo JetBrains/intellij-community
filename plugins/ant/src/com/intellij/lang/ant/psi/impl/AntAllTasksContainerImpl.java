@@ -11,9 +11,9 @@ public class AntAllTasksContainerImpl extends AntTaskImpl implements AntAllTasks
 
   public AntAllTasksContainerImpl(final AntElement parent, final XmlTag sourceElement, final AntTypeDefinition definition) {
     super(parent, sourceElement, definition);
-    if (myDefinition.getNestedElements().length == 0) {
+    if (myDefinition.getNestedClassName(definition.getTypeId()) == null) {
       // allow all tasks as nested elements
-      for (AntTypeDefinition def : getAntFile().getBaseTypeDefinitions()) {
+      for (final AntTypeDefinition def : getAntFile().getBaseTypeDefinitions()) {
         if (def.isTask()) {
           myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
         }
