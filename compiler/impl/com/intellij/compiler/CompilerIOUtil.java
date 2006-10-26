@@ -32,7 +32,7 @@ public class CompilerIOUtil {
         final int bytesRead = Math.min((length - charsRead) * 2, buff.length);
         stream.readFully(buff, 0, bytesRead);
         for (int i = 0 ; i < bytesRead; i += 2) {
-          chars[charsRead++] = (char)((buff[i] << 8) + buff[i + 1]);
+          chars[charsRead++] = (char)((buff[i] << 8) + buff[i + 1] & 0xFF);
         }
       }
     }

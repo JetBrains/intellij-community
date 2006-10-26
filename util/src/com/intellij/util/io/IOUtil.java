@@ -29,7 +29,7 @@ public class IOUtil {
     stream.readFully(bytes);
 
     for (int i = 0, i2 = 0; i < length; i++, i2+=2) {
-      chars[i] = (char)((bytes[i2] << 8) + bytes[i2 + 1]);
+      chars[i] = (char)((bytes[i2] << 8) + bytes[i2 + 1] & 0xFF);
     }
 
     return new String(chars);
