@@ -395,6 +395,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private void updateAll(FileEditor editor, Runnable postRunnable) {
+    if (myProject.isDisposed()) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (LOG.isDebugEnabled()) {
       /* TODO:
