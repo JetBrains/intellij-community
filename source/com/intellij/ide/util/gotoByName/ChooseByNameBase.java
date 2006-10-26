@@ -122,6 +122,9 @@ public abstract class ChooseByNameBase{
     }
 
     public Object getData(String dataId) {
+      if (!myListIsUpToDate) {
+        return null;
+      }
       if (dataId.equals(DataConstants.PSI_ELEMENT)) {
         Object element = getChosenElement();
 
