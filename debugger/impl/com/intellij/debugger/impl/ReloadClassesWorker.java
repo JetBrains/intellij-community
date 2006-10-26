@@ -1,8 +1,8 @@
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -85,7 +85,7 @@ class ReloadClassesWorker {
 
                           MethodSignature sig = method.getSignature(PsiSubstitutor.EMPTY);
                           myProgress.addMessage(
-                            MessageCategory.WARNING,
+                            myDebuggerSession, MessageCategory.WARNING,
                             getPresentableSignatureText(sig) + " : "+ DebuggerBundle.message("warning.hotswap.ignored.breakpoints")
                           );
                         }
@@ -193,35 +193,35 @@ class ReloadClassesWorker {
 
   private void processException(Throwable e) {
     if (e.getMessage() != null) {
-      myProgress.addMessage(MessageCategory.ERROR, e.getMessage());
+      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, e.getMessage());
     }
 
     if (e instanceof ProcessCanceledException) {
-      myProgress.addMessage(MessageCategory.INFORMATION, DebuggerBundle.message("error.operation.canceled"));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("error.operation.canceled"));
       return;
     }
 
     if (e instanceof UnsupportedOperationException) {
-      myProgress.addMessage(MessageCategory.ERROR, DebuggerBundle.message("error.operation.not.supported.by.vm"));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, DebuggerBundle.message("error.operation.not.supported.by.vm"));
     }
     else if (e instanceof NoClassDefFoundError) {
-      myProgress.addMessage(MessageCategory.ERROR, DebuggerBundle.message("error.class.def.not.found", e.getLocalizedMessage()));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, DebuggerBundle.message("error.class.def.not.found", e.getLocalizedMessage()));
     }
     else if (e instanceof VerifyError) {
-      myProgress.addMessage(MessageCategory.ERROR, DebuggerBundle.message("error.verification.error", e.getLocalizedMessage()));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, DebuggerBundle.message("error.verification.error", e.getLocalizedMessage()));
     }
     else if (e instanceof UnsupportedClassVersionError) {
-      myProgress.addMessage(MessageCategory.ERROR, DebuggerBundle.message("error.unsupported.class.version", e.getLocalizedMessage()));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, DebuggerBundle.message("error.unsupported.class.version", e.getLocalizedMessage()));
     }
     else if (e instanceof ClassFormatError) {
-      myProgress.addMessage(MessageCategory.ERROR, DebuggerBundle.message("error.class.format.error", e.getLocalizedMessage()));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, DebuggerBundle.message("error.class.format.error", e.getLocalizedMessage()));
     }
     else if (e instanceof ClassCircularityError) {
-      myProgress.addMessage(MessageCategory.ERROR, DebuggerBundle.message("error.class.circularity.error", e.getLocalizedMessage()));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, DebuggerBundle.message("error.class.circularity.error", e.getLocalizedMessage()));
     }
     else {
       myProgress.addMessage(
-        MessageCategory.ERROR,
+        myDebuggerSession, MessageCategory.ERROR,
         DebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), e.getLocalizedMessage())
       );
     }
@@ -238,7 +238,7 @@ class ReloadClassesWorker {
 
   public void reloadClasses(final HashMap<String, HotSwapFile> modifiedClasses) {
     if(modifiedClasses == null || modifiedClasses.size() == 0) {
-      myProgress.addMessage(MessageCategory.INFORMATION, DebuggerBundle.message("status.hotswap.loaded.classes.up.to.date"));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("status.hotswap.loaded.classes.up.to.date"));
       return;
     }
 
@@ -276,7 +276,7 @@ class ReloadClassesWorker {
           ReferenceType reference = (ReferenceType)i.next();
 
           if (buffer == null) {
-            myProgress.addMessage(MessageCategory.ERROR, DebuggerBundle.message("error.io.error"));
+            myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, DebuggerBundle.message("error.io.error"));
           }
           redefineMap.put(reference, buffer);
         }
@@ -284,7 +284,7 @@ class ReloadClassesWorker {
         //myProgress.addMessage(MessageCategory.INFORMATION, new String[] { qualifiedName + " reloaded" }, null, -1, -1);
       }
       myProgress.setFraction(1);
-      myProgress.addMessage(MessageCategory.INFORMATION, DebuggerBundle.message("status.classes.reloaded", modifiedClasses.size()));
+      myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("status.classes.reloaded", modifiedClasses.size()));
       if (LOG.isDebugEnabled()) {
         LOG.debug("classes reloaded");
       }

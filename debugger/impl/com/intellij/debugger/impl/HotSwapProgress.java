@@ -1,9 +1,6 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.util.ui.MessageCategory;
 import com.intellij.openapi.project.Project;
-import com.sun.jdi.ReferenceType;
 
 /**
  * User: lex
@@ -23,7 +20,7 @@ public abstract class HotSwapProgress {
     return myProject;
   }
 
-  public abstract void addMessage(final int type, final String text);
+  public abstract void addMessage(DebuggerSession session, final int type, final String text);
 
   public abstract void setText(String text);
 

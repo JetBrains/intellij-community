@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.MessageCategory;
 import gnu.trove.TIntObjectHashMap;
 
@@ -57,14 +58,19 @@ public class HotSwapProgressImpl extends HotSwapProgress{
           WindowManager.getInstance().getStatusBar(getProject()).setInfo(DebuggerBundle.message("status.hot.swap.completed.with.warnings"));
         }
         else {
-          final StringBuffer msg = new StringBuffer();
-          for (int category : myMessages.keys()) {
-            if (msg.length() > 0) {
-              msg.append("\n");
+          final StringBuilder msg = StringBuilderSpinAllocator.alloc();
+          try {
+            for (int category : myMessages.keys()) {
+              if (msg.length() > 0) {
+                msg.append(" \n");
+              }
+              msg.append(buildMessage(getMessages(category)));
             }
-            msg.append(buildMessage(getMessages(category)));
+            WindowManager.getInstance().getStatusBar(getProject()).setInfo(msg.toString());
           }
-          WindowManager.getInstance().getStatusBar(getProject()).setInfo(msg.toString());
+          finally {
+            StringBuilderSpinAllocator.dispose(msg);
+          }
         }
       }
     });
@@ -76,24 +82,36 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
     
   private String buildMessage(List<String> messages) {
-    StringBuffer msg = new StringBuffer();
-    for (Iterator<String> it = messages.iterator(); it.hasNext();) {
-      final String message = it.next();
-      if (msg.length() > 0) {
-        msg.append("\n");
+    final StringBuilder msg = StringBuilderSpinAllocator.alloc();
+    try {
+      for (Iterator<String> it = messages.iterator(); it.hasNext();) {
+        final String message = it.next();
+        if (msg.length() > 0) {
+          msg.append(" \n");
+        }
+        msg.append(message);
       }
-      msg.append(message);
+      return msg.toString();
     }
-    return msg.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(msg);
+    }
   } 
   
-  public void addMessage(final int type, final String text) {
+  public void addMessage(DebuggerSession session, final int type, final String text) {
     List<String> messages = myMessages.get(type);
     if (messages == null) {
       messages = new ArrayList<String>();
       myMessages.put(type, messages);
     }
-    messages.add(text);
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(session.getSessionName()).append(": ").append(text).append(";");
+      messages.add(builder.toString());
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   public void setText(final String text) {
