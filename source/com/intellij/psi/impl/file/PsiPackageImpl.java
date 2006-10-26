@@ -432,7 +432,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       else {
         PsiPackage[] packs = getSubPackages(scope);
         for (PsiPackage pack : packs) {
-          if (!getManager().getNameHelper().isIdentifier(pack.getName(), PsiUtil.getLanguageLevel(this))) {
+          final String packageName = pack.getName();
+          if (packageName == null) continue;
+          if (!getManager().getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
             continue;
           }
           if (!processor.execute(pack, substitutor)) {
