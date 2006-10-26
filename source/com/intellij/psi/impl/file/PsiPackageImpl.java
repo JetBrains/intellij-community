@@ -28,10 +28,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -435,6 +432,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       else {
         PsiPackage[] packs = getSubPackages(scope);
         for (PsiPackage pack : packs) {
+          if (!getManager().getNameHelper().isIdentifier(pack.getName(), PsiUtil.getLanguageLevel(this))) {
+            continue;
+          }
           if (!processor.execute(pack, substitutor)) {
             return false;
           }

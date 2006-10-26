@@ -15,8 +15,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
 import gnu.trove.THashMap;
@@ -42,8 +40,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private VirtualFileListener myVirtualFileListener;
   private FileTypeListener myFileTypeListener;
   private ModuleRootListener myRootListener;
-
-  private PsiNameHelper myNameHelper;
 
   public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManagerEx startupManagerEx) {
     myProject = project;
@@ -137,8 +133,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   public void initialize() {
-    myNameHelper = PsiManager.getInstance(myProject).getNameHelper();
-
     if (myInitialized) {
       LOG.error("Directory index is already initialized.");
       return;
@@ -794,9 +788,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   @Nullable
-  private String getPackageNameForSubdir(String parentPackageName, String subdirName) {
+  private static String getPackageNameForSubdir(String parentPackageName, String subdirName) {
     if (parentPackageName == null) return null;
-    if (!myNameHelper.isIdentifier(subdirName)) return null;
     return parentPackageName.length() > 0 ? parentPackageName + "." + subdirName : subdirName;
   }
 
