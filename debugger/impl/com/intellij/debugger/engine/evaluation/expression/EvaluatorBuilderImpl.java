@@ -265,11 +265,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
             PsiType type = localVariable.getType();
 
-            if (type == null) {
-              throw new EvaluateRuntimeException(EvaluateExceptionUtil
-                .createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", localVariable.getName())));
-            }
-
             PsiElementFactory elementFactory = localVariable.getManager().getElementFactory();
             try {
               PsiExpression initialValue = elementFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(type), null);
@@ -527,10 +522,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())));
       }
       PsiType type = checkType.getType();
-      if (type == null) {
-        throw new EvaluateRuntimeException(EvaluateExceptionUtil
-          .createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getCheckType().getText())));
-      }
       expression.getOperand().accept(this);
 //    ClassObjectEvaluator typeEvaluator = new ClassObjectEvaluator(type.getCanonicalText());
       Evaluator operandEvaluator = myResult;
@@ -600,10 +591,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         LOG.debug("visitMethodCallExpression " + expression);
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      if (argumentList == null) {
-        throw new EvaluateRuntimeException(EvaluateExceptionUtil
-          .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())));
-      }
       final PsiExpression[] argExpressions = argumentList.getExpressions();
       List<Evaluator> argumentEvaluators = new ArrayList<Evaluator>(argExpressions.length);
       // evaluate arguments
@@ -617,10 +604,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         argumentEvaluators.add(myResult);
       }
       PsiReferenceExpression methodExpr = expression.getMethodExpression();
-      if(methodExpr == null) {
-        throw new EvaluateRuntimeException(EvaluateExceptionUtil
-          .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())));
-      }
 
       final JavaResolveResult resolveResult = methodExpr.advancedResolve(false);
       final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
@@ -730,7 +713,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiType type = expression.getOperand().getType();
 
       if (type instanceof PsiPrimitiveType) {
-        final JVMName typeName = JVMNameUtil.getJVMRawText(ourPrimitiveTypeMapping.get(type.getCanonicalText()));
+        final JVMName typeName = JVMNameUtil.getJVMRawText(((PsiPrimitiveType)type).getBoxedTypeName());
         myResult = new FieldEvaluator(new TypeEvaluator(typeName), typeName, "TYPE");
       }
       else {
