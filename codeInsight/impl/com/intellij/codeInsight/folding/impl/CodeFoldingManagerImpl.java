@@ -73,7 +73,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (!((FoldingModelEx)editor.getFoldingModel()).isFoldingEnabled()) return;
-            if (editor.isDisposed()) return;
+            if (project.isDisposed() || editor.isDisposed()) return;
 
             PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
