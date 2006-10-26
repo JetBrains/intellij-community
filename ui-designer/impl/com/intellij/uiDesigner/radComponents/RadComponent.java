@@ -716,7 +716,17 @@ public abstract class RadComponent implements IComponent {
     final IntrospectedProperty[] properties = context.getPalette().getIntrospectedProperties(component.getClass(),
                                                                                              result.getDelegee().getClass());
     for(IntrospectedProperty prop: properties) {
+      if (component instanceof AbstractButton) {
+        AbstractButton btn = (AbstractButton) component;
+        if (prop.getName().equals(SwingProperties.LABEL) && btn.getLabel().equals(btn.getText())) {
+          continue;
+        }
+        if (prop.getName().equals(SwingProperties.ACTION_COMMAND) && btn.getActionCommand().equals(btn.getText())) {
+          continue;
+        }
+      }
       prop.importSnapshotValue(context, component, result);
+
     }
 
     if (component instanceof AbstractButton) {
