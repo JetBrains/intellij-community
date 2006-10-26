@@ -17,4 +17,9 @@ public class RevisionTest extends Assert {
     assertFalse(r.equals(null));
     assertFalse(r.equals(new Object()));
   }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testHashCodeThrowsException() {
+    new Revision(1, "name", "content").hashCode();
+  }
 }

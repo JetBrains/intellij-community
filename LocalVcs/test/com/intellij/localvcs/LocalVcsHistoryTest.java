@@ -7,7 +7,7 @@ import org.junit.Test;
 public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testRevertingToPreviousVersion() {
-    myVcs.addFile("file", "");
+    myVcs.createFile("file", "");
     myVcs.commit();
     assertTrue(myVcs.hasFile("file"));
 
@@ -17,10 +17,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testRevertingClearsAllPendingChanges() {
-    myVcs.addFile("file1", "");
+    myVcs.createFile("file1", "");
     myVcs.commit();
 
-    myVcs.addFile("file2", "");
+    myVcs.createFile("file2", "");
     assertFalse(myVcs.isClean());
 
     myVcs.revert();
@@ -39,7 +39,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testClearingChangesAfterRevertWhenNoPreviousVersions() {
-    myVcs.addFile("file", "");
+    myVcs.createFile("file", "");
     assertFalse(myVcs.isClean());
 
     myVcs.revert();
@@ -48,11 +48,11 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingSnapshots() {
-    myVcs.addFile("file1", "content1");
-    myVcs.addFile("file2", "content2");
+    myVcs.createFile("file1", "content1");
+    myVcs.createFile("file2", "content2");
     myVcs.commit();
 
-    myVcs.addFile("file3", "content3");
+    myVcs.createFile("file3", "content3");
     myVcs.changeFile("file1", "new content1");
     myVcs.commit();
 
@@ -84,7 +84,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingLabeledSnapshot() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.putLabel("label");
@@ -99,7 +99,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingSnapshotWithUnknownLabel() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
     myVcs.putLabel("label");
 

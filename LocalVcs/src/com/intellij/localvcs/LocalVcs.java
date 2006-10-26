@@ -11,6 +11,10 @@ public class LocalVcs {
     return mySnapshot.hasFile(name);
   }
 
+  public boolean hasDirectory(String name) {
+    return hasFile(name);
+  }
+
   public Revision getFileRevision(String name) {
     return mySnapshot.getFileRevision(name);
   }
@@ -32,8 +36,12 @@ public class LocalVcs {
     return result;
   }
 
-  public void addFile(String name, String content) {
-    myPendingChanges.add(new AddFileChange(name, content));
+  public void createDirectory(String name) {
+    myPendingChanges.add(new CreateFileChange(name, null));
+  }
+
+  public void createFile(String name, String content) {
+    myPendingChanges.add(new CreateFileChange(name, content));
   }
 
   public void changeFile(String name, String content) {

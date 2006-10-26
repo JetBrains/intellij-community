@@ -14,6 +14,6 @@ class DeleteFileChange implements Change {
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.addFile(myName, myContent);
+    snapshot.createFile(myName, myContent);
   }
 }

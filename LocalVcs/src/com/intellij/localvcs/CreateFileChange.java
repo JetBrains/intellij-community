@@ -1,16 +1,19 @@
 package com.intellij.localvcs;
 
-class AddFileChange implements Change {
+class CreateFileChange implements Change {
   private String myName;
   private String myContent;
 
-  public AddFileChange(String name, String content) {
+  public CreateFileChange(String name, String content) {
     myName = name;
     myContent = content;
   }
 
   public void applyTo(Snapshot snapshot) {
-    snapshot.addFile(myName, myContent);
+    if (snapshot.hasFile(myName)) {
+      throw new LocalVcsException();
+    }
+    snapshot.createFile(myName, myContent);
   }
 
   public void revertOn(Snapshot snapshot) {

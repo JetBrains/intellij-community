@@ -6,8 +6,8 @@ import org.junit.Test;
 
 public class LocalVcsChangesTest extends LocalVcsTestCase {
   @Test
-  public void testAddingFiles() {
-    myVcs.addFile("file", "");
+  public void testCreatingFiles() {
+    myVcs.createFile("file", "");
     assertFalse(myVcs.hasFile("file"));
 
     myVcs.commit();
@@ -15,9 +15,9 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testAddingTwoFiles() {
-    myVcs.addFile("file1", "");
-    myVcs.addFile("file2", "");
+  public void testCreatingTwoFiles() {
+    myVcs.createFile("file1", "");
+    myVcs.createFile("file2", "");
     myVcs.commit();
 
     assertTrue(myVcs.hasFile("file1"));
@@ -27,8 +27,31 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testCommitThrowsException() {
+    myVcs.createFile("file", "");
+    myVcs.createFile("file", "");
+
+    try {
+      myVcs.commit();
+      fail();
+    } catch (LocalVcsException e) { }
+  }
+
+  @Test
+  public void testDoesNotApplyAnyChangeIfCommitFail() {
+    myVcs.createFile("file1", "");
+    myVcs.createFile("file2", "");
+    myVcs.createFile("file2", "");
+
+    try { myVcs.commit(); } catch (LocalVcsException e) { }
+
+    assertFalse(myVcs.hasFile("file1"));
+    assertFalse(myVcs.hasFile("file2"));
+  }
+
+  @Test
   public void testClearingChangesOnCommit() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.changeFile("file", "new content");
     myVcs.renameFile("file", "new file");
     myVcs.deleteFile("new file");
@@ -41,7 +64,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testChangingContent() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.changeFile("file", "new content");
@@ -57,8 +80,8 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testChangingOnlyOneFile() {
-    myVcs.addFile("file1", "content1");
-    myVcs.addFile("file2", "content2");
+    myVcs.createFile("file1", "content1");
+    myVcs.createFile("file2", "content2");
     myVcs.commit();
 
     myVcs.changeFile("file1", "new content");
@@ -70,7 +93,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testKeepingOldVersions() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.changeFile("file", "new content");
@@ -82,7 +105,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotChangeContentBeforeCommit() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.changeFile("file", "new content");
@@ -92,7 +115,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotIncludeUncommittedChangesInRevisions() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.changeFile("file", "new content");
@@ -103,7 +126,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testRenaming() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.renameFile("file", "new file");
@@ -117,7 +140,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingKeepsOldNameAndContent() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.renameFile("file", "new file");
@@ -136,7 +159,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testDeleting() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.deleteFile("file");
@@ -149,8 +172,8 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingOnlyOneFile() {
-    myVcs.addFile("file1", "");
-    myVcs.addFile("file2", "");
+    myVcs.createFile("file1", "");
+    myVcs.createFile("file2", "");
     myVcs.commit();
 
     myVcs.deleteFile("file2");
@@ -161,8 +184,8 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testAddingAndDeletingSameFileBeforeCommit() {
-    myVcs.addFile("file", "");
+  public void testCreatingAndDeletingSameFileBeforeCommit() {
+    myVcs.createFile("file", "");
     myVcs.deleteFile("file");
     myVcs.commit();
 
@@ -171,11 +194,11 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingAndAddingSameFileBeforeCommit() {
-    myVcs.addFile("file", "");
+    myVcs.createFile("file", "");
     myVcs.commit();
 
     myVcs.deleteFile("file");
-    myVcs.addFile("file", "");
+    myVcs.createFile("file", "");
     myVcs.commit();
 
     assertTrue(myVcs.hasFile("file"));
@@ -183,7 +206,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testAddingAndChangingSameFileBeforeCommit() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.changeFile("file", "new content");
     myVcs.commit();
 
@@ -192,11 +215,11 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingFileAndCreatingNewOneWithSameName() {
-    myVcs.addFile("file", "old");
+    myVcs.createFile("file", "old");
     myVcs.commit();
 
     myVcs.deleteFile("file");
-    myVcs.addFile("file", "new");
+    myVcs.createFile("file", "new");
     myVcs.commit();
 
     assertRevisionsContent(new String[]{"new"},
@@ -205,11 +228,11 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingFileAndCreatingNewOneWithSameName() {
-    myVcs.addFile("file1", "content1");
+    myVcs.createFile("file1", "content1");
     myVcs.commit();
 
     myVcs.renameFile("file1", "file2");
-    myVcs.addFile("file1", "content2");
+    myVcs.createFile("file1", "content2");
     myVcs.commit();
 
     assertRevisionsContent(new String[]{"content1", "content1"},
@@ -223,7 +246,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
   public void testFileRevisions() {
     assertTrue(myVcs.getFileRevisions("file").isEmpty());
 
-    myVcs.addFile("file", "");
+    myVcs.createFile("file", "");
     myVcs.commit();
 
     assertEquals(1, myVcs.getFileRevisions("file").size());
@@ -231,7 +254,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testRevisionsForUnknownFile() {
-    myVcs.addFile("file", "");
+    myVcs.createFile("file", "");
     myVcs.commit();
 
     assertTrue(myVcs.getFileRevisions("unknown file").isEmpty());
@@ -239,7 +262,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
   @Test
   public void testFileRevisionsForDeletedFile() {
-    myVcs.addFile("file", "content");
+    myVcs.createFile("file", "content");
     myVcs.commit();
 
     myVcs.deleteFile("file");
