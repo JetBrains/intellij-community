@@ -343,7 +343,7 @@ public class LocalVcsTest extends Assert {
     myVcs.addFile("file", "content");
     myVcs.commit();
 
-    myVcs.label("label");
+    myVcs.putLabel("label");
 
     myVcs.changeFile("file", "new content");
     myVcs.commit();
@@ -355,7 +355,11 @@ public class LocalVcsTest extends Assert {
 
   @Test
   public void testGettingSnapshotWithUnknownLabel() {
-    // todo    
+    myVcs.addFile("file", "content");
+    myVcs.commit();
+    myVcs.putLabel("label");
+
+    assertNull(myVcs.getSnapshot("unknown label"));
   }
 
   private void assertRevisionContent(String expectedContent,

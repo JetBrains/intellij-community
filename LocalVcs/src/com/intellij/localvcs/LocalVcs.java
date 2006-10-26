@@ -69,7 +69,7 @@ public class LocalVcs {
     return myPendingChanges.isEmpty();
   }
 
-  public void label(String label) {
+  public void putLabel(String label) {
     mySnapshot.setLabel(label);
   }
 
