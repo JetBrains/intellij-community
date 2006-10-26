@@ -150,6 +150,10 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
       EditSourceOnDoubleClickHandler.install(table);
     }
 
+    public void installTreeTableSpeedSearch(TreeTable treeTable) {
+      new TreeTableSpeedSearch(treeTable);
+    }
+
     public void installTreeSpeedSearch(JTree tree) {
       new TreeSpeedSearch(tree);
     }

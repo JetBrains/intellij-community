@@ -11,15 +11,17 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.table.TableCellEditor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import javax.swing.table.TableCellEditor;
 
 /**
  * @author peter
@@ -122,6 +124,9 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
   public abstract BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
+  public abstract void registerCustomControl(Class aClass, Function<DomWrapper<String>, BaseControl> creator);
+
+  @Nullable
   public abstract BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public static BaseControl createTextControl(GenericDomValue value, final boolean commitOnEveryChange) {

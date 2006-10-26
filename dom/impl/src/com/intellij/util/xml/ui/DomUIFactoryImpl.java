@@ -11,11 +11,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ClassMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
-import com.intellij.javaee.web.WebPath;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,6 +29,7 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public class DomUIFactoryImpl extends DomUIFactory {
+  private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<Function<DomWrapper<String>, BaseControl>>();
 
   public TableCellEditor createPsiClasssTableCellEditor(Project project, GlobalSearchScope searchScope) {
     return new PsiClassTableCellEditor(project, searchScope);
@@ -77,12 +80,10 @@ public class DomUIFactoryImpl extends DomUIFactory {
     };
   }
 
+  @Nullable
   public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
-    // todo registry for custom controls
-    if (WebPath.class.isAssignableFrom(DomReflectionUtil.getRawType(type))) {
-      return new WebPathControl(wrapper, commitOnEveryChange);
-    }
-    return null;
+    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(DomReflectionUtil.getRawType(type));
+    return factory == null ? null : factory.fun(wrapper);
   }
 
   public CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements) {
@@ -100,6 +101,10 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
   public BaseControl createTextControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
     return new TextControl(wrapper, commitOnEveryChange);
+  }
+
+  public void registerCustomControl(Class aClass, Function<DomWrapper<String>, BaseControl> creator) {
+    myCustomControlCreators.put(aClass, creator);
   }
 
   private static <T extends JComponent> T removeBorder(final T component) {
