@@ -1,88 +1,64 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class RemoveSuppressWarningAction implements IntentionAction, LocalQuickFix {
+public class RemoveSuppressWarningAction implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction");
 
   private final String myID;
-  protected final PsiElement myContext;
+  private final PsiElement myContext;
 
   public RemoveSuppressWarningAction(String ID, PsiElement context) {
     myID = ID;
     myContext = context;
   }
 
-  public String getText() {
-    return QuickFixBundle.message("remove.suppression.action.name", myID);
-  }
-
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.suppression.action.family");
   }
 
-  public void applyFix(Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     try {
-      invoke(project, null, element.getContainingFile());
+      if (!CodeInsightUtil.prepareFileForWrite(element.getContainingFile())) return;
+      if (myContext instanceof PsiAnnotation) {
+        removeFromAnnotation((PsiAnnotation)myContext);
+      }
+      else if (myContext instanceof PsiDocComment) {
+        removeFromJavaDoc((PsiDocComment)myContext);
+      }
+      else if (myContext instanceof PsiComment) {
+        removeFromComment((PsiComment)myContext);
+      }
+      else {
+        LOG.error("invalid element type: " + myContext);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
 
+  @NotNull
   public String getName() {
-    return getText();
-  }
-
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    final Module module = ModuleUtil.findModuleForPsiElement(myContext);
-    if (module == null) return false;
-    final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
-    if (jdk == null) return false;
-    final boolean is_1_5 = JavaSdk.getInstance().compareTo(jdk.getVersionString(), "1.5") >= 0;
-    return  DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(myContext)) <= 0 &&
-            myContext.isValid() && myContext.getManager().isInProject(myContext);
-  }
-
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    if (myContext instanceof PsiAnnotation) {
-      removeFromAnnotation((PsiAnnotation)myContext);
-    }
-    else if (myContext instanceof PsiDocComment) {
-      removeFromJavaDoc((PsiDocComment)myContext);
-    }
-    else if (myContext instanceof PsiComment) {
-      removeFromComment((PsiComment)myContext);
-    }
-    else {
-      LOG.error("invalid element type: " + myContext);
-    }
+    return QuickFixBundle.message("remove.suppression.action.name", myID);
   }
 
   private void removeFromComment(final PsiComment comment) throws IncorrectOperationException {
@@ -110,6 +86,7 @@ public class RemoveSuppressWarningAction implements IntentionAction, LocalQuickF
     }
   }
 
+  @Nullable
   private String removeFromElementText(final PsiElement element) {
     String text = StringUtil.trimStart(element.getText(), "//").trim();
     text = StringUtil.trimStart(text, "@").trim();
@@ -149,9 +126,5 @@ public class RemoveSuppressWarningAction implements IntentionAction, LocalQuickF
       return true;
     }
     return false;
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

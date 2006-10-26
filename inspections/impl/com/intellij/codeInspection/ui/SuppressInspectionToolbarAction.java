@@ -4,10 +4,10 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AddNoInspectionDocTagAction;
 import com.intellij.codeInsight.daemon.impl.AddSuppressWarningsAnnotationAction;
+import com.intellij.codeInsight.daemon.impl.SuppressUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -22,16 +22,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,17 +230,10 @@ class SuppressInspectionToolbarAction extends AnAction {
       if (customActions.length > 0) return customActions[0];
     }
 
-    boolean isSuppressWarnings = false;
-    final Module module = ModuleUtil.findModuleForPsiElement(context);
-    if (module != null) {
-      final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
-      if (jdk != null) {
-        isSuppressWarnings = DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && JavaSdk.getInstance().compareTo(jdk.getVersionString(), "1.5") >= 0 &&
-                             LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(context)) <= 0;
+    if (SuppressUtil.canHave15Suppressions(context.getContainingFile())) {
+      if (!(context instanceof PsiDocCommentOwner && SuppressUtil.alreadyHas14Suppressions((PsiDocCommentOwner)context))) {
+        return new SuppressWarningAction(id, context);
       }
-    }
-    if (isSuppressWarnings) {
-      return new SuppressWarningAction(id, context);
     }
     return new SuppressDocCommentAction(id, context);
   }
@@ -259,16 +245,19 @@ class SuppressInspectionToolbarAction extends AnAction {
                                             final InspectionResultsView view){
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (key != null) {
-        final IntentionAction action = SuppressInspectionToolbarAction.getCorrectIntentionAction(tool, key.getID(), descriptor, refElement.getElement());
-        final PsiFile file = refElement.getElement().getContainingFile();
-        if (action.isAvailable(view.getProject(), null, file)) {
-          return new AnAction(action.getText()) {
-            public void actionPerformed(AnActionEvent e) {
-              final List<RefEntity> elementsToSuppress = new ArrayList<RefEntity>();
-              InspectionResultsView.traverseRefElements((InspectionTreeNode)view.getTree().getSelectionPath().getLastPathComponent(), elementsToSuppress);
-              invokeSuppressAction(action, refElement, tool, elementsToSuppress, view);
-            }
-          };
+        final PsiElement psiElement = refElement.getElement();
+        if (psiElement != null && psiElement.isValid()) {
+          final IntentionAction action = SuppressInspectionToolbarAction.getCorrectIntentionAction(tool, key.getID(), descriptor, psiElement);
+          final PsiFile file = psiElement.getContainingFile();
+          if (action.isAvailable(view.getProject(), null, file)) {
+            return new AnAction(action.getText()) {
+              public void actionPerformed(AnActionEvent e) {
+                final List<RefEntity> elementsToSuppress = new ArrayList<RefEntity>();
+                InspectionResultsView.traverseRefElements((InspectionTreeNode)view.getTree().getSelectionPath().getLastPathComponent(), elementsToSuppress);
+                invokeSuppressAction(action, refElement, tool, elementsToSuppress, view);
+              }
+            };
+          }
         }
       }
       return null;
