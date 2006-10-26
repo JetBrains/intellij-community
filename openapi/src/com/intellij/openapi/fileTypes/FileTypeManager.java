@@ -48,7 +48,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param defaultAssociatedExtensions The list of extensions which cause the file to be
    *                                    treated as the specified file type. The extensions should not start with '.'.
    */
-  public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String[] defaultAssociatedExtensions) {
+  public final void registerFileType(@NotNull FileType type, @NonNls @Nullable String... defaultAssociatedExtensions) {
     List<FileNameMatcher> matchers = new ArrayList<FileNameMatcher>();
     if (defaultAssociatedExtensions != null) {
       for (String extension : defaultAssociatedExtensions) {
