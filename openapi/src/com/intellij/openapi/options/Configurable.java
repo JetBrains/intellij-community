@@ -44,7 +44,7 @@ public interface Configurable extends UnnamedConfigurable {
    *
    * @return the icon for the component.
    */
-  Icon getIcon();
+  @Nullable Icon getIcon();
 
   /**
    * Returns the topic in the help file which is shown when help for the configurable

@@ -16,12 +16,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,7 +46,6 @@ public class SdkEditor implements Configurable{
   private TextFieldWithBrowseButton myHomeComponent;
   private Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<SdkType, AdditionalDataConfigurable>();
   private Map<AdditionalDataConfigurable, JComponent> myAdditionalDataComponents = new HashMap<AdditionalDataConfigurable, JComponent>();
-  private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   private JPanel myAdditionalDataPanel;
   private SdkModificator myEditedSdkModificator = new EditedSdkModificator();
 
@@ -65,10 +63,6 @@ public class SdkEditor implements Configurable{
   public SdkEditor(NotifiableSdkModel sdkModel) {
     mySdkModel = sdkModel;
     createMainPanel();
-  }
-
-  public ProjectJdk getEditedSdk(){
-    return mySdk;
   }
 
   public void setSdk(ProjectJdk sdk){
@@ -102,10 +96,6 @@ public class SdkEditor implements Configurable{
   }
 
   public JComponent createComponent(){
-    return myMainPanel;
-  }
-
-  public JComponent getComponent(){
     return myMainPanel;
   }
 
@@ -227,15 +217,7 @@ public class SdkEditor implements Configurable{
     return myHomeComponent.getText().trim();
   }
 
-  public void addChangeListener(ChangeListener listener){
-    myEventDispatcher.addListener(listener);
-  }
-
-  public void removeChangeListener(ChangeListener listener){
-    myEventDispatcher.removeListener(listener);
-  }
-
-  public void clearAllPaths(){
+  private void clearAllPaths(){
     myClassPathEditor.clearList();
     mySourcePathEditor.clearList();
     myJavadocPathEditor.clearList();
@@ -254,6 +236,7 @@ public class SdkEditor implements Configurable{
     myHomeComponent.getTextField().setForeground(fg);
   }
 
+  @Nullable
   public static String selectSdkHome(final Component parentComponent, final SdkType sdkType){
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
@@ -280,7 +263,8 @@ public class SdkEditor implements Configurable{
     return null;
   }
 
-  public static VirtualFile getSuggestedSdkRoot(SdkType sdkType) {
+  @Nullable
+  private static VirtualFile getSuggestedSdkRoot(SdkType sdkType) {
     final String homepath = sdkType.suggestHomePath();
     if (homepath == null) return null;
     return LocalFileSystem.getInstance().findFileByPath(homepath);
@@ -384,6 +368,7 @@ public class SdkEditor implements Configurable{
     }
   }
 
+  @Nullable
   private AdditionalDataConfigurable getAdditionalDataConfigurable() {
     if (mySdk == null) {
       return null;
@@ -391,7 +376,8 @@ public class SdkEditor implements Configurable{
     return initAdditionalDataConfigurable(mySdk);
   }
 
-  public AdditionalDataConfigurable initAdditionalDataConfigurable(Sdk sdk) {
+  @Nullable
+  private AdditionalDataConfigurable initAdditionalDataConfigurable(Sdk sdk) {
     final SdkType sdkType = sdk.getSdkType();
     AdditionalDataConfigurable configurable = myAdditionalDataConfigurables.get(sdkType);
     if (configurable == null) {
