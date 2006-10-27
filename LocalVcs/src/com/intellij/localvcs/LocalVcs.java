@@ -70,7 +70,7 @@ public class LocalVcs {
     myPendingChanges = new ArrayList<Change>();
   }
 
-  public boolean isClean() {
+  public Boolean isClean() {
     return myPendingChanges.isEmpty();
   }
 
