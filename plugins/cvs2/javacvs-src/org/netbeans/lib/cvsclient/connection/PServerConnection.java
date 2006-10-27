@@ -14,12 +14,11 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.connection;
 
-import org.netbeans.lib.cvsclient.io.AsciiOutputStreamWriter;
+import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.io.StreamUtilities;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.net.ConnectException;
@@ -160,17 +159,15 @@ public final class PServerConnection
       final OutputStream loggingOutputStream = streamLogger.createLoggingOutputStream(this.socketOutputStream);
       final InputStream loggingInputStream = streamLogger.createLoggingInputStream(this.socketInputStream);
 
-      final AsciiOutputStreamWriter loggedWriter = new AsciiOutputStreamWriter(loggingOutputStream);
-      println(loggedWriter, preamble);
-      println(loggedWriter, repository);
-      println(loggedWriter, userName);
+      writeLn(loggingOutputStream, preamble, "US-ASCII");
+      writeLn(loggingOutputStream, repository);
+      writeLn(loggingOutputStream, userName);
 
-      final AsciiOutputStreamWriter writer = new AsciiOutputStreamWriter(socketOutputStream);
-      println(writer, encodedPassword);
-      println(new AsciiOutputStreamWriter(streamLogger.getOutputLogStream()), ENCODED_PASSWORD_OUTPUT_MESSAGE);
+      writeLn(socketOutputStream, encodedPassword, "US-ASCII");
+      writeLn(streamLogger.getOutputLogStream(), ENCODED_PASSWORD_OUTPUT_MESSAGE);
 
-      println(loggedWriter, postamble);
-      loggedWriter.flush();
+      writeLn(loggingOutputStream, postamble, "US-ASCII");
+      loggingOutputStream.flush();
 
       String response = new StreamUtilities(null).readLine(loggingInputStream);
       if (response.equals(SUCCESS_MESSAGE)) {
@@ -206,6 +203,16 @@ public final class PServerConnection
     }
   }
 
+  private static void writeLn(final OutputStream outputStream, final String line, @NonNls final String encoding) throws IOException {
+    final String line1 = line + "\n";
+    outputStream.write(line1.getBytes(encoding));
+  }
+
+  private static void writeLn(final OutputStream outputStream, final String line) throws IOException {
+    final String line1 = line + "\n";
+    outputStream.write(line1.getBytes());
+  }
+
   private void createSocket() throws IOException {
     if (connectionSettings.isUseProxy()) {
       this.socket = connectionSettings.createProxyTransport();
@@ -228,10 +235,5 @@ public final class PServerConnection
 
   private static String getMessage(String messagePattern, String value) {
     return MessageFormat.format(messagePattern, new Object[]{value});
-  }
-
-  private static void println(Writer writer, String line) throws IOException {
-    writer.write(line);
-    writer.write('\n');
   }
 }
