@@ -295,6 +295,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
     TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
-    return ChangeUtil.decodeInformation(treeElement).getPsi();
+    if (treeElement != null) return ChangeUtil.decodeInformation(treeElement).getPsi();
+    throw new IncorrectOperationException("Element cannot be added");
   }
 }
