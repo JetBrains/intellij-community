@@ -100,6 +100,10 @@ public class OSProcessHandler extends ProcessHandler {
               try {
                 exitCode = myWaitFor.waitFor();
 
+                // tell threads that no more attempts to read process' output should be made
+                stderrThread.setProcessTerminated(true);
+                stdoutThread.setProcessTerminated(true);
+
                 stderrThread.join(0);
                 stdoutThread.join(0);
               }
@@ -187,6 +191,7 @@ public class OSProcessHandler extends ProcessHandler {
     private final Alarm myAlarm;
 
     private boolean myIsClosed = false;
+    private boolean myIsProcessTerminated = false;
 
     public ReadProcessThread(final Reader reader) {
       //noinspection HardCodedStringLiteral
@@ -194,6 +199,14 @@ public class OSProcessHandler extends ProcessHandler {
       setPriority(Thread.MAX_PRIORITY);
       myReader = reader;
       myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    }
+
+    public synchronized boolean isProcessTerminated() {
+      return myIsProcessTerminated;
+    }
+
+    public synchronized void setProcessTerminated(boolean isProcessTerminated) {
+      myIsProcessTerminated = isProcessTerminated;
     }
 
     public void run() {
@@ -230,6 +243,16 @@ public class OSProcessHandler extends ProcessHandler {
 
     private int readNextByte() {
       try {
+        while(!myReader.ready()) {
+          if (isProcessTerminated()) {
+            return -1;
+          }
+          try {
+            Thread.sleep(100);
+          }
+          catch (InterruptedException ignore) {
+          }
+        }
         return myReader.read();
       }
       catch (IOException e) {
