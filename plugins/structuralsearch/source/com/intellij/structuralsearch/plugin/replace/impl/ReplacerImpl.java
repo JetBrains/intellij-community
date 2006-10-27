@@ -63,19 +63,28 @@ public class ReplacerImpl {
 
     Matcher matcher = new Matcher(project);
     try {
-      PsiElement[] elements = MatcherImplUtil.createTreeFromText(
-        in,
-        filePattern ? MatcherImplUtil.TreeContext.File : MatcherImplUtil.TreeContext.Block,
-        this.options.getMatchOptions().getFileType(),
-        project
-      );
-      PsiElement firstElement = elements[0];
-      PsiElement lastElement = elements[elements.length-1];
-      PsiElement parent = firstElement.getParent();
+      PsiElement firstElement, lastElement, parent;
 
-      this.options.getMatchOptions().setScope(
-        new LocalSearchScope(parent)
-      );
+      if (options.getMatchOptions().getScope() == null) {
+        PsiElement[] elements = MatcherImplUtil.createTreeFromText(
+          in,
+          filePattern ? MatcherImplUtil.TreeContext.File : MatcherImplUtil.TreeContext.Block,
+          this.options.getMatchOptions().getFileType(),
+          project
+        );
+
+        firstElement = elements[0];
+        lastElement = elements[elements.length-1];
+        parent = firstElement.getParent();
+
+        this.options.getMatchOptions().setScope(
+          new LocalSearchScope(parent)
+        );
+      } else {
+        parent = ((LocalSearchScope)options.getMatchOptions().getScope()).getScope()[0];
+        firstElement = parent.getFirstChild();
+        lastElement = parent.getLastChild();
+      }
 
       this.options.getMatchOptions().setResultIsContextMatch(true);
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
@@ -114,6 +123,8 @@ public class ReplacerImpl {
     } catch(Exception ex) {
       ex.printStackTrace( );
       return "";
+    } finally {
+      options.getMatchOptions().setScope(null);
     }
   }
 
@@ -265,14 +276,19 @@ public class ReplacerImpl {
             }
           }
 
-          final PsiElement inserted = elementParent.addBefore(replacement,elementToReplace);
+          try {
+            final PsiElement inserted = elementParent.addBefore(replacement,elementToReplace);
 
-          if (replacement instanceof PsiComment &&
-               ( elementParent instanceof PsiIfStatement ||
-                 elementParent instanceof PsiLoopStatement
-               )
-              ) {
-            elementParent.addAfter(createSemicolon(replacement),inserted);
+            if (replacement instanceof PsiComment &&
+                 ( elementParent instanceof PsiIfStatement ||
+                   elementParent instanceof PsiLoopStatement
+                 )
+                ) {
+              elementParent.addAfter(createSemicolon(replacement),inserted);
+            }
+          }
+          catch (IncorrectOperationException e) {
+            elementToReplace.replace(replacement);
           }
         }
       } else if (statements.length > 0) {
@@ -378,6 +394,7 @@ public class ReplacerImpl {
             aMatchesPtrList.getElement()
           );
 
+          if (element == null) continue;
           PsiElement firstToDelete = element;
           PsiElement lastToDelete = element;
           PsiElement prevSibling = element.getPrevSibling();

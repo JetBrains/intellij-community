@@ -1,5 +1,10 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
+
 import java.io.IOException;
 
 /**
@@ -1692,6 +1697,23 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(
       "Removing comments",
       expectedResult2,
+      actualResult
+    );
+  }
+
+  public void testJspExpressionReplacement() throws Exception {
+    String jsp = TestUtils.loadFile(getTestName(false)+".jsp");
+    String jspResultExpected = TestUtils.loadFile(getTestName(false)+"_after.jsp");
+    String toReplace = "jspHelper.composeTag('tag, 'a)";
+    String replacement = "jspHelper.composeTag($tag$, $a$, Boolean.getBoolean($a$))";
+
+    final PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("A.jsp", jsp);
+    options.getMatchOptions().setScope(new LocalSearchScope(psiFile));
+    actualResult = replacer.testReplace(jsp,toReplace,replacement,options, true);
+
+    assertEquals(
+      "Replacing jsp expressions",
+      jspResultExpected,
       actualResult
     );
   }
