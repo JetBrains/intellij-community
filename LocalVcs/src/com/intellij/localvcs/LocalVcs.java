@@ -7,28 +7,28 @@ public class LocalVcs {
   private Snapshot mySnapshot = new Snapshot();
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
-  public boolean hasFile(String name) {
-    return mySnapshot.hasFile(name);
+  public boolean hasRevision(String name) {
+    return mySnapshot.hasRevision(name);
   }
 
-  public boolean hasDirectory(String name) {
-    return mySnapshot.hasDirectory(name);
+  public Integer getId(String name) {
+    return mySnapshot.getId(name);
   }
 
-  public Revision getFileRevision(String name) {
-    return mySnapshot.getFileRevision(name);
+  public Revision getRevision(String name) {
+    return mySnapshot.getRevision(name);
   }
 
-  public List<Revision> getFileRevisions(String name) {
+  public List<Revision> getRevisions(String name) {
     List<Revision> result = new ArrayList<Revision>();
 
     //todo clean up this mess
-    Revision r = mySnapshot.getFileRevision(name);
-    if (r == null) return result;
+    if (!mySnapshot.hasRevision(name)) return result;
+
+    Integer id = mySnapshot.getId(name);
 
     for (Snapshot snapshot : getSnapshots()) {
-      r = snapshot.getFileRevision(r.getObjectId());
-
+      Revision r = snapshot.getRevision(id);
       if (r == null) break;
       result.add(r);
     }

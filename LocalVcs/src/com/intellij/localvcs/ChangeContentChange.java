@@ -11,7 +11,7 @@ class ChangeContentChange implements Change {
   }
 
   public void applyTo(Snapshot snapshot) {
-    myPreviousRevision = snapshot.getFileRevision(myName);
+    myPreviousRevision = snapshot.getRevision(myName);
     snapshot.changeFile(myName, myNewContent);
   }
 

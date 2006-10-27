@@ -9,10 +9,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   public void testRevertingToPreviousVersion() {
     myVcs.createFile("file", "");
     myVcs.commit();
-    assertTrue(myVcs.hasFile("file"));
+    assertTrue(myVcs.hasRevision("file"));
 
     myVcs.revert();
-    assertFalse(myVcs.hasFile("file"));
+    assertFalse(myVcs.hasRevision("file"));
   }
 
   @Test
@@ -56,9 +56,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     myVcs.changeFile("file1", "new content1");
     myVcs.commit();
 
-    Integer id1 = myVcs.getFileRevision("file1").getObjectId();
-    Integer id2 = myVcs.getFileRevision("file2").getObjectId();
-    Integer id3 = myVcs.getFileRevision("file3").getObjectId();
+    Integer id1 = myVcs.getId("file1");
+    Integer id2 = myVcs.getId("file2");
+    Integer id3 = myVcs.getId("file3");
 
     List<Snapshot> snapshots = myVcs.getSnapshots();
     assertEquals(2, snapshots.size());
@@ -94,7 +94,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
     Snapshot s = myVcs.getSnapshot("label");
     assertNotNull(s);
-    assertRevisionContent("content", s.getFileRevision("file"));
+    assertRevisionContent("content", s.getRevision("file"));
   }
 
   @Test

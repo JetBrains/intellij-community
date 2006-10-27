@@ -1,7 +1,17 @@
 package com.intellij.localvcs;
 
-public interface DirectoryRevision extends Revision {
-  Integer size();
+import java.util.ArrayList;
+import java.util.List;
 
-  Revision get(Integer index);
+public class DirectoryRevision extends Revision {
+  private List<Revision> myChildren = new ArrayList<Revision>();
+
+  public DirectoryRevision(Integer objectId, String name) {
+    super(objectId, name);
+  }
+
+  @Override
+  public List<Revision> getChildren() {
+    return myChildren;
+  }
 }

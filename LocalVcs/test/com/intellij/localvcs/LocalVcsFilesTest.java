@@ -4,14 +4,15 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class LocalVcsChangesTest extends LocalVcsTestCase {
+public class LocalVcsFilesTest extends LocalVcsTestCase {
   @Test
   public void testCreatingFiles() {
     myVcs.createFile("file", "");
-    assertFalse(myVcs.hasFile("file"));
+    assertFalse(myVcs.hasRevision("file"));
 
     myVcs.commit();
-    assertTrue(myVcs.hasFile("file"));
+    assertTrue(myVcs.hasRevision("file"));
+    assertEquals(FileRevision.class, myVcs.getRevision("file").getClass());
   }
 
   @Test
@@ -20,10 +21,10 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.createFile("file2", "");
     myVcs.commit();
 
-    assertTrue(myVcs.hasFile("file1"));
-    assertTrue(myVcs.hasFile("file2"));
+    assertTrue(myVcs.hasRevision("file1"));
+    assertTrue(myVcs.hasRevision("file2"));
 
-    assertFalse(myVcs.hasFile("unknown file"));
+    assertFalse(myVcs.hasRevision("unknown file"));
   }
 
   @Test
@@ -45,8 +46,8 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
     try { myVcs.commit(); } catch (LocalVcsException e) { }
 
-    assertFalse(myVcs.hasFile("file1"));
-    assertFalse(myVcs.hasFile("file2"));
+    assertFalse(myVcs.hasRevision("file1"));
+    assertFalse(myVcs.hasRevision("file2"));
   }
 
   @Test
@@ -70,12 +71,12 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.changeFile("file", "new content");
     myVcs.commit();
 
-    assertRevisionContent("new content", myVcs.getFileRevision("file"));
+    assertRevisionContent("new content", myVcs.getRevision("file"));
   }
 
   @Test
   public void testRevisionOfUnknownFile() {
-    assertNull(myVcs.getFileRevision("unknown file"));
+    assertNull(myVcs.getRevision("unknown file"));
   }
 
   @Test
@@ -87,8 +88,8 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.changeFile("file1", "new content");
     myVcs.commit();
 
-    assertRevisionContent("new content", myVcs.getFileRevision("file1"));
-    assertRevisionContent("content2", myVcs.getFileRevision("file2"));
+    assertRevisionContent("new content", myVcs.getRevision("file1"));
+    assertRevisionContent("content2", myVcs.getRevision("file2"));
   }
 
   @Test
@@ -100,7 +101,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.commit();
 
     assertRevisionsContent(new String[]{"new content", "content"},
-                           myVcs.getFileRevisions("file"));
+                           myVcs.getRevisions("file"));
   }
 
   @Test
@@ -110,7 +111,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
 
     myVcs.changeFile("file", "new content");
 
-    assertRevisionContent("content", myVcs.getFileRevision("file"));
+    assertRevisionContent("content", myVcs.getRevision("file"));
   }
 
   @Test
@@ -121,7 +122,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.changeFile("file", "new content");
 
     assertRevisionsContent(new String[]{"content"},
-                           myVcs.getFileRevisions("file"));
+                           myVcs.getRevisions("file"));
   }
 
   @Test
@@ -132,10 +133,10 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.renameFile("file", "new file");
     myVcs.commit();
 
-    assertFalse(myVcs.hasFile("file"));
-    assertTrue(myVcs.hasFile("new file"));
+    assertFalse(myVcs.hasRevision("file"));
+    assertTrue(myVcs.hasRevision("new file"));
 
-    assertRevisionContent("content", myVcs.getFileRevision("new file"));
+    assertRevisionContent("content", myVcs.getRevision("new file"));
   }
 
   @Test
@@ -146,7 +147,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.renameFile("file", "new file");
     myVcs.commit();
 
-    List<Revision> revs = myVcs.getFileRevisions("new file");
+    List<Revision> revs = myVcs.getRevisions("new file");
 
     assertEquals(2, revs.size());
 
@@ -163,11 +164,11 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.commit();
 
     myVcs.deleteFile("file");
-    assertRevisionContent("content", myVcs.getFileRevision("file"));
+    assertRevisionContent("content", myVcs.getRevision("file"));
 
     myVcs.commit();
-    assertFalse(myVcs.hasFile("file"));
-    assertNull(myVcs.getFileRevision("file"));
+    assertFalse(myVcs.hasRevision("file"));
+    assertNull(myVcs.getRevision("file"));
   }
 
   @Test
@@ -179,8 +180,8 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.deleteFile("file2");
     myVcs.commit();
 
-    assertTrue(myVcs.hasFile("file1"));
-    assertFalse(myVcs.hasFile("file2"));
+    assertTrue(myVcs.hasRevision("file1"));
+    assertFalse(myVcs.hasRevision("file2"));
   }
 
   @Test
@@ -189,7 +190,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.deleteFile("file");
     myVcs.commit();
 
-    assertFalse(myVcs.hasFile("file"));
+    assertFalse(myVcs.hasRevision("file"));
   }
 
   @Test
@@ -201,7 +202,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.createFile("file", "");
     myVcs.commit();
 
-    assertTrue(myVcs.hasFile("file"));
+    assertTrue(myVcs.hasRevision("file"));
   }
 
   @Test
@@ -210,7 +211,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.changeFile("file", "new content");
     myVcs.commit();
 
-    assertRevisionContent("new content", myVcs.getFileRevision("file"));
+    assertRevisionContent("new content", myVcs.getRevision("file"));
   }
 
   @Test
@@ -223,7 +224,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.commit();
 
     assertRevisionsContent(new String[]{"new"},
-                           myVcs.getFileRevisions("file"));
+                           myVcs.getRevisions("file"));
   }
 
   @Test
@@ -236,20 +237,20 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.commit();
 
     assertRevisionsContent(new String[]{"content1", "content1"},
-                           myVcs.getFileRevisions("file2"));
+                           myVcs.getRevisions("file2"));
 
     assertRevisionsContent(new String[]{"content2"},
-                           myVcs.getFileRevisions("file1"));
+                           myVcs.getRevisions("file1"));
   }
 
   @Test
   public void testFileRevisions() {
-    assertTrue(myVcs.getFileRevisions("file").isEmpty());
+    assertTrue(myVcs.getRevisions("file").isEmpty());
 
     myVcs.createFile("file", "");
     myVcs.commit();
 
-    assertEquals(1, myVcs.getFileRevisions("file").size());
+    assertEquals(1, myVcs.getRevisions("file").size());
   }
 
   @Test
@@ -257,7 +258,7 @@ public class LocalVcsChangesTest extends LocalVcsTestCase {
     myVcs.createFile("file", "");
     myVcs.commit();
 
-    assertTrue(myVcs.getFileRevisions("unknown file").isEmpty());
+    assertTrue(myVcs.getRevisions("unknown file").isEmpty());
   }
 
   @Test

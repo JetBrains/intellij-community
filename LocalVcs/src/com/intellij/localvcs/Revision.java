@@ -1,9 +1,42 @@
 package com.intellij.localvcs;
 
+import java.util.List;
+
 public abstract class Revision {
-  public abstract Integer getObjectId();
+  private Integer myObjectId;
+  private String myName;
 
-  public abstract String getName();
+  public Revision(Integer objectId, String name) {
+    // todo move objectId outside of Revision
+    myObjectId = objectId;
+    myName = name;
+  }
 
-  public abstract String getContent();
+  public Integer getObjectId() {
+    return myObjectId;
+  }
+
+  public String getName() {
+    return myName;
+  }
+
+  public String getContent() {
+    throw new UnsupportedOperationException();
+  }
+
+  public List<Revision> getChildren() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || !o.getClass().equals(getClass())) return false;
+    Revision r = (Revision)o;
+    return myObjectId.equals(r.myObjectId) && myName.equals(r.myName);
+  }
+
+  @Override
+  public int hashCode() {
+    throw new UnsupportedOperationException();
+  }
 }
