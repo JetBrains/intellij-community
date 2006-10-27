@@ -33,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
@@ -251,7 +252,7 @@ public final class PreviewFormAction extends AnAction{
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
-    parameters.getClassPath().add(tempPath + "/jgoodies-forms.jar");
+    parameters.getClassPath().add(PathManager.getLibPath() + "/jgoodies-forms.jar");
     final List<String> paths = sources.getPathList();
     for (final String path : paths) {
       parameters.getClassPath().add(path);
