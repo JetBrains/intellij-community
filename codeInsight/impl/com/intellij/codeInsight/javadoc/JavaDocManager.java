@@ -2,8 +2,8 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -71,9 +71,10 @@ public class JavaDocManager implements ProjectComponent {
   private ActionManagerEx myActionManagerEx;
   private AnActionListener myActionListener = new AnActionListener() {
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
+      if (action instanceof HintManager.ActionToIgnore) return;
       if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
       if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
-      if (action instanceof HintManager.ActionToIgnore) return;
+      if (action == ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
       cancelJavadoc();
     }
 
