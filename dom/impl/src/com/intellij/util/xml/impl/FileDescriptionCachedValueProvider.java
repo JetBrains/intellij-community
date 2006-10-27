@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.SmartList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -81,6 +82,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     myComputing = true;
     try {
       if (!myXmlFile.isValid()) {
+        computeCachedValue(ArrayUtil.EMPTY_OBJECT_ARRAY);
         if (fireEvents && myLastResult != null) {
           myDomManager.getFileDescriptions().get(myFileDescription).remove(myLastResult);
           return Arrays.<DomEvent>asList(new ElementUndefinedEvent(myLastResult));
@@ -98,6 +100,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       if (myLastResult != null && myFileDescription.getRootTagName().equals(rootTagName.getValue()) && myFileDescription.isMyFile(myXmlFile, module)) {
         List<DomEvent> list = new SmartList<DomEvent>();
         setInModel(changedRoot, list, myLastResult, fireEvents);
+        myCachedValue.getValue();
         return list;
       }
 
@@ -188,14 +191,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     return null;
   }
 
-  final boolean isInModel() {
-    return myInModel;
-  }
-
-  final void setInModel(final boolean inModel) {
-    myInModel = inModel;
-  }
-
   private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents, DomFileElement changedRoot) {
     final DomFileElementImpl oldValue = getLastValue();
     final DomFileDescription oldFileDescription = myFileDescription;
@@ -220,7 +215,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final Set<Object> deps = new HashSet<Object>(description.getDependencyItems(myXmlFile));
     deps.add(this);
     deps.add(myXmlFile);
-    computeCachedValue(deps.toArray());
+    final Object[] dependencyItems = deps.toArray();
+    computeCachedValue(dependencyItems);
 
     myDomManager.getFileDescriptions().get(myFileDescription).add(myLastResult);
     if (fireEvents) {
