@@ -196,7 +196,7 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
             for (PsiMethod method : methods) {
                 final PsiParameterList parameterList =
                         method.getParameterList();
-                if (parameterList.getParameters().length == 0) {
+                if (parameterList.getParametersCount() == 0) {
                     return true;
                 }
             }

@@ -63,7 +63,7 @@ public class MisspelledCompareToInspection extends MethodInspection {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParameters().length != 1) {
+            if (parameterList.getParametersCount() != 1) {
                 return;
             }
             registerMethodError(method);

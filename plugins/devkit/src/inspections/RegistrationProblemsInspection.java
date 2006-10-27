@@ -174,7 +174,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             method.getNameIdentifier() != null &&
             method.getContainingFile().getVirtualFile() != null)
     {
-      if (method.getParameterList().getParameters().length == 0 && !isPublic(method)) {
+      if (method.getParameterList().getParametersCount() == 0 && !isPublic(method)) {
         final PsiClass checkedClass = method.getContainingClass();
         if (ActionType.ACTION.isOfType(checkedClass)) {
           if (isActionRegistered(checkedClass)) {
@@ -368,7 +368,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       final PsiMethod[] constructors = checkedClass.getConstructors();
       if (constructors.length > 0) {
         for (PsiMethod ctor : constructors) {
-          if (ctor.getParameterList().getParameters().length == 0) {
+          if (ctor.getParameterList().getParametersCount() == 0) {
             return new ConstructorType(ctor);
           }
         }

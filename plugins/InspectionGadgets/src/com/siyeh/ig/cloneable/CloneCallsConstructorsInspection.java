@@ -52,8 +52,7 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
             final String methodName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
             final boolean isClone =
-                    HardcodedMethodConstants.CLONE.equals(methodName) &&
-                            parameterList.getParameters().length == 0;
+                    HardcodedMethodConstants.CLONE.equals(methodName) && parameterList.getParametersCount() == 0;
             if (isClone) {
                 method.accept(new PsiRecursiveElementVisitor() {
 

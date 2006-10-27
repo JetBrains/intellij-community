@@ -80,7 +80,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection{
               return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList.getParameters().length != 0){
+            if(parameterList.getParametersCount() != 0){
                 return;
             }
             if(method.hasModifierProperty(PsiModifier.PROTECTED)){

@@ -90,7 +90,7 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
                 }
             }
             final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList.getParameters().length != 0){
+            if(parameterList.getParametersCount() != 0){
                 return;
             }
             final CallToSuperFinalizeVisitor visitor =

@@ -87,7 +87,7 @@ public class SerializableWithUnconstructableAncestorInspection
                 if (method.isConstructor()) {
                     hasConstructor = true;
                     final PsiParameterList params = method.getParameterList();
-                    if (params.getParameters().length == 0 &&
+                    if (params.getParametersCount() == 0 &&
                             (method.hasModifierProperty(PsiModifier.PUBLIC) ||
                                     method.hasModifierProperty(
                                             PsiModifier.PROTECTED))) {

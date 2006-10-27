@@ -121,7 +121,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
             final PsiMethod[] constructurs = aClass.getConstructors();
             for (final PsiMethod constructor : constructurs) {
                 final PsiParameterList params = constructor.getParameterList();
-                if (params.getParameters().length == 0) {
+                if (params.getParametersCount() == 0) {
                     final PsiModifierList modifiers =
                             constructor.getModifierList();
                     modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
@@ -215,7 +215,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
         final PsiMethod[] constructors = aClass.getConstructors();
         for (final PsiMethod constructor : constructors) {
             final PsiParameterList params = constructor.getParameterList();
-            if (params.getParameters().length == 0) {
+            if (params.getParametersCount() == 0) {
                 return true;
             }
         }

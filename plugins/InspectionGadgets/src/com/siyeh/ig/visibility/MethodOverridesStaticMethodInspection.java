@@ -89,8 +89,7 @@ public class MethodOverridesStaticMethodInspection extends MethodInspection{
                 for(final PsiMethod testMethod : methods){
                     final PsiParameterList testParametersList =
                             testMethod.getParameterList();
-                    final int numTestParameters =
-                            testParametersList.getParameters().length;
+                  final int numTestParameters = testParametersList.getParametersCount();
                     if(numParameters != numTestParameters){
                         continue;
                     }

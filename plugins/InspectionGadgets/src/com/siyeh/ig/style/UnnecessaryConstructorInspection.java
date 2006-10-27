@@ -94,7 +94,7 @@ public class UnnecessaryConstructorInspection extends ClassInspection {
             }
             final PsiParameterList parameterList =
                     constructor.getParameterList();
-            if (parameterList.getParameters().length != 0) {
+            if (parameterList.getParametersCount() != 0) {
                 return;
             }
             final PsiReferenceList throwsList = constructor.getThrowsList();
