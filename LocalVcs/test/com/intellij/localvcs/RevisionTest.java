@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import org.junit.Test;
 
-public class FileRevisionTest extends TestCase {
+public class RevisionTest extends TestCase {
   @Test
   public void testEquality() {
     FileRevision r = new FileRevision(1, fn("name"), "content");
