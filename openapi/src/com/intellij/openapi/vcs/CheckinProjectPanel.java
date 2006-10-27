@@ -89,15 +89,6 @@ public interface CheckinProjectPanel extends Refreshable {
   Project getProject();
 
   /**
-   * Returns the list of operations (change, add, delete) that will need to be performed
-   * on individual files under a single VCS during the checkin operation.
-   *
-   * @param checkinEnvironment the environment for the checkin.
-   * @return the list of operations.
-   */
-  List<VcsOperation> getCheckinOperations(CheckinEnvironment checkinEnvironment);
-
-  /**
    * Returns the list of version control systems files from which are included in the
    * commit operation.
    *

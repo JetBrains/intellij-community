@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -548,10 +547,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public Project getProject() {
     return myProject;
-  }
-
-  public List<VcsOperation> getCheckinOperations(CheckinEnvironment checkinEnvironment) {
-    throw new UnsupportedOperationException();
   }
 
   public void setCommitMessage(final String currentDescription) {
