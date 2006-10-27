@@ -314,7 +314,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   protected Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration)
     throws Exception {
     final Project project = getProject();
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
+    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

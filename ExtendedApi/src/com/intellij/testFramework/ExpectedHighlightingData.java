@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
@@ -30,13 +31,15 @@ import java.awt.*;
 public class ExpectedHighlightingData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.ExpectedHighlightingData");
 
- @NonNls private static final String ERROR_MARKER = "error";
- @NonNls private static final String WARNING_MARKER = "warning";
- @NonNls private static final String INFORMATION_MARKER = "weak_warning";
- @NonNls private static final String SERVER_PROBLEM_MARKER = "server_problem";
- @NonNls private static final String INFO_MARKER = "info";
- @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
- @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
+  @NonNls private static final String ERROR_MARKER = "error";
+  @NonNls private static final String WARNING_MARKER = "warning";
+  @NonNls private static final String INFORMATION_MARKER = "weak_warning";
+  @NonNls private static final String SERVER_PROBLEM_MARKER = "server_problem";
+  @NonNls private static final String INFO_MARKER = "info";
+  @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
+  @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
+
+  private final PsiFile myFile;
 
   static class ExpectedHighlightingSet {
     public final String marker;
@@ -65,11 +68,25 @@ public class ExpectedHighlightingData {
     this(document, checkWarnings, checkWeakWarnings, checkInfos, false);
   }
 
+  public ExpectedHighlightingData(Document document, boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, PsiFile file){
+    this(document, checkWarnings, checkWeakWarnings, checkInfos, false, file);
+  }
+
   public ExpectedHighlightingData(Document document,
                                   boolean checkWarnings,
                                   boolean checkWeakWarnings,
                                   boolean checkInfos,
                                   boolean checkServerProblems) {
+    this(document, checkWarnings, checkWeakWarnings, checkInfos, checkServerProblems, null);
+  }
+
+  public ExpectedHighlightingData(Document document,
+                                  boolean checkWarnings,
+                                  boolean checkWeakWarnings,
+                                  boolean checkInfos,
+                                  boolean checkServerProblems,
+                                  PsiFile file) {
+    myFile = file;
     highlightingTypes = new THashMap<String,ExpectedHighlightingSet>();
     highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(ERROR_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
     highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(WARNING_MARKER, HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
@@ -83,13 +100,14 @@ public class ExpectedHighlightingData {
 
   /**
    * remove highlights (bounded with <marker>...</marker>) from test case file
-   * @param document
+   * @param document document to process
    */
   private void extractExpectedHighlightsSet(Document document) {
     String text = document.getText();
 
+    final Set<String> markers = highlightingTypes.keySet();
     String typesRegex = "";
-    for (String marker : highlightingTypes.keySet()) {
+    for (String marker : markers) {
       typesRegex += (typesRegex.length() == 0 ? "" : "|") + "(?:" + marker + ")";
     }
 
@@ -182,6 +200,7 @@ public class ExpectedHighlightingData {
   }
 
   public void checkResult(Collection<HighlightInfo> infos, String text) {
+    String fileName = myFile == null ? "" : myFile.getName() + ": ";
     for (HighlightInfo info : infos) {
       if (!expectedInfosContainsInfo(info)) {
         final int startOffset = info.startOffset;
@@ -194,7 +213,7 @@ public class ExpectedHighlightingData {
         int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
         int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-        Assert.assertTrue("Extra text fragment highlighted " +
+        Assert.assertTrue(fileName + "Extra text fragment highlighted " +
                           "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                           "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
                           " :'" +
@@ -219,7 +238,7 @@ public class ExpectedHighlightingData {
           int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
           int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-          Assert.assertTrue("Text fragment was not highlighted " +
+          Assert.assertTrue(fileName + "Text fragment was not highlighted " +
                             "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                             "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
                             " :'" +
