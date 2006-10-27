@@ -56,9 +56,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     myVcs.changeFile("file1", "new content1");
     myVcs.commit();
 
-    Integer id1 = myVcs.getId("file1");
-    Integer id2 = myVcs.getId("file2");
-    Integer id3 = myVcs.getId("file3");
+    Integer id1 = myVcs.getRevision("file1").getObjectId();
+    Integer id2 = myVcs.getRevision("file2").getObjectId();
+    Integer id3 = myVcs.getRevision("file3").getObjectId();
 
     List<Snapshot> snapshots = myVcs.getSnapshots();
     assertEquals(2, snapshots.size());

@@ -7,7 +7,6 @@ public abstract class Revision {
   private String myName;
 
   public Revision(Integer objectId, String name) {
-    // todo move objectId outside of Revision
     myObjectId = objectId;
     myName = name;
   }

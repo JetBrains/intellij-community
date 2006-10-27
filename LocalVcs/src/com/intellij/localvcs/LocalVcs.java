@@ -11,10 +11,6 @@ public class LocalVcs {
     return mySnapshot.hasRevision(name);
   }
 
-  public Integer getId(String name) {
-    return mySnapshot.getId(name);
-  }
-
   public Revision getRevision(String name) {
     return mySnapshot.getRevision(name);
   }
@@ -25,11 +21,12 @@ public class LocalVcs {
     //todo clean up this mess
     if (!mySnapshot.hasRevision(name)) return result;
 
-    Integer id = mySnapshot.getId(name);
+    Integer id = mySnapshot.getRevision(name).getObjectId();
 
     for (Snapshot snapshot : getSnapshots()) {
       Revision r = snapshot.getRevision(id);
       if (r == null) break;
+
       result.add(r);
     }
 
