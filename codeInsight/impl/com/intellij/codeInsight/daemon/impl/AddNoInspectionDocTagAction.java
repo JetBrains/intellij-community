@@ -54,7 +54,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
   }
 
   @Nullable protected PsiDocCommentOwner getContainer() {
-    if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage) || myContext instanceof PsiFile){
+    if (!myContext.isValid() || !(myContext.getContainingFile().getLanguage() instanceof JavaLanguage) || myContext instanceof PsiFile){
       return null;
     }
     PsiElement container = myContext;
