@@ -188,7 +188,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   }
 
   @Nullable
-  public DropLocation getAdjacentLocation(Direction direction) {
+  public ComponentDropLocation getAdjacentLocation(Direction direction) {
     if (direction == Direction.DOWN && myYPart < 2) {
       return createAdjacentLocation(myXPart, myYPart+1);
     }

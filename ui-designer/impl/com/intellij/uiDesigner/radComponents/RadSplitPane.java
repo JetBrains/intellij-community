@@ -164,7 +164,7 @@ public final class RadSplitPane extends RadContainer {
     }
 
     @Override @NotNull
-    public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
       if (location == null) {
         return new MyDropLocation(isEmptySplitComponent(getSplitPane().getLeftComponent()));
       }
@@ -172,7 +172,7 @@ public final class RadSplitPane extends RadContainer {
     }
   }
 
-  private class MyDropLocation implements DropLocation {
+  private class MyDropLocation implements ComponentDropLocation {
     private boolean myLeft;
 
     public MyDropLocation(final boolean left) {
@@ -234,7 +234,7 @@ public final class RadSplitPane extends RadContainer {
     }
 
     @Nullable
-    public DropLocation getAdjacentLocation(Direction direction) {
+    public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }

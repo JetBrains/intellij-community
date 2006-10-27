@@ -9,7 +9,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -53,7 +53,7 @@ public class RadFlowLayoutManager extends RadLayoutManager {
   }
 
   @NotNull @Override
-  public DropLocation getDropLocation(RadContainer container, final Point location) {
+  public ComponentDropLocation getDropLocation(RadContainer container, final Point location) {
     FlowLayout flowLayout = (FlowLayout) container.getLayout();
     return new FlowDropLocation(container, location, flowLayout.getAlignment(),
                                 (flowLayout.getHgap()+1)/2, (flowLayout.getVgap()+1)/2);

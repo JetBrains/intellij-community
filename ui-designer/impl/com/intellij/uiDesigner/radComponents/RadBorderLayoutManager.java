@@ -9,7 +9,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -59,7 +59,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
   }
 
   @NotNull @Override
-  public DropLocation getDropLocation(RadContainer container, final Point location) {
+  public ComponentDropLocation getDropLocation(RadContainer container, final Point location) {
     return new MyDropLocation(container, getQuadrantAt(container, location));
   }
 
@@ -180,7 +180,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
   }
 
-  private static class MyDropLocation implements DropLocation {
+  private static class MyDropLocation implements ComponentDropLocation {
     private RadContainer myContainer;
     private String myQuadrant;
 
@@ -229,7 +229,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
 
     @Nullable
-    public DropLocation getAdjacentLocation(Direction direction) {
+    public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }

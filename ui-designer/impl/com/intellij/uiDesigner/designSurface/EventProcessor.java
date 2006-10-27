@@ -36,16 +36,16 @@ public abstract class EventProcessor {
     return false;
   }
 
-  protected static DropLocation.Direction directionFromKey(final int keyCode) {
+  protected static ComponentDropLocation.Direction directionFromKey(final int keyCode) {
     switch(keyCode) {
-      case KeyEvent.VK_RIGHT: return DropLocation.Direction.RIGHT;
-      case KeyEvent.VK_LEFT: return DropLocation.Direction.LEFT;
-      case KeyEvent.VK_UP: return DropLocation.Direction.UP;
-      case KeyEvent.VK_DOWN: return DropLocation.Direction.DOWN;
-      case KeyEvent.VK_END: return DropLocation.Direction.RIGHT;
-      case KeyEvent.VK_HOME: return DropLocation.Direction.LEFT;
-      case KeyEvent.VK_PAGE_UP: return DropLocation.Direction.UP;
-      case KeyEvent.VK_PAGE_DOWN: return DropLocation.Direction.DOWN;
+      case KeyEvent.VK_RIGHT: return ComponentDropLocation.Direction.RIGHT;
+      case KeyEvent.VK_LEFT: return ComponentDropLocation.Direction.LEFT;
+      case KeyEvent.VK_UP: return ComponentDropLocation.Direction.UP;
+      case KeyEvent.VK_DOWN: return ComponentDropLocation.Direction.DOWN;
+      case KeyEvent.VK_END: return ComponentDropLocation.Direction.RIGHT;
+      case KeyEvent.VK_HOME: return ComponentDropLocation.Direction.LEFT;
+      case KeyEvent.VK_PAGE_UP: return ComponentDropLocation.Direction.UP;
+      case KeyEvent.VK_PAGE_DOWN: return ComponentDropLocation.Direction.DOWN;
       default: return null;
     }
   }
@@ -55,15 +55,15 @@ public abstract class EventProcessor {
            keyCode == KeyEvent.VK_PAGE_UP || keyCode == KeyEvent.VK_PAGE_DOWN;
   }
 
-  protected static DropLocation moveDropLocation(final GuiEditor editor, final DropLocation location,
+  protected static ComponentDropLocation moveDropLocation(final GuiEditor editor, final ComponentDropLocation location,
                                                  final ComponentDragObject dragObject, final KeyEvent e) {
-    DropLocation.Direction dir = directionFromKey(e.getKeyCode());
+    ComponentDropLocation.Direction dir = directionFromKey(e.getKeyCode());
     boolean moveToLast = isMoveToLast(e.getKeyCode());
     if (dir != null && location != null) {
-      DropLocation adjacentLocation;
+      ComponentDropLocation adjacentLocation;
       if (moveToLast) {
         adjacentLocation = location.getAdjacentLocation(dir);
-        DropLocation lastLocation = location;
+        ComponentDropLocation lastLocation = location;
         while(adjacentLocation != null) {
           if (adjacentLocation.canDrop(dragObject)) {
             lastLocation = adjacentLocation;

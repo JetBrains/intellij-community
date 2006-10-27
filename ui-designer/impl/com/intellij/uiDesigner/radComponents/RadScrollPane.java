@@ -5,7 +5,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
@@ -82,7 +82,7 @@ public final class RadScrollPane extends RadContainer {
     }
 
     @Override @NotNull
-    public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
       if (myDropLocation == null) {
         myDropLocation = new MyDropLocation();
       }
@@ -102,7 +102,7 @@ public final class RadScrollPane extends RadContainer {
     }
   }
 
-  private class MyDropLocation implements DropLocation {
+  private class MyDropLocation implements ComponentDropLocation {
     public RadContainer getContainer() {
       return RadScrollPane.this;
     }
@@ -123,7 +123,7 @@ public final class RadScrollPane extends RadContainer {
     }
 
     @Nullable
-    public DropLocation getAdjacentLocation(Direction direction) {
+    public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }

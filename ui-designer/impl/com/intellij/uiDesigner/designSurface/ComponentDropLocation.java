@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface DropLocation {
+public interface ComponentDropLocation {
   enum Direction { LEFT, UP, RIGHT, DOWN }
 
   RadContainer getContainer();
@@ -27,5 +27,5 @@ public interface DropLocation {
                    ComponentDragObject dragObject);
 
   @Nullable
-  DropLocation getAdjacentLocation(Direction direction);
+  ComponentDropLocation getAdjacentLocation(Direction direction);
 }

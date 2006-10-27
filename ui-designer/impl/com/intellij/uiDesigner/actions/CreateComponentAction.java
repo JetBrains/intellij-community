@@ -47,8 +47,8 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
     }
   }
 
-  private static DropLocation getCreateLocation(final GuiEditor editor, final List<RadComponent> selection) {
-    DropLocation dropLocation = null;
+  private static ComponentDropLocation getCreateLocation(final GuiEditor editor, final List<RadComponent> selection) {
+    ComponentDropLocation dropLocation = null;
     if (selection.size() > 0) {
       RadComponent component = selection.get(0);
       final RadContainer container = component.getParent();

@@ -6,7 +6,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.NoDropLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
@@ -44,7 +44,7 @@ public abstract class RadLayoutManager {
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
   }
 
-  @NotNull public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  @NotNull public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
     return NoDropLocation.INSTANCE;
   }
 

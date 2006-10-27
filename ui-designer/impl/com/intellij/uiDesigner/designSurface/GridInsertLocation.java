@@ -357,7 +357,7 @@ public class GridInsertLocation extends GridDropLocation {
   }
 
   @Override @Nullable
-  public DropLocation getAdjacentLocation(Direction direction) {
+  public ComponentDropLocation getAdjacentLocation(Direction direction) {
     if (isRowInsert()) {
       if (direction == Direction.RIGHT) {
         if (getColumn() < myContainer.getGridColumnCount()-1) {
@@ -409,7 +409,7 @@ public class GridInsertLocation extends GridDropLocation {
     return null;
   }
 
-  private DropLocation getLocationAtParent(final Direction direction) {
+  private ComponentDropLocation getLocationAtParent(final Direction direction) {
     final RadContainer parent = myContainer.getParent();
     if (parent.getLayoutManager().isGrid()) {
       final GridConstraints c = myContainer.getConstraints();

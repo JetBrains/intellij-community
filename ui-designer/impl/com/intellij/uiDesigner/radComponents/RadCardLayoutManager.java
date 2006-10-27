@@ -10,7 +10,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -78,7 +78,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
   }
 
   @Override @NotNull
-  public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
     return new CardDropLocation(container);
   }
 
@@ -164,7 +164,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     return false;
   }
 
-  private static class CardDropLocation implements DropLocation {
+  private static class CardDropLocation implements ComponentDropLocation {
     private RadContainer myContainer;
     @NonNls private static final String CARD_NAME_PREFIX = "Card";
 
@@ -198,7 +198,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     }
 
     @Nullable
-    public DropLocation getAdjacentLocation(Direction direction) {
+    public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }

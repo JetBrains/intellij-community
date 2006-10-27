@@ -19,7 +19,7 @@ import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.DraggedComponentList;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.Painter;
 import com.intellij.uiDesigner.editor.UIFormEditor;
@@ -661,7 +661,7 @@ public final class FormEditingUtil {
   }
 
   public static boolean isDropOnChild(final DraggedComponentList draggedComponentList,
-                                       final DropLocation location) {
+                                       final ComponentDropLocation location) {
     if (location.getContainer() == null) {
       return false;
     }

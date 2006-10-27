@@ -352,7 +352,7 @@ public final class MainProcessor extends EventProcessor{
                                                         1, false));
   }
 
-  public void startInsertProcessor(final ComponentItem componentToInsert, final DropLocation location) {
+  public void startInsertProcessor(final ComponentItem componentToInsert, final ComponentDropLocation location) {
     removeDragger();
     myEditor.hideIntentionHint();
     myInsertComponentProcessor.setComponentToInsert(componentToInsert);

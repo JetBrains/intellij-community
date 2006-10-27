@@ -9,7 +9,7 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.ComponentDragObject;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -71,7 +71,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
   }
 
   @NotNull @Override
-  public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
     return new MyDropLocation(container, location != null ? location : new Point(5, 5));
   }
 
@@ -79,7 +79,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
     container.getDelegee().add(component.getDelegee(), component.getConstraints());
   }
 
-  private static class MyDropLocation implements DropLocation {
+  private static class MyDropLocation implements ComponentDropLocation {
     private final RadContainer myContainer;
     private final Point myLocation;
 
@@ -140,7 +140,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
     }
 
     @Nullable
-    public DropLocation getAdjacentLocation(Direction direction) {
+    public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }

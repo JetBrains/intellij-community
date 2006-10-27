@@ -7,7 +7,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.ComponentItemDragObject;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadTabbedPane;
@@ -30,7 +30,7 @@ public class AddTabAction extends AbstractGuiEditorAction {
     Palette palette = Palette.getInstance(editor.getProject());
 
     final RadComponent radComponent = InsertComponentProcessor.createPanelComponent(editor);
-    final DropLocation dropLocation = tabbedPane.getDropLocation(null);
+    final ComponentDropLocation dropLocation = tabbedPane.getDropLocation(null);
     dropLocation.processDrop(editor, new RadComponent[] { radComponent }, null, 
                              new ComponentItemDragObject(palette.getPanelItem()));
   }

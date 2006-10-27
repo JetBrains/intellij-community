@@ -16,7 +16,7 @@ import java.awt.LayoutManager;
 /**
  * @author yole
  */
-public class GridDropLocation implements DropLocation {
+public class GridDropLocation implements ComponentDropLocation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridDropLocation");
 
   protected final RadContainer myContainer;
@@ -144,7 +144,7 @@ public class GridDropLocation implements DropLocation {
   }
 
   @Nullable
-  public DropLocation getAdjacentLocation(Direction direction) {
+  public ComponentDropLocation getAdjacentLocation(Direction direction) {
     switch(direction) {
       case LEFT:  return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.ColumnBefore);
       case UP:    return new GridInsertLocation(myContainer, myRow, myColumn, GridInsertMode.RowBefore);

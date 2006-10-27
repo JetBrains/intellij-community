@@ -271,7 +271,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   @NotNull @Override
-  public DropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
+  public ComponentDropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
     FormLayout formLayout = getFormLayout(container);
     if (formLayout.getRowCount() == 0 && formLayout.getColumnCount() == 0) {
       if (location != null) {

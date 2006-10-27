@@ -14,7 +14,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class FlowDropLocation implements DropLocation {
+public class FlowDropLocation implements ComponentDropLocation {
   private int myInsertIndex;
   private String myInsertBeforeId;
   private RadContainer myContainer;
@@ -142,7 +142,7 @@ public class FlowDropLocation implements DropLocation {
   }
 
   @Nullable
-  public DropLocation getAdjacentLocation(Direction direction) {
+  public ComponentDropLocation getAdjacentLocation(Direction direction) {
     return null;
   }
 }

@@ -10,7 +10,7 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.GridBagConverter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FirstComponentInsertLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
@@ -188,7 +188,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   @NotNull @Override
-  public DropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
+  public ComponentDropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
     if (getGridRowCount(container) == 0 && getGridColumnCount(container) == 0) {
       return new FirstComponentInsertLocation(container, container.getBounds(), 0, 0);
     }

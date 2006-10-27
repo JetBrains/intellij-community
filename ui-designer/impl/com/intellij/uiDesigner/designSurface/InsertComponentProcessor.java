@@ -52,7 +52,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   private RadComponent myInsertedComponent;
   private GridInsertProcessor myGridInsertProcessor;
   private ComponentItem myComponentToInsert;
-  private DropLocation myLastLocation;
+  private ComponentDropLocation myLastLocation;
 
   private static Map<String, RadComponentFactory> myComponentClassMap = new HashMap<String, RadComponentFactory>();
   static {
@@ -80,14 +80,14 @@ public final class InsertComponentProcessor extends EventProcessor {
     myComponentToInsert = componentToInsert;
   }
 
-  public void setLastLocation(final DropLocation location) {
+  public void setLastLocation(final ComponentDropLocation location) {
     ComponentItemDragObject dragObject = new ComponentItemDragObject(getComponentToInsert());
     if (location.canDrop(dragObject)) {
       myLastLocation = location;
     }
     else {
-      DropLocation locationToRight = location.getAdjacentLocation(DropLocation.Direction.RIGHT);
-      DropLocation locationToBottom = location.getAdjacentLocation(DropLocation.Direction.DOWN);
+      ComponentDropLocation locationToRight = location.getAdjacentLocation(ComponentDropLocation.Direction.RIGHT);
+      ComponentDropLocation locationToBottom = location.getAdjacentLocation(ComponentDropLocation.Direction.DOWN);
       if (locationToRight != null && locationToRight.canDrop(dragObject)) {
         myLastLocation = locationToRight;
       }
@@ -236,7 +236,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   // either point or targetContainer is null
   public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer, final ComponentItem item) {
-    final DropLocation location;
+    final ComponentDropLocation location;
     if (point != null) {
       location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point);
     }
@@ -248,7 +248,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     processComponentInsert(item, location);
   }
 
-  public void processComponentInsert(ComponentItem item, final DropLocation location) {
+  public void processComponentInsert(ComponentItem item, final ComponentDropLocation location) {
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.setDesignTimeInsets(2);
 

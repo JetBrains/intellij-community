@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.AbstractLayout;
-import com.intellij.uiDesigner.designSurface.DropLocation;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -265,7 +265,7 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   @NotNull
-  public DropLocation getDropLocation(@Nullable Point location) {
+  public ComponentDropLocation getDropLocation(@Nullable Point location) {
     return getLayoutManager().getDropLocation(this, location);
   }
 

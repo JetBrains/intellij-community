@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class NoDropLocation implements DropLocation {
+public class NoDropLocation implements ComponentDropLocation {
   public static final NoDropLocation INSTANCE = new NoDropLocation();
 
   private NoDropLocation() {
@@ -36,7 +36,7 @@ public class NoDropLocation implements DropLocation {
   }
 
   @Nullable
-  public DropLocation getAdjacentLocation(Direction direction) {
+  public ComponentDropLocation getAdjacentLocation(Direction direction) {
     return null;
   }
 }

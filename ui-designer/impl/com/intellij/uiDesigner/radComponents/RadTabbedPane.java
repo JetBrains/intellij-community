@@ -475,7 +475,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     @Override @NotNull
-    public DropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
       final JTabbedPane tabbedPane = getTabbedPane();
       final TabbedPaneUI ui = tabbedPane.getUI();
       if (location != null && tabbedPane.getTabCount() > 0) {
@@ -614,7 +614,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
   }
 
-  private final class InsertTabDropLocation implements DropLocation {
+  private final class InsertTabDropLocation implements ComponentDropLocation {
     private int myInsertIndex;
     private String myInsertBeforeId;
     private Rectangle myFeedbackRect;
@@ -686,7 +686,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
 
     @Nullable
-    public DropLocation getAdjacentLocation(Direction direction) {
+    public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }
