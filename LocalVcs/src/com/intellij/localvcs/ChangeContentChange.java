@@ -12,10 +12,10 @@ class ChangeContentChange implements Change {
 
   public void applyTo(Snapshot snapshot) {
     myPreviousRevision = snapshot.getRevision(myName);
-    snapshot.changeFile(myName, myNewContent);
+    snapshot.doChangeFile(myName, myNewContent);
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.changeFile(myName, myPreviousRevision.getContent());
+    snapshot.doChangeFile(myName, myPreviousRevision.getContent());
   }
 }

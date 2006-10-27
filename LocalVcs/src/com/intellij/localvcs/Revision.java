@@ -5,6 +5,7 @@ import java.util.List;
 public abstract class Revision {
   // todo rename to Entry
   private Integer myObjectId;
+  private Revision myParent;
   private Filename myName;
 
   public Revision(Integer objectId, Filename name) {
@@ -22,6 +23,14 @@ public abstract class Revision {
 
   public String getContent() {
     throw new UnsupportedOperationException();
+  }
+
+  public Revision getParent() {
+    return myParent;
+  }
+
+  protected void setParent(Revision parent) {
+    myParent = parent;
   }
 
   public List<Revision> getChildren() {

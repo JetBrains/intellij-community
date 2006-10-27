@@ -10,10 +10,10 @@ class DeleteFileChange implements Change {
 
   public void applyTo(Snapshot snapshot) {
     myPreviousRevision = snapshot.getRevision(myName);
-    snapshot.deleteFile(myName);
+    snapshot.doDeleteFile(myName);
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.createFile(myName, myPreviousRevision.getContent());
+    snapshot.doCreateFile(myName, myPreviousRevision.getContent());
   }
 }

@@ -10,10 +10,10 @@ class CreateFileChange implements Change {
   }
 
   public void applyTo(Snapshot snapshot) {
-    snapshot.createFile(myName, myContent);
+    snapshot.doCreateFile(myName, myContent);
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.deleteFile(myName);
+    snapshot.doDeleteFile(myName);
   }
 }

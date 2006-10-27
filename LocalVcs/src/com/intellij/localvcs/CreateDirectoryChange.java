@@ -8,7 +8,7 @@ class CreateDirectoryChange implements Change {
   }
 
   public void applyTo(Snapshot snapshot) {
-    snapshot.createDirectory(myName);
+    snapshot.doCreateDirectory(myName);
   }
 
   public void revertOn(Snapshot snapshot) {
