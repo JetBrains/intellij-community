@@ -105,6 +105,10 @@ public class JUnitProcessHandler extends OSProcessHandler {
           myStream.close();
         }
 
+        public boolean ready() throws IOException {
+          return myStream.available() > 0;
+        }
+
         public int read(final char[] cbuf, final int off, final int len) throws IOException {
           for (int i = 0; i < len; i++) {
             final int aChar = myStream.read();
