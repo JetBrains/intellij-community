@@ -353,7 +353,7 @@ public class ScopeEditorPanel {
           }
         }.start();
       }
-    }, 600);
+    }, 1000);
   }
 
   public void rebuild(final boolean updateText) {
