@@ -5,6 +5,7 @@ import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -16,6 +17,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.HSpacer;
+import com.intellij.uiDesigner.VSpacer;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -35,6 +38,8 @@ import java.util.HashMap;
  */
 public final class ComponentItem implements Cloneable, PaletteItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.ComponentItem");
+
+  public static final DataKey<ComponentItem> DATA_KEY = DataKey.create(ComponentItem.class.getName());
 
   @NonNls private String myClassName;
   private final GridConstraints myDefaultConstraints;
@@ -410,6 +415,10 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   public boolean isAnyComponent() {
     return myAnyComponent;
+  }
+
+  public boolean isSpacer() {
+    return myClassName.equals(HSpacer.class.getName()) || myClassName.equals(VSpacer.class.getName());
   }
 
   private static final class MySmallIcon implements Icon{

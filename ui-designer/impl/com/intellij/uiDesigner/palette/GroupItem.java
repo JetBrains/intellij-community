@@ -4,6 +4,7 @@ import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -17,6 +18,8 @@ import java.util.ArrayList;
  */
 public final class GroupItem implements Cloneable, PaletteGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.GroupItem");
+
+  public static final DataKey<GroupItem> DATA_KEY = DataKey.create(GroupItem.class.getName());
 
   @NotNull private String myName;
   @NotNull private final ArrayList<ComponentItem> myItems = new ArrayList<ComponentItem>();
