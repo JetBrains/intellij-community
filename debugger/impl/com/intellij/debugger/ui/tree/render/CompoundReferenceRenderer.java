@@ -1,7 +1,11 @@
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -64,8 +68,15 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
     return myLabelRenderer == classRenderer ? null : myLabelRenderer;
   }
 
-  public void setClassName(String name) {
-    LOG.assertTrue(name != null);
+
+  public boolean isApplicable(Type type) {
+    if(type == null || !(type instanceof ReferenceType) || !DebuggerUtils.instanceOf(type, getClassName())) {
+      return false;
+    }
+    return super.isApplicable(type);
+  }
+
+  public void setClassName(@NotNull String name) {
     myProperties.setClassName(name);
     if(getRawLabelRenderer() != null) {
       if (myLabelRenderer instanceof ReferenceRenderer) {
@@ -80,7 +91,7 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
     }
   }
 
-  public String getClassName() {
+  public @NotNull String getClassName() {
     return myProperties.getClassName();
   }
 }
