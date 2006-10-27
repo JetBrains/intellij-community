@@ -101,8 +101,13 @@ public class CreateAction extends BaseRunConfigurationAction {
 
     public void perform(final ConfigurationContext context) {
       final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
-      if (RunDialog.editConfiguration(context.getProject(), configuration, ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName())))
-        super.perform(context);
+      if (RunDialog.editConfiguration(context.getProject(), configuration, ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
+        final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
+        runManager.addConfiguration(configuration,
+                                    runManager.isConfigurationShared(configuration),
+                                    runManager.getStepsBeforeLaunch(configuration.getConfiguration()));
+        runManager.setActiveConfiguration(configuration);
+      }
     }
   }
 
