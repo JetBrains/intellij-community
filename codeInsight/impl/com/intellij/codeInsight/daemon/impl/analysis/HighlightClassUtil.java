@@ -485,8 +485,8 @@ public class HighlightClassUtil {
 
     for (PsiMethod constructor : constructors) {
       if (resolveHelper.isAccessible(constructor, aClass, null)) {
-        if (constructor.getParameterList().getParameters().length == 0 ||
-            constructor.getParameterList().getParameters().length == 1 && constructor.isVarArgs()
+        if (constructor.getParameterList().getParametersCount() == 0 ||
+            constructor.getParameterList().getParametersCount() == 1 && constructor.isVarArgs()
           ) {
           // it is an error if base ctr throws exceptions
           String description = checkDefaultConstructorThrowsException(constructor, handledExceptions);
@@ -719,7 +719,7 @@ public class HighlightClassUtil {
     PsiMethod[] constructors = aClass.getConstructors();
     boolean hasPublicNoArgsConstructor = constructors.length == 0;
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParameters().length == 0 && constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (constructor.getParameterList().getParametersCount() == 0 && constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
         hasPublicNoArgsConstructor = true;
         break;
       }

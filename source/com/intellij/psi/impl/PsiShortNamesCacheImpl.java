@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
 
 class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiShortNamesCacheImpl");
@@ -175,17 +176,17 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
 
   private void addElementsByIds(ArrayList<PsiElement> list, long[] ids, final GlobalSearchScope scope) {
     RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
-    THashSet<PsiElement> set = new THashSet<PsiElement>(new TObjectHashingStrategy<PsiElement>() {
+    Set<PsiElement> set = new THashSet<PsiElement>(ids.length, new TObjectHashingStrategy<PsiElement>() {
       public int computeHashCode(PsiElement psiElement) {
         if (psiElement instanceof PsiMember) {
           PsiMember member = (PsiMember)psiElement;
           int code = 0;
           if (member instanceof PsiMethod) {
-            code += ((PsiMethod)member).getParameterList().getParameters().length;
+            code += ((PsiMethod)member).getParameterList().getParametersCount();
           }
-          PsiClass aClass = member.getContainingClass();
-          if (aClass != null) {
-            code += computeHashCode(aClass);
+          String name = member.getName();
+          if (name != null) {
+            code += name.hashCode();
           }
           return code;
         }

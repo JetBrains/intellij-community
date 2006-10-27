@@ -94,7 +94,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
       boolean hasDefaultConstructor = false;
 
       for (PsiMethod superConstructor : constructors) {
-        if (superConstructor.getParameterList().getParameters().length == 0) {
+        if (superConstructor.getParameterList().getParametersCount() == 0) {
           hasDefaultConstructor = true;
           break;
         }

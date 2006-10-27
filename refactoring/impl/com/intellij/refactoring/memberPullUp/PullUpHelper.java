@@ -525,7 +525,7 @@ public class PullUpHelper {
       }
 
       // check default constructor
-      if (constructor == null || constructor.getParameterList().getParameters().length == 0) {
+      if (constructor == null || constructor.getParameterList().getParametersCount() == 0) {
         RefactoringUtil.visitImplicitSuperConstructorUsages(mySourceClass, new RefactoringUtil.ImplicitConstructorUsageVisitor() {
           public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
             referencingSubConstructors.add(constructor);

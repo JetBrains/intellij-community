@@ -53,7 +53,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     //TODO: move this logic to ClsMethodImpl.getNavigationElement
     if (navElement == element && element instanceof PsiCompiledElement && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      if (method.isConstructor() && method.getParameterList().getParameters().length == 0) {
+      if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
         PsiClass aClass = method.getContainingClass();
         PsiElement navClass = aClass.getNavigationElement();
         if (aClass != navClass) navElement = navClass;

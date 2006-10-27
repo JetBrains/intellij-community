@@ -799,7 +799,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitParameterList(PsiParameterList list) {
-    if (list.getParent() instanceof PsiAnnotationMethod && list.getParameters().length > 0) {
+    if (list.getParent() instanceof PsiAnnotationMethod && list.getParametersCount() > 0) {
       myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      list,
                                                      JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters")));

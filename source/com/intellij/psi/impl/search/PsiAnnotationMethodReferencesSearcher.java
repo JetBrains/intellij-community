@@ -17,7 +17,7 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
     final PsiElement refElement = p.getElementToSearch();
     if (refElement instanceof PsiAnnotationMethod) {
       PsiMethod method = (PsiMethod)refElement;
-      if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
         final Query<PsiReference> query = ReferencesSearch.search(method.getContainingClass(), p.getScope(), p.isIgnoreAccessScope());
         return query.forEach(new Processor<PsiReference>() {
           public boolean process(final PsiReference reference) {

@@ -355,7 +355,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     boolean hasParms = false;
     if (myLookupItem.getObject() instanceof PsiMethod){
       final PsiMethod method = (PsiMethod)myLookupItem.getObject();
-      hasParms = method.getParameterList().getParameters().length > 0;
+      hasParms = method.getParameterList().getParametersCount() > 0;
       if (!signatureSelected){
         hasParms = hasParms || hasOverloads();
       }
@@ -369,7 +369,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       final PsiMethod[] constructors = aClass.getConstructors();
       for (PsiMethod constructor : constructors) {
         if (!aClass.getManager().getResolveHelper().isAccessible(constructor, place, null)) continue;
-        if (constructor.getParameterList().getParameters().length > 0) {
+        if (constructor.getParameterList().getParametersCount() > 0) {
           hasParms = true;
           break;
         }

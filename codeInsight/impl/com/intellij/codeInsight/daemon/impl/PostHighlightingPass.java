@@ -572,7 +572,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static boolean isIntentionalPrivateConstructor(PsiMethod method) {
     if (!method.isConstructor()) return false;
     if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    if (method.getParameterList().getParameters().length > 0) return false;
+    if (method.getParameterList().getParametersCount() > 0) return false;
     PsiClass aClass = method.getContainingClass();
     return aClass != null && aClass.getConstructors().length == 1;
   }

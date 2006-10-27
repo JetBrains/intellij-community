@@ -222,7 +222,7 @@ public class FindUsagesUtil {
   }
 
   private static void addImplicitConstructorCalls(final PsiMethod constructor, final Processor<UsageInfo> result, SearchScope searchScope){
-    if (constructor.getParameterList().getParameters().length > 0) return;
+    if (constructor.getParameterList().getParametersCount() > 0) return;
     if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) return;
 
     PsiClass parentClass = constructor.getContainingClass();

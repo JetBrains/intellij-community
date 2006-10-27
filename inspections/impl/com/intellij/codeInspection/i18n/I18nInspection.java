@@ -748,7 +748,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (method == null) return false;
     final PsiType returnType = method.getReturnType();
     return TO_STRING.equals(method.getName())
-           && method.getParameterList().getParameters().length == 0
+           && method.getParameterList().getParametersCount() == 0
            && returnType != null
            && "java.lang.String".equals(returnType.getCanonicalText());
   }

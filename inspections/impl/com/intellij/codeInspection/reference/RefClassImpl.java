@@ -115,12 +115,12 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
 
       if (refMethod != null) {
         if (psiMethod.isConstructor()) {
-          if (psiMethod.getParameterList().getParameters().length > 0 || !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+          if (psiMethod.getParameterList().getParametersCount() > 0 || !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
             setUtilityClass(false);
           }
 
           addConstructor(refMethod);
-          if (psiMethod.getParameterList().getParameters().length == 0) {
+          if (psiMethod.getParameterList().getParametersCount() == 0) {
             setDefaultConstructor((RefMethodImpl)refMethod);
           }
         }

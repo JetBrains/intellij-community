@@ -62,7 +62,7 @@ public class PropertyUtil {
       return false;
     }
 
-    if (method.getParameterList().getParameters().length != 0) {
+    if (method.getParameterList().getParametersCount() != 0) {
       return false;
     }
 
@@ -80,7 +80,7 @@ public class PropertyUtil {
     if (!(methodName.startsWith("set") && methodName.length() > "set".length())) return false;
     if (Character.isLowerCase(methodName.charAt("set".length()))) return false;
 
-    if (method.getParameterList().getParameters().length != 1) {
+    if (method.getParameterList().getParametersCount() != 1) {
       return false;
     }
 

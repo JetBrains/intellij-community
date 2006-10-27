@@ -185,7 +185,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   public boolean isVarArgs() {
-    return ((PsiMethod) myParent.getParent()).isVarArgs() && myIdx == myParent.getParameters().length - 1;
+    return ((PsiMethod) myParent.getParent()).isVarArgs() && myIdx == myParent.getParametersCount() - 1;
   }
 
   @NotNull

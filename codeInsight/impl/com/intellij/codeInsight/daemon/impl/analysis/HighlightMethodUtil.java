@@ -101,7 +101,7 @@ public class HighlightMethodUtil {
       if (superClass == null) continue;
       // EJB override rules are tricky, they are checked elsewhere in EJB SelectInEditorManager
       if (!Comparing.strEqual(method.getName(), superMethod.getName())
-          || method.getParameterList().getParameters().length != superMethod.getParameterList().getParameters().length) {
+          || method.getParameterList().getParametersCount() != superMethod.getParameterList().getParametersCount()) {
         continue;
       }
 
@@ -483,7 +483,7 @@ public class HighlightMethodUtil {
 
   private static String createAmbiguousMethodHtmlTooltip(MethodCandidateInfo[] methodCandidates) {
     return JavaErrorMessages.message("ambiguous.method.html.tooltip",
-                                     new Integer(methodCandidates[0].getElement().getParameterList().getParameters().length + 2),
+                                     new Integer(methodCandidates[0].getElement().getParameterList().getParametersCount() + 2),
                                      createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
                                      getContainingClassName(methodCandidates[0]),
                                      createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[1]),

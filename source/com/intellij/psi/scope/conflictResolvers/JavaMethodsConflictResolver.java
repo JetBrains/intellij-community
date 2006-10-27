@@ -118,7 +118,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (info instanceof MethodCandidateInfo) {
         final PsiMethod method = ((MethodCandidateInfo)info).getElement();
         if (method.isVarArgs()) return;
-        if (method.getParameterList().getParameters().length == argumentsCount) {
+        if (method.getParameterList().getParametersCount() == argumentsCount) {
           parametersNumberMatch = true;
         }
       }
@@ -129,7 +129,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         CandidateInfo info = iterator.next();
         if (info instanceof MethodCandidateInfo) {
           final PsiMethod method = ((MethodCandidateInfo)info).getElement();
-          if (method.getParameterList().getParameters().length != argumentsCount) {
+          if (method.getParameterList().getParametersCount() != argumentsCount) {
             iterator.remove();
           }
         }

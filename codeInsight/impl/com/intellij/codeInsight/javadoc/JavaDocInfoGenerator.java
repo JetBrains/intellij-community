@@ -634,10 +634,10 @@ class JavaDocInfoGenerator {
   private PsiDocComment getMethodDocComment(final PsiMethod method) {
     final PsiClass parentClass = method.getContainingClass();
     if (parentClass != null && parentClass.isEnum()) {
-      if (method.getName().equals("values") && method.getParameterList().getParameters().length == 0) {
+      if (method.getName().equals("values") && method.getParameterList().getParametersCount() == 0) {
         return loadSyntheticDocComment(method, "/javadoc/EnumValues.java.template");
       }
-      if (method.getName().equals("valueOf") && method.getParameterList().getParameters().length == 1) {
+      if (method.getName().equals("valueOf") && method.getParameterList().getParametersCount() == 1) {
         return loadSyntheticDocComment(method, "/javadoc/EnumValueOf.java.template");
       }
     }

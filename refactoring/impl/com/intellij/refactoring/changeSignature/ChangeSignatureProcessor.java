@@ -153,7 +153,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         l.add(reference);
       }
 
-      int parameterCount = method.getParameterList().getParameters().length;
+      int parameterCount = method.getParameterList().getParametersCount();
       for (PsiReference ref : l) {
         PsiElement element = ref.getElement();
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));

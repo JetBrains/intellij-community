@@ -254,7 +254,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
           PsiType returnType = method.getReturnType();
           if (returnType != null
               && TypeConversionUtil.isAssignable(type, returnType)
-              && method.getParameterList().getParameters().length == 0
+              && method.getParameterList().getParametersCount() == 0
             ) {
             result.add(method.getName()+"()");
           }

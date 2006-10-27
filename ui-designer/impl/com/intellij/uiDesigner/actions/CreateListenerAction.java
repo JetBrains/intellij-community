@@ -253,7 +253,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         return (PsiMethod) aClass.addBefore(newConstructor, firstMethod);
       }
       for(PsiMethod method: constructors) {
-        if (method.getParameterList().getParameters().length == 0) {
+        if (method.getParameterList().getParametersCount() == 0) {
           return method;
         }
       }

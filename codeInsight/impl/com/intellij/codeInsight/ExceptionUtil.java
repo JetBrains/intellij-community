@@ -186,8 +186,7 @@ public class ExceptionUtil {
       final PsiMethod[] superConstructors = superClass == null ? PsiMethod.EMPTY_ARRAY : superClass.getConstructors();
       Set<PsiClassType> unhandled = new HashSet<PsiClassType>();
       for (PsiMethod superConstructor : superConstructors) {
-        if (!superConstructor.hasModifierProperty(PsiModifier.PRIVATE) &&
-            superConstructor.getParameterList().getParameters().length == 0) {
+        if (!superConstructor.hasModifierProperty(PsiModifier.PRIVATE) && superConstructor.getParameterList().getParametersCount() == 0) {
           final PsiClassType[] exceptionTypes = superConstructor.getThrowsList().getReferencedTypes();
           for (PsiClassType exceptionType : exceptionTypes) {
             if (!isUncheckedException(exceptionType) && !isHandled(element, exceptionType, topElement)) {

@@ -145,7 +145,7 @@ public class VisibilityInspection extends FilteringInspectionTool {
           }
 
           for (PsiMethod constructor : primaryKeyClass.getConstructors()) {
-            if (constructor.getParameterList().getParameters().length == 0) {
+            if (constructor.getParameterList().getParametersCount() == 0) {
               RefMethod refConstructor = (RefMethod)getRefManager().getReference(constructor);
               if (refConstructor != null) {
                 getFilter().addIgnoreList(refConstructor);

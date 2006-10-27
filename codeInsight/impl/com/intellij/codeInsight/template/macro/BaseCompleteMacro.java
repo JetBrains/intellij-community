@@ -139,7 +139,7 @@ public abstract class BaseCompleteMacro implements Macro {
         else {
           if (elements[0] instanceof PsiMethod) {
             PsiMethod method = (PsiMethod)elements[0];
-            goNextTab = method.getParameterList().getParameters().length == 0;
+            goNextTab = method.getParameterList().getParametersCount() == 0;
           }
           else if (elements[0] instanceof WebDirectoryElement) {
             VirtualFile originalVirtualFile = ((WebDirectoryElement) elements[0]).getOriginalVirtualFile();

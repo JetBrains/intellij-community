@@ -1112,7 +1112,7 @@ public class RefactoringUtil {
   private static PsiMethod findDefaultConstructor(final PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParameters().length == 0) return constructor;
+      if (constructor.getParameterList().getParametersCount() == 0) return constructor;
     }
 
     return null;

@@ -105,7 +105,7 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
     }
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitParameterList(this);
   }
 

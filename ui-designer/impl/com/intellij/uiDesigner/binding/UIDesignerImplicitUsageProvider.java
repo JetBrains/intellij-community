@@ -23,8 +23,7 @@ public class UIDesignerImplicitUsageProvider implements ApplicationComponent, Im
       PsiMethod method = (PsiMethod) element;
       if ((AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME.equals(method.getName()) ||
            AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
-           AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) &&
-          method.getParameterList().getParameters().length == 0) {
+           AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) && method.getParameterList().getParametersCount() == 0) {
         return true;
       }
     }
