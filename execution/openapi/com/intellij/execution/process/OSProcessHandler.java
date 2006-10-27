@@ -248,7 +248,7 @@ public class OSProcessHandler extends ProcessHandler {
             return -1;
           }
           try {
-            Thread.sleep(3);
+            Thread.sleep(1L);
           }
           catch (InterruptedException ignore) {
           }
