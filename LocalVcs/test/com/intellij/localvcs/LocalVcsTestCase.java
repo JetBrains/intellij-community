@@ -1,14 +1,12 @@
 package com.intellij.localvcs;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.junit.Assert;
 import org.junit.Before;
 
-public abstract class LocalVcsTestCase extends Assert {
+public abstract class LocalVcsTestCase extends TestCase {
   protected LocalVcs myVcs;
 
   @Before
@@ -28,11 +26,5 @@ public abstract class LocalVcsTestCase extends Assert {
       actualContents.add(rev.getContent());
     }
     assertEquals(expectedContents, actualContents.toArray(new Object[0]));
-  }
-
-  @SuppressWarnings("unchecked")
-  protected void assertElements(Object[] expected, Collection actual) {
-    assertEquals(expected.length, actual.size());
-    assertTrue(actual.containsAll(Arrays.asList(expected)));
   }
 }

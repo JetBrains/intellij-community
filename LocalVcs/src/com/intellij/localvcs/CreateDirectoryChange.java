@@ -1,9 +1,9 @@
 package com.intellij.localvcs;
 
 class CreateDirectoryChange implements Change {
-  private String myName;
+  private Filename myName;
 
-  public CreateDirectoryChange(String name) {
+  public CreateDirectoryChange(Filename name) {
     myName = name;
   }
 

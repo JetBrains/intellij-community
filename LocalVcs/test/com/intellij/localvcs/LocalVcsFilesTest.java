@@ -7,30 +7,30 @@ import org.junit.Test;
 public class LocalVcsFilesTest extends LocalVcsTestCase {
   @Test
   public void testCreatingFiles() {
-    myVcs.createFile("file", "");
-    assertFalse(myVcs.hasRevision("file"));
+    myVcs.createFile(fn("file"), "");
+    assertFalse(myVcs.hasRevision(fn("file")));
 
     myVcs.commit();
-    assertTrue(myVcs.hasRevision("file"));
-    assertEquals(FileRevision.class, myVcs.getRevision("file").getClass());
+    assertTrue(myVcs.hasRevision(fn("file")));
+    assertEquals(FileRevision.class, myVcs.getRevision(fn("file")).getClass());
   }
 
   @Test
   public void testCreatingTwoFiles() {
-    myVcs.createFile("file1", "");
-    myVcs.createFile("file2", "");
+    myVcs.createFile(fn("file1"), "");
+    myVcs.createFile(fn("file2"), "");
     myVcs.commit();
 
-    assertTrue(myVcs.hasRevision("file1"));
-    assertTrue(myVcs.hasRevision("file2"));
+    assertTrue(myVcs.hasRevision(fn("file1")));
+    assertTrue(myVcs.hasRevision(fn("file2")));
 
-    assertFalse(myVcs.hasRevision("unknown file"));
+    assertFalse(myVcs.hasRevision(fn("unknown file")));
   }
 
   @Test
   public void testCommitThrowsException() {
-    myVcs.createFile("file", "");
-    myVcs.createFile("file", "");
+    myVcs.createFile(fn("file"), "");
+    myVcs.createFile(fn("file"), "");
 
     try {
       myVcs.commit();
@@ -40,22 +40,22 @@ public class LocalVcsFilesTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotApplyAnyChangeIfCommitFail() {
-    myVcs.createFile("file1", "");
-    myVcs.createFile("file2", "");
-    myVcs.createFile("file2", "");
+    myVcs.createFile(fn("file1"), "");
+    myVcs.createFile(fn("file2"), "");
+    myVcs.createFile(fn("file2"), "");
 
     try { myVcs.commit(); } catch (LocalVcsException e) { }
 
-    assertFalse(myVcs.hasRevision("file1"));
-    assertFalse(myVcs.hasRevision("file2"));
+    assertFalse(myVcs.hasRevision(fn("file1")));
+    assertFalse(myVcs.hasRevision(fn("file2")));
   }
 
   @Test
   public void testClearingChangesOnCommit() {
-    myVcs.createFile("file", "content");
-    myVcs.changeFile("file", "new content");
-    myVcs.renameFile("file", "new file");
-    myVcs.deleteFile("new file");
+    myVcs.createFile(fn("file"), "content");
+    myVcs.changeFile(fn("file"), "new content");
+    myVcs.renameFile(fn("file"), fn("new file"));
+    myVcs.deleteFile(fn("new file"));
 
     assertFalse(myVcs.isClean());
 
@@ -65,208 +65,209 @@ public class LocalVcsFilesTest extends LocalVcsTestCase {
 
   @Test
   public void testChangingContent() {
-    myVcs.createFile("file", "content");
+    myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.changeFile("file", "new content");
+    myVcs.changeFile(fn("file"), "new content");
     myVcs.commit();
 
-    assertRevisionContent("new content", myVcs.getRevision("file"));
+    assertRevisionContent("new content", myVcs.getRevision(fn("file")));
   }
 
   @Test
   public void testRevisionOfUnknownFile() {
-    assertNull(myVcs.getRevision("unknown file"));
+    assertNull(myVcs.getRevision(fn("unknown file")));
   }
 
   @Test
   public void testChangingOnlyOneFile() {
-    myVcs.createFile("file1", "content1");
-    myVcs.createFile("file2", "content2");
+    myVcs.createFile(fn("file1"), "content1");
+    myVcs.createFile(fn("file2"), "content2");
     myVcs.commit();
 
-    myVcs.changeFile("file1", "new content");
+    myVcs.changeFile(fn("file1"), "new content");
     myVcs.commit();
 
-    assertRevisionContent("new content", myVcs.getRevision("file1"));
-    assertRevisionContent("content2", myVcs.getRevision("file2"));
+    assertRevisionContent("new content",
+                          myVcs.getRevision(fn("file1")));
+    assertRevisionContent("content2", myVcs.getRevision(fn("file2")));
   }
 
   @Test
   public void testKeepingOldVersions() {
-    myVcs.createFile("file", "content");
+    myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.changeFile("file", "new content");
+    myVcs.changeFile(fn("file"), "new content");
     myVcs.commit();
 
     assertRevisionsContent(new String[]{"new content", "content"},
-                           myVcs.getRevisions("file"));
+                           myVcs.getRevisions(fn("file")));
   }
 
   @Test
   public void testDoesNotChangeContentBeforeCommit() {
-    myVcs.createFile("file", "content");
+    myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.changeFile("file", "new content");
+    myVcs.changeFile(fn("file"), "new content");
 
-    assertRevisionContent("content", myVcs.getRevision("file"));
+    assertRevisionContent("content", myVcs.getRevision(fn("file")));
   }
 
   @Test
   public void testDoesNotIncludeUncommittedChangesInRevisions() {
-    myVcs.createFile("file", "content");
+    myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.changeFile("file", "new content");
+    myVcs.changeFile(fn("file"), "new content");
 
     assertRevisionsContent(new String[]{"content"},
-                           myVcs.getRevisions("file"));
+                           myVcs.getRevisions(fn("file")));
   }
 
   @Test
   public void testRenaming() {
-    myVcs.createFile("file", "content");
+    myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.renameFile("file", "new file");
+    myVcs.renameFile(fn("file"), fn("new file"));
     myVcs.commit();
 
-    assertFalse(myVcs.hasRevision("file"));
-    assertTrue(myVcs.hasRevision("new file"));
+    assertFalse(myVcs.hasRevision(fn("file")));
+    assertTrue(myVcs.hasRevision(fn("new file")));
 
-    assertRevisionContent("content", myVcs.getRevision("new file"));
+    assertRevisionContent("content", myVcs.getRevision(fn("new file")));
   }
 
   @Test
   public void testRenamingKeepsOldNameAndContent() {
-    myVcs.createFile("file", "content");
+    myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.renameFile("file", "new file");
+    myVcs.renameFile(fn("file"), fn("new file"));
     myVcs.commit();
 
-    List<Revision> revs = myVcs.getRevisions("new file");
+    List<Revision> revs = myVcs.getRevisions(fn("new file"));
 
     assertEquals(2, revs.size());
 
-    assertEquals("new file", revs.get(0).getName());
+    assertEquals(fn("new file"), revs.get(0).getName());
     assertEquals("content", revs.get(0).getContent());
 
-    assertEquals("file", revs.get(1).getName());
+    assertEquals(fn("file"), revs.get(1).getName());
     assertEquals("content", revs.get(1).getContent());
   }
 
   @Test
   public void testDeleting() {
-    myVcs.createFile("file", "content");
+    myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.deleteFile("file");
-    assertRevisionContent("content", myVcs.getRevision("file"));
+    myVcs.deleteFile(fn("file"));
+    assertRevisionContent("content", myVcs.getRevision(fn("file")));
 
     myVcs.commit();
-    assertFalse(myVcs.hasRevision("file"));
-    assertNull(myVcs.getRevision("file"));
+    assertFalse(myVcs.hasRevision(fn("file")));
+    assertNull(myVcs.getRevision(fn("file")));
   }
 
   @Test
   public void testDeletingOnlyOneFile() {
-    myVcs.createFile("file1", "");
-    myVcs.createFile("file2", "");
+    myVcs.createFile(fn("file1"), "");
+    myVcs.createFile(fn("file2"), "");
     myVcs.commit();
 
-    myVcs.deleteFile("file2");
+    myVcs.deleteFile(fn("file2"));
     myVcs.commit();
 
-    assertTrue(myVcs.hasRevision("file1"));
-    assertFalse(myVcs.hasRevision("file2"));
+    assertTrue(myVcs.hasRevision(fn("file1")));
+    assertFalse(myVcs.hasRevision(fn("file2")));
   }
 
   @Test
   public void testCreatingAndDeletingSameFileBeforeCommit() {
-    myVcs.createFile("file", "");
-    myVcs.deleteFile("file");
+    myVcs.createFile(fn("file"), "");
+    myVcs.deleteFile(fn("file"));
     myVcs.commit();
 
-    assertFalse(myVcs.hasRevision("file"));
+    assertFalse(myVcs.hasRevision(fn("file")));
   }
 
   @Test
   public void testDeletingAndAddingSameFileBeforeCommit() {
-    myVcs.createFile("file", "");
+    myVcs.createFile(fn("file"), "");
     myVcs.commit();
 
-    myVcs.deleteFile("file");
-    myVcs.createFile("file", "");
+    myVcs.deleteFile(fn("file"));
+    myVcs.createFile(fn("file"), "");
     myVcs.commit();
 
-    assertTrue(myVcs.hasRevision("file"));
+    assertTrue(myVcs.hasRevision(fn("file")));
   }
 
   @Test
   public void testAddingAndChangingSameFileBeforeCommit() {
-    myVcs.createFile("file", "content");
-    myVcs.changeFile("file", "new content");
+    myVcs.createFile(fn("file"), "content");
+    myVcs.changeFile(fn("file"), "new content");
     myVcs.commit();
 
-    assertRevisionContent("new content", myVcs.getRevision("file"));
+    assertRevisionContent("new content", myVcs.getRevision(fn("file")));
   }
 
   @Test
   public void testDeletingFileAndCreatingNewOneWithSameName() {
-    myVcs.createFile("file", "old");
+    myVcs.createFile(fn("file"), "old");
     myVcs.commit();
 
-    myVcs.deleteFile("file");
-    myVcs.createFile("file", "new");
+    myVcs.deleteFile(fn("file"));
+    myVcs.createFile(fn("file"), "new");
     myVcs.commit();
 
     assertRevisionsContent(new String[]{"new"},
-                           myVcs.getRevisions("file"));
+                           myVcs.getRevisions(fn("file")));
   }
 
   @Test
   public void testRenamingFileAndCreatingNewOneWithSameName() {
-    myVcs.createFile("file1", "content1");
+    myVcs.createFile(fn("file1"), "content1");
     myVcs.commit();
 
-    myVcs.renameFile("file1", "file2");
-    myVcs.createFile("file1", "content2");
+    myVcs.renameFile(fn("file1"), fn("file2"));
+    myVcs.createFile(fn("file1"), "content2");
     myVcs.commit();
 
     assertRevisionsContent(new String[]{"content1", "content1"},
-                           myVcs.getRevisions("file2"));
+                           myVcs.getRevisions(fn("file2")));
 
     assertRevisionsContent(new String[]{"content2"},
-                           myVcs.getRevisions("file1"));
+                           myVcs.getRevisions(fn("file1")));
   }
 
   @Test
   public void testFileRevisions() {
-    assertTrue(myVcs.getRevisions("file").isEmpty());
+    assertTrue(myVcs.getRevisions(fn("file")).isEmpty());
 
-    myVcs.createFile("file", "");
+    myVcs.createFile(fn("file"), "");
     myVcs.commit();
 
-    assertEquals(1, myVcs.getRevisions("file").size());
+    assertEquals(1, myVcs.getRevisions(fn("file")).size());
   }
 
   @Test
   public void testRevisionsForUnknownFile() {
-    myVcs.createFile("file", "");
+    myVcs.createFile(fn("file"), "");
     myVcs.commit();
 
-    assertTrue(myVcs.getRevisions("unknown file").isEmpty());
+    assertTrue(myVcs.getRevisions(fn("unknown file")).isEmpty());
   }
 
   @Test
   public void testFileRevisionsForDeletedFile() {
-    myVcs.createFile("file", "content");
+    myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.deleteFile("file");
+    myVcs.deleteFile(fn("file"));
     myVcs.commit();
 
     // todo what should we return?

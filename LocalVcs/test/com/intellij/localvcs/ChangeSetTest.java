@@ -2,11 +2,10 @@ package com.intellij.localvcs;
 
 import java.util.Arrays;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ChangeSetTest extends Assert {
+public class ChangeSetTest extends TestCase {
   private ChangeSet myChangeSet;
   private String myLog;
   private Snapshot mySnapshot;
@@ -15,20 +14,20 @@ public class ChangeSetTest extends Assert {
   public void setUp() {
     myChangeSet = new ChangeSet(
         Arrays.asList(new Change[]{
-            new CreateFileChange("file1", ""),
-            new CreateFileChange("file2", ""),
-            new CreateFileChange("file3", "")}));
+            new CreateFileChange(fn("file1"), ""),
+            new CreateFileChange(fn("file2"), ""),
+            new CreateFileChange(fn("file3"), "")}));
 
     myLog = "";
     mySnapshot = new Snapshot() {
       @Override
-      protected void createFile(String name, String content) {
-        myLog += name + " ";
+      protected void createFile(Filename name, String content) {
+        myLog += name.getName() + " ";
       }
 
       @Override
-      protected void deleteFile(String name) {
-        myLog += name + " ";
+      protected void deleteFile(Filename name) {
+        myLog += name.getName() + " ";
       }
     };
   }

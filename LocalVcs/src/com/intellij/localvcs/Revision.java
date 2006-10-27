@@ -5,9 +5,9 @@ import java.util.List;
 public abstract class Revision {
   // todo rename to Entry
   private Integer myObjectId;
-  private String myName;
+  private Filename myName;
 
-  public Revision(Integer objectId, String name) {
+  public Revision(Integer objectId, Filename name) {
     myObjectId = objectId;
     myName = name;
   }
@@ -16,7 +16,7 @@ public abstract class Revision {
     return myObjectId;
   }
 
-  public String getName() {
+  public Filename getName() {
     return myName;
   }
 

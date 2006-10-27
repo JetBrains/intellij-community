@@ -1,10 +1,10 @@
 package com.intellij.localvcs;
 
 class DeleteFileChange implements Change {
-  private String myName;
+  private Filename myName;
   private Revision myPreviousRevision;
 
-  public DeleteFileChange(String name) {
+  public DeleteFileChange(Filename name) {
     myName = name;
   }
 

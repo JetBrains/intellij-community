@@ -1,37 +1,29 @@
 package com.intellij.localvcs;
 
-import java.util.List;
-
 import org.junit.Test;
 
-public class SnapshotDirectoriesTest extends SnapshotTestCase {
+public class SnapshotDirectoriesTest extends TestCase {
   @Test
   public void testCeatingDirectory() {
     Snapshot s = new Snapshot();
-    assertFalse(s.hasRevision("dir"));
+    assertFalse(s.hasRevision(fn("dir")));
 
-    s.createDirectory("dir");
-    assertTrue(s.hasRevision("dir"));
-    assertEquals(DirectoryRevision.class, s.getRevision("dir").getClass());
-    assertTrue(s.getRevision("dir").getChildren().isEmpty());
+    s.createDirectory(fn("dir"));
+    assertTrue(s.hasRevision(fn("dir")));
+    assertEquals(DirectoryRevision.class, s.getRevision(fn("dir")).getClass());
+    assertTrue(s.getRevision(fn("dir")).getChildren().isEmpty());
   }
 
   @Test
-  public void testCreatingDirectoryWithFiles() {
-    Snapshot s = new Snapshot();
-
-    s.createDirectory("dir");
-    s.createFile("dir/file", "content");
-
-    assertTrue(s.hasRevision("dir/file"));
-
-    Revision rev = s.getRevision("dir/file");
-
-    assertEquals("dir/file", rev.getName());
-    assertEquals("content", rev.getContent());
-
-    List<Revision> children = s.getRevision("dir").getChildren();
-    assertEquals(1, children.size());
-    assertSame(rev, children.get(0));
+  public void testCreatingFileUnderNonExistingDirectory() {
+    //Snapshot s = new Snapshot();
+    //s.createFile("dir/file", "");
+    //
+    //assertTrue(s.hasRevision("dir/file"));
+    //assertTrue(s.hasRevision("dir"));
+    //
+    //List<Revision> children = s.getRevision("dir").getChildren();
+    //assertEquals(1, children.size());
+    //assertEquals("dir/file", children.get(0).getName());
   }
 }
