@@ -25,6 +25,9 @@ public class EnumEditor extends PropertyEditor<Enum> {
   }
 
   public JComponent getComponent(final RadComponent component, final Enum value, final boolean inplace) {
+    if (value == null) {
+      return myCbx;
+    }
     final ComboBoxModel model = myCbx.getModel();
     for (int i = model.getSize() - 1; i >= 0; i--) {
       if (model.getElementAt(i) == value) {
