@@ -30,6 +30,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ActionData;
 import org.jetbrains.idea.devkit.util.ActionType;
@@ -71,7 +72,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   private ShortcutTextField mySecondKeystrokeEdit;
   private TextFieldWithBrowseButton myIconEdit;
   private Project myProject;
-  private ButtonGroup myAnchorButtonGroup = new ButtonGroup();
+  private ButtonGroup myAnchorButtonGroup;
 
   public  NewActionDialog(PsiClass actionClass) {
     this(actionClass.getProject());
@@ -135,11 +136,6 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     myActionNameEdit.getDocument().addDocumentListener(listener);
     myActionTextEdit.getDocument().addDocumentListener(listener);
 
-    myAnchorButtonGroup = new ButtonGroup();
-    myAnchorButtonGroup.add(myAnchorFirstRadio);
-    myAnchorButtonGroup.add(myAnchorLastRadio);
-    myAnchorButtonGroup.add(myAnchorBeforeRadio);
-    myAnchorButtonGroup.add(myAnchorAfterRadio);
     myAnchorButtonGroup.setSelected(myAnchorFirstRadio.getModel(), true);
 
     myFirstKeystrokeEdit = new ShortcutTextField();
@@ -202,11 +198,13 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     return myActionDescriptionEdit.getText();
   }
 
+  @Nullable
   public String getSelectedGroupId() {
     ActionGroup group = (ActionGroup) myGroupList.getSelectedValue();
     return group == null ? null : ActionManager.getInstance().getId(group);
   }
 
+  @Nullable
   public String getSelectedActionId() {
     AnAction action = (AnAction) myActionList.getSelectedValue();
     return action == null ? null : ActionManager.getInstance().getId(action);
@@ -280,7 +278,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     }
   }
 
-  private class ShortcutTextField extends JTextField {
+  private static class ShortcutTextField extends JTextField {
     private KeyStroke myKeyStroke;
 
     public ShortcutTextField() {

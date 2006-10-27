@@ -36,6 +36,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="c0ce9"/>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.actions"/>
             </properties>
           </component>
@@ -106,6 +107,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="fe8a"/>
               <text resource-bundle="org/jetbrains/idea/devkit/DevKitBundle" key="new.action.group.groups"/>
             </properties>
           </component>
@@ -261,4 +263,12 @@
       </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="myAnchorButtonGroup" bound="true">
+      <member id="f4be7"/>
+      <member id="74ccc"/>
+      <member id="8b7"/>
+      <member id="a46a8"/>
+    </group>
+  </buttonGroups>
 </form>

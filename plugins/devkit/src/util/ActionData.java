@@ -30,8 +30,10 @@ public interface ActionData {
 
   String getActionDescription();
 
+  @Nullable
   String getSelectedGroupId();
 
+  @Nullable
   String getSelectedActionId();
 
   String getSelectedAnchor();
