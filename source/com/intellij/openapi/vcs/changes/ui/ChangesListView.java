@@ -65,7 +65,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   public ChangesListView(final Project project) {
     myProject = project;
 
-    getModel().setRoot(new ChangesBrowserNode(TreeModelBuilder.ROOT_NODE_VALUE));
+    getModel().setRoot(new ChangesBrowserNode(myProject, TreeModelBuilder.ROOT_NODE_VALUE));
 
     setShowsRootHandles(true);
     setRootVisible(false);

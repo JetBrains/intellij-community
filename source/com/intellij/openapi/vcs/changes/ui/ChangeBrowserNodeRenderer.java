@@ -88,6 +88,9 @@ class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
         assert parentFile != null;
         append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
+      else if (node.getCount() != 1 || node.getDirectoryCount() != 0) {
+        appendCount(node);
+      }
       if (file.isDirectory()) {
         setIcon(Icons.DIRECTORY_CLOSED_ICON);
       }

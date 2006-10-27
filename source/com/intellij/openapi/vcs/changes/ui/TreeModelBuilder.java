@@ -22,15 +22,15 @@ import java.util.*;
 public class TreeModelBuilder {
   @NonNls public static final String ROOT_NODE_VALUE = "root";
 
-  private Project project;
+  private Project myProject;
   private boolean showFlatten;
   private DefaultTreeModel model;
   private ChangesBrowserNode root;
 
   public TreeModelBuilder(final Project project, final boolean showFlatten) {
-    this.project = project;
+    myProject = project;
     this.showFlatten = showFlatten;
-    root = new ChangesBrowserNode(ROOT_NODE_VALUE);
+    root = new ChangesBrowserNode(myProject, ROOT_NODE_VALUE);
     model = new DefaultTreeModel(root);
   }
 
@@ -52,7 +52,7 @@ public class TreeModelBuilder {
                                      final List<FilePath> locallyDeletedFiles) {
 
     for (ChangeList list : changeLists) {
-      ChangesBrowserNode listNode = new ChangesBrowserNode(list);
+      ChangesBrowserNode listNode = new ChangesBrowserNode(myProject, list);
       model.insertNodeInto(listNode, root, 0);
       final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
       final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
@@ -62,23 +62,22 @@ public class TreeModelBuilder {
     }
 
     if (!unversionedFiles.isEmpty()) {
-      ChangesBrowserNode unversionedNode = new ChangesBrowserNode(VcsBundle.message("changes.nodetitle.unversioned.files"));
+      ChangesBrowserNode unversionedNode = new ChangesBrowserNode(myProject, VcsBundle.message("changes.nodetitle.unversioned.files"));
       model.insertNodeInto(unversionedNode, root, root.getChildCount());
       final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
       final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
       for (VirtualFile file : unversionedFiles) {
-        final ChangesBrowserNode node = new ChangesBrowserNode(file);
-        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, unversionedNode), 0);
+        insertChangeNode(file, foldersCache, moduleCache, unversionedNode);
       }
     }
 
     if (!locallyDeletedFiles.isEmpty()) {
-      ChangesBrowserNode locallyDeletedNode = new ChangesBrowserNode(VcsBundle.message("changes.nodetitle.locally.deleted.files"));
+      ChangesBrowserNode locallyDeletedNode = new ChangesBrowserNode(myProject, VcsBundle.message("changes.nodetitle.locally.deleted.files"));
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
       final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
       final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
       for (FilePath file : locallyDeletedFiles) {
-        final ChangesBrowserNode node = new ChangesBrowserNode(file);
+        final ChangesBrowserNode node = new ChangesBrowserNode(myProject, file);
         model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, locallyDeletedNode), 0);
       }
     }
@@ -89,16 +88,16 @@ public class TreeModelBuilder {
     return model;
   }
 
-  private void insertChangeNode(final Change change, final HashMap<FilePath, ChangesBrowserNode> foldersCache, final HashMap<Module, ChangesBrowserNode> moduleCache,
+  private void insertChangeNode(final Object change, final HashMap<FilePath, ChangesBrowserNode> foldersCache, final HashMap<Module, ChangesBrowserNode> moduleCache,
                                 final ChangesBrowserNode listNode) {
-    final FilePath nodePath = ChangesUtil.getFilePath(change);
+    final FilePath nodePath = getPathForObject(change);
     nodePath.refresh();
     ChangesBrowserNode oldNode = foldersCache.get(nodePath);
     if (oldNode != null) {
       oldNode.setUserObject(change);
     }
     else {
-      final ChangesBrowserNode node = new ChangesBrowserNode(change);
+      final ChangesBrowserNode node = new ChangesBrowserNode(myProject, change);
       model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, listNode), 0);
       foldersCache.put(nodePath, node);
     }
@@ -155,7 +154,7 @@ public class TreeModelBuilder {
     model.nodeStructureChanged((TreeNode)model.getRoot());
   }
 
-  public static void collapseDirectories(DefaultTreeModel model, ChangesBrowserNode node) {
+  private static void collapseDirectories(DefaultTreeModel model, ChangesBrowserNode node) {
     if (node.getUserObject() instanceof FilePath && node.getChildCount() == 1) {
       final ChangesBrowserNode child = (ChangesBrowserNode)node.getChildAt(0);
       if (child.getUserObject() instanceof FilePath && !child.isLeaf()) {
@@ -176,7 +175,7 @@ public class TreeModelBuilder {
     }
   }
 
-  public static FilePath getPathForObject(Object o) {
+  private static FilePath getPathForObject(Object o) {
     if (o instanceof Change) {
       return ChangesUtil.getFilePath((Change)o);
     }
@@ -198,7 +197,7 @@ public class TreeModelBuilder {
       return rootNode;
     }
 
-    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final FilePath path = getPathForObject(node.getUserObject());
 
     final VirtualFile rootFolder = VcsDirtyScope.getRootFor(index, path);
@@ -216,7 +215,7 @@ public class TreeModelBuilder {
 
     ChangesBrowserNode parentNode = folderNodesCache.get(parentPath);
     if (parentNode == null) {
-      parentNode = new ChangesBrowserNode(parentPath);
+      parentNode = new ChangesBrowserNode(myProject, parentPath);
       ChangesBrowserNode grandPa = getParentNodeFor(parentNode, folderNodesCache, moduleNodesCache, rootNode);
       model.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
       folderNodesCache.put(parentPath, parentNode);
@@ -230,7 +229,7 @@ public class TreeModelBuilder {
                                               ChangesBrowserNode root) {
     ChangesBrowserNode node = moduleNodesCache.get(module);
     if (node == null) {
-      node = new ChangesBrowserNode(module);
+      node = new ChangesBrowserNode(myProject, module);
       model.insertNodeInto(node, root, root.getChildCount());
       moduleNodesCache.put(module, node);
     }
