@@ -15,6 +15,15 @@ public class SnapshotDirectoriesTest extends TestCase {
   }
 
   @Test
+  public void testCreatingParentDirectoriesDirectory() {
+    Snapshot s = new Snapshot();
+    s.createDirectory(fn("dir1/dir2"));
+
+    assertTrue(s.hasRevision(fn("dir1")));
+    assertTrue(s.hasRevision(fn("dir1/dir2")));
+  }
+
+  @Test
   public void testCreatingFileUnderNonExistingDirectory() {
     //Snapshot s = new Snapshot();
     //s.createFile("dir/file", "");
