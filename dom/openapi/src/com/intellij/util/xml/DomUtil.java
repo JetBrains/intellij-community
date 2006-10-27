@@ -138,20 +138,16 @@ public class DomUtil {
     if (nameValueMethod != null) {
       final NameValue nameValue = DomReflectionUtil.findAnnotationDFS(nameValueMethod, NameValue.class);
       if (nameValue == null || nameValue.unique()) {
-        final Object o = DomReflectionUtil.invokeMethod(nameValueMethod, element);
-        if (o instanceof GenericDomValue) {
-          final GenericDomValue genericDomValue = (GenericDomValue)o;
-          final String stringValue = genericDomValue.getStringValue();
-          if (stringValue != null) {
-            final DomElement parent = element.getManager().getIdentityScope(element);
-            final DomGenericInfo domGenericInfo = parent.getGenericInfo();
-            final String tagName = element.getXmlElementName();
-            final DomCollectionChildDescription childDescription = domGenericInfo.getCollectionChildDescription(tagName);
-            if (childDescription != null) {
-              final ArrayList<DomElement> list = new ArrayList<DomElement>(childDescription.getValues(parent));
-              list.remove(element);
-              return list;
-            }
+        final String stringValue = ElementPresentationManager.getElementName(element);
+        if (stringValue != null) {
+          final DomElement parent = element.getManager().getIdentityScope(element);
+          final DomGenericInfo domGenericInfo = parent.getGenericInfo();
+          final String tagName = element.getXmlElementName();
+          final DomCollectionChildDescription childDescription = domGenericInfo.getCollectionChildDescription(tagName);
+          if (childDescription != null) {
+            final ArrayList<DomElement> list = new ArrayList<DomElement>(childDescription.getValues(parent));
+            list.remove(element);
+            return list;
           }
         }
       }

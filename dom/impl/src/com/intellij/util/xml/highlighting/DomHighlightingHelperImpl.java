@@ -146,7 +146,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
   @NotNull
   public List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, final DomElementAnnotationHolder holder) {
-    final String elementName = element.getGenericInfo().getElementName(element);
+    final String elementName = ElementPresentationManager.getElementName(element);
     if (StringUtil.isNotEmpty(elementName)) {
       final DomElement domElement = DomUtil.findDuplicateNamedValue(element, elementName);
       if (domElement != null) {
