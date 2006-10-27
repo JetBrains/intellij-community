@@ -12,7 +12,7 @@ public class LocalVcs {
   }
 
   public boolean hasDirectory(String name) {
-    return hasFile(name);
+    return mySnapshot.hasDirectory(name);
   }
 
   public Revision getFileRevision(String name) {
@@ -37,7 +37,7 @@ public class LocalVcs {
   }
 
   public void createDirectory(String name) {
-    myPendingChanges.add(new CreateFileChange(name, null));
+    myPendingChanges.add(new CreateDirectoryChange(name));
   }
 
   public void createFile(String name, String content) {
