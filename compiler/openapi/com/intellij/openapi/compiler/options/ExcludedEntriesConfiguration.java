@@ -36,6 +36,7 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
   private static final @NonNls String URL = "url";
   private static final @NonNls String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
   private List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
+  private ExcludeEntryDescription[] myCachedDescriptions = null;
   private Factory<FileChooserDescriptor> myFileChooserDescriptorFactory;
 
 
@@ -43,16 +44,21 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
     myFileChooserDescriptorFactory = factory;
   }
 
-  public ExcludeEntryDescription[] getExcludeEntryDescriptions() {
-    return myExcludeEntryDescriptions.toArray(new ExcludeEntryDescription[myExcludeEntryDescriptions.size()]);
+  public synchronized ExcludeEntryDescription[] getExcludeEntryDescriptions() {
+    if (myCachedDescriptions == null) {
+      myCachedDescriptions = myExcludeEntryDescriptions.toArray(new ExcludeEntryDescription[myExcludeEntryDescriptions.size()]);
+    }
+    return myCachedDescriptions;
   }
 
-  public void addExcludeEntryDescription(ExcludeEntryDescription description) {
+  public synchronized void addExcludeEntryDescription(ExcludeEntryDescription description) {
     myExcludeEntryDescriptions.add(description);
+    myCachedDescriptions = null;
   }
 
-  public void removeAllExcludeEntryDescriptions() {
+  public synchronized void removeAllExcludeEntryDescriptions() {
     myExcludeEntryDescriptions.clear();
+    myCachedDescriptions = null;
   }
 
   public void readExternal(final Element node) {
@@ -62,18 +68,18 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
       if (url == null) continue;
       if (FILE.equals(element.getName())) {
         ExcludeEntryDescription excludeEntryDescription = new ExcludeEntryDescription(url, false, true);
-        myExcludeEntryDescriptions.add(excludeEntryDescription);
+        addExcludeEntryDescription(excludeEntryDescription);
       }
       if (DIRECTORY.equals(element.getName())) {
         boolean includeSubdirectories = Boolean.parseBoolean(element.getAttributeValue(INCLUDE_SUBDIRECTORIES));
         ExcludeEntryDescription excludeEntryDescription = new ExcludeEntryDescription(url, includeSubdirectories, false);
-        myExcludeEntryDescriptions.add(excludeEntryDescription);
+        addExcludeEntryDescription(excludeEntryDescription);
       }
     }
   }
 
   public void writeExternal(final Element element) {
-    for (final ExcludeEntryDescription description : myExcludeEntryDescriptions) {
+    for (final ExcludeEntryDescription description : getExcludeEntryDescriptions()) {
       if (description.isFile()) {
         Element entry = new Element(FILE);
         entry.setAttribute(URL, description.getUrl());
@@ -89,7 +95,7 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
   }
 
   public boolean isExcluded(VirtualFile virtualFile) {
-    for (final ExcludeEntryDescription entryDescription : myExcludeEntryDescriptions) {
+    for (final ExcludeEntryDescription entryDescription : getExcludeEntryDescriptions()) {
       VirtualFile descriptionFile = entryDescription.getVirtualFile();
       if (descriptionFile == null) {
         continue;
