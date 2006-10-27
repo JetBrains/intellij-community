@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 
-public class LocalVcsTestCase extends Assert {
+public abstract class LocalVcsTestCase extends Assert {
   protected LocalVcs myVcs;
 
   @Before

@@ -65,15 +65,15 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
     assertElements(
         new Object[]{
-            new Revision(id1, "file1", "new content1"),
-            new Revision(id2, "file2", "content2"),
-            new Revision(id3, "file3", "content3")},
+            new FileRevision(id1, "file1", "new content1"),
+            new FileRevision(id2, "file2", "content2"),
+            new FileRevision(id3, "file3", "content3")},
         snapshots.get(0).getRevisions());
 
     assertElements(
         new Object[]{
-            new Revision(id1, "file1", "content1"),
-            new Revision(id2, "file2", "content2")},
+            new FileRevision(id1, "file1", "content1"),
+            new FileRevision(id2, "file2", "content2")},
         snapshots.get(1).getRevisions());
   }
 
