@@ -5,18 +5,19 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.containers.HashMap;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.zip.ZipFile;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl");
@@ -178,14 +179,35 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return path;
   }
 
-  public void refresh(boolean asynchronous) {
+  public void refresh(final boolean asynchronous) {
     JarFileInfo[] infos;
     synchronized (LOCK) {
       infos = myPathToFileInfoMap.values().toArray(new JarFileInfo[myPathToFileInfoMap.size()]);
     }
 
-    for (JarFileInfo info : infos) {
-      refreshInfo(info, asynchronous, false);
+    final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
+    final VirtualFileManagerEx manager = getManager();
+    manager.beforeRefreshStart(asynchronous, modalityState, null);
+
+    final Ref<Integer> joinCount = new Ref<Integer>(infos.length);
+    for (final JarFileInfo info : infos) {
+      final VirtualFile localRoot = getVirtualFileForJar(info.getRootFile());
+      if (localRoot != null) {
+        localRoot.refresh(asynchronous, false, new Runnable() {
+          public void run() {
+            int cnt = joinCount.get();
+            if (--cnt == 0) {
+              manager.afterRefreshFinish(asynchronous, modalityState);
+            }
+            joinCount.set(cnt);
+            if (!localRoot.isValid() || localRoot.getTimeStamp() != info.getTimeStamp()) {
+              refreshInfo(info, asynchronous, false);
+            }
+          }
+        });
+      } else {
+        refreshInfo(info, asynchronous, false);
+      }
     }
   }
 

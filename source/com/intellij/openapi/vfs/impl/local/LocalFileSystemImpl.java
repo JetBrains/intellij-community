@@ -225,24 +225,16 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       if (path.indexOf('\\') >= 0) return null;
     }
 
-    VirtualFile file = _findFileByPath(path, true);
+    VirtualFile file = findFileByPath(path, true, false);
     if (file == null){
       String canonicalPath = getCanonicalPath(new File(path.replace('/', File.separatorChar)));
       if (canonicalPath == null) return null;
       String path1 = canonicalPath.replace(File.separatorChar, '/');
       if (!path.equals(path1)){
-        return _findFileByPath(path1, true);
+        return findFileByPath(path1, true, false);
       }
     }
     return file;
-  }
-
-  private VirtualFile _findFileByPath(String path, final boolean assertReadAccessAllowed) {
-    if (assertReadAccessAllowed) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-
-    return findFileByPath(path, true, false);
   }
 
   private VirtualFile findFileByPath(String path, boolean createIfNoCache, final boolean refreshIfNotFound) {
@@ -431,7 +423,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
         for (final WatchRequest request : requests) {
           String runPath = request.getRootPath();
-          final VirtualFileImpl rootFile = (VirtualFileImpl)_findFileByPath(runPath, false);
+          final VirtualFileImpl rootFile = (VirtualFileImpl)findFileByPath(runPath, true, false);
           if (rootFile != null) {
 
             final PhysicalFile file = rootFile.getPhysicalFile();
@@ -520,7 +512,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       int index = vfsPath.lastIndexOf('/');
       while(index >= 0) {
         String parentPath = vfsPath.substring(0, index);
-        final VirtualFileImpl vParent = (VirtualFileImpl)_findFileByPath(parentPath, false);
+        final VirtualFileImpl vParent = (VirtualFileImpl)findFileByPath(parentPath, true, false);
         if (vParent != null) {
           final String path = vfsPath;
           getManager().addEventToFireByRefresh(new Runnable() {
