@@ -19,11 +19,7 @@ import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 6:07:21 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesParserDefinition implements ParserDefinition {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertiesParserDefinition");

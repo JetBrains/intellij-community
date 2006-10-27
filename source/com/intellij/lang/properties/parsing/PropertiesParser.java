@@ -7,11 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 28, 2005
- * Time: 12:29:06 AM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesParser implements PsiParser {
   @NotNull

@@ -5,11 +5,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 6:38:56 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesElementType extends IElementType {
   public PropertiesElementType(@NonNls String debugName) {

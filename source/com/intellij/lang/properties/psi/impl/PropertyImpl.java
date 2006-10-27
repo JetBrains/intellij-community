@@ -42,8 +42,8 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return this;
   }
 
-  public void setValue(String value) throws IncorrectOperationException {
-    StringBuffer escapedName = new StringBuffer(value.length());
+  public void setValue(@NotNull String value) throws IncorrectOperationException {
+    StringBuilder escapedName = new StringBuilder(value.length());
     for (int i=0; i<value.length();i++) {
       char c = value.charAt(i);
       if (c == '\n' && (i == 0 || value.charAt(i-1) != '\\')) {
@@ -81,10 +81,16 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return node.getText();
   }
 
+  @NotNull
+  public ASTNode getNode() {
+    return super.getNode();
+  }
+
   public @Nullable ASTNode getKeyNode() {
     return getNode().findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
   }
-  private @Nullable ASTNode getValueNode() {
+  @Nullable
+  public ASTNode getValueNode() {
     return getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
   }
 
@@ -104,12 +110,11 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     }
     int off = 0;
     int len = s.length();
-    char aChar;
     StringBuilder out = new StringBuilder();
 
     while (off < len) {
-        aChar = s.charAt(off++);
-        if (aChar == '\\') {
+      char aChar = s.charAt(off++);
+      if (aChar == '\\') {
             aChar = s.charAt(off++);
             if(aChar == 'u') {
                 // Read the xxxx

@@ -3,21 +3,18 @@ package com.intellij.lang.properties;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
+import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 10:44:17 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesLexerTest extends LightIdeaTestCase {
-  private static void doTest(String text, String[] expectedTokens) {
+  private static void doTest(@NonNls String text, @NonNls String[] expectedTokens) {
     Lexer lexer = new PropertiesLexer();
     doTest(text, expectedTokens, lexer);
   }
 
-  private static void doTestHL(String text, String[] expectedTokens) {
+  private static void doTestHL(@NonNls String text, @NonNls String[] expectedTokens) {
     Lexer lexer = new PropertiesHighlightingLexer();
     doTest(text, expectedTokens, lexer);
   }
@@ -171,6 +168,22 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
       "Properties:VALUE_CHARACTERS", "z",
       "VALID_STRING_ESCAPE_TOKEN", "\\t",
       "Properties:VALUE_CHARACTERS", "p",
+    });
+  }
+  public void testFramingSpaces() throws Exception {
+    doTestHL("\\ x\\ y\\ =\\ z\\ t\\ \\ ", new String[]{
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
+      "Properties:KEY_CHARACTERS", "x",
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
+      "Properties:KEY_CHARACTERS", "y",
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
+      "Properties:KEY_VALUE_SEPARATOR", "=",
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
+      "Properties:VALUE_CHARACTERS", "z",
+      "INVALID_CHARACTER_ESCAPE_TOKEN", "\\ ",
+      "Properties:VALUE_CHARACTERS", "t",
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
+      "VALID_STRING_ESCAPE_TOKEN", "\\ ",
     });
   }
 

@@ -40,16 +40,23 @@ public class StringLiteralLexer extends LexerBase {
   private int myBufferEnd;
   private char myQuoteChar;
   private IElementType myOriginalLiteralToken;
-  private final boolean myCanEscapeEol;
+  private final boolean myCanEscapeEolOrFramingSpaces;
   private final String myAdditionalValidEscapes;
+  private boolean mySeenEscapedSpacesOnly;
 
   public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken) {
     this(quoteChar, originalLiteralToken, false, null);
   }
-  public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken, boolean canEscapeEol, String additionalValidEscapes) {
+
+  /**
+   * @param canEscapeEolOrFramingSpaces true if following sequences are acceptable
+   *    '\' in the end of the buffer (meaning escaped end of line) or
+   *    '\ ' (escaped space) in the beginning and in the end of the buffer (meaning escaped space, to avoid auto trimming on load)
+   */
+  public StringLiteralLexer(char quoteChar, final IElementType originalLiteralToken, boolean canEscapeEolOrFramingSpaces, String additionalValidEscapes) {
     myQuoteChar = quoteChar;
     myOriginalLiteralToken = originalLiteralToken;
-    myCanEscapeEol = canEscapeEol;
+    myCanEscapeEolOrFramingSpaces = canEscapeEolOrFramingSpaces;
     myAdditionalValidEscapes = additionalValidEscapes;
   }
 
@@ -69,6 +76,7 @@ public class StringLiteralLexer extends LexerBase {
     myLastState = initialState;
     myBufferEnd = endOffset;
     myEnd = locateToken(myStart);
+    mySeenEscapedSpacesOnly = true;
   }
 
   public void start(char[] buffer, int startOffset, int endOffset) {
@@ -86,11 +94,17 @@ public class StringLiteralLexer extends LexerBase {
   public IElementType getTokenType() {
     if (myStart >= myEnd) return null;
 
-    if (myBuffer[myStart] != '\\') return myOriginalLiteralToken;
+    if (myBuffer[myStart] != '\\') {
+      mySeenEscapedSpacesOnly = false;
+      return myOriginalLiteralToken;
+    }
 
     if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
-    final char nextChar = myBuffer[myStart + 1];
-    if (myCanEscapeEol && nextChar == '\n') {
+    char nextChar = myBuffer[myStart + 1];
+    mySeenEscapedSpacesOnly &= nextChar == ' ';
+    if (myCanEscapeEolOrFramingSpaces &&
+        (nextChar == '\n' || nextChar == ' ' && (mySeenEscapedSpacesOnly || isTrailingSpace(myStart+2)))
+      ) {
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
     if (nextChar == 'u') {
@@ -126,6 +140,17 @@ public class StringLiteralLexer extends LexerBase {
     return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
   }
 
+  // all subsequent chars are escaped spaces
+  private boolean isTrailingSpace(final int start) {
+    for (int i=start;i<myBufferEnd;i+=2) {
+      char c = myBuffer[i];
+      if (c != '\\') return false;
+      if (i==myBufferEnd-1) return false;
+      if (myBuffer[i+1] != ' ') return false;
+    }
+    return true;
+  }
+
   public int getTokenStart() {
     return myStart;
   }
@@ -143,7 +168,7 @@ public class StringLiteralLexer extends LexerBase {
     if (myBuffer[i] == '\\') {
       LOG.assertTrue(myState == AFTER_FIRST_QUOTE);
       i++;
-      if (i == myBufferEnd || myBuffer[i] == '\n' && !myCanEscapeEol) {
+      if (i == myBufferEnd || myBuffer[i] == '\n' && !myCanEscapeEolOrFramingSpaces) {
         myState = AFTER_LAST_QUOTE;
         return i;
       }

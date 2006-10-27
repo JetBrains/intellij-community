@@ -35,25 +35,27 @@ import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.options.OptionsBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
 
-import org.jetbrains.annotations.NotNull;
-
 public class PropertiesColorsPage implements ColorSettingsPage {
-  private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.property.key"), PropertiesHighlighter.PROPERTY_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.property.value"), PropertiesHighlighter.PROPERTY_VALUE),
-    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.key.value.separator"), PropertiesHighlighter.PROPERTY_KEY_VALUE_SEPARATOR),
-    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.comment"), PropertiesHighlighter.PROPERTY_COMMENT),
-    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.valid.string.escape"), PropertiesHighlighter.PROPERTIES_VALID_STRING_ESCAPE),
-    new AttributesDescriptor(OptionsBundle.message("options.properties.attribute.descriptor.invalid.string.escape"), PropertiesHighlighter.PROPERTIES_INVALID_STRING_ESCAPE),
-  };
+  private static final AttributesDescriptor[] ATTRS;
+
+  static {
+    ATTRS = new AttributesDescriptor[PropertiesHighlighter.DISPLAY_NAMES.size()];
+    TextAttributesKey[] keys = PropertiesHighlighter.DISPLAY_NAMES.keySet().toArray(new TextAttributesKey[0]);
+    for (int i = 0; i < keys.length; i++) {
+      TextAttributesKey key = keys[i];
+      String name = PropertiesHighlighter.DISPLAY_NAMES.get(key).getFirst();
+      ATTRS[i] = new AttributesDescriptor(name, key);
+    }
+  }
 
   private static final ColorDescriptor[] COLORS = new ColorDescriptor[0];
 

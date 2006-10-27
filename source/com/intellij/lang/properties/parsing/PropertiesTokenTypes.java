@@ -5,11 +5,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 6:40:01 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public interface PropertiesTokenTypes {
   IElementType WHITE_SPACE = TokenType.WHITE_SPACE;

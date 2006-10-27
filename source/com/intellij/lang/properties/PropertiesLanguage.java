@@ -29,11 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 27, 2005
- * Time: 6:03:49 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesLanguage extends Language {
   private static final Annotator ANNOTATOR = new PropertiesAnnotator();
