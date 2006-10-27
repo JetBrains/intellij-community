@@ -3,6 +3,7 @@ package com.intellij.localvcs;
 import java.util.List;
 
 public abstract class Revision {
+  // todo rename to Entry
   private Integer myObjectId;
   private String myName;
 
