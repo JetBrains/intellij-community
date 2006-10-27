@@ -19,6 +19,6 @@ public class Filename {
 
   @Override
   public int hashCode() {
-    return myName.hashCode();
+    throw new UnsupportedOperationException();
   }
 }

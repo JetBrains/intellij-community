@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,11 +10,9 @@ public class ChangeSetTest extends TestCase {
 
   @Before
   public void setUp() {
-    myChangeSet = new ChangeSet(
-        Arrays.asList(new Change[]{
-            new CreateFileChange(fn("file1"), ""),
-            new CreateFileChange(fn("file2"), ""),
-            new CreateFileChange(fn("file3"), "")}));
+    myChangeSet = cs(new CreateFileChange(fn("file1"), ""),
+                     new CreateFileChange(fn("file2"), ""),
+                     new CreateFileChange(fn("file3"), ""));
 
     myLog = "";
     mySnapshot = new Snapshot() {
