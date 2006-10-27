@@ -586,7 +586,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     if (myJdksTreeModel.isModified() || modifiedJdks) myJdksTreeModel.apply(this);
     myJdksTreeModel.setProjectJdk(ProjectRootManager.getInstance(myProject).getProjectJdk());
     if (isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified()) myProjectConfigurable.apply(); //do not reorder
-    if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myProjectLibrariesProvider.deferredCommit();
@@ -599,6 +599,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         }
       }
     });
+
+    if (myModulesConfigurator.isModified()) myModulesConfigurator.apply();
 
     //cleanup
     myUpdateDependenciesAlarm.cancelAllRequests();
