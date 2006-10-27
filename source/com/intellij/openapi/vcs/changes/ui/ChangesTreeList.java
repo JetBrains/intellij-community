@@ -375,14 +375,14 @@ public class ChangesTreeList extends JPanel {
   }
 
   private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
-    private final ChangeBrowserNodeRenderer myTextRenderer;
+    private final ChangesBrowserNodeRenderer myTextRenderer;
     private final JCheckBox myCheckBox;
 
 
     public MyTreeCellRenderer() {
       super(new BorderLayout());
       myCheckBox = new JCheckBox();
-      myTextRenderer = new ChangeBrowserNodeRenderer(myProject, false);
+      myTextRenderer = new ChangesBrowserNodeRenderer(myProject, false);
 
       myCheckBox.setBackground(null);
       setBackground(null);

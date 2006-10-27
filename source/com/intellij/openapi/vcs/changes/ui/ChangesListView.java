@@ -135,7 +135,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
     final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles);
     setModel(model);
-    setCellRenderer(new ChangeBrowserNodeRenderer(myProject, isShowFlatten()));
+    setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten()));
 
     expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 

@@ -18,12 +18,12 @@ import java.io.File;
 /**
  * @author max
  */
-class ChangeBrowserNodeRenderer extends ColoredTreeCellRenderer {
+class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
   private final Project myProject;
   private ChangeListDecorator[] myDecorators;
 
-  public ChangeBrowserNodeRenderer(final Project project, final boolean showFlatten) {
+  public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten) {
     myShowFlatten = showFlatten;
     myProject = project;
     myDecorators = myProject.getComponents(ChangeListDecorator.class);
