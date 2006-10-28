@@ -3,7 +3,7 @@ package com.intellij.ide.structureView;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author Eugene Belyaev
@@ -18,7 +18,7 @@ public abstract class StructureViewFactoryEx {
   public abstract void registerExtension(Class<? extends PsiElement> type, StructureViewExtension extension);
   public abstract void unregisterExtension(Class<? extends PsiElement> type, StructureViewExtension extension);
 
-  public abstract List<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type);
+  public abstract Collection<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type);
 
   public abstract void setActiveAction(final String name, final boolean state);
 

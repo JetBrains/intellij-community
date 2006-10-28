@@ -18,7 +18,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Eugene Belyaev
@@ -33,6 +36,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   private StructureViewWrapperImpl myStructureViewWrapperImpl;
 
   private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
+  private final MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> myImplExtensions = new MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension>();
 
   public StructureViewFactoryImpl(Project project) {
     myProject = project;
@@ -80,17 +84,27 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
 
   public void registerExtension(Class<? extends PsiElement> type, StructureViewExtension extension) {
     myExtensions.put(type, extension);
+    myImplExtensions.clear();
   }
 
   public void unregisterExtension(Class<? extends PsiElement> type, StructureViewExtension extension) {
     myExtensions.remove(type, extension);
+    myImplExtensions.clear();
   }
 
-  public List<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type) {
-    ArrayList<StructureViewExtension> result = new ArrayList<StructureViewExtension>();
-
-    for (Class<? extends PsiElement> registeregType : myExtensions.keySet()) {
-      if (registeregType.isAssignableFrom(type)) result.addAll(myExtensions.get(registeregType));
+  public Collection<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type) {
+    Collection<StructureViewExtension> result = myImplExtensions.get(type);
+    if (result == null) {
+      for (Class<? extends PsiElement> registeregType : myExtensions.keySet()) {
+        if (registeregType.isAssignableFrom(type)) {
+          final Collection<StructureViewExtension> extensions = myExtensions.get(registeregType);
+          for (StructureViewExtension extension : extensions) {
+            myImplExtensions.put(type, extension);
+          }
+        }
+      }
+      result = myImplExtensions.get(type);
+      if (result == null) return Collections.emptyList();
     }
     return result;
   }

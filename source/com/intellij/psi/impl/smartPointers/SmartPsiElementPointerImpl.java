@@ -85,7 +85,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       Document document = myElementInfo.getDocumentToSynchronize();
       if (document != null && PsiDocumentManager.getInstance(myProject).isUncommited(document)) return myElement; // keep element info if document is modified
     }
-    myElementInfo = null;
+    // myElementInfo = null;
 
     return myElement;
   }
@@ -154,6 +154,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   public void fastenBelt() {
+    if (myElementInfo != null && myElement != null && myElement.isValid()) return;
+
     if (myElementInfo == null && myElement != null && myElement.isValid()) {
       myElementInfo = createElementInfo();
     }

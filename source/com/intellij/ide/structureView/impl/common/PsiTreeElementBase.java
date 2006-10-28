@@ -31,32 +31,29 @@
  */
 package com.intellij.ide.structureView.impl.common;
 
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Collection;
-
-import org.jetbrains.annotations.Nullable;
+import java.util.List;
 
 public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement<Value>, ItemPresentation {
-  private final SmartPsiElementPointer mySmartPsiElementPointer;
+  private final PsiElement myValue;
 
   protected PsiTreeElementBase(PsiElement psiElement) {
-    mySmartPsiElementPointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
+    myValue = psiElement;
   }
 
   public ItemPresentation getPresentation() {
@@ -64,7 +61,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
   }
 
   public @Nullable final Value getElement() {
-    return (Value)mySmartPsiElementPointer.getElement();
+    return (Value)(myValue.isValid() ? myValue : null);
   }
 
   public Icon getIcon(boolean open) {
@@ -110,8 +107,7 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     result.addAll(baseChildren);
     StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstance(element.getProject());
     Class<? extends PsiElement> aClass = element.getClass();
-    List<StructureViewExtension> allExtensions = structureViewFactory.getAllExtensions(aClass);
-    for (StructureViewExtension extension : allExtensions) {
+    for (StructureViewExtension extension : structureViewFactory.getAllExtensions(aClass)) {
       StructureViewTreeElement[] children = extension.getChildren(element);
       if (children != null) {
         result.addAll(Arrays.asList(children));
