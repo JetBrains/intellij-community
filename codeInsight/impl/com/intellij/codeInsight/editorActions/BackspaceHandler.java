@@ -56,14 +56,16 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     if (offset >= editor.getDocument().getTextLength()) return true;
     chars = editor.getDocument().getCharsSequence();
-    if (c == '(' || c == '[' || toDeleteGt){
+    if (c == '(' || c == '[' || c == '{' || toDeleteGt){
       char c1 = chars.charAt(offset);
       if (c == '(' && c1 != ')') return true;
       if (c == '[' && c1 != ']') return true;
+      if (c == '{' && c1 != '}') return true;
 
       if (c == '<') {
         if (c1 != '>') return true;
-        return handleLTDeletion(editor, offset);
+        handleLTDeletion(editor, offset);
+        return true;
       }
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
@@ -105,7 +107,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
   }
 
   //need custom handler since cannot use brace matcher
-  private static boolean handleLTDeletion(final Editor editor, final int offset) {
+  private static void handleLTDeletion(final Editor editor, final int offset) {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
     while (iterator.getStart() > 0 && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
       iterator.retreat();
@@ -132,7 +134,5 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (balance < 0) {
       editor.getDocument().deleteString(offset, offset + 1);
     }
-
-    return true;
   }
 }

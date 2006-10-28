@@ -402,12 +402,12 @@ public class TypedHandler implements TypedActionHandler {
     }
     else if ('"' == charTyped || '\'' == charTyped){
       if (handleQuote(editor, fileType, charTyped, dataContext)) return;
-    } else if ('}' == charTyped &&
-               ( originalFileType == StdFileTypes.JSPX ||
-                 originalFileType == StdFileTypes.JSP
-               )
-    ) {
-      if (handleELClosingBrace(editor, file,project)) return;
+    } else if ('}' == charTyped) {
+      if (originalFileType == StdFileTypes.JSPX || originalFileType == StdFileTypes.JSP) {
+        if (handleELClosingBrace(editor, file, project)) return;
+      } else if (originalFileType == StdFileTypes.JAVA) {
+        if (handleJavaArrayInitializerRBrace(editor)) return;
+      }
     } else if ('/' == charTyped){
       if (file instanceof XmlFile){
         if(handleXmlSlashInEmptyEnd(project, editor)) return;
@@ -442,8 +442,11 @@ public class TypedHandler implements TypedActionHandler {
       if (originalFileType == StdFileTypes.JSPX ||
           originalFileType == StdFileTypes.JSP
         ) {
-        if(handleELOpeningBrace(editor, file,project)) return;
+        if(handleELOpeningBrace(editor, file, project)) return;
+      } else if (originalFileType == StdFileTypes.JAVA) {
+        if (handleJavaArrayInitializerLBrace(editor)) return;
       }
+
       indentOpenedBrace(project, editor);
     }
     else if ('/' == charTyped){
@@ -455,6 +458,39 @@ public class TypedHandler implements TypedActionHandler {
         handleJspEqual(project, editor);
       }
     }
+  }
+
+  private boolean handleJavaArrayInitializerRBrace(final Editor editor) {
+    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
+
+    int offset = editor.getCaretModel().getOffset();
+    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    if (iterator.getStart() == 0 || iterator.getTokenType() != JavaTokenType.RBRACE) return false;
+    iterator.retreat();
+    if (!checkArrayInitializerLBrace(iterator)) return false;
+    editor.getCaretModel().moveToOffset(offset + 1);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    return true;
+  }
+
+  private boolean handleJavaArrayInitializerLBrace(final Editor editor) {
+    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
+
+    int offset = editor.getCaretModel().getOffset();
+    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
+    if (!checkArrayInitializerLBrace(iterator)) return false;
+    editor.getDocument().insertString(offset, "}");
+    return true;
+  }
+
+  private boolean checkArrayInitializerLBrace(final HighlighterIterator iterator) {
+    if (iterator.getTokenType() != JavaTokenType.LBRACE) return false;
+    iterator.retreat();
+    if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
+    if (iterator.getTokenType() != JavaTokenType.RBRACKET) return false;
+    iterator.retreat();
+    if (iterator.getTokenType() != JavaTokenType.LBRACKET) return false;
+    return true;
   }
 
   //need custom handler, since brace matcher cannot be used
@@ -532,7 +568,7 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   private static boolean handleELOpeningBrace(final Editor editor, final PsiFile file, final Project project) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement elementAt = file.findElementAt(offset-1);
 
@@ -550,7 +586,7 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   private static boolean handleELClosingBrace(final Editor editor, final PsiFile file, final Project project) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     final int offset = editor.getCaretModel().getOffset();
     PsiElement elementAt = file.findElementAt(offset);
     PsiElement parent = PsiTreeUtil.getParentOfType(elementAt,ELExpressionHolder.class);
