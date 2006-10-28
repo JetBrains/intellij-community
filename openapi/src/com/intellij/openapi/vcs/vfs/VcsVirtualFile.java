@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.vfs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
@@ -56,6 +56,8 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   }
 
   private void loadContent() throws IOException {
+    if (myContent != null) return;
+    
     final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
 
     try {
