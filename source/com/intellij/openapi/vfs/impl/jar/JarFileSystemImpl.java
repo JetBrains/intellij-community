@@ -195,11 +195,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       if (localRoot != null) {
         localRoot.refresh(asynchronous, false, new Runnable() {
           public void run() {
-            int cnt = joinCount.get();
-            if (--cnt == 0) {
-              manager.afterRefreshFinish(asynchronous, modalityState);
-            }
-            joinCount.set(cnt);
+            postAfterRefreshFinishWhenAllJoined(joinCount, manager, asynchronous, modalityState);
             if (!localRoot.isValid() || localRoot.getTimeStamp() != info.getTimeStamp()) {
               refreshInfo(info, asynchronous, false);
             }
@@ -207,11 +203,23 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         });
       } else {
         refreshInfo(info, asynchronous, false);
+        postAfterRefreshFinishWhenAllJoined(joinCount, manager, asynchronous, modalityState);
       }
     }
   }
 
-  public void forceRefreshFiles(final boolean asynchronous, VirtualFile... files) {
+  private static void postAfterRefreshFinishWhenAllJoined(final Ref<Integer> joinCount, 
+                                                   final VirtualFileManagerEx manager,
+                                                   final boolean asynchronous,
+                                                   final ModalityState modalityState) {
+    int cnt = joinCount.get();
+    if (--cnt == 0) {
+      manager.afterRefreshFinish(asynchronous, modalityState);
+    }
+    joinCount.set(cnt);
+  }
+
+  public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
     for (VirtualFile file : files) {
       String path = file.getPath();
       JarFileInfo jarFileInfo = myPathToFileInfoMap.get(path);
