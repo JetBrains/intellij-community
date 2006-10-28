@@ -12,16 +12,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PendingEventDispatcher <T extends EventListener> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PendingEventDispatcher");
 
   private final T myMulticaster;
 
-  private List<T> myListeners = new ArrayList<T>();
+  private List<T> myListeners = new CopyOnWriteArrayList<T>();
   private Map<T, Boolean> myListenersState = new HashMap<T, Boolean>();
-
-  private List<T> myCachedListeners = null;
 
   private Stack<T> myDispatchingListeners = new Stack<T>();
 
@@ -93,7 +92,6 @@ public class PendingEventDispatcher <T extends EventListener> {
 
     myListeners.add(listener);
     myListenersState.put(listener, Boolean.TRUE);
-    myCachedListeners = null;
   }
 
   public synchronized void addListener(final T listener, Disposable parentDisposable) {
@@ -110,7 +108,6 @@ public class PendingEventDispatcher <T extends EventListener> {
 
     myListeners.remove(listener);
     myListenersState.remove(listener);
-    myCachedListeners = null;
   }
 
   public void dispatchPendingEvent(final T listener) {
@@ -209,14 +206,7 @@ public class PendingEventDispatcher <T extends EventListener> {
     }
   }
 
-  private void updateCachedListeners() {
-    if (myCachedListeners == null) {
-      myCachedListeners = new ArrayList<T>(myListeners);
-    }
-  }
-
   public List<T> getListeners() {
-    updateCachedListeners();
-    return myCachedListeners;
+    return myListeners;
   }
 }
