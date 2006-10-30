@@ -674,8 +674,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myModelTracker.removeListener(this);
     myModelTracker.dispose();
     myUpdateAlarm.cancelAllRequests();
-    myTargets = new UsageTarget[0];
-    myUsages.clear();
     myRootPanel.dispose();
   }
 

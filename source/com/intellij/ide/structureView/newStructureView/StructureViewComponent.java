@@ -33,8 +33,8 @@ import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -367,6 +367,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public DefaultMutableTreeNode expandPathToElement(Object element) {
+    if (myAbstractTreeBuilder == null) return null;
+    
     ArrayList<AbstractTreeNode> pathToElement = getPathToElement(element);
 
     if (pathToElement.isEmpty()) return null;
