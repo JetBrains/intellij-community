@@ -24,7 +24,7 @@ public abstract class Revision {
 
   public Filename getPath() {
     if (!hasParent()) return myName;
-    return myParent.getPath().with(myName);
+    return myParent.getPath().appendedWith(myName);
   }
 
   public String getContent() {

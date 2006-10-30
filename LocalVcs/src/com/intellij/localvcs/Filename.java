@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class Filename {
-  private String myName;
+  private final String myName;
 
   public Filename(String name) {
     myName = name;
@@ -49,8 +49,13 @@ public class Filename {
     return result;
   }
 
-  public Filename with(Filename tail) {
+  public Filename appendedWith(Filename tail) {
     return new Filename(myName + "/" + tail.myName);
+  }
+
+  public Filename renamedWith(Filename newName) {
+    if (!hasParent()) return newName;
+    return getParent().appendedWith(newName);
   }
 
   @Override

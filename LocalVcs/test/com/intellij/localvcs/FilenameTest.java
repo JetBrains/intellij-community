@@ -38,6 +38,21 @@ public class FilenameTest extends TestCase {
     Filename f1 = new Filename("file1");
 
     assertEquals(new Filename("file1/file2"),
-                 f1.with(new Filename("file2")));
+                 f1.appendedWith(new Filename("file2")));
+  }
+
+  @Test
+  public void testRenaming() {
+    Filename f = new Filename("file1");
+
+    assertEquals(new Filename("file2"), f.renamedWith(new Filename("file2")));
+  }
+
+  @Test
+  public void testRenamingWithParent() {
+    Filename f = new Filename("dir/file1");
+
+    assertEquals(new Filename("dir/file2"),
+                 f.renamedWith(new Filename("file2")));
   }
 }

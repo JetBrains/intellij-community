@@ -95,6 +95,17 @@ public class SnapshotDirectoriesTest extends TestCase {
   }
 
   @Test
+  public void testRenamingFilesUnderDirectory() {
+    s.doCreateDirectory(fn("dir"));
+    s.doCreateFile(fn("dir/file"), "");
+
+    s.doRenameFile(fn("dir/file"), fn("new file"));
+
+    assertFalse(s.hasRevision(fn("dir/file")));
+    assertTrue(s.hasRevision(fn("dir/new file")));
+  }
+
+  @Test
   public void testApplyingAndRevertingDirectoryCreation() {
     s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
     assertTrue(s.hasRevision(fn("dir")));
@@ -104,7 +115,7 @@ public class SnapshotDirectoriesTest extends TestCase {
   }
 
   @Test
-  public void testApplyingAndRevertingCreationFilesUnderDirectories() {
+  public void testApplyingAndRevertingFileCreationUnderDirectory() {
     s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
     s = s.apply(cs(new CreateFileChange(fn("dir/file"), "")));
 
