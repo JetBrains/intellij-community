@@ -1,13 +1,19 @@
 package com.intellij.localvcs;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class SnapshotDirectoriesTest extends TestCase {
   // todo test boundary conditions
+  private Snapshot s;
+
+  @Before
+  public void setUp() {
+    s = new Snapshot();
+  }
 
   @Test
   public void testCeatingDirectory() {
-    Snapshot s = new Snapshot();
     assertFalse(s.hasRevision(fn("dir")));
 
     s.doCreateDirectory(fn("dir"));
@@ -18,7 +24,6 @@ public class SnapshotDirectoriesTest extends TestCase {
 
   @Test
   public void testFilesUnderDirectory() {
-    Snapshot s = new Snapshot();
     s.doCreateDirectory(fn("dir"));
     s.doCreateFile(fn("dir/file"), "");
 
@@ -34,49 +39,20 @@ public class SnapshotDirectoriesTest extends TestCase {
   }
 
   @Test
-  public void testCreatingFileUnderNonExistingDirectory() {
-    Snapshot s = new Snapshot();
-    s.doCreateFile(fn("dir/file"), "");
+  public void testCreatingChildredForNonExistingDirectoryThrowsException() {
+    try {
+      s.doCreateFile(fn("dir/file"), "");
+      fail();
+    } catch (LocalVcsException e) { }
 
-    assertTrue(s.hasRevision(fn("dir")));
-    assertTrue(s.hasRevision(fn("dir/file")));
-
-    Revision dir = s.getRevision(fn("dir"));
-    Revision file = s.getRevision(fn("dir/file"));
-
-    assertEquals(1, dir.getChildren().size());
-    assertSame(file, dir.getChildren().get(0));
-  }
-
-  @Test
-  public void testCreatingParentDirectoryForNewDirectory() {
-    Snapshot s = new Snapshot();
-    s.doCreateDirectory(fn("dir1/dir2"));
-
-    assertTrue(s.hasRevision(fn("dir1")));
-    assertTrue(s.hasRevision(fn("dir1/dir2")));
-
-    Revision dir1 = s.getRevision(fn("dir1"));
-    Revision dir2 = s.getRevision(fn("dir1/dir2"));
-
-    assertEquals(1, dir1.getChildren().size());
-    assertSame(dir2, dir1.getChildren().get(0));
-  }
-
-  @Test
-  public void testCreatingAllParentDirectories() {
-    Snapshot s = new Snapshot();
-    s.doCreateFile(fn("dir1/dir2/file"), "");
-
-    assertTrue(s.hasRevision(fn("dir1")));
-    assertTrue(s.hasRevision(fn("dir1/dir2")));
-    assertTrue(s.hasRevision(fn("dir1/dir2/file")));
+    try {
+      s.doCreateDirectory(fn("dir1/dir2"));
+      fail();
+    } catch (LocalVcsException e) { }
   }
 
   @Test
   public void testDeletingDirectory() {
-    Snapshot s = new Snapshot();
-
     s.doCreateDirectory(fn("dir"));
     assertTrue(s.hasRevision(fn("dir")));
 
@@ -86,9 +62,9 @@ public class SnapshotDirectoriesTest extends TestCase {
 
   @Test
   public void testDeletingSubdirectory() {
-    Snapshot s = new Snapshot();
-
+    s.doCreateDirectory(fn("dir1"));
     s.doCreateDirectory(fn("dir1/dir2"));
+
     assertTrue(s.hasRevision(fn("dir1")));
     assertTrue(s.hasRevision(fn("dir1/dir2")));
 
@@ -100,8 +76,7 @@ public class SnapshotDirectoriesTest extends TestCase {
 
   @Test
   public void testDeletingDirectoryWithContent() {
-    Snapshot s = new Snapshot();
-
+    s.doCreateDirectory(fn("dir1"));
     s.doCreateDirectory(fn("dir1/dir2"));
     s.doDelete(fn("dir1"));
 
@@ -111,8 +86,7 @@ public class SnapshotDirectoriesTest extends TestCase {
 
   @Test
   public void testDeletingFilesUnderDirectory() {
-    Snapshot s = new Snapshot();
-
+    s.doCreateDirectory(fn("dir"));
     s.doCreateFile(fn("dir/file"), "");
     assertTrue(s.hasRevision(fn("dir/file")));
 
@@ -122,8 +96,6 @@ public class SnapshotDirectoriesTest extends TestCase {
 
   @Test
   public void testApplyingAndRevertingDirectoryCreation() {
-    Snapshot s = new Snapshot();
-
     s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
     assertTrue(s.hasRevision(fn("dir")));
 
@@ -132,15 +104,14 @@ public class SnapshotDirectoriesTest extends TestCase {
   }
 
   @Test
-  public void testRevertingAutomaticallyCreatedDirectories() {
-    Snapshot s = new Snapshot();
+  public void testApplyingAndRevertingCreationFilesUnderDirectories() {
+    s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
+    s = s.apply(cs(new CreateFileChange(fn("dir/file"), "")));
 
-    s = s.apply(cs(new CreateDirectoryChange(fn("dir1/dir2"))));
-    assertTrue(s.hasRevision(fn("dir1")));
-    assertTrue(s.hasRevision(fn("dir1/dir2")));
+    assertTrue(s.hasRevision(fn("dir/file")));
 
     s = s.revert();
-    assertFalse(s.hasRevision(fn("dir1")));
-    assertFalse(s.hasRevision(fn("dir1/dir2")));
+    assertFalse(s.hasRevision(fn("dir/file")));
+    assertTrue(s.hasRevision(fn("dir")));
   }
 }
