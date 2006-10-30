@@ -146,7 +146,7 @@ public class CommonRefactoringUtil {
       return false;
     }
 
-    return true;
+    return failed.isEmpty();
   }
 
   private static void addVirtualFiles(final VirtualFile vFile, final List<VirtualFile> list) {
