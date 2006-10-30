@@ -243,10 +243,13 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   //should be called before setting static modifier
-  protected void setupTypeParameterList(Collection<PsiType> addedTypes) throws IncorrectOperationException {
+  protected void setupTypeParameterList() throws IncorrectOperationException {
     final PsiTypeParameterList list = myMember.getTypeParameterList();
     assert list != null;
-    list.replace(RefactoringUtil.createTypeParameterListWithUsedTypeParameters(myMember));
+    final PsiTypeParameterList newList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(myMember);
+    if (newList != null) {
+      list.replace(newList);
+    }
   }
 
   protected boolean makeClassParameterFinal(UsageInfo[] usages) {

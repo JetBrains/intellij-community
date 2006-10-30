@@ -58,6 +58,7 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -1487,8 +1488,9 @@ public class RefactoringUtil {
     return false;
   }
 
-  @NotNull
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters (final PsiElement... elements) {
+  @Nullable
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters (final @NotNull PsiElement... elements) {
+    if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new com.intellij.util.containers.HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {
       element.accept(new PsiRecursiveElementVisitor() {

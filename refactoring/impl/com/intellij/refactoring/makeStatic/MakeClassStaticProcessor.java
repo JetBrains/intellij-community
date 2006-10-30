@@ -97,7 +97,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     }
 
 
-    setupTypeParameterList(addedTypes);
+    setupTypeParameterList();
 
     // Add static modifier
     final PsiModifierList modifierList = myMember.getModifierList();

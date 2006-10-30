@@ -150,7 +150,7 @@ public class ExtractSuperClassUtil {
       movedElements.toArray(new PsiElement[movedElements.size()]));
     final PsiTypeParameterList originalTypeParameterList = superClass.getTypeParameterList();
     assert originalTypeParameterList != null;
-    final PsiTypeParameterList newList = (PsiTypeParameterList)originalTypeParameterList.replace(typeParameterList);
+    final PsiTypeParameterList newList = typeParameterList != null ? (PsiTypeParameterList)originalTypeParameterList.replace(typeParameterList) : originalTypeParameterList;
     final PsiElementFactory factory = manager.getElementFactory();
     Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
     for (final PsiTypeParameter parameter : newList.getTypeParameters()) {
