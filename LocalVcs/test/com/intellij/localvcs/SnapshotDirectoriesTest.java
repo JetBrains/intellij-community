@@ -18,7 +18,7 @@ public class SnapshotDirectoriesTest extends TestCase {
 
     s.doCreateDirectory(fn("dir"));
     assertTrue(s.hasRevision(fn("dir")));
-    assertEquals(DirectoryRevision.class, s.getRevision(fn("dir")).getClass());
+    assertEquals(DirectoryEntry.class, s.getRevision(fn("dir")).getClass());
     assertTrue(s.getRevision(fn("dir")).getChildren().isEmpty());
   }
 
@@ -30,8 +30,8 @@ public class SnapshotDirectoriesTest extends TestCase {
     assertTrue(s.hasRevision(fn("dir")));
     assertTrue(s.hasRevision(fn("dir/file")));
 
-    Revision dir = s.getRevision(fn("dir"));
-    Revision file = s.getRevision(fn("dir/file"));
+    Entry dir = s.getRevision(fn("dir"));
+    Entry file = s.getRevision(fn("dir/file"));
 
     assertEquals(1, dir.getChildren().size());
     assertSame(file, dir.getChildren().get(0));
