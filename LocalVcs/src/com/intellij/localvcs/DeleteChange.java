@@ -1,10 +1,10 @@
 package com.intellij.localvcs;
 
-class DeleteFileChange implements Change {
+class DeleteChange implements Change {
   private Path myPath;
   private Entry myPreviousEntry;
 
-  public DeleteFileChange(Path path) {
+  public DeleteChange(Path path) {
     myPath = path;
   }
 

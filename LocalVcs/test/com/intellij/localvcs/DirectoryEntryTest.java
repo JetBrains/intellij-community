@@ -36,13 +36,13 @@ public class DirectoryEntryTest extends TestCase {
 
     dir.addChild(file);
 
-    assertEquals(fn("dir/file"), file.getPath());
+    assertEquals(p("dir/file"), file.getPath());
   }
 
   @Test
   public void testPathWithoutParent() {
-    assertEquals(fn("dir"), new DirectoryEntry(null, "dir").getPath());
-    assertEquals(fn("file"), new FileEntry(null, "file", null).getPath());
+    assertEquals(p("dir"), new DirectoryEntry(null, "dir").getPath());
+    assertEquals(p("file"), new FileEntry(null, "file", null).getPath());
   }
 
   @Test
@@ -56,10 +56,10 @@ public class DirectoryEntryTest extends TestCase {
     root.addChild(file1);
     dir.addChild(file2);
 
-    assertSame(root, root.getEntry(fn("root")));
-    assertSame(dir, root.getEntry(fn("root/dir")));
-    assertSame(file1, root.getEntry(fn("root/file1")));
-    assertSame(file2, root.getEntry(fn("root/dir/file2")));
+    assertSame(root, root.getEntry(p("root")));
+    assertSame(dir, root.getEntry(p("root/dir")));
+    assertSame(file1, root.getEntry(p("root/file1")));
+    assertSame(file2, root.getEntry(p("root/dir/file2")));
   }
 
   @Test
@@ -71,8 +71,8 @@ public class DirectoryEntryTest extends TestCase {
     root.addChild(dir);
     dir.addChild(file);
 
-    assertNull(root.getEntry(fn("unknown root")));
-    assertNull(root.getEntry(fn("root/unknown dir")));
-    assertNull(root.getEntry(fn("root/dir/unknown file")));
+    assertNull(root.getEntry(p("unknown root")));
+    assertNull(root.getEntry(p("root/unknown dir")));
+    assertNull(root.getEntry(p("root/dir/unknown file")));
   }
 }

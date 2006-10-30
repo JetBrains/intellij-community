@@ -13,9 +13,9 @@ public class ChangeSetTest extends TestCase {
 
   @Before
   public void setUp() {
-    myChangeSet = cs(new CreateFileChange(fn("file1"), null),
-                     new CreateFileChange(fn("file2"), null),
-                     new CreateFileChange(fn("file3"), null));
+    myChangeSet = cs(new CreateFileChange(p("file1"), null),
+                     new CreateFileChange(p("file2"), null),
+                     new CreateFileChange(p("file3"), null));
 
     myLog = new ArrayList<Path>();
     mySnapshot = new Snapshot() {
@@ -34,12 +34,12 @@ public class ChangeSetTest extends TestCase {
   @Test
   public void testApplyingIsFIFO() {
     myChangeSet.applyTo(mySnapshot);
-    assertElements(new Object[]{fn("file1"), fn("file2"), fn("file3")}, myLog);
+    assertElements(new Object[]{p("file1"), p("file2"), p("file3")}, myLog);
   }
 
   @Test
   public void testRevertingIsLIFO() {
     myChangeSet.revertOn(mySnapshot);
-    assertElements(new Object[]{fn("file3"), fn("file2"), fn("file1")}, myLog);
+    assertElements(new Object[]{p("file3"), p("file2"), p("file1")}, myLog);
   }
 }

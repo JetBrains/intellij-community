@@ -21,8 +21,8 @@ public class Path {
     return getParts().get(getParts().size() - 1);
   }
 
-  public boolean hasParent() {
-    return getParent() != null;
+  public boolean isRoot() {
+    return getParent() == null;
   }
 
   public Path getParent() {
@@ -44,7 +44,7 @@ public class Path {
   }
 
   public Path renamedWith(String newName) {
-    if (!hasParent()) return new Path(newName);
+    if (isRoot()) return new Path(newName);
     return getParent().appendedWith(newName);
   }
 

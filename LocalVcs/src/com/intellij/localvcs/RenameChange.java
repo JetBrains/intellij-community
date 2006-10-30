@@ -1,10 +1,10 @@
 package com.intellij.localvcs;
 
-class RenameFileChange implements Change {
+class RenameChange implements Change {
   private Path myPath;
   private String myNewName;
 
-  public RenameFileChange(Path path, String newName) {
+  public RenameChange(Path path, String newName) {
     myPath = path;
     myNewName = newName;
   }

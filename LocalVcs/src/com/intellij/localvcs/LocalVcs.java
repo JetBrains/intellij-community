@@ -42,15 +42,15 @@ public class LocalVcs {
   }
 
   public void changeFile(Path path, String content) {
-    myPendingChanges.add(new ChangeContentChange(path, content));
+    myPendingChanges.add(new ChangeFileContentChange(path, content));
   }
 
   public void renameFile(Path path, String newName) {
-    myPendingChanges.add(new RenameFileChange(path, newName));
+    myPendingChanges.add(new RenameChange(path, newName));
   }
 
   public void deleteFile(Path path) {
-    myPendingChanges.add(new DeleteFileChange(path));
+    myPendingChanges.add(new DeleteChange(path));
   }
 
   public void commit() {

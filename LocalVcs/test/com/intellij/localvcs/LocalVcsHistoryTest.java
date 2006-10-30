@@ -7,20 +7,20 @@ import org.junit.Test;
 public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testRevertingToPreviousVersion() {
-    myVcs.createFile(fn("file"), "");
+    myVcs.createFile(p("file"), "");
     myVcs.commit();
-    assertTrue(myVcs.hasEntry(fn("file")));
+    assertTrue(myVcs.hasEntry(p("file")));
 
     myVcs.revert();
-    assertFalse(myVcs.hasEntry(fn("file")));
+    assertFalse(myVcs.hasEntry(p("file")));
   }
 
   @Test
   public void testRevertingClearsAllPendingChanges() {
-    myVcs.createFile(fn("file1"), "");
+    myVcs.createFile(p("file1"), "");
     myVcs.commit();
 
-    myVcs.createFile(fn("file2"), "");
+    myVcs.createFile(p("file2"), "");
     assertFalse(myVcs.isClean());
 
     myVcs.revert();
@@ -39,7 +39,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testClearingChangesAfterRevertWhenNoPreviousVersions() {
-    myVcs.createFile(fn("file"), "");
+    myVcs.createFile(p("file"), "");
     assertFalse(myVcs.isClean());
 
     myVcs.revert();
@@ -48,17 +48,17 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingSnapshots() {
-    myVcs.createFile(fn("file1"), "content1");
-    myVcs.createFile(fn("file2"), "content2");
+    myVcs.createFile(p("file1"), "content1");
+    myVcs.createFile(p("file2"), "content2");
     myVcs.commit();
 
-    myVcs.createFile(fn("file3"), "content3");
-    myVcs.changeFile(fn("file1"), "new content1");
+    myVcs.createFile(p("file3"), "content3");
+    myVcs.changeFile(p("file1"), "new content1");
     myVcs.commit();
 
-    Integer id1 = myVcs.getEntry(fn("file1")).getObjectId();
-    Integer id2 = myVcs.getEntry(fn("file2")).getObjectId();
-    Integer id3 = myVcs.getEntry(fn("file3")).getObjectId();
+    Integer id1 = myVcs.getEntry(p("file1")).getObjectId();
+    Integer id2 = myVcs.getEntry(p("file2")).getObjectId();
+    Integer id3 = myVcs.getEntry(p("file3")).getObjectId();
 
     List<Snapshot> snapshots = myVcs.getSnapshots();
     assertEquals(2, snapshots.size());
@@ -84,22 +84,22 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingLabeledSnapshot() {
-    myVcs.createFile(fn("file"), "content");
+    myVcs.createFile(p("file"), "content");
     myVcs.commit();
 
     myVcs.putLabel("label");
 
-    myVcs.changeFile(fn("file"), "new content");
+    myVcs.changeFile(p("file"), "new content");
     myVcs.commit();
 
     Snapshot s = myVcs.getSnapshot("label");
     assertNotNull(s);
-    assertRevisionContent("content", s.getEntry(fn("file")));
+    assertRevisionContent("content", s.getEntry(p("file")));
   }
 
   @Test
   public void testGettingSnapshotWithUnknownLabel() {
-    myVcs.createFile(fn("file"), "content");
+    myVcs.createFile(p("file"), "content");
     myVcs.commit();
     myVcs.putLabel("label");
 
