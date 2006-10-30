@@ -141,7 +141,7 @@ public class GenerateEqualsHelper implements Runnable {
       return new PsiMethod[]{hashCode};
     }
     else {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
   }
 
