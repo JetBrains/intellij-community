@@ -6,13 +6,19 @@ public class FilenameTest extends TestCase {
   @Test
   public void testParent() {
     Filename f = new Filename("dir1/dir2/file");
-    assertEquals("dir1/dir2", f.getParent().getName());
+    assertEquals("dir1/dir2", f.getParent().getPath());
   }
 
   @Test
   public void testParentOfOnePartFile() {
     Filename f = new Filename("file");
     assertNull(f.getParent());
+  }
+
+  @Test
+  public void testTail() {
+    assertEquals(fn("file"), new Filename("file").getTail());
+    assertEquals(fn("file"), new Filename("dir/file").getTail());
   }
 
   @Test

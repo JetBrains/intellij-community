@@ -11,7 +11,7 @@ public class Filename {
     myName = name;
   }
 
-  public String getName() {
+  public String getPath() {
     return myName;
   }
 
@@ -32,6 +32,10 @@ public class Filename {
     }
 
     return new Filename(result.substring(0, result.length() - 1));
+  }
+
+  public Filename getTail() {
+    return new Filename(getParts().get(getParts().size() - 1));
   }
 
   public List<String> getParts() {

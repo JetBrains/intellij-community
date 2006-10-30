@@ -18,12 +18,12 @@ public class ChangeSetTest extends TestCase {
     mySnapshot = new Snapshot() {
       @Override
       protected void doCreateFile(Filename name, String content) {
-        myLog += name.getName() + " ";
+        myLog += name.getPath() + " ";
       }
 
       @Override
       protected void doDeleteFile(Filename name) {
-        myLog += name.getName() + " ";
+        myLog += name.getPath() + " ";
       }
     };
   }
