@@ -1,9 +1,9 @@
 package com.intellij.localvcs;
 
-public class FileRevision extends Revision {
+public class FileEntry extends Entry {
   private String myContent;
 
-  public FileRevision(Integer objectId, String name, String content) {
+  public FileEntry(Integer objectId, String name, String content) {
     super(objectId, name);
     myContent = content;
   }
@@ -16,6 +16,6 @@ public class FileRevision extends Revision {
   @Override
   public boolean equals(Object o) {
     return super.equals(o)
-           && myContent.equals(((FileRevision)o).myContent);
+           && myContent.equals(((FileEntry)o).myContent);
   }
 }

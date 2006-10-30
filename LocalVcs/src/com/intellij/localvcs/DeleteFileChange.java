@@ -2,18 +2,18 @@ package com.intellij.localvcs;
 
 class DeleteFileChange implements Change {
   private Path myPath;
-  private Revision myPreviousRevision;
+  private Entry myPreviousEntry;
 
   public DeleteFileChange(Path path) {
     myPath = path;
   }
 
   public void applyTo(Snapshot snapshot) {
-    myPreviousRevision = snapshot.getRevision(myPath);
+    myPreviousEntry = snapshot.getRevision(myPath);
     snapshot.doDelete(myPath);
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.doCreateFile(myPath, myPreviousRevision.getContent());
+    snapshot.doCreateFile(myPath, myPreviousEntry.getContent());
   }
 }

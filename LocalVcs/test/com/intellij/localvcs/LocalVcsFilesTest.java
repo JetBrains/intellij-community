@@ -12,7 +12,7 @@ public class LocalVcsFilesTest extends LocalVcsTestCase {
 
     myVcs.commit();
     assertTrue(myVcs.hasRevision(fn("file")));
-    assertEquals(FileRevision.class, myVcs.getRevision(fn("file")).getClass());
+    assertEquals(FileEntry.class, myVcs.getRevision(fn("file")).getClass());
   }
 
   @Test
@@ -148,7 +148,7 @@ public class LocalVcsFilesTest extends LocalVcsTestCase {
     myVcs.renameFile(fn("file"), "new file");
     myVcs.commit();
 
-    List<Revision> revs = myVcs.getRevisions(fn("new file"));
+    List<Entry> revs = myVcs.getRevisions(fn("new file"));
 
     assertEquals(2, revs.size());
 

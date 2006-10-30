@@ -5,8 +5,8 @@ import org.junit.Test;
 public class DirectoryRevisionTest extends TestCase {
   @Test
   public void testAddingChildren() {
-    Revision dir = new DirectoryRevision(null, null);
-    Revision file = new FileRevision(null, null, null);
+    Entry dir = new DirectoryEntry(null, null);
+    Entry file = new FileEntry(null, null, null);
 
     dir.addChild(file);
 
@@ -18,8 +18,8 @@ public class DirectoryRevisionTest extends TestCase {
 
   @Test
   public void testRemovingChildren() {
-    Revision dir = new DirectoryRevision(null, null);
-    Revision file = new FileRevision(null, null, null);
+    Entry dir = new DirectoryEntry(null, null);
+    Entry file = new FileEntry(null, null, null);
 
     dir.addChild(file);
     assertFalse(dir.getChildren().isEmpty());
@@ -31,8 +31,8 @@ public class DirectoryRevisionTest extends TestCase {
 
   @Test
   public void testPath() {
-    Revision dir = new DirectoryRevision(null, "dir");
-    Revision file = new FileRevision(null, "file", null);
+    Entry dir = new DirectoryEntry(null, "dir");
+    Entry file = new FileEntry(null, "file", null);
 
     dir.addChild(file);
 
@@ -41,16 +41,16 @@ public class DirectoryRevisionTest extends TestCase {
 
   @Test
   public void testPathWithoutParent() {
-    assertEquals(fn("dir"), new DirectoryRevision(null, "dir").getPath());
-    assertEquals(fn("file"), new FileRevision(null, "file", null).getPath());
+    assertEquals(fn("dir"), new DirectoryEntry(null, "dir").getPath());
+    assertEquals(fn("file"), new FileEntry(null, "file", null).getPath());
   }
 
   @Test
   public void testFindingRevisionInTree() {
-    Revision root = new DirectoryRevision(null, "root");
-    Revision dir = new DirectoryRevision(null, "dir");
-    Revision file1 = new FileRevision(null, "file1", null);
-    Revision file2 = new FileRevision(null, "file2", null);
+    Entry root = new DirectoryEntry(null, "root");
+    Entry dir = new DirectoryEntry(null, "dir");
+    Entry file1 = new FileEntry(null, "file1", null);
+    Entry file2 = new FileEntry(null, "file2", null);
 
     root.addChild(dir);
     root.addChild(file1);
@@ -64,9 +64,9 @@ public class DirectoryRevisionTest extends TestCase {
 
   @Test
   public void testDoesNotFindUnknownRevision() {
-    Revision root = new DirectoryRevision(null, "root");
-    Revision dir = new DirectoryRevision(null, "dir");
-    Revision file = new FileRevision(null, "file", null);
+    Entry root = new DirectoryEntry(null, "root");
+    Entry dir = new DirectoryEntry(null, "dir");
+    Entry file = new FileEntry(null, "file", null);
 
     root.addChild(dir);
     dir.addChild(file);

@@ -11,12 +11,12 @@ public class LocalVcs {
     return mySnapshot.hasRevision(path);
   }
 
-  public Revision getRevision(Path path) {
+  public Entry getRevision(Path path) {
     return mySnapshot.getRevision(path);
   }
 
-  public List<Revision> getRevisions(Path path) {
-    List<Revision> result = new ArrayList<Revision>();
+  public List<Entry> getRevisions(Path path) {
+    List<Entry> result = new ArrayList<Entry>();
 
     //todo clean up this mess
     if (!mySnapshot.hasRevision(path)) return result;
@@ -24,7 +24,7 @@ public class LocalVcs {
     Integer id = mySnapshot.getRevision(path).getObjectId();
 
     for (Snapshot snapshot : getSnapshots()) {
-      Revision r = snapshot.getRevision(id);
+      Entry r = snapshot.getRevision(id);
       if (r == null) break;
 
       result.add(r);

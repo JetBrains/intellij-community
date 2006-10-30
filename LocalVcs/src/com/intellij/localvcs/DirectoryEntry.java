@@ -3,21 +3,21 @@ package com.intellij.localvcs;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DirectoryRevision extends Revision {
-  private List<Revision> myChildren = new ArrayList<Revision>();
+public class DirectoryEntry extends Entry {
+  private List<Entry> myChildren = new ArrayList<Entry>();
 
-  public DirectoryRevision(Integer objectId, String name) {
+  public DirectoryEntry(Integer objectId, String name) {
     super(objectId, name);
   }
 
   @Override
-  public void addChild(Revision child) {
+  public void addChild(Entry child) {
     myChildren.add(child);
     child.setParent(this);
   }
 
   @Override
-  public void removeChild(Revision child) {
+  public void removeChild(Entry child) {
     // todo should we remove child by equality or by identity?
     for (int i = 0; i < myChildren.size(); i++) {
       if (myChildren.get(i) == child) {
@@ -29,17 +29,17 @@ public class DirectoryRevision extends Revision {
   }
 
   @Override
-  public List<Revision> getChildren() {
+  public List<Entry> getChildren() {
     return myChildren;
   }
 
   @Override
-  public Revision getRevision(Path path) {
+  public Entry getRevision(Path path) {
     // todo a bit messy
-    Revision result = super.getRevision(path);
+    Entry result = super.getRevision(path);
     if (result != null) return result;
 
-    for (Revision child : myChildren) {
+    for (Entry child : myChildren) {
       result = child.getRevision(path);
       if (result != null) return result;
     }
