@@ -1,17 +1,17 @@
 package com.intellij.localvcs;
 
 class CreateDirectoryChange implements Change {
-  private Filename myName;
+  private Filename myPath;
 
-  public CreateDirectoryChange(Filename name) {
-    myName = name;
+  public CreateDirectoryChange(Filename path) {
+    myPath = path;
   }
 
   public void applyTo(Snapshot snapshot) {
-    snapshot.doCreateDirectory(myName);
+    snapshot.doCreateDirectory(myPath);
   }
 
   public void revertOn(Snapshot snapshot) {
-    throw new UnsupportedOperationException();
+    //snapshot.doDeleteDirectory(myPath);
   }
 }

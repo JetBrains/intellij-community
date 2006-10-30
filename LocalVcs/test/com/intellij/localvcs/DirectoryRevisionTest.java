@@ -5,8 +5,8 @@ import org.junit.Test;
 public class DirectoryRevisionTest extends TestCase {
   @Test
   public void testAddingChildren() {
-    Revision dir = new DirectoryRevision(null, fn("dir"));
-    Revision file = new FileRevision(null, fn("file"), "");
+    Revision dir = new DirectoryRevision(null, null);
+    Revision file = new FileRevision(null, null, null);
 
     dir.addChild(file);
 
@@ -14,6 +14,19 @@ public class DirectoryRevisionTest extends TestCase {
     assertSame(file, dir.getChildren().get(0));
 
     assertSame(dir, file.getParent());
+  }
+
+  @Test
+  public void testRemovingChildren() {
+    Revision dir = new DirectoryRevision(null, null);
+    Revision file = new FileRevision(null, null, null);
+
+    dir.addChild(file);
+    assertFalse(dir.getChildren().isEmpty());
+
+    dir.removeChild(file);
+    assertTrue(dir.getChildren().isEmpty());
+    assertNull(file.getParent());
   }
 
   @Test

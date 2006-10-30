@@ -17,6 +17,17 @@ public class DirectoryRevision extends Revision {
   }
 
   @Override
+  public void removeChild(Revision child) {
+    for (int i = 0; i < myChildren.size(); i++) {
+      if (myChildren.get(i) == child) {
+        myChildren.remove(i);
+        break;
+      }
+    }
+    child.setParent(null);
+  }
+
+  @Override
   public List<Revision> getChildren() {
     return myChildren;
   }

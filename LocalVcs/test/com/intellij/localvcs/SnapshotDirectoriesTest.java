@@ -72,4 +72,62 @@ public class SnapshotDirectoriesTest extends TestCase {
     assertTrue(s.hasRevision(fn("dir1/dir2")));
     assertTrue(s.hasRevision(fn("dir1/dir2/file")));
   }
+
+  @Test
+  public void testDeletingDirectory() {
+    Snapshot s = new Snapshot();
+
+    s.doCreateDirectory(fn("dir"));
+    assertTrue(s.hasRevision(fn("dir")));
+
+    s.doDelete(fn("dir"));
+    assertFalse(s.hasRevision(fn("dir")));
+  }
+
+  @Test
+  public void testDeletingSubdirectory() {
+    Snapshot s = new Snapshot();
+
+    s.doCreateDirectory(fn("dir1/dir2"));
+    assertTrue(s.hasRevision(fn("dir1")));
+    assertTrue(s.hasRevision(fn("dir1/dir2")));
+
+    s.doDelete(fn("dir1/dir2"));
+    assertFalse(s.hasRevision(fn("dir1/dir2")));
+
+    assertTrue(s.hasRevision(fn("dir1")));
+  }
+
+  @Test
+  public void testDeletingDirectoryWithContent() {
+    Snapshot s = new Snapshot();
+
+    s.doCreateDirectory(fn("dir1/dir2"));
+    s.doDelete(fn("dir1"));
+
+    assertFalse(s.hasRevision(fn("dir1/dir2")));
+    assertFalse(s.hasRevision(fn("dir1")));
+  }
+
+  @Test
+  public void testDeletingFilesUnderDirectory() {
+    Snapshot s = new Snapshot();
+
+    s.doCreateFile(fn("dir/file"), "");
+    assertTrue(s.hasRevision(fn("dir/file")));
+
+    s.doDelete(fn("dir/file"));
+    assertFalse(s.hasRevision(fn("dir/file")));
+  }
+
+  //@Test
+  //public void testApplyingRevertingDirectoryCreation() {
+  //  Snapshot s = new Snapshot();
+  //
+  //  s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
+  //  assertTrue(s.hasRevision(fn("dir")));
+  //
+  //  s = s.revert();
+  //  assertFalse(s.hasRevision(fn("dir")));
+  //}
 }

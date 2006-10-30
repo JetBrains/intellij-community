@@ -47,6 +47,10 @@ public abstract class Revision {
     throw new UnsupportedOperationException();
   }
 
+  public void removeChild(Revision child) {
+    throw new UnsupportedOperationException();
+  }
+
   public List<Revision> getChildren() {
     throw new UnsupportedOperationException();
   }

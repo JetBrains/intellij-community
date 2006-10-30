@@ -22,7 +22,7 @@ public class ChangeSetTest extends TestCase {
       }
 
       @Override
-      protected void doDeleteFile(Filename name) {
+      protected void doDelete(Filename name) {
         myLog += name.getPath() + " ";
       }
     };
