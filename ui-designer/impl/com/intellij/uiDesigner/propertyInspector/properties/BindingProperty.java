@@ -51,7 +51,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.BindingProperty");
 
   private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
-    protected void customize(final String value) {
+    protected void customize(@NotNull final String value) {
       setText(value);
     }
   };
@@ -78,7 +78,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   protected void setValueImpl(final RadComponent component, final String value) throws Exception {
-    if (Comparing.equal(value, component.getBinding())) {
+    if (Comparing.strEqual(value, component.getBinding(), true)) {
       return;
     }
 
@@ -282,6 +282,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
   }
 
+  @Nullable
   public static String suggestBindingFromText(final RadComponent component, final String text) {
     ArrayList<String> words = new ArrayList<String>(StringUtil.getWordsIn(text));
     if (words.size() > 0) {
