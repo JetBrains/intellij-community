@@ -16,8 +16,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 
