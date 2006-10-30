@@ -120,14 +120,27 @@ public class SnapshotDirectoriesTest extends TestCase {
     assertFalse(s.hasRevision(fn("dir/file")));
   }
 
-  //@Test
-  //public void testApplyingRevertingDirectoryCreation() {
-  //  Snapshot s = new Snapshot();
-  //
-  //  s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
-  //  assertTrue(s.hasRevision(fn("dir")));
-  //
-  //  s = s.revert();
-  //  assertFalse(s.hasRevision(fn("dir")));
-  //}
+  @Test
+  public void testApplyingAndRevertingDirectoryCreation() {
+    Snapshot s = new Snapshot();
+
+    s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
+    assertTrue(s.hasRevision(fn("dir")));
+
+    s = s.revert();
+    assertFalse(s.hasRevision(fn("dir")));
+  }
+
+  @Test
+  public void testRevertingAutomaticallyCreatedDirectories() {
+    Snapshot s = new Snapshot();
+
+    s = s.apply(cs(new CreateDirectoryChange(fn("dir1/dir2"))));
+    assertTrue(s.hasRevision(fn("dir1")));
+    assertTrue(s.hasRevision(fn("dir1/dir2")));
+
+    s = s.revert();
+    assertFalse(s.hasRevision(fn("dir1")));
+    assertFalse(s.hasRevision(fn("dir1/dir2")));
+  }
 }

@@ -12,6 +12,6 @@ class CreateDirectoryChange implements Change {
   }
 
   public void revertOn(Snapshot snapshot) {
-    //snapshot.doDeleteDirectory(myPath);
+    snapshot.doDelete(myPath);
   }
 }
