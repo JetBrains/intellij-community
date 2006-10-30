@@ -64,8 +64,8 @@ public abstract class Entry {
   @Override
   public boolean equals(Object o) {
     if (o == null || !o.getClass().equals(getClass())) return false;
-    Entry r = (Entry)o;
-    return myObjectId.equals(r.myObjectId) && myName.equals(r.myName);
+    Entry e = (Entry)o;
+    return myObjectId.equals(e.myObjectId) && myName.equals(e.myName);
   }
 
   @Override

@@ -24,10 +24,10 @@ public class LocalVcs {
     Integer id = mySnapshot.getEntry(path).getObjectId();
 
     for (Snapshot snapshot : getSnapshots()) {
-      Entry r = snapshot.getEntry(id);
-      if (r == null) break;
+      Entry e = snapshot.getEntry(id);
+      if (e == null) break;
 
-      result.add(r);
+      result.add(e);
     }
 
     return result;
