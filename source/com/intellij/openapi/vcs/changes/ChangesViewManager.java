@@ -12,7 +12,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -25,8 +24,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -160,12 +159,6 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     modelActionsGroup.add(refreshAction);
     modelActionsGroup.add(commitAction);
-
-    /*
-    for (CommitExecutor executor : myExecutors) {
-      modelActionsGroup.add(new CommitUsingExecutorAction(executor));
-    }
-    */
 
     modelActionsGroup.add(rollbackAction);
     modelActionsGroup.add(newChangeListAction);
@@ -403,7 +396,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
     public void update(AnActionEvent e) {
       if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
-        ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+        ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
         e.getPresentation().setVisible(lists != null && lists.length > 0);
       }
     }
@@ -417,7 +410,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void update(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
       final boolean visible =
         lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isReadOnly();
       if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
@@ -427,7 +420,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
       assert lists != null;
       final LocalChangeList list = ChangeListManager.getInstance(myProject).findChangeList(lists[0].getName());
       if (list != null) {
@@ -447,7 +440,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
 
     public void update(AnActionEvent e) {
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
       final boolean visible =
         lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isDefault();
       if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
@@ -457,7 +450,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
+      final ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
       assert lists != null;
       ChangeListManager.getInstance(myProject).setDefaultChangeList((LocalChangeList)lists[0]);
     }
@@ -470,12 +463,12 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void update(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      Change[] changes = e.getData(DataKeys.CHANGES);
       e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+      Change[] changes = e.getData(DataKeys.CHANGES);
       final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
       if (list == null) return;
 
@@ -491,21 +484,19 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void update(AnActionEvent e) {
-      Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-      //noinspection unchecked
-      List<FilePath> files = (List<FilePath>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      Change[] changes = e.getData(DataKeys.CHANGES);
+      List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
       e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null ||
                                      (files != null && !files.isEmpty()));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      //noinspection unchecked
-      List<FilePath> files = (List<FilePath>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
+      List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
       if (files != null && !files.isEmpty()) {
         new RollbackDeletionAction().actionPerformed(e);
       }
       else {
-        Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+        Change[] changes = e.getData(DataKeys.CHANGES);
         final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
         if (list == null) return;
 
@@ -612,8 +603,8 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void update(AnActionEvent e) {
-      Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      ChangeList[] lists = (ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS);
+      Project project = e.getData(DataKeys.PROJECT);
+      ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
       final boolean visible = canRemoveChangeLists(project, lists);
       if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
           e.getPresentation().setVisible(visible);
@@ -632,8 +623,8 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-      final ChangeList[] lists = ((ChangeList[])e.getDataContext().getData(DataConstants.CHANGE_LISTS));
+      Project project = e.getData(DataKeys.PROJECT);
+      final ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
       assert lists != null;
       int rc;
       if (lists.length == 1) {
@@ -666,14 +657,14 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      DeleteProvider deleteProvider = (DeleteProvider)e.getDataContext().getData(DataConstantsEx.DELETE_ELEMENT_PROVIDER);
+      DeleteProvider deleteProvider = e.getData(DataKeys.DELETE_ELEMENT_PROVIDER);
       assert deleteProvider != null;
       deleteProvider.deleteElement(e.getDataContext());
     }
 
     @Override
     public void update(AnActionEvent e) {
-      DeleteProvider deleteProvider = (DeleteProvider)e.getDataContext().getData(DataConstantsEx.DELETE_ELEMENT_PROVIDER);
+      DeleteProvider deleteProvider = e.getData(DataKeys.DELETE_ELEMENT_PROVIDER);
       e.getPresentation().setVisible(deleteProvider != null && deleteProvider.canDeleteElement(e.getDataContext()));
     }
   }
