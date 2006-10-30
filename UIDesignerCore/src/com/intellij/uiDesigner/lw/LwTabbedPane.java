@@ -87,12 +87,25 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
       }
       myTitle = title;
     }
+
+    public StringDescriptor getProperty(final String propName) {
+      if (propName.equals(TAB_TITLE_PROPERTY)) {
+        return myTitle;
+      }
+      if (propName.equals(TAB_TOOLTIP_PROPERTY)) {
+        return myToolTip;
+      }
+      throw new IllegalArgumentException("Unknown property name " + propName);
+    }
   }
 
-  public StringDescriptor getTabTitle(IComponent component) {
+  public StringDescriptor getTabProperty(IComponent component, final String propName) {
     LwComponent lwComponent = (LwComponent) component;
     LwTabbedPane.Constraints constraints = (LwTabbedPane.Constraints) lwComponent.getCustomLayoutConstraints();
-    return constraints == null ? null : constraints.myTitle;
+    if (constraints == null) {
+      return null;
+    }
+    return constraints.getProperty(propName);
   }
 
   public boolean areChildrenExclusive() {

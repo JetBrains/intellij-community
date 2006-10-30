@@ -15,6 +15,11 @@ public final class StringRenderer extends LabelPropertyRenderer<StringDescriptor
     if (resolvedValue == null) {
       resolvedValue = value.getValue();
     }
-    setText(StringUtil.escapeStringCharacters(resolvedValue));
+    if (resolvedValue != null) {
+      setText(StringUtil.escapeStringCharacters(resolvedValue));
+    }
+    else {
+      setText("");
+    }
   }
 }

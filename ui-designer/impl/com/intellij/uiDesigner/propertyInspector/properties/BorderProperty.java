@@ -25,6 +25,8 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class BorderProperty extends Property<RadContainer, BorderType> {
+  @NonNls public static final String NAME = "border";
+
   private Project myProject;
   private final Property[] myChildren;
 
@@ -35,7 +37,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   };
 
   public BorderProperty(final Project project){
-    super(null, "border");
+    super(null, NAME);
     myProject = project;
     myChildren=new Property[]{
       new MyTypeProperty(),

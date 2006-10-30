@@ -22,8 +22,7 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
     super("UnresolvedPropertyKey");
   }
 
-  protected void checkStringDescriptor(final StringDescriptorType property,
-                                       final Module module,
+  protected void checkStringDescriptor(final Module module,
                                        final IComponent component,
                                        final IProperty prop,
                                        final StringDescriptor descriptor,

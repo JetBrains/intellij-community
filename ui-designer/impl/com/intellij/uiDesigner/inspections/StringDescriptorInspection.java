@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NonNls;
  * @author yole
  */
 public abstract class StringDescriptorInspection extends BaseFormInspection {
-  protected enum StringDescriptorType { PROPERTY, BORDER, TAB }
   private static BorderProperty myBorderProperty = new BorderProperty(null);
 
   public StringDescriptorInspection(@NonNls String inspectionKey) {
@@ -21,7 +20,7 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
       Object propValue = prop.getPropertyValue(component);
       if (propValue instanceof StringDescriptor) {
         StringDescriptor descriptor = (StringDescriptor) propValue;
-        checkStringDescriptor(StringDescriptorType.PROPERTY, module, component, prop, descriptor, collector);
+        checkStringDescriptor(module, component, prop, descriptor, collector);
       }
     }
 
@@ -29,23 +28,50 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
       IContainer container = (IContainer) component;
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null) {
-        checkStringDescriptor(StringDescriptorType.BORDER, module, component, myBorderProperty, descriptor, collector);
+        checkStringDescriptor(module, component, myBorderProperty, descriptor, collector);
       }
     }
 
     if (component.getParentContainer() instanceof ITabbedPane) {
       ITabbedPane parentTabbedPane = (ITabbedPane) component.getParentContainer();
-      final StringDescriptor descriptor = parentTabbedPane.getTabTitle(component);
+      StringDescriptor descriptor = parentTabbedPane.getTabProperty(component, ITabbedPane.TAB_TITLE_PROPERTY);
       if (descriptor != null) {
-        checkStringDescriptor(StringDescriptorType.TAB, module, component, null, descriptor, collector);
+        checkStringDescriptor(module, component, MockTabTitleProperty.INSTANCE, descriptor, collector);
+      }
+      descriptor = parentTabbedPane.getTabProperty(component, ITabbedPane.TAB_TOOLTIP_PROPERTY);
+      if (descriptor != null) {
+        checkStringDescriptor(module, component, MockTabToolTipProperty.INSTANCE, descriptor, collector);
       }
     }
   }
 
-  protected abstract void checkStringDescriptor(final StringDescriptorType descriptorType,
-                                                final Module module,
+  protected abstract void checkStringDescriptor(final Module module,
                                                 final IComponent component,
                                                 final IProperty prop,
                                                 final StringDescriptor descriptor,
                                                 final FormErrorCollector collector);
+
+  private static class MockTabTitleProperty implements IProperty {
+    public static MockTabTitleProperty INSTANCE = new MockTabTitleProperty();
+
+    public String getName() {
+      return ITabbedPane.TAB_TITLE_PROPERTY;
+    }
+
+    public Object getPropertyValue(final IComponent component) {
+      return null;
+    }
+  }
+
+  private static class MockTabToolTipProperty implements IProperty {
+    public static MockTabToolTipProperty INSTANCE = new MockTabToolTipProperty();
+
+    public String getName() {
+      return ITabbedPane.TAB_TOOLTIP_PROPERTY;
+    }
+
+    public Object getPropertyValue(final IComponent component) {
+      return null;
+    }
+  }
 }

@@ -407,7 +407,7 @@ public final class FormEditingUtil {
     iterateImpl(component, visitor);
   }
 
-  public static boolean iterateImpl(final IComponent component, final ComponentVisitor visitor) {
+  private static boolean iterateImpl(final IComponent component, final ComponentVisitor visitor) {
     final boolean shouldContinue;
     try {
       shouldContinue = visitor.visit(component);
@@ -674,7 +674,7 @@ public final class FormEditingUtil {
     return false;
   }
 
-  public static boolean isChild(RadContainer maybeChild, RadComponent maybeParent) {
+  private static boolean isChild(RadContainer maybeChild, RadComponent maybeParent) {
     while(maybeChild != null) {
       if (maybeParent == maybeChild) {
         return true;
@@ -771,8 +771,12 @@ public final class FormEditingUtil {
           }
         }
         if (component.getParentContainer() instanceof ITabbedPane) {
-          StringDescriptor tabTitle = ((ITabbedPane) component.getParentContainer()).getTabTitle(component);
+          StringDescriptor tabTitle = ((ITabbedPane) component.getParentContainer()).getTabProperty(component, ITabbedPane.TAB_TITLE_PROPERTY);
           if (tabTitle != null && !visitor.visit(component, tabTitle)) {
+            return false;
+          }
+          StringDescriptor tabToolTip = ((ITabbedPane) component.getParentContainer()).getTabProperty(component, ITabbedPane.TAB_TOOLTIP_PROPERTY);
+          if (tabToolTip != null && !visitor.visit(component, tabToolTip)) {
             return false;
           }
         }

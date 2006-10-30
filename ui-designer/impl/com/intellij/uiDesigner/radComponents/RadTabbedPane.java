@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
@@ -35,6 +36,7 @@ import java.awt.event.MouseEvent;
  * @author yole
  */
 public final class RadTabbedPane extends RadContainer implements ITabbedPane {
+
   public static class Factory extends RadComponentFactory {
     public RadComponent newInstance(Module module, Class aClass, String id) {
       return new RadTabbedPane(module, aClass, id);
@@ -111,7 +113,9 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     if (titleDescriptor == null) return null;
     final String value = titleDescriptor.getValue();
     if (value == null) { // from res bundle
-      return StringDescriptorManager.getInstance(getModule()).resolve(this, titleDescriptor);
+      final String resolvedValue = StringDescriptorManager.getInstance(getModule()).resolve(this, titleDescriptor);
+      titleDescriptor.setResolvedValue(resolvedValue);
+      return resolvedValue;
     }
     return value;
   }
@@ -162,12 +166,20 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     return constraints == null ? null : constraints.myTitle;
   }
 
-  public void setChildTitle(RadComponent component, StringDescriptor title) throws Exception {
+  public void setTabProperty(RadComponent component, final String propName, StringDescriptor title) throws Exception {
     final JComponent delegee = component.getDelegee();
     final JTabbedPane tabbedPane = getTabbedPane();
     int index = tabbedPane.indexOfComponent(delegee);
     if (index >= 0) {
-      new MyTitleProperty(null, index).setValue(component, title);
+      if (propName.equals(ITabbedPane.TAB_TITLE_PROPERTY)) {
+        new MyTitleProperty(null, index).setValue(component, title);
+      }
+      else if (propName.equals(ITabbedPane.TAB_TOOLTIP_PROPERTY)) {
+        new MyToolTipProperty(null, index).setValue(component, title);
+      }
+      else {
+        throw new IllegalArgumentException("Invalid property name " + propName);
+      }
     }
   }
 
@@ -221,8 +233,10 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
   }
 
-  public StringDescriptor getTabTitle(IComponent component) {
-    return getChildTitle((RadComponent) component);
+  public StringDescriptor getTabProperty(IComponent component, final String propName) {
+    final HashMap<String, LwTabbedPane.Constraints> id2Constraints = getId2Constraints(this);
+    final LwTabbedPane.Constraints constraints = id2Constraints.get(component.getId());
+    return constraints == null ? null : constraints.getProperty(propName);
   }
 
   public boolean refreshChildTitle(final RadComponent radComponent) {
@@ -231,7 +245,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     String oldTitle = childTitle.getResolvedValue();
     childTitle.setResolvedValue(null);
     try {
-      setChildTitle(radComponent, childTitle);
+      setTabProperty(radComponent, ITabbedPane.TAB_TITLE_PROPERTY, childTitle);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -317,7 +331,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     private final StringRenderer myRenderer = new StringRenderer();
 
     public MyTitleProperty(final Property parent, final int index) {
-      super(parent, "Tab Title");
+      super(parent, TAB_TITLE_PROPERTY);
       myIndex = index;
     }
 
@@ -348,6 +362,9 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
       // 2. Apply real string value to JComponent peer
       final String text = StringDescriptorManager.getInstance(getModule()).resolve(RadTabbedPane.this, value);
+      if (value.getValue() == null) {
+        value.setResolvedValue(text);
+      }
       putValueToTabbedPane(text);
     }
 
@@ -375,11 +392,19 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     public PropertyEditor<StringDescriptor> getEditor() {
       return myEditor;
     }
+
+    @Override public boolean isModified(final RadComponent component) {
+      return !getTabbedPane().getTitleAt(myIndex).equals(UIDesignerBundle.message("tab.untitled"));
+    }
+
+    @Override public void resetValue(final RadComponent component) throws Exception {
+      setValue(component, StringDescriptor.create(UIDesignerBundle.message("tab.untitled")));
+    }
   }
 
   private class MyToolTipProperty extends MyTitleProperty {
     protected MyToolTipProperty(final Property parent, final int index) {
-      super(parent, "Tab Tooltip", index);
+      super(parent, TAB_TOOLTIP_PROPERTY, index);
     }
 
     @Override protected String getValueFromTabbedPane() {
@@ -396,6 +421,15 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
     @Override protected void putValueToConstraints(final StringDescriptor value, final LwTabbedPane.Constraints constraints) {
       constraints.myToolTip = value;
+    }
+
+    @Override public boolean isModified(final RadComponent component) {
+      String toolTipText = getTabbedPane().getToolTipTextAt(myIndex);
+      return !StringUtil.isEmpty(toolTipText);
+    }
+
+    @Override public void resetValue(final RadComponent component) throws Exception {
+      setValue(component, StringDescriptor.create(""));
     }
   }
 

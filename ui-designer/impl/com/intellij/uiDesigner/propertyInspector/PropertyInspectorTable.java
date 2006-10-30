@@ -1017,6 +1017,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           return component;
         }
         catch(Exception ex) {
+          LOG.debug(ex);
           myErrorRenderer.clear();
           myErrorRenderer.append(UIDesignerBundle.message("error.getting.value", ex.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
           return myErrorRenderer;
@@ -1111,6 +1112,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         return myEditor.getComponent(mySelection.get(0), getSelectionValue(property), false);
       }
       catch(Exception ex) {
+        LOG.debug(ex);
         SimpleColoredComponent errComponent = new SimpleColoredComponent();
         errComponent.append(UIDesignerBundle.message("error.getting.value", ex.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
         return errComponent;

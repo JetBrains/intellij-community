@@ -19,5 +19,8 @@ package com.intellij.uiDesigner.lw;
  * @author yole
  */
 public interface ITabbedPane extends IContainer {
-  StringDescriptor getTabTitle(IComponent component);
+  String TAB_TITLE_PROPERTY = "Tab Title";
+  String TAB_TOOLTIP_PROPERTY = "Tab Tooltip";
+
+  StringDescriptor getTabProperty(IComponent component, final String propName);
 }
