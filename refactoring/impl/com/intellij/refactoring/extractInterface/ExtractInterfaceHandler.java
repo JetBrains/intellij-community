@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -104,8 +105,6 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
       LvcsIntegration.checkinFilesAfterRefactoring(myProject, action);
     }
 
-    /*PsiJavaCodeReferenceElement ref = myManager.getElementFactory().createClassReferenceElement(anInterface);
-    sourceClassRefList.add(ref);*/
     if (anInterface != null) {
       ExtractClassUtil.askAndTurnRefsToSuper(myProject, myClass, anInterface);
     }
@@ -118,12 +117,12 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
                                    JavaDocPolicy javaDocPolicy) throws IncorrectOperationException {
     PsiClass anInterface;
     anInterface = targetDir.createInterface(interfaceName);
+    PsiJavaCodeReferenceElement ref = ExtractSuperClassUtil.createExtendingReference(anInterface, aClass, selectedMembers);
+    final PsiReferenceList referenceList = aClass.isInterface() ? aClass.getExtendsList() : aClass.getImplementsList();
+    assert referenceList != null;
+    referenceList.add(ref);
     PullUpHelper pullUpHelper = new PullUpHelper(aClass, anInterface, selectedMembers, javaDocPolicy);
     pullUpHelper.moveMembersToBase();
-    final PsiManager manager = aClass.getManager();
-    PsiJavaCodeReferenceElement ref = manager.getElementFactory().createClassReferenceElement(anInterface);
-    final PsiReferenceList referenceList = aClass.isInterface() ? aClass.getExtendsList() : aClass.getImplementsList();
-    referenceList.add(ref);
     return anInterface;
   }
 

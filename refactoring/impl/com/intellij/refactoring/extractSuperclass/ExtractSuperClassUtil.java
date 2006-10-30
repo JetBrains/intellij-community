@@ -1,24 +1,30 @@
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.JavaDocPolicy;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
  */
 public class ExtractSuperClassUtil {
+  private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil");
   private ExtractSuperClassUtil() {}
 
   public static PsiClass extractSuperClass(final Project project,
@@ -46,7 +52,7 @@ public class ExtractSuperClassUtil {
     clearPsiReferenceList(subclass.getExtendsList());
 
     // make original class extend extracted superclass
-    PsiJavaCodeReferenceElement ref = factory.createClassReferenceElement(superclass);
+    PsiJavaCodeReferenceElement ref = createExtendingReference(superclass, subclass, selectedMemberInfos); 
     subclass.getExtendsList().add(ref);
 
     PullUpHelper pullUpHelper = new PullUpHelper(subclass, superclass, selectedMemberInfos,
@@ -130,5 +136,39 @@ public class ExtractSuperClassUtil {
     for (PsiJavaCodeReferenceElement ref : refs) {
       destinationList.add(ref);
     }
+  }
+
+  public static PsiJavaCodeReferenceElement createExtendingReference(final PsiClass superClass,
+                                                                      final PsiClass derivedClass,
+                                                                      final MemberInfo[] selectedMembers) throws IncorrectOperationException {
+    final PsiManager manager = derivedClass.getManager();
+    Set<PsiElement> movedElements = new com.intellij.util.containers.HashSet<PsiElement>();
+    for (final MemberInfo info : selectedMembers) {
+      movedElements.add(info.getMember());
+    }
+    final PsiTypeParameterList typeParameterList = RefactoringUtil.createTypeParameterListWithUsedTypeParameters(
+      movedElements.toArray(new PsiElement[movedElements.size()]));
+    final PsiTypeParameterList originalTypeParameterList = superClass.getTypeParameterList();
+    assert originalTypeParameterList != null;
+    final PsiTypeParameterList newList = (PsiTypeParameterList)originalTypeParameterList.replace(typeParameterList);
+    final PsiElementFactory factory = manager.getElementFactory();
+    Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
+    for (final PsiTypeParameter parameter : newList.getTypeParameters()) {
+      substitutionMap.put(parameter, factory.createType(findTypeParameterInDerived(derivedClass, parameter.getName())));
+    }
+
+    final PsiClassType type = factory.createType(superClass, factory.createSubstitutor(substitutionMap));
+    return factory.createReferenceElementByType(type);
+  }
+
+  public static PsiTypeParameter findTypeParameterInDerived(final PsiClass aClass, final String name) {
+    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
+    while(iterator.hasNext()) {
+      final PsiTypeParameter typeParameter = iterator.next();
+      if (name.equals(typeParameter.getName())) return typeParameter;
+    }
+
+    LOG.assertTrue(false, "Cannot find type parameter");
+    return null;
   }
 }

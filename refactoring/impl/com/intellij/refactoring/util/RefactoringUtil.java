@@ -57,6 +57,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -68,15 +69,6 @@ public class RefactoringUtil {
   public static final int EXPR_COPY_PROHIBITED = 2;
 
   private RefactoringUtil() {}
-
-  public static void showInfoDialog(String info, Project project) {
-    RefactoringSettings settings = RefactoringSettings.getInstance();
-    if (settings.IS_SHOW_ACTION_INFO) {
-      InfoDialog usagesWarning = new InfoDialog(info, project);
-      usagesWarning.show();
-      settings.IS_SHOW_ACTION_INFO = usagesWarning.isToShowInFuture();
-    }
-  }
 
   public static boolean isSourceRoot(final PsiDirectory directory) {
     if (directory.getManager() == null) return false;
@@ -488,19 +480,6 @@ public class RefactoringUtil {
       return (PsiClass)scope;
     }
     return null;
-    /*
-    PsiElement parent = place.getContext();
-    PsiElement prev = null;
-    while (true) {
-      if (parent instanceof PsiClass) {
-        if (!(parent instanceof PsiAnonymousClass && ((PsiAnonymousClass)parent).getArgumentList() == prev))
-          return (PsiClass)parent;
-      }
-      prev = parent;
-      parent = parent.getContext();
-      if (parent == null) return null;
-    }
-    */
   }
 
   public static PsiCall getEnclosingConstructorCall (PsiJavaCodeReferenceElement ref) {
@@ -673,7 +652,7 @@ public class RefactoringUtil {
            isPlusPlusOrMinusMinus(parent);
   }
 
-  public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
+  private static boolean isPlusPlusOrMinusMinus(PsiElement element) {
     if (element instanceof PsiPrefixExpression) {
       PsiJavaToken operandSign = ((PsiPrefixExpression)element).getOperationSign();
       return operandSign.getTokenType() == JavaTokenType.PLUSPLUS
@@ -689,7 +668,7 @@ public class RefactoringUtil {
     }
   }
 
-  public static void removeFinalParameters(PsiMethod method)
+  private static void removeFinalParameters(PsiMethod method)
     throws IncorrectOperationException {
     // Remove final parameters
     PsiParameterList paramList = method.getParameterList();
@@ -1508,23 +1487,26 @@ public class RefactoringUtil {
     return false;
   }
 
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters (final PsiElement element) {
+  @NotNull
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters (final PsiElement... elements) {
     final Set<PsiTypeParameter> used = new com.intellij.util.containers.HashSet<PsiTypeParameter>();
-    element.accept(new PsiRecursiveElementVisitor() {
+    for (final PsiElement element : elements) {
+      element.accept(new PsiRecursiveElementVisitor() {
 
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
-        if (!reference.isQualified()) {
-          final PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiTypeParameter) {
-            final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
-            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
-              used.add(typeParameter);
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          super.visitReferenceElement(reference);
+          if (!reference.isQualified()) {
+            final PsiElement resolved = reference.resolve();
+            if (resolved instanceof PsiTypeParameter) {
+              final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+              if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
+                used.add(typeParameter);
+              }
             }
           }
         }
-      }
-    });
+      });
+    }
 
     PsiTypeParameter[] typeParameters = used.toArray(new PsiTypeParameter[used.size()]);
 
@@ -1534,7 +1516,7 @@ public class RefactoringUtil {
       }
     });
 
-    final PsiElementFactory elementFactory = element.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = elements[0].getManager().getElementFactory();
     try {
       final PsiClass aClass = elementFactory.createClassFromText("class A {}", null);
       PsiTypeParameterList list = aClass.getTypeParameterList();
