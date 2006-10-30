@@ -1,16 +1,16 @@
 package com.siyeh.ig.modularization;
 
-import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.analysis.AnalysisScope;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,9 +30,6 @@ public class ModuleWithTooManyClassesInspection extends BaseGlobalInspection {
                                                   InspectionManager inspectionManager,
                                                   GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefModule)) {
-            return null;
-        }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
         final RefModule refModule = (RefModule) refEntity;

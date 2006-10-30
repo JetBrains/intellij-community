@@ -1,15 +1,15 @@
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.reference.RefPackage;
+import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
@@ -30,9 +30,6 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
                                                   InspectionManager inspectionManager,
                                                   GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
         final RefClass refClass = (RefClass) refEntity;

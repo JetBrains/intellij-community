@@ -29,9 +29,6 @@ public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
             return null;
         }
         final RefPackage refPackage = (RefPackage) refEntity;
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
-            return null;
-        }
 
         final Set<RefPackage> dependencies =
                 DependencyUtils.calculateTransitiveDependenciesForPackage(refPackage);

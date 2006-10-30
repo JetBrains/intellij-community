@@ -1,18 +1,21 @@
 package com.siyeh.ig.packaging;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
 
@@ -24,9 +27,6 @@ public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
     @Nullable
     public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope analysisScope, InspectionManager inspectionManager, GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefPackage)) {
-            return null;
-        }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
         final Set<RefModule> modules = new HashSet<RefModule>();

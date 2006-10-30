@@ -8,9 +8,9 @@ import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
-import com.siyeh.InspectionGadgetsBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +25,6 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
     public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext) {
         if (!(refEntity instanceof RefMethod)) {
-            return null;
-        }
-        if (globalContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
         final RefMethod refMethod = (RefMethod) refEntity;
@@ -54,12 +51,10 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
         }
         final List<ProblemDescriptor> out = new ArrayList<ProblemDescriptor>();
         for (RefMethod siblingMethod : siblingMethods) {
-            if (!globalContext.isSuppressed(siblingMethod, getShortName())) {
-                final PsiMethod siblingPsiMethod = (PsiMethod) siblingMethod.getElement();
-                out.add(manager.createProblemDescriptor(siblingPsiMethod, InspectionGadgetsBundle.message(
-                        "method.return.always.constant.problem.descriptor"), (LocalQuickFix[]) null,
-                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-            }
+            final PsiMethod siblingPsiMethod = (PsiMethod) siblingMethod.getElement();
+            out.add(manager.createProblemDescriptor(siblingPsiMethod, InspectionGadgetsBundle.message(
+                    "method.return.always.constant.problem.descriptor"), (LocalQuickFix[]) null,
+                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             siblingMethod.putUserData(ALWAYS_CONSTANT, true);
         }
         return out.toArray(new ProblemDescriptor[out.size()]);

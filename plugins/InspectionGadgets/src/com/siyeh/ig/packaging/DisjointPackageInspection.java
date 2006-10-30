@@ -12,14 +12,14 @@ import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.dependency.DependencyUtils;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 public class DisjointPackageInspection extends BaseGlobalInspection {
 
@@ -30,9 +30,6 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
     @Nullable
     public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope analysisScope, InspectionManager inspectionManager, GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefPackage)) {
-            return null;
-        }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
         final RefPackage refPackage = (RefPackage) refEntity;

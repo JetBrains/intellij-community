@@ -32,9 +32,6 @@ public class PackageWithTooManyClassesInspection extends BaseGlobalInspection {
         if (!(refEntity instanceof RefPackage)) {
             return null;
         }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
-            return null;
-        }
         final RefPackage refPackage = (RefPackage) refEntity;
         int numClasses = 0;
         final List<RefEntity> children = refPackage.getChildren();

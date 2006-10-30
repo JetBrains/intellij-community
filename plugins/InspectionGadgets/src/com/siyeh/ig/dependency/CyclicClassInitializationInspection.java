@@ -1,18 +1,18 @@
 package com.siyeh.ig.dependency;
 
-import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.psi.PsiClass;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class CyclicClassInitializationInspection extends BaseGlobalInspection {
 
@@ -26,9 +26,6 @@ public class CyclicClassInitializationInspection extends BaseGlobalInspection {
                                                   InspectionManager inspectionManager,
                                                   GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
         final RefClass refClass = (RefClass) refEntity;

@@ -59,9 +59,6 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
         if (!(refEntity instanceof RefPackage)) {
             return null;
         }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
-            return null;
-        }
         final String name = refEntity.getName();
         if (name == null) {
             return null;

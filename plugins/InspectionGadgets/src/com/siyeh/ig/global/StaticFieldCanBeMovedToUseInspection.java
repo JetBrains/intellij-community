@@ -1,19 +1,19 @@
 package com.siyeh.ig.global;
 
-import org.jetbrains.annotations.Nullable;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.reference.*;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.siyeh.ig.BaseGlobalInspection;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class StaticFieldCanBeMovedToUseInspection extends BaseGlobalInspection {
 
@@ -24,9 +24,6 @@ public class StaticFieldCanBeMovedToUseInspection extends BaseGlobalInspection {
     @Nullable
     public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope analysisScope, InspectionManager inspectionManager, GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefField)) {
-            return null;
-        }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
         final RefField refField = (RefField) refEntity;

@@ -1,17 +1,17 @@
 package com.siyeh.ig.dependency;
 
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.psi.PsiClass;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.psi.PsiClass;
-import com.intellij.codeInsight.daemon.GroupNames;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,9 +31,6 @@ public class ClassWithTooManyTransitiveDependenciesInspection extends BaseGlobal
                                                   InspectionManager inspectionManager,
                                                   GlobalInspectionContext globalInspectionContext) {
         if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        if (globalInspectionContext.isSuppressed(refEntity, getShortName())) {
             return null;
         }
         final RefClass refClass = (RefClass) refEntity;
