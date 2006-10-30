@@ -449,7 +449,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       ) {
         if (tag instanceof HtmlTag) {
           XmlEntitiesInspection inspection = getInspectionProfile(tag, HtmlStyleLocalInspection.SHORT_NAME);
-          if (inspection != null && isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_TAG), name)) {
+          if (inspection != null /*&& isAdditionallyDeclared(inspection.getAdditionalEntries(XmlEntitiesInspection.UNKNOWN_TAG), name)*/) {
             return;
           }
         }
