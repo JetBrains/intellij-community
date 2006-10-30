@@ -15,6 +15,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.lw.IComponent;
@@ -114,6 +115,14 @@ public class MorphAction extends AbstractGuiEditorAction {
     parent.addComponent(newComponent, index);
     newComponent.setSelected(true);
 
+    if (oldComponent.isDefaultBinding()) {
+      final String text = FormInspectionUtil.getText(newComponent.getModule(), newComponent);
+      String binding = BindingProperty.suggestBindingFromText(newComponent, text);
+      if (binding != null) {
+        new BindingProperty(newComponent.getProject()).setValueEx(newComponent, binding);
+      }
+      newComponent.setDefaultBinding(true);
+    }
     return true;
   }
 

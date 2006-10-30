@@ -191,7 +191,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   @Nullable
-  public static PsiField findBoundField(final RadRootContainer root, final String fieldName) {
+  public static PsiField findBoundField(@NotNull final RadRootContainer root, final String fieldName) {
     final Project project = root.getProject();
     final String classToBind = root.getClassToBind();
     if (classToBind != null) {
@@ -271,14 +271,9 @@ public final class BindingProperty extends Property<RadComponent, String> {
 
     String binding = suggestBindingFromText(component, text);
     if (binding != null) {
-      try {
-        new BindingProperty(component.getProject()).setValue(component, binding);
-        // keep the binding marked as default
-        component.setDefaultBinding(true);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+      new BindingProperty(component.getProject()).setValueEx(component, binding);
+      // keep the binding marked as default
+      component.setDefaultBinding(true);
     }
   }
 
