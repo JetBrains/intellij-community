@@ -10,20 +10,27 @@ package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -41,6 +48,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
   @NonNls public static final String SHORT_NAME = "CanBeFinal";
   private CanBeFinalFilter myFilter;
   private CanBeFinalComposer myComposer;
+  @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
 
   public CanBeFinalInspection() {
     myQuickFixActions = new QuickFixAction[]{new AcceptSuggested()};
@@ -237,7 +245,7 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     return SHORT_NAME;
   }
 
-  private static void makeFinal(PsiModifierListOwner psiElement, RefElement refElement) {
+  private static void makeFinal(PsiModifierListOwner psiElement, @Nullable RefElement refElement) {
     try {
       if (psiElement instanceof PsiVariable) {
         ((PsiVariable)psiElement).normalizeDeclaration();
@@ -250,12 +258,47 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
       LOG.error(e);
     }
 
-    RefUtil.getInstance().setIsFinal(refElement, true);
+    if (refElement != null) {
+      RefUtil.getInstance().setIsFinal(refElement, true);
+    }
+  }
+
+
+  @Nullable
+  public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
+    return new IntentionAction() {
+      @NotNull
+      public String getText() {
+        return QUICK_FIX_NAME;
+      }
+
+      @NotNull
+      public String getFamilyName() {
+        return getText();
+      }
+
+      public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+        return true;
+      }
+
+      public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        if (descriptor instanceof ProblemDescriptor) {
+          final PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(((ProblemDescriptor)descriptor).getPsiElement(), PsiModifierListOwner.class);
+          if (modifierListOwner != null) {
+            makeFinal(modifierListOwner, null);
+          }
+        }
+      }
+
+      public boolean startInWriteAction() {
+        return true;
+      }
+    };
   }
 
   private class AcceptSuggested extends QuickFixAction {
     private AcceptSuggested() {
-      super(InspectionsBundle.message("inspection.can.be.final.accept.quickfix"), CanBeFinalInspection.this);
+      super(QUICK_FIX_NAME, CanBeFinalInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {

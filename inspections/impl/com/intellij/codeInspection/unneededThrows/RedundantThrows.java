@@ -4,9 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -15,9 +13,14 @@ import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,74 +31,65 @@ import java.util.List;
 /**
  * @author max
  */
-public class RedundantThrows extends DescriptorProviderInspection {
+public class RedundantThrows extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
   private MyQuickFix myQuickFix;
   @NonNls private static final String SHORT_NAME = "RedundantThrows";
-
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefMethod && !((RefMethod)refEntity).isSyntheticJSP()) {
-          RefMethod refMethod = (RefMethod)refEntity;
-          if (!getContext().isToCheckMember(refMethod, RedundantThrows.this)) return;
-          ProblemDescriptorImpl[] descriptors = checkMethod(refMethod, manager);
-          if (descriptors != null) {
-            addProblemElement(refMethod, descriptors);
-          }
-        }
-      }
-    });
-  }
 
   public boolean isGraphNeeded() {
     return true;
   }
 
   @Nullable
-  private ProblemDescriptorImpl[] checkMethod(RefMethod refMethod, InspectionManager manager) {
-    if (refMethod.hasSuperMethods()) return null;
+  public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
+                                                AnalysisScope scope,
+                                                InspectionManager manager,
+                                                GlobalInspectionContext globalContext,
+                                                ProblemDescriptionsProcessor processor) {
+    if (refEntity instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refEntity;
 
-    PsiClass[] unThrown = refMethod.getUnThrownExceptions();
-    if (unThrown == null) return null;
+      if (refMethod.hasSuperMethods()) return null;
 
-    PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
-    PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
-    PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
-    ArrayList<ProblemDescriptor> problems = null;
+      PsiClass[] unThrown = refMethod.getUnThrownExceptions();
+      if (unThrown == null) return null;
 
-    for (int i = 0; i < throwsList.length; i++) {
-      PsiClassType throwsType = throwsList[i];
-      PsiJavaCodeReferenceElement throwsRef = throwsRefs[i];
-      if (ExceptionUtil.isUncheckedException(throwsType)) continue;
-      if (declaredInRemotableMethod(psiMethod, throwsType)) continue;
+      PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+      PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
+      PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
+      ArrayList<ProblemDescriptor> problems = null;
 
-      for (PsiClass s : unThrown) {
-        final PsiClass throwsResolvedType = throwsType.resolve();
-        if (Comparing.equal(s, throwsResolvedType)) {
-          if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
+      for (int i = 0; i < throwsList.length; i++) {
+        PsiClassType throwsType = throwsList[i];
+        PsiJavaCodeReferenceElement throwsRef = throwsRefs[i];
+        if (ExceptionUtil.isUncheckedException(throwsType)) continue;
+        if (declaredInRemotableMethod(psiMethod, throwsType)) continue;
 
-          if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
-            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-              "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+        for (PsiClass s : unThrown) {
+          final PsiClass throwsResolvedType = throwsType.resolve();
+          if (Comparing.equal(s, throwsResolvedType)) {
+            if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
+
+            if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
+              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(processor), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+            }
+            else if (!refMethod.getDerivedMethods().isEmpty()) {
+              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(processor), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+            }
+            else {
+              problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
+                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(processor), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+            }
           }
-          else if (!refMethod.getDerivedMethods().isEmpty()) {
-            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-              "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
-          }
-          else {
-            problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-              "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
-          }
-
-
         }
       }
-    }
 
-    if (problems != null) {
-      return problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+      if (problems != null) {
+        return problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+      }
     }
 
     return null;
@@ -109,15 +103,18 @@ public class RedundantThrows extends DescriptorProviderInspection {
     return remote != null && aClass.isInheritor(remote, true);
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
+
+  public boolean queryExternalUsagesRequests(final InspectionManager manager,
+                                             final GlobalInspectionContext globalContext,
+                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (getDescriptions(refEntity) != null) {
+        if (problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
-                  ignoreElement(refMethod);
+                  problemDescriptionsProcessor.ignoreElement(refMethod);
                   return true;
                 }
               });
@@ -128,11 +125,6 @@ public class RedundantThrows extends DescriptorProviderInspection {
     });
 
     return false;
-  }
-
-  @NotNull
-  public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
   @NotNull
@@ -150,24 +142,46 @@ public class RedundantThrows extends DescriptorProviderInspection {
     return SHORT_NAME;
   }
 
-  private LocalQuickFix getFix() {
+  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor) {
     if (myQuickFix == null) {
-      myQuickFix = new MyQuickFix();
+      myQuickFix = new MyQuickFix(processor);
     }
     return myQuickFix;
   }
 
-  private class MyQuickFix implements LocalQuickFix {
+
+  @Nullable
+  public QuickFix getQuickFix(String hint) {
+    return getFix(null);
+  }
+
+  private static class MyQuickFix implements LocalQuickFix {
+    private ProblemDescriptionsProcessor myProcessor;
+
+    public MyQuickFix(final ProblemDescriptionsProcessor processor) {
+      myProcessor = processor;
+    }
+
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
     public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
-      RefElement refElement = (RefElement)getElement(descriptor);
-      if (refElement.isValid() && refElement instanceof RefMethod) {
-        RefMethod refMethod = (RefMethod)refElement;
-        removeExcessiveThrows(refMethod);
+      if (myProcessor != null) {
+        RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
+        if (refElement.isValid() && refElement instanceof RefMethod) {
+          RefMethod refMethod = (RefMethod)refElement;
+          final ProblemDescriptor[] problems = (ProblemDescriptor[])myProcessor.getDescriptions(refMethod);
+          if (problems != null) {
+            removeExcessiveThrows(refMethod, null, problems);
+          }
+        }
+      } else {
+        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
+        if (psiMethod != null) {
+          removeExcessiveThrows(null, psiMethod, new ProblemDescriptor[]{descriptor});
+        }
       }
     }
 
@@ -176,18 +190,16 @@ public class RedundantThrows extends DescriptorProviderInspection {
       return getName();
     }
 
-    private void removeExcessiveThrows(RefMethod refMethod) {
+    private static void removeExcessiveThrows(RefMethod refMethod, final PsiModifierListOwner element, final ProblemDescriptor[] problems) {
       try {
-        Project project = getContext().getProject();
-        ProblemDescriptor[] problems = (ProblemDescriptor[])getDescriptions(refMethod);
-        if (problems == null) return;
+        Project project = element.getProject();
         PsiManager psiManager = PsiManager.getInstance(project);
         List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();
         for (ProblemDescriptor problem : problems) {
           PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)problem.getPsiElement();
           if (classRef == null) continue;
           PsiType psiType = psiManager.getElementFactory().createType(classRef);
-          removeException(refMethod, psiType, refsToDelete);
+          removeException(refMethod, psiType, refsToDelete, (PsiMethod)problem.getPsiElement());
         }
 
         for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
@@ -199,9 +211,10 @@ public class RedundantThrows extends DescriptorProviderInspection {
       }
     }
 
-    private void removeException(RefMethod refMethod, PsiType exceptionType,
-                                 List<PsiJavaCodeReferenceElement> refsToDelete) {
-      PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+    private static void removeException(RefMethod refMethod,
+                                        final PsiType exceptionType,
+                                        final List<PsiJavaCodeReferenceElement> refsToDelete,
+                                        final PsiMethod psiMethod) {
       PsiManager psiManager = psiMethod.getManager();
 
       PsiJavaCodeReferenceElement[] refs = psiMethod.getThrowsList().getReferenceElements();
@@ -212,8 +225,20 @@ public class RedundantThrows extends DescriptorProviderInspection {
         }
       }
 
-      for (RefMethod refDerived : refMethod.getDerivedMethods()) {
-        removeException(refDerived, exceptionType, refsToDelete);
+      if (refMethod != null) {
+        for (RefMethod refDerived : refMethod.getDerivedMethods()) {
+          removeException(refDerived, exceptionType, refsToDelete, (PsiMethod)refDerived.getElement());
+        }
+      } else {
+        final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
+        query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>(){
+          public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
+            if (pair.first == psiMethod) {
+              removeException(null, exceptionType, refsToDelete, pair.second);
+            }
+            return true;
+          }
+        });
       }
     }
   }

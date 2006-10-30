@@ -22,11 +22,9 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction");
 
   private final String myID;
-  private final PsiElement myContext;
 
-  public RemoveSuppressWarningAction(String ID, PsiElement context) {
+  public RemoveSuppressWarningAction(String ID) {
     myID = ID;
-    myContext = context;
   }
 
   @NotNull
@@ -38,17 +36,17 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     try {
       if (!CodeInsightUtil.prepareFileForWrite(element.getContainingFile())) return;
-      if (myContext instanceof PsiAnnotation) {
-        removeFromAnnotation((PsiAnnotation)myContext);
+      if (element instanceof PsiAnnotation) {
+        removeFromAnnotation((PsiAnnotation)element);
       }
-      else if (myContext instanceof PsiDocComment) {
-        removeFromJavaDoc((PsiDocComment)myContext);
+      else if (element instanceof PsiDocComment) {
+        removeFromJavaDoc((PsiDocComment)element);
       }
-      else if (myContext instanceof PsiComment) {
-        removeFromComment((PsiComment)myContext);
+      else if (element instanceof PsiComment) {
+        removeFromComment((PsiComment)element);
       }
       else {
-        LOG.error("invalid element type: " + myContext);
+        LOG.error("invalid element type: " + element);
       }
     }
     catch (IncorrectOperationException e) {
@@ -105,20 +103,20 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       if (value instanceof PsiArrayInitializerMemberValue) {
         PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
         for (PsiAnnotationMemberValue initializer : initializers) {
-          if (removeFromValue(initializer, initializers.length==1)) return;
+          if (removeFromValue(annotation, initializer, initializers.length==1)) return;
         }
       }
-      if (removeFromValue(value, attributes.length==1)) return;
+      if (removeFromValue(annotation, value, attributes.length==1)) return;
     }
   }
 
-  private boolean removeFromValue(final PsiAnnotationMemberValue value, final boolean removeParent) throws IncorrectOperationException {
+  private boolean removeFromValue(final PsiAnnotationMemberValue parent, final PsiAnnotationMemberValue value, final boolean removeParent) throws IncorrectOperationException {
     String text = value.getText();
     text = StringUtil.trimStart(text, "\"");
     text = StringUtil.trimEnd(text, "\"");
     if (myID.equals(text)) {
       if (removeParent) {
-        myContext.delete();
+        parent.delete();
       }
       else {
         value.delete();

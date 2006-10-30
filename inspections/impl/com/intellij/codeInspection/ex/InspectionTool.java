@@ -11,10 +11,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -223,4 +221,10 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   public static void setOutputPath(final String output) {
     ourOutputPath = output;
   }
+
+  @Nullable
+  public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
+    return null;
+  }
+  
 }

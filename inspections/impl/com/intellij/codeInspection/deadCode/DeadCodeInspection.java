@@ -11,10 +11,8 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
@@ -22,6 +20,7 @@ import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -32,12 +31,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -65,6 +67,13 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private RefUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
   @NonNls public static final String SHORT_NAME = "UnusedDeclaration";
+
+  private static final String COMMENT_OUT_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.comment.quickfix");
+  private static final String DELETE_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix");
+
+  @NonNls private static final String DELETE = "delete";
+  @NonNls private static final String COMMENT = "comment";
+  @NonNls private static final String [] HINTS = new String[] {COMMENT, DELETE};
 
   public DeadCodeInspection() {
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
@@ -250,8 +259,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private static boolean isSerializable(PsiClass aClass) {
     PsiClass serializableClass = aClass.getManager().findClass("java.io.Serializable", aClass.getResolveScope());
-    if (serializableClass == null) return false;
-    return aClass.isInheritor(serializableClass, true);
+    return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
@@ -521,8 +529,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public void exportResults(final Element parentNode) {
     final RefUnreferencedFilter filter = new RefUnreferencedFilter(this);
-    final DeadHTMLComposer composer = new DeadHTMLComposer(this);
-
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
@@ -542,9 +548,19 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
           element.addContent(problemClassElement);
 
+          @NonNls Element hintsElement = new Element("hints");
+
+          for (String hint : HINTS) {
+            @NonNls Element hintElement = new Element("hint");
+            hintElement.setAttribute("value", hint);
+            hintsElement.addContent(hintElement);
+          }
+          element.addContent(hintsElement);
+
+
           Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
           StringBuffer buf = new StringBuffer();
-          composer.appendProblemSynopsis((RefElement)refEntity, buf);
+          DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
           descriptionElement.addContent(buf.toString());
           element.addContent(descriptionElement);
         }
@@ -561,41 +577,43 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
-  private void commentOutDead(PsiElement psiElement) {
+  private static void commentOutDead(PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();
 
     if (psiFile != null) {
-      Document doc = PsiDocumentManager.getInstance(getContext().getProject()).getDocument(psiFile);
-      TextRange textRange = psiElement.getTextRange();
-      SimpleDateFormat format = new SimpleDateFormat();
-      String date = format.format(new Date());
+      Document doc = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiFile);
+      if (doc != null) {
+        TextRange textRange = psiElement.getTextRange();
+        SimpleDateFormat format = new SimpleDateFormat();
+        String date = format.format(new Date());
 
-      int startOffset = textRange.getStartOffset();
-      CharSequence chars = doc.getCharsSequence();
-      while (CharArrayUtil.regionMatches(chars, startOffset, InspectionsBundle.message("inspection.dead.code.comment"))) {
-        int line = doc.getLineNumber(startOffset) + 1;
-        if (line < doc.getLineCount()) {
-          startOffset = doc.getLineStartOffset(line);
-          startOffset = CharArrayUtil.shiftForward(chars, startOffset, " \t");
-        }
-      }
-
-      int endOffset = textRange.getEndOffset();
-
-      int line1 = doc.getLineNumber(startOffset);
-      int line2 = doc.getLineNumber(endOffset - 1);
-
-      if (line1 == line2) {
-        doc.insertString(startOffset, InspectionsBundle.message("inspection.dead.code.date.comment", date));
-      }
-      else {
-        for (int i = line1; i <= line2; i++) {
-          doc.insertString(doc.getLineStartOffset(i), "//");
+        int startOffset = textRange.getStartOffset();
+        CharSequence chars = doc.getCharsSequence();
+        while (CharArrayUtil.regionMatches(chars, startOffset, InspectionsBundle.message("inspection.dead.code.comment"))) {
+          int line = doc.getLineNumber(startOffset) + 1;
+          if (line < doc.getLineCount()) {
+            startOffset = doc.getLineStartOffset(line);
+            startOffset = CharArrayUtil.shiftForward(chars, startOffset, " \t");
+          }
         }
 
-        doc.insertString(doc.getLineStartOffset(Math.min(line2 + 1, doc.getLineCount() - 1)),
-                         InspectionsBundle.message("inspection.dead.code.stop.comment", date));
-        doc.insertString(doc.getLineStartOffset(line1), InspectionsBundle.message("inspection.dead.code.start.comment", date));
+        int endOffset = textRange.getEndOffset();
+
+        int line1 = doc.getLineNumber(startOffset);
+        int line2 = doc.getLineNumber(endOffset - 1);
+
+        if (line1 == line2) {
+          doc.insertString(startOffset, InspectionsBundle.message("inspection.dead.code.date.comment", date));
+        }
+        else {
+          for (int i = line1; i <= line2; i++) {
+            doc.insertString(doc.getLineStartOffset(i), "//");
+          }
+
+          doc.insertString(doc.getLineStartOffset(Math.min(line2 + 1, doc.getLineCount() - 1)),
+                           InspectionsBundle.message("inspection.dead.code.stop.comment", date));
+          doc.insertString(doc.getLineStartOffset(line1), InspectionsBundle.message("inspection.dead.code.start.comment", date));
+        }
       }
     }
   }
@@ -604,10 +622,21 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return EntryPointsManager.getInstance(project);
   }
 
+  @Nullable
+  public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
+    if (descriptor instanceof ProblemDescriptor) {
+      if (DELETE.equals(hint)) {
+        return new PermanentDeleteIntention(((ProblemDescriptor)descriptor).getPsiElement());
+      } else if (COMMENT.equals(hint)) {
+        return new CommentOutIntention(((ProblemDescriptor)descriptor).getPsiElement());
+      }
+    }
+    return null;
+  }
+
   private class PermanentDeleteAction extends QuickFixAction {
     public PermanentDeleteAction() {
-      super(InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix"), IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
-            DeadCodeInspection.this);
+      super(DELETE_QUICK_FIX, IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DeadCodeInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {
@@ -630,10 +659,46 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
   }
 
+  private static class PermanentDeleteIntention implements IntentionAction {
+    private PsiElement myElement;
+
+    public PermanentDeleteIntention(final PsiElement element) {
+      myElement = element;
+    }
+
+    @NotNull
+    public String getText() {
+      return DELETE_QUICK_FIX;
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getText();
+    }
+
+    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      if (myElement != null && myElement.isValid()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            SafeDeleteHandler
+              .invoke(myElement.getProject(), new PsiElement[]{PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class)}, false);
+          }
+        });
+      }
+    }
+
+    public boolean startInWriteAction() {
+      return true;
+    }
+  }
+
   private class CommentOutBin extends QuickFixAction {
     public CommentOutBin() {
-      super(InspectionsBundle.message("inspection.dead.code.comment.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH,
-                                                                                                             SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
+      super(COMMENT_OUT_QUICK_FIX, null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK),
             DeadCodeInspection.this);
     }
 
@@ -651,6 +716,38 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         entryPointsManager.removeEntryPoint(refElement);
       }
 
+      return true;
+    }
+  }
+
+  private static class CommentOutIntention implements IntentionAction {
+    private PsiElement myElement;
+
+    public CommentOutIntention(final PsiElement element) {
+      myElement = element;
+    }
+
+    @NotNull
+    public String getText() {
+      return COMMENT_OUT_QUICK_FIX;
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getText();
+    }
+
+    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      if (myElement != null && myElement.isValid()) {
+        commentOutDead(PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class));        
+      }
+    }
+
+    public boolean startInWriteAction() {
       return true;
     }
   }

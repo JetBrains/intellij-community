@@ -50,4 +50,6 @@ public interface ProblemDescriptionsProcessor {
    * @param commonProblemDescriptors the descriptors for the problems to register.
    */
   void addProblemElement(final RefEntity refEntity, final CommonProblemDescriptor[] commonProblemDescriptors);
+
+  RefEntity getElement(final CommonProblemDescriptor descriptor);
 }

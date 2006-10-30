@@ -10,24 +10,28 @@ package com.intellij.codeInspection.unusedParameters;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +39,7 @@ import java.util.Collection;
 public class UnusedParametersInspection extends FilteringInspectionTool {
   private UnusedParametersFilter myFilter;
   private UnusedParametersComposer myComposer;
+  @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.unused.parameter.delete.quickfix");
 
   public UnusedParametersInspection() {
 
@@ -120,6 +125,11 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
             element.addContent(problemClassElement);
 
+            @NonNls Element hintsElement = new Element("hints");
+            @NonNls Element hintElement = new Element("hint");
+            hintElement.setAttribute("value", String.valueOf(unusedParameter.getIndex()));
+            hintsElement.addContent(hintElement);
+
             Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
             descriptionElement
               .addContent(InspectionsBundle.message("inspection.unused.parameter.export.results.description", unusedParameter.getName()));
@@ -139,9 +149,57 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     return new JobDescriptor[] {GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
+
+  @Nullable
+  public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
+    return new IntentionAction() {
+      @NotNull
+      public String getText() {
+        return QUICK_FIX_NAME;
+      }
+
+      @NotNull
+      public String getFamilyName() {
+        return getText();
+      }
+
+      public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+        return true;
+      }
+
+      public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        if (hint == null) return;
+        if (descriptor instanceof ProblemDescriptor) {
+          int idx;
+          try {
+            idx = Integer.parseInt(hint);
+          }
+          catch (NumberFormatException e) {
+            return;
+          }
+          final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(((ProblemDescriptor)descriptor).getPsiElement(), PsiMethod.class);
+          if (psiMethod != null) {
+
+            final PsiParameter parameter = psiMethod.getParameterList().getParameters()[idx];
+
+            if (descriptor.getDescriptionTemplate().indexOf(parameter.getName()) == - 1) return;
+
+            final ArrayList<PsiElement> parametersToDelete = new ArrayList<PsiElement>();
+            parametersToDelete.add(parameter);
+            removeUnusedParameterViaChangeSignature(psiMethod, parametersToDelete);
+          }
+        }
+      }
+
+      public boolean startInWriteAction() {
+        return true;
+      }
+    };
+  }
+
   private class AcceptSuggested extends QuickFixAction {
     private AcceptSuggested() {
-      super(InspectionsBundle.message("inspection.unused.parameter.delete.quickfix"),IconLoader.getIcon("/actions/cancel.png"), null, UnusedParametersInspection.this);
+      super(QUICK_FIX_NAME, IconLoader.getIcon("/actions/cancel.png"), null, UnusedParametersInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {

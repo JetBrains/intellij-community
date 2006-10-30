@@ -65,8 +65,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (globalContext.isSuppressed(refEntity, getShortName())) return;
-        CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager, globalContext);
+        if (!globalContext.shouldCheck(refEntity, GlobalInspectionTool.this)) return;
+        CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
         if (descriptors != null) {
           problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
         }
@@ -86,6 +86,25 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext) {
     return null;
+  }
+
+  /**
+   * Processes and reports problems for a single element of the completed reference graph. 
+   *
+   * @param refEntity     the reference graph element to check for problems.
+   * @param scope         the scope on which analysis was invoked.
+   * @param manager       the inspection manager instance for the project on which the inspection was run.
+   * @param globalContext the context for the current global inspection run.
+   * @param processor     the collector for problems reported by the inspection
+   * @return the problems found for the element, or null if no problems were found.
+   */
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
+                                                AnalysisScope scope,
+                                                InspectionManager manager,
+                                                GlobalInspectionContext globalContext,
+                                                ProblemDescriptionsProcessor processor) {
+    return checkElement(refEntity, scope, manager, globalContext);
   }
 
   /**
@@ -122,4 +141,13 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
     return false;
   }
 
+  @Nullable
+  public QuickFix getQuickFix(final String hint) {
+    return null;
+  }
+
+  @Nullable
+  public String getHint(final QuickFix fix) {
+    return null;
+  }
 }

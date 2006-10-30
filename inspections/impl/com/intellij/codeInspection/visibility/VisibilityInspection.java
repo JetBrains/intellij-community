@@ -10,8 +10,11 @@ package com.intellij.codeInspection.visibility;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
@@ -20,11 +23,15 @@ import com.intellij.javaee.model.common.ejb.EjbRootElement;
 import com.intellij.javaee.model.common.ejb.EntityBean;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -38,9 +45,10 @@ public class VisibilityInspection extends FilteringInspectionTool {
   public boolean SUGGEST_PRIVATE_FOR_INNERS = false;
   private WeakerAccessFilter myFilter;
   private QuickFixAction[] myQuickFixActions;
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
+  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   private VisibilityPageComposer myComposer;
-  @NonNls public static final String SHORT_NAME = "WeakerAccess";
+  @NonNls private static final String SHORT_NAME = "WeakerAccess";
+  @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.visibility.accept.quickfix");
 
   public VisibilityInspection() {
     myQuickFixActions = new QuickFixAction[]{new AcceptSuggestedAccess()};
@@ -239,6 +247,11 @@ public class VisibilityInspection extends FilteringInspectionTool {
           Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
           String possibleAccess = getFilter().getPossibleAccess((RefElement)refEntity);
           descriptionElement.addContent(InspectionsBundle.message("inspection.visibility.compose.suggestion", possibleAccess == PsiModifier.PACKAGE_LOCAL ? InspectionsBundle.message("inspection.package.local") : possibleAccess));
+          @NonNls Element hintsElement = new Element("hints");
+          @NonNls Element hintElement = new Element("hint");
+          hintElement.setAttribute("value", possibleAccess);
+          hintsElement.addContent(hintElement);
+          element.addContent(hintsElement);
           element.addContent(descriptionElement);
         }
       }
@@ -254,13 +267,15 @@ public class VisibilityInspection extends FilteringInspectionTool {
     return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
   }
 
-  private void changeAccessLevel(PsiModifierListOwner psiElement, RefElement refElement, String newAccess) {
+  private void changeAccessLevel(PsiModifierListOwner psiElement, @Nullable RefElement refElement, String newAccess) {
     try {
       if (psiElement instanceof PsiVariable) {
         ((PsiVariable)psiElement).normalizeDeclaration();
       }
 
       PsiModifierList list = psiElement.getModifierList();
+
+      LOG.assertTrue(list != null);
 
       if (psiElement instanceof PsiMethod) {
         PsiMethod psiMethod = (PsiMethod)psiElement;
@@ -273,8 +288,10 @@ public class VisibilityInspection extends FilteringInspectionTool {
       }
 
       list.setModifierProperty(newAccess, true);
-      RefUtil.getInstance().setAccessModifier(refElement, newAccess);
-      getFilter().addIgnoreList(refElement);
+      if (refElement != null) {
+        RefUtil.getInstance().setAccessModifier(refElement, newAccess);
+        getFilter().addIgnoreList(refElement);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -295,9 +312,41 @@ public class VisibilityInspection extends FilteringInspectionTool {
     return myComposer;
   }
 
+  @Nullable
+  public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
+    return new IntentionAction() {
+      @NotNull
+      public String getText() {
+        return QUICK_FIX_NAME;
+      }
+
+      @NotNull
+      public String getFamilyName() {
+        return getText();
+      }
+
+      public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+        return true;
+      }
+
+      public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        if (descriptor instanceof ProblemDescriptor) {
+          final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(((ProblemDescriptor)descriptor).getPsiElement(), PsiModifierListOwner.class);
+          if (listOwner != null) {
+            changeAccessLevel(listOwner, null, hint);
+          }
+        }
+      }
+
+      public boolean startInWriteAction() {
+        return true;
+      }
+    };
+  }
+
   private class AcceptSuggestedAccess extends QuickFixAction {
     private AcceptSuggestedAccess() {
-      super(InspectionsBundle.message("inspection.visibility.accept.quickfix"), VisibilityInspection.this);
+      super(QUICK_FIX_NAME, VisibilityInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {

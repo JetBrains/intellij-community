@@ -4,115 +4,120 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.Processor;
+import com.intellij.util.Query;
+import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.awt.*;
 
 /**
  * @author max
  */
-public class EmptyMethodInspection extends DescriptorProviderInspection {
-  public static final Collection<String> STANDARD_EXCLUDE_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
-    "javax.ejb.Remove", "javax.ejb.Init")));
+public class EmptyMethodInspection extends GlobalInspectionTool {
+  private static final Collection<String> STANDARD_EXCLUDE_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList("javax.ejb.Remove", "javax.ejb.Init")));
 
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
-  private QuickFix myQuickFix;
-  @NonNls public static final String SHORT_NAME = "EmptyMethod";
+  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
+  @NonNls private static final String SHORT_NAME = "EmptyMethod";
 
-  public JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
+  private BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<Boolean, QuickFix>();
 
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefMethod) {
-          RefMethod refMethod = (RefMethod)refEntity;
-          if (!getContext().isToCheckMember(refMethod, EmptyMethodInspection.this)) return;
-          ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
-          if (descriptors != null) {
-            addProblemElement(refMethod, descriptors);
-          }
-        }
-      }
-    });
-  }
+  private JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
+  @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.emptyMethod.EmptyMethodInspection");
 
   public boolean isGraphNeeded() {
     return true;
   }
 
   @Nullable
-  private ProblemDescriptor[] checkMethod(final RefMethod refMethod, InspectionManager manager) {
-    if (!isBodyEmpty(refMethod)) return null;
-    if (refMethod.isConstructor()) return null;
-    if (refMethod.isSyntheticJSP()) return null;
+  public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
+                                                AnalysisScope scope,
+                                                InspectionManager manager,
+                                                GlobalInspectionContext globalContext,
+                                                ProblemDescriptionsProcessor processor) {
+    if (refEntity instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refEntity;
 
-    for (RefMethod refSuper : refMethod.getSuperMethods()) {
-      if (checkMethod(refSuper, manager) != null) return null;
-    }
+      if (!isBodyEmpty(refMethod)) return null;
+      if (refMethod.isConstructor()) return null;
+      if (refMethod.isSyntheticJSP()) return null;
 
-    if (SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), STANDARD_EXCLUDE_ANNOS, EXCLUDE_ANNOS)) return null;
-
-    String message = null;
-    if (refMethod.isOnlyCallsSuper()) {
-      RefMethod refSuper = findSuperWithBody(refMethod);
-      if (refSuper == null || RefUtil.getInstance().compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
-        message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
+      for (RefMethod refSuper : refMethod.getSuperMethods()) {
+        if (checkElement(refSuper, scope, manager, globalContext, processor) != null) return null;
       }
-    }
-    else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
-      message = InspectionsBundle.message("inspection.empty.method.problem.descriptor1");
-    }
-    else if (areAllImplementationsEmpty(refMethod)) {
-      if (refMethod.hasBody()) {
-        if (refMethod.getDerivedMethods().size() == 0) {
-          if (refMethod.getSuperMethods().size() == 0) {
-            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor2");
+
+      if (SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), STANDARD_EXCLUDE_ANNOS, EXCLUDE_ANNOS)) return null;
+
+      String message = null;
+      boolean needToDeleteHierarchy = false;
+      if (refMethod.isOnlyCallsSuper()) {
+        RefMethod refSuper = findSuperWithBody(refMethod);
+        if (refSuper == null || RefUtil.getInstance().compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
+          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
+        }
+      }
+      else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
+
+        message = InspectionsBundle.message("inspection.empty.method.problem.descriptor1");
+      }
+      else if (areAllImplementationsEmpty(refMethod)) {
+        if (refMethod.hasBody()) {
+          if (refMethod.getDerivedMethods().size() == 0) {
+            if (refMethod.getSuperMethods().size() == 0) {
+              message = InspectionsBundle.message("inspection.empty.method.problem.descriptor2");
+            }
+          }
+          else {
+            needToDeleteHierarchy = true;
+            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor3");
           }
         }
         else {
-          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor3");
+          if (refMethod.getDerivedMethods().size() > 0) {
+            needToDeleteHierarchy = true;
+            message = InspectionsBundle.message("inspection.empty.method.problem.descriptor4");
+          }
         }
       }
-      else {
-        if (refMethod.getDerivedMethods().size() > 0) {
-          message = InspectionsBundle.message("inspection.empty.method.problem.descriptor4");
-        }
+
+      if (message != null) {
+        final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+        fixes.add(getFix(processor, needToDeleteHierarchy));
+        SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
+          public boolean process(final String qualifiedName) {
+            fixes.add(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
+              QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
+              QuickFixBundle.message("fix.add.special.annotation.family"),
+              EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
+            return true;
+          }
+        });
+
+        final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message,
+                                                                             fixes.toArray(new LocalQuickFix[fixes.size()]),
+                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        return new ProblemDescriptor[]{descriptor};
       }
-    }
-
-    if (message != null) {
-      final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
-      fixes.add(getFix());
-      SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
-        public boolean process(final String qualifiedName) {
-          fixes.add(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
-            QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
-            QuickFixBundle.message("fix.add.special.annotation.family"),
-            EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
-          return true;
-        }
-      });
-
-      return new ProblemDescriptor[]{
-        manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
     return null;
@@ -123,6 +128,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
            !SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), STANDARD_EXCLUDE_ANNOS, EXCLUDE_ANNOS);
   }
 
+  @Nullable
   private static RefMethod findSuperWithBody(RefMethod refMethod) {
     for (RefMethod refSuper : refMethod.getSuperMethods()) {
       if (refSuper.hasBody()) return refSuper;
@@ -148,20 +154,23 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return false;
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
+
+  public boolean queryExternalUsagesRequests(final InspectionManager manager,
+                                             final GlobalInspectionContext globalContext,
+                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
+        if (refEntity instanceof RefElement && problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   PsiCodeBlock body = derivedMethod.getBody();
                   if (body == null) return true;
                   if (body.getStatements().length == 0) return true;
                   if (RefUtil.getInstance().isMethodOnlyCallsSuper(derivedMethod)) return true;
 
-                  ignoreElement(refMethod);
+                  problemDescriptionsProcessor.ignoreElement(refMethod);
                   return false;
                 }
               });
@@ -174,28 +183,44 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return false;
   }
 
-  @NotNull
-  public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
-  }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
 
-  private LocalQuickFix getFix() {
-    if (myQuickFix == null) {
-      myQuickFix = new QuickFix();
+  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
+    QuickFix fix = myQuickFixes.get(needToDeleteHierarchy);
+    if (fix == null) {
+      fix = new DeleteMethodQuickFix(processor, needToDeleteHierarchy);
+      myQuickFixes.put(needToDeleteHierarchy, fix);
+      return (LocalQuickFix)fix;
     }
-    return myQuickFix;
+    return (LocalQuickFix)fix;
+  }
+
+  public String getHint(final QuickFix fix) {
+    final List<Boolean> list = myQuickFixes.getKeysByValue(fix);
+    if (list != null) {
+      LOG.assertTrue(list.size() == 1);
+      return String.valueOf(list.get(0));
+    }
+    return null;
+  }
+
+  @Nullable
+  public LocalQuickFix getQuickFix(final String hint) {
+    return new DeleteMethodIntention(hint);
   }
 
   @Nullable
@@ -208,39 +233,74 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     return panel;
   }
 
+  private class DeleteMethodIntention implements LocalQuickFix {
+    private String myHint;
 
-  private class QuickFix implements LocalQuickFix {
-    @NotNull
-    public String getName() {
-      return InspectionsBundle.message("inspection.empty.method.delete.quickfix");
+    public DeleteMethodIntention(final String hint) {
+      myHint = hint;
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
-      RefElement refElement = (RefElement)getElement(descriptor);
+    @NotNull
+    public String getName() {
+      return QUICK_FIX_NAME;
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return QUICK_FIX_NAME;
+    }
+
+    public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
+      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
+      if (psiMethod != null) {
+        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+        psiElements.add(psiMethod);
+        if (Boolean.valueOf(myHint).booleanValue()) {
+          final Query<Pair<PsiMethod, PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
+          query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
+            public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
+              if (pair.first == psiMethod) {
+                psiElements.add(pair.second);
+              }
+              return true;
+            }
+          });
+        }
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false);
+          }
+        });
+      }
+    }
+  }
+
+
+  private class DeleteMethodQuickFix implements LocalQuickFix {
+    private ProblemDescriptionsProcessor myProcessor;
+    private boolean myNeedToDEleteHierarchy;
+
+    public DeleteMethodQuickFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
+      myProcessor = processor;
+      myNeedToDEleteHierarchy = needToDeleteHierarchy;
+    }
+
+    @NotNull
+    public String getName() {
+      return QUICK_FIX_NAME;
+    }
+
+    public void applyFix(final @NotNull Project project, ProblemDescriptor descriptor) {
+      RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         List<RefElement> refElements = new ArrayList<RefElement>(1);
         RefMethod refMethod = (RefMethod)refElement;
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
-        if (refMethod.isOnlyCallsSuper()) {
+        if (myNeedToDEleteHierarchy) {
+          deleteHierarchy(refMethod, psiElements, refElements);
+        } else {
           deleteMethod(refMethod, psiElements, refElements);
-        }
-        else if (refMethod.hasBody() && hasEmptySuperImplementation(refMethod)) {
-          deleteMethod(refMethod, psiElements, refElements);
-        }
-        else if (areAllImplementationsEmpty(refMethod)) {
-          if (refMethod.hasBody()) {
-            if (refMethod.getDerivedMethods().size() == 0) {
-              if (refMethod.getSuperMethods().size() == 0) {
-                deleteMethod(refMethod, psiElements, refElements);
-              }
-            }
-            else {
-              deleteHierarchy(refMethod, psiElements, refElements);
-            }
-          }
-          else {
-            deleteHierarchy(refMethod, psiElements, refElements);
-          }
         }
 
         ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
@@ -250,8 +310,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            SafeDeleteHandler.invoke(getContext().getProject(),
-                                     psiElements.toArray(new PsiElement[psiElements.size()]), false);
+            SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false);
           }
         });
       }

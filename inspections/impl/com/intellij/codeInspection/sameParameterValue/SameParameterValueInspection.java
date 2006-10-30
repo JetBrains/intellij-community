@@ -3,68 +3,60 @@ package com.intellij.codeInspection.sameParameterValue;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
 /**
  * @author max
  */
-public class SameParameterValueInspection extends DescriptorProviderInspection {
- 
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefMethod) {
-          RefMethod refMethod = (RefMethod) refEntity;
-          if (!getContext().isToCheckMember(refMethod, SameParameterValueInspection.this)) return;
-          ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
-          if (descriptors != null) {
-            addProblemElement(refMethod, descriptors);
-          }
-        }
-      }
-    });
-  }
-
+public class SameParameterValueInspection extends GlobalInspectionTool {
   public boolean isGraphNeeded() {
     return true;
   }
 
-  private static ProblemDescriptor[] checkMethod(RefMethod refMethod, InspectionManager manager) {
-    if (refMethod.hasSuperMethods()) return null;
-
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext,
+                                                ProblemDescriptionsProcessor processor) {
     ArrayList<ProblemDescriptor> problems = null;
-    RefParameter[] parameters = refMethod.getParameters();
-    for (RefParameter refParameter : parameters) {
-      String value = refParameter.getActualValueIfSame();
-      if (value != null) {
-        if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
-        problems.add(manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), InspectionsBundle.message(
-          "inspection.same.parameter.problem.descriptor", "<code>" + refParameter.getName() + "</code>", "<code>" + value + "</code>"),
-                                                     (LocalQuickFix [])null,
-                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+    if (refEntity instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refEntity;
+
+      if (refMethod.hasSuperMethods()) return null;
+
+      RefParameter[] parameters = refMethod.getParameters();
+      for (RefParameter refParameter : parameters) {
+        String value = refParameter.getActualValueIfSame();
+        if (value != null) {
+          if (problems == null) problems = new ArrayList<ProblemDescriptor>(1);
+          problems.add(manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), InspectionsBundle.message(
+            "inspection.same.parameter.problem.descriptor", "<code>" + refParameter.getName() + "</code>", "<code>" + value + "</code>"),
+                                                       (LocalQuickFix [])null,
+                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        }
       }
     }
 
     return problems == null ? null : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
+
+  public boolean queryExternalUsagesRequests(final InspectionManager manager,
+                                             final GlobalInspectionContext globalContext,
+                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
+        if (refEntity instanceof RefElement && problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getContext().enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
+              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
-                  ignoreElement(refMethod);
+                  problemDescriptionsProcessor.ignoreElement(refMethod);
                   return false;
                 }
               });
@@ -78,18 +70,16 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
   }
 
   @NotNull
-  public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[] {GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
-  }
-
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.same.parameter.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getShortName() {
     return "SameParameterValue";
   }

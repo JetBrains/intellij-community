@@ -7,11 +7,13 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.BidirectionalMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -27,6 +29,9 @@ import java.util.Map;
  * @author cdr
  */
 public class RedundantSuppressInspection extends GlobalInspectionTool{
+  private BidirectionalMap<String, QuickFix> myQuickFixes = null;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.RedundantSuppressInspection");
+
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.GENERAL_GROUP_NAME;
@@ -50,7 +55,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitClass(RefClass refClass) {
-        if (globalContext.isSuppressed(refClass, getShortName())) return;
+        if (!globalContext.shouldCheck(refClass, RedundantSuppressInspection.this)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext.getProject());
         if (descriptors != null) {
           problemDescriptionsProcessor.addProblemElement(refClass, descriptors);
@@ -60,7 +65,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
   }
 
   @Nullable
-  private static CommonProblemDescriptor[] checkElement(RefClass refEntity, InspectionManager manager, final Project project) {
+  private CommonProblemDescriptor[] checkElement(RefClass refEntity, InspectionManager manager, final Project project) {
     final PsiElement psiElement = refEntity.getElement();
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
     psiElement.accept(new PsiRecursiveElementVisitor() {
@@ -141,7 +146,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
         }
         else if (tool instanceof GlobalInspectionToolWrapper) {
           GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)tool;
-          global.processFile(new AnalysisScope(psiElement.getContainingFile()), manager, globalContext, false);
+          global.processFile(new AnalysisScope(psiElement.getContainingFile()), manager, globalContext);
           descriptors = global.getProblemDescriptors();
         }
         else {
@@ -168,8 +173,13 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
             PsiElement annotation = InspectionManagerEx.getElementToolSuppressedIn(element, toolId);
             if (annotation != null && annotation.isValid()) {
               String description = InspectionsBundle.message("inspection.redundant.suppression.description");
-              LocalQuickFix fix = new RemoveSuppressWarningAction(toolId, annotation);
-              ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<String, QuickFix>();
+              QuickFix fix = myQuickFixes.get(toolId);
+              if (fix == null) {
+                fix = new RemoveSuppressWarningAction(toolId);
+                myQuickFixes.put(toolId, fix);
+              }
+              ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, description, (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
               result.add(descriptor);
             }
           }
@@ -182,6 +192,22 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     return result.toArray(new ProblemDescriptor[result.size()]);
   }
 
+
+  @Nullable
+  public QuickFix getQuickFix(final String hint) {
+    return myQuickFixes.get(hint);
+  }
+
+
+  @Nullable
+  public String getHint(final QuickFix fix) {
+    final List<String> list = myQuickFixes.getKeysByValue(fix);
+    if (list != null) {
+      LOG.assertTrue(list.size() == 1);
+      return list.get(0);
+    }
+    return null;
+  }
 
   public boolean isGraphNeeded() {
     return true;

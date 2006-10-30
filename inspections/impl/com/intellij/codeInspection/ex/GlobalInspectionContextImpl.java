@@ -7,10 +7,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
@@ -152,6 +149,27 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public boolean isSuppressed(RefEntity entity, String id) {
     return entity instanceof RefElement && ((RefElementImpl)entity).isSuppressed(id);
+  }
+
+  public boolean shouldCheck(RefEntity entity, GlobalInspectionTool tool) {
+    if (entity instanceof RefElement) {
+      final RefElementImpl refElement = (RefElementImpl)entity;
+      if (refElement.isSuppressed(tool.getShortName())) return false;
+
+      final PsiElement element = refElement.getElement();
+
+      if (element == null) return false;
+
+      if (RUN_WITH_EDITOR_PROFILE) {
+        final InspectionProfileEntry inspectionTool =
+          InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element)
+            .getInspectionTool(tool.getShortName());
+        if (inspectionTool instanceof GlobalInspectionToolWrapper && ((GlobalInspectionToolWrapper)inspectionTool).getTool() != tool) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public boolean isSuppressed(PsiElement element, String id) {

@@ -5,20 +5,22 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.GlobalInspectionTool;
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -54,14 +56,17 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
     return isGraphNeeded() ? new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH}: JobDescriptor.EMPTY_ARRAY;
   }
 
+  @NotNull
   public String getDisplayName() {
     return myTool.getDisplayName();
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return myTool.getGroupDisplayName();
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return myTool.getShortName();
@@ -71,6 +76,7 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
     return myTool.isEnabledByDefault();
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return myTool.getDefaultLevel();
   }
@@ -97,11 +103,9 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
 
   public void processFile(final AnalysisScope analysisScope,
                           final InspectionManager manager,
-                          final GlobalInspectionContext context,
-                          final boolean filterSuppressed) {
+                          final GlobalInspectionContext context) {
     context.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (filterSuppressed && context.isSuppressed(refEntity, myTool.getShortName())) return;
         CommonProblemDescriptor[] descriptors = myTool.checkElement(refEntity, analysisScope, manager, context);
         if (descriptors != null) {
           addProblemElement(refEntity, descriptors);
@@ -116,4 +120,46 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   public void projectClosed(Project project) {
     myTool.projectClosed(project);
   }
+
+  @Nullable
+  public IntentionAction findQuickFixes(final CommonProblemDescriptor problemDescriptor, final String hint) {
+    final QuickFix fix = myTool.getQuickFix(hint);
+    if (fix != null) {
+      if (problemDescriptor instanceof ProblemDescriptor) {
+        final ProblemDescriptor descriptor = new ProblemDescriptorImpl(((ProblemDescriptor)problemDescriptor).getStartElement(),
+                                                                       ((ProblemDescriptor)problemDescriptor).getEndElement(),
+                                                                       problemDescriptor.getDescriptionTemplate(),
+                                                                       new LocalQuickFix[]{(LocalQuickFix)fix},
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+        return new QuickFixWrapper(descriptor, 0);
+      }
+      else {
+        return new IntentionAction() {
+          @NotNull
+          public String getText() {
+            return fix.getName();
+          }
+
+          @NotNull
+          public String getFamilyName() {
+            return fix.getFamilyName();
+          }
+
+          public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+            return true;
+          }
+
+          public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+            fix.applyFix(project, problemDescriptor); //todo check type consistency
+          }
+
+          public boolean startInWriteAction() {
+            return true;
+          }
+        };
+      }
+    }
+    return null;
+  }
+
 }

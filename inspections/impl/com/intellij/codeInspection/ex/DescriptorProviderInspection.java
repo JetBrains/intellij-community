@@ -235,6 +235,22 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         problemClassElement.setAttribute("attribute_key", attributeKey);
       }
       element.addContent(problemClassElement);
+      if (this instanceof GlobalInspectionToolWrapper) {
+        final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)this).getTool();
+        final QuickFix[] fixes = description.getFixes();
+        if (fixes != null) {
+          @NonNls Element hintsElement = new Element("hints");
+          for (QuickFix fix : fixes) {
+            final String hint = globalInspectionTool.getHint(fix);
+            if (hint != null) {
+              @NonNls Element hintElement = new Element("hint");
+              hintElement.setAttribute("value", hint);
+              hintsElement.addContent(hintElement);
+            }
+          }
+          element.addContent(hintsElement);
+        }
+      }
       try {
         Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
         descriptionElement.addContent(problemText);
@@ -399,7 +415,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return result.values().isEmpty() ? null : result.values().toArray(new QuickFixAction[result.size()]);
   }
 
-  protected RefEntity getElement(CommonProblemDescriptor descriptor) {
+  public RefEntity getElement(CommonProblemDescriptor descriptor) {
     return getProblemToElements().get(descriptor);
   }
 

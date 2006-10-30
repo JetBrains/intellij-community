@@ -3,9 +3,7 @@ package com.intellij.codeInspection.unusedReturnValue;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefMethod;
@@ -15,6 +13,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jetbrains.annotations.NotNull;
@@ -23,52 +22,48 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class UnusedReturnValue extends DescriptorProviderInspection {
-  private QuickFix myQuickFix;
-
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefMethod) {
-          RefMethod refMethod = (RefMethod) refEntity;
-          if (!getContext().isToCheckMember(refMethod, UnusedReturnValue.this)) return;
-          ProblemDescriptor[] descriptors = checkMethod(refMethod, manager);
-          if (descriptors != null) {
-            addProblemElement(refMethod, descriptors);
-          }
-        }
-      }
-    });
-  }
+public class UnusedReturnValue extends GlobalInspectionTool {
+  private MakeVoidQuickFix myQuickFix;
 
   public boolean isGraphNeeded() {
     return true;
   }
 
   @Nullable
-  private ProblemDescriptor[] checkMethod(RefMethod refMethod, final InspectionManager manager) {
-    if (refMethod.isConstructor()) return null;
-    if (refMethod.hasSuperMethods()) return null;
-    if (refMethod.getInReferences().size() == 0) return null;
+  public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
+                                                AnalysisScope scope,
+                                                InspectionManager manager,
+                                                GlobalInspectionContext globalContext,
+                                                ProblemDescriptionsProcessor processor) {
+    if (refEntity instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refEntity;
 
-    if (!refMethod.isReturnValueUsed()) {
-      return new ProblemDescriptor[]{
-        manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
-                                        getFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      if (refMethod.isConstructor()) return null;
+      if (refMethod.hasSuperMethods()) return null;
+      if (refMethod.getInReferences().size() == 0) return null;
+
+      if (!refMethod.isReturnValueUsed()) {
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(),
+                                                                       InspectionsBundle.message("inspection.unused.return.value.problem.descriptor"),
+                                                                       getFix(processor), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      }
     }
 
     return null;
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
+
+  public boolean queryExternalUsagesRequests(final InspectionManager manager,
+                                             final GlobalInspectionContext globalContext,
+                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefElement && getDescriptions(refEntity) != null) {
+        if (refEntity instanceof RefElement && problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
             public void visitMethod(final RefMethod refMethod) {
-              getContext().enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
+              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
-                  ignoreElement(refMethod);
+                  problemDescriptionsProcessor.ignoreElement(refMethod);
                   return false;
                 }
               });
@@ -82,41 +77,57 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
   }
 
   @NotNull
-  public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[] {GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
-  }
-
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.unused.return.value.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getShortName() {
     return "UnusedReturnValue";
   }
 
-  private LocalQuickFix getFix() {
+  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor) {
     if (myQuickFix == null) {
-      myQuickFix = new QuickFix();
+      myQuickFix = new MakeVoidQuickFix(processor);
     }
     return myQuickFix;
   }
 
-  private class QuickFix implements LocalQuickFix {
+  @Nullable
+  public QuickFix getQuickFix(String hint) {
+    return getFix(null);
+  }
+
+  private static class MakeVoidQuickFix implements LocalQuickFix {
+    private ProblemDescriptionsProcessor myProcessor;
+
+    public MakeVoidQuickFix(final ProblemDescriptionsProcessor processor) {
+      myProcessor = processor;
+    }
+
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
     }
 
     public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
-      RefElement refElement = (RefElement)getElement(descriptor);
-      if (refElement.isValid() && refElement instanceof RefMethod) {
-        RefMethod refMethod = (RefMethod)refElement;
-        makeMethodVoid(refMethod);
+      PsiMethod psiMethod = null;
+      if (myProcessor != null) {
+        RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
+        if (refElement.isValid() && refElement instanceof RefMethod) {
+          RefMethod refMethod = (RefMethod)refElement;
+          psiMethod = (PsiMethod) refMethod.getElement();
+        }
+      } else {
+        psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       }
+      if (psiMethod == null) return;
+      makeMethodVoid(project, psiMethod);
     }
 
     @NotNull
@@ -124,9 +135,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
       return getName();
     }
 
-    private void makeMethodVoid(RefMethod refMethod) {
-      PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
-      if (psiMethod == null) return;
+    private static void makeMethodVoid(Project project, PsiMethod psiMethod) {
       PsiParameter[] params = psiMethod.getParameterList().getParameters();
       ParameterInfo[] infos = new ParameterInfo[params.length];
       for (int i = 0; i < params.length; i++) {
@@ -134,7 +143,7 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
         infos[i] = new ParameterInfo(i, param.getName(), param.getType());
       }
 
-      ChangeSignatureProcessor csp = new ChangeSignatureProcessor(getContext().getProject(),
+      ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
                                                                   psiMethod,
                                                                   false, null, psiMethod.getName(),
                                                                   PsiType.VOID,
