@@ -58,6 +58,10 @@ public class StaticImportMethodFix implements IntentionAction {
     if (!file.getManager().isInProject(file)) return false;
 
     PsiManager manager = file.getManager();
+    if (myMethodCall.getMethodExpression().isQualified()) {
+      // TODO[cdr]: review
+      return false;
+    }
 
     candidates = getMethodsToImport(manager);
     return !candidates.isEmpty();
