@@ -18,6 +18,7 @@ public class DirectoryRevision extends Revision {
 
   @Override
   public void removeChild(Revision child) {
+    // todo should we remove child by equality or by identity?
     for (int i = 0; i < myChildren.size(); i++) {
       if (myChildren.get(i) == child) {
         myChildren.remove(i);
@@ -34,6 +35,7 @@ public class DirectoryRevision extends Revision {
 
   @Override
   public Revision getRevision(Path path) {
+    // todo a bit messy
     Revision result = super.getRevision(path);
     if (result != null) return result;
 

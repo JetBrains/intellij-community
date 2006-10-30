@@ -9,7 +9,6 @@ public abstract class Revision {
   private String myName;
 
   public Revision(Integer objectId, String name) {
-    // todo replace Path name parameter with String name 
     myObjectId = objectId;
     myName = name;
   }

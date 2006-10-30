@@ -1,19 +1,19 @@
 package com.intellij.localvcs;
 
 class CreateFileChange implements Change {
-  private Path myName;
+  private Path myPath;
   private String myContent;
 
-  public CreateFileChange(Path name, String content) {
-    myName = name;
+  public CreateFileChange(Path path, String content) {
+    myPath = path;
     myContent = content;
   }
 
   public void applyTo(Snapshot snapshot) {
-    snapshot.doCreateFile(myName, myContent);
+    snapshot.doCreateFile(myPath, myContent);
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.doDelete(myName);
+    snapshot.doDelete(myPath);
   }
 }
