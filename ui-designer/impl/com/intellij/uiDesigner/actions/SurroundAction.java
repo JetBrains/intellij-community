@@ -75,8 +75,14 @@ public class SurroundAction extends AbstractGuiEditorAction {
           }
 
           Rectangle rc = new Rectangle(0, 0, 1, 1);
+          int minIndex = Integer.MAX_VALUE;
           if (selectionParent.getLayoutManager().isGrid()) {
             rc = FormEditingUtil.getSelectionBounds(selection);
+          }
+          else if (selectionParent.getLayoutManager().isIndexed()) {
+            for(RadComponent c: selection) {
+              minIndex = Math.min(minIndex, selectionParent.indexOfComponent(c));
+            }
           }
           for(RadComponent c: selection) {
             selectionParent.removeComponent(c);
@@ -96,7 +102,12 @@ public class SurroundAction extends AbstractGuiEditorAction {
           if (selection.size() == 1) {
             newContainer.setCustomLayoutConstraints(selection.get(0).getCustomLayoutConstraints());
           }
-          selectionParent.addComponent(newContainer);
+          if (minIndex != Integer.MAX_VALUE) {
+            selectionParent.addComponent(newContainer, minIndex);
+          }
+          else {
+            selectionParent.addComponent(newContainer);
+          }
 
           if (newContainer instanceof RadTabbedPane) {
             // the first tab is created by RadTabbedPane itself
