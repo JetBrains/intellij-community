@@ -7,24 +7,24 @@ public class LocalVcs {
   private Snapshot mySnapshot = new Snapshot();
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
-  public boolean hasRevision(Path path) {
-    return mySnapshot.hasRevision(path);
+  public boolean hasEntry(Path path) {
+    return mySnapshot.hasEntry(path);
   }
 
-  public Entry getRevision(Path path) {
-    return mySnapshot.getRevision(path);
+  public Entry getEntry(Path path) {
+    return mySnapshot.getEntry(path);
   }
 
-  public List<Entry> getRevisions(Path path) {
+  public List<Entry> getEntries(Path path) {
     List<Entry> result = new ArrayList<Entry>();
 
     //todo clean up this mess
-    if (!mySnapshot.hasRevision(path)) return result;
+    if (!mySnapshot.hasEntry(path)) return result;
 
-    Integer id = mySnapshot.getRevision(path).getObjectId();
+    Integer id = mySnapshot.getEntry(path).getObjectId();
 
     for (Snapshot snapshot : getSnapshots()) {
-      Entry r = snapshot.getRevision(id);
+      Entry r = snapshot.getEntry(id);
       if (r == null) break;
 
       result.add(r);

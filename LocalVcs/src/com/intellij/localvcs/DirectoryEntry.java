@@ -34,13 +34,13 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public Entry getRevision(Path path) {
+  public Entry getEntry(Path path) {
     // todo a bit messy
-    Entry result = super.getRevision(path);
+    Entry result = super.getEntry(path);
     if (result != null) return result;
 
     for (Entry child : myChildren) {
-      result = child.getRevision(path);
+      result = child.getEntry(path);
       if (result != null) return result;
     }
 

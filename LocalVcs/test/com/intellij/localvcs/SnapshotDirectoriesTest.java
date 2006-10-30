@@ -1,25 +1,17 @@
 package com.intellij.localvcs;
 
-import org.junit.Before;
 import org.junit.Test;
 
-public class SnapshotDirectoriesTest extends TestCase {
+public class SnapshotDirectoriesTest extends SnapshotTestCase {
   // todo test boundary conditions
-  private Snapshot s;
-
-  @Before
-  public void setUp() {
-    s = new Snapshot();
-  }
-
   @Test
   public void testCeatingDirectory() {
-    assertFalse(s.hasRevision(fn("dir")));
+    assertFalse(s.hasEntry(fn("dir")));
 
     s.doCreateDirectory(fn("dir"));
-    assertTrue(s.hasRevision(fn("dir")));
-    assertEquals(DirectoryEntry.class, s.getRevision(fn("dir")).getClass());
-    assertTrue(s.getRevision(fn("dir")).getChildren().isEmpty());
+    assertTrue(s.hasEntry(fn("dir")));
+    assertEquals(DirectoryEntry.class, s.getEntry(fn("dir")).getClass());
+    assertTrue(s.getEntry(fn("dir")).getChildren().isEmpty());
   }
 
   @Test
@@ -27,11 +19,11 @@ public class SnapshotDirectoriesTest extends TestCase {
     s.doCreateDirectory(fn("dir"));
     s.doCreateFile(fn("dir/file"), "");
 
-    assertTrue(s.hasRevision(fn("dir")));
-    assertTrue(s.hasRevision(fn("dir/file")));
+    assertTrue(s.hasEntry(fn("dir")));
+    assertTrue(s.hasEntry(fn("dir/file")));
 
-    Entry dir = s.getRevision(fn("dir"));
-    Entry file = s.getRevision(fn("dir/file"));
+    Entry dir = s.getEntry(fn("dir"));
+    Entry file = s.getEntry(fn("dir/file"));
 
     assertEquals(1, dir.getChildren().size());
     assertSame(file, dir.getChildren().get(0));
@@ -54,10 +46,10 @@ public class SnapshotDirectoriesTest extends TestCase {
   @Test
   public void testDeletingDirectory() {
     s.doCreateDirectory(fn("dir"));
-    assertTrue(s.hasRevision(fn("dir")));
+    assertTrue(s.hasEntry(fn("dir")));
 
     s.doDelete(fn("dir"));
-    assertFalse(s.hasRevision(fn("dir")));
+    assertFalse(s.hasEntry(fn("dir")));
   }
 
   @Test
@@ -65,13 +57,13 @@ public class SnapshotDirectoriesTest extends TestCase {
     s.doCreateDirectory(fn("dir1"));
     s.doCreateDirectory(fn("dir1/dir2"));
 
-    assertTrue(s.hasRevision(fn("dir1")));
-    assertTrue(s.hasRevision(fn("dir1/dir2")));
+    assertTrue(s.hasEntry(fn("dir1")));
+    assertTrue(s.hasEntry(fn("dir1/dir2")));
 
     s.doDelete(fn("dir1/dir2"));
-    assertFalse(s.hasRevision(fn("dir1/dir2")));
+    assertFalse(s.hasEntry(fn("dir1/dir2")));
 
-    assertTrue(s.hasRevision(fn("dir1")));
+    assertTrue(s.hasEntry(fn("dir1")));
   }
 
   @Test
@@ -80,18 +72,18 @@ public class SnapshotDirectoriesTest extends TestCase {
     s.doCreateDirectory(fn("dir1/dir2"));
     s.doDelete(fn("dir1"));
 
-    assertFalse(s.hasRevision(fn("dir1/dir2")));
-    assertFalse(s.hasRevision(fn("dir1")));
+    assertFalse(s.hasEntry(fn("dir1/dir2")));
+    assertFalse(s.hasEntry(fn("dir1")));
   }
 
   @Test
   public void testDeletingFilesUnderDirectory() {
     s.doCreateDirectory(fn("dir"));
     s.doCreateFile(fn("dir/file"), "");
-    assertTrue(s.hasRevision(fn("dir/file")));
+    assertTrue(s.hasEntry(fn("dir/file")));
 
     s.doDelete(fn("dir/file"));
-    assertFalse(s.hasRevision(fn("dir/file")));
+    assertFalse(s.hasEntry(fn("dir/file")));
   }
 
   @Test
@@ -101,10 +93,10 @@ public class SnapshotDirectoriesTest extends TestCase {
 
     s.doRename(fn("dir/file"), "new file");
 
-    assertFalse(s.hasRevision(fn("dir/file")));
-    assertTrue(s.hasRevision(fn("dir/new file")));
+    assertFalse(s.hasEntry(fn("dir/file")));
+    assertTrue(s.hasEntry(fn("dir/new file")));
 
-    assertEquals("content", s.getRevision(fn("dir/new file")).getContent());
+    assertEquals("content", s.getEntry(fn("dir/new file")).getContent());
   }
 
   @Test
@@ -126,10 +118,10 @@ public class SnapshotDirectoriesTest extends TestCase {
   @Test
   public void testApplyingAndRevertingDirectoryCreation() {
     s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
-    assertTrue(s.hasRevision(fn("dir")));
+    assertTrue(s.hasEntry(fn("dir")));
 
     s = s.revert();
-    assertFalse(s.hasRevision(fn("dir")));
+    assertFalse(s.hasEntry(fn("dir")));
   }
 
   @Test
@@ -137,10 +129,10 @@ public class SnapshotDirectoriesTest extends TestCase {
     s = s.apply(cs(new CreateDirectoryChange(fn("dir"))));
     s = s.apply(cs(new CreateFileChange(fn("dir/file"), "")));
 
-    assertTrue(s.hasRevision(fn("dir/file")));
+    assertTrue(s.hasEntry(fn("dir/file")));
 
     s = s.revert();
-    assertFalse(s.hasRevision(fn("dir/file")));
-    assertTrue(s.hasRevision(fn("dir")));
+    assertFalse(s.hasEntry(fn("dir/file")));
+    assertTrue(s.hasEntry(fn("dir")));
   }
 }

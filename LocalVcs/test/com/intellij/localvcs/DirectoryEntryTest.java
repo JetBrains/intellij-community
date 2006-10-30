@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import org.junit.Test;
 
-public class DirectoryRevisionTest extends TestCase {
+public class DirectoryEntryTest extends TestCase {
   @Test
   public void testAddingChildren() {
     Entry dir = new DirectoryEntry(null, null);
@@ -56,10 +56,10 @@ public class DirectoryRevisionTest extends TestCase {
     root.addChild(file1);
     dir.addChild(file2);
 
-    assertSame(root, root.getRevision(fn("root")));
-    assertSame(dir, root.getRevision(fn("root/dir")));
-    assertSame(file1, root.getRevision(fn("root/file1")));
-    assertSame(file2, root.getRevision(fn("root/dir/file2")));
+    assertSame(root, root.getEntry(fn("root")));
+    assertSame(dir, root.getEntry(fn("root/dir")));
+    assertSame(file1, root.getEntry(fn("root/file1")));
+    assertSame(file2, root.getEntry(fn("root/dir/file2")));
   }
 
   @Test
@@ -71,8 +71,8 @@ public class DirectoryRevisionTest extends TestCase {
     root.addChild(dir);
     dir.addChild(file);
 
-    assertNull(root.getRevision(fn("unknown root")));
-    assertNull(root.getRevision(fn("root/unknown dir")));
-    assertNull(root.getRevision(fn("root/dir/unknown file")));
+    assertNull(root.getEntry(fn("unknown root")));
+    assertNull(root.getEntry(fn("root/unknown dir")));
+    assertNull(root.getEntry(fn("root/dir/unknown file")));
   }
 }

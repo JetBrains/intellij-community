@@ -3,10 +3,9 @@ package com.intellij.localvcs;
 import java.util.List;
 
 public abstract class Entry {
-  // todo rename to Entry
   private Integer myObjectId;
-  private Entry myParent;
   private String myName;
+  private Entry myParent;
 
   public Entry(Integer objectId, String name) {
     myObjectId = objectId;
@@ -50,7 +49,7 @@ public abstract class Entry {
     throw new UnsupportedOperationException();
   }
 
-  public Entry getRevision(Path path) {
+  public Entry getEntry(Path path) {
     if (path.equals(getPath())) return this;
     return null;
   }

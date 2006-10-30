@@ -9,10 +9,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   public void testRevertingToPreviousVersion() {
     myVcs.createFile(fn("file"), "");
     myVcs.commit();
-    assertTrue(myVcs.hasRevision(fn("file")));
+    assertTrue(myVcs.hasEntry(fn("file")));
 
     myVcs.revert();
-    assertFalse(myVcs.hasRevision(fn("file")));
+    assertFalse(myVcs.hasEntry(fn("file")));
   }
 
   @Test
@@ -56,9 +56,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
     myVcs.changeFile(fn("file1"), "new content1");
     myVcs.commit();
 
-    Integer id1 = myVcs.getRevision(fn("file1")).getObjectId();
-    Integer id2 = myVcs.getRevision(fn("file2")).getObjectId();
-    Integer id3 = myVcs.getRevision(fn("file3")).getObjectId();
+    Integer id1 = myVcs.getEntry(fn("file1")).getObjectId();
+    Integer id2 = myVcs.getEntry(fn("file2")).getObjectId();
+    Integer id3 = myVcs.getEntry(fn("file3")).getObjectId();
 
     List<Snapshot> snapshots = myVcs.getSnapshots();
     assertEquals(2, snapshots.size());
@@ -68,13 +68,13 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
             new FileEntry(id1, "file1", "new content1"),
             new FileEntry(id2, "file2", "content2"),
             new FileEntry(id3, "file3", "content3")},
-        snapshots.get(0).getRevisions());
+        snapshots.get(0).getEntries());
 
     assertElements(
         new Object[]{
             new FileEntry(id1, "file1", "content1"),
             new FileEntry(id2, "file2", "content2")},
-        snapshots.get(1).getRevisions());
+        snapshots.get(1).getEntries());
   }
 
   @Test
@@ -94,7 +94,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
     Snapshot s = myVcs.getSnapshot("label");
     assertNotNull(s);
-    assertRevisionContent("content", s.getRevision(fn("file")));
+    assertRevisionContent("content", s.getEntry(fn("file")));
   }
 
   @Test

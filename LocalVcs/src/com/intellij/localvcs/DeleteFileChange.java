@@ -9,7 +9,7 @@ class DeleteFileChange implements Change {
   }
 
   public void applyTo(Snapshot snapshot) {
-    myPreviousEntry = snapshot.getRevision(myPath);
+    myPreviousEntry = snapshot.getEntry(myPath);
     snapshot.doDelete(myPath);
   }
 
