@@ -6,18 +6,16 @@ package com.intellij.javaee.web;
 
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -96,7 +94,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
       default:
         int minOffset = chooseReference().getRangeInElement().getStartOffset();
         final String text = myReferences.get(0).getElement().getText();
-        Set<Object> variants = new HashSet<Object>();
+        List<Object> variants = new ArrayList<Object>();
         for(PsiReference ref: myReferences) {
           final int startOffset = ref.getRangeInElement().getStartOffset();
           final String prefix;

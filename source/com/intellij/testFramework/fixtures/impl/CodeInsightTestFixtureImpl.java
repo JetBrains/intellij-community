@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -47,6 +48,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -124,6 +126,27 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
   public long testHighlighting(final String... filePaths) throws Throwable {
     return testHighlighting(true, true, true, filePaths);
+  }
+
+  @Nullable
+  public PsiReference getReferenceAtCaretPosition(final String filePath) throws Throwable {
+    final RunResult<PsiReference> runResult = new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
+      protected void run(final Result<PsiReference> result) throws Throwable {
+        configureByFiles(filePath);
+        final int offset = myEditor.getCaretModel().getOffset();
+        final PsiReference psiReference = getFile().findReferenceAt(offset);
+        result.setResult(psiReference);
+      }
+    }.execute();
+    runResult.throwException();
+    return runResult.getResultObject();
+  }
+
+  @NotNull
+  public PsiReference getReferenceAtCaretPositionWithAssertion(final String filePath) throws Throwable {
+    final PsiReference reference = getReferenceAtCaretPosition(filePath);
+    assert reference != null: "no reference found at " + myEditor.getCaretModel().getLogicalPosition();
+    return reference;
   }
 
   @NotNull

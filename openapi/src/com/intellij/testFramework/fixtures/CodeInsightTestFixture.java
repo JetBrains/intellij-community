@@ -21,9 +21,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -89,6 +91,31 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @throws Throwable any exception thrown during highlighting
    */
   long testHighlighting(String... filePaths) throws Throwable;
+
+  /**
+   * Finds the reference in position marked by {@link #CARET_MARKER}.
+   *
+   * @param filePath file to be processed
+   * @return null if no reference found
+   * @throws Throwable any exception
+   *
+   * @see #getReferenceAtCaretPositionWithAssertion(String)
+   */
+  @Nullable
+  PsiReference getReferenceAtCaretPosition(String filePath) throws Throwable;
+
+  /**
+   * Finds the reference in position marked by {@link #CARET_MARKER}.
+   * Asserts that the reference exists.
+   *
+   * @param filePath file to be processed
+   * @return founded reference
+   * @throws Throwable any exception
+   *
+   * @see #getReferenceAtCaretPosition(String)
+   */
+  @NotNull
+  PsiReference getReferenceAtCaretPositionWithAssertion(String filePath) throws Throwable;
 
   @NotNull
   Collection<IntentionAction> getAvailableIntentions(String... filePaths) throws Throwable;
