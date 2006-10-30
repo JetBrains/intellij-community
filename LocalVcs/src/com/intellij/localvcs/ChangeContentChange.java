@@ -1,11 +1,11 @@
 package com.intellij.localvcs;
 
 class ChangeContentChange implements Change {
-  private Filename myName;
+  private FileName myName;
   private String myNewContent;
   private Revision myPreviousRevision;
 
-  public ChangeContentChange(Filename name, String newContent) {
+  public ChangeContentChange(FileName name, String newContent) {
     myName = name;
     myNewContent = newContent;
   }

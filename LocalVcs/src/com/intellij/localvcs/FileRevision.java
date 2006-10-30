@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 public class FileRevision extends Revision {
   private String myContent;
 
-  public FileRevision(Integer objectId, Filename name, String content) {
+  public FileRevision(Integer objectId, FileName name, String content) {
     super(objectId, name);
     myContent = content;
   }
