@@ -26,4 +26,12 @@ public class FilenameTest extends TestCase {
     Filename f = new Filename("file");
     assertElements(new Object[]{"file"}, f.getParts());
   }
+
+  @Test
+  public void testAppending() {
+    Filename f1 = new Filename("file1");
+
+    assertEquals(new Filename("file1/file2"),
+                 f1.with(new Filename("file2")));
+  }
 }

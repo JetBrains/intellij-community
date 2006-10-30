@@ -30,17 +30,6 @@ public class Filename {
     return new Filename(result.substring(0, result.length() - 1));
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || o.getClass() != getClass()) return false;
-    return myName.equals(((Filename)o).myName);
-  }
-
-  @Override
-  public int hashCode() {
-    throw new UnsupportedOperationException();
-  }
-
   public List<String> getParts() {
     List<String> result = new ArrayList<String>();
 
@@ -50,5 +39,25 @@ public class Filename {
     }
 
     return result;
+  }
+
+  public Filename with(Filename tail) {
+    return new Filename(myName + "/" + tail.myName);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "(" + myName + ")";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || o.getClass() != getClass()) return false;
+    return myName.equals(((Filename)o).myName);
+  }
+
+  @Override
+  public int hashCode() {
+    throw new UnsupportedOperationException();
   }
 }

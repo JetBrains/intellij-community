@@ -11,6 +11,12 @@ public class DirectoryRevision extends Revision {
   }
 
   @Override
+  public void addChild(Revision child) {
+    myChildren.add(child);
+    child.setParent(this);
+  }
+
+  @Override
   public List<Revision> getChildren() {
     return myChildren;
   }

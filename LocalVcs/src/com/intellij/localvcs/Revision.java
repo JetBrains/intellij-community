@@ -21,8 +21,17 @@ public abstract class Revision {
     return myName;
   }
 
+  public Filename getPath() {
+    if (!hasParent()) return myName;
+    return myParent.getPath().with(myName);
+  }
+
   public String getContent() {
     throw new UnsupportedOperationException();
+  }
+
+  private boolean hasParent() {
+    return myParent != null;
   }
 
   public Revision getParent() {
@@ -33,8 +42,19 @@ public abstract class Revision {
     myParent = parent;
   }
 
+  public void addChild(Revision child) {
+    throw new UnsupportedOperationException();
+  }
+
   public List<Revision> getChildren() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName()
+           + "(id: " + myObjectId + ", "
+           + "name: " + myName + ")";
   }
 
   @Override
