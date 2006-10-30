@@ -15,6 +15,10 @@ public class Filename {
     return myName;
   }
 
+  public boolean hasParent() {
+    return getParent() != null;
+  }
+
   public Filename getParent() {
     List<String> parts = getParts();
     parts.remove(parts.size() - 1);

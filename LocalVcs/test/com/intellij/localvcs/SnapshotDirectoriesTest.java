@@ -15,6 +15,23 @@ public class SnapshotDirectoriesTest extends TestCase {
   }
 
   @Test
+  public void testFilesUnderDirectory() {
+    Snapshot s = new Snapshot();
+    s.doCreateDirectory(fn("dir"));
+    s.doCreateFile(fn("dir/file"), "");
+
+    assertTrue(s.hasRevision(fn("dir")));
+    assertTrue(s.hasRevision(fn("dir/file")));
+
+    Revision dir = s.getRevision(fn("dir"));
+    Revision file = s.getRevision(fn("dir/file"));
+
+    assertEquals(1, dir.getChildren().size());
+    assertSame(file, dir.getChildren().get(0));
+    assertSame(dir, file.getParent());
+  }
+
+  @Test
   public void testCreatingParentDirectoriesDirectory() {
     //Snapshot s = new Snapshot();
     //s.doCreateDirectory(fn("dir1/dir2"));

@@ -7,21 +7,21 @@ public class LocalVcs {
   private Snapshot mySnapshot = new Snapshot();
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
-  public boolean hasRevision(Filename name) {
-    return mySnapshot.hasRevision(name);
+  public boolean hasRevision(Filename path) {
+    return mySnapshot.hasRevision(path);
   }
 
-  public Revision getRevision(Filename name) {
-    return mySnapshot.getRevision(name);
+  public Revision getRevision(Filename path) {
+    return mySnapshot.getRevision(path);
   }
 
-  public List<Revision> getRevisions(Filename name) {
+  public List<Revision> getRevisions(Filename path) {
     List<Revision> result = new ArrayList<Revision>();
 
     //todo clean up this mess
-    if (!mySnapshot.hasRevision(name)) return result;
+    if (!mySnapshot.hasRevision(path)) return result;
 
-    Integer id = mySnapshot.getRevision(name).getObjectId();
+    Integer id = mySnapshot.getRevision(path).getObjectId();
 
     for (Snapshot snapshot : getSnapshots()) {
       Revision r = snapshot.getRevision(id);
@@ -33,24 +33,24 @@ public class LocalVcs {
     return result;
   }
 
-  public void createDirectory(Filename name) {
-    myPendingChanges.add(new CreateDirectoryChange(name));
+  public void createDirectory(Filename path) {
+    myPendingChanges.add(new CreateDirectoryChange(path));
   }
 
-  public void createFile(Filename name, String content) {
-    myPendingChanges.add(new CreateFileChange(name, content));
+  public void createFile(Filename path, String content) {
+    myPendingChanges.add(new CreateFileChange(path, content));
   }
 
-  public void changeFile(Filename name, String content) {
-    myPendingChanges.add(new ChangeContentChange(name, content));
+  public void changeFile(Filename path, String content) {
+    myPendingChanges.add(new ChangeContentChange(path, content));
   }
 
-  public void renameFile(Filename name, Filename newName) {
-    myPendingChanges.add(new RenameFileChange(name, newName));
+  public void renameFile(Filename path, Filename newName) {
+    myPendingChanges.add(new RenameFileChange(path, newName));
   }
 
-  public void deleteFile(Filename name) {
-    myPendingChanges.add(new DeleteFileChange(name));
+  public void deleteFile(Filename path) {
+    myPendingChanges.add(new DeleteFileChange(path));
   }
 
   public void commit() {

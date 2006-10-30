@@ -20,4 +20,17 @@ public class DirectoryRevision extends Revision {
   public List<Revision> getChildren() {
     return myChildren;
   }
+
+  @Override
+  public Revision getRevision(Filename path) {
+    Revision result = super.getRevision(path);
+    if (result != null) return result;
+
+    for (Revision child : myChildren) {
+      result = child.getRevision(path);
+      if (result != null) return result;
+    }
+
+    return null;
+  }
 }

@@ -9,6 +9,7 @@ public abstract class Revision {
   private Filename myName;
 
   public Revision(Integer objectId, Filename name) {
+    // todo replace Filename name parameter with String name 
     myObjectId = objectId;
     myName = name;
   }
@@ -48,6 +49,11 @@ public abstract class Revision {
 
   public List<Revision> getChildren() {
     throw new UnsupportedOperationException();
+  }
+
+  public Revision getRevision(Filename path) {
+    if (path.equals(getPath())) return this;
+    return null;
   }
 
   @Override
