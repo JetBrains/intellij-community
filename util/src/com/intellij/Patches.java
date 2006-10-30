@@ -114,4 +114,9 @@ public class Patches {
    * It treats the BOM as if it were the initial character of the stream
    */
   public static final boolean SUN_BUG_ID_4508058 = true;
+
+  /**
+   * Huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes. For instance screen saver activates or computer goes hibernate.
+   */
+  public static final boolean SUN_BUG_ID_6209673 = SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.5");
 }

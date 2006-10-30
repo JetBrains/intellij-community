@@ -1,7 +1,9 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.Patches;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.HackyRepaintManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -106,6 +108,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (!isUnitTestMode) {
       Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+      if (Patches.SUN_BUG_ID_6209673) {
+        RepaintManager.setCurrentManager(new HackyRepaintManager());
+      }
       IconLoader.activate();
     }
 
