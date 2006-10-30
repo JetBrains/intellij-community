@@ -62,14 +62,15 @@ public class TestNGConsoleView implements ConsoleView
                     int i = lines.length - 1;
                     while (i >= 0) {
                         //first 4 chars are '\t at '
-                        if (lines[i].length() > 4 &&  (lines[i].startsWith("org.testng.", 4)
+                        if (lines[i].length() > 4 && (lines[i].startsWith("org.testng.", 4)
                                 || lines[i].startsWith("sun.reflect.DelegatingMethodAccessorImpl", 4)
                                 || lines[i].startsWith("sun.reflect.NativeMethodAccessorImpl", 4)
                                 || lines[i].startsWith("java.lang.reflect.Method", 4)
-                                )) {
+                                || lines[i].startsWith("com.intellij.rt.execution.application.AppMain", 4)
+                        )) {
 
                         } else {
-                            //we're done with internals, so we know the rest are ok
+                            // we're done with internals, so we know the rest are ok
                             break;
                         }
                         i--;

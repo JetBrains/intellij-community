@@ -179,7 +179,7 @@ public class TestNGRunnableState extends JavaCommandLineState
         javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.PORT_COMMAND_OPT, String.valueOf(port));
 
         if (!is15) {
-            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.DEFAULT_ANNOTATIONS_COMMAND_OPT, "javadoc");
+            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.ANNOTATIONS_COMMAND_OPT, "javadoc");
         }
 
         // Always include the source paths - just makes things easier :)
@@ -271,7 +271,7 @@ public class TestNGRunnableState extends JavaCommandLineState
             Map<String, String> testParams = convertPropertiesFileToMap(data.PROPERTIES_FILE);
             testParams.putAll(data.TEST_PROPERTIES);
 
-            String annotationType = is15 ? TestNG.JDK5_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
+            String annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
             LOGGER.info("Using annotationType of " + annotationType);
 
             LaunchSuite suite = SuiteGenerator.createCustomizedSuite(project.getName(), null, classNames, methodNames, groupNames, testParams, annotationType, 1);

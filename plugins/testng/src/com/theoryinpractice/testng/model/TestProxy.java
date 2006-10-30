@@ -1,16 +1,16 @@
 package com.theoryinpractice.testng.model;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
-import org.testng.remote.strprotocol.TestResultMessage;
-import org.testng.remote.strprotocol.MessageHelper;
-import com.theoryinpractice.testng.TestNGConsoleView;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.theoryinpractice.testng.TestNGConsoleView;
+import org.testng.remote.strprotocol.MessageHelper;
+import org.testng.remote.strprotocol.TestResultMessage;
 
 /**
  * @author Hani Suleiman Date: Jul 28, 2005 Time: 10:52:51 PM
@@ -24,7 +24,7 @@ public class TestProxy
     private List<TestNGConsoleView.Chunk> output;
     private PsiElement psiElement;
     private boolean inProgress;
-    
+
     public TestProxy() {
 
     }
@@ -58,9 +58,9 @@ public class TestProxy
     }
 
     public List<TestNGConsoleView.Chunk> getOutput() {
-        if(output != null) return output;
+        if (output != null) return output;
         List<TestNGConsoleView.Chunk> total = new ArrayList<TestNGConsoleView.Chunk>();
-        for(TestProxy child : results) {
+        for (TestProxy child : results) {
             total.addAll(child.getOutput());
         }
         return total;
@@ -80,7 +80,7 @@ public class TestProxy
         ApplicationManager.getApplication().runReadAction(new Runnable()
         {
             public void run() {
-                PsiClass psiClass = (PsiClass)getParent().getPsiElement();
+                PsiClass psiClass = (PsiClass) getParent().getPsiElement();
                 PsiMethod[] methods = psiClass.getMethods();
                 for (PsiMethod method : methods) {
                     if (method.getName().equals(resultMessage.getMethod())) {
@@ -92,11 +92,10 @@ public class TestProxy
         });
         this.resultMessage = resultMessage;
         TestProxy current = this;
-        while(current != null) {
+        while (current != null) {
             current.inProgress = resultMessage.getResult() == MessageHelper.TEST_STARTED;
             current = current.getParent();
         }
-        
         this.name = resultMessage.getMethod();
     }
 
@@ -104,26 +103,26 @@ public class TestProxy
         return inProgress;
     }
 
-    public TestProxy[] getPathFromRoot()
-    {
+    public TestProxy[] getPathFromRoot() {
         ArrayList<TestProxy> arraylist = new ArrayList<TestProxy>();
         TestProxy testproxy = this;
         do
             arraylist.add(testproxy);
-        while((testproxy = testproxy.getParent()) != null);
+        while ((testproxy = testproxy.getParent()) != null);
         Collections.reverse(arraylist);
         return arraylist.toArray(new TestProxy[arraylist.size()]);
     }
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        final TestProxy testProxy = (TestProxy)o;
+        final TestProxy testProxy = (TestProxy) o;
 
-        if(name != null ? !name.equals(testProxy.name) : testProxy.name != null) return false;
-        if(resultMessage != null ? !resultMessage.equals(testProxy.resultMessage) : testProxy.resultMessage != null) return false;
+        if (name != null ? !name.equals(testProxy.name) : testProxy.name != null) return false;
+        if (resultMessage != null ? !resultMessage.equals(testProxy.resultMessage) : testProxy.resultMessage != null)
+            return false;
 
         return true;
     }
@@ -139,7 +138,7 @@ public class TestProxy
     public String toString() {
         return name + ' ' + results;
     }
-    
+
     public void addResult(TestProxy proxy) {
         results.add(proxy);
         proxy.setParent(this);
@@ -158,15 +157,15 @@ public class TestProxy
     }
 
     public boolean isNotPassed() {
-        if(resultNotPassed()) return true;
+        if (resultNotPassed()) return true;
         //we just added the node, so we don't know if it has passes or fails
-        if(resultMessage == null && results.size() == 0) return true;
-        for(TestProxy child : results) {
-            if(child.isNotPassed()) return true;
+        if (resultMessage == null && results.size() == 0) return true;
+        for (TestProxy child : results) {
+            if (child.isNotPassed()) return true;
         }
         return false;
     }
-    
+
     private boolean resultNotPassed() {
         return resultMessage != null && resultMessage.getResult() != MessageHelper.PASSED_TEST;
     }
@@ -174,7 +173,7 @@ public class TestProxy
     public List<TestProxy> getAllTests() {
         List<TestProxy> total = new ArrayList<TestProxy>();
         total.add(this);
-        for(TestProxy child : results) {
+        for (TestProxy child : results) {
             total.addAll(child.getAllTests());
         }
         return total;
@@ -187,14 +186,23 @@ public class TestProxy
     public TestProxy getChildAt(int i) {
         return results.get(i);
     }
-    
+
     public TestProxy getFirstDefect() {
-        for(TestProxy child : results) {
-            if(child.isNotPassed() && child.isResult()) return child;
+        for (TestProxy child : results) {
+            if (child.isNotPassed() && child.isResult()) return child;
             TestProxy firstDefect = child.getFirstDefect();
-            if(firstDefect != null)
+            if (firstDefect != null)
                 return firstDefect;
         }
         return null;
+    }
+
+    public boolean childExists(String child) {
+        for (int count = 0; count < getChildCount(); count++) {
+            if (child.equals(getChildAt(count).getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
