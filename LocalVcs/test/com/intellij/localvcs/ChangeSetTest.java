@@ -1,29 +1,32 @@
 package com.intellij.localvcs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 
 public class ChangeSetTest extends TestCase {
   private ChangeSet myChangeSet;
-  private String myLog;
+  private List<Path> myLog;
   private Snapshot mySnapshot;
 
   @Before
   public void setUp() {
-    myChangeSet = cs(new CreateFileChange(fn("file1"), ""),
-                     new CreateFileChange(fn("file2"), ""),
-                     new CreateFileChange(fn("file3"), ""));
+    myChangeSet = cs(new CreateFileChange(fn("file1"), null),
+                     new CreateFileChange(fn("file2"), null),
+                     new CreateFileChange(fn("file3"), null));
 
-    myLog = "";
+    myLog = new ArrayList<Path>();
     mySnapshot = new Snapshot() {
       @Override
-      protected void doCreateFile(FileName name, String content) {
-        myLog += name.getPath() + " ";
+      protected void doCreateFile(Path path, String content) {
+        myLog.add(path);
       }
 
       @Override
-      protected void doDelete(FileName name) {
-        myLog += name.getPath() + " ";
+      protected void doDelete(Path path) {
+        myLog.add(path);
       }
     };
   }
@@ -31,12 +34,12 @@ public class ChangeSetTest extends TestCase {
   @Test
   public void testApplyingIsFIFO() {
     myChangeSet.applyTo(mySnapshot);
-    assertEquals("file1 file2 file3 ", myLog);
+    assertElements(new Object[]{fn("file1"), fn("file2"), fn("file3")}, myLog);
   }
 
   @Test
   public void testRevertingIsLIFO() {
     myChangeSet.revertOn(mySnapshot);
-    assertEquals("file3 file2 file1 ", myLog);
+    assertElements(new Object[]{fn("file3"), fn("file2"), fn("file1")}, myLog);
   }
 }

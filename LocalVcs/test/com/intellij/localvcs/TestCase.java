@@ -6,8 +6,8 @@ import java.util.Collection;
 import org.junit.Assert;
 
 public class TestCase extends Assert {
-  protected FileName fn(String name) {
-    return new FileName(name);
+  protected Path fn(String name) {
+    return new Path(name);
   }
 
   protected ChangeSet cs(Change... changes) {

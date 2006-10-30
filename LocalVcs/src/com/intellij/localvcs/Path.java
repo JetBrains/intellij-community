@@ -4,22 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class FileName {
+public class Path {
   private final String myName;
 
-  public FileName(String name) {
+  public Path(String name) {
     myName = name;
-  }
-
-  public String getPath() {
-    return myName;
   }
 
   public boolean hasParent() {
     return getParent() != null;
   }
 
-  public FileName getParent() {
+  public Path getParent() {
     List<String> parts = getParts();
     parts.remove(parts.size() - 1);
 
@@ -31,11 +27,11 @@ public class FileName {
       result += p + "/";
     }
 
-    return new FileName(result.substring(0, result.length() - 1));
+    return new Path(result.substring(0, result.length() - 1));
   }
 
-  public FileName getTail() {
-    return new FileName(getParts().get(getParts().size() - 1));
+  public Path getTail() {
+    return new Path(getParts().get(getParts().size() - 1));
   }
 
   public List<String> getParts() {
@@ -49,11 +45,11 @@ public class FileName {
     return result;
   }
 
-  public FileName appendedWith(FileName tail) {
-    return new FileName(myName + "/" + tail.myName);
+  public Path appendedWith(Path tail) {
+    return new Path(myName + "/" + tail.myName);
   }
 
-  public FileName renamedWith(FileName newName) {
+  public Path renamedWith(Path newName) {
     if (!hasParent()) return newName;
     return getParent().appendedWith(newName);
   }
@@ -66,7 +62,7 @@ public class FileName {
   @Override
   public boolean equals(Object o) {
     if (o == null || o.getClass() != getClass()) return false;
-    return myName.equals(((FileName)o).myName);
+    return myName.equals(((Path)o).myName);
   }
 
   @Override

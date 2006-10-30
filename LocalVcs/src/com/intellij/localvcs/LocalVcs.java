@@ -7,15 +7,15 @@ public class LocalVcs {
   private Snapshot mySnapshot = new Snapshot();
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
-  public boolean hasRevision(FileName path) {
+  public boolean hasRevision(Path path) {
     return mySnapshot.hasRevision(path);
   }
 
-  public Revision getRevision(FileName path) {
+  public Revision getRevision(Path path) {
     return mySnapshot.getRevision(path);
   }
 
-  public List<Revision> getRevisions(FileName path) {
+  public List<Revision> getRevisions(Path path) {
     List<Revision> result = new ArrayList<Revision>();
 
     //todo clean up this mess
@@ -33,23 +33,23 @@ public class LocalVcs {
     return result;
   }
 
-  public void createDirectory(FileName path) {
+  public void createDirectory(Path path) {
     myPendingChanges.add(new CreateDirectoryChange(path));
   }
 
-  public void createFile(FileName path, String content) {
+  public void createFile(Path path, String content) {
     myPendingChanges.add(new CreateFileChange(path, content));
   }
 
-  public void changeFile(FileName path, String content) {
+  public void changeFile(Path path, String content) {
     myPendingChanges.add(new ChangeContentChange(path, content));
   }
 
-  public void renameFile(FileName path, FileName newName) {
+  public void renameFile(Path path, Path newName) {
     myPendingChanges.add(new RenameFileChange(path, newName));
   }
 
-  public void deleteFile(FileName path) {
+  public void deleteFile(Path path) {
     myPendingChanges.add(new DeleteFileChange(path));
   }
 

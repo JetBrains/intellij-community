@@ -1,10 +1,10 @@
 package com.intellij.localvcs;
 
 class RenameFileChange implements Change {
-  private FileName myName;
-  private FileName myNewName;
+  private Path myName;
+  private Path myNewName;
 
-  public RenameFileChange(FileName name, FileName newName) {
+  public RenameFileChange(Path name, Path newName) {
     myName = name;
     myNewName = newName;
   }

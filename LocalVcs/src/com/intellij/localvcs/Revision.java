@@ -6,9 +6,9 @@ public abstract class Revision {
   // todo rename to Entry
   private Integer myObjectId;
   private Revision myParent;
-  private FileName myName;
+  private Path myName;
 
-  public Revision(Integer objectId, FileName name) {
+  public Revision(Integer objectId, Path name) {
     // todo replace Path name parameter with String name 
     myObjectId = objectId;
     myName = name;
@@ -18,11 +18,11 @@ public abstract class Revision {
     return myObjectId;
   }
 
-  public FileName getName() {
+  public Path getName() {
     return myName;
   }
 
-  public FileName getPath() {
+  public Path getPath() {
     if (!hasParent()) return myName;
     return myParent.getPath().appendedWith(myName);
   }
@@ -55,7 +55,7 @@ public abstract class Revision {
     throw new UnsupportedOperationException();
   }
 
-  public Revision getRevision(FileName path) {
+  public Revision getRevision(Path path) {
     if (path.equals(getPath())) return this;
     return null;
   }
