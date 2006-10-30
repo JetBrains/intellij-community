@@ -4,16 +4,19 @@
 
 package com.intellij.javaee.web;
 
-import com.intellij.psi.*;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -60,7 +63,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   public PsiElement resolve(){
-    return chooseReference().resolve();
+    final ResolveResult[] resolveResults = multiResolve(false);
+    return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
   public String getCanonicalText(){
@@ -84,14 +88,40 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
 
   public Object[] getVariants() {
-    Set<Object> variants = new HashSet<Object>();
-    for(PsiReference ref: myReferences) {
-      Object[] refVariants = ref.getVariants();
-      for(Object refVariant : refVariants) {
-        variants.add(refVariant);
-      }
+    switch (myReferences.size()) {
+      case 0:
+        return new Object[0];
+      case 1:
+        return myReferences.get(0).getVariants();
+      default:
+        int minOffset = chooseReference().getRangeInElement().getStartOffset();
+        final String text = myReferences.get(0).getElement().getText();
+        Set<Object> variants = new HashSet<Object>();
+        for(PsiReference ref: myReferences) {
+          final int startOffset = ref.getRangeInElement().getStartOffset();
+          final String prefix;
+          if (startOffset > minOffset) {
+            prefix = text.substring(minOffset, startOffset);
+          } else {
+            prefix = null;
+          }
+          Object[] refVariants = ref.getVariants();
+          for(Object refVariant : refVariants) {
+            if (prefix != null) {
+              if (refVariant instanceof CandidateInfo) {
+                refVariant = ((CandidateInfo)refVariant).getElement();
+              }
+              final LookupItem item = LookupItemUtil.objectToLookupItem(refVariant);
+              final String s = item.getLookupString();
+              item.setLookupString(prefix + s);
+              variants.add(item);
+            } else {
+              variants.add(refVariant);
+            }
+          }
+        }
+        return variants.toArray();
     }
-    return variants.toArray();
   }
 
   @NotNull
@@ -116,6 +146,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return result.toArray(new ResolveResult[result.size()]);
   }
 
+  @NotNull
   private PsiReference chooseReference(){
     if(myChoosenOne != -1){
       return myReferences.get(myChoosenOne);
