@@ -10,10 +10,10 @@ class RenameFileChange implements Change {
   }
 
   public void applyTo(Snapshot snapshot) {
-    snapshot.doRenameFile(myName, myNewName);
+    snapshot.doRename(myName, myNewName);
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.doRenameFile(myNewName, myName);
+    snapshot.doRename(myNewName, myName);
   }
 }

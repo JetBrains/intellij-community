@@ -97,12 +97,30 @@ public class SnapshotDirectoriesTest extends TestCase {
   @Test
   public void testRenamingFilesUnderDirectory() {
     s.doCreateDirectory(fn("dir"));
-    s.doCreateFile(fn("dir/file"), "");
+    s.doCreateFile(fn("dir/file"), "content");
 
-    s.doRenameFile(fn("dir/file"), fn("new file"));
+    s.doRename(fn("dir/file"), fn("new file"));
 
     assertFalse(s.hasRevision(fn("dir/file")));
     assertTrue(s.hasRevision(fn("dir/new file")));
+
+    assertEquals("content", s.getRevision(fn("dir/new file")).getContent());
+  }
+
+  @Test
+  public void testRenamingSubdirectories() {
+    // todo 
+    //s.doCreateDirectory(fn("dir1"));
+    //s.doCreateDirectory(fn("dir1/dir2"));
+    //s.doCreateFile(fn("dir1/dir2/file"), null);
+    //
+    //s.doRename(fn("dir1/dir2"), fn("new dir"));
+    //
+    //assertFalse(s.hasRevision(fn("dir1/dir2")));
+    //assertFalse(s.hasRevision(fn("dir1/dir2/file")));
+    //
+    //assertTrue(s.hasRevision(fn("dir1/new dir")));
+    //assertTrue(s.hasRevision(fn("dir1/new dir/file")));
   }
 
   @Test
