@@ -41,6 +41,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("A", "Test", new int[]{0, 1});
   }
 
+  public void testIDEADEV11416() throws Exception {
+    doTest("Y", "X", new int[]{0});
+  }
+
   public void testTwoMethods() throws Exception {
     doTest("pack1.A", "pack1.C", new int[]{0, 1, 2});
   }
