@@ -1,9 +1,9 @@
 package com.intellij.localvcs;
 
 class CreateDirectoryChange implements Change {
-  private FileName myPath;
+  private Path myPath;
 
-  public CreateDirectoryChange(FileName path) {
+  public CreateDirectoryChange(Path path) {
     myPath = path;
   }
 

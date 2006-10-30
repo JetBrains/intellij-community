@@ -1,10 +1,10 @@
 package com.intellij.localvcs;
 
 class CreateFileChange implements Change {
-  private FileName myName;
+  private Path myName;
   private String myContent;
 
-  public CreateFileChange(FileName name, String content) {
+  public CreateFileChange(Path name, String content) {
     myName = name;
     myContent = content;
   }

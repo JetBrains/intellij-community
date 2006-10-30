@@ -6,7 +6,7 @@ import java.util.List;
 public class DirectoryRevision extends Revision {
   private List<Revision> myChildren = new ArrayList<Revision>();
 
-  public DirectoryRevision(Integer objectId, FileName name) {
+  public DirectoryRevision(Integer objectId, Path name) {
     super(objectId, name);
   }
 
@@ -33,7 +33,7 @@ public class DirectoryRevision extends Revision {
   }
 
   @Override
-  public Revision getRevision(FileName path) {
+  public Revision getRevision(Path path) {
     Revision result = super.getRevision(path);
     if (result != null) return result;
 
