@@ -18,7 +18,7 @@ public class LocalVcs {
   public List<Entry> getEntries(Path path) {
     List<Entry> result = new ArrayList<Entry>();
 
-    //todo clean up this mess
+    // todo clean up this mess
     if (!mySnapshot.hasEntry(path)) return result;
 
     Integer id = mySnapshot.getEntry(path).getObjectId();

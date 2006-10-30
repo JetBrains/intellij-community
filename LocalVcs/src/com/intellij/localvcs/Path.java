@@ -49,7 +49,6 @@ public class Path {
   }
 
   protected List<String> getParts() {
-    // todo try to make it private
     List<String> result = new ArrayList<String>();
 
     StringTokenizer t = new StringTokenizer(myPath, DELIM);
