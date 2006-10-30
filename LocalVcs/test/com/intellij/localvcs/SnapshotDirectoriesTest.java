@@ -3,6 +3,8 @@ package com.intellij.localvcs;
 import org.junit.Test;
 
 public class SnapshotDirectoriesTest extends TestCase {
+  // todo test boundary conditions
+
   @Test
   public void testCeatingDirectory() {
     Snapshot s = new Snapshot();
@@ -61,13 +63,13 @@ public class SnapshotDirectoriesTest extends TestCase {
     assertSame(dir2, dir1.getChildren().get(0));
   }
 
-  //@Test
-  //public void testCreatingAllParentDirectories() {
-  //  Snapshot s = new Snapshot();
-  //  s.doCreateFile(fn("dir1/dir2/file"), "");
-  //
-  //  assertTrue(s.hasRevision(fn("dir1")));
-  //  assertTrue(s.hasRevision(fn("dir1/dir2")));
-  //  assertTrue(s.hasRevision(fn("dir1/dir2/file")));
-  //}
+  @Test
+  public void testCreatingAllParentDirectories() {
+    Snapshot s = new Snapshot();
+    s.doCreateFile(fn("dir1/dir2/file"), "");
+
+    assertTrue(s.hasRevision(fn("dir1")));
+    assertTrue(s.hasRevision(fn("dir1/dir2")));
+    assertTrue(s.hasRevision(fn("dir1/dir2/file")));
+  }
 }
