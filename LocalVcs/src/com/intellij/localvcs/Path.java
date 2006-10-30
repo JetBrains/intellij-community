@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class Path {
+  private static final String DELIM = "/";
   private final String myPath;
 
   public Path(String path) {
@@ -14,6 +15,10 @@ public class Path {
   public String getValue() {
     // todo remove this method
     return myPath;
+  }
+
+  public String getName() {
+    return getParts().get(getParts().size() - 1);
   }
 
   public boolean hasParent() {
@@ -27,36 +32,32 @@ public class Path {
     if (parts.isEmpty()) return null;
 
     String result = "";
-
     for (String p : parts) {
-      result += p + "/";
+      result += p + DELIM;
     }
 
     return new Path(result.substring(0, result.length() - 1));
   }
 
-  public String getTail() {
-    return getParts().get(getParts().size() - 1);
-  }
-
-  public List<String> getParts() {
-    List<String> result = new ArrayList<String>();
-
-    StringTokenizer t = new StringTokenizer(myPath, "/");
-    while (t.hasMoreTokens()) {
-      result.add(t.nextToken());
-    }
-
-    return result;
-  }
-
   public Path appendedWith(String tail) {
-    return new Path(myPath + "/" + tail);
+    return new Path(myPath + DELIM + tail);
   }
 
   public Path renamedWith(String newName) {
     if (!hasParent()) return new Path(newName);
     return getParent().appendedWith(newName);
+  }
+
+  protected List<String> getParts() {
+    // todo try to make it private
+    List<String> result = new ArrayList<String>();
+
+    StringTokenizer t = new StringTokenizer(myPath, DELIM);
+    while (t.hasMoreTokens()) {
+      result.add(t.nextToken());
+    }
+
+    return result;
   }
 
   @Override

@@ -14,6 +14,6 @@ class RenameFileChange implements Change {
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.doRename(myPath.renamedWith(myNewName), myPath.getTail());
+    snapshot.doRename(myPath.renamedWith(myNewName), myPath.getName());
   }
 }

@@ -16,21 +16,9 @@ public class PathTest extends TestCase {
   }
 
   @Test
-  public void testTail() {
-    assertEquals("file", new Path("file").getTail());
-    assertEquals("file", new Path("dir/file").getTail());
-  }
-
-  @Test
-  public void testParts() {
-    Path p = new Path("dir1/dir2/file");
-    assertElements(new Object[]{"dir1", "dir2", "file"}, p.getParts());
-  }
-
-  @Test
-  public void testPartsOnOnePartFile() {
-    Path p = new Path("file");
-    assertElements(new Object[]{"file"}, p.getParts());
+  public void testName() {
+    assertEquals("file", new Path("file").getName());
+    assertEquals("file", new Path("dir/file").getName());
   }
 
   @Test
@@ -52,5 +40,17 @@ public class PathTest extends TestCase {
     Path p = new Path("dir/file1");
 
     assertEquals(new Path("dir/file2"), p.renamedWith("file2"));
+  }
+
+  @Test
+  public void testParts() {
+    Path p = new Path("dir1/dir2/file");
+    assertElements(new Object[]{"dir1", "dir2", "file"}, p.getParts());
+  }
+
+  @Test
+  public void testPartsOnOnePartFile() {
+    Path p = new Path("file");
+    assertElements(new Object[]{"file"}, p.getParts());
   }
 }
