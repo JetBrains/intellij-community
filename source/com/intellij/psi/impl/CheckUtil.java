@@ -36,23 +36,6 @@ public class CheckUtil {
     }
   }
 
-  public static void checkNotCompiled(PsiElement element) throws IncorrectOperationException{
-    if (element instanceof PsiCompiledElement){
-      PsiClass aClass;
-      if (element instanceof PsiFile){
-        aClass = ((PsiJavaFile)element).getClasses()[0];
-      }
-      else{
-        PsiElement parent = element;
-        while(!(parent instanceof PsiClass)){
-          parent = parent.getParent();
-        }
-        aClass = (PsiClass)parent;
-      }
-      throw new IncorrectOperationException("Cannot modify a compiled class " + aClass.getQualifiedName() + ".");
-    }
-  }
-
   public static void checkDelete(VirtualFile file) throws IncorrectOperationException{
     if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
     if (!file.isWritable()){
