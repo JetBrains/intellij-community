@@ -54,7 +54,7 @@ public class LocalVcsFilesTest extends LocalVcsTestCase {
   public void testClearingChangesOnCommit() {
     myVcs.createFile(fn("file"), "content");
     myVcs.changeFile(fn("file"), "new content");
-    myVcs.renameFile(fn("file"), fn("new file"));
+    myVcs.renameFile(fn("file"), "new file");
     myVcs.deleteFile(fn("new file"));
 
     assertFalse(myVcs.isClean());
@@ -131,7 +131,7 @@ public class LocalVcsFilesTest extends LocalVcsTestCase {
     myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.renameFile(fn("file"), fn("new file"));
+    myVcs.renameFile(fn("file"), "new file");
     myVcs.commit();
 
     assertFalse(myVcs.hasRevision(fn("file")));
@@ -145,17 +145,17 @@ public class LocalVcsFilesTest extends LocalVcsTestCase {
     myVcs.createFile(fn("file"), "content");
     myVcs.commit();
 
-    myVcs.renameFile(fn("file"), fn("new file"));
+    myVcs.renameFile(fn("file"), "new file");
     myVcs.commit();
 
     List<Revision> revs = myVcs.getRevisions(fn("new file"));
 
     assertEquals(2, revs.size());
 
-    assertEquals(fn("new file"), revs.get(0).getName());
+    assertEquals(fn("new file"), revs.get(0).getPath());
     assertEquals("content", revs.get(0).getContent());
 
-    assertEquals(fn("file"), revs.get(1).getName());
+    assertEquals(fn("file"), revs.get(1).getPath());
     assertEquals("content", revs.get(1).getContent());
   }
 
@@ -233,7 +233,7 @@ public class LocalVcsFilesTest extends LocalVcsTestCase {
     myVcs.createFile(fn("file1"), "content1");
     myVcs.commit();
 
-    myVcs.renameFile(fn("file1"), fn("file2"));
+    myVcs.renameFile(fn("file1"), "file2");
     myVcs.createFile(fn("file1"), "content2");
     myVcs.commit();
 

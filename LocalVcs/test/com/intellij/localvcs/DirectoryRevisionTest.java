@@ -31,27 +31,26 @@ public class DirectoryRevisionTest extends TestCase {
 
   @Test
   public void testPath() {
-    Revision dir = new DirectoryRevision(null, fn("dir"));
-    Revision file = new FileRevision(null, fn("file"), "");
+    Revision dir = new DirectoryRevision(null, "dir");
+    Revision file = new FileRevision(null, "file", null);
 
     dir.addChild(file);
 
     assertEquals(fn("dir/file"), file.getPath());
-    assertEquals(fn("file"), file.getName());
   }
 
   @Test
   public void testPathWithoutParent() {
-    assertEquals(fn("dir"), new DirectoryRevision(null, fn("dir")).getPath());
-    assertEquals(fn("file"), new FileRevision(null, fn("file"), "").getPath());
+    assertEquals(fn("dir"), new DirectoryRevision(null, "dir").getPath());
+    assertEquals(fn("file"), new FileRevision(null, "file", null).getPath());
   }
 
   @Test
   public void testFindingRevisionInTree() {
-    Revision root = new DirectoryRevision(null, fn("root"));
-    Revision dir = new DirectoryRevision(null, fn("dir"));
-    Revision file1 = new FileRevision(null, fn("file1"), "");
-    Revision file2 = new FileRevision(null, fn("file2"), "");
+    Revision root = new DirectoryRevision(null, "root");
+    Revision dir = new DirectoryRevision(null, "dir");
+    Revision file1 = new FileRevision(null, "file1", null);
+    Revision file2 = new FileRevision(null, "file2", null);
 
     root.addChild(dir);
     root.addChild(file1);
@@ -65,9 +64,9 @@ public class DirectoryRevisionTest extends TestCase {
 
   @Test
   public void testDoesNotFindUnknownRevision() {
-    Revision root = new DirectoryRevision(null, fn("root"));
-    Revision dir = new DirectoryRevision(null, fn("dir"));
-    Revision file = new FileRevision(null, fn("file"), "");
+    Revision root = new DirectoryRevision(null, "root");
+    Revision dir = new DirectoryRevision(null, "dir");
+    Revision file = new FileRevision(null, "file", null);
 
     root.addChild(dir);
     dir.addChild(file);

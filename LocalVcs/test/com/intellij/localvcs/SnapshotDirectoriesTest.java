@@ -99,7 +99,7 @@ public class SnapshotDirectoriesTest extends TestCase {
     s.doCreateDirectory(fn("dir"));
     s.doCreateFile(fn("dir/file"), "content");
 
-    s.doRename(fn("dir/file"), fn("new file"));
+    s.doRename(fn("dir/file"), "new file");
 
     assertFalse(s.hasRevision(fn("dir/file")));
     assertTrue(s.hasRevision(fn("dir/new file")));

@@ -6,9 +6,9 @@ public abstract class Revision {
   // todo rename to Entry
   private Integer myObjectId;
   private Revision myParent;
-  private Path myName;
+  private String myName;
 
-  public Revision(Integer objectId, Path name) {
+  public Revision(Integer objectId, String name) {
     // todo replace Path name parameter with String name 
     myObjectId = objectId;
     myName = name;
@@ -18,12 +18,8 @@ public abstract class Revision {
     return myObjectId;
   }
 
-  public Path getName() {
-    return myName;
-  }
-
   public Path getPath() {
-    if (!hasParent()) return myName;
+    if (!hasParent()) return new Path(myName);
     return myParent.getPath().appendedWith(myName);
   }
 

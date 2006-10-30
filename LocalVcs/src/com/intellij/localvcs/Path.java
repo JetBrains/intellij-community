@@ -5,10 +5,15 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class Path {
-  private final String myName;
+  private final String myPath;
 
-  public Path(String name) {
-    myName = name;
+  public Path(String path) {
+    myPath = path;
+  }
+
+  public String getValue() {
+    // todo remove this method
+    return myPath;
   }
 
   public boolean hasParent() {
@@ -30,14 +35,14 @@ public class Path {
     return new Path(result.substring(0, result.length() - 1));
   }
 
-  public Path getTail() {
-    return new Path(getParts().get(getParts().size() - 1));
+  public String getTail() {
+    return getParts().get(getParts().size() - 1);
   }
 
   public List<String> getParts() {
     List<String> result = new ArrayList<String>();
 
-    StringTokenizer t = new StringTokenizer(myName, "/");
+    StringTokenizer t = new StringTokenizer(myPath, "/");
     while (t.hasMoreTokens()) {
       result.add(t.nextToken());
     }
@@ -45,24 +50,24 @@ public class Path {
     return result;
   }
 
-  public Path appendedWith(Path tail) {
-    return new Path(myName + "/" + tail.myName);
+  public Path appendedWith(String tail) {
+    return new Path(myPath + "/" + tail);
   }
 
-  public Path renamedWith(Path newName) {
-    if (!hasParent()) return newName;
+  public Path renamedWith(String newName) {
+    if (!hasParent()) return new Path(newName);
     return getParent().appendedWith(newName);
   }
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "(" + myName + ")";
+    return getClass().getSimpleName() + "(" + myPath + ")";
   }
 
   @Override
   public boolean equals(Object o) {
     if (o == null || o.getClass() != getClass()) return false;
-    return myName.equals(((Path)o).myName);
+    return myPath.equals(((Path)o).myPath);
   }
 
   @Override

@@ -1,19 +1,19 @@
 package com.intellij.localvcs;
 
 class RenameFileChange implements Change {
-  private Path myName;
-  private Path myNewName;
+  private Path myPath;
+  private String myNewName;
 
-  public RenameFileChange(Path name, Path newName) {
-    myName = name;
+  public RenameFileChange(Path path, String newName) {
+    myPath = path;
     myNewName = newName;
   }
 
   public void applyTo(Snapshot snapshot) {
-    snapshot.doRename(myName, myNewName);
+    snapshot.doRename(myPath, myNewName);
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.doRename(myNewName, myName);
+    snapshot.doRename(myPath.renamedWith(myNewName), myPath.getTail());
   }
 }

@@ -17,8 +17,8 @@ public class PathTest extends TestCase {
 
   @Test
   public void testTail() {
-    assertEquals(fn("file"), new Path("file").getTail());
-    assertEquals(fn("file"), new Path("dir/file").getTail());
+    assertEquals("file", new Path("file").getTail());
+    assertEquals("file", new Path("dir/file").getTail());
   }
 
   @Test
@@ -37,20 +37,20 @@ public class PathTest extends TestCase {
   public void testAppending() {
     Path p1 = new Path("file1");
 
-    assertEquals(new Path("file1/file2"), p1.appendedWith(new Path("file2")));
+    assertEquals(new Path("file1/file2"), p1.appendedWith("file2"));
   }
 
   @Test
   public void testRenaming() {
     Path p = new Path("file1");
 
-    assertEquals(new Path("file2"), p.renamedWith(new Path("file2")));
+    assertEquals(new Path("file2"), p.renamedWith("file2"));
   }
 
   @Test
   public void testRenamingWithParent() {
     Path p = new Path("dir/file1");
 
-    assertEquals(new Path("dir/file2"), p.renamedWith(new Path("file2")));
+    assertEquals(new Path("dir/file2"), p.renamedWith("file2"));
   }
 }

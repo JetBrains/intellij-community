@@ -45,7 +45,7 @@ public class LocalVcs {
     myPendingChanges.add(new ChangeContentChange(path, content));
   }
 
-  public void renameFile(Path path, Path newName) {
+  public void renameFile(Path path, String newName) {
     myPendingChanges.add(new RenameFileChange(path, newName));
   }
 
