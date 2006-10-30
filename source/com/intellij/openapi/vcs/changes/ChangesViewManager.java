@@ -18,7 +18,10 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ModuleListener;
+import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -66,6 +69,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
 
   private ChangeListListener myListener = new MyChangeListListener();
   private VcsListener myVcsListener = new MyVcsListener();
+  private ModuleListener myModuleListener = new MyModuleListener();
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   private ToolWindow myToolWindow;
@@ -93,6 +97,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
           myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowChanges.png"));
           updateToolWindowAvailability();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+          ModuleManager.getInstance(myProject).addModuleListener(myModuleListener);
           SelectInManager.getInstance(myProject).addTarget(new SelectInChangesViewTarget(myProject));
         }
       }
@@ -107,6 +112,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   public void projectClosed() {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
     ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
+    ModuleManager.getInstance(myProject).removeModuleListener(myModuleListener);
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
     myVcsChangeAlarm.cancelAllRequests();
@@ -677,6 +683,16 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
           updateToolWindowAvailability();
         }
       }, 100, ModalityState.NON_MODAL);
+    }
+  }
+
+  private class MyModuleListener extends ModuleAdapter {
+    public void moduleAdded(Project project, Module module) {
+      updateToolWindowAvailability();
+    }
+
+    public void moduleRemoved(Project project, Module module) {
+      updateToolWindowAvailability();
     }
   }
 }
