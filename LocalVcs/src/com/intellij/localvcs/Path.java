@@ -12,11 +12,6 @@ public class Path {
     myPath = path;
   }
 
-  public String getValue() {
-    // todo remove this method
-    return myPath;
-  }
-
   public String getName() {
     return getParts().get(getParts().size() - 1);
   }

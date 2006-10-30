@@ -102,6 +102,11 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
     assertFalse(s.hasEntry(p("dir/file")));
   }
 
+  @Test(expected = LocalVcsException.class)
+  public void testDeletingUnknownDirectoryThrowsException() {
+    s.doDelete(p("unknown dir"));
+  }
+
   @Test
   public void testRenamingFilesUnderDirectory() {
     s.doCreateDirectory(p("dir"));
@@ -117,18 +122,17 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
 
   @Test
   public void testRenamingSubdirectories() {
-    // todo 
-    //s.doCreateDirectory(fn("dir1"));
-    //s.doCreateDirectory(fn("dir1/dir2"));
-    //s.doCreateFile(fn("dir1/dir2/file"), null);
-    //
-    //s.doRename(fn("dir1/dir2"), fn("new dir"));
-    //
-    //assertFalse(s.hasRevision(fn("dir1/dir2")));
-    //assertFalse(s.hasRevision(fn("dir1/dir2/file")));
-    //
-    //assertTrue(s.hasRevision(fn("dir1/new dir")));
-    //assertTrue(s.hasRevision(fn("dir1/new dir/file")));
+    s.doCreateDirectory(p("dir1"));
+    s.doCreateDirectory(p("dir1/dir2"));
+    s.doCreateFile(p("dir1/dir2/file"), null);
+
+    s.doRename(p("dir1/dir2"), "new dir");
+
+    assertFalse(s.hasEntry(p("dir1/dir2")));
+    assertFalse(s.hasEntry(p("dir1/dir2/file")));
+
+    assertTrue(s.hasEntry(p("dir1/new dir")));
+    assertTrue(s.hasEntry(p("dir1/new dir/file")));
   }
 
   @Test
