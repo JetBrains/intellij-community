@@ -511,6 +511,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myAutoScrollFromSourceHandler.dispose();
   }
 
+  public boolean isDisposed() {
+    return myAbstractTreeBuilder == null;
+  }
+
   public void centerSelectedRow() {
     TreePath path = getTree().getSelectionPath();
     if (path == null)
