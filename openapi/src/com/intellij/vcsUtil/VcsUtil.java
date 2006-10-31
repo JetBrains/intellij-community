@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LocalVcsBundle;
 import com.intellij.openapi.localVcs.LvcsObject;
@@ -346,5 +347,31 @@ public class VcsUtil
   public static boolean isChangeForNew( Change change )
   {
     return (change.getBeforeRevision() == null) && (change.getAfterRevision() != null);
+  }
+
+  /**
+   * Collects all files which are located in the passed directory.
+   *
+   * @throws IllegalArgumentException if <code>dir</code> isn't a directory.
+   */
+  public static void collectFiles( VirtualFile dir, List files, boolean recursive, boolean addDirectories)
+  {
+    if (!dir.isDirectory()) {
+      throw new IllegalArgumentException(LocalVcsBundle.message("exception.text.file.should.be.directory", dir.getPresentableUrl()));
+    }
+
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    VirtualFile[] children = dir.getChildren();
+    for (VirtualFile child : children) {
+      if (!child.isDirectory() && (fileTypeManager == null || fileTypeManager.getFileTypeByFile(child) != StdFileTypes.UNKNOWN)) {
+        files.add(child);
+      }
+      else if (recursive && child.isDirectory()) {
+        if (addDirectories) {
+          files.add(child);
+        }
+        collectFiles(child, files, recursive, false);
+      }
+    }
   }
 }
