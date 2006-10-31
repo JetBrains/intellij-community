@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.problems.WolfTheProblemSolver;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   private ChangeListListener myListener = new MyChangeListListener();
   private VcsListener myVcsListener = new MyVcsListener();
   private ModuleListener myModuleListener = new MyModuleListener();
+  private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   private ToolWindow myToolWindow;
@@ -98,6 +100,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
           updateToolWindowAvailability();
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
           ModuleManager.getInstance(myProject).addModuleListener(myModuleListener);
+          WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
           SelectInManager.getInstance(myProject).addTarget(new SelectInChangesViewTarget(myProject));
         }
       }
@@ -113,6 +116,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
     ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
     ModuleManager.getInstance(myProject).removeModuleListener(myModuleListener);
+    WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
     myVcsChangeAlarm.cancelAllRequests();
@@ -694,5 +698,36 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     public void moduleRemoved(Project project, Module module) {
       updateToolWindowAvailability();
     }
+  }
+
+  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
+    @Override
+    public void problemsAppeared(VirtualFile file) {
+      refreshChangesViewNode(file);
+    }
+
+    @Override
+    public void problemsDisappeared(VirtualFile file) {
+      refreshChangesViewNode(file);
+    }
+
+    private void refreshChangesViewNode(final VirtualFile file) {
+      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+      Object userObject;
+      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+      if (changeListManager.isUnversioned(file)) {
+        userObject = file;
+      }
+      else {
+        userObject = changeListManager.getChange(file);
+      }
+      if (userObject != null) {
+        final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
+        if (node != null) {
+          myView.getModel().nodeChanged(node);
+        }
+      }
+    }
+
   }
 }

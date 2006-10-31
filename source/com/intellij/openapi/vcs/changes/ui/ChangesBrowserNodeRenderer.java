@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
+import com.intellij.problems.WolfTheProblemSolver;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,13 +21,13 @@ import java.io.File;
  */
 class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
-  private final Project myProject;
   private ChangeListDecorator[] myDecorators;
+  private WolfTheProblemSolver myProblemSolver;
 
   public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten) {
     myShowFlatten = showFlatten;
-    myProject = project;
-    myDecorators = myProject.getComponents(ChangeListDecorator.class);
+    myDecorators = project.getComponents(ChangeListDecorator.class);
+    myProblemSolver = WolfTheProblemSolver.getInstance(project);
   }
 
   public void customizeCellRenderer(JTree tree,
@@ -60,7 +61,9 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     else if (object instanceof Change) {
       final Change change = (Change)object;
       final FilePath filePath = ChangesUtil.getFilePath(change);
-      append(filePath.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
+      final String fileName = filePath.getName();
+      VirtualFile vFile = filePath.getVirtualFile();
+      appendFileName(vFile, fileName, getColor(change));
       if (myShowFlatten) {
         append(" (", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         final File parentFile = filePath.getIOFile().getParentFile();
@@ -82,7 +85,7 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
     else if (object instanceof VirtualFile) {
       final VirtualFile file = (VirtualFile)object;
-      append(file.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.COLOR_UNKNOWN));
+      appendFileName(file, file.getName(), FileStatus.COLOR_UNKNOWN);
       if (myShowFlatten && file.isValid()) {
         final VirtualFile parentFile = file.getParent();
         assert parentFile != null;
@@ -132,6 +135,16 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
       append(object.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       appendCount(node);
     }
+  }
+
+  private void appendFileName(final VirtualFile vFile, final String fileName, final Color color) {
+    int style = SimpleTextAttributes.STYLE_PLAIN;
+    Color underlineColor = null;
+    if (vFile != null && !vFile.isDirectory() && myProblemSolver.isProblemFile(vFile)) {
+      underlineColor = Color.red;
+      style = SimpleTextAttributes.STYLE_WAVED;
+    }
+    append(fileName, new SimpleTextAttributes(style, color, underlineColor));
   }
 
   private void appendCount(final ChangesBrowserNode node) {
