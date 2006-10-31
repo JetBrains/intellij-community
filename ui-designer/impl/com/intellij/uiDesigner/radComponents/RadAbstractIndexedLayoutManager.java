@@ -34,4 +34,21 @@ public abstract class RadAbstractIndexedLayoutManager extends RadLayoutManager {
                                    final RadComponent component) {
     container.addComponent(component);
   }
+
+  @Override
+  public boolean canMoveComponent(RadComponent c, int rowDelta, int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+    if (colDelta == 1 || colDelta == -1) {
+      int newIndex = c.getParent().indexOfComponent(c) + colDelta;
+      return newIndex >= 0 && newIndex < c.getParent().getComponentCount();
+    }
+    return false;
+  }
+
+  @Override
+  public void moveComponent(RadComponent c, int rowDelta, int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+    final RadContainer container = c.getParent();
+    int newIndex = container.indexOfComponent(c) + colDelta;
+    container.removeComponent(c);
+    container.addComponent(c, newIndex);
+  }
 }

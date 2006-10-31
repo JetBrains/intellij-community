@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * @author yole
@@ -30,8 +32,18 @@ public class MoveComponentAction extends AbstractGuiEditorAction {
   }
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
+    if (myColumnDelta != 0) {
+      // sort the selection so that move in indexed layout will handle components in correct order
+      Collections.sort(selection, new Comparator<RadComponent>() {
+        public int compare(final RadComponent o1, final RadComponent o2) {
+          int index1 = o1.getParent().indexOfComponent(o1);
+          int index2 = o2.getParent().indexOfComponent(o2);
+          return (index2 - index1) * myColumnDelta;
+        }
+      });
+    }
     for(RadComponent c: selection) {
-      c.getParent().getLayoutManager().moveComponent(c, myRowDelta, myColumnDelta, myRowSpanDelta, myColSpanDelta);
+      c.getParent().getLayoutManager().moveComponent(c, myRowDelta, myColumnDelta, 0, 0);
     }
   }
 
