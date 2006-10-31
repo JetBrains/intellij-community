@@ -4,12 +4,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -76,7 +76,7 @@ public class GroupTreeNode extends AbstractTreeNode {
     return mySupportsDeletion;
   }
 
-  public void addFilePath(String filePath) {
+  public void addFilePath(@NotNull String filePath) {
     myFilePaths.add(filePath);
   }
 
@@ -112,8 +112,8 @@ public class GroupTreeNode extends AbstractTreeNode {
 
   private void buildPackages() {
     ArrayList<File> files = new ArrayList<File>();
-    for (Iterator each = myFilePaths.iterator(); each.hasNext();) {
-      files.add(new File((String)each.next()));
+    for (final String myFilePath : myFilePaths) {
+      files.add(new File(myFilePath));
     }
     GroupByPackages groupByPackages = new GroupByPackages(files);
 
@@ -137,13 +137,12 @@ public class GroupTreeNode extends AbstractTreeNode {
       }
     });
 
-    for (Iterator iterator = roots.iterator(); iterator.hasNext();) {
-      File file = (File)iterator.next();
-      FileOrDirectoryTreeNode child = files.contains(file) ?
-                                      new FileTreeNode(file.getAbsolutePath(), myInvalidAttributes, myProject, parentPath)
-                                      : (FileOrDirectoryTreeNode)new DirectoryTreeNode(file.getAbsolutePath(), myProject, parentPath);
+    for (final File root : roots) {
+      FileOrDirectoryTreeNode child = files.contains(root)
+                                      ? new FileTreeNode(root.getAbsolutePath(), myInvalidAttributes, myProject, parentPath)
+                                      : new DirectoryTreeNode(root.getAbsolutePath(), myProject, parentPath);
       parentNode.add(child);
-      addFiles(child, groupByPackages.getChildren(file), files, groupByPackages, child.getFilePath());
+      addFiles(child, groupByPackages.getChildren(root), files, groupByPackages, child.getFilePath());
     }
   }
 
@@ -154,8 +153,7 @@ public class GroupTreeNode extends AbstractTreeNode {
       }
     });
 
-    for (Iterator each = myFilePaths.iterator(); each.hasNext();) {
-      String filePath = (String)each.next();
+    for (final String filePath : myFilePaths) {
       add(new FileTreeNode(filePath, myInvalidAttributes, myProject, null));
     }
   }
