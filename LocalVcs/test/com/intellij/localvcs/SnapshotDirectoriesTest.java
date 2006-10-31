@@ -188,7 +188,7 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
   @Test
   public void testApplyingAndRevertingFileCreationUnderDirectory() {
     s = s.apply(cs(new CreateDirectoryChange(p("dir"))));
-    s = s.apply(cs(new CreateFileChange(p("dir/file"), "")));
+    s = s.apply(cs(new CreateFileChange(p("dir/file"), null)));
 
     assertTrue(s.hasEntry(p("dir/file")));
 
