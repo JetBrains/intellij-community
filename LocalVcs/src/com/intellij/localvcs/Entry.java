@@ -57,7 +57,11 @@ public abstract class Entry {
 
   public abstract Entry copy();
 
-  public Entry renamed(String newName) { return copy(); }
+  public Entry renamed(String newName) {
+    Entry result = copy();
+    result.myName = newName;
+    return result;
+  }
 
   @Override
   public String toString() {

@@ -145,29 +145,26 @@ public class DirectoryEntryTest extends TestCase {
     assertSame(child2, child3.getParent());
   }
 
-  //@Test
-  //public void testRenaming() {
-  //  DirectoryEntry root = new DirectoryEntry(null, "root");
-  //  DirectoryEntry dir = new DirectoryEntry(33, "dir");
-  //  FileEntry child = new FileEntry(44, "child", null);
-  //
-  //  dir.setParent(root);
-  //  dir.addChild(child);
-  //
-  //  Entry renamed = dir.renamed("new dir");
-  //
-  //  assertEquals(p("new dir"), renamed.getPath());
-  //  assertNull(renamed.getParent());
-  //
-  //  List<Entry> newChildren = renamed.getChildren();
-  //  assertEquals(1, renamed.getChildren().size());
-  //
-  //  assertEquals(44, newChildren.get(0).getObjectId());
-  //
-  //  assertEquals(p("root/dir/child"), child.getPath());
-  //  assertEquals(p("root/new_dir/child"), newChildren.get(0).getPath());
-  //
-  //  assertSame(dir, child.getParent());
-  //  assertSame(renamed, newChildren.get(0).getParent());
-  //}
+  @Test
+  public void testRenaming() {
+    DirectoryEntry root = new DirectoryEntry(null, "root");
+    DirectoryEntry dir = new DirectoryEntry(33, "dir");
+    FileEntry child = new FileEntry(44, "child", null);
+
+    root.addChild(root);
+    dir.addChild(child);
+
+    Entry renamed = dir.renamed("new dir");
+
+    assertNull(renamed.getParent());
+    assertEquals(p("new dir"), renamed.getPath());
+
+    List<Entry> newChildren = renamed.getChildren();
+    assertEquals(1, renamed.getChildren().size());
+
+    assertEquals(44, newChildren.get(0).getObjectId());
+
+    assertSame(dir, child.getParent());
+    assertSame(renamed, newChildren.get(0).getParent());
+  }
 }

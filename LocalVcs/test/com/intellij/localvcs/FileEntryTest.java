@@ -48,7 +48,8 @@ public class FileEntryTest extends TestCase {
   public void testRenaming() {
     DirectoryEntry dir = new DirectoryEntry(null, "dir");
     FileEntry file = new FileEntry(33, "name", "content");
-    file.setParent(dir);
+
+    dir.addChild(file);
 
     Entry renamed = file.renamed("new name");
 
