@@ -199,25 +199,41 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
 
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
-      feedbackLayer.putFeedback(myContainer.getDelegee(), getFeedbackRect(myQuadrant),
+      Dimension initialSize = dragObject.getInitialSize(myContainer);
+      feedbackLayer.putFeedback(myContainer.getDelegee(), getFeedbackRect(myQuadrant, initialSize),
                                 myContainer.getDisplayName() + " (" + myQuadrant.toLowerCase() + ")");
     }
 
-    private Rectangle getFeedbackRect(final String quadrant) {
+    private Rectangle getFeedbackRect(final String quadrant, final Dimension initialSize) {
       Dimension size = myContainer.getDelegee().getSize();
+      int initialWidth = (initialSize.width > 0 && initialSize.width < size.width) ? initialSize.width : size.width/3;
+      int initialHeight = (initialSize.height > 0 && initialSize.height < size.height) ? initialSize.height: size.height/3;
       if (quadrant.equals(BorderLayout.WEST)) {
-        return new Rectangle(0, 0, size.width/3, size.height);
+        int deltaN = getHeightAtConstraint(BorderLayout.NORTH);
+        int deltaS = getHeightAtConstraint(BorderLayout.SOUTH);
+        return new Rectangle(0, deltaN, initialWidth, size.height - deltaN - deltaS);
       }
       if (quadrant.equals(BorderLayout.NORTH)) {
-        return new Rectangle(0, 0, size.width, size.height/3);
+        return new Rectangle(0, 0, size.width, initialHeight);
       }
       if (quadrant.equals(BorderLayout.EAST)) {
-        return new Rectangle(size.width*2/3, 0, size.width/3, size.height);
+        int deltaN = getHeightAtConstraint(BorderLayout.NORTH);
+        int deltaS = getHeightAtConstraint(BorderLayout.SOUTH);
+        return new Rectangle(size.width - initialWidth, deltaN, initialWidth, size.height - deltaN - deltaS);
       }
       if (quadrant.equals(BorderLayout.SOUTH)) {
-        return new Rectangle(0, size.height*2/3, size.width, size.height/3);
+        return new Rectangle(0, size.height - initialHeight, size.width, initialHeight);
       }
       return new Rectangle(size.width/3, size.height/3, size.width/3, size.height/3);
+    }
+
+    private int getHeightAtConstraint(final String constraint) {
+      BorderLayout layout = (BorderLayout) myContainer.getLayout();
+      Component c = layout.getLayoutComponent(myContainer.getDelegee(), constraint);
+      if (c == null) {
+        return 0;
+      }
+      return c.getBounds().height;
     }
 
     public void processDrop(GuiEditor editor,
