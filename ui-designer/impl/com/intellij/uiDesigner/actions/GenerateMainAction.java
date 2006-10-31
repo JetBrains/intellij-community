@@ -6,10 +6,7 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.execution.application.ApplicationConfigurationType;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,9 +34,9 @@ public class GenerateMainAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.GenerateMainAction");
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     assert project != null;
-    final Editor editor = (Editor) e.getDataContext().getData(DataConstants.EDITOR);
+    final Editor editor = e.getData(DataKeys.EDITOR);
     assert editor != null;
     final int offset = editor.getCaretModel().getOffset();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -106,13 +103,13 @@ public class GenerateMainAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(isActionEnabled(e.getDataContext()));
+    e.getPresentation().setVisible(isActionEnabled(e));
   }
 
-  private static boolean isActionEnabled(final DataContext dataContext) {
-    Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+  private static boolean isActionEnabled(final AnActionEvent e) {
+    Project project = e.getData(DataKeys.PROJECT);
     if (project == null) return false;
-    Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
+    Editor editor = e.getData(DataKeys.EDITOR);
     if (editor == null) return false;
     int offset = editor.getCaretModel().getOffset();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

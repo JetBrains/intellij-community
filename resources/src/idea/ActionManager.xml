@@ -719,14 +719,6 @@
       <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"
               icon="/actions/refresh.png"/>
       <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>
-      <action id="GuiDesigner.LayOutHorizontally" class="com.intellij.uiDesigner.actions.LayOutHorizontallyAction"
-              icon="/com/intellij/uiDesigner/icons/horizontal.png"/>
-      <action id="GuiDesigner.LayOutVertically" class="com.intellij.uiDesigner.actions.LayOutVerticallyAction"
-              icon="/com/intellij/uiDesigner/icons/vertical.png"/>
-      <action id="GuiDesigner.LayOutInGrid" class="com.intellij.uiDesigner.actions.LayOutInAGridAction"
-              icon="/com/intellij/uiDesigner/icons/grid.png"/>
-      <action id="GuiDesigner.BreakLayout" class="com.intellij.uiDesigner.actions.BreakLayoutAction"
-              icon="/com/intellij/uiDesigner/icons/break.png"/>
       <separator/>
       <reference ref="HelpTopics"/>
       <separator/>
@@ -1386,10 +1378,6 @@
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
       <separator/>
-      <reference ref="GuiDesigner.LayOutHorizontally"/>
-      <reference ref="GuiDesigner.LayOutVertically"/>
-      <reference ref="GuiDesigner.LayOutInGrid"/>
-      <reference ref="GuiDesigner.BreakLayout"/>
       <action id="GuiDesigner.Pack" class="com.intellij.uiDesigner.actions.PackAction"/>
       <action id="GuiDesigner.ShowGrid" class="com.intellij.uiDesigner.actions.ShowGridAction"/>
       <action id="GuiDesigner.ShowComponentTags" class="com.intellij.uiDesigner.actions.ShowComponentTagsAction"/>

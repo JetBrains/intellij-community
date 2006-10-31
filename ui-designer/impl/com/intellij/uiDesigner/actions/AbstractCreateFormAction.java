@@ -7,10 +7,8 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -35,11 +33,10 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
 
   public void update(final AnActionEvent e) {
     super.update(e);
-    final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     final Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
-      final IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
+      final IdeView view = e.getData(DataKeys.IDE_VIEW);
       if (view != null) {
         final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         final PsiDirectory[] dirs = view.getDirectories();
@@ -55,8 +52,8 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
     }
   }
 
-  protected String createFormBody(Project project, @Nullable final String fullQualifiedClassName,
-                                  @NonNls final String formName, final String layoutManager) throws IncorrectOperationException {
+  protected String createFormBody(@Nullable final String fullQualifiedClassName, @NonNls final String formName,
+                                  final String layoutManager) throws IncorrectOperationException {
 
     final InputStream inputStream = getClass().getResourceAsStream(formName);
 

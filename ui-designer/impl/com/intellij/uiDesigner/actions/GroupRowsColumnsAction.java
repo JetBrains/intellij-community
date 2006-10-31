@@ -22,7 +22,7 @@ public class GroupRowsColumnsAction extends RowColumnAction {
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
+    CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
     if (selection != null) {
       e.getPresentation().setEnabled(selection.getContainer() != null &&
         selection.getContainer().getLayout() instanceof FormLayout &&

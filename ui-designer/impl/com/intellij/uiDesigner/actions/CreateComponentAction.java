@@ -37,7 +37,7 @@ public class CreateComponentAction extends AbstractGuiEditorAction {
 
     PaletteListPopupStep step = new PaletteListPopupStep(editor, myLastCreatedComponent, processor,
                                                          UIDesignerBundle.message("create.component.title"));
-    final ListPopup listPopup = JBPopupFactory.getInstance().createWizardStep(step);
+    final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
 
     if (selection.size() > 0) {
       FormEditingUtil.showPopupUnderComponent(listPopup, selection.get(0));

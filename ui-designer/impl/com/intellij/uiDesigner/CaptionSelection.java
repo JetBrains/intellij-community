@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.openapi.actionSystem.DataKey;
 
 /**
  * @author yole
@@ -14,6 +15,8 @@ public class CaptionSelection {
   private boolean myIsRow;
   private int[] mySelection;
   private int myFocusedIndex;
+
+  public static final DataKey<CaptionSelection> DATA_KEY = DataKey.create(CaptionSelection.class.getName());
 
   public CaptionSelection(final RadContainer container, final boolean isRow, final int[] selection, final int focusedIndex) {
     myContainer = container;
