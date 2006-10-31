@@ -43,7 +43,6 @@ public abstract class AbstractVcs {
 
   protected final Project myProject;
   private boolean myIsStarted = false;
-  private VcsShowSettingOption myCheckinOption;
   private VcsShowSettingOption myUpdateOption;
   private VcsShowSettingOption myStatusOption;
 
@@ -179,10 +178,6 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public VcsShowSettingOption getCheckinOptions() {
-    return myCheckinOption;
-  }
-
   public VcsShowSettingOption getUpdateOptions() {
     return myUpdateOption;
   }
@@ -194,10 +189,6 @@ public abstract class AbstractVcs {
 
   public void loadSettings() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-
-    if (getCheckinEnvironment() != null) {
-      myCheckinOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKIN, this);
-    }
 
     if (getUpdateEnvironment() != null) {
       myUpdateOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.UPDATE, this);

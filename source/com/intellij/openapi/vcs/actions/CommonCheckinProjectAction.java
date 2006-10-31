@@ -30,10 +30,6 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
     return VcsBundle.message("action.name.commit.project");
   }
 
-  protected boolean shouldShowDialog(VcsContext context) {
-    return true;
-  }
-
   protected boolean filterRootsBeforeAction() {
     return false;
   }

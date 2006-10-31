@@ -45,7 +45,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,11 +166,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       }
     }
 
-    String actionName = getActionName(vcsContext);
-    if (shouldShowDialog(vcsContext) || OptionsDialog.shiftIsPressed(vcsContext.getModifiers())) {
-      actionName += "...";
-    }
-
+    String actionName = getActionName(vcsContext) + "...";
     presentation.setText(actionName);
 
     presentation.setEnabled(!ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning());
@@ -206,8 +201,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   protected boolean forceSyncUpdate(final AnActionEvent e) {
     return true;
   }
-
-  protected abstract boolean shouldShowDialog(VcsContext context);
 
   protected abstract boolean filterRootsBeforeAction();
 

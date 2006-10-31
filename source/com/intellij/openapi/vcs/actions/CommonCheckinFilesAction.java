@@ -38,12 +38,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
@@ -120,18 +118,6 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
 
   protected FilePath[] getRoots(VcsContext context) {
     return context.getSelectedFilePaths();
-  }
-
-  protected boolean shouldShowDialog(VcsContext context) {
-    Project project = context.getProject();
-    FilePath[] roots = filterDescindingFiles(getRoots(context), project);
-    int ciType = getCheckinType(roots);
-    if (ciType == DIRECTORIES) {
-      return true;
-    }
-    else {
-      return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.CHECKIN).getValue();
-    }
   }
 
   protected boolean filterRootsBeforeAction() {

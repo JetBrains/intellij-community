@@ -41,7 +41,6 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public boolean PERFORM_COMMIT_IN_BACKGROUND = false;
 
   public enum StandardOption {
-    CHECKIN(VcsBundle.message("vcs.command.name.checkin")),
     ADD(VcsBundle.message("vcs.command.name.add")),
     REMOVE(VcsBundle.message("vcs.command.name.remove")),
     EDIT(VcsBundle.message("vcs.command.name.edit")),

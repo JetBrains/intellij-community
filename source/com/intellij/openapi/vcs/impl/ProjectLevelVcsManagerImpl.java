@@ -127,7 +127,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public void initComponent() {
     createSettingFor(VcsConfiguration.StandardOption.ADD);
     createSettingFor(VcsConfiguration.StandardOption.REMOVE);
-    createSettingFor(VcsConfiguration.StandardOption.CHECKIN);
     createSettingFor(VcsConfiguration.StandardOption.CHECKOUT);
     createSettingFor(VcsConfiguration.StandardOption.UPDATE);
     createSettingFor(VcsConfiguration.StandardOption.STATUS);
