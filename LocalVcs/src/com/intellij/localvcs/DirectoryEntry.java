@@ -24,12 +24,7 @@ public class DirectoryEntry extends Entry {
   @Override
   public void removeChild(Entry child) {
     // todo should we remove child by equality or by identity?
-    for (int i = 0; i < myChildren.size(); i++) {
-      if (myChildren.get(i) == child) {
-        myChildren.remove(i);
-        break;
-      }
-    }
+    ListUtil.identityRemove(myChildren, child);
     child.setParent(null);
   }
 

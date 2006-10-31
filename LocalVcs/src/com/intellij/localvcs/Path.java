@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class Path {
+  // todo support c:/ notation
   private static final String DELIM = "/";
   private final String myPath;
 

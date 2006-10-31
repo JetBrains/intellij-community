@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import org.junit.Test;
 
 public class SnapshotDirectoriesTest extends SnapshotTestCase {
-  // todo test boundary conditions
+  // todo test boundary conditions and applying/reverting
   @Test
   public void testCeatingDirectory() {
     assertFalse(s.hasEntry(p("dir")));
@@ -175,6 +175,88 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
       fail();
     } catch (LocalVcsException e) {}
   }
+
+  // todo is renaming and moving are the same things?
+  // todo should we support both renaming and moving?
+  @Test
+  public void testMovingFilesBetweenDirectories() {
+    s.doCreateDirectory(p("dir1"));
+    s.doCreateDirectory(p("dir2"));
+    s.doCreateFile(p("dir1/file"), "content");
+
+    s.doMove(p("dir1/file"), p("dir2"));
+
+    assertTrue(s.hasEntry(p("dir2/file")));
+    assertFalse(s.hasEntry(p("dir1/file")));
+
+    assertEquals("content", s.getEntry(p("dir2/file")).getContent());
+  }
+
+  @Test
+  public void testMovingDirectories() {
+    s.doCreateDirectory(p("root1"));
+    s.doCreateDirectory(p("root2"));
+    s.doCreateDirectory(p("root1/dir"));
+    s.doCreateFile(p("root1/dir/file"), null);
+
+    s.doMove(p("root1/dir"), p("root2"));
+
+    assertTrue(s.hasEntry(p("root2/dir")));
+    assertTrue(s.hasEntry(p("root2/dir/file")));
+
+    assertFalse(s.hasEntry(p("root1/dir")));
+  }
+
+  @Test
+  public void testMovingEntryFromRootToDirectory() {
+    s.doCreateDirectory(p("dir"));
+    s.doCreateFile(p("file"), null);
+
+    s.doMove(p("file"), p("dir"));
+
+    assertTrue(s.hasEntry(p("dir/file")));
+    assertFalse(s.hasEntry(p("file")));
+  }
+
+  @Test
+  public void testMovingEntryFromDirectoryToRoot() {
+    s.doCreateDirectory(p("dir"));
+    s.doCreateFile(p("dir/file"), null);
+
+    // todo move to where??? shold we support this case?
+    //s.doMove(p("file"), p(""));
+    //
+    //assertTrue(s.hasEntry(p("file")));
+    //assertFalse(s.hasEntry(p("dir/file")));
+  }
+
+  @Test
+  public void testMovingEntriesToAnotherLevelInTree() {
+    s.doCreateDirectory(p("dir1"));
+    s.doCreateDirectory(p("dir1/dir2"));
+
+    s.doCreateFile(p("dir1/file1"), null);
+    s.doCreateFile(p("dir1/dir2/file2"), null);
+
+    s.doMove(p("dir1/file1"), p("dir1/dir2"));
+    s.doMove(p("dir1/dir2/file2"), p("dir1"));
+
+    assertTrue(s.hasEntry(p("dir1/file2")));
+    assertTrue(s.hasEntry(p("dir1/dir2/file1")));
+  }
+
+  @Test
+  public void testMovingDirectoryToItsChildThrowsException() {
+    s.doCreateDirectory(p("dir1"));
+    s.doCreateDirectory(p("dir1/dir2"));
+
+    try {
+      s.doMove(p("dir1"), p("dir1/dir2"));
+      fail();
+    } catch (LocalVcsException e) {}
+  }
+
+  // todo add some more 'moving' tests... 
 
   @Test
   public void testApplyingAndRevertingDirectoryCreation() {
