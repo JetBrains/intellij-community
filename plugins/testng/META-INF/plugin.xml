@@ -30,6 +30,6 @@
         </component>
     </project-components>
     <change-notes>
-        <![CDATA[Updated TestNG 5.3.]]>
+        <![CDATA[Updated TestNG 5.3.1.]]>
     </change-notes>
 </idea-plugin>

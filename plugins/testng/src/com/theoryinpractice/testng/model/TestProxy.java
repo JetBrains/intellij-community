@@ -96,7 +96,7 @@ public class TestProxy
             current.inProgress = resultMessage.getResult() == MessageHelper.TEST_STARTED;
             current = current.getParent();
         }
-        this.name = resultMessage.getMethod();
+        this.name = resultMessage.toDisplayString();
     }
 
     public boolean isInProgress() {
