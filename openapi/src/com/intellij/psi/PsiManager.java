@@ -64,7 +64,8 @@ public abstract class PsiManager implements UserDataHolder {
    * Returns the PSI file corresponding to the specified virtual file.
    *
    * @param file the file for which the PSI is requested.
-   * @return the PSI file, or null if there is no PSI for the specified file in this project.
+   * @return the PSI file, or null if <code>file</code> is a directory, an invalid virtual file,
+   * or the current project is a dummy or default project.
    */
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
