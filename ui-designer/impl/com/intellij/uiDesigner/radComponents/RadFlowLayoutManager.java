@@ -27,7 +27,7 @@ import java.awt.Point;
 /**
  * @author yole
  */
-public class RadFlowLayoutManager extends RadLayoutManager {
+public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
   private static final MyAlignProperty ALIGN_PROPERTY = new MyAlignProperty();
 
   public String getName() {
@@ -38,18 +38,11 @@ public class RadFlowLayoutManager extends RadLayoutManager {
     return new FlowLayout();
   }
 
-  public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
-  }
-
   public void writeLayout(final XmlWriter writer, final RadContainer radContainer) {
     FlowLayout layout = (FlowLayout) radContainer.getLayout();
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_HGAP, layout.getHgap());
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_VGAP, layout.getVgap());
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_FLOW_ALIGN, layout.getAlignment());
-  }
-
-  public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
-    container.getDelegee().add(component.getDelegee(), index);
   }
 
   @NotNull @Override
@@ -73,19 +66,6 @@ public class RadFlowLayoutManager extends RadLayoutManager {
                                    final LayoutManager layout) {
     FlowLayout flowLayout = (FlowLayout) layout;
     container.setLayout(new FlowLayout(flowLayout.getAlignment(), flowLayout.getHgap(), flowLayout.getVgap()));
-  }
-
-  @Override
-  public void addSnapshotComponent(final JComponent parent,
-                                   final JComponent child,
-                                   final RadContainer container,
-                                   final RadComponent component) {
-    container.addComponent(component);
-  }
-
-  @Override
-  public boolean isIndexed() {
-    return true;
   }
 
   private static class MyAlignProperty extends Property<RadContainer, Integer> {

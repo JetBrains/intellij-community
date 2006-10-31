@@ -51,33 +51,15 @@ public class RadToolBar extends RadContainer {
     }
   }
 
-  private class RadToolBarLayoutManager extends RadLayoutManager {
+  private class RadToolBarLayoutManager extends RadAbstractIndexedLayoutManager {
 
     @Nullable public String getName() {
       return null;
     }
 
-    public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
-    }
-
-    public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
-      getDelegee().add(component.getDelegee(), component.getConstraints(), index);
-    }
-
     @Override @NotNull
     public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
       return new FlowDropLocation(RadToolBar.this, location, FlowLayout.LEFT, 0, 0);
-    }
-
-    @Override
-    public boolean isIndexed() {
-      return true;
-    }
-
-    @Override
-    public void addSnapshotComponent(final JComponent parent, final JComponent child,
-                                     final RadContainer container, final RadComponent component) {
-      container.addComponent(component);
     }
   }
 }
