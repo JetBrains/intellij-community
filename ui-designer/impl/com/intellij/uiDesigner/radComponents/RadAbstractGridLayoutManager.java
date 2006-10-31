@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.designSurface.*;
 import com.intellij.util.IncorrectOperationException;
@@ -425,5 +426,53 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
       container.removeComponent(component);
     }
     return contents;
+  }
+
+  public boolean canMoveComponent(RadComponent c, int rowDelta, int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+    final int newRow = getNewRow(c, rowDelta);
+    final int newCol = getNewColumn(c, colDelta);
+    final int newRowSpan = getNewRowSpan(c, rowSpanDelta);
+    final int newColSpan = getNewColSpan(c, colSpanDelta);
+    if (newRow < 0 || newCol < 0 || newRowSpan < 1 || newColSpan < 1 ||
+        newRow + newRowSpan > c.getParent().getGridRowCount() ||
+        newCol + newColSpan > c.getParent().getGridColumnCount()) {
+      return false;
+    }
+    c.setDragging(true);
+    final RadComponent overlap = c.getParent().findComponentInRect(newRow, newCol, newRowSpan, newColSpan);
+    c.setDragging(false);
+    if (overlap != null) {
+      return false;
+    }
+    return true;
+  }
+
+  private static int getNewRow(final RadComponent c, final int rowDelta) {
+    return FormEditingUtil.adjustForGap(c.getParent(), c.getConstraints().getRow() + rowDelta, true, rowDelta);
+  }
+
+  private static int getNewColumn(final RadComponent c, final int colDelta) {
+    return FormEditingUtil.adjustForGap(c.getParent(), c.getConstraints().getColumn() + colDelta, false, colDelta);
+  }
+
+  private static int getNewRowSpan(final RadComponent c, final int rowSpanDelta) {
+    int gapCount = c.getParent().getGridLayoutManager().getGapCellCount();
+    return c.getConstraints().getRowSpan() + rowSpanDelta * (gapCount+1);
+  }
+
+  private static int getNewColSpan(final RadComponent c, final int colSpanDelta) {
+    int gapCount = c.getParent().getGridLayoutManager().getGapCellCount();
+    return c.getConstraints().getColSpan() + colSpanDelta * (gapCount+1);
+  }
+
+  @Override
+  public void moveComponent(RadComponent c, int rowDelta, int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+    GridConstraints constraints = c.getConstraints();
+    GridConstraints oldConstraints = (GridConstraints)constraints.clone();
+    constraints.setRow(getNewRow(c, rowDelta));
+    constraints.setColumn(getNewColumn(c, colDelta));
+    constraints.setRowSpan(getNewRowSpan(c, rowSpanDelta));
+    constraints.setColSpan(getNewColSpan(c, colSpanDelta));
+    c.fireConstraintsChanged(oldConstraints);
   }
 }

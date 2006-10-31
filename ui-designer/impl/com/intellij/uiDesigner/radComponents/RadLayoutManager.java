@@ -98,4 +98,11 @@ public abstract class RadLayoutManager {
   public void setChildDragging(RadComponent child, boolean dragging) {
     child.getDelegee().setVisible(!dragging);
   }
+
+  public boolean canMoveComponent(RadComponent c, int rowDelta, int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+    return false;
+  }
+
+  public void moveComponent(RadComponent c, int rowDelta, int colDelta, final int rowSpanDelta, final int colSpanDelta) {
+  }
 }
