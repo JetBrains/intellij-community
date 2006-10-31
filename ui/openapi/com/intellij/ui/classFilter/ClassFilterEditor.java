@@ -4,15 +4,17 @@
  */
 package com.intellij.ui.classFilter;
 
-import com.intellij.ui.UIBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -25,8 +27,6 @@ import java.awt.event.KeyEvent;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ClassFilterEditor extends JPanel {
   protected JTable myTable = null;
@@ -302,7 +302,7 @@ public class ClassFilterEditor extends JPanel {
     chooser.showDialog();
     PsiClass selectedClass = chooser.getSelectedClass();
     if (selectedClass != null) {
-      ClassFilter filter = createFilter(selectedClass.getQualifiedName());
+      ClassFilter filter = createFilter(getJvmClassName(selectedClass));
       if(filter != null){
         myTableModel.addRow(filter);
         int row = myTableModel.getRowCount() - 1;
@@ -312,6 +312,18 @@ public class ClassFilterEditor extends JPanel {
       }
       myTable.requestFocus();
     }
+  }
+
+  private String getJvmClassName(PsiClass aClass) {
+    PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
+    if(parentClass != null) {
+      final String parentName = getJvmClassName(parentClass);
+      if (parentName == null) {
+        return null;
+      }
+      return parentName + "$" + aClass.getName();
+    }
+    return aClass.getQualifiedName();
   }
 
   public void addPattern(String pattern) {
