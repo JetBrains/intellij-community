@@ -35,6 +35,7 @@ public class HackyRepaintManager extends RepaintManager {
     if (myImagesMap == null) {
       try {
         Field volMapField = RepaintManager.class.getDeclaredField(FAULTY_FIELD_NAME);
+        volMapField.setAccessible(true);
         myImagesMap = (Map<GraphicsConfiguration, VolatileImage>)volMapField.get(this);
       }
       catch (Exception e) {
