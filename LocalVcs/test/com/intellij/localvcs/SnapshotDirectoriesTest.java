@@ -117,6 +117,16 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
   }
 
   @Test
+  public void testRenamingDirectories() {
+    s.doCreateDirectory(p("dir"));
+
+    s.doRename(p("dir"), "new dir");
+
+    assertTrue(s.hasEntry(p("new dir")));
+    assertFalse(s.hasEntry(p("dir")));
+  }
+
+  @Test
   public void testRenamingFilesUnderDirectory() {
     s.doCreateDirectory(p("dir"));
     s.doCreateFile(p("dir/file"), "content");
@@ -133,15 +143,25 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
   public void testRenamingSubdirectories() {
     s.doCreateDirectory(p("dir1"));
     s.doCreateDirectory(p("dir1/dir2"));
-    s.doCreateFile(p("dir1/dir2/file"), null);
 
     s.doRename(p("dir1/dir2"), "new dir");
 
-    assertFalse(s.hasEntry(p("dir1/dir2")));
-    assertFalse(s.hasEntry(p("dir1/dir2/file")));
-
     assertTrue(s.hasEntry(p("dir1/new dir")));
-    assertTrue(s.hasEntry(p("dir1/new dir/file")));
+    assertFalse(s.hasEntry(p("dir1/dir2")));
+  }
+
+  @Test
+  public void testRenamingDirectoryWithContent() {
+    s.doCreateDirectory(p("dir"));
+    s.doCreateFile(p("dir/file"), null);
+
+    s.doRename(p("dir"), "new dir");
+
+    assertTrue(s.hasEntry(p("new dir")));
+    assertTrue(s.hasEntry(p("new dir/file")));
+
+    assertFalse(s.hasEntry(p("dir")));
+    assertFalse(s.hasEntry(p("dir/file")));
   }
 
   @Test

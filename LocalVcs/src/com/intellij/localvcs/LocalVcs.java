@@ -15,7 +15,7 @@ public class LocalVcs {
     return mySnapshot.getEntry(path);
   }
 
-  public List<Entry> getEntries(Path path) {
+  public List<Entry> getEntryHistory(Path path) {
     List<Entry> result = new ArrayList<Entry>();
 
     // todo clean up this mess
