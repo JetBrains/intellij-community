@@ -231,10 +231,12 @@ public final class InplaceEditingLayer extends JComponent{
 
       // 2. Remove editor from the layer
 
-      removeInplaceEditorComponent();
+      if (myInplaceEditorComponent != null) {  // reenterability guard
+        removeInplaceEditorComponent();
+        myFocusWatcher.deinstall(myInplaceEditorComponent);
+      }
 
       myInplaceEditor.removePropertyEditorListener(myPropertyEditorListener);
-      myFocusWatcher.deinstall(myInplaceEditorComponent);
 
       myInplaceComponent = null;
       myInplaceEditorComponent = null;
@@ -262,8 +264,6 @@ public final class InplaceEditingLayer extends JComponent{
       LOG.assertTrue(myInplaceEditor != null);
 
       removeInplaceEditorComponent();
-
-      remove(myInplaceEditorComponent);
 
       myInplaceEditor.removePropertyEditorListener(myPropertyEditorListener);
       myFocusWatcher.deinstall(myInplaceEditorComponent);
