@@ -206,7 +206,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return definedMacros;
   }
 
-  private static boolean checkMacros(Project project, Set<String> definedMacros) throws IOException, JDOMException {
+  private boolean checkMacros(Project project, Set<String> definedMacros) throws IOException, JDOMException {
     String projectFilePath = project.getProjectFilePath();
     if (projectFilePath == null) {
       return true;
@@ -216,9 +216,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     final Set<String> usedMacros = new HashSet<String>(Arrays.asList(ProjectImpl.readUsedMacros(root)));
 
     usedMacros.removeAll(definedMacros);
+
+    // try to lookup values in System properties
+    for (Iterator it = usedMacros.iterator(); it.hasNext();) {
+      final String macro = (String)it.next();
+      final String value = System.getProperty(macro, null);
+      if (value != null) {
+        myPathMacros.setMacro(macro, value);
+        it.remove();
+      }
+    }
+
     if (usedMacros.isEmpty()) {
       return true; // all macros in configuration files are defined
     }
+    
     // there are undefined macros, need to define them before loading components
     final String text = ProjectBundle.message("project.load.undefined.path.variables.message");
     return showMacrosConfigurationDialog(project, text, usedMacros);
