@@ -30,7 +30,7 @@ public class Comparing {
       return Arrays.equals(arr1, arr2);
     }
     else if (arg1 instanceof CharSequence && arg2 instanceof CharSequence) {
-      return equal((CharSequence)arg1, (CharSequence)arg2, false);
+      return equal((CharSequence)arg1, (CharSequence)arg2, true);
     }
     else{
       return arg1.equals(arg2);
@@ -42,14 +42,14 @@ public class Comparing {
   }
 
   public static boolean equal(CharSequence s1, CharSequence s2) {
-    return equal(s1, s2, false);
+    return equal(s1, s2, true);
   }
 
   public static boolean equal(String arg1, String arg2) {
     return equal(arg1, arg2, false);
   }
 
-  public static boolean equal(CharSequence s1, CharSequence s2, boolean ignoreCase) {
+  public static boolean equal(CharSequence s1, CharSequence s2, boolean caseSensitive) {
     if (s1 == s2) return true;
     if (s1 == null || s2 == null) return false;
 
@@ -66,7 +66,7 @@ public class Comparing {
       if (c1 == c2) {
         continue;
       }
-      if (ignoreCase) {
+      if (!caseSensitive) {
         char u1 = Character.toUpperCase(c1);
         char u2 = Character.toUpperCase(c2);
         if (u1 == u2) continue;

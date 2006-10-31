@@ -111,7 +111,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
 
   //Q: get rid of these methods?
   public boolean textMatches(@NotNull CharSequence text) {
-    return Comparing.equal(getText(), text, false);
+    return Comparing.equal(getText(), text, true);
   }
 
   public boolean textMatches(@NotNull PsiElement element) {
