@@ -59,6 +59,10 @@ public class FlattenAction extends AbstractGuiEditorAction {
       container.removeComponent(container.getComponent(i));
     }
 
+    if (contents.size() == 1) {
+      contents.get(0).setCustomLayoutConstraints(container.getCustomLayoutConstraints());
+    }
+    
     FormEditingUtil.deleteComponents(Collections.singletonList(container), false);
     for(RadComponent child: contents) {
       final GridConstraints childConstraints = child.getConstraints();
