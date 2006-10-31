@@ -44,6 +44,11 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
   }
 
   @Test
+  public void testCreatingChildredForFileThrowsException() {
+    //todo
+  }
+
+  @Test
   public void teateCreateingDirectoryWithExistedNameThrowsException() {
     s.doCreateFile(p("name1"), null);
     s.doCreateDirectory(p("name2"));

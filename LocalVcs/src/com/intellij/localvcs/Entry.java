@@ -3,9 +3,10 @@ package com.intellij.localvcs;
 import java.util.List;
 
 public abstract class Entry {
-  private Integer myObjectId;
-  private String myName;
-  private Entry myParent;
+  //todo try to make fields final
+  protected Integer myObjectId;
+  protected String myName;
+  protected DirectoryEntry myParent;
 
   public Entry(Integer objectId, String name) {
     myObjectId = objectId;
@@ -29,11 +30,11 @@ public abstract class Entry {
     return myParent != null;
   }
 
-  public Entry getParent() {
+  public DirectoryEntry getParent() {
     return myParent;
   }
 
-  protected void setParent(Entry parent) {
+  protected void setParent(DirectoryEntry parent) {
     myParent = parent;
   }
 
@@ -49,10 +50,14 @@ public abstract class Entry {
     throw new UnsupportedOperationException();
   }
 
-  public Entry getEntry(Path path) {
+  public Entry findEntry(Path path) {
     if (path.equals(getPath())) return this;
     return null;
   }
+
+  public abstract Entry copy();
+
+  public Entry renamed(String newName) { return copy(); }
 
   @Override
   public String toString() {

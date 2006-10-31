@@ -34,16 +34,32 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public Entry getEntry(Path path) {
+  public Entry findEntry(Path path) {
     // todo a bit messy
-    Entry result = super.getEntry(path);
+    Entry result = super.findEntry(path);
     if (result != null) return result;
 
     for (Entry child : myChildren) {
-      result = child.getEntry(path);
+      result = child.findEntry(path);
       if (result != null) return result;
     }
 
     return null;
   }
+
+  public Entry copy() {
+    DirectoryEntry result = new DirectoryEntry(myObjectId, myName);
+    for (Entry child : myChildren) {
+      result.addChild(child.copy());
+    }
+    return result;
+  }
+
+  //public Entry renamed(String newName) {
+  //  DirectoryEntry result = new DirectoryEntry(myObjectId, newName);
+  //  for (Entry child : myChildren) {
+  //    result.addChild(child.renamed(c));
+  //  }
+  //  return result;
+  //}
 }
