@@ -25,6 +25,9 @@ public interface AntBuildTarget {
   String getName();
 
   @Nullable
+  String getDisplayName();
+
+  @Nullable
   String getNotEmptyDescription();
 
   boolean isDefault();

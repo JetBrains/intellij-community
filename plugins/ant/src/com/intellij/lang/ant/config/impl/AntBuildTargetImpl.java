@@ -35,6 +35,11 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   @Nullable
   public String getName() {
+    return myTarget.getName();
+  }
+
+  @Nullable
+  public String getDisplayName() {
     final AntProject project = myModel.getAntProject();
     return (project == myTarget.getAntProject()) ? myTarget.getName() : myTarget.getQualifiedName();
   }

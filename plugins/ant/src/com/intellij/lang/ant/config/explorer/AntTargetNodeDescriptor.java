@@ -53,7 +53,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final Color color = buildFile.isTargetVisible(myTarget) ? Color.black : Color.gray;
     TextAttributes nameAttributes = new TextAttributes(color, null, null, EffectType.BOXED, myTarget.isDefault() ? Font.BOLD : Font.PLAIN);
 
-    myHighlightedText.getEnding().addText(myTarget.getName(), nameAttributes);
+    myHighlightedText.getEnding().addText(myTarget.getDisplayName(), nameAttributes);
 
     AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
     final ArrayList<String> addedNames = new ArrayList<String>(4);

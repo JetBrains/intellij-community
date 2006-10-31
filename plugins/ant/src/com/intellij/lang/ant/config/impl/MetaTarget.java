@@ -38,6 +38,11 @@ public class MetaTarget implements AntBuildTargetBase {
     return myName;
   }
 
+  @Nullable
+  public String getDisplayName() {
+    return getName();
+  }
+
   public String getNotEmptyDescription() {
     return myDescription;
   }
