@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.peer.PeerFactory;
@@ -32,9 +33,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIHelper;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
-import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.thumbnail.ThumbnailView;
+import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.ui.ImageComponent;
+import org.intellij.images.ui.ImageComponentDecorator;
 import org.intellij.images.ui.ThumbnailComponent;
 import org.intellij.images.ui.ThumbnailComponentUI;
 import org.intellij.images.vfs.IfsUtil;
@@ -207,17 +209,17 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     @NotNull
     public VirtualFile[] getSelection() {
-      if (list != null) {
-        Object[] selectedValues = list.getSelectedValues();
-        if (selectedValues != null) {
-            VirtualFile[] files = new VirtualFile[selectedValues.length];
-            for (int i = 0; i < selectedValues.length; i++) {
-                files[i] = (VirtualFile) selectedValues[i];
+        if (list != null) {
+            Object[] selectedValues = list.getSelectedValues();
+            if (selectedValues != null) {
+                VirtualFile[] files = new VirtualFile[selectedValues.length];
+                for (int i = 0; i < selectedValues.length; i++) {
+                    files[i] = (VirtualFile) selectedValues[i];
+                }
+                return files;
             }
-            return files;
         }
-      }
-      return VirtualFile.EMPTY_ARRAY;
+        return VirtualFile.EMPTY_ARRAY;
     }
 
     private final class ThumbnailListCellRenderer extends ThumbnailComponent
@@ -290,19 +292,22 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     private Set<VirtualFile> findFiles(VirtualFile file) {
         Set<VirtualFile> files = new HashSet<VirtualFile>(0);
-        ProjectRootManager rootManager = ProjectRootManager.getInstance(thumbnailView.getProject());
-        boolean projectIgnored = rootManager.getFileIndex().isIgnored(file);
+        Project project = thumbnailView.getProject();
+        if (!project.isDisposed()) {
+            ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+            boolean projectIgnored = rootManager.getFileIndex().isIgnored(file);
 
-        if (!projectIgnored && !FileTypeManager.getInstance().isFileIgnored(file.getName())) {
-            ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
-            if (file.isDirectory()) {
-                if (thumbnailView.isRecursive()) {
-                    files.addAll(findFiles(file.getChildren()));
-                } else if (isImagesInDirectory(file)) {
+            if (!projectIgnored && !FileTypeManager.getInstance().isFileIgnored(file.getName())) {
+                ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
+                if (file.isDirectory()) {
+                    if (thumbnailView.isRecursive()) {
+                        files.addAll(findFiles(file.getChildren()));
+                    } else if (isImagesInDirectory(file)) {
+                        files.add(file);
+                    }
+                } else if (typeManager.isImage(file)) {
                     files.add(file);
                 }
-            } else if (typeManager.isImage(file)) {
-                files.add(file);
             }
         }
         return files;
@@ -346,8 +351,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             int index = list.locationToIndex(point);
             if (index != -1) {
                 Rectangle cellBounds = list.getCellBounds(index, index);
-                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK)
-                {
+                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
                     list.clearSelection();
                     e.consume();
                 }
@@ -359,8 +363,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             int index = list.locationToIndex(point);
             if (index != -1) {
                 Rectangle cellBounds = list.getCellBounds(index, index);
-                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK)
-                {
+                if (!cellBounds.contains(point) && (KeyEvent.CTRL_DOWN_MASK & e.getModifiersEx()) != KeyEvent.CTRL_DOWN_MASK) {
                     index = -1;
                     list.clearSelection();
                 }
@@ -440,6 +443,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
             return navigatables.toArray(EMPTY_NAVIGATABLE_ARRAY);
         } else if (ThumbnailView.class.getName().equals(dataId)) {
+            return thumbnailView;
+        } else if (ImageComponentDecorator.class.getName().equals(dataId)) {
             return thumbnailView;
         }
 

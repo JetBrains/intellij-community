@@ -10,7 +10,7 @@
     <resource-bundle>org.intellij.images.ImagesBundle</resource-bundle>
 
     <extensions xmlns="com.intellij">
-      <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+        <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     </extensions>
 
     <application-components>
@@ -32,18 +32,20 @@
         <component>
             <implementation-class>org.intellij.images.editor.impl.ImageFileEditorProvider</implementation-class>
         </component>
+    </application-components>
+    <project-components>
         <component>
             <interface-class>org.intellij.images.thumbnail.ThumbnailManager</interface-class>
             <implementation-class>org.intellij.images.thumbnail.impl.ThumbnailManagerImpl</implementation-class>
             <headless-implementation-class></headless-implementation-class>
         </component>
-    </application-components>
+    </project-components>
 
     <actions>
         <action class="org.intellij.images.actions.EditExternalyAction"
                 id="Images.EditExternaly"
                 icon="/org/intellij/images/icons/EditExternaly.png">
-            <keyboard-shortcut first-keystroke="control alt F4" keymap="$default" />
+            <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
             <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
         </action>
@@ -58,11 +60,11 @@
                 icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png">
         </action>
         <group id="Images.EditorToolbar">
-            <reference id="Images.ToggleTransparencyChessboard" />
+            <reference id="Images.ToggleTransparencyChessboard"/>
             <action class="org.intellij.images.editor.actions.ToggleGridAction"
                     id="Images.Editor.ToggleGrid"
                     icon="/org/intellij/images/icons/ToggleGrid.png">
-                <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default" />
+                <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
             </action>
             <separator/>
             <action class="org.intellij.images.editor.actions.ZoomInAction"
@@ -85,64 +87,64 @@
             </action>
         </group>
         <group id="Images.EditorPopupMenu">
-            <reference id="CutCopyPasteGroup" />
+            <reference id="CutCopyPasteGroup"/>
             <separator/>
-            <reference id="FindUsages" />
-            <reference id="RefactoringMenu" />
-            <separator />
+            <reference id="FindUsages"/>
+            <reference id="RefactoringMenu"/>
+            <separator/>
             <reference id="Images.EditorToolbar"/>
             <separator/>
-            <reference id="CloseEditor" />
+            <reference id="CloseEditor"/>
             <separator/>
-            <reference id="AddToFavorites" />
-            <separator />
-            <reference id="VersionControlsGroup" />
-            <separator />
+            <reference id="AddToFavorites"/>
+            <separator/>
+            <reference id="VersionControlsGroup"/>
+            <separator/>
             <reference id="Images.EditExternaly"/>
-            <reference id="ExternalToolsGroup" />
+            <reference id="ExternalToolsGroup"/>
         </group>
         <group id="Images.ThumbnailsToolbar">
             <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
                     id="Images.Thumbnails.UpFolder"
                     icon="/nodes/upFolder.png">
-                <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default" />
+                <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default"/>
             </action>
             <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
                     id="Images.Thumbnails.ToggleRecursive"
                     icon="/objectBrowser/flattenPackages.png">
-                <keyboard-shortcut first-keystroke="control MULTIPLY" keymap="$default" />
+                <keyboard-shortcut first-keystroke="control MULTIPLY" keymap="$default"/>
             </action>
             <separator/>
-            <reference id="Images.ToggleTransparencyChessboard" />
+            <reference id="Images.ToggleTransparencyChessboard"/>
             <separator/>
             <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
                     id="Images.Thumbnails.Hide"
                     icon="/actions/cancel.png">
-                <keyboard-shortcut first-keystroke="control F4" keymap="$default" />
+                <keyboard-shortcut first-keystroke="control F4" keymap="$default"/>
             </action>
         </group>
         <group id="Images.ThumbnailsPopupMenu">
-            <reference id="CutCopyPasteGroup" />
-            <reference id="EditSource" />
+            <reference id="CutCopyPasteGroup"/>
+            <reference id="EditSource"/>
             <action class="org.intellij.images.thumbnail.actions.EnterAction"
                     id="Images.Thumbnails.EnterAction">
-                <keyboard-shortcut first-keystroke="ENTER" keymap="$default" />
+                <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
             </action>
-            <separator />
+            <separator/>
             <reference id="Images.ThumbnailsToolbar"/>
             <separator/>
-            <reference id="FindUsages" />
-            <reference id="RefactoringMenu" />
-            <separator />
-            <reference id="AddToFavorites" />
-            <separator />
-            <reference id="$Delete" />
-            <separator />
-            <reference id="VersionControlsGroup" />
-            <reference id="CompareTwoFiles" />
-            <separator />
+            <reference id="FindUsages"/>
+            <reference id="RefactoringMenu"/>
+            <separator/>
+            <reference id="AddToFavorites"/>
+            <separator/>
+            <reference id="$Delete"/>
+            <separator/>
+            <reference id="VersionControlsGroup"/>
+            <reference id="CompareTwoFiles"/>
+            <separator/>
             <reference id="Images.EditExternaly"/>
-            <reference id="ExternalToolsGroup" />
+            <reference id="ExternalToolsGroup"/>
         </group>
     </actions>
 </idea-plugin>

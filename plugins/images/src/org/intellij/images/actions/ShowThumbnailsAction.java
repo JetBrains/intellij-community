@@ -32,11 +32,11 @@ import org.intellij.images.thumbnail.ThumbnailView;
 public final class ShowThumbnailsAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         DataContext dataContext = e.getDataContext();
-        Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-        VirtualFile file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+        Project project = (Project) dataContext.getData(DataConstants.PROJECT);
+        VirtualFile file = (VirtualFile) dataContext.getData(DataConstants.VIRTUAL_FILE);
         if (project != null && file != null && file.isDirectory()) {
-            ThumbnailManager thumbnailManager = ThumbnailManager.getInstance();
-            ThumbnailView thumbnailView = thumbnailManager.getThumbnailView(project);
+            ThumbnailManager thumbnailManager = project.getComponent(ThumbnailManager.class);
+            ThumbnailView thumbnailView = thumbnailManager.getThumbnailView();
             thumbnailView.setRoot(file);
             thumbnailView.setVisible(true);
             thumbnailView.activate();
@@ -46,7 +46,7 @@ public final class ShowThumbnailsAction extends AnAction {
     public void update(AnActionEvent e) {
         super.update(e);
         DataContext dataContext = e.getDataContext();
-        VirtualFile file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+        VirtualFile file = (VirtualFile) dataContext.getData(DataConstants.VIRTUAL_FILE);
         e.getPresentation().setEnabled(file != null && file.isDirectory());
     }
 }

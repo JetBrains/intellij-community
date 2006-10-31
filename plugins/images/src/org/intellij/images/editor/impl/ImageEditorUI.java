@@ -32,6 +32,7 @@ import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
 import org.intellij.images.ui.ImageComponent;
+import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +53,10 @@ import java.awt.image.ColorModel;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageEditorUI extends JPanel implements DataProvider {
-    @NonNls private static final String IMAGE_PANEL = "image";
-    @NonNls private static final String ERROR_PANEL = "error";
+    @NonNls
+    private static final String IMAGE_PANEL = "image";
+    @NonNls
+    private static final String ERROR_PANEL = "error";
 
     private final ImageEditor editor;
     private final DeleteProvider deleteProvider;
@@ -76,7 +79,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         });
 
         deleteProvider = uiHelper.createPsiBasedDeleteProvider();
-      
+
         ImageDocument document = imageComponent.getDocument();
         document.addChangeListener(changeListener);
 
@@ -106,17 +109,17 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         setLayout(new BorderLayout());
 
         ActionManager actionManager = ActionManager.getInstance();
-        ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
+        ActionGroup actionGroup = (ActionGroup) actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
         ActionToolbar actionToolbar = actionManager.createActionToolbar(
-            ImageEditorActions.ACTION_PLACE, actionGroup, true
+                ImageEditorActions.ACTION_PLACE, actionGroup, true
         );
 
         JComponent toolbarPanel = actionToolbar.getComponent();
         toolbarPanel.addMouseListener(new FocusRequester());
 
         JLabel errorLabel = new JLabel(
-            ImagesBundle.message("error.broken.image.file.format"),
-            Messages.getErrorIcon(), JLabel.CENTER
+                ImagesBundle.message("error.broken.image.file.format"),
+                Messages.getErrorIcon(), JLabel.CENTER
         );
 
         JPanel errorPanel = new JPanel(new BorderLayout());
@@ -128,7 +131,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(toolbarPanel, BorderLayout.WEST);
-        infoLabel = new JLabel((String)null, JLabel.RIGHT);
+        infoLabel = new JLabel((String) null, JLabel.RIGHT);
         topPanel.add(infoLabel, BorderLayout.EAST);
 
         add(topPanel, BorderLayout.NORTH);
@@ -223,7 +226,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         public double getZoomFactor() {
             Dimension size = imageComponent.getCanvasSize();
             BufferedImage image = imageComponent.getDocument().getValue();
-            return image != null ? size.getWidth() / (double)image.getWidth() : 0.0d;
+            return image != null ? size.getWidth() / (double) image.getWidth() : 0.0d;
         }
 
         public void setZoomFactor(double zoomFactor) {
@@ -231,7 +234,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
             Dimension size = imageComponent.getCanvasSize();
             BufferedImage image = imageComponent.getDocument().getValue();
             if (image != null) {
-                size.setSize((double)image.getWidth() * zoomFactor, (double)image.getHeight() * zoomFactor);
+                size.setSize((double) image.getWidth() * zoomFactor, (double) image.getHeight() * zoomFactor);
                 imageComponent.setCanvasSize(size);
             }
 
@@ -253,7 +256,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
                 // Micro
                 double minFactor = getMinimumZoomFactor();
                 double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
-                int step = (int)Math.ceil((1.0d - factor) / stepSize);
+                int step = (int) Math.ceil((1.0d - factor) / stepSize);
 
                 setZoomFactor(1.0d - stepSize * (step + 1));
             }
@@ -268,7 +271,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
                 // Micro
                 double minFactor = getMinimumZoomFactor();
                 double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
-                int step = (int)Math.ceil((1.0d - factor) / stepSize);
+                int step = (int) Math.ceil((1.0d - factor) / stepSize);
 
                 setZoomFactor(1.0d - stepSize * (step - 1));
             }
@@ -294,7 +297,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
             ImageDocument document = imageComponent.getDocument();
             BufferedImage value = document.getValue();
 
-            CardLayout layout = (CardLayout)contentPanel.getLayout();
+            CardLayout layout = (CardLayout) contentPanel.getLayout();
             layout.show(contentPanel, value != null ? IMAGE_PANEL : ERROR_PANEL);
 
             updateInfo();
@@ -315,7 +318,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
             if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
                 // Single right click
                 ActionManager actionManager = ActionManager.getInstance();
-                ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_POPUP);
+                ActionGroup actionGroup = (ActionGroup) actionManager.getAction(ImageEditorActions.GROUP_POPUP);
                 ActionPopupMenu menu = actionManager.createActionPopupMenu(ImageEditorActions.ACTION_PLACE, actionGroup);
                 JPopupMenu popupMenu = menu.getComponent();
                 popupMenu.pack();
@@ -335,20 +338,22 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         } else if (DataConstantsEx.VIRTUAL_FILE.equals(dataId)) {
             return editor.getFile();
         } else if (DataConstantsEx.VIRTUAL_FILE_ARRAY.equals(dataId)) {
-            return new VirtualFile[] {editor.getFile()};
+            return new VirtualFile[]{editor.getFile()};
         } else if (DataConstantsEx.PSI_FILE.equals(dataId)) {
             return getData(DataConstantsEx.PSI_ELEMENT);
         } else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
             VirtualFile file = editor.getFile();
             return file != null ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
         } else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
-            return new PsiElement[] {(PsiElement) getData(DataConstants.PSI_ELEMENT)};
+            return new PsiElement[]{(PsiElement) getData(DataConstants.PSI_ELEMENT)};
         } else if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
             return copyPasteSupport.getCopyProvider();
         } else if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
             return copyPasteSupport.getCutProvider();
         } else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
             return deleteProvider;
+        } else if (ImageComponentDecorator.class.getName().equals(dataId)) {
+            return editor;
         }
 
         return null;

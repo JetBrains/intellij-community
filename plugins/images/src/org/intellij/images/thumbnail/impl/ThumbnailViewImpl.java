@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,8 @@ final class ThumbnailViewImpl implements ThumbnailView {
         this.project = project;
 
         ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-        toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, new ThumbnailViewUI(this), ToolWindowAnchor.BOTTOM);
+        ThumbnailViewUI component = new ThumbnailViewUI(this);
+        toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, component, ToolWindowAnchor.BOTTOM);
         toolWindow.setIcon(TOOL_WINDOW_ICON);
         setVisible(false);
     }
@@ -147,7 +149,15 @@ final class ThumbnailViewImpl implements ThumbnailView {
         return isVisible() && getUI().isTransparencyChessboardVisible();
     }
 
+    public boolean isEnabledForActionPlace(String place) {
+        // Enable if it not for Editor
+        return isVisible() && !ImageEditorActions.ACTION_PLACE.equals(place);
+    }
+
     public void dispose() {
+        // Dispose UI
+        getUI().dispose();
+        // Unregister ToolWindow
         ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
         windowManager.unregisterToolWindow(TOOLWINDOW_ID);
     }

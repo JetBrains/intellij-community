@@ -16,17 +16,17 @@
  */
 package org.intellij.images.vfs;
 
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.reference.SoftReference;
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.javaee.web.WebModuleProperties;
 import com.intellij.javaee.web.WebRoot;
+import com.intellij.javaee.web.WebUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +35,10 @@ import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 
 /**
@@ -56,18 +56,17 @@ public final class IfsUtil {
      *
      * @param file File
      * @return true if file image is loaded.
-     *
-     * @throws java.io.IOException
+     * @throws java.io.IOException if image can not be loaded
      */
     private static boolean refresh(@NotNull VirtualFile file) throws IOException {
         Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
         SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
         if (loadedTimeStamp == null || loadedTimeStamp < file.getTimeStamp() || imageRef == null || imageRef.get() == null) {
             try {
-              final byte[] content = file.contentsToByteArray();
-              InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
-              ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
-              try {
+                final byte[] content = file.contentsToByteArray();
+                InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
+                ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
+                try {
                     Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
                     if (imageReaders.hasNext()) {
                         ImageReader imageReader = imageReaders.next();

@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.ImagesBundle;
+import org.intellij.images.ui.ImageComponentDecorator;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public interface ThumbnailView extends Disposable {
+public interface ThumbnailView extends Disposable, ImageComponentDecorator {
     String TOOLWINDOW_ID = ImagesBundle.message("thumbnails.toolwindow.name");
 
     @NotNull
@@ -68,8 +69,4 @@ public interface ThumbnailView extends Disposable {
     boolean isVisible();
 
     void activate();
-
-    void setTransparencyChessboardVisible(boolean visible);
-
-    boolean isTransparencyChessboardVisible();
 }

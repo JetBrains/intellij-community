@@ -17,61 +17,30 @@ package org.intellij.images.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import org.intellij.images.editor.ImageEditor;
-import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
-import org.intellij.images.editor.actionSystem.ImageEditorActions;
-import org.intellij.images.thumbnail.ThumbnailView;
-import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
-import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
+import org.intellij.images.ui.ImageComponentDecorator;
 
 /**
  * Show/hide background action.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
- * @see ImageEditor#setTransparencyChessboardVisible
- * @see ThumbnailView#setTransparencyChessboardVisible
+ * @see org.intellij.images.ui.ImageComponentDecorator#setTransparencyChessboardVisible
  */
 public final class ToggleTransparencyChessboardAction extends ToggleAction {
     public boolean isSelected(AnActionEvent e) {
-        if (ImageEditorActions.ACTION_PLACE.equals(e.getPlace())) {
-            ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
-            if (editor != null) {
-                return editor.isTransparencyChessboardVisible();
-            }
-        } else if (ThumbnailViewActions.ACTION_PLACE.equals(e.getPlace())) {
-            ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
-            if (view != null) {
-                return view.isTransparencyChessboardVisible();
-            }
-        }
-        return false;
+        ImageComponentDecorator decorator = (ImageComponentDecorator) e.getDataContext().getData(ImageComponentDecorator.class.getName());
+        return decorator != null && decorator.isEnabledForActionPlace(e.getPlace()) && decorator.isTransparencyChessboardVisible();
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-        if (ImageEditorActions.ACTION_PLACE.equals(e.getPlace())) {
-            ImageEditor editor = ImageEditorActionUtil.getValidEditor(e);
-            if (editor != null) {
-                editor.setTransparencyChessboardVisible(state);
-            }
-        } else if (ThumbnailViewActions.ACTION_PLACE.equals(e.getPlace())) {
-            ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
-            if (view != null) {
-                view.setTransparencyChessboardVisible(state);
-            }
+        ImageComponentDecorator decorator = (ImageComponentDecorator) e.getDataContext().getData(ImageComponentDecorator.class.getName());
+        if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
+            decorator.setTransparencyChessboardVisible(state);
         }
     }
 
     public void update(final AnActionEvent e) {
         super.update(e);
-        if (ImageEditorActions.ACTION_PLACE.equals(e.getPlace())) {
-            e.getPresentation().setVisible(true);
-            ImageEditorActionUtil.setEnabled(e);
-        } else if (ThumbnailViewActions.ACTION_PLACE.equals(e.getPlace())) {
-            e.getPresentation().setVisible(true);
-            ThumbnailViewActionUtil.setEnabled(e);
-        } else {
-            e.getPresentation().setEnabled(false);
-            e.getPresentation().setVisible(false);
-        }
+        ImageComponentDecorator decorator = (ImageComponentDecorator) e.getDataContext().getData(ImageComponentDecorator.class.getName());
+        e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
     }
 }

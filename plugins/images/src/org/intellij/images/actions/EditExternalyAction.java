@@ -59,7 +59,6 @@ public final class EditExternalyAction extends AnAction {
             OptionsConfigurabe.show(project);
         } else {
             if (files != null) {
-                ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
                 Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
                 Set<String> varNames = env.keySet();
                 for (String varName : varNames) {
@@ -71,27 +70,22 @@ public final class EditExternalyAction extends AnAction {
                 }
                 executablePath = FileUtil.toSystemDependentName(executablePath);
                 File executable = new File(executablePath);
-                if (executable.exists()) {
-                    StringBuffer commandLine = new StringBuffer(executable.getAbsolutePath());
-                    for (VirtualFile file : files) {
-                        if ((file.getFileSystem() instanceof LocalFileSystem) && typeManager.isImage(file)) {
-                            commandLine.append(" \"");
-                            commandLine.append(VfsUtil.virtualToIoFile(file).getAbsolutePath());
-                            commandLine.append('\"');
-                        }
+                StringBuffer commandLine = new StringBuffer(executable.exists() ? executable.getAbsolutePath() : executablePath);
+                ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
+                for (VirtualFile file : files) {
+                    if ((file.getFileSystem() instanceof LocalFileSystem) && typeManager.isImage(file)) {
+                        commandLine.append(" \"");
+                        commandLine.append(VfsUtil.virtualToIoFile(file).getAbsolutePath());
+                        commandLine.append('\"');
                     }
+                }
 
-                    try {
-                        File executableFile = new File(executablePath);
-                        Runtime.getRuntime().exec(commandLine.toString(), null, executableFile.getParentFile());
-                    } catch (IOException ex) {
-                        Messages.showErrorDialog(project,
-                                ex.getLocalizedMessage(),
-                                ImagesBundle.message("error.title.launching.external.editor"));
-                    }
-                } else {
+                try {
+                    File executableFile = new File(executablePath);
+                    Runtime.getRuntime().exec(commandLine.toString(), null, executableFile.getParentFile());
+                } catch (IOException ex) {
                     Messages.showErrorDialog(project,
-                            ImagesBundle.message("error.executable.not.found", executablePath),
+                            ex.getLocalizedMessage(),
                             ImagesBundle.message("error.title.launching.external.editor"));
                     OptionsConfigurabe.show(project);
                 }
@@ -114,7 +108,7 @@ public final class EditExternalyAction extends AnAction {
             for (VirtualFile file : files) {
                 boolean isImage = typeManager.isImage(file);
                 isImagesFound |= isImage;
-                if (!(file.getFileSystem()instanceof LocalFileSystem) || !isImage) {
+                if (!(file.getFileSystem() instanceof LocalFileSystem) || !isImage) {
                     return false;
                 }
             }

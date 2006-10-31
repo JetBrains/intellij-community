@@ -15,9 +15,6 @@
  */
 package org.intellij.images.thumbnail;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,18 +22,12 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public abstract class ThumbnailManager {
-    public static ThumbnailManager getInstance() {
-        Application application = ApplicationManager.getApplication();
-        return application.getComponent(ThumbnailManager.class);
-    }
-
+public interface ThumbnailManager {
     /**
      * Create thumbnail view
      *
-     * @param project Project
      * @return Return thumbnail view
      */
     @NotNull
-    public abstract ThumbnailView getThumbnailView(@NotNull Project project);
+    ThumbnailView getThumbnailView();
 }

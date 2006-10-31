@@ -15,19 +15,20 @@
  */
 package org.intellij.images.editor.impl;
 
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
+import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
+import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.vfs.IfsUtil;
-import org.intellij.images.fileTypes.ImageFileTypeManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -123,6 +124,11 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
 
     public boolean isTransparencyChessboardVisible() {
         return editorUI.getImageComponent().isTransparencyChessboardVisible();
+    }
+
+    public boolean isEnabledForActionPlace(String place) {
+        // Disable for thumbnails action
+        return !ThumbnailViewActions.ACTION_PLACE.equals(place);
     }
 
     public void setGridVisible(boolean visible) {

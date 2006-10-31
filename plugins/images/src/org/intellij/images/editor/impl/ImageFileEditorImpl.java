@@ -44,7 +44,8 @@ import java.io.Serializable;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor {
-    @NonNls private static final String NAME = "ImageFileEditor";
+    @NonNls
+    private static final String NAME = "ImageFileEditor";
     private final ImageEditor imageEditor;
 
     ImageFileEditorImpl(Project project, VirtualFile file) {
@@ -68,6 +69,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         return application.getComponent(ImageEditorManager.class);
     }
 
+    @NotNull
     public JComponent getComponent() {
         return imageEditor.getComponent();
     }
@@ -85,14 +87,14 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     public FileEditorState getState(@NotNull FileEditorStateLevel level) {
         ImageZoomModel zoomModel = imageEditor.getZoomModel();
         return new ImageFileEditorState(
-            imageEditor.isTransparencyChessboardVisible(),
-            imageEditor.isGridVisible(),
-            zoomModel.getZoomFactor());
+                imageEditor.isTransparencyChessboardVisible(),
+                imageEditor.isGridVisible(),
+                zoomModel.getZoomFactor());
     }
 
     public void setState(@NotNull FileEditorState state) {
         if (state instanceof ImageFileEditorState) {
-            ImageFileEditorState editorState = (ImageFileEditorState)state;
+            ImageFileEditorState editorState = (ImageFileEditorState) state;
             ImageZoomModel zoomModel = imageEditor.getZoomModel();
             imageEditor.setTransparencyChessboardVisible(editorState.backgroundVisible);
             imageEditor.setGridVisible(editorState.gridVisible);
