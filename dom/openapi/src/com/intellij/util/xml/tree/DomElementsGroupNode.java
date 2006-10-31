@@ -15,6 +15,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.awt.*;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
   private DomElement myParentElement;
@@ -54,7 +55,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
 
     if (childrenCount > 0) {
       final SimpleTextAttributes textAttributes =
-        showErrors ? getWavedAttributes(SimpleTextAttributes.STYLE_BOLD) : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        showErrors ? getWavedAttributes(SimpleTextAttributes.STYLE_BOLD) :  new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
 
       addColoredFragment(getNodeName(), textAttributes);
       addColoredFragment(" (" + childrenCount + ')', showErrors ? IdeBundle.message("dom.elements.tree.childs.contain.errors") : null,
@@ -69,7 +70,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     for (DomElement domElement : myChildDescription.getStableValues(myParentElement)) {
       final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(getProject());
       final DomElementsProblemsHolder holder = annotationsManager.getCachedProblemHolder(domElement);
-      final List<DomElementProblemDescriptor> problems = holder.getProblems(domElement, true, true, HighlightSeverity.ERROR);
+      final List<DomElementProblemDescriptor> problems = holder.getProblems(domElement, true, HighlightSeverity.ERROR);
       if (problems.size() > 0) return true;
     }
 
