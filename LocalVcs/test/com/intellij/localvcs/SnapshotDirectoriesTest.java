@@ -45,7 +45,11 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
 
   @Test
   public void testCreatingChildredForFileThrowsException() {
-    //todo
+    s.doCreateFile(p("file"), null);
+    try {
+      s.doCreateFile(p("file/child"), null);
+      fail();
+    } catch (LocalVcsException e) {}
   }
 
   @Test
@@ -138,6 +142,18 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
 
     assertTrue(s.hasEntry(p("dir1/new dir")));
     assertTrue(s.hasEntry(p("dir1/new dir/file")));
+  }
+
+  @Test
+  public void testRenamingDirectoryToExistingFileNameThrowsException() {
+    s.doCreateDirectory(p("dir1"));
+    s.doCreateDirectory(p("dir1/dir2"));
+    s.doCreateFile(p("dir1/file"), null);
+
+    try {
+      s.doRename(p("dir1/dir2"), "file");
+      fail();
+    } catch (LocalVcsException e) {}
   }
 
   @Test

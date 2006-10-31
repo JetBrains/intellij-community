@@ -38,6 +38,10 @@ public abstract class Entry {
     myParent = parent;
   }
 
+  public Boolean isDirectory() {
+    return false;
+  }
+
   public void addChild(Entry child) {
     throw new UnsupportedOperationException();
   }

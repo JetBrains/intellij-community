@@ -11,6 +11,11 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
+  public Boolean isDirectory() {
+    return true;
+  }
+
+  @Override
   public void addChild(Entry child) {
     myChildren.add(child);
     child.setParent(this);
