@@ -17,6 +17,10 @@ public abstract class Entry {
     return myObjectId;
   }
 
+  public String getName() {
+    return myName;
+  }
+
   public Path getPath() {
     if (!hasParent()) return new Path(myName);
     return myParent.getPath().appendedWith(myName);

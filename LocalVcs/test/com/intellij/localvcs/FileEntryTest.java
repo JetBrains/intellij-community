@@ -29,7 +29,7 @@ public class FileEntryTest extends TestCase {
     Entry copy = file.copy();
 
     assertEquals(33, copy.getObjectId());
-    assertEquals(p("name"), copy.getPath());
+    assertEquals("name", copy.getName());
     assertEquals("content", copy.getContent());
   }
 
@@ -54,7 +54,7 @@ public class FileEntryTest extends TestCase {
     Entry renamed = file.renamed("new name");
 
     assertEquals(33, renamed.getObjectId());
-    assertEquals(p("new name"), renamed.getPath());
+    assertEquals("new name", renamed.getName());
     assertEquals("content", renamed.getContent());
 
     assertNull(renamed.getParent());

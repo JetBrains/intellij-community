@@ -14,6 +14,17 @@ public class DeleteChange implements Change {
   }
 
   public void revertOn(Snapshot snapshot) {
-    snapshot.doCreateFile(myPath, myPreviousEntry.getContent());
+    restoreEntryRecursively(snapshot, myPreviousEntry, myPath);
+  }
+
+  private void restoreEntryRecursively(Snapshot s, Entry e, Path p) {
+    if (e.isDirectory()) {
+      s.doCreateDirectory(p);
+      for (Entry child : e.getChildren()) {
+        restoreEntryRecursively(s, child, p.appendedWith(child.getName()));
+      }
+    } else {
+      s.doCreateFile(p, e.getContent());
+    }
   }
 }
