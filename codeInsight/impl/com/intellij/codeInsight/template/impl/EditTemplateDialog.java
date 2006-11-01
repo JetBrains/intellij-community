@@ -4,10 +4,6 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
-import com.intellij.openapi.command.undo.NonUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -70,7 +66,7 @@ public class EditTemplateDialog extends DialogWrapper {
     myKeyField=new JTextField();
     myDescription=new JTextField();
     myGroupCombo=new ComboBox(-1);
-    myTemplateEditor = TemplateEditorUtil.createEditor(false);
+    myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString());
 
     init();
     reset();
@@ -392,15 +388,6 @@ public class EditTemplateDialog extends DialogWrapper {
             public void run() {
               final Document document = myTemplateEditor.getDocument();
               document.replaceString(0, document.getTextLength(), myTemplate.getString());
-              UndoManager.getGlobalInstance().undoableActionPerformed(new NonUndoableAction() {
-                public DocumentReference[] getAffectedDocuments() {
-                  return new DocumentReference[] {DocumentReferenceByDocument.createDocumentReference(document)};
-                }
-
-                public boolean isComplex() {
-                  return false;
-                }
-              });
             }
           });
         }
@@ -557,7 +544,7 @@ public class EditTemplateDialog extends DialogWrapper {
     myVariables = parsedVariables;
   }
 
-  public static void parseVariables(CharSequence text, ArrayList variables) {
+  private static void parseVariables(CharSequence text, ArrayList variables) {
     TemplateImplUtil.parseVariables(
       text,
       variables,

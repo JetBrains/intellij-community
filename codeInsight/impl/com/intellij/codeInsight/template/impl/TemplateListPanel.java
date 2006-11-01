@@ -162,7 +162,7 @@ class TemplateListPanel extends JPanel {
 
     JPanel textPanel = new JPanel(new BorderLayout());
     textPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    myEditor = TemplateEditorUtil.createEditor(true);
+    myEditor = TemplateEditorUtil.createEditor(true, "");
     textPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
     textPanel.add(createExpandByPanel(), BorderLayout.SOUTH);
     textPanel.setPreferredSize(new Dimension(100, myEditor.getLineHeight() * 12));

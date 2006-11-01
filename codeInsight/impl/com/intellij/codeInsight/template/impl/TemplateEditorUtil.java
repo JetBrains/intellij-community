@@ -22,9 +22,9 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 public class TemplateEditorUtil {
-  public static Editor createEditor(boolean isReadOnly) {
+  public static Editor createEditor(boolean isReadOnly, final CharSequence text) {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document doc = editorFactory.createDocument("");
+    Document doc = editorFactory.createDocument(text);
     Editor editor = (isReadOnly ? editorFactory.createViewer(doc) : editorFactory.createEditor(doc));
 
     EditorSettings editorSettings = editor.getSettings();
