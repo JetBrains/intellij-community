@@ -832,13 +832,17 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
     final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
     initializeTools(scope, usedTools, localTools);
-    final Set<InspectionTool> tools = usedTools.get(DeadCodeInspection.SHORT_NAME);
-    if (tools != null) {
-      processGlobalTools(tools, scope, manager, needRepeatSearchRequest); //need to initialize entry points first
+    final Set<Pair<InspectionTool, InspectionProfile>> deadCodeTools = myTools.get(DeadCodeInspection.SHORT_NAME);
+    if (deadCodeTools != null) {
+      for (Pair<InspectionTool, InspectionProfile> deadCodeTool : deadCodeTools) {
+        processGlobalTool(deadCodeTool.first, scope, manager, needRepeatSearchRequest); //need to initialize entry points first
+      }
     }
-    for (String toolName : usedTools.keySet()) {
-      if (!Comparing.strEqual(toolName, DeadCodeInspection.SHORT_NAME)) {
-        processGlobalTools(usedTools.get(toolName), scope, manager, needRepeatSearchRequest);
+    for (Set<InspectionTool> tools : usedTools.values()) {
+      for (InspectionTool tool : tools) {
+        if (!Comparing.strEqual(tool.getShortName(), DeadCodeInspection.SHORT_NAME)) {
+          processGlobalTool(tool, scope, manager, needRepeatSearchRequest);
+        }
       }
     }
     performPostRunFindUsages(needRepeatSearchRequest, manager);
@@ -883,27 +887,26 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private static void processGlobalTools(@NotNull final Set<InspectionTool> tools, 
+  private static void processGlobalTool(final InspectionTool tool,
                                          final AnalysisScope scope,
                                          final InspectionManager manager,
                                          final List<InspectionTool> needRepeatSearchRequest) {
-    for (InspectionTool tool : tools) {
-      try {
-        if (tool.isGraphNeeded()) {
-          ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
-        }
-        tool.runInspection(scope, manager);
-        if (tool.queryExternalUsagesRequests(manager)) {
-          needRepeatSearchRequest.add(tool);
-        }
+    try {
+      if (tool.isGraphNeeded()) {
+        ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
       }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
+      tool.runInspection(scope, manager);
+      if (tool.queryExternalUsagesRequests(manager)) {
+        needRepeatSearchRequest.add(tool);
       }
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+
   }
 
   private void initializeTools(AnalysisScope scope, Map<String, Set<InspectionTool>> tools, Map<String, Set<InspectionTool>> localTools) {
