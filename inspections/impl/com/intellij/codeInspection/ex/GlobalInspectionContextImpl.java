@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -785,14 +784,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             runTools(needRepeatSearchRequest, scope, manager);
           }
           catch (ProcessCanceledException e) {
-            ((InspectionManagerEx)manager).closeRunningContext(GlobalInspectionContextImpl.this);
-            for (Set<Pair<InspectionTool, InspectionProfile>> tools : myTools.values()) {
-              for (Pair<InspectionTool, InspectionProfile> tool : tools) {
-                tool.first.finalCleanup();
-              }
-            }
-            myTools.clear();
-            cleanup();
+            cleanup((InspectionManagerEx)manager);
             throw e;
           } catch (Exception e){
             LOG.error(e);
@@ -832,16 +824,22 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
     final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
     initializeTools(scope, usedTools, localTools);
-    final Set<Pair<InspectionTool, InspectionProfile>> deadCodeTools = myTools.get(DeadCodeInspection.SHORT_NAME);
-    if (deadCodeTools != null) {
-      for (Pair<InspectionTool, InspectionProfile> deadCodeTool : deadCodeTools) {
-        processGlobalTool(deadCodeTool.first, scope, manager, needRepeatSearchRequest); //need to initialize entry points first
-      }
-    }
     for (Set<InspectionTool> tools : usedTools.values()) {
       for (InspectionTool tool : tools) {
-        if (!Comparing.strEqual(tool.getShortName(), DeadCodeInspection.SHORT_NAME)) {
-          processGlobalTool(tool, scope, manager, needRepeatSearchRequest);
+        try {
+          if (tool.isGraphNeeded()) {
+            ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
+          }
+          tool.runInspection(scope, manager);
+          if (tool.queryExternalUsagesRequests(manager)) {
+            needRepeatSearchRequest.add(tool);
+          }
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }
@@ -887,28 +885,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private static void processGlobalTool(final InspectionTool tool,
-                                         final AnalysisScope scope,
-                                         final InspectionManager manager,
-                                         final List<InspectionTool> needRepeatSearchRequest) {
-    try {
-      if (tool.isGraphNeeded()) {
-        ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
-      }
-      tool.runInspection(scope, manager);
-      if (tool.queryExternalUsagesRequests(manager)) {
-        needRepeatSearchRequest.add(tool);
-      }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-
-  }
-
   private void initializeTools(AnalysisScope scope, Map<String, Set<InspectionTool>> tools, Map<String, Set<InspectionTool>> localTools) {
     myJobDescriptors = new ArrayList<JobDescriptor>();
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
@@ -937,7 +913,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                                    final Map<String, Set<InspectionTool>> tools,
                                    final Map<String, Set<InspectionTool>> localTools) {
     final InspectionTool[] usedTools = inspectionProfile.getInspectionTools();
-    final Set<InspectionTool> profileTools = new HashSet<InspectionTool>();
+    final Set<InspectionTool> profileTools = new TreeSet<InspectionTool>(new Comparator<InspectionTool>() {
+      public int compare(final InspectionTool tool1, final InspectionTool tool2) {
+        if (tool1.getShortName().equals(DeadCodeInspection.SHORT_NAME)) return -1;
+        if (tool2.getShortName().equals(DeadCodeInspection.SHORT_NAME)) return 1;
+        return tool1.getShortName().compareTo(tool2.getShortName());
+      }
+    });
     tools.put(inspectionProfile.getName(), profileTools);
     final HashSet<InspectionTool> localProfileTools = new HashSet<InspectionTool>();
     localTools.put(inspectionProfile.getName(), localProfileTools);
@@ -981,16 +963,20 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   public void close(boolean noSuspisiousCodeFound) {
     if (!noSuspisiousCodeFound && (myView == null || myView.isRerun())) return;
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-    managerEx.closeRunningContext(this);
+    cleanup(managerEx);
     managerEx.getUIOptions().save(myUIOptions);
     getContentManager().removeContent(myContent);
+    myView = null;
+  }
+
+  private void cleanup(final InspectionManagerEx managerEx) {
+    managerEx.closeRunningContext(this);
     for (Set<Pair<InspectionTool, InspectionProfile>> tools : myTools.values()) {
       for (Pair<InspectionTool, InspectionProfile> tool : tools) {
         tool.first.finalCleanup();
       }
     }
     cleanup();
-    myView = null;
   }
 
   public void refreshViews() {
