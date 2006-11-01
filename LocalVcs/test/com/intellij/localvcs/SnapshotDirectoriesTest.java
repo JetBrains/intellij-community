@@ -17,7 +17,7 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
   }
 
   @Test
-  public void testFilesUnderDirectory() {
+  public void testCreatingFilesUnderDirectory() {
     s.doCreateDirectory(p("dir"));
     s.doCreateFile(p("dir/file"), "");
 
@@ -55,7 +55,7 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
   }
 
   @Test
-  public void teateCreateingDirectoryWithExistedNameThrowsException() {
+  public void testCreateingDirectoryWithExistedNameThrowsException() {
     s.doCreateFile(p("name1"), null);
     s.doCreateDirectory(p("name2"));
 
@@ -68,54 +68,6 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
       s.doCreateDirectory(p("name2"));
       fail();
     } catch (LocalVcsException e) {}
-  }
-
-  @Test
-  public void testDeletingDirectory() {
-    s.doCreateDirectory(p("dir"));
-    assertTrue(s.hasEntry(p("dir")));
-
-    s.doDelete(p("dir"));
-    assertFalse(s.hasEntry(p("dir")));
-  }
-
-  @Test
-  public void testDeletingSubdirectory() {
-    s.doCreateDirectory(p("dir1"));
-    s.doCreateDirectory(p("dir1/dir2"));
-
-    assertTrue(s.hasEntry(p("dir1")));
-    assertTrue(s.hasEntry(p("dir1/dir2")));
-
-    s.doDelete(p("dir1/dir2"));
-    assertFalse(s.hasEntry(p("dir1/dir2")));
-
-    assertTrue(s.hasEntry(p("dir1")));
-  }
-
-  @Test
-  public void testDeletingDirectoryWithContent() {
-    s.doCreateDirectory(p("dir1"));
-    s.doCreateDirectory(p("dir1/dir2"));
-    s.doDelete(p("dir1"));
-
-    assertFalse(s.hasEntry(p("dir1/dir2")));
-    assertFalse(s.hasEntry(p("dir1")));
-  }
-
-  @Test
-  public void testDeletingFilesUnderDirectory() {
-    s.doCreateDirectory(p("dir"));
-    s.doCreateFile(p("dir/file"), "");
-    assertTrue(s.hasEntry(p("dir/file")));
-
-    s.doDelete(p("dir/file"));
-    assertFalse(s.hasEntry(p("dir/file")));
-  }
-
-  @Test(expected = LocalVcsException.class)
-  public void testDeletingUnknownDirectoryThrowsException() {
-    s.doDelete(p("unknown dir"));
   }
 
   @Test
@@ -279,6 +231,54 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
     s.doMove(p("dir/file"), p("dir"));
 
     assertTrue(s.hasEntry(p("dir/file")));
+  }
+
+  @Test
+  public void testDeletingDirectory() {
+    s.doCreateDirectory(p("dir"));
+    assertTrue(s.hasEntry(p("dir")));
+
+    s.doDelete(p("dir"));
+    assertFalse(s.hasEntry(p("dir")));
+  }
+
+  @Test
+  public void testDeletingSubdirectory() {
+    s.doCreateDirectory(p("dir1"));
+    s.doCreateDirectory(p("dir1/dir2"));
+
+    assertTrue(s.hasEntry(p("dir1")));
+    assertTrue(s.hasEntry(p("dir1/dir2")));
+
+    s.doDelete(p("dir1/dir2"));
+    assertFalse(s.hasEntry(p("dir1/dir2")));
+
+    assertTrue(s.hasEntry(p("dir1")));
+  }
+
+  @Test
+  public void testDeletingDirectoryWithContent() {
+    s.doCreateDirectory(p("dir1"));
+    s.doCreateDirectory(p("dir1/dir2"));
+    s.doDelete(p("dir1"));
+
+    assertFalse(s.hasEntry(p("dir1/dir2")));
+    assertFalse(s.hasEntry(p("dir1")));
+  }
+
+  @Test
+  public void testDeletingFilesUnderDirectory() {
+    s.doCreateDirectory(p("dir"));
+    s.doCreateFile(p("dir/file"), "");
+    assertTrue(s.hasEntry(p("dir/file")));
+
+    s.doDelete(p("dir/file"));
+    assertFalse(s.hasEntry(p("dir/file")));
+  }
+
+  @Test(expected = LocalVcsException.class)
+  public void testDeletingUnknownDirectoryThrowsException() {
+    s.doDelete(p("unknown dir"));
   }
 
   @Test
