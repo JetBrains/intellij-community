@@ -7,6 +7,8 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class LeafElement extends TreeElement {
   private volatile int myState = 0; // 16 bit for type, 15 bit for state and 1 bit for parentFlag
@@ -79,6 +81,16 @@ public abstract class LeafElement extends TreeElement {
   public abstract CharSequence getInternedText();
 
   public ASTNode findChildByType(IElementType type) {
+    return null;
+  }
+
+  @Nullable
+  public ASTNode findChildByType(@NotNull TokenSet typesSet) {
+    return null;
+  }
+
+  @Nullable
+  public ASTNode findChildByType(@NotNull TokenSet typesSet, @Nullable ASTNode anchor) {
     return null;
   }
 

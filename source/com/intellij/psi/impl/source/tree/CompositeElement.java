@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CompositeElement extends TreeElement implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
@@ -179,7 +180,15 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return TreeUtil.findChild(this, type);
   }
 
+  @Nullable
+  public ASTNode findChildByType(@NotNull TokenSet typesSet) {
+    return TreeUtil.findChild(this, typesSet);
+  }
 
+  @Nullable
+  public ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
+    return TreeUtil.findSibling(anchor, typesSet);
+  }
 
   public String getText() {
     synchronized (PsiLock.LOCK) {

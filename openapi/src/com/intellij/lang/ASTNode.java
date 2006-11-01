@@ -237,6 +237,25 @@ public interface ASTNode extends UserDataHolder {
   @Nullable
   ASTNode findChildByType(IElementType type);
 
+   /**
+   * Returns the first child of the specified node which has type from specified set.
+   *
+   * @param typesSet the token set used to filter the returned children.
+   * @return the found node, or null if none was found.
+   */
+  @Nullable
+  ASTNode findChildByType(@NotNull TokenSet typesSet);
+
+  /**
+   * Returns the first child after anchor of the specified node which has type from specified set.
+   *
+   * @param typesSet the token set used to filter the returned children.
+   * @param anchor to start search from
+   * @return the found node, or null if none was found.
+   */
+  @Nullable
+  ASTNode findChildByType(@NotNull TokenSet typesSet, @Nullable ASTNode anchor);
+
   /**
    * Returns the PSI element for this node.
    *
