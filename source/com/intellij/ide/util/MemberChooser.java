@@ -264,7 +264,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
       @Nullable
       public String convert(TreePath path) {
         final MemberChooserObject delegate = ((ElementNode)path.getLastPathComponent()).getDelegate();
-        return delegate instanceof ClassMember ? null : delegate.getText();
+        return delegate.getText();
       }
     });
     myTree.addMouseListener(
