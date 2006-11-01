@@ -47,7 +47,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
   private PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
   private String myLastProjectLocation;
-  private boolean myUseCyclicBuffer;
+  private boolean myUseCyclicBuffer = true;
   private boolean mySearchInBackground;
   private int myCyclicBufferSize = 1024*1024; //1Mb
   private boolean myConfirmExit = true;
