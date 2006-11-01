@@ -48,7 +48,7 @@ public class DirectoryEntryTest extends TestCase {
   }
 
   @Test
-  public void testFindingRevisionInTree() {
+  public void testFindingEntriesInTree() {
     Entry root = new DirectoryEntry(null, "root");
     Entry dir = new DirectoryEntry(null, "dir");
     Entry file1 = new FileEntry(null, "file1", null);
@@ -65,7 +65,7 @@ public class DirectoryEntryTest extends TestCase {
   }
 
   @Test
-  public void testDoesNotFindUnknownRevision() {
+  public void testDoesNotFindUnknownEntry() {
     Entry root = new DirectoryEntry(null, "root");
     Entry dir = new DirectoryEntry(null, "dir");
     Entry file = new FileEntry(null, "file", null);

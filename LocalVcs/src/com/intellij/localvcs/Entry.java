@@ -59,27 +59,14 @@ public abstract class Entry {
   }
 
   public Entry findEntry(Path path) {
-    final Path finalPath = path;
-    return findEntry(new Matcher() {
-      @Override
-      public boolean matches(Entry entry) {
-        // todo optimize it
-        return entry.getPath().equals(finalPath);
-      }
-    });
+    return findEntry(new PathMatcher(path));
   }
 
   public Entry findEntry(Integer id) {
-    final Integer finalId = id;
-    return findEntry(new Matcher() {
-      @Override
-      public boolean matches(Entry entry) {
-        return entry.myObjectId.equals(finalId);
-      }
-    });
+    return findEntry(new IdMatcher(id));
   }
 
-  protected Entry findEntry(Matcher m) {
+  public Entry findEntry(Matcher m) {
     return m.matches(this) ? this : null;
   }
 
@@ -110,7 +97,25 @@ public abstract class Entry {
     throw new UnsupportedOperationException();
   }
 
-  protected abstract class Matcher {
-    public boolean matches(Entry entry) { return true; }
+  // todo make them all private by replacing clients with RootEntry 
+  public interface Matcher {
+    boolean matches(Entry entry);
+  }
+
+  public static class PathMatcher implements Matcher {
+    // todo optimize it
+    private Path myPath;
+
+    public PathMatcher(Path p) { myPath = p; }
+
+    public boolean matches(Entry e) { return e.getPath().equals(myPath); }
+  }
+
+  public static class IdMatcher implements Matcher {
+    private Integer myId;
+
+    public IdMatcher(Integer id) { myId = id; }
+
+    public boolean matches(Entry e) { return e.myObjectId.equals(myId); }
   }
 }
