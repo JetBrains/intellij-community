@@ -186,13 +186,15 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         final RefactoringElementListener elementListener = getTransaction().getElementListener(member);
         ChangeContextUtil.encodeContextInfo(member, true);
         final PsiMember memberCopy = (PsiMember)member.copy();
-        final PsiModifierList list = memberCopy.getModifierList();
-        assert list != null;
 
-        //might need to make modifiers explicit, see IDEADEv-11416
-        list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
-        list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
-        RefactoringUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
+        if (member.getContainingClass().isInterface() && !myTargetClass.isInterface()) {
+          //might need to make modifiers explicit, see IDEADEV-11416
+          final PsiModifierList list = memberCopy.getModifierList();
+          assert list != null;
+          list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
+          list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
+          RefactoringUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
+        }
 
         ArrayList<PsiReference> refsToBeRebind = new ArrayList<PsiReference>();
         for (Iterator<MyUsageInfo> iterator = otherUsages.iterator(); iterator.hasNext();) {
