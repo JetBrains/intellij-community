@@ -8,6 +8,7 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -245,23 +247,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     myFieldUsagesRequests = null;
     myClassUsagesRequests = null;
 
-    myTools.clear();
-    final InspectionProfile profile = myExternalProfile;
-    if (profile == null) {
-      if (myCurrentScope != null) {
-        final Set<String> profiles = myCurrentScope.getActiveInspectionProfiles();
-        InspectionProjectProfileManager inspectionProfileManager = InspectionProjectProfileManager.getInstance(myProject);
-        for (String profileName : profiles) {
-          ((InspectionProfile)inspectionProfileManager.getProfile(profileName)).cleanup();
-        }
-      }
-    } else {
-      final InspectionProfileWrapper profileWrapper =
-        InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(profile.getName());
-      if (profileWrapper != null) {  //not offline inspections 
-        profileWrapper.getInspectionProfile().cleanup();
+    for (Set<Pair<InspectionTool, InspectionProfile>> tools : myTools.values()) {
+      for (Pair<InspectionTool, InspectionProfile> pair : tools) {
+        pair.first.cleanup();
       }
     }
+    myTools.clear();
 
     EntryPointsManager.getInstance(getProject()).cleanup();
 
@@ -794,6 +785,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             runTools(needRepeatSearchRequest, scope, manager);
           }
           catch (ProcessCanceledException e) {
+            ((InspectionManagerEx)manager).closeRunningContext(GlobalInspectionContextImpl.this);
+            for (Set<Pair<InspectionTool, InspectionProfile>> tools : myTools.values()) {
+              for (Pair<InspectionTool, InspectionProfile> tool : tools) {
+                tool.first.finalCleanup();
+              }
+            }
+            myTools.clear();
             cleanup();
             throw e;
           } catch (Exception e){
@@ -834,23 +832,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
     final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
     initializeTools(scope, usedTools, localTools);
-    for (Set<InspectionTool> tools : usedTools.values()) {
-      for (InspectionTool tool : tools) {
-        try {
-          if (tool.isGraphNeeded()) {
-            ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
-          }
-          tool.runInspection(scope, manager);
-          if (tool.queryExternalUsagesRequests(manager)) {
-            needRepeatSearchRequest.add(tool);
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    final Set<InspectionTool> tools = usedTools.get(DeadCodeInspection.SHORT_NAME);
+    if (tools != null) {
+      processGlobalTools(tools, scope, manager, needRepeatSearchRequest); //need to initialize entry points first
+    }
+    for (String toolName : usedTools.keySet()) {
+      if (!Comparing.strEqual(toolName, DeadCodeInspection.SHORT_NAME)) {
+        processGlobalTools(usedTools.get(toolName), scope, manager, needRepeatSearchRequest);
       }
     }
     performPostRunFindUsages(needRepeatSearchRequest, manager);
@@ -892,6 +880,29 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           psiManager.dropResolveCaches();
         }
       });
+    }
+  }
+
+  private static void processGlobalTools(@NotNull final Set<InspectionTool> tools, 
+                                         final AnalysisScope scope,
+                                         final InspectionManager manager,
+                                         final List<InspectionTool> needRepeatSearchRequest) {
+    for (InspectionTool tool : tools) {
+      try {
+        if (tool.isGraphNeeded()) {
+          ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
+        }
+        tool.runInspection(scope, manager);
+        if (tool.queryExternalUsagesRequests(manager)) {
+          needRepeatSearchRequest.add(tool);
+        }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 
