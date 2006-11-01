@@ -6,14 +6,13 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class VcsGeneralConfigurationPanel {
 
@@ -189,7 +188,7 @@ public class VcsGeneralConfigurationPanel {
     selectInGroup(myOnFileRemovingGroup, getRemoveConfirmation());
   }
 
-  private void selectInGroup(final JRadioButton[] group, final VcsShowConfirmationOption confirmation) {
+  private static void selectInGroup(final JRadioButton[] group, final VcsShowConfirmationOption confirmation) {
     final VcsShowConfirmationOption.Value value = confirmation.getValue();
     final int index;
     switch(value) {
@@ -226,15 +225,13 @@ public class VcsGeneralConfigurationPanel {
       myRemoveConfirmationPanel.setToolTipText(
         VcsBundle.message("tooltip.text.action.applicable.to.vcses", composeText(removeConfirmation.getApplicableVcses())));
     }
-
   }
 
-  private String composeText(final List<AbstractVcs> applicableVcses) {
-    final StringBuffer result = new StringBuffer();
+  private static String composeText(final List<AbstractVcs> applicableVcses) {
+    final TreeSet<String> result = new TreeSet<String>();
     for (AbstractVcs abstractVcs : applicableVcses) {
-      if (result.length() > 0) result.append(", ");
-      result.append(abstractVcs.getDisplayName());
+      result.add(abstractVcs.getDisplayName());
     }
-    return result.toString();
+    return StringUtil.join(result, ", ");
   }
 }
