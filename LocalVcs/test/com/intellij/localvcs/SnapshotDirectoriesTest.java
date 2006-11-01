@@ -92,6 +92,18 @@ public class SnapshotDirectoriesTest extends TestCase {
   }
 
   @Test
+  public void testRenamingFilesUnderDirectoryToExistingNameThrowsException() {
+    s.doCreateDirectory(p("dir"));
+    s.doCreateFile(p("dir/file1"), null);
+    s.doCreateFile(p("dir/file2"), null);
+
+    try {
+      s.doRename(p("dir/file1"), "file2");
+      fail();
+    } catch (LocalVcsException e) { }
+  }
+
+  @Test
   public void testRenamingSubdirectories() {
     s.doCreateDirectory(p("dir1"));
     s.doCreateDirectory(p("dir1/dir2"));
