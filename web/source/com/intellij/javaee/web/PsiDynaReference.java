@@ -49,9 +49,21 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
 
   public TextRange getRangeInElement(){
-    final PsiReference chosenRef = chooseReference();
-    TextRange rangeInElement = chosenRef.getRangeInElement();
-    PsiElement element = chosenRef.getElement();
+    final TextRange range = myReferences.get(0).getRangeInElement();
+    int start = range.getStartOffset();
+    int end = range.getEndOffset();
+    for (int i = 1; i < myReferences.size(); i++) {
+      PsiReference reference = myReferences.get(i);
+      final TextRange textRange = getRange(reference);
+      start = Math.min(start, textRange.getStartOffset());
+      end = Math.max(end, textRange.getEndOffset());
+    }
+    return new TextRange(start, end);
+  }
+
+  private TextRange getRange(PsiReference reference) {
+    TextRange rangeInElement = reference.getRangeInElement();
+    PsiElement element = reference.getElement();
     while(element != myElement) {
       rangeInElement = rangeInElement.shiftRight(element.getStartOffsetInParent());
       element = element.getParent();
@@ -92,8 +104,8 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
       case 1:
         return myReferences.get(0).getVariants();
       default:
-        int minOffset = chooseReference().getRangeInElement().getStartOffset();
-        final String text = myReferences.get(0).getElement().getText();
+        int minOffset = getRangeInElement().getStartOffset();
+        final String text = myElement.getText();
         List<Object> variants = new ArrayList<Object>();
         for(PsiReference ref: myReferences) {
           final int startOffset = ref.getRangeInElement().getStartOffset();
