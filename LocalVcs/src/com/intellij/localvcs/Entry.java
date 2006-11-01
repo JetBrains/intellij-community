@@ -108,7 +108,7 @@ public abstract class Entry {
 
     public PathMatcher(Path p) { myPath = p; }
 
-    public boolean matches(Entry e) { return e.getPath().equals(myPath); }
+    public boolean matches(Entry e) { return myPath.equals(e.getPath()); }
   }
 
   public static class IdMatcher implements Matcher {
@@ -116,6 +116,6 @@ public abstract class Entry {
 
     public IdMatcher(Integer id) { myId = id; }
 
-    public boolean matches(Entry e) { return e.myObjectId.equals(myId); }
+    public boolean matches(Entry e) { return myId.equals(e.myObjectId); }
   }
 }

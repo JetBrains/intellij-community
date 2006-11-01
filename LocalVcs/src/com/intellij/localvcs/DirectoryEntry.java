@@ -28,7 +28,12 @@ public class DirectoryEntry extends Entry {
   @Override
   public void removeChild(Entry child) {
     // todo should we remove child by equality or by identity?
-    ListUtil.identityRemove(myChildren, child);
+    for (int i = 0; i < myChildren.size(); i++) {
+      if (myChildren.get(i) == child) {
+        myChildren.remove(i);
+        break;
+      }
+    }
     child.setParent(null);
   }
 
@@ -52,10 +57,14 @@ public class DirectoryEntry extends Entry {
   }
 
   public Entry copy() {
-    DirectoryEntry result = new DirectoryEntry(myObjectId, myName);
+    Entry result = copyEntry();
     for (Entry child : myChildren) {
       result.addChild(child.copy());
     }
     return result;
+  }
+
+  protected Entry copyEntry() {
+    return new DirectoryEntry(myObjectId, myName);
   }
 }

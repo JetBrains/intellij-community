@@ -8,4 +8,9 @@ public class RootEntry extends DirectoryEntry {
   protected Path getPathAppendedWith(String name) {
     return new Path(name);
   }
+
+  @Override
+  protected Entry copyEntry() {
+    return new RootEntry();
+  }
 }

@@ -29,6 +29,7 @@ public class RootEntryTest extends TestCase {
   public void testCopying() {
     Entry copy = root.copy();
 
+    assertEquals(RootEntry.class, copy.getClass());
     assertEquals(1, copy.getChildren().size());
 
     assertNotSame(child, copy.getChildren().get(0));
