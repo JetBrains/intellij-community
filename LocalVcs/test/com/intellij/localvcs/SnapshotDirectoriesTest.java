@@ -69,6 +69,16 @@ public class SnapshotDirectoriesTest extends TestCase {
   }
 
   @Test
+  public void testChangingFileContentUnderDirectory() {
+    s.doCreateDirectory(p("dir"));
+    s.doCreateFile(p("dir/file"), "content");
+
+    s.doChangeFileContent(p("dir/file"), "new content");
+
+    assertEquals("new content", s.getEntry(p("dir/file")).getContent());
+  }
+
+  @Test
   public void testRenamingDirectories() {
     s.doCreateDirectory(p("dir"));
 

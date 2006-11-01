@@ -7,7 +7,7 @@ import java.util.StringTokenizer;
 public class Path {
   // todo support c:/ notation
   private static final String DELIM = "/";
-  private final String myPath;
+  private String myPath;
 
   public Path(String path) {
     myPath = path;

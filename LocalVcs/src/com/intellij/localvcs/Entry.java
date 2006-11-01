@@ -3,7 +3,6 @@ package com.intellij.localvcs;
 import java.util.List;
 
 public abstract class Entry {
-  //todo try to make fields final
   protected Integer myObjectId;
   protected String myName;
   protected DirectoryEntry myParent;
@@ -22,8 +21,9 @@ public abstract class Entry {
   }
 
   public Path getPath() {
+    // try to remove this check
     if (!hasParent()) return new Path(myName);
-    return myParent.getPath().appendedWith(myName);
+    return myParent.getPathAppendedWith(myName);
   }
 
   public String getContent() {

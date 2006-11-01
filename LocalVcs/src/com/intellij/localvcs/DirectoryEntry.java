@@ -10,6 +10,10 @@ public class DirectoryEntry extends Entry {
     super(objectId, name);
   }
 
+  protected Path getPathAppendedWith(String name) {
+    return getPath().appendedWith(name);
+  }
+
   @Override
   public Boolean isDirectory() {
     return true;
