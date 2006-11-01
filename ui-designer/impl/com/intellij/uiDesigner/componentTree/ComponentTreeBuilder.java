@@ -266,6 +266,9 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder{
               else {
                 component.setSelected(true);
               }
+              if (i == 0) {
+                myEditor.scrollComponentInView(component);
+              }
             }
           }
         }

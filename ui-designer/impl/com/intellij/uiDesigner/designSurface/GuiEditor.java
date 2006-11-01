@@ -679,6 +679,11 @@ public final class GuiEditor extends JPanel implements DataProvider {
     return mySelectionLead.getComponent();
   }
 
+  public void scrollComponentInView(final RadComponent component) {
+    Rectangle rect = SwingUtilities.convertRectangle(component.getDelegee().getParent(), component.getBounds(), myLayeredPane);
+    myLayeredPane.scrollRectToVisible(rect);
+  }
+
   public static final class ReplaceInfo {
     private final int myStartOffset;
     private final int myEndOffset;
