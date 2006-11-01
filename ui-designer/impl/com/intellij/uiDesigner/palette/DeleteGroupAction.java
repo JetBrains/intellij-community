@@ -7,7 +7,7 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -19,8 +19,8 @@ import java.util.ArrayList;
  */
 public class DeleteGroupAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-    GroupItem groupToBeRemoved = (GroupItem)e.getDataContext().getData(GroupItem.class.getName());
+    Project project = e.getData(DataKeys.PROJECT);
+    GroupItem groupToBeRemoved = e.getData(GroupItem.DATA_KEY);
     if (groupToBeRemoved == null || project == null) return;
 
     if(!Palette.isRemovable(groupToBeRemoved)){
@@ -39,9 +39,9 @@ public class DeleteGroupAction extends AnAction {
   }
 
   @Override public void update(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
-    ComponentItem selectedItem = (ComponentItem) e.getDataContext().getData(ComponentItem.class.getName());
+    Project project = e.getData(DataKeys.PROJECT);
+    GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
+    ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
     e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly() && selectedItem == null);
   }
 }

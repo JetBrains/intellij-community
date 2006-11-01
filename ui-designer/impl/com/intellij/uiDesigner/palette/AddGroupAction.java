@@ -4,13 +4,13 @@
 
 package com.intellij.uiDesigner.palette;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.CommonBundle;
 
 import java.util.ArrayList;
 
@@ -19,7 +19,7 @@ import java.util.ArrayList;
  */
 public class AddGroupAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = e.getData(DataKeys.PROJECT);
     if (project == null) return;
     // Ask group name
     final String groupName = Messages.showInputDialog(

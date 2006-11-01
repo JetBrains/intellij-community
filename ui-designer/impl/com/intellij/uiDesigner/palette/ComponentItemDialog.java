@@ -1,5 +1,6 @@
 package com.intellij.uiDesigner.palette;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
@@ -9,21 +10,21 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.EditorTextField;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.ImageFileFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.CommonBundle;
+import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,8 +34,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 
 /**
@@ -65,6 +66,7 @@ public final class ComponentItemDialog extends DialogWrapper {
   private JComboBox myGroupComboBox;
   private JLabel myGroupLabel;
   private JCheckBox myIsContainerCheckBox;
+  private JLabel myErrorLabel;
   private EditorTextField myEditorTextField;
   private Document myDocument;
 
@@ -289,15 +291,35 @@ public final class ComponentItemDialog extends DialogWrapper {
   }
 
   private void updateOKAction() {
-    boolean enabled;
+    setOKActionEnabled(isOKEnabled());
+  }
+
+  private boolean isOKEnabled() {
+    myErrorLabel.setText(" ");
     if (myClassRadioButton.isSelected()) {
-      enabled = PsiManager.getInstance(myProject).getNameHelper().isQualifiedName(myDocument.getText());
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      if (!psiManager.getNameHelper().isQualifiedName(myDocument.getText())) {
+        if (myDocument.getTextLength() > 0) {
+          myErrorLabel.setText(UIDesignerBundle.message("add.component.error.qualified.name.required"));
+        }
+        return false;
+      }
+      PsiClass psiClass = psiManager.findClass(myDocument.getText(), myProject.getAllScope());
+      PsiClass componentClass = psiManager.findClass(JComponent.class.getName(), myProject.getAllScope());
+      if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {
+        myErrorLabel.setText(UIDesignerBundle.message("add.component.error.component.required"));
+        return false;
+      }
     }
     else {
-      enabled = myTfNestedForm.getText().length() > 0;
+      if (myTfNestedForm.getText().length() == 0) {
+        return false;
+      }
     }
-    enabled = enabled && (!myGroupComboBox.isVisible() || myGroupComboBox.getSelectedItem() != null);
-    setOKActionEnabled(enabled);
+    if (myGroupComboBox.isVisible() && myGroupComboBox.getSelectedItem() == null) {
+      return false;
+    }
+    return true;
   }
 
   private static String getClassOrInnerName(final PsiClass aClass) {

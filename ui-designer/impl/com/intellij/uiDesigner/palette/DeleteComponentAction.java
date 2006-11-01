@@ -7,7 +7,7 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -17,9 +17,9 @@ import com.intellij.uiDesigner.UIDesignerBundle;
  */
 public class DeleteComponentAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    ComponentItem selectedItem = (ComponentItem) e.getDataContext().getData(ComponentItem.class.getName());
-    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+    Project project = e.getData(DataKeys.PROJECT);
+    ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
+    GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
     if (project == null || selectedItem == null || groupItem == null) return;
 
     if(!selectedItem.isRemovable()){
@@ -41,9 +41,9 @@ public class DeleteComponentAction extends AnAction {
   }
 
   @Override public void update(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    ComponentItem selectedItem = (ComponentItem) e.getDataContext().getData(ComponentItem.class.getName());
-    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+    Project project = e.getData(DataKeys.PROJECT);
+    ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
+    GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
     e.getPresentation().setEnabled(project != null && selectedItem != null && groupItem != null &&
                                    !selectedItem.isAnyComponent() && selectedItem.isRemovable());
   }
