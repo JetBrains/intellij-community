@@ -16,19 +16,18 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FrameStateManagerImpl extends FrameStateManager implements ApplicationComponent,PropertyChangeListener {
 
-  private ArrayList<FrameStateListener> myListeners = new ArrayList<FrameStateListener>();
+  private CopyOnWriteArrayList<FrameStateListener> myListeners = new CopyOnWriteArrayList<FrameStateListener>();
 
   private boolean myShouldSynchronize;
   private final Alarm mySyncAlarm;
@@ -45,6 +44,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     focusManager.addPropertyChangeListener("focusOwner",this);
   }
 
+  @NotNull
   @NonNls
   public String getComponentName() {
     return "FrameStateManager";
@@ -66,31 +66,26 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
         myShouldSynchronize = false;
         fireActivationEvent();
       }
-      return;
     }
     else{
+      myShouldSynchronize = true;
       mySyncAlarm.cancelAllRequests();
       mySyncAlarm.addRequest(new Runnable() {
         public void run() {
-          myShouldSynchronize = true;
           fireDeactivationEvent();
         }
-      }, 200, ModalityState.NON_MODAL);
+      }, 200);
     }
   }
 
   private void fireDeactivationEvent() {
-    final FrameStateListener[] listeners = myListeners.toArray(new FrameStateListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      FrameStateListener listener = listeners[i];
+    for (FrameStateListener listener : myListeners) {
       listener.onFrameDeactivated();
     }
   }
 
   private void fireActivationEvent() {
-    final FrameStateListener[] listeners = myListeners.toArray(new FrameStateListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      FrameStateListener listener = listeners[i];
+    for (FrameStateListener listener : myListeners) {
       listener.onFrameActivated();
     }
   }
