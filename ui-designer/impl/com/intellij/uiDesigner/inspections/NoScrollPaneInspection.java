@@ -5,16 +5,17 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.actions.SurroundAction;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author yole
@@ -24,6 +25,7 @@ public class NoScrollPaneInspection extends BaseFormInspection {
     super("NoScrollPane");
   }
 
+  @NotNull
   @Override public String getDisplayName() {
     return UIDesignerBundle.message("inspection.no.scroll.pane");
   }
@@ -32,7 +34,7 @@ public class NoScrollPaneInspection extends BaseFormInspection {
     if (FormInspectionUtil.isComponentClass(module, component, Scrollable.class) &&
         !FormInspectionUtil.isComponentClass(module, component, JTextField.class) &&
         !FormInspectionUtil.isComponentClass(module, component.getParentContainer(), JScrollPane.class)) {
-      collector.addError(getID(), null, UIDesignerBundle.message("inspection.no.scroll.pane"),
+      collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.no.scroll.pane"),
                          new EditorQuickFixProvider() {
                            public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                              return new MyQuickFix(editor, component);

@@ -12,12 +12,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.FormHighlightingPass;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.FormHighlightingPass;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class UIFormEditor extends UserDataHolderBase implements FileEditor{
+public final class UIFormEditor extends UserDataHolderBase implements /*Navigatable*/FileEditor {
   private final VirtualFile myFile;
   private final GuiEditor myEditor;
   private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
@@ -140,6 +140,22 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
+
+  /*
+  public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
+    if (navigatable instanceof ComponentNavigatable) {
+      return true;
+    }
+    return (navigatable instanceof OpenFileDescriptor) && (((OpenFileDescriptor)navigatable).getOffset() >= 0 || (
+      ((OpenFileDescriptor)navigatable).getLine() != -1 && ((OpenFileDescriptor)navigatable).getColumn() != -1));
+  }
+
+  public void navigateTo(@NotNull final Navigatable navigatable) {
+    if (navigatable instanceof ComponentNavigatable) {
+      String componentId = ((ComponentNavigatable))
+    }
+  }
+  */
 
   private class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
     private HighlightingPass[] myPasses;

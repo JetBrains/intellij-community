@@ -1,9 +1,9 @@
 package com.intellij.uiDesigner.inspections;
 
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -17,6 +17,7 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,6 +29,7 @@ public class NoLabelForInspection extends BaseFormInspection {
     super("NoLabelFor");
   }
 
+  @NotNull
   @Override public String getDisplayName() {
     return UIDesignerBundle.message("inspection.no.label.for");
   }
@@ -69,7 +71,7 @@ public class NoLabelForInspection extends BaseFormInspection {
         }
       });
       if (!found.get().booleanValue()) {
-        collector.addError(getID(), null, UIDesignerBundle.message("inspection.no.label.for.error"),
+        collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.no.label.for.error"),
                            candidateLabel.isNull() ? null : new EditorQuickFixProvider() {
                              public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                                return new MyQuickFix(editor, component, candidateLabel.get());

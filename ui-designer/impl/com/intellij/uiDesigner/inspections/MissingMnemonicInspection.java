@@ -2,7 +2,6 @@ package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.SupportCode;
@@ -10,6 +9,8 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -21,6 +22,7 @@ public class MissingMnemonicInspection extends BaseFormInspection {
     super("MissingMnemonic");
   }
 
+  @NotNull
   @Override public String getDisplayName() {
     return UIDesignerBundle.message("inspection.missing.mnemonics");
   }
@@ -34,14 +36,14 @@ public class MissingMnemonicInspection extends BaseFormInspection {
     SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
     if (twm.myMnemonicIndex < 0 && twm.myText.length() > 0) {
       if (FormInspectionUtil.isComponentClass(module, component, AbstractButton.class)) {
-        collector.addError(getID(), textProperty,
+        collector.addError(getID(), component, textProperty,
                            UIDesignerBundle.message("inspection.missing.mnemonics.message", value),
                            new MyEditorQuickFixProvider());
       }
       else if (FormInspectionUtil.isComponentClass(module, component, JLabel.class)) {
         IProperty labelForProperty = FormInspectionUtil.findProperty(component, SwingProperties.LABEL_FOR);
         if (labelForProperty != null && !StringUtil.isEmpty((String) labelForProperty.getPropertyValue(component))) {
-          collector.addError(getID(), textProperty,
+          collector.addError(getID(), component, textProperty,
                              UIDesignerBundle.message("inspection.missing.mnemonics.message", value),
                              new MyEditorQuickFixProvider());
         }

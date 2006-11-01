@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -18,6 +19,7 @@ public class OneButtonGroupInspection extends BaseFormInspection {
     super("OneButtonGroup");
   }
 
+  @NotNull
   @Override public String getDisplayName() {
     return UIDesignerBundle.message("inspection.one.button.group");
   }
@@ -34,7 +36,7 @@ public class OneButtonGroupInspection extends BaseFormInspection {
           return;
         }
       }
-      collector.addError(getID(), null, UIDesignerBundle.message("inspection.one.button.group.error"), null);
+      collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.one.button.group.error"), null);
     }
   }
 }

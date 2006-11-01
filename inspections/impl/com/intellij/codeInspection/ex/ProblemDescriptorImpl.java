@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
 
   private ProblemHighlightType myHighlightType;
+  private Navigatable myNavigatable;
   private boolean myAfterEndOfLine;
 
   public ProblemDescriptorImpl(PsiElement startElement, PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine) {
@@ -94,5 +96,13 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     }
     LOG.assertTrue(!isAfterEndOfLine());
     return new TextRange(textRange.getStartOffset(), endElement.getTextRange().getEndOffset());
+  }
+
+  public Navigatable getNavigatable() {
+    return myNavigatable;
+  }
+
+  public void setNavigatable(final Navigatable navigatable) {
+    myNavigatable = navigatable;
   }
 }

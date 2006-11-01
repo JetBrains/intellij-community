@@ -8,6 +8,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +39,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
     return myResults == null ? null : myResults.toArray(new ErrorInfo[myResults.size()]);
   }
 
-  public void addError(final String inspectionId,
-                       @Nullable IProperty prop,
+  public void addError(final String inspectionId, final IComponent component, @Nullable IProperty prop,
                        @NotNull String errorMessage,
                        @Nullable EditorQuickFixProvider editorQuickFixProvider) {
     if (myResults == null) {

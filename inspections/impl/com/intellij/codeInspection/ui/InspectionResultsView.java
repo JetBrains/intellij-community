@@ -119,6 +119,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
       @Nullable
       private Navigatable navigate(final CommonProblemDescriptor descriptor) {
+        if (descriptor instanceof ProblemDescriptorImpl) {
+          Navigatable navigatable = ((ProblemDescriptorImpl) descriptor).getNavigatable();
+          if (navigatable != null) {
+            return navigatable;
+          }
+        }
         final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
         if (psiElement == null || !psiElement.isValid()) return null;
         return getOpenFileDescriptor(psiElement);
@@ -606,6 +612,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
 
       if (DataConstants.NAVIGATABLE.equals(dataId)) {
+        if (problem instanceof ProblemDescriptorImpl) {
+          Navigatable navigatable = ((ProblemDescriptorImpl) problem).getNavigatable();
+          if (navigatable != null) {
+            return navigatable;
+          }
+        }
         final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
         if (virtualFile != null && virtualFile.isValid()) {
           return new OpenFileDescriptor(myProject, virtualFile, psiElement.getTextOffset());
@@ -617,6 +629,12 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
     else if (selectedNode instanceof ProblemDescriptionNode && DataConstants.NAVIGATABLE.equals(dataId)) {
       final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)selectedNode).getDescriptor();
+      if (descriptor instanceof ProblemDescriptorImpl) {
+        Navigatable navigatable = ((ProblemDescriptorImpl) descriptor).getNavigatable();
+        if (navigatable != null) {
+          return navigatable;
+        }
+      }
       PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
       if (psiElement == null || !psiElement.isValid()) return null;
       return new OpenFileDescriptor(myProject, psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());

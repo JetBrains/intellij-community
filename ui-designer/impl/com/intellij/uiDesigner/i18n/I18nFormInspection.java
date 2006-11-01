@@ -78,7 +78,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
         };
       }
 
-      collector.addError(getID(), prop,
+      collector.addError(getID(), component, prop,
                          UIDesignerBundle.message("inspection.i18n.message.in.form", descriptor.getValue()),
                          provider);
     }
