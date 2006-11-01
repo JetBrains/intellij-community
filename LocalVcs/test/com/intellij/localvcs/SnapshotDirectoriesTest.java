@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import org.junit.Test;
 
-public class SnapshotDirectoriesTest extends SnapshotTestCase {
+public class SnapshotDirectoriesTest extends TestCase {
   // todo test boundary conditions and applying/reverting
   // todo should we test boundary conditions at all?
 

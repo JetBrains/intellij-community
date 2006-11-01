@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class LocalVcsBasicsTest extends LocalVcsTestCase {
+public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testOnlyCommitThrowsException() {
     vcs.createFile(p("file"), "");
@@ -49,7 +49,7 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
     vcs.changeFileContent(p("file"), "new content");
 
-    assertRevisionContent("content", vcs.getEntry(p("file")));
+    assertEquals("content", vcs.getEntry(p("file")).getContent());
   }
 
   @Test
@@ -60,11 +60,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.changeFileContent(p("file"), "new content");
     vcs.commit();
 
-    List<Entry> history = vcs.getEntryHistory(p("file"));
-
-    assertEquals(2, history.size());
-    assertEquals("new content", history.get(0).getContent());
-    assertEquals("content", history.get(1).getContent());
+    assertEntiesContents(new String[]{"new content", "content"},
+                         vcs.getEntryHistory(p("file")));
   }
 
   @Test
@@ -94,8 +91,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
     vcs.changeFileContent(p("file"), "new content");
 
-    assertRevisionsContent(new String[]{"content"},
-                           vcs.getEntryHistory(p("file")));
+    assertEntiesContents(new String[]{"content"},
+                         vcs.getEntryHistory(p("file")));
   }
 
   @Test
@@ -144,7 +141,7 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.changeFileContent(p("file"), "new content");
     vcs.commit();
 
-    assertRevisionContent("new content", vcs.getEntry(p("file")));
+    assertEquals("new content", vcs.getEntry(p("file")).getContent());
   }
 
   @Test
@@ -156,8 +153,7 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createFile(p("file"), "new");
     vcs.commit();
 
-    assertRevisionsContent(new String[]{"new"},
-                           vcs.getEntryHistory(p("file")));
+    assertEntiesContents(new String[]{"new"}, vcs.getEntryHistory(p("file")));
   }
 
   @Test
@@ -169,10 +165,10 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createFile(p("file1"), "content2");
     vcs.commit();
 
-    assertRevisionsContent(new String[]{"content1", "content1"},
-                           vcs.getEntryHistory(p("file2")));
+    assertEntiesContents(new String[]{"content1", "content1"},
+                         vcs.getEntryHistory(p("file2")));
 
-    assertRevisionsContent(new String[]{"content2"},
-                           vcs.getEntryHistory(p("file1")));
+    assertEntiesContents(new String[]{"content2"},
+                         vcs.getEntryHistory(p("file1")));
   }
 }
