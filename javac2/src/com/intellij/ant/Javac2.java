@@ -48,7 +48,8 @@ public class Javac2 extends Javac{
     instrumentForms();
 
     //NotNull instrumentation
-    instrumentNotNull(getDestdir());
+    final int instrumented = instrumentNotNull(getDestdir());
+    log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
   }
 
   private void instrumentForms() {
@@ -172,7 +173,8 @@ public class Javac2 extends Javac{
     }
   }
 
-  private void instrumentNotNull(File dir) {
+  private int instrumentNotNull(File dir) {
+    int instrumented = 0;
     final File[] files = dir.listFiles();
     for (int i = 0; i < files.length; i++) {
       File file = files[i];
@@ -192,6 +194,7 @@ public class Javac2 extends Javac{
               final FileOutputStream fileOutputStream = new FileOutputStream(path);
               try {
                 fileOutputStream.write(writer.toByteArray());
+                instrumented++;
               }
               finally {
                 fileOutputStream.close();
@@ -203,12 +206,14 @@ public class Javac2 extends Javac{
           }
         }
         catch (IOException e) {
-          log("Failed to instrument @NotNull assertion: " + e.getMessage(), Project.MSG_WARN);
+          log("Failed to instrument @NotNull assertion for " + path + ": " + e.getMessage(), Project.MSG_WARN);
         }
       } else if (file.isDirectory()) {
-        instrumentNotNull(file);
+        instrumented += instrumentNotNull(file);
       }
     }
+
+    return instrumented;
   }
 
   private static String getInternalClassPath() {
