@@ -5,6 +5,8 @@ import java.util.List;
 import org.junit.Test;
 
 public class LocalVcsBasicsTest extends TestCase {
+  // todo test basic file and directory operations
+
   @Test
   public void testOnlyCommitThrowsException() {
     vcs.createFile(p("file"), "");
