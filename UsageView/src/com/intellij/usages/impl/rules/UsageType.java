@@ -49,7 +49,7 @@ public class UsageType {
 
   private final String myName;
 
-  private UsageType(String name) {
+  public UsageType(String name) {
     myName = name;
   }
 

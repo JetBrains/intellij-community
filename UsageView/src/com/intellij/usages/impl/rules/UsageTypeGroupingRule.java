@@ -65,6 +65,14 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
 
     if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null) { return UsageType.COMMENT_USAGE; }
 
+    UsageTypeProvider[] providers = element.getProject().getComponents(UsageTypeProvider.class);
+    for(UsageTypeProvider provider: providers) {
+      UsageType usageType = provider.getUsageType(element);
+      if (usageType != null) {
+        return usageType;
+      }
+    }
+
     return null;
   }
 

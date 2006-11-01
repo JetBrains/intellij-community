@@ -19,7 +19,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.usages.impl.rules.UsageTypeProvider;
+import com.intellij.usages.impl.rules.UsageType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +33,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class FormReferenceProvider implements PsiReferenceProvider, ProjectComponent {
+public class FormReferenceProvider implements PsiReferenceProvider, ProjectComponent, UsageTypeProvider {
   private static class CachedFormData {
     PsiReference[] myReferences;
     Map<String, Pair<PsiType, TextRange>> myFieldNameToTypeMap;
@@ -338,4 +341,15 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
 
   public void disposeComponent() {
   }
+
+  @Nullable
+  public UsageType getUsageType(PsiElement element) {
+    final PsiFile psiFile = element.getContainingFile();
+    if (psiFile.getFileType() == StdFileTypes.GUI_DESIGNER_FORM) {
+      return FORM_USAGE_TYPE;      
+    }
+    return null;
+  }
+
+  private static final UsageType FORM_USAGE_TYPE = new UsageType(UIDesignerBundle.message("form.usage.type"));
 }
