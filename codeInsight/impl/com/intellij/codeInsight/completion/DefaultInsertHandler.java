@@ -932,13 +932,13 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     chooser.setCopyJavadocVisible(true);
 
     chooser.show();
-    List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
-    if (selectedElements == null || selectedElements.size() == 0) return;
+    List<PsiMethodMember> selected = chooser.getSelectedElements();
+    if (selected == null || selected.size() == 0) return;
 
 
     try{
-      CandidateInfo[] selectedCandidates = (CandidateInfo[])selectedElements.toArray(new CandidateInfo[selectedElements.size()]);
-      final PsiMethod[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selectedCandidates, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
+      PsiMethodMember[] selectedArray = selected.toArray(new PsiMethodMember[selected.size()]);
+      final PsiMethod[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selectedArray, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
 
       for (PsiMethod prototype : prototypes) {
         PsiStatement[] statements = prototype.getBody().getStatements();
