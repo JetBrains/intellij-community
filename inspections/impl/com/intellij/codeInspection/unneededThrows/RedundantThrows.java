@@ -49,6 +49,7 @@ public class RedundantThrows extends GlobalInspectionTool {
                                                 ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
+      if (refMethod.isSyntheticJSP()) return null;
 
       if (refMethod.hasSuperMethods()) return null;
 
