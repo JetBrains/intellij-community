@@ -98,7 +98,8 @@ public class FlowDropLocation implements ComponentDropLocation {
         rc = new Rectangle(minX - myHGap - initialSize.width, lastTop, initialSize.width, maxSize);
       }
       else {
-        rc = new Rectangle(maxX, lastTop, initialSize.width, maxSize);
+        int initialWidth = Math.max(8, Math.min(initialSize.width, myContainer.getBounds().width - maxX));
+        rc = new Rectangle(maxX, lastTop, initialWidth, maxSize);
       }
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
