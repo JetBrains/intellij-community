@@ -58,8 +58,12 @@ public class MakeMethodVarargsIntention extends Intention {
         final Query<PsiReference> query =
                 ReferencesSearch.search(method, method.getUseScope(), false);
         for (PsiReference reference : query) {
+            final PsiElement referenceElement = reference.getElement();
+            if (!(referenceElement instanceof PsiReferenceExpression)) {
+                continue;
+            }
             final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) reference.getElement();
+                    (PsiReferenceExpression)referenceElement;
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)referenceExpression.getParent();
             final PsiExpressionList argumentList =

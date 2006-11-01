@@ -38,7 +38,7 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
         convertVarargsToArray(parameterList);
     }
 
-    private void convertVarargsToArray(PsiParameterList parameterList)
+    private static void convertVarargsToArray(PsiParameterList parameterList)
             throws IncorrectOperationException {
         final PsiParameter[] parameters = parameterList.getParameters();
         if (parameters.length == 0) {
@@ -57,8 +57,12 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
         final int parameterIndex =
                 parameterList.getParameterIndex(lastParameter);
         for (PsiReference reference : query) {
+            final PsiElement referenceElement = reference.getElement();
+            if (!(referenceElement instanceof PsiReferenceExpression)) {
+                continue;
+            }
             final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) reference.getElement();
+                    (PsiReferenceExpression)referenceElement;
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) referenceExpression.getParent();
             modifyCall(methodCallExpression, typeText, parameterIndex);
