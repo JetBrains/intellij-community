@@ -34,13 +34,13 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public Entry findEntry(Path path) {
+  public Entry findEntry(Matcher m) {
     // todo a bit messy
-    Entry result = super.findEntry(path);
+    Entry result = super.findEntry(m);
     if (result != null) return result;
 
     for (Entry child : myChildren) {
-      result = child.findEntry(path);
+      result = child.findEntry(m);
       if (result != null) return result;
     }
 
@@ -54,12 +54,4 @@ public class DirectoryEntry extends Entry {
     }
     return result;
   }
-
-  //public Entry renamed(String newName) {
-  //  DirectoryEntry result = new DirectoryEntry(myObjectId, newName);
-  //  for (Entry child : myChildren) {
-  //    result.addChild(child.renamed(c));
-  //  }
-  //  return result;
-  //}
 }

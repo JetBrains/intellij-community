@@ -1,6 +1,7 @@
 package com.intellij.localvcs;
 
 public class FileEntry extends Entry {
+  // todo change String to ByteArray or something else
   private String myContent;
 
   public FileEntry(Integer objectId, String name, String content) {

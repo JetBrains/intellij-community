@@ -59,8 +59,28 @@ public abstract class Entry {
   }
 
   public Entry findEntry(Path path) {
-    if (path.equals(getPath())) return this;
-    return null;
+    final Path finalPath = path;
+    return findEntry(new Matcher() {
+      @Override
+      public boolean matches(Entry entry) {
+        // todo optimize it
+        return entry.getPath().equals(finalPath);
+      }
+    });
+  }
+
+  public Entry findEntry(Integer id) {
+    final Integer finalId = id;
+    return findEntry(new Matcher() {
+      @Override
+      public boolean matches(Entry entry) {
+        return entry.myObjectId.equals(finalId);
+      }
+    });
+  }
+
+  protected Entry findEntry(Matcher m) {
+    return m.matches(this) ? this : null;
   }
 
   public abstract Entry copy();
@@ -88,5 +108,9 @@ public abstract class Entry {
   @Override
   public int hashCode() {
     throw new UnsupportedOperationException();
+  }
+
+  protected abstract class Matcher {
+    public boolean matches(Entry entry) { return true; }
   }
 }
