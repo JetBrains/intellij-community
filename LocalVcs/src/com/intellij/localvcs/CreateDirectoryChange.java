@@ -1,6 +1,6 @@
 package com.intellij.localvcs;
 
-class CreateDirectoryChange implements Change {
+public class CreateDirectoryChange implements Change {
   private Path myPath;
 
   public CreateDirectoryChange(Path path) {

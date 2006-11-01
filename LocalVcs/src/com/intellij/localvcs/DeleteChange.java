@@ -1,6 +1,6 @@
 package com.intellij.localvcs;
 
-class DeleteChange implements Change {
+public class DeleteChange implements Change {
   private Path myPath;
   private Entry myPreviousEntry;
 

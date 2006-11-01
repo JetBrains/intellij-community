@@ -4,6 +4,8 @@ import org.junit.Test;
 
 public class SnapshotDirectoriesTest extends SnapshotTestCase {
   // todo test boundary conditions and applying/reverting
+  // todo should we test boundary conditions at all?
+
   @Test
   public void testCeatingDirectory() {
     assertFalse(s.hasEntry(p("dir")));
@@ -256,7 +258,28 @@ public class SnapshotDirectoriesTest extends SnapshotTestCase {
     } catch (LocalVcsException e) {}
   }
 
-  // todo add some more 'moving' tests... 
+  @Test
+  public void testMovingEntryToNotADirectoryThrowsException() {
+    s.doCreateFile(p("file1"), null);
+    s.doCreateFile(p("file2"), null);
+
+    try {
+      s.doMove(p("file1"), p("file1/file2"));
+      fail();
+    } catch (LocalVcsException e) {}
+  }
+
+  @Test
+  public void testMovingEntryToSameDirectory() {
+    // todo maybe this test is useless
+
+    s.doCreateDirectory(p("dir"));
+    s.doCreateFile(p("dir/file"), null);
+
+    s.doMove(p("dir/file"), p("dir"));
+
+    assertTrue(s.hasEntry(p("dir/file")));
+  }
 
   @Test
   public void testApplyingAndRevertingDirectoryCreation() {

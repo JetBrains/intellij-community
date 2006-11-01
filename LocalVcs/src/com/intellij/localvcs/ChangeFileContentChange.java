@@ -1,6 +1,6 @@
 package com.intellij.localvcs;
 
-class ChangeFileContentChange implements Change {
+public class ChangeFileContentChange implements Change {
   private Path myPath;
   private String myNewContent;
   private Entry myPreviousEntry;
