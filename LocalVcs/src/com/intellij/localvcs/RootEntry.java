@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 public class RootEntry extends DirectoryEntry {
   public RootEntry() {
-    super(-1, "");
+    super(null, null);
   }
 
   protected Path getPathAppendedWith(String name) {
