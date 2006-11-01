@@ -2,7 +2,7 @@
 <idea-plugin version="2">
   <name>Plugin DevKit</name>
   <id>DevKit</id>
-  <version>1.0</version>  <!-- $Revision$ -->
+  <version>1.0</version>  <!-- $Revision: $ -->
 
   <category>inspection</category>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
