@@ -535,8 +535,8 @@ public class StringUtil {
     if (s.length() == 0) return s;
     if (s.length() == 1) return s.toUpperCase();
 
-    // Per JavaBeans spec, Introspector.decaptalize
-    if (s.length() > 1 && Character.isUpperCase(s.charAt(0)) && Character.isUpperCase(s.charAt(1))) return s;
+    // Optimization
+    if (Character.isUpperCase(s.charAt(0)) ) return s;
     return Character.toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
