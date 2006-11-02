@@ -24,7 +24,7 @@ import java.util.ArrayList;
 public final class MainProcessor extends EventProcessor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.MainProcessor");
 
-  public static final int DRAGGER_SIZE = 10;
+  private static final int DRAGGER_SIZE = 10;
 
   private EventProcessor myCurrentProcessor;
   @NotNull private final InsertComponentProcessor myInsertComponentProcessor;
@@ -53,7 +53,8 @@ public final class MainProcessor extends EventProcessor{
     if (myCurrentProcessor != null) {
       myCurrentProcessor.processKeyEvent(e);
     }
-    else if (e.getID() == KeyEvent.KEY_PRESSED && Character.isLetterOrDigit(e.getKeyChar())) {
+    else if (e.getID() == KeyEvent.KEY_PRESSED && Character.isLetterOrDigit(e.getKeyChar()) &&
+      (e.getModifiers() & (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)) == 0) {
       final ArrayList<RadComponent> selection = FormEditingUtil.getAllSelectedComponents(myEditor);
       if (selection.size() > 0) {
         final RadComponent component = selection.get(0);
