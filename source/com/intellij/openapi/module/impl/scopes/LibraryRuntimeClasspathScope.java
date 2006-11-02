@@ -63,6 +63,13 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
         return value;
       }
 
+
+      public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
+                                                                    final LinkedHashSet<VirtualFile> value) {
+        value.addAll(Arrays.asList(moduleSourceOrderEntry.getFiles(OrderRootType.SOURCES)));
+        return value;
+      }
+
       public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
         if (myJDKProcessed) return value;
         myJDKProcessed = true;

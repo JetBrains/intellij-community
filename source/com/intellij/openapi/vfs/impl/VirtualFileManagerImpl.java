@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -19,8 +20,8 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Stack;
 import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
@@ -217,10 +218,13 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void afterRefreshFinish(final boolean asynchronous, final ModalityState modalityState) {
     Runnable action = new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        final Application application = ApplicationManager.getApplication();
+        if (application.isDisposed()) return;
+
+        application.assertIsDispatchThread();
         Runnable postRunnable = myPostRefreshRunnables.pop();
 
-        ApplicationManager.getApplication().runWriteAction(
+        application.runWriteAction(
           new Runnable() {
             public void run() {
               fireBeforeRefreshStart(asynchronous);
@@ -277,7 +281,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                 if (asynchronous) {
                   int filesCount = synchronizer.collectFilesToUpdate();
                   if (filesCount > 0) {
-                    boolean runWithProgress = !ApplicationManager.getApplication().isUnitTestMode() && filesCount > 5;
+                    boolean runWithProgress = !application.isUnitTestMode() && filesCount > 5;
                     if (runWithProgress) {
                       Runnable process = new Runnable() {
                         public void run() {
