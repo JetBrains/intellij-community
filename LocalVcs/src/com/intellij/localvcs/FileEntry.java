@@ -35,12 +35,6 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public String toString() {
-    return getClass().getSimpleName()
-           + "(" + super.toString() + ", " + myContent + ")";
-  }
-
-  @Override
   public boolean equals(Object o) {
     FileEntry e = (FileEntry)o;
     return super.equals(e) && myContent.equals(e.myContent);

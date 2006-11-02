@@ -1,11 +1,25 @@
 package com.intellij.localvcs;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 public class DeleteChange extends Change {
   private Path myPath;
   private Entry myPreviousEntry;
 
   public DeleteChange(Path path) {
     myPath = path;
+  }
+
+  public DeleteChange(DataInputStream s) throws IOException {
+    myPath = new Path(s);
+  }
+
+  @Override
+  public void write(DataOutputStream s) throws IOException {
+    super.write(s);
+    myPath.write(s);
   }
 
   @Override
@@ -28,5 +42,15 @@ public class DeleteChange extends Change {
     } else {
       s.doCreateFile(p, e.getContent());
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return TestableObject.fieldsEqual(this, o);
+  }
+
+  @Override
+  public int hashCode() {
+    throw new UnsupportedOperationException();
   }
 }

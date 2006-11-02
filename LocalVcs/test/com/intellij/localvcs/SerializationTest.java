@@ -108,4 +108,11 @@ public class SerializationTest extends TestCase {
     c.write(os);
     assertEquals(c, Change.read(is));
   }
+
+  @Test
+  public void testDeleteChange() throws IOException {
+    Change c = new DeleteChange(p("entry"));
+    c.write(os);
+    assertEquals(c, Change.read(is));
+  }
 }

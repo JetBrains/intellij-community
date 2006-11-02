@@ -5,7 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class Entry {
+public abstract class Entry extends TestableObject {
   protected Integer myObjectId;
   protected String myName;
   protected DirectoryEntry myParent;
@@ -93,11 +93,6 @@ public abstract class Entry {
     Entry result = copy();
     result.myName = newName;
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "(" + myObjectId + ", " + myName + ")";
   }
 
   @Override

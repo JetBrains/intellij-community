@@ -14,6 +14,9 @@ public abstract class Change {
     if (clazz.equals(CreateDirectoryChange.class.getSimpleName()))
       return new CreateDirectoryChange(s);
 
+    if (clazz.equals(DeleteChange.class.getSimpleName()))
+      return new DeleteChange(s);
+
     throw new RuntimeException();
   }
 

@@ -107,12 +107,6 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public String toString() {
-    return getClass().getSimpleName()
-           + "(" + super.toString() + ", " + myChildren + ")";
-  }
-
-  @Override
   public boolean equals(Object o) {
     DirectoryEntry e = (DirectoryEntry)o;
     return super.equals(e) && myChildren.equals(e.myChildren);
