@@ -33,10 +33,6 @@ public class LocalVcs {
     return result;
   }
 
-  public void createDirectory(Path path) {
-    myPendingChanges.add(new CreateDirectoryChange(path));
-  }
-
   public void createFile(Path path, String content) {
     myPendingChanges.add(new CreateFileChange(path, content));
   }

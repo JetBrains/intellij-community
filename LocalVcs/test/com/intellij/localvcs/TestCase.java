@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 
-public class TestCase extends Assert {
+public abstract class TestCase extends Assert {
   protected LocalVcs vcs;
   protected Snapshot s;
 
