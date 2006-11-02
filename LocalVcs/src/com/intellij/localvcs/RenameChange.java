@@ -1,6 +1,6 @@
 package com.intellij.localvcs;
 
-public class RenameChange implements Change {
+public class RenameChange extends Change {
   private Path myPath;
   private String myNewName;
 
@@ -9,10 +9,12 @@ public class RenameChange implements Change {
     myNewName = newName;
   }
 
+  @Override
   public void applyTo(Snapshot snapshot) {
     snapshot.doRename(myPath, myNewName);
   }
 
+  @Override
   public void revertOn(Snapshot snapshot) {
     snapshot.doRename(myPath.renamedWith(myNewName), myPath.getName());
   }

@@ -73,7 +73,6 @@ public class Path {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || o.getClass() != getClass()) return false;
     return myPath.equals(((Path)o).myPath);
   }
 

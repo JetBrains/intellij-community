@@ -1,7 +1,27 @@
 package com.intellij.localvcs;
 
-public interface Change {
-  void applyTo(Snapshot snapshot);
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
-  void revertOn(Snapshot snapshot);
+public abstract class Change {
+  public static Change read(DataInputStream s) throws IOException {
+    String clazz = s.readUTF();
+
+    if (clazz.equals(CreateFileChange.class.getSimpleName()))
+      return new CreateFileChange(s);
+
+    if (clazz.equals(CreateDirectoryChange.class.getSimpleName()))
+      return new CreateDirectoryChange(s);
+
+    throw new RuntimeException();
+  }
+
+  public void write(DataOutputStream s) throws IOException {
+    s.writeUTF(getClass().getSimpleName());
+  }
+
+  public abstract void applyTo(Snapshot snapshot);
+
+  public abstract void revertOn(Snapshot snapshot);
 }

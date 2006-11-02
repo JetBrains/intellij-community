@@ -1,6 +1,6 @@
 package com.intellij.localvcs;
 
-public class ChangeFileContentChange implements Change {
+public class ChangeFileContentChange extends Change {
   private Path myPath;
   private String myNewContent;
   private Entry myPreviousEntry;
@@ -10,11 +10,13 @@ public class ChangeFileContentChange implements Change {
     myNewContent = newContent;
   }
 
+  @Override
   public void applyTo(Snapshot snapshot) {
     myPreviousEntry = snapshot.getEntry(myPath);
     snapshot.doChangeFileContent(myPath, myNewContent);
   }
 
+  @Override
   public void revertOn(Snapshot snapshot) {
     snapshot.doChangeFileContent(myPath, myPreviousEntry.getContent());
   }

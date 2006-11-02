@@ -91,4 +91,18 @@ public class SerializationTest extends TestCase {
     assertNull(result.getName());
     assertEquals(e.getChildren(), result.getChildren());
   }
+
+  @Test
+  public void testCreateFileChange() throws IOException {
+    Change c = new CreateFileChange(p("file"), "content");
+    c.write(os);
+    assertEquals(c, Change.read(is));
+  }
+
+  @Test
+  public void testCreateDirectoryChange() throws IOException {
+    Change c = new CreateDirectoryChange(p("dir"));
+    c.write(os);
+    assertEquals(c, Change.read(is));
+  }
 }

@@ -1,6 +1,6 @@
 package com.intellij.localvcs;
 
-public class DeleteChange implements Change {
+public class DeleteChange extends Change {
   private Path myPath;
   private Entry myPreviousEntry;
 
@@ -8,11 +8,13 @@ public class DeleteChange implements Change {
     myPath = path;
   }
 
+  @Override
   public void applyTo(Snapshot snapshot) {
     myPreviousEntry = snapshot.getEntry(myPath);
     snapshot.doDelete(myPath);
   }
 
+  @Override
   public void revertOn(Snapshot snapshot) {
     restoreEntryRecursively(snapshot, myPreviousEntry, myPath);
   }

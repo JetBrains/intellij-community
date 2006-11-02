@@ -85,14 +85,11 @@ public abstract class Entry {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName()
-           + "(id: " + myObjectId + ", "
-           + "name: " + myName + ")";
+    return getClass().getSimpleName() + "(" + myObjectId + ", " + myName + ")";
   }
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || !o.getClass().equals(getClass())) return false;
     Entry e = (Entry)o;
     return myObjectId.equals(e.myObjectId) && myName.equals(e.myName);
   }
