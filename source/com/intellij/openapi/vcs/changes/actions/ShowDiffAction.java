@@ -1,8 +1,9 @@
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -13,11 +14,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author max
@@ -28,8 +32,8 @@ public class ShowDiffAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Change[] changes = e.getData(DataKeys.CHANGES);
+    Project project = e.getData(DataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null && canShowDiff(changes));
   }
 
@@ -39,8 +43,8 @@ public class ShowDiffAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    Change[] changes = (Change[])e.getDataContext().getData(DataConstants.CHANGES);
+    Project project = e.getData(DataKeys.PROJECT);
+    Change[] changes = e.getData(DataKeys.CHANGES);
     if (project == null || changes == null) return;
 
     int index = 0;
@@ -94,7 +98,7 @@ public class ShowDiffAction extends AnAction {
                                         final int index,
                                         final Project project,
                                         AdditionalToolbarActionsFactory actionsFactory) {
-    DiffViewer diffViewer = (DiffViewer)e.getDataContext().getData(DataConstants.DIFF_VIEWER);
+    DiffViewer diffViewer = e.getData(DataKeys.DIFF_VIEWER);
     if (diffViewer != null) {
       final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
       if (diffReq != null) {

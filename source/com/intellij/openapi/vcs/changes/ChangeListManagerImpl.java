@@ -380,7 +380,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
   }
 
-  List<LocalChangeList> getChangeListsCopy() {
+  public List<LocalChangeList> getChangeListsCopy() {
     synchronized (myChangeLists) {
       List<LocalChangeList> copy = new ArrayList<LocalChangeList>(myChangeLists.size());
       for (LocalChangeList list : myChangeLists) {

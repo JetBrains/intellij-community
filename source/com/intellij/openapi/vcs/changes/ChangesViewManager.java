@@ -16,29 +16,24 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vcs.changes.actions.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.problems.WolfTheProblemSolver;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,14 +43,12 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
-class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
+public class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
 
-  static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
+  public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
   private boolean SHOW_FLATTEN_MODE = true;
 
@@ -76,7 +69,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   private ToolWindow myToolWindow;
 
-  static ChangesViewManager getInstance(Project project) {
+  public static ChangesViewManager getInstance(Project project) {
     return project.getComponent(ChangesViewManager.class);
   }
 
@@ -243,7 +236,7 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  void scheduleRefresh() {
+  public void scheduleRefresh() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     myRepaintAlarm.cancelAllRequests();
     myRepaintAlarm.addRequest(new Runnable() {
@@ -352,330 +345,6 @@ class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
       SHOW_FLATTEN_MODE = !state;
       myView.setShowFlatten(SHOW_FLATTEN_MODE);
       refreshView();
-    }
-  }
-
-  public class RefreshAction extends AnAction {
-    public RefreshAction() {
-      super(VcsBundle.message("changes.action.refresh.text"),
-            VcsBundle.message("changes.action.refresh.description"),
-            IconLoader.getIcon("/actions/sync.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      VirtualFileManager.getInstance().refresh(true, new Runnable() {
-        public void run() {
-          VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-        }
-      });
-    }
-  }
-
-  public class AddChangeListAction extends AnAction {
-    public AddChangeListAction() {
-      super(VcsBundle.message("changes.action.new.changelist.text"),
-            VcsBundle.message("changes.action.new.changelist.description"),
-            IconLoader.getIcon("/actions/include.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      NewChangelistDialog dlg = new NewChangelistDialog(myProject);
-      dlg.show();
-      if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        String name = dlg.getName();
-        if (name.length() == 0) {
-          name = getUniqueName();
-        }
-
-        ChangeListManager.getInstance(myProject).addChangeList(name, dlg.getDescription());
-      }
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private String getUniqueName() {
-      int unnamedcount = 0;
-      for (ChangeList list : ChangeListManagerImpl.getInstanceImpl(myProject).getChangeListsCopy()) {
-        if (list.getName().startsWith("Unnamed")) {
-          unnamedcount++;
-        }
-      }
-
-      return unnamedcount == 0 ? "Unnamed" : "Unnamed (" + unnamedcount + ")";
-    }
-
-    public void update(AnActionEvent e) {
-      if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
-        ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
-        e.getPresentation().setVisible(lists != null && lists.length > 0);
-      }
-    }
-  }
-
-  public class RenameChangeListAction extends AnAction {
-
-    public RenameChangeListAction() {
-      super(VcsBundle.message("changes.action.rename.text"),
-            VcsBundle.message("changes.action.rename.description"), null);
-    }
-
-    public void update(AnActionEvent e) {
-      ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
-      final boolean visible =
-        lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isReadOnly();
-      if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
-        e.getPresentation().setVisible(visible);
-      else
-        e.getPresentation().setEnabled(visible);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
-      assert lists != null;
-      final LocalChangeList list = ChangeListManager.getInstance(myProject).findChangeList(lists[0].getName());
-      if (list != null) {
-        new EditChangelistDialog(myProject, list).show();
-      }
-      else {
-        LOG.assertTrue(false, "Cannot find changelist " + lists [0].getName());
-      }
-    }
-  }
-
-  public class SetDefaultChangeListAction extends AnAction {
-    public SetDefaultChangeListAction() {
-      super(VcsBundle.message("changes.action.setdefaultchangelist.text"),
-            VcsBundle.message("changes.action.setdefaultchangelist.description"), IconLoader.getIcon("/actions/submit1.png"));
-    }
-
-
-    public void update(AnActionEvent e) {
-      ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
-      final boolean visible =
-        lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isDefault();
-      if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
-        e.getPresentation().setVisible(visible);
-      else
-        e.getPresentation().setEnabled(visible);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      final ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
-      assert lists != null;
-      ChangeListManager.getInstance(myProject).setDefaultChangeList((LocalChangeList)lists[0]);
-    }
-  }
-
-  public class CommitAction extends AnAction {
-    public CommitAction() {
-      super(VcsBundle.message("changes.action.commit.text"), VcsBundle.message("changes.action.commit.description"),
-            IconLoader.getIcon("/actions/commit.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Change[] changes = e.getData(DataKeys.CHANGES);
-      e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Change[] changes = e.getData(DataKeys.CHANGES);
-      final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
-      if (list == null) return;
-
-      CommitChangeListDialog.commitChanges(myProject, Arrays.asList(changes), list, 
-                                           ChangeListManager.getInstance(myProject).getRegisteredExecutors());
-    }
-  }
-
-  public class RollbackAction extends AnAction {
-    public RollbackAction() {
-      super(VcsBundle.message("changes.action.rollback.text"), VcsBundle.message("changes.action.rollback.description"),
-            IconLoader.getIcon("/actions/rollback.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Change[] changes = e.getData(DataKeys.CHANGES);
-      List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
-      e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(myProject, changes) != null ||
-                                     (files != null && !files.isEmpty()));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
-      if (files != null && !files.isEmpty()) {
-        new RollbackDeletionAction().actionPerformed(e);
-      }
-      else {
-        Change[] changes = e.getData(DataKeys.CHANGES);
-        final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(myProject, changes);
-        if (list == null) return;
-
-        FileDocumentManager.getInstance().saveAllDocuments();
-        RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes));
-      }
-    }
-  }
-
-  public class ScheduleForAdditionAction extends AnAction {
-    public ScheduleForAdditionAction() {
-      super(VcsBundle.message("changes.action.add.text"), VcsBundle.message("changes.action.add.description"),
-            IconLoader.getIcon("/actions/include.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      //noinspection unchecked
-      List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
-      boolean enabled = files != null && !files.isEmpty();
-      e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setVisible(enabled);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      //noinspection unchecked
-      final List<VirtualFile> files = (List<VirtualFile>)e.getDataContext().getData(ChangesListView.UNVERSIONED_FILES_KEY);
-      if (files == null) return;
-
-      final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-      changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), files);
-    }
-  }
-
-  public abstract class AbstractMissingFilesAction extends AnAction {
-
-    protected AbstractMissingFilesAction(String text, String description, Icon icon) {
-      super(text, description, icon);
-    }
-
-    public void update(AnActionEvent e) {
-      //noinspection unchecked
-      List<FilePath> files = (List<FilePath>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
-      boolean enabled = files != null && !files.isEmpty();
-      e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setVisible(enabled);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      //noinspection unchecked
-      final List<FilePath> files = (List<FilePath>)e.getDataContext().getData(ChangesListView.MISSING_FILES_KEY);
-      if (files == null) return;
-
-      ChangesUtil.processFilePathsByVcs(myProject, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
-        public void process(final AbstractVcs vcs, final List<FilePath> items) {
-          final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-          if (environment != null) {
-            processFiles(environment, files);
-          }
-        }
-      });
-
-      for (FilePath file : files) {
-        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
-      }
-      scheduleRefresh();
-    }
-
-    protected abstract void processFiles(final CheckinEnvironment environment, final List<FilePath> files);
-  }
-
-  public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
-    public ScheduleForRemovalAction() {
-      super(VcsBundle.message("changes.action.remove.text"), VcsBundle.message("changes.action.remove.description"),
-            IconLoader.getIcon("/actions/exclude.png"));
-    }
-
-    protected void processFiles(final CheckinEnvironment environment, final List<FilePath> files) {
-      environment.scheduleMissingFileForDeletion(files);
-    }
-  }
-
-  public class RollbackDeletionAction extends AbstractMissingFilesAction {
-    public RollbackDeletionAction() {
-      super(VcsBundle.message("changes.action.rollback.deletion.text"),
-            VcsBundle.message("changes.action.rollback.deletion.description"),
-            IconLoader.getIcon("/actions/rollback.png"));
-    }
-
-    protected void processFiles(final CheckinEnvironment environment, final List<FilePath> files) {
-      environment.rollbackMissingFileDeletion(files);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          LocalFileSystem.getInstance().refreshIoFiles(ChangesUtil.filePathsToFiles(files));
-        }
-      });
-    }
-  }
-
-  public static class RemoveChangeListAction extends AnAction {
-    public RemoveChangeListAction() {
-      super(VcsBundle.message("changes.action.removechangelist.text"),
-            VcsBundle.message("changes.action.removechangelist.description"),
-            IconLoader.getIcon("/actions/exclude.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Project project = e.getData(DataKeys.PROJECT);
-      ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
-      final boolean visible = canRemoveChangeLists(project, lists);
-      if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
-          e.getPresentation().setVisible(visible);
-      else
-        e.getPresentation().setEnabled(visible);
-    }
-
-    private static boolean canRemoveChangeLists(final Project project, final ChangeList[] lists) {
-      if (project == null || lists == null || lists.length == 0) return false;
-      for(ChangeList changeList: lists) {
-        if (!(changeList instanceof LocalChangeList)) return false;
-        LocalChangeList localChangeList = (LocalChangeList) changeList;
-        if (localChangeList.isReadOnly() || localChangeList.isDefault()) return false;
-      }
-      return true;
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      Project project = e.getData(DataKeys.PROJECT);
-      final ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
-      assert lists != null;
-      int rc;
-      if (lists.length == 1) {
-        final LocalChangeList list = (LocalChangeList)lists[0];
-        rc = list.getChanges().size() == 0 ? DialogWrapper.OK_EXIT_CODE :
-                 Messages.showYesNoDialog(project,
-                                          VcsBundle.message("changes.removechangelist.warning.text", list.getName()),
-                                          VcsBundle.message("changes.removechangelist.warning.title"),
-                                          Messages.getQuestionIcon());
-      }
-      else {
-        rc = Messages.showYesNoDialog(project,
-                                      VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.length),
-                                      VcsBundle.message("changes.removechangelist.warning.title"),
-                                      Messages.getQuestionIcon());
-      }
-
-      if (rc == DialogWrapper.OK_EXIT_CODE) {
-        for(ChangeList list: lists) {
-          ChangeListManager.getInstance(project).removeChangeList((LocalChangeList) list);
-        }
-      }
-    }
-  }
-
-  private static class DeleteUnversionedFilesAction extends AnAction {
-    public DeleteUnversionedFilesAction() {
-      super(IdeBundle.message("action.delete"), "",
-            IconLoader.getIcon("/actions/cancel.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      DeleteProvider deleteProvider = e.getData(DataKeys.DELETE_ELEMENT_PROVIDER);
-      assert deleteProvider != null;
-      deleteProvider.deleteElement(e.getDataContext());
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      DeleteProvider deleteProvider = e.getData(DataKeys.DELETE_ELEMENT_PROVIDER);
-      e.getPresentation().setVisible(deleteProvider != null && deleteProvider.canDeleteElement(e.getDataContext()));
     }
   }
 
