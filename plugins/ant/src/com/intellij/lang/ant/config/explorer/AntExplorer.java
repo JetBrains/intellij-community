@@ -692,6 +692,15 @@ public class AntExplorer extends JPanel implements DataProvider {
             enabled = true;
           }
         }
+        else {
+          if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
+            final AntTargetNodeDescriptor descr = (AntTargetNodeDescriptor)node.getUserObject();
+            final AntBuildTargetBase target = descr.getTarget();
+            if (target instanceof MetaTarget) {
+              enabled = true;
+            }
+          }
+        }
         presentation.setText(text);
         presentation.setEnabled(enabled);
       }
