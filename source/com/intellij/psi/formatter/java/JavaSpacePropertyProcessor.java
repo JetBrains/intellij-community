@@ -860,6 +860,12 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
   }
 
+  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+    if (myRole1 == ChildRole.CASE_KEYWORD || myRole2 == ChildRole.CASE_EXPRESSION) {
+      createSpaceProperty(true, false, 0);
+    }
+  }
+
   public void visitSwitchStatement(PsiSwitchStatement statement) {
     if (myRole1 == ChildRole.SWITCH_KEYWORD && myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES);
