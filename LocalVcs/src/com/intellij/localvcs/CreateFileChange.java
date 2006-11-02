@@ -34,23 +34,4 @@ public class CreateFileChange extends Change {
   public void revertOn(Snapshot snapshot) {
     snapshot.doDelete(myPath);
   }
-
-  @Override
-  public String toString() {
-    // todo generalize all toString and equals methods
-    return getClass().getSimpleName() + "(" + myPath + ", " + myContent + ")";
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    // todo generalize all toString and equals methods
-    CreateFileChange c = (CreateFileChange)o;
-    return myPath.equals(c.myPath) && myContent.equals(c.myContent);
-  }
-
-  @Override
-  public int hashCode() {
-    // todo generalize all toString and equals methods
-    throw new UnsupportedOperationException();
-  }
 }

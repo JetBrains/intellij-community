@@ -95,17 +95,6 @@ public abstract class Entry extends TestableObject {
     return result;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    Entry e = (Entry)o;
-    return myObjectId.equals(e.myObjectId) && myName.equals(e.myName);
-  }
-
-  @Override
-  public int hashCode() {
-    throw new UnsupportedOperationException();
-  }
-
   protected interface Matcher {
     boolean matches(Entry entry);
   }

@@ -43,14 +43,4 @@ public class DeleteChange extends Change {
       s.doCreateFile(p, e.getContent());
     }
   }
-
-  @Override
-  public boolean equals(Object o) {
-    return TestableObject.fieldsEqual(this, o);
-  }
-
-  @Override
-  public int hashCode() {
-    throw new UnsupportedOperationException();
-  }
 }

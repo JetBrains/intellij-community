@@ -4,7 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public abstract class Change {
+public abstract class Change extends TestableObject {
   public static Change read(DataInputStream s) throws IOException {
     String clazz = s.readUTF();
 

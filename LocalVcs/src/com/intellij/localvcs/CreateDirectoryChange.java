@@ -30,20 +30,4 @@ public class CreateDirectoryChange extends Change {
   public void revertOn(Snapshot snapshot) {
     snapshot.doDelete(myPath);
   }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "(" + myPath + ")";
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    CreateDirectoryChange c = (CreateDirectoryChange)o;
-    return myPath.equals(c.myPath);
-  }
-
-  @Override
-  public int hashCode() {
-    throw new UnsupportedOperationException();
-  }
 }

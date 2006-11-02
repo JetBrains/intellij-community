@@ -33,10 +33,4 @@ public class FileEntry extends Entry {
   public Entry copy() {
     return new FileEntry(myObjectId, myName, myContent);
   }
-
-  @Override
-  public boolean equals(Object o) {
-    FileEntry e = (FileEntry)o;
-    return super.equals(e) && myContent.equals(e.myContent);
-  }
 }

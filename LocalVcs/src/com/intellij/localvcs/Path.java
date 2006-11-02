@@ -67,11 +67,6 @@ public class Path {
   }
 
   @Override
-  public String toString() {
-    return getClass().getSimpleName() + "(" + myPath + ")";
-  }
-
-  @Override
   public boolean equals(Object o) {
     return myPath.equals(((Path)o).myPath);
   }

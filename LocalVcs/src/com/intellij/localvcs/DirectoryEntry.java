@@ -105,10 +105,4 @@ public class DirectoryEntry extends Entry {
   protected Entry copyEntry() {
     return new DirectoryEntry(myObjectId, myName);
   }
-
-  @Override
-  public boolean equals(Object o) {
-    DirectoryEntry e = (DirectoryEntry)o;
-    return super.equals(e) && myChildren.equals(e.myChildren);
-  }
 }
