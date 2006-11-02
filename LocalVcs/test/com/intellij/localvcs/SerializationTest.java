@@ -33,7 +33,7 @@ public class SerializationTest extends TestCase {
   public void testFileEntry() throws IOException {
     FileEntry e = new FileEntry(42, "file", "content");
     e.write(os);
-    assertEquals(e, new FileEntry(is));
+    assertEquals(e, Entry.read(is));
   }
 
   @Test
@@ -43,15 +43,18 @@ public class SerializationTest extends TestCase {
     parent.addChild(e);
     e.write(os);
 
-    assertNull(new FileEntry(is).getParent());
+    assertNull(Entry.read(is).getParent());
   }
 
   @Test
-  public void testEmptyDirectoryEntry() throws IOException {
+  public void tesEmptyDirectoryEntry() throws IOException {
     DirectoryEntry e = new DirectoryEntry(13, "name");
     e.write(os);
 
-    assertEquals(e, new DirectoryEntry(is));
+    Entry result = Entry.read(is);
+
+    assertEquals(DirectoryEntry.class, result.getClass());
+    assertEquals(e, result);
   }
 
   @Test
@@ -67,7 +70,7 @@ public class SerializationTest extends TestCase {
 
     e.write(os);
 
-    assertEquals(e, new DirectoryEntry(is));
+    assertEquals(e, Entry.read(is));
   }
 
   @Test
@@ -84,7 +87,7 @@ public class SerializationTest extends TestCase {
     e.write(os);
 
     // todo bad... it seems that something wrong with RootEntry
-    RootEntry result = new RootEntry(is);
+    Entry result = new RootEntry(is);
 
     assertEquals(RootEntry.class, result.getClass());
     assertNull(result.getObjectId());

@@ -20,7 +20,19 @@ public abstract class Entry {
     myName = s.readUTF();
   }
 
+  public static Entry read(DataInputStream s) throws IOException {
+    String clazz = s.readUTF();
+
+    if (clazz.equals(FileEntry.class.getSimpleName()))
+      return new FileEntry(s);
+    if (clazz.equals(DirectoryEntry.class.getSimpleName()))
+      return new DirectoryEntry(s);
+
+    throw new RuntimeException();
+  }
+
   public void write(DataOutputStream s) throws IOException {
+    s.writeUTF(getClass().getSimpleName());
     s.writeInt(myObjectId);
     s.writeUTF(myName);
   }

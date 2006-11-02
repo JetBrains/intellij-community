@@ -21,10 +21,7 @@ public class DirectoryEntry extends Entry {
   protected void readChildren(DataInputStream s) throws IOException {
     int count = s.readInt();
     for (int i = 0; i < count; i++) {
-      if (s.readBoolean())
-        myChildren.add(new DirectoryEntry(s));
-      else
-        myChildren.add(new FileEntry(s));
+      myChildren.add(Entry.read(s));
     }
   }
 
@@ -37,7 +34,6 @@ public class DirectoryEntry extends Entry {
   protected void writeChildren(DataOutputStream s) throws IOException {
     s.writeInt(myChildren.size());
     for (Entry child : myChildren) {
-      s.writeBoolean(child.isDirectory());
       child.write(s);
     }
   }
