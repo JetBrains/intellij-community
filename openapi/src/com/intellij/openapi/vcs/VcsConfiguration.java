@@ -97,7 +97,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
   public float FILE_HISTORY_SPLITTER_PROPORTION = 0.6f;
-  private static final int MAX_STORED_MESSAGES = 10;
+  private static final int MAX_STORED_MESSAGES = 25;
   @NonNls private static final String MESSAGE_ELEMENT_NAME = "MESSAGE";
 
   private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
