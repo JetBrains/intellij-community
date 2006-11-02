@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <options>
-  <configurable id="preferences.applicationServers" configurable_name="Application&#10;Servers">
+  <configurable id="preferences.appIntegration" configurable_name="Application&#10;Servers">
     <option name="application" hit="Application Servers" />
     <option name="servers" hit="Application Servers" />
   </configurable>
