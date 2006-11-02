@@ -534,7 +534,7 @@ public class StringUtil {
   @NotNull public static String capitalize(@NotNull String s) {
     if (s.length() == 0) return s;
     if (s.length() == 1) return s.toUpperCase();
-    if (s.length() > 1 && Character.isUpperCase(s.charAt(0))) return s;
+    if (s.length() > 1 && Character.isUpperCase(s.charAt(1))) return s;
     return Character.toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
