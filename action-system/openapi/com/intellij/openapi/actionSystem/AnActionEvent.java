@@ -99,6 +99,7 @@ public final class AnActionEvent {
    * the action invocation (active editor, selection and so on).
    *
    * @return the data context instance.
+   * @deprecated use {@link #getData} instead
    */
   @NotNull
   public DataContext getDataContext() {
