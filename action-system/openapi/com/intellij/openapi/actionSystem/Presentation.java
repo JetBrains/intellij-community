@@ -77,7 +77,7 @@ public final class Presentation implements Cloneable {
   private boolean myVisible;
   private boolean myEnabled;
 
-  Presentation(){
+  public Presentation(){
     myChangeSupport = new PropertyChangeSupport(this);
     myVisible = true;
     myEnabled = true;
