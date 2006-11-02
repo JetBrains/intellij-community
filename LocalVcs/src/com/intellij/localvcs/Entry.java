@@ -5,7 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class Entry extends TestableObject {
+public abstract class Entry {
   protected Integer myObjectId;
   protected String myName;
   protected DirectoryEntry myParent;
