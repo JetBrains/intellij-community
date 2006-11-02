@@ -789,13 +789,17 @@ public final class GuiEditor extends JPanel implements DataProvider {
         selection = SelectionState.getSelection(this);
         tabbedPaneSelectedTabs = saveTabbedPaneSelectedTabs();
       }
+      Locale oldLocale = null;
+      if (myRootContainer != null) {
+        oldLocale = myRootContainer.getStringDescriptorLocale();
+      }
 
       final String text = myDocument.getText();
 
       final ClassLoader classLoader = LoaderFactory.getInstance(myModule.getProject()).getLoader(myFile);
 
       final LwRootContainer rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(classLoader));
-      final RadRootContainer container = XmlReader.createRoot(myModule, rootContainer, classLoader);
+      final RadRootContainer container = XmlReader.createRoot(myModule, rootContainer, classLoader, oldLocale);
       setRootContainer(container);
       if (keepSelection) {
         SelectionState.restoreSelection(this, selection);

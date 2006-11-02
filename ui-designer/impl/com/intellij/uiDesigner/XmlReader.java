@@ -18,6 +18,7 @@ import java.awt.LayoutManager;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Locale;
 
 /**
  * @author Anton Katilin
@@ -30,14 +31,16 @@ public final class XmlReader {
   }
 
   @NotNull
-  public static RadRootContainer createRoot(final Module module, final LwRootContainer lwRootContainer, final ClassLoader loader) throws Exception{
-    return (RadRootContainer)createComponent(module, lwRootContainer, loader);
+  public static RadRootContainer createRoot(final Module module, final LwRootContainer lwRootContainer, final ClassLoader loader,
+                                            final Locale stringDescriptorLocale) throws Exception{
+    return (RadRootContainer)createComponent(module, lwRootContainer, loader, stringDescriptorLocale);
   }
 
   @NotNull
   public static RadComponent createComponent(@NotNull final Module module,
                                              @NotNull final LwComponent lwComponent,
-                                             @NotNull final ClassLoader loader) throws Exception{
+                                             @NotNull final ClassLoader loader,
+                                             final Locale stringDescriptorLocale) throws Exception{
     // Id
     final String id = lwComponent.getId();
     final RadComponent component;
@@ -130,6 +133,9 @@ public final class XmlReader {
         else {
           if (lwContainer instanceof LwRootContainer) {
             component = new RadRootContainer(module, id);
+            if (stringDescriptorLocale != null) {
+              ((RadRootContainer) component).setStringDescriptorLocale(stringDescriptorLocale);
+            }
           }
           else {
             component = new RadContainer(module, componentClass, id);
@@ -162,6 +168,9 @@ public final class XmlReader {
     component.setBounds(lwComponent.getBounds());
 
     // properties
+    if (stringDescriptorLocale != null) {
+      component.putClientProperty(RadComponent.CLIENT_PROP_LOAD_TIME_LOCALE, stringDescriptorLocale);
+    }
     final LwIntrospectedProperty[] properties = lwComponent.getAssignedIntrospectedProperties();
     if (componentClass != null) {
       final Palette palette = Palette.getInstance(module.getProject());
@@ -198,7 +207,7 @@ public final class XmlReader {
 
       // add children
       for (int i=0; i < lwContainer.getComponentCount(); i++){
-        container.addComponent(createComponent(module, (LwComponent)lwContainer.getComponent(i), loader));
+        container.addComponent(createComponent(module, (LwComponent)lwContainer.getComponent(i), loader, stringDescriptorLocale));
       }
     }
 
@@ -214,6 +223,7 @@ public final class XmlReader {
     }
 
     component.doneLoadingFromLw();
+    component.putClientProperty(RadComponent.CLIENT_PROP_LOAD_TIME_LOCALE, null);
     return component;
   }
 

@@ -106,7 +106,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   @Nullable
-  public static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
+  private static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
     ArrayList<RadComponent> components = new ArrayList<RadComponent>();
     TIntArrayList xs = new TIntArrayList();
     TIntArrayList ys = new TIntArrayList();
@@ -116,10 +116,10 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     return components;
   }
 
-  public static boolean loadComponentsToPaste(final GuiEditor editor, final String serializedComponents,
-                                              final TIntArrayList xs,
-                                              final TIntArrayList ys,
-                                              final ArrayList<RadComponent> componentsToPaste) {
+  private static boolean loadComponentsToPaste(final GuiEditor editor, final String serializedComponents,
+                                               final TIntArrayList xs,
+                                               final TIntArrayList ys,
+                                               final ArrayList<RadComponent> componentsToPaste) {
     final PsiPropertiesProvider provider = new PsiPropertiesProvider(editor.getModule());
 
     try {
@@ -169,7 +169,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
         final Module module = editor.getModule();
         final ClassLoader loader = LoaderFactory.getInstance(module.getProject()).getLoader(editor.getFile());
-        final RadComponent radComponent = XmlReader.createComponent(module, lwComponent, loader);
+        final RadComponent radComponent = XmlReader.createComponent(module, lwComponent, loader, editor.getStringDescriptorLocale());
         componentsToPaste.add(radComponent);
       }
     }
@@ -239,7 +239,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     return deserializeComponents(editor, serializeForCopy(editor, components));
   }
 
-  public static String serializeForCopy(final GuiEditor editor, final List<RadComponent> components) {
+  private static String serializeForCopy(final GuiEditor editor, final List<RadComponent> components) {
     final XmlWriter writer = new XmlWriter();
 
     writer.startElement(ELEMENT_SERIALIZED, Utils.FORM_NAMESPACE);

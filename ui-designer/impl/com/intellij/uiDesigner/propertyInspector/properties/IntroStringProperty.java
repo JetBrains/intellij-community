@@ -4,10 +4,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.core.SupportCode;
-import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
@@ -15,6 +14,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -176,9 +176,17 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
     // 2. Apply real string value to JComponent peer
     final JComponent delegee = component.getDelegee();
+
+    Locale locale = (Locale)component.getClientProperty(RadComponent.CLIENT_PROP_LOAD_TIME_LOCALE);
+    if (locale == null) {
+      RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
+      if (root != null) {
+        locale = root.getStringDescriptorLocale();
+      }
+    }
     final String resolvedValue = (value != null && value.getValue() != null)
                                  ? value.getValue()
-                                 : StringDescriptorManager.getInstance(component.getModule()).resolve(component, value);
+                                 : StringDescriptorManager.getInstance(component.getModule()).resolve(value, locale);
 
     if (value != null) {
       value.setResolvedValue(resolvedValue);

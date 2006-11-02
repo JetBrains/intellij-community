@@ -38,7 +38,7 @@ public class RadNestedForm extends RadComponent {
     Document doc = FileDocumentManager.getInstance().getDocument(formFile);
     final ClassLoader classLoader = LoaderFactory.getInstance(module.getProject()).getLoader(formFile);
     final LwRootContainer rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(classLoader));
-    myRootContainer = XmlReader.createRoot(module, rootContainer, classLoader);
+    myRootContainer = XmlReader.createRoot(module, rootContainer, classLoader, null);
     if (myRootContainer.getComponentCount() > 0) {
       getDelegee().setLayout(new BorderLayout());
       JComponent nestedFormDelegee = myRootContainer.getComponent(0).getDelegee();

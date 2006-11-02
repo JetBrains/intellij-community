@@ -55,6 +55,10 @@ public abstract class RadComponent implements IComponent {
    */
   @NonNls
   public static final String CLIENT_PROP_RAD_COMPONENT = "radComponent";
+
+  @NonNls
+  public static final String CLIENT_PROP_LOAD_TIME_LOCALE = "LoadTimeLocaleKey";
+
   /**
    * Whether the component selected or not. Value is java.lang.Boolean
    */
