@@ -125,7 +125,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
     }
     myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
 
-    myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
+    myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
     myGeneralUI.myLayoutManagerCombo.setRenderer(new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           append(LayoutManagerRegistry.getLayoutManagerDisplayName((String) value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
