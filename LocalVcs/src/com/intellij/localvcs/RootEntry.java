@@ -1,6 +1,7 @@
 package com.intellij.localvcs;
 
 public class RootEntry extends DirectoryEntry {
+  // todo try to crean up Entry hierarchy
   public RootEntry() {
     super(null, null);
   }
