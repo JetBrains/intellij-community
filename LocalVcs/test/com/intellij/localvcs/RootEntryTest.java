@@ -22,7 +22,35 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testFindingChildren() {
-    assertSame(child, child.findEntry(p("child")));
+    assertTrue(root.hasEntry(p("child")));
+    assertSame(child, root.getEntry(p("child")));
+  }
+
+  @Test
+  public void testFindingEntriesInTree() {
+    root = new RootEntry();
+    Entry dir = new DirectoryEntry(null, "dir");
+    Entry file1 = new FileEntry(null, "file1", null);
+    Entry file2 = new FileEntry(null, "file2", null);
+
+    root.addChild(dir);
+    root.addChild(file1);
+    dir.addChild(file2);
+
+    assertSame(dir, root.findEntry(p("dir")));
+    assertSame(file1, root.findEntry(p("file1")));
+    assertSame(file2, root.findEntry(p("dir/file2")));
+  }
+
+  @Test
+  public void testDoesNotFindUnknownEntry() {
+    assertNull(root.findEntry(p("unknown entry")));
+    assertNull(root.findEntry(p("root/unknown entry")));
+  }
+
+  @Test(expected = LocalVcsException.class)
+  public void testGettingUnknownEntryThrowsException() {
+    root.getEntry(p("unknown entry"));
   }
 
   @Test

@@ -16,14 +16,16 @@ public class LocalVcs {
   }
 
   public List<Entry> getEntryHistory(Path path) {
+    //todo optimize it
     List<Entry> result = new ArrayList<Entry>();
 
     // todo clean up this mess
+    // todo should we raise exception?
     if (!mySnapshot.hasEntry(path)) return result;
 
     Integer id = mySnapshot.getEntry(path).getObjectId();
 
-    for (Snapshot snapshot : getSnapshots()) {
+    for (Snapshot snapshot : getSnapshotHistory()) {
       if (!snapshot.hasEntry(id)) break;
       result.add(snapshot.getEntry(id));
     }
@@ -77,13 +79,13 @@ public class LocalVcs {
   }
 
   public Snapshot getSnapshot(String label) {
-    for (Snapshot s : getSnapshots()) {
+    for (Snapshot s : getSnapshotHistory()) {
       if (label.equals(s.getLabel())) return s;
     }
     return null;
   }
 
-  public List<Snapshot> getSnapshots() {
+  public List<Snapshot> getSnapshotHistory() {
     List<Snapshot> result = new ArrayList<Snapshot>();
 
     Snapshot s = mySnapshot;

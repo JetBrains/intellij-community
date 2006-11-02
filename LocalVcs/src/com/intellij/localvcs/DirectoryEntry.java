@@ -21,8 +21,17 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public void addChild(Entry child) {
+    checkThatEntryDoesNotExists(child);
+
     myChildren.add(child);
     child.setParent(this);
+  }
+
+  private void checkThatEntryDoesNotExists(Entry child) {
+    // todo replace with existing find/hasEntry methods
+    for (Entry e : myChildren) {
+      if (e.getName().equals(child.getName())) throw new LocalVcsException();
+    }
   }
 
   @Override
@@ -43,7 +52,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public Entry findEntry(Matcher m) {
+  protected Entry findEntry(Matcher m) {
     // todo a bit messy
     Entry result = super.findEntry(m);
     if (result != null) return result;
@@ -56,6 +65,7 @@ public class DirectoryEntry extends Entry {
     return null;
   }
 
+  @Override
   public Entry copy() {
     Entry result = copyEntry();
     for (Entry child : myChildren) {

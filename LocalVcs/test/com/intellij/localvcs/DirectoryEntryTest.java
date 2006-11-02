@@ -19,6 +19,17 @@ public class DirectoryEntryTest extends TestCase {
   }
 
   @Test
+  public void testAddingEntryWithExistingNameThrowsException() {
+    Entry dir = new DirectoryEntry(null, null);
+    dir.addChild(new FileEntry(null, "name", null));
+
+    try {
+      dir.addChild(new FileEntry(null, "name", null));
+      fail();
+    } catch (LocalVcsException e) {}
+  }
+
+  @Test
   public void testRemovingChildren() {
     Entry dir = new DirectoryEntry(null, null);
     Entry file = new FileEntry(null, null, null);
@@ -48,37 +59,6 @@ public class DirectoryEntryTest extends TestCase {
   }
 
   @Test
-  public void testFindingEntriesInTree() {
-    Entry root = new DirectoryEntry(null, "root");
-    Entry dir = new DirectoryEntry(null, "dir");
-    Entry file1 = new FileEntry(null, "file1", null);
-    Entry file2 = new FileEntry(null, "file2", null);
-
-    root.addChild(dir);
-    root.addChild(file1);
-    dir.addChild(file2);
-
-    assertSame(root, root.findEntry(p("root")));
-    assertSame(dir, root.findEntry(p("root/dir")));
-    assertSame(file1, root.findEntry(p("root/file1")));
-    assertSame(file2, root.findEntry(p("root/dir/file2")));
-  }
-
-  @Test
-  public void testDoesNotFindUnknownEntry() {
-    Entry root = new DirectoryEntry(null, "root");
-    Entry dir = new DirectoryEntry(null, "dir");
-    Entry file = new FileEntry(null, "file", null);
-
-    root.addChild(dir);
-    dir.addChild(file);
-
-    assertNull(root.findEntry(p("unknown root")));
-    assertNull(root.findEntry(p("root/unknown dir")));
-    assertNull(root.findEntry(p("root/dir/unknown file")));
-  }
-
-  @Test
   public void testCopyingWithContent() {
     Entry dir = new DirectoryEntry(42, "name");
     Entry copy = dir.copy();
@@ -100,9 +80,9 @@ public class DirectoryEntryTest extends TestCase {
   @Test
   public void testCopyingContentRecursively() {
     Entry dir = new DirectoryEntry(null, null);
-    Entry child1 = new FileEntry(1, null, null);
-    Entry child2 = new DirectoryEntry(2, null);
-    Entry child3 = new FileEntry(3, null, null);
+    Entry child1 = new FileEntry(1, "child1", null);
+    Entry child2 = new DirectoryEntry(2, "child2");
+    Entry child3 = new FileEntry(3, "child3", null);
 
     dir.addChild(child1);
     dir.addChild(child2);
@@ -130,9 +110,9 @@ public class DirectoryEntryTest extends TestCase {
   @Test
   public void testCopyingContentDoesNotChangeOriginalStructure() {
     Entry dir = new DirectoryEntry(null, null);
-    Entry child1 = new FileEntry(1, null, null);
-    Entry child2 = new DirectoryEntry(2, null);
-    Entry child3 = new FileEntry(3, null, null);
+    Entry child1 = new FileEntry(1, "child1", null);
+    Entry child2 = new DirectoryEntry(2, "child2");
+    Entry child3 = new FileEntry(3, "child3", null);
 
     dir.addChild(child1);
     dir.addChild(child2);

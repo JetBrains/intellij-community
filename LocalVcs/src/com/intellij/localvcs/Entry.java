@@ -47,26 +47,18 @@ public abstract class Entry {
   }
 
   public void addChild(Entry child) {
-    throw new UnsupportedOperationException();
+    throw new LocalVcsException();
   }
 
   public void removeChild(Entry child) {
-    throw new UnsupportedOperationException();
+    throw new LocalVcsException();
   }
 
   public List<Entry> getChildren() {
-    throw new UnsupportedOperationException();
+    throw new LocalVcsException();
   }
 
-  public Entry findEntry(Path path) {
-    return findEntry(new PathMatcher(path));
-  }
-
-  public Entry findEntry(Integer id) {
-    return findEntry(new IdMatcher(id));
-  }
-
-  public Entry findEntry(Matcher m) {
+  protected Entry findEntry(Matcher m) {
     return m.matches(this) ? this : null;
   }
 
@@ -97,25 +89,7 @@ public abstract class Entry {
     throw new UnsupportedOperationException();
   }
 
-  // todo make them all private by replacing clients with RootEntry 
-  public interface Matcher {
+  protected interface Matcher {
     boolean matches(Entry entry);
-  }
-
-  public static class PathMatcher implements Matcher {
-    // todo optimize it
-    private Path myPath;
-
-    public PathMatcher(Path p) { myPath = p; }
-
-    public boolean matches(Entry e) { return myPath.equals(e.getPath()); }
-  }
-
-  public static class IdMatcher implements Matcher {
-    private Integer myId;
-
-    public IdMatcher(Integer id) { myId = id; }
-
-    public boolean matches(Entry e) { return myId.equals(e.myObjectId); }
   }
 }

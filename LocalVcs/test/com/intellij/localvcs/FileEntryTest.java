@@ -59,4 +59,24 @@ public class FileEntryTest extends TestCase {
 
     assertNull(renamed.getParent());
   }
+
+  @Test
+  public void testCanNotWorkWithChildren() {
+    FileEntry file = new FileEntry(null, null, null);
+
+    try {
+      file.addChild(new FileEntry(null, null, null));
+      fail();
+    } catch (LocalVcsException e) {}
+
+    try {
+      file.removeChild(new FileEntry(null, null, null));
+      fail();
+    } catch (LocalVcsException e) {}
+
+    try {
+      file.getChildren();
+      fail();
+    } catch (LocalVcsException e) {}
+  }
 }
