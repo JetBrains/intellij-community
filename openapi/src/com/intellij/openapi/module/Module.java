@@ -119,9 +119,27 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   @NotNull PomModule getPom();
 
+  /**
+   * Returns module scope including sources and tests, excluding libraries and dependencies.
+   *
+   * @return scope including sources and tests, excluding libraries and dependencies.
+   */
   GlobalSearchScope getModuleScope();
+
+  /**
+   * Returns module scope including sources, tests, and libraries, excluding dependencies.
+   *
+   * @return scope including sources, tests, and libraries, excluding dependencies.
+   */
   GlobalSearchScope getModuleWithLibrariesScope();
+
+  /**
+   * Returns module scope including sources, tests, and dependencies, excluding libraries.
+   * 
+   * @return scope including sources, tests, and dependencies, excluding libraries.
+   */
   GlobalSearchScope getModuleWithDependenciesScope();
+
   GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests);
   GlobalSearchScope getModuleWithDependentsScope();
   GlobalSearchScope getModuleTestsWithDependentsScope();

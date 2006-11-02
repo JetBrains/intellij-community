@@ -94,14 +94,32 @@ public abstract class GlobalSearchScope extends SearchScope {
     return new FilterScopeAdapter(project, set, includeNonJavaFiles);
   }
 
+  /**
+   * Returns module scope including sources and tests, excluding libraries and dependencies.
+   *
+   * @param module the module to get the scope.
+   * @return scope including sources and tests, excluding libraries and dependencies.
+   */
   public static GlobalSearchScope moduleScope(Module module) {
     return module.getModuleScope();
   }
 
+  /**
+   * Returns module scope including sources, tests, and libraries, excluding dependencies.
+   *
+   * @param module the module to get the scope.
+   * @return scope including sources, tests, and libraries, excluding dependencies.
+   */
   public static GlobalSearchScope moduleWithLibrariesScope(Module module) {
     return module.getModuleWithLibrariesScope();
   }
 
+  /**
+   * Returns module scope including sources, tests, and dependencies, excluding libraries.
+   *
+   * @param module the module to get the scope.
+   * @return scope including sources, tests, and dependencies, excluding libraries.
+   */
   public static GlobalSearchScope moduleWithDependenciesScope(@NotNull Module module) {
     return module.getModuleWithDependenciesScope();
   }
