@@ -138,7 +138,7 @@
 
   </configurable>
 
-  <configurable id="preferences.appIntegration" configurable_name="Application Servers">
+  <configurable id="preferences.applicationServers" configurable_name="Application Servers">
     <synonym>J2EE Build Settings</synonym>
     <synonym>Manage Application Server Validations</synonym>
     <synonym>J2EE Application settings</synonym>
