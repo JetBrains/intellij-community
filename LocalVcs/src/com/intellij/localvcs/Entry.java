@@ -1,5 +1,8 @@
 package com.intellij.localvcs;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 public abstract class Entry {
@@ -10,6 +13,16 @@ public abstract class Entry {
   public Entry(Integer objectId, String name) {
     myObjectId = objectId;
     myName = name;
+  }
+
+  public Entry(DataInputStream s) throws IOException {
+    myObjectId = s.readInt();
+    myName = s.readUTF();
+  }
+
+  public void write(DataOutputStream s) throws IOException {
+    s.writeInt(myObjectId);
+    s.writeUTF(myName);
   }
 
   public Integer getObjectId() {

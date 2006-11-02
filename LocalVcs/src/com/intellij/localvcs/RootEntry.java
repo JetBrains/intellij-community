@@ -1,9 +1,23 @@
 package com.intellij.localvcs;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 public class RootEntry extends DirectoryEntry {
   // todo try to crean up Entry hierarchy
   public RootEntry() {
     super(null, null);
+  }
+
+  public RootEntry(DataInputStream s) throws IOException {
+    this();
+    readChildren(s);
+  }
+
+  @Override
+  public void write(DataOutputStream s) throws IOException {
+    super.writeChildren(s);
   }
 
   protected Path getPathAppendedWith(String name) {

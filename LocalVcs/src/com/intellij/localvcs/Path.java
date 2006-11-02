@@ -1,5 +1,8 @@
 package com.intellij.localvcs;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -11,6 +14,14 @@ public class Path {
 
   public Path(String path) {
     myPath = path;
+  }
+
+  public Path(DataInputStream s) throws IOException {
+    myPath = s.readUTF();
+  }
+
+  public void write(DataOutputStream s) throws IOException {
+    s.writeUTF(myPath);
   }
 
   public String getName() {
