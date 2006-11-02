@@ -230,7 +230,8 @@ public class MatcherImpl {
 
     final Language ourPatternLanguage = ((LanguageFileType)options.getFileType()).getLanguage();
     SearchScope searchScope = compiledPattern.getScope();
-    if (searchScope==null) searchScope = options.getScope();
+    boolean ourOptimizedScope = searchScope != null;
+    if (!ourOptimizedScope) searchScope = options.getScope();
 
     if (searchScope instanceof GlobalSearchScope) {
       final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
@@ -311,7 +312,7 @@ public class MatcherImpl {
         if (language != JspxFileViewProvider.JAVA_HOLDER_METHOD_TREE_LANGUAGE && language == ourPatternLanguage) { // prevent duplicated usages
           scheduler.addOneTask(new MatchOneFile(elementsToScan[i]));
         }
-        elementsToScan[i] = null; // to prevent long PsiElement reference
+        if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }
 
