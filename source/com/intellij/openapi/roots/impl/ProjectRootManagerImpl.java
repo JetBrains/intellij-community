@@ -595,6 +595,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       rootPaths.add(module.getModuleFilePath());
     }
 
+    if (myCompilerOutput != null) {
+      final String url = myCompilerOutput.getUrl();
+      rootPaths.add(extractLocalPath(url));
+    }
+
     final String projectFile = myProject.getProjectFilePath();
     if (projectFile != null) {
       rootPaths.add(projectFile);
