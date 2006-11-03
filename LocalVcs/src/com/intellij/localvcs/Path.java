@@ -67,8 +67,14 @@ public class Path {
   }
 
   @Override
+  public String toString() {
+    return getClass().getSimpleName() + "(" + myPath + ")";
+  }
+
+  @Override
   public boolean equals(Object o) {
-    // todo possible we should remove these methods  
+    // todo possible we should remove these methods
+    if (o == null || !o.getClass().equals(getClass())) return false;
     return myPath.equals(((Path)o).myPath);
   }
 

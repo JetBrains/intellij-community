@@ -47,6 +47,8 @@ public class DeleteChange extends Change {
 
   @Override
   public void revertOn(Snapshot snapshot) {
+    // todo maybe we should create several DeleteChanges instead of saving
+    // previous entry?
     restoreEntryRecursively(snapshot, myAffectedEntry, myPath);
   }
 

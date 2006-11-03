@@ -12,6 +12,7 @@ import org.junit.Test;
 
 public class SerializationTest extends TestCase {
   // todo replace DataStreams with ObjectStreams and remove checks for null
+  // todo replace DataStreams with MyStreams and remove checks for null
   private DataOutputStream os;
   private DataInputStream is;
 
@@ -144,11 +145,13 @@ public class SerializationTest extends TestCase {
     Change c = new DeleteChange(p("entry"));
     c.write(os);
 
-    Change result = Change.read(is);
-    assertEquals(DeleteChange.class, result.getClass());
+    Change read = Change.read(is);
+    assertEquals(DeleteChange.class, read.getClass());
 
-    assertEquals(p("entry"), ((DeleteChange)result).getPath());
-    assertNull(((DeleteChange)result).getAffectedEntry());
+    DeleteChange result = ((DeleteChange)read);
+
+    assertEquals(p("entry"), result.getPath());
+    assertNull(result.getAffectedEntry());
   }
 
   @Test
@@ -175,5 +178,65 @@ public class SerializationTest extends TestCase {
     assertEquals(2, result.getChildren().size());
     assertEquals("file", result.getChildren().get(0).getName());
     assertEquals("dir", result.getChildren().get(1).getName());
+  }
+
+  @Test
+  public void testChangeFileContentChange() throws IOException {
+    Change c = new ChangeFileContentChange(p("entry"), "new content");
+    c.write(os);
+
+    Change read = Change.read(is);
+    assertEquals(ChangeFileContentChange.class, read.getClass());
+
+    ChangeFileContentChange result = ((ChangeFileContentChange)read);
+
+    assertEquals(p("entry"), result.getPath());
+    assertEquals("new content", result.getNewContent());
+    assertNull(result.getOldContent());
+  }
+
+  @Test
+  public void testAppliedChangeFileContentChange() throws IOException {
+    Change c = new ChangeFileContentChange(p("file"), "new content");
+
+    c.applyTo(new Snapshot() {
+      @Override
+      public Entry getEntry(Path path) {
+        return new FileEntry(null, null, "content");
+      }
+    });
+
+    c.write(os);
+
+    Change read = Change.read(is);
+    assertEquals("content", ((ChangeFileContentChange)read).getOldContent());
+  }
+
+  @Test
+  public void testRenameChange() throws IOException {
+    Change c = new RenameChange(p("entry"), "new name");
+    c.write(os);
+
+    Change read = Change.read(is);
+    assertEquals(RenameChange.class, read.getClass());
+
+    RenameChange result = ((RenameChange)read);
+
+    assertEquals(p("entry"), result.getPath());
+    assertEquals("new name", result.getNewName());
+  }
+
+  @Test
+  public void testMoveChange() throws IOException {
+    Change c = new MoveChange(p("entry"), p("dir"));
+    c.write(os);
+
+    Change read = Change.read(is);
+    assertEquals(MoveChange.class, read.getClass());
+
+    MoveChange result = ((MoveChange)read);
+
+    assertEquals(p("entry"), result.getPath());
+    assertEquals(p("dir"), result.getNewParent());
   }
 }
