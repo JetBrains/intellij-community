@@ -1,16 +1,16 @@
 class A {
 
     Integer f(int i) {
-        Integer result1;
+        Integer result;
         if (i > 0) {
-            result1 = new Integer(i);
+            result = new Integer(i);
         }
         else {
             Integer result;
             result = new Integer(0);
-            result1 = result;
+            result = result;
         }
-        return result1;
+        return result;
     }
 
 }

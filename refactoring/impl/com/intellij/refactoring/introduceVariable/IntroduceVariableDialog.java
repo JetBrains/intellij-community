@@ -149,7 +149,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
               public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
                 final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
                 final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, myExpression, type);
-                return codeStyleManager.suggestUniqueVariableName(nameInfo, myExpression, false);
+                return codeStyleManager.suggestUniqueVariableName(nameInfo, myExpression, true);
               }
 
               public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {

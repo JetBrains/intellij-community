@@ -31,6 +31,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -1374,54 +1375,36 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   public String suggestUniqueVariableName(String baseName, PsiElement place, boolean lookForward) {
-    PsiElement scope;
-    if (lookForward) {
-      scope = place.getParent();
-      while (true) {
-        if( scope instanceof PsiCodeBlock )
-        {
-          break;
-        }
-        if( scope instanceof PsiClass )
-        {
-          break;
-        }
-        if( scope instanceof PsiFile )
-        {
-          break;
-        }
-        scope = scope.getParent();
-      }
-      place = scope.getLastChild();
-    }
-    else {
-      scope = null;
-    }
-
     int index = 0;
-    while (true) {
+    final PsiStatement enclosingStatement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);
+    NextName: while (true) {
       String name = baseName;
       if (index > 0) {
         name += index;
       }
       index++;
       if (PsiUtil.isVariableNameUnique(name, place)) {
-        if (scope instanceof PsiCodeBlock) {
+        if (lookForward) {
           final String name1 = name;
-          class CancelException extends RuntimeException {
+          PsiElement scope = enclosingStatement;
+          while (scope != null) {
+            class CancelException extends RuntimeException {
+            }
+            try {
+              scope.accept(new PsiRecursiveElementVisitor() {
+                public void visitVariable(PsiVariable variable) {
+                  if (name1.equals(variable.getName())) {
+                    throw new CancelException();
+                  }
+                }
+              });
+            }
+            catch (CancelException e) {
+              continue NextName;
+            }
+            scope = scope.getNextSibling();
           }
-          try {
-            scope.accept(new PsiRecursiveElementVisitor() {
-                           public void visitVariable(PsiVariable variable) {
-                             if (name1.equals(variable.getName())) {
-                               throw new CancelException();
-                             }
-                           }
-                         });
-          }
-          catch (CancelException e) {
-          continue;
-          }
+
         }
         return name;
       }
@@ -1433,7 +1416,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final String[] names = baseNameInfo.names;
     Set<String> uniqueNames = new HashSet<String>(names.length);
     for (String name : names) {
-      uniqueNames.add(suggestUniqueVariableName(name, place, true));
+      uniqueNames.add(suggestUniqueVariableName(name, place, lookForward));
     }
 
     return new SuggestedNameInfo(uniqueNames.toArray(new String[uniqueNames.size()])) {
