@@ -167,6 +167,11 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     myPropertiesArray = null;
     myPrev = null;
     myNext = null;
+    incModificationCount();
+  }
+
+  public void incModificationCount() {
+    getAntFile().incModificationCount();
   }
 
   @Nullable

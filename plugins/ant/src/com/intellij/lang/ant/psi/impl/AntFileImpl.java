@@ -13,6 +13,7 @@ import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
+import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
@@ -72,7 +73,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private PsiElement[] myChildren;
   private AntClassLoader myClassLoader;
   private Hashtable myProjectProperties;
-
   /**
    * Map of propeties set outside.
    */
@@ -88,6 +88,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    * It's updated together with the set of custom definitons.
    */
   private HashMap<AntTypeId, String> myProjectElements;
+  private long myModificationCount = 0;
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -174,13 +175,27 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
-      myChildren = null;
-      myPrologElement = null;
-      myProject = null;
-      myEpilogueElement = null;
-      myTargetDefinition = null;
-      myClassLoader = null;
+      if (myChildren != null) {
+        myChildren = null;
+        myPrologElement = null;
+        myProject = null;
+        myEpilogueElement = null;
+        myTargetDefinition = null;
+        myClassLoader = null;
+        incModificationCount();
+      }
     }
+  }
+
+  public synchronized void incModificationCount() {
+    ++myModificationCount;
+    for (final AntFile file : AntSupport.getImpotingFiles(this)) {
+      file.clearCaches();
+    }
+  }
+
+  public synchronized long getModificationCount() {
+    return myModificationCount;
   }
 
   public void subtreeChanged() {
@@ -224,28 +239,41 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable
   public AntProject getAntProject() {
-    // the following line is necessary only to satisfy the "sync/unsync context" inspection
-    synchronized (PsiLock.LOCK) {
-      if (myProject == null) {
-        final XmlFile baseFile = getSourceElement();
-        final XmlDocument document = baseFile.getDocument();
-        assert document != null;
-        final XmlTag tag = document.getRootTag();
-        if (tag == null) return null;
-        final String fileText = baseFile.getText();
-        final int projectStart = tag.getTextRange().getStartOffset();
-        if (projectStart > 0) {
-          myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
+    boolean updateBuilFile = false;
+    try {
+      synchronized (PsiLock.LOCK) {
+        if (myProject == null) {
+          final XmlFile baseFile = getSourceElement();
+          final XmlDocument document = baseFile.getDocument();
+          assert document != null;
+          final XmlTag tag = document.getRootTag();
+          if (tag == null) return null;
+          final String fileText = baseFile.getText();
+          final int projectStart = tag.getTextRange().getStartOffset();
+          if (projectStart > 0) {
+            myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
+          }
+          final int projectEnd = tag.getTextRange().getEndOffset();
+          if (projectEnd < fileText.length()) {
+            myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
+          }
+          final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
+          myProject = project;
+          project.loadPredefinedProperties(myProjectProperties, myExternalProperties);
+          for (final AntFile imported : project.getImportedFiles()) {
+            if (imported.isPhysical()) {
+              AntSupport.registerDependency(this, imported);
+            }
+          }
+          updateBuilFile = true;
         }
-        final int projectEnd = tag.getTextRange().getEndOffset();
-        if (projectEnd < fileText.length()) {
-          myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
-        }
-        final AntProjectImpl project = new AntProjectImpl(this, tag, createProjectDefinition());
-        myProject = project;
-        project.loadPredefinedProperties(myProjectProperties, myExternalProperties);
+        return myProject;
       }
-      return myProject;
+    }
+    finally {
+      if (updateBuilFile) {
+        AntChangeVisitor.updateBuildFile(this);
+      }
     }
   }
 
@@ -461,7 +489,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
     return null;
   }
-
 
   private static final class ReflectedProject {
 

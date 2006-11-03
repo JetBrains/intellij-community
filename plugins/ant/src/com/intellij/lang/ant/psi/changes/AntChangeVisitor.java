@@ -21,8 +21,8 @@ import java.util.Set;
 
 public class AntChangeVisitor implements XmlChangeVisitor {
 
-  private final Set<AntBuildFile> myDirtyFiles = new HashSet<AntBuildFile>();
-  private final Alarm myAlarm = new Alarm();
+  private static final Set<AntBuildFile> myDirtyFiles = new HashSet<AntBuildFile>();
+  private static final Alarm myAlarm = new Alarm();
 
   public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
     final XmlTag tag = xmlAttributeSet.getTag();
@@ -39,7 +39,6 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     final AntFile antFile = getAntFile(doc);
     if (antFile != null) {
       antFile.clearCaches();
-      updateBuildFile(antFile);
     }
   }
 
@@ -67,7 +66,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     clearParentCaches(xmlTextChanged.getText());
   }
 
-  private void clearParentCaches(final XmlElement el) {
+  private static void clearParentCaches(final XmlElement el) {
     final TextRange textRange = el.getTextRange();
     final AntFile file = getAntFile(el);
     if (file == null) return;
@@ -97,11 +96,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     updateBuildFile(file);
   }
 
-  private static AntFile getAntFile(final XmlElement el) {
-    return (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
-  }
-
-  private void updateBuildFile(final AntFile file) {
+  public static void updateBuildFile(final AntFile file) {
     final AntConfiguration antConfiguration = AntConfiguration.getInstance(file.getProject());
     for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
       if (file.equals(buildFile.getAntFile())) {
@@ -121,5 +116,9 @@ public class AntChangeVisitor implements XmlChangeVisitor {
         break;
       }
     }
+  }
+
+  private static AntFile getAntFile(final XmlElement el) {
+    return (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
   }
 }
