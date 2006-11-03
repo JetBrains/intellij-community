@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,28 +11,28 @@ public class DirectoryEntry extends Entry {
     super(objectId, name);
   }
 
-  public DirectoryEntry(DataInputStream s) throws IOException {
+  public DirectoryEntry(Stream s) throws IOException {
     super(s);
     readChildren(s);
   }
 
-  protected void readChildren(DataInputStream s) throws IOException {
-    int count = s.readInt();
-    for (int i = 0; i < count; i++) {
-      myChildren.add(Entry.read(s));
-    }
-  }
-
   @Override
-  public void write(DataOutputStream s) throws IOException {
+  public void write(Stream s) throws IOException {
     super.write(s);
     writeChildren(s);
   }
 
-  protected void writeChildren(DataOutputStream s) throws IOException {
-    s.writeInt(myChildren.size());
+  protected void readChildren(Stream s) throws IOException {
+    int count = s.readInteger();
+    for (int i = 0; i < count; i++) {
+      myChildren.add(s.readEntry());
+    }
+  }
+
+  protected void writeChildren(Stream s) throws IOException {
+    s.writeInteger(myChildren.size());
     for (Entry child : myChildren) {
-      child.write(s);
+      s.writeEntry(child);
     }
   }
 

@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -15,13 +13,13 @@ public abstract class Entry {
     myName = name;
   }
 
-  public Entry(DataInputStream s) throws IOException {
-    myObjectId = s.readInt();
-    myName = s.readUTF();
+  public Entry(Stream s) throws IOException {
+    myObjectId = s.readInteger();
+    myName = s.readString();
   }
 
-  public static Entry read(DataInputStream s) throws IOException {
-    String clazz = s.readUTF();
+  public static Entry read(Stream s) throws IOException {
+    String clazz = s.readString();
 
     if (clazz.equals(FileEntry.class.getSimpleName()))
       return new FileEntry(s);
@@ -31,10 +29,10 @@ public abstract class Entry {
     throw new RuntimeException();
   }
 
-  public void write(DataOutputStream s) throws IOException {
-    s.writeUTF(getClass().getSimpleName());
-    s.writeInt(myObjectId);
-    s.writeUTF(myName);
+  public void write(Stream s) throws IOException {
+    s.writeString(getClass().getSimpleName());
+    s.writeInteger(myObjectId);
+    s.writeString(myName);
   }
 
   public Integer getObjectId() {

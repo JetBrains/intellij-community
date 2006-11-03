@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class MoveChange extends Change {
@@ -13,17 +11,17 @@ public class MoveChange extends Change {
     myNewParent = newParent;
   }
 
-  public MoveChange(DataInputStream s) throws IOException {
-    myPath = new Path(s);
-    myNewParent = new Path(s);
+  public MoveChange(Stream s) throws IOException {
+    myPath = s.readPath();
+    myNewParent = s.readPath();
   }
 
   @Override
-  public void write(DataOutputStream s) throws IOException {
+  public void write(Stream s) throws IOException {
     super.write(s);
 
-    myPath.write(s);
-    myNewParent.write(s);
+    s.writePath(myPath);
+    s.writePath(myNewParent);
   }
 
   public Path getPath() {

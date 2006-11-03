@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class FileEntry extends Entry {
@@ -13,15 +11,15 @@ public class FileEntry extends Entry {
     myContent = content;
   }
 
-  public FileEntry(DataInputStream s) throws IOException {
+  public FileEntry(Stream s) throws IOException {
     super(s);
-    myContent = s.readUTF();
+    myContent = s.readString();
   }
 
   @Override
-  public void write(DataOutputStream s) throws IOException {
+  public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeUTF(myContent);
+    s.writeString(myContent);
   }
 
   @Override

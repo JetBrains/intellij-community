@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class CreateDirectoryChange extends Change {
@@ -11,14 +9,14 @@ public class CreateDirectoryChange extends Change {
     myPath = path;
   }
 
-  public CreateDirectoryChange(DataInputStream s) throws IOException {
-    myPath = new Path(s);
+  public CreateDirectoryChange(Stream s) throws IOException {
+    myPath = s.readPath();
   }
 
   @Override
-  public void write(DataOutputStream s) throws IOException {
+  public void write(Stream s) throws IOException {
     super.write(s);
-    myPath.write(s);
+    s.writePath(myPath);
   }
 
   public Path getPath() {

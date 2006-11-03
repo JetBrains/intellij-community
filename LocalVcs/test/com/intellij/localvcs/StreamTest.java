@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -10,11 +8,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SerializationTest extends TestCase {
-  // todo replace DataStreams with ObjectStreams and remove checks for null
-  // todo replace DataStreams with MyStreams and remove checks for null
-  private DataOutputStream os_;
-  private DataInputStream is_;
+public class StreamTest extends TestCase {
   private Stream is;
   private Stream os;
 
@@ -23,11 +17,8 @@ public class SerializationTest extends TestCase {
     PipedOutputStream pos = new PipedOutputStream();
     PipedInputStream pis = new PipedInputStream(pos);
 
-    os_ = new DataOutputStream(pos);
-    is_ = new DataInputStream(pis);
-
-    os = new Stream(os_);
-    is = new Stream(is_);
+    os = new Stream(pos);
+    is = new Stream(pis);
   }
 
   @Test
@@ -123,9 +114,10 @@ public class SerializationTest extends TestCase {
   @Test
   public void testCreateFileChange() throws IOException {
     Change c = new CreateFileChange(p("file"), "content");
-    c.write(os_);
 
-    Change result = Change.read(is_);
+    os.writeChange(c);
+    Change result = is.readChange();
+
     assertEquals(CreateFileChange.class, result.getClass());
 
     assertEquals(p("file"), ((CreateFileChange)result).getPath());

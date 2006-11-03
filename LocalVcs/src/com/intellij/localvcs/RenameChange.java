@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class RenameChange extends Change {
@@ -13,16 +11,16 @@ public class RenameChange extends Change {
     myNewName = newName;
   }
 
-  public RenameChange(DataInputStream s) throws IOException {
-    myPath = new Path(s);
-    myNewName = s.readUTF();
+  public RenameChange(Stream s) throws IOException {
+    myPath = s.readPath();
+    myNewName = s.readString();
   }
 
   @Override
-  public void write(DataOutputStream s) throws IOException {
+  public void write(Stream s) throws IOException {
     super.write(s);
-    myPath.write(s);
-    s.writeUTF(myNewName);
+    s.writePath(myPath);
+    s.writeString(myNewName);
   }
 
   public Path getPath() {

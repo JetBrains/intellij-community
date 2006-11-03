@@ -1,22 +1,20 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 public abstract class Change {
-  public static Change read(DataInputStream s) throws IOException {
-    return createChange(s.readUTF(), s);
+  public static Change read(Stream s) throws IOException {
+    return createChange(s.readString(), s);
   }
 
-  private static Change createChange(String className, DataInputStream s)
+  private static Change createChange(String className, Stream s)
       throws IOException {
     // todo move it to MyStream class
     try {
       Class clazz = Class.forName(className);
-      Constructor constructor = clazz.getConstructor(DataInputStream.class);
+      Constructor constructor = clazz.getConstructor(s.getClass());
 
       return (Change)constructor.newInstance(s);
     } catch (ClassNotFoundException e) {
@@ -32,8 +30,8 @@ public abstract class Change {
     }
   }
 
-  public void write(DataOutputStream s) throws IOException {
-    s.writeUTF(getClass().getName());
+  public void write(Stream s) throws IOException {
+    s.writeString(getClass().getName());
   }
 
   public abstract void applyTo(Snapshot snapshot);

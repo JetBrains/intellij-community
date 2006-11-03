@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class CreateFileChange extends Change {
@@ -13,16 +11,16 @@ public class CreateFileChange extends Change {
     myContent = content;
   }
 
-  public CreateFileChange(DataInputStream s) throws IOException {
-    myPath = new Path(s);
-    myContent = s.readUTF();
+  public CreateFileChange(Stream s) throws IOException {
+    myPath = s.readPath();
+    myContent = s.readString();
   }
 
   @Override
-  public void write(DataOutputStream s) throws IOException {
+  public void write(Stream s) throws IOException {
     super.write(s);
-    myPath.write(s);
-    s.writeUTF(myContent);
+    s.writePath(myPath);
+    s.writeString(myContent);
   }
 
   public Path getPath() {

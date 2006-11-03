@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class RootEntry extends DirectoryEntry {
@@ -10,13 +8,13 @@ public class RootEntry extends DirectoryEntry {
     super(null, null);
   }
 
-  public RootEntry(DataInputStream s) throws IOException {
+  public RootEntry(Stream s) throws IOException {
     this();
     readChildren(s);
   }
 
   @Override
-  public void write(DataOutputStream s) throws IOException {
+  public void write(Stream s) throws IOException {
     super.writeChildren(s);
   }
 

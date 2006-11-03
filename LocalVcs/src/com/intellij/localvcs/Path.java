@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +14,12 @@ public class Path {
     myPath = path;
   }
 
-  public Path(DataInputStream s) throws IOException {
-    myPath = s.readUTF();
+  public Path(Stream s) throws IOException {
+    myPath = s.readString();
   }
 
-  public void write(DataOutputStream s) throws IOException {
-    s.writeUTF(myPath);
+  public void write(Stream s) throws IOException {
+    s.writeString(myPath);
   }
 
   public String getName() {

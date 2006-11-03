@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class DeleteChange extends Change {
@@ -12,20 +10,20 @@ public class DeleteChange extends Change {
     myPath = path;
   }
 
-  public DeleteChange(DataInputStream s) throws IOException {
-    myPath = new Path(s);
+  public DeleteChange(Stream s) throws IOException {
+    myPath = s.readPath();
     if (s.readBoolean()) {
-      myAffectedEntry = Entry.read(s);
+      myAffectedEntry = s.readEntry();
     }
   }
 
   @Override
-  public void write(DataOutputStream s) throws IOException {
+  public void write(Stream s) throws IOException {
     super.write(s);
-    myPath.write(s);
+    s.writePath(myPath);
     if (myAffectedEntry != null) {
       s.writeBoolean(true);
-      myAffectedEntry.write(s);
+      s.writeEntry(myAffectedEntry);
     } else {
       s.writeBoolean(false);
     }
