@@ -18,19 +18,7 @@ public abstract class Entry {
     myName = s.readString();
   }
 
-  public static Entry read(Stream s) throws IOException {
-    String clazz = s.readString();
-
-    if (clazz.equals(FileEntry.class.getSimpleName()))
-      return new FileEntry(s);
-    if (clazz.equals(DirectoryEntry.class.getSimpleName()))
-      return new DirectoryEntry(s);
-
-    throw new RuntimeException();
-  }
-
   public void write(Stream s) throws IOException {
-    s.writeString(getClass().getSimpleName());
     s.writeInteger(myObjectId);
     s.writeString(myName);
   }
@@ -44,7 +32,7 @@ public abstract class Entry {
   }
 
   public Path getPath() {
-    // try to remove this check
+    // todo try to remove this check
     if (!hasParent()) return new Path(myName);
     return myParent.getPathAppendedWith(myName);
   }

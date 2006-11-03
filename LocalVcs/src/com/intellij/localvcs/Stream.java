@@ -33,21 +33,22 @@ public class Stream {
   }
 
   public Entry readEntry() throws IOException {
-    return Entry.read(this);
+    return (Entry)readSubclass(readString());
   }
 
   public void writeEntry(Entry e) throws IOException {
+    writeString(e.getClass().getName());
     e.write(this);
   }
 
   public Entry readNullableEntry() throws IOException {
     if (!readBoolean()) return null;
-    return Entry.read(this);
+    return readEntry();
   }
 
   public void writeNullableEntry(Entry e) throws IOException {
     writeBoolean(e != null);
-    if (e != null) e.write(this);
+    if (e != null) writeEntry(e);
   }
 
   // todo get rid of these two methods
@@ -60,25 +61,7 @@ public class Stream {
   }
 
   public Change readChange() throws IOException {
-    return createChange(readString());
-  }
-
-  private Change createChange(String className) throws IOException {
-    try {
-      Class clazz = Class.forName(className);
-      Constructor constructor = clazz.getConstructor(getClass());
-      return (Change)constructor.newInstance(this);
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    } catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    } catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
-    } catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    }
+    return (Change)readSubclass(readString());
   }
 
   public void writeChange(Change c) throws IOException {
@@ -118,5 +101,23 @@ public class Stream {
 
   public void writeInteger(Integer i) throws IOException {
     myOs.writeInt(i);
+  }
+
+  private Object readSubclass(String className) throws IOException {
+    try {
+      Class clazz = Class.forName(className);
+      Constructor constructor = clazz.getConstructor(getClass());
+      return constructor.newInstance(this);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    } catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
+    } catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
