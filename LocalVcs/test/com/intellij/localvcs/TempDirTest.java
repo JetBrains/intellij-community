@@ -33,6 +33,6 @@ public abstract class TempDirTest extends TestCase {
   @Test
   public void testHasOneChangeSetByDefault() {
     ChangeList l = new ChangeList();
-    assertTrue(l.hasOnlyOneChangeSet());
+    assertTrue(l.isEmpty());
   }
 }

@@ -6,11 +6,6 @@ import java.util.List;
 public class ChangeList {
   private List<ChangeSet> myChangeSets = new ArrayList<ChangeSet>();
 
-  public ChangeList() {
-    // todo a but of hack
-    add(new ChangeSet(new ArrayList<Change>()));
-  }
-
   public List<ChangeSet> getChangeSets() {
     return myChangeSets;
   }
@@ -19,24 +14,32 @@ public class ChangeList {
     myChangeSets.add(cs);
   }
 
-  public void removeLast() {
+  public void revertLastChangeSetOn(Snapshot snapshot) {
+    getLast().revertOn(snapshot);
     myChangeSets.remove(getLast());
   }
 
-  public Boolean hasOnlyOneChangeSet() {
-    return myChangeSets.size() == 1;
+  public Boolean isEmpty() {
+    return myChangeSets.isEmpty();
   }
 
   public ChangeSet getLast() {
+    // todo ummm... one more unpleasant check... 
+    if (isEmpty()) throw new LocalVcsException();
     return myChangeSets.get(myChangeSets.size() - 1);
+  }
+
+  public void setLastChangeSetLabel(String label) {
+    getLast().setLabel(label);
+  }
+
+  public String getLastChangeSetLabel() {
+    return getLast().getLabel();
   }
 
   public ChangeList copy() {
     ChangeList result = new ChangeList();
-
-    result.myChangeSets.clear();
     result.myChangeSets.addAll(myChangeSets);
-
     return result;
   }
 }

@@ -250,4 +250,17 @@ public class StreamTest extends TestCase {
     assertEquals(1, result.getChanges().size());
     assertEquals(CreateFileChange.class, result.getChanges().get(0).getClass());
   }
+
+  @Test
+  public void testChangeList() throws IOException {
+    ChangeList c = new ChangeList();
+    fail();
+
+    //os.writeChangeSet(c);
+    //ChangeSet result = is.readChangeSet();
+    //
+    //assertEquals("label", result.getLabel());
+    //assertEquals(1, result.getChanges().size());
+    //assertEquals(CreateFileChange.class, result.getChanges().get(0).getClass());
+  }
 }
