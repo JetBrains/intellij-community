@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -183,19 +184,24 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
-    final StringBuffer classpathBuffer = new StringBuffer();
-    for (final VirtualFile file : cpFiles) {
-      final String path = PathUtil.getLocalPath(file);
-      if (path == null) {
-        continue;
+    final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
+    try {
+      for (final VirtualFile file : cpFiles) {
+        final String path = PathUtil.getLocalPath(file);
+        if (path == null) {
+          continue;
+        }
+        if (classpathBuffer.length() > 0) {
+          classpathBuffer.append(File.pathSeparatorChar);
+        }
+        classpathBuffer.append(path);
       }
-      if (classpathBuffer.length() > 0) {
-        classpathBuffer.append(File.pathSeparatorChar);
-      }
-      classpathBuffer.append(path);
-    }
 
-    return classpathBuffer.toString();
+      return classpathBuffer.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(classpathBuffer);
+    }
   }
 
   public int getModuleCount() {
