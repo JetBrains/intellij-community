@@ -15,14 +15,14 @@ public class ChangeFileContentChange extends Change {
   public ChangeFileContentChange(Stream s) throws IOException {
     myPath = s.readPath();
     myNewContent = s.readString();
-    myOldContent = s.readNullableString();
+    myOldContent = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     s.writePath(myPath);
     s.writeString(myNewContent);
-    s.writeNullableString(myOldContent);
+    s.writeString(myOldContent);
   }
 
   public Path getPath() {

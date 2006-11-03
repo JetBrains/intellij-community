@@ -9,7 +9,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 public class Stream {
-  // todo get rid of *nullable* methods
   private DataInputStream myIs;
   private DataOutputStream myOs;
 
@@ -34,84 +33,45 @@ public class Stream {
   }
 
   public Entry readEntry() throws IOException {
-    return (Entry)readSubclass(readString());
+    if (!myIs.readBoolean()) return null;
+    return (Entry)readSubclass(myIs.readUTF());
   }
 
   public void writeEntry(Entry e) throws IOException {
-    writeString(e.getClass().getName());
-    e.write(this);
-  }
-
-  public Entry readNullableEntry() throws IOException {
-    if (!readBoolean()) return null;
-    return readEntry();
-  }
-
-  public void writeNullableEntry(Entry e) throws IOException {
-    writeBoolean(e != null);
-    if (e != null) writeEntry(e);
-  }
-
-  // todo get rid of these two methods
-  public Entry readRootEntry() throws IOException {
-    return new RootEntry(this);
-  }
-
-  public void writeRootEntry(Entry e) throws IOException {
-    e.write(this);
+    myOs.writeBoolean(e != null);
+    if (e != null) {
+      myOs.writeUTF(e.getClass().getName());
+      e.write(this);
+    }
   }
 
   public Change readChange() throws IOException {
-    return (Change)readSubclass(readString());
+    return (Change)readSubclass(myIs.readUTF());
   }
 
   public void writeChange(Change c) throws IOException {
-    writeString(c.getClass().getName());
+    myOs.writeUTF(c.getClass().getName());
     c.write(this);
   }
 
   public String readString() throws IOException {
+    if (!myIs.readBoolean()) return null;
     return myIs.readUTF();
   }
 
   public void writeString(String s) throws IOException {
-    myOs.writeUTF(s);
-  }
-
-  public String readNullableString() throws IOException {
-    if (!readBoolean()) return null;
-    return readString();
-  }
-
-  public void writeNullableString(String s) throws IOException {
-    writeBoolean(s != null);
-    if (s != null) writeString(s);
-  }
-
-  public Boolean readBoolean() throws IOException {
-    return myIs.readBoolean();
-  }
-
-  public void writeBoolean(Boolean b) throws IOException {
-    myOs.writeBoolean(b);
+    myOs.writeBoolean(s != null);
+    if (s != null) myOs.writeUTF(s);
   }
 
   public Integer readInteger() throws IOException {
+    if (!myIs.readBoolean()) return null;
     return myIs.readInt();
   }
 
   public void writeInteger(Integer i) throws IOException {
-    myOs.writeInt(i);
-  }
-
-  public Integer readNullableInteger() throws IOException {
-    if (!readBoolean()) return null;
-    return readInteger();
-  }
-
-  public void writeNullableInteger(Integer i) throws IOException {
-    writeBoolean(i != null);
-    if (i != null) writeInteger(i);
+    myOs.writeBoolean(i != null);
+    if (i != null) myOs.writeInt(i);
   }
 
   private Object readSubclass(String className) throws IOException {
@@ -119,15 +79,9 @@ public class Stream {
       Class clazz = Class.forName(className);
       Constructor constructor = clazz.getConstructor(getClass());
       return constructor.newInstance(this);
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    } catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
     } catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
-    } catch (InstantiationException e) {
+      throw (IOException)e.getCause();
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }

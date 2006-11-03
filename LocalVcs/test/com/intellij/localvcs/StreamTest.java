@@ -94,8 +94,8 @@ public class StreamTest extends TestCase {
     e.addChild(new FileEntry(1, "file", ""));
     e.addChild(new DirectoryEntry(2, "dir"));
 
-    os.writeRootEntry(e);
-    Entry result = is.readRootEntry();
+    os.writeEntry(e);
+    Entry result = is.readEntry();
 
     assertEquals(RootEntry.class, result.getClass());
     assertNull(result.getObjectId());
