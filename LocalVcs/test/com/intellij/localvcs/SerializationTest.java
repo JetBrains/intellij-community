@@ -13,31 +13,36 @@ import org.junit.Test;
 public class SerializationTest extends TestCase {
   // todo replace DataStreams with ObjectStreams and remove checks for null
   // todo replace DataStreams with MyStreams and remove checks for null
-  private DataOutputStream os;
-  private DataInputStream is;
+  private DataOutputStream os_;
+  private DataInputStream is_;
+  private Stream is;
+  private Stream os;
 
   @Before
   public void setUpStreams() throws IOException {
     PipedOutputStream pos = new PipedOutputStream();
     PipedInputStream pis = new PipedInputStream(pos);
 
-    os = new DataOutputStream(pos);
-    is = new DataInputStream(pis);
+    os_ = new DataOutputStream(pos);
+    is_ = new DataInputStream(pis);
+
+    os = new Stream(os_);
+    is = new Stream(is_);
   }
 
   @Test
   public void testPath() throws IOException {
     Path p = new Path("dir/file");
-    p.write(os);
-    assertEquals(p, new Path(is));
+    os.writePath(p);
+    assertEquals(p, is.readPath());
   }
 
   @Test
   public void testFileEntry() throws IOException {
     Entry e = new FileEntry(42, "file", "content");
-    e.write(os);
 
-    Entry result = Entry.read(is);
+    os.writeEntry(e);
+    Entry result = is.readEntry();
 
     assertEquals(FileEntry.class, result.getClass());
     assertEquals(42, result.getObjectId());
@@ -51,17 +56,17 @@ public class SerializationTest extends TestCase {
     Entry e = new FileEntry(42, "file", "content");
 
     parent.addChild(e);
-    e.write(os);
+    os.writeEntry(e);
 
-    assertNull(Entry.read(is).getParent());
+    assertNull(is.readEntry().getParent());
   }
 
   @Test
   public void tesEmptyDirectoryEntry() throws IOException {
     Entry e = new DirectoryEntry(13, "name");
-    e.write(os);
 
-    Entry result = Entry.read(is);
+    os.writeEntry(e);
+    Entry result = is.readEntry();
 
     assertEquals(DirectoryEntry.class, result.getClass());
     assertEquals(13, result.getObjectId());
@@ -77,11 +82,10 @@ public class SerializationTest extends TestCase {
     dir.addChild(subDir);
     subDir.addChild(new FileEntry(2, "f2", "2"));
 
-    dir.write(os);
+    os.writeEntry(dir);
+    Entry result = is.readEntry();
 
-    Entry result = Entry.read(is);
     List<Entry> children = result.getChildren();
-
     assertEquals(2, children.size());
 
     assertEquals(FileEntry.class, children.get(0).getClass());
@@ -99,10 +103,8 @@ public class SerializationTest extends TestCase {
     e.addChild(new FileEntry(1, "file", ""));
     e.addChild(new DirectoryEntry(2, "dir"));
 
-    e.write(os);
-
-    // todo maby we should read RootEntry with Entry.read() too?
-    Entry result = new RootEntry(is);
+    os.writeRootEntry(e);
+    Entry result = is.readRootEntry();
 
     assertEquals(RootEntry.class, result.getClass());
     assertNull(result.getObjectId());
@@ -121,9 +123,9 @@ public class SerializationTest extends TestCase {
   @Test
   public void testCreateFileChange() throws IOException {
     Change c = new CreateFileChange(p("file"), "content");
-    c.write(os);
+    c.write(os_);
 
-    Change result = Change.read(is);
+    Change result = Change.read(is_);
     assertEquals(CreateFileChange.class, result.getClass());
 
     assertEquals(p("file"), ((CreateFileChange)result).getPath());
@@ -133,9 +135,10 @@ public class SerializationTest extends TestCase {
   @Test
   public void testCreateDirectoryChange() throws IOException {
     Change c = new CreateDirectoryChange(p("dir"));
-    c.write(os);
 
-    Change result = Change.read(is);
+    os.writeChange(c);
+    Change result = is.readChange();
+
     assertEquals(CreateDirectoryChange.class, result.getClass());
     assertEquals(p("dir"), ((CreateDirectoryChange)result).getPath());
   }
@@ -143,9 +146,10 @@ public class SerializationTest extends TestCase {
   @Test
   public void testDeleteChange() throws IOException {
     Change c = new DeleteChange(p("entry"));
-    c.write(os);
 
-    Change read = Change.read(is);
+    os.writeChange(c);
+    Change read = is.readChange();
+
     assertEquals(DeleteChange.class, read.getClass());
 
     DeleteChange result = ((DeleteChange)read);
@@ -168,9 +172,8 @@ public class SerializationTest extends TestCase {
       }
     });
 
-    c.write(os);
-
-    Entry result = ((DeleteChange)Change.read(is)).getAffectedEntry();
+    os.writeChange(c);
+    Entry result = ((DeleteChange)is.readChange()).getAffectedEntry();
 
     assertEquals(DirectoryEntry.class, result.getClass());
     assertEquals("entry", result.getName());
@@ -183,9 +186,10 @@ public class SerializationTest extends TestCase {
   @Test
   public void testChangeFileContentChange() throws IOException {
     Change c = new ChangeFileContentChange(p("entry"), "new content");
-    c.write(os);
 
-    Change read = Change.read(is);
+    os.writeChange(c);
+    Change read = is.readChange();
+
     assertEquals(ChangeFileContentChange.class, read.getClass());
 
     ChangeFileContentChange result = ((ChangeFileContentChange)read);
@@ -206,18 +210,19 @@ public class SerializationTest extends TestCase {
       }
     });
 
-    c.write(os);
+    os.writeChange(c);
+    Change read = is.readChange();
 
-    Change read = Change.read(is);
     assertEquals("content", ((ChangeFileContentChange)read).getOldContent());
   }
 
   @Test
   public void testRenameChange() throws IOException {
     Change c = new RenameChange(p("entry"), "new name");
-    c.write(os);
 
-    Change read = Change.read(is);
+    os.writeChange(c);
+    Change read = is.readChange();
+
     assertEquals(RenameChange.class, read.getClass());
 
     RenameChange result = ((RenameChange)read);
@@ -229,9 +234,10 @@ public class SerializationTest extends TestCase {
   @Test
   public void testMoveChange() throws IOException {
     Change c = new MoveChange(p("entry"), p("dir"));
-    c.write(os);
 
-    Change read = Change.read(is);
+    os.writeChange(c);
+    Change read = is.readChange();
+
     assertEquals(MoveChange.class, read.getClass());
 
     MoveChange result = ((MoveChange)read);
