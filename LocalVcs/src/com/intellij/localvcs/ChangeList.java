@@ -46,13 +46,8 @@ public class ChangeList {
     return result;
   }
 
-  public void save(File outputDir) {
-    try {
-      File f = new File(outputDir, "changes");
-      f.createNewFile();
-    } catch (IOException e) {
-      // todo process exceptions correctly 
-      throw new RuntimeException(e);
-    }
+  public void save(File outputDir) throws IOException {
+    File f = new File(outputDir, "changes");
+    f.createNewFile();
   }
 }

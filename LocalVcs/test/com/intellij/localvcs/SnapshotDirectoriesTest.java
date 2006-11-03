@@ -3,7 +3,6 @@ package com.intellij.localvcs;
 import org.junit.Test;
 
 public class SnapshotDirectoriesTest extends TestCase {
-  // todo should we test boundary conditions at all?
   @Test
   public void testCeatingDirectory() {
     assertFalse(s.hasEntry(p("dir")));
@@ -150,8 +149,6 @@ public class SnapshotDirectoriesTest extends TestCase {
     } catch (LocalVcsException e) {}
   }
 
-  // todo is renaming and moving are the same things?
-  // todo should we support both renaming and moving?
   @Test
   public void testMovingFilesBetweenDirectories() {
     s.doCreateDirectory(p("dir1"));
@@ -243,8 +240,6 @@ public class SnapshotDirectoriesTest extends TestCase {
 
   @Test
   public void testMovingEntryToSameDirectory() {
-    // todo maybe this test is useless
-
     s.doCreateDirectory(p("dir"));
     s.doCreateFile(p("dir/file"), null);
 

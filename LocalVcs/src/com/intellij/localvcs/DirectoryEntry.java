@@ -56,7 +56,7 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public void removeChild(Entry child) {
-    // todo we shoult removeChild by name!!!
+    // todo we shoult remove child by name!!!
     for (int i = 0; i < myChildren.size(); i++) {
       if (myChildren.get(i) == child) {
         myChildren.remove(i);
