@@ -9,6 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 public class Stream {
+  // todo get rid of *nullable* methods
   private DataInputStream myIs;
   private DataOutputStream myOs;
 
@@ -101,6 +102,16 @@ public class Stream {
 
   public void writeInteger(Integer i) throws IOException {
     myOs.writeInt(i);
+  }
+
+  public Integer readNullableInteger() throws IOException {
+    if (!readBoolean()) return null;
+    return readInteger();
+  }
+
+  public void writeNullableInteger(Integer i) throws IOException {
+    writeBoolean(i != null);
+    if (i != null) writeInteger(i);
   }
 
   private Object readSubclass(String className) throws IOException {

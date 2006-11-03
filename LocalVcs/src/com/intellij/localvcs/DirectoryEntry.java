@@ -13,23 +13,17 @@ public class DirectoryEntry extends Entry {
 
   public DirectoryEntry(Stream s) throws IOException {
     super(s);
-    readChildren(s);
-  }
 
-  @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    writeChildren(s);
-  }
-
-  protected void readChildren(Stream s) throws IOException {
     int count = s.readInteger();
     for (int i = 0; i < count; i++) {
       myChildren.add(s.readEntry());
     }
   }
 
-  protected void writeChildren(Stream s) throws IOException {
+  @Override
+  public void write(Stream s) throws IOException {
+    super.write(s);
+
     s.writeInteger(myChildren.size());
     for (Entry child : myChildren) {
       s.writeEntry(child);

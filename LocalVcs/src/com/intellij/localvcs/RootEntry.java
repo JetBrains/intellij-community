@@ -9,13 +9,7 @@ public class RootEntry extends DirectoryEntry {
   }
 
   public RootEntry(Stream s) throws IOException {
-    this();
-    readChildren(s);
-  }
-
-  @Override
-  public void write(Stream s) throws IOException {
-    super.writeChildren(s);
+    super(s);
   }
 
   protected Path getPathAppendedWith(String name) {

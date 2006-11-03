@@ -14,13 +14,13 @@ public abstract class Entry {
   }
 
   public Entry(Stream s) throws IOException {
-    myObjectId = s.readInteger();
-    myName = s.readString();
+    myObjectId = s.readNullableInteger();
+    myName = s.readNullableString();
   }
 
   public void write(Stream s) throws IOException {
-    s.writeInteger(myObjectId);
-    s.writeString(myName);
+    s.writeNullableInteger(myObjectId);
+    s.writeNullableString(myName);
   }
 
   public Integer getObjectId() {
