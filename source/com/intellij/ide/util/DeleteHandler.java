@@ -103,8 +103,6 @@ public class DeleteHandler {
     else {
       String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("prompt.delete.elements"), elements);
 
-      int defaultOption;
-
       boolean anyDirectories = false;
       String directoryName = null;
       for (PsiElement psiElement : elementsToDelete) {
@@ -121,15 +119,11 @@ public class DeleteHandler {
         else {
           warningMessage += IdeBundle.message("warning.delete.all.files.and.subdirectories.in.the.selected.directory");
         }
-        defaultOption = -1;
-      }
-      else {
-        defaultOption = 0;
       }
 
       int result = Messages.showDialog(project, warningMessage, IdeBundle.message("title.delete"),
                                        new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()},
-                                       defaultOption, Messages.getQuestionIcon());
+                                       0, Messages.getQuestionIcon());
       if (result != 0) return;
     }
 
