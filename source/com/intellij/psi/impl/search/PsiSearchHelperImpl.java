@@ -72,11 +72,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiFile file = element.getContainingFile();
       if (PsiUtil.isInJspFile(file)) return maximalUseScope;
       PsiClass aClass = (PsiClass)element;
+      final PsiClass containingClass = aClass.getContainingClass();
       if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return maximalUseScope;
+        return containingClass != null ? containingClass.getUseScope() : maximalUseScope;
       }
       else if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return maximalUseScope;
+        return containingClass != null ? containingClass.getUseScope() : maximalUseScope;
       }
       else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
         PsiClass topClass = PsiUtil.getTopLevelClass(aClass);
@@ -117,10 +118,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
 
       if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
-        return maximalUseScope;
+        return aClass != null ? aClass.getUseScope() : maximalUseScope;
       }
       else if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return maximalUseScope;
+        return aClass != null ? aClass.getUseScope() : maximalUseScope;
       }
       else if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
         PsiClass topClass = PsiUtil.getTopLevelClass(member);
