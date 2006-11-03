@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 public class Stream {
   private DataInputStream myIs;
@@ -38,6 +40,16 @@ public class Stream {
     e.write(this);
   }
 
+  public Entry readNullableEntry() throws IOException {
+    if (!readBoolean()) return null;
+    return Entry.read(this);
+  }
+
+  public void writeNullableEntry(Entry e) throws IOException {
+    writeBoolean(e != null);
+    if (e != null) e.write(this);
+  }
+
   // todo get rid of these two methods
   public Entry readRootEntry() throws IOException {
     return new RootEntry(this);
@@ -48,10 +60,29 @@ public class Stream {
   }
 
   public Change readChange() throws IOException {
-    return Change.read(this);
+    return createChange(readString());
+  }
+
+  private Change createChange(String className) throws IOException {
+    try {
+      Class clazz = Class.forName(className);
+      Constructor constructor = clazz.getConstructor(getClass());
+      return (Change)constructor.newInstance(this);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    } catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
+    } catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void writeChange(Change c) throws IOException {
+    writeString(c.getClass().getName());
     c.write(this);
   }
 
@@ -64,13 +95,13 @@ public class Stream {
   }
 
   public String readNullableString() throws IOException {
-    if (!myIs.readBoolean()) return null;
-    return myIs.readUTF();
+    if (!readBoolean()) return null;
+    return readString();
   }
 
   public void writeNullableString(String s) throws IOException {
-    myOs.writeBoolean(s != null);
-    if (s != null) myOs.writeUTF(s);
+    writeBoolean(s != null);
+    if (s != null) writeString(s);
   }
 
   public Boolean readBoolean() throws IOException {

@@ -18,7 +18,6 @@ public class CreateFileChange extends Change {
 
   @Override
   public void write(Stream s) throws IOException {
-    super.write(s);
     s.writePath(myPath);
     s.writeString(myContent);
   }

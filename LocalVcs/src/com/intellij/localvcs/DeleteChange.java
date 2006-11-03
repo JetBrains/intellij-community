@@ -12,21 +12,13 @@ public class DeleteChange extends Change {
 
   public DeleteChange(Stream s) throws IOException {
     myPath = s.readPath();
-    if (s.readBoolean()) {
-      myAffectedEntry = s.readEntry();
-    }
+    myAffectedEntry = s.readNullableEntry();
   }
 
   @Override
   public void write(Stream s) throws IOException {
-    super.write(s);
     s.writePath(myPath);
-    if (myAffectedEntry != null) {
-      s.writeBoolean(true);
-      s.writeEntry(myAffectedEntry);
-    } else {
-      s.writeBoolean(false);
-    }
+    s.writeNullableEntry(myAffectedEntry);
   }
 
   public Path getPath() {

@@ -15,7 +15,6 @@ public class CreateDirectoryChange extends Change {
 
   @Override
   public void write(Stream s) throws IOException {
-    super.write(s);
     s.writePath(myPath);
   }
 
