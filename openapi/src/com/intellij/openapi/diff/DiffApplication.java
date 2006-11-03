@@ -52,7 +52,7 @@ public class DiffApplication implements ApplicationStarter {
       String path2 = args[2];
       VirtualFile file1 = findFile(path1);
       VirtualFile file2 = findFile(path2);
-      SimpleDiffRequest request = SimpleDiffRequest.comapreFiles(file1, file2, null);
+      SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, null);
       request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
       DiffManager.getInstance().getIdeaDiffTool().show(request);
       FileDocumentManager.getInstance().saveAllDocuments();

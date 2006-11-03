@@ -86,7 +86,7 @@ public class SimpleDiffRequest extends DiffRequest {
     return result;
   }
 
-  public static SimpleDiffRequest comapreFiles(VirtualFile file1, VirtualFile file2, Project project) {
+  public static SimpleDiffRequest compareFiles(VirtualFile file1, VirtualFile file2, Project project) {
     return compareFiles(file1, file2, project,
                         DiffBundle.message("compare.file.vs.file.dialog.title", file1.getPresentableUrl(), file2.getPresentableUrl()));
   }
