@@ -7,10 +7,7 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementResolveResult;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
 import com.intellij.util.IncorrectOperationException;
@@ -66,11 +63,18 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final PsiElement element = getManipulatorElement();
     final AntStructuredElement antElement = getElement();
+    final PsiElement element = getManipulatorElement();
     getManipulator(element).handleContentChange(element, getRangeInElement().shiftRight(
       antElement.getTextRange().getStartOffset() - element.getTextRange().getStartOffset()), newElementName);
     return antElement;
+  }
+
+  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    if (element instanceof PsiNamedElement) {
+      return handleElementRename(((PsiNamedElement)element).getName());
+    }
+    return getElement();
   }
 
   protected ResolveResult[] innerResolve() {
