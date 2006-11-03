@@ -17,19 +17,23 @@ import java.util.ArrayList;
 public class MakeClassStaticTest extends CodeInsightTestCase {
   private static final String TEST_ROOT = "/refactoring/makeClassStatic/";
 
-  public void testSimple() throws Exception { perform(true); }
+  public void testSimple() throws Exception { perform(); }
 
   public void testSimpleWithFields() throws Exception { performWithFields(); }
 
-  public void testQualifiedThisInSibling() throws Exception { perform(true); }
+  public void testQualifiedThisInSibling() throws Exception { perform(); }
 
-  public void testIDEADEV3247() throws Exception { perform(true); }
+  public void testIDEADEV3247() throws Exception { perform(); }
 
-  private void perform(boolean addClassParameter) throws Exception {
+  public void testIDEADEV11595() throws Exception { perform(); }
+
+  private void perform() throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiClass);
     PsiClass aClass = (PsiClass)element;
+
+    boolean addClassParameter = MakeStaticUtil.isParameterNeeded(aClass);
 
     new MakeClassStaticProcessor(
             myProject,

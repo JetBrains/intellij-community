@@ -29,6 +29,10 @@ public class MakeStaticUtil {
     return classRefs.toArray(new InternalUsageInfo[classRefs.size()]);
   }
 
+  public static boolean isParameterNeeded(PsiTypeParameterListOwner member) {
+    return findClassRefsInMember(member, false).length > 0;
+  }
+
   private static void addClassRefs(PsiTypeParameterListOwner originalMember, ArrayList<InternalUsageInfo> classRefs,
                                    PsiClass containingClass, PsiElement element, boolean includeSelf) {
     if (element instanceof PsiReferenceExpression) {
@@ -86,7 +90,7 @@ public class MakeStaticUtil {
         PsiElement refElement = classReference.resolve();
         if (refElement instanceof PsiClass) {
           PsiClass hisClass = ((PsiClass) refElement).getContainingClass();
-          if (hisClass != null && isPartOf(hisClass, containingClass)) {
+          if (hisClass != originalMember && isPartOf(hisClass, containingClass)) {
             classRefs.add(new InternalUsageInfo(element, refElement));
           }
         }

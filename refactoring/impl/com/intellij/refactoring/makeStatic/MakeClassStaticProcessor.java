@@ -33,12 +33,10 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     PsiClass containingClass = myMember.getContainingClass();
 
     //Add fields
-    List<PsiType> addedTypes = new ArrayList<PsiType>();
     if (mySettings.isMakeClassParameter()) {
       PsiType type = factory.createType(containingClass, PsiSubstitutor.EMPTY);
       final String classParameterName = mySettings.getClassParameterName();
       final String fieldName = convertToFieldName(classParameterName);
-      addedTypes.add(type);
       myMember.add(factory.createField(fieldName, type));
     }
 
@@ -47,7 +45,6 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
 
       for (Settings.FieldParameter fieldParameter : parameters) {
         final PsiType type = fieldParameter.field.getType();
-        addedTypes.add(type);
         final PsiField field = factory.createField(convertToFieldName(fieldParameter.name), type);
         myMember.add(field);
       }
