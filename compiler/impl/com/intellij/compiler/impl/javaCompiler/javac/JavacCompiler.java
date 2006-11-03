@@ -1,6 +1,7 @@
 package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
@@ -289,12 +290,12 @@ public class JavacCompiler extends ExternalCompiler {
       File cpFile = FileUtil.createTempFile(tempFileName, ".tmp");
       cpFile.deleteOnExit();
       myTempFiles.add(cpFile);
-      PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(cpFile)));
+      final DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(cpFile)));
       try {
-        writer.println(cpString);
+        CompilerIOUtil.writeString(cpString, out);
       }
       finally {
-        writer.close();
+        out.close();
       }
       commandLine.add("@" + cpFile.getAbsolutePath());
     }
