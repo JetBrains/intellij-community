@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class DeleteChange extends Change {
   private Path myPath;
-  private Entry myPreviousEntry;
+  private Entry myAffectedEntry;
 
   public DeleteChange(Path path) {
     myPath = path;
@@ -14,23 +14,40 @@ public class DeleteChange extends Change {
 
   public DeleteChange(DataInputStream s) throws IOException {
     myPath = new Path(s);
+    if (s.readBoolean()) {
+      myAffectedEntry = Entry.read(s);
+    }
   }
 
   @Override
   public void write(DataOutputStream s) throws IOException {
     super.write(s);
     myPath.write(s);
+    if (myAffectedEntry != null) {
+      s.writeBoolean(true);
+      myAffectedEntry.write(s);
+    } else {
+      s.writeBoolean(false);
+    }
+  }
+
+  public Path getPath() {
+    return myPath;
+  }
+
+  public Entry getAffectedEntry() {
+    return myAffectedEntry;
   }
 
   @Override
   public void applyTo(Snapshot snapshot) {
-    myPreviousEntry = snapshot.getEntry(myPath);
+    myAffectedEntry = snapshot.getEntry(myPath);
     snapshot.doDelete(myPath);
   }
 
   @Override
   public void revertOn(Snapshot snapshot) {
-    restoreEntryRecursively(snapshot, myPreviousEntry, myPath);
+    restoreEntryRecursively(snapshot, myAffectedEntry, myPath);
   }
 
   private void restoreEntryRecursively(Snapshot s, Entry e, Path p) {

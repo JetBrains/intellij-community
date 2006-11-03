@@ -68,6 +68,7 @@ public class Path {
 
   @Override
   public boolean equals(Object o) {
+    // todo possible we should remove these methods  
     return myPath.equals(((Path)o).myPath);
   }
 

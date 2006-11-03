@@ -25,6 +25,14 @@ public class CreateFileChange extends Change {
     s.writeUTF(myContent);
   }
 
+  public Path getPath() {
+    return myPath;
+  }
+
+  public String getContent() {
+    return myContent;
+  }
+
   @Override
   public void applyTo(Snapshot snapshot) {
     snapshot.doCreateFile(myPath, myContent);

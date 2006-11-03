@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class SerializationTest extends TestCase {
+  // todo replace DataStreams with ObjectStreams and remove checks for null
   private DataOutputStream os;
   private DataInputStream is;
 
@@ -116,24 +117,63 @@ public class SerializationTest extends TestCase {
     assertEquals("dir", children.get(1).getName());
   }
 
-  //@Test
-  //public void testCreateFileChange() throws IOException {
-  //  Change c = new CreateFileChange(p("file"), "content");
-  //  c.write(os);
-  //  assertEquals(c, Change.read(is));
-  //}
-  //
-  //@Test
-  //public void testCreateDirectoryChange() throws IOException {
-  //  Change c = new CreateDirectoryChange(p("dir"));
-  //  c.write(os);
-  //  assertEquals(c, Change.read(is));
-  //}
-  //
-  //@Test
-  //public void testDeleteChange() throws IOException {
-  //  Change c = new DeleteChange(p("entry"));
-  //  c.write(os);
-  //  assertEquals(c, Change.read(is));
-  //}
+  @Test
+  public void testCreateFileChange() throws IOException {
+    Change c = new CreateFileChange(p("file"), "content");
+    c.write(os);
+
+    Change result = Change.read(is);
+    assertEquals(CreateFileChange.class, result.getClass());
+
+    assertEquals(p("file"), ((CreateFileChange)result).getPath());
+    assertEquals("content", ((CreateFileChange)result).getContent());
+  }
+
+  @Test
+  public void testCreateDirectoryChange() throws IOException {
+    Change c = new CreateDirectoryChange(p("dir"));
+    c.write(os);
+
+    Change result = Change.read(is);
+    assertEquals(CreateDirectoryChange.class, result.getClass());
+    assertEquals(p("dir"), ((CreateDirectoryChange)result).getPath());
+  }
+
+  @Test
+  public void testDeleteChange() throws IOException {
+    Change c = new DeleteChange(p("entry"));
+    c.write(os);
+
+    Change result = Change.read(is);
+    assertEquals(DeleteChange.class, result.getClass());
+
+    assertEquals(p("entry"), ((DeleteChange)result).getPath());
+    assertNull(((DeleteChange)result).getAffectedEntry());
+  }
+
+  @Test
+  public void testAppliedDeleteChange() throws IOException {
+    Change c = new DeleteChange(p("entry"));
+
+    c.applyTo(new Snapshot() {
+      @Override
+      public Entry getEntry(Path path) {
+        Entry e = new DirectoryEntry(1, "entry");
+        e.addChild(new FileEntry(2, "file", ""));
+        e.addChild(new DirectoryEntry(3, "dir"));
+        return e;
+      }
+    });
+
+    c.write(os);
+
+    Entry result = ((DeleteChange)Change.read(is)).getAffectedEntry();
+
+    assertEquals(DirectoryEntry.class, result.getClass());
+    assertEquals("entry", result.getName());
+
+    assertEquals(2, result.getChildren().size());
+    assertEquals("file", result.getChildren().get(0).getName());
+    assertEquals("dir", result.getChildren().get(1).getName());
+  }
 }

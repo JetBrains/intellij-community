@@ -21,6 +21,10 @@ public class CreateDirectoryChange extends Change {
     myPath.write(s);
   }
 
+  public Path getPath() {
+    return myPath;
+  }
+
   @Override
   public void applyTo(Snapshot snapshot) {
     snapshot.doCreateDirectory(myPath);
