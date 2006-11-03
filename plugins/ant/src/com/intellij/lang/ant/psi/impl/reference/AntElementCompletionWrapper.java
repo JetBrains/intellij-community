@@ -18,6 +18,19 @@ public class AntElementCompletionWrapper extends AntElementImpl {
     myRole = role;
   }
 
+
+  public boolean equals(final Object o) {
+    if (this != o) {
+      final AntElementCompletionWrapper that = (AntElementCompletionWrapper)o;
+      if (!myName.equals(that.myName)) return false;
+    }
+    return true;
+  }
+
+  public int hashCode() {
+    return myName.hashCode();
+  }
+
   public String getName() {
     return myName;
   }
