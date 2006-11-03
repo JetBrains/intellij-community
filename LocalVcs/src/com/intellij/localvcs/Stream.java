@@ -54,12 +54,21 @@ public class Stream {
     c.write(this);
   }
 
+  public ChangeSet readChangeSet() throws IOException {
+    return new ChangeSet(this);
+  }
+
+  public void writeChangeSet(ChangeSet c) throws IOException {
+    c.write(this);
+  }
+
   public String readString() throws IOException {
     if (!myIs.readBoolean()) return null;
     return myIs.readUTF();
   }
 
   public void writeString(String s) throws IOException {
+    // todo writeUTF is very time consuming
     myOs.writeBoolean(s != null);
     if (s != null) myOs.writeUTF(s);
   }

@@ -237,4 +237,17 @@ public class StreamTest extends TestCase {
     assertEquals(p("entry"), result.getPath());
     assertEquals(p("dir"), result.getNewParent());
   }
+
+  @Test
+  public void testChangeSet() throws IOException {
+    ChangeSet c = cs(new CreateFileChange(p(""), ""));
+    c.setLabel("label");
+
+    os.writeChangeSet(c);
+    ChangeSet result = is.readChangeSet();
+
+    assertEquals("label", result.getLabel());
+    assertEquals(1, result.getChanges().size());
+    assertEquals(CreateFileChange.class, result.getChanges().get(0).getClass());
+  }
 }

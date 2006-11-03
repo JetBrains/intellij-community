@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,10 +9,6 @@ public class ChangeList {
   public ChangeList() {
     // todo a but of hack
     add(new ChangeSet(new ArrayList<Change>()));
-  }
-
-  public ChangeList(File sourceDir) {
-    this();
   }
 
   public List<ChangeSet> getChangeSets() {
@@ -44,10 +38,5 @@ public class ChangeList {
     result.myChangeSets.addAll(myChangeSets);
 
     return result;
-  }
-
-  public void save(File outputDir) throws IOException {
-    File f = new File(outputDir, "changes");
-    f.createNewFile();
   }
 }
