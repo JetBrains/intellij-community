@@ -15,9 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -28,11 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class RollbackAction extends AnAction {
-  public RollbackAction() {
-    super(VcsBundle.message("changes.action.rollback.text"), VcsBundle.message("changes.action.rollback.description"),
-          IconLoader.getIcon("/actions/rollback.png"));
-  }
-
   public void update(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);

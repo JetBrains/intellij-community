@@ -27,10 +27,6 @@ import java.util.List;
 
 public abstract class AbstractMissingFilesAction extends AnAction {
 
-  protected AbstractMissingFilesAction(String text, String description, Icon icon) {
-    super(text, description, icon);
-  }
-
   public void update(AnActionEvent e) {
     List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     boolean enabled = files != null && !files.isEmpty();

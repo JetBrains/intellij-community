@@ -27,10 +27,6 @@ import java.util.List;
  * @author max
  */
 public class ShowDiffAction extends AnAction {
-  public ShowDiffAction() {
-    super(VcsBundle.message("show.diff.action.text"), VcsBundle.message("show.diff.action.description"), IconLoader.getIcon("/actions/diff.png"));
-  }
-
   public void update(AnActionEvent e) {
     Change[] changes = e.getData(DataKeys.CHANGES);
     Project project = e.getData(DataKeys.PROJECT);

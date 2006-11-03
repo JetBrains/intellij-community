@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -24,11 +23,6 @@ import com.intellij.openapi.vcs.changes.ui.EditChangelistDialog;
 
 public class RenameChangeListAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.actions.RenameChangeListAction");
-
-  public RenameChangeListAction() {
-    super(VcsBundle.message("changes.action.rename.text"),
-          VcsBundle.message("changes.action.rename.description"), null);
-  }
 
   public void update(AnActionEvent e) {
     ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);

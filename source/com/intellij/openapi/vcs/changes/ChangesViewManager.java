@@ -10,7 +10,9 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ide.*;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.SelectInManager;
+import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -23,8 +25,10 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.actions.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -132,46 +136,21 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
   private JComponent createChangeViewComponent() {
     JPanel panel = new JPanel(new BorderLayout());
-    DefaultActionGroup modelActionsGroup = new DefaultActionGroup();
 
-    RefreshAction refreshAction = new RefreshAction();
-    refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
+    DefaultActionGroup group = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewToolbar");
 
-    AddChangeListAction newChangeListAction = new AddChangeListAction();
-    newChangeListAction.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
+    ActionManager.getInstance().getAction("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
+    ActionManager.getInstance().getAction("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
+    ActionManager.getInstance().getAction("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.DELETE, panel);
+    ActionManager.getInstance().getAction("ChangesView.Move").registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
+    ActionManager.getInstance().getAction("ChangesView.Rename").registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
 
-    final RemoveChangeListAction removeChangeListAction = new RemoveChangeListAction();
-    removeChangeListAction.registerCustomShortcutSet(CommonShortcuts.DELETE, panel);
-
-    final ShowDiffAction diffAction = new ShowDiffAction();
-    diffAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D,
-                                                                                      SystemInfo.isMac
-                                                                                      ? KeyEvent.META_DOWN_MASK
-                                                                                      : KeyEvent.CTRL_DOWN_MASK)),
-                                         panel);
-
-    final MoveChangesToAnotherListAction toAnotherListAction = new MoveChangesToAnotherListAction();
-    toAnotherListAction.registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
-
-    final SetDefaultChangeListAction setDefaultChangeListAction = new SetDefaultChangeListAction();
-    final RenameChangeListAction renameAction = new RenameChangeListAction();
-    renameAction.registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
-
-    final CommitAction commitAction = new CommitAction();
-    final RollbackAction rollbackAction = new RollbackAction();
-
-    modelActionsGroup.add(refreshAction);
-    modelActionsGroup.add(commitAction);
-
-    modelActionsGroup.add(rollbackAction);
-    modelActionsGroup.add(newChangeListAction);
-    modelActionsGroup.add(removeChangeListAction);
-    modelActionsGroup.add(setDefaultChangeListAction);
-    modelActionsGroup.add(toAnotherListAction);
-    modelActionsGroup.add(diffAction);
+    final CustomShortcutSet diffShortcut =
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
+    ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(diffShortcut, panel);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.add(createToolbarComponent(modelActionsGroup), BorderLayout.WEST);
+    toolbarPanel.add(createToolbarComponent(group), BorderLayout.WEST);
 
     DefaultActionGroup visualActionsGroup = new DefaultActionGroup();
     final Expander expander = new Expander();
@@ -188,26 +167,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
 
 
-    DefaultActionGroup menuGroup = new DefaultActionGroup();
-    menuGroup.add(commitAction);
-    menuGroup.add(rollbackAction);
-    menuGroup.add(toAnotherListAction);
-    menuGroup.add(diffAction);
-    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
-    menuGroup.addSeparator();
-    menuGroup.add(new DeleteUnversionedFilesAction());
-    menuGroup.add(new ScheduleForAdditionAction());
-    menuGroup.add(new ScheduleForRemovalAction());
-    menuGroup.addSeparator();
-    menuGroup.add(newChangeListAction);
-    menuGroup.add(removeChangeListAction);
-    menuGroup.add(setDefaultChangeListAction);
-    menuGroup.add(renameAction);
-    menuGroup.addSeparator();
-    menuGroup.add(refreshAction);
-    menuGroup.addSeparator();
-    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
-
+    DefaultActionGroup menuGroup = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewPopupMenu");
     myView.setMenuActions(menuGroup);
 
     myView.setShowFlatten(SHOW_FLATTEN_MODE);

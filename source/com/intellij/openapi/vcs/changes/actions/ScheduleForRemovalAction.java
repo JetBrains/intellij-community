@@ -18,11 +18,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import java.util.List;
 
 public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
-  public ScheduleForRemovalAction() {
-    super(VcsBundle.message("changes.action.remove.text"), VcsBundle.message("changes.action.remove.description"),
-          IconLoader.getIcon("/actions/exclude.png"));
-  }
-
   protected void processFiles(final CheckinEnvironment environment, final List<FilePath> files) {
     environment.scheduleMissingFileForDeletion(files);
   }

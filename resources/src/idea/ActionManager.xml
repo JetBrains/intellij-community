@@ -1662,5 +1662,48 @@
       </action>
     </group>
 
+    <group id="ChangesViewToolbar">
+      <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
+        icon="/actions/sync.png"/>
+      <action id="ChangesView.Commit" class="com.intellij.openapi.vcs.changes.actions.CommitAction"
+        icon="/actions/commit.png"/>
+      <action id="ChangesView.Rollback" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
+        icon="/actions/rollback.png"/>
+      <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
+        icon="/actions/include.png"/>
+      <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
+        icon="/actions/exclude.png"/>
+      <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
+        icon="/actions/submit1.png"/>
+      <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
+        icon="/actions/fileStatus.png"/>
+      <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.ShowDiffAction"
+        icon="/actions/diff.png"/>
+    </group>
+
+    <group id="ChangesViewPopupMenu">
+      <reference ref="ChangesView.Commit"/>
+      <reference ref="ChangesView.Rollback"/>
+      <reference ref="ChangesView.Move"/>
+      <reference ref="ChangesView.Diff"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
+        icon="/actions/cancel.png"/>
+      <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
+        icon="/actions/include.png"/>
+      <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
+        icon="/actions/exclude.png"/>
+      <separator/>
+      <reference ref="ChangesView.NewChangeList"/>
+      <reference ref="ChangesView.RemoveChangeList"/>
+      <reference ref="ChangesView.SetDefault"/>
+      <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
+      <separator/>
+      <reference ref="ChangesView.Refresh"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+    </group>
+
   </actions>
 </component>

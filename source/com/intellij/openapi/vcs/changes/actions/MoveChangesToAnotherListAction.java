@@ -4,10 +4,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -26,11 +24,6 @@ import java.util.Set;
  * @author max
  */
 public class MoveChangesToAnotherListAction extends AnAction {
-  public MoveChangesToAnotherListAction() {
-    super(VcsBundle.message("move.to.another.list.action.text"), VcsBundle.message("move.to.another.list.action.description"),
-          IconLoader.getIcon("/actions/fileStatus.png"));
-  }
-
   public void update(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);

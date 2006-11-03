@@ -13,21 +13,14 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
 public class ScheduleForAdditionAction extends AnAction {
-  public ScheduleForAdditionAction() {
-    super(VcsBundle.message("changes.action.add.text"), VcsBundle.message("changes.action.add.description"),
-          IconLoader.getIcon("/actions/include.png"));
-  }
-
   public void update(AnActionEvent e) {
     List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
     boolean enabled = files != null && !files.isEmpty();

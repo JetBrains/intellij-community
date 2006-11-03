@@ -10,26 +10,19 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 
 public class RemoveChangeListAction extends AnAction {
-  public RemoveChangeListAction() {
-    super(VcsBundle.message("changes.action.removechangelist.text"),
-          VcsBundle.message("changes.action.removechangelist.description"),
-          IconLoader.getIcon("/actions/exclude.png"));
-  }
-
   public void update(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);

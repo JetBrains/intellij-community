@@ -10,26 +10,18 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
 
 public class AddChangeListAction extends AnAction {
-  public AddChangeListAction() {
-    super(VcsBundle.message("changes.action.new.changelist.text"),
-          VcsBundle.message("changes.action.new.changelist.description"),
-          IconLoader.getIcon("/actions/include.png"));
-  }
-
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     NewChangelistDialog dlg = new NewChangelistDialog(project);
