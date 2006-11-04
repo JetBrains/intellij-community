@@ -15,13 +15,11 @@ import java.util.*;
 
 public class MessageBusImpl implements MessageBus {
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"}) // Holds strong connections to prevent them from GC-ing.
-  private List<MessageBusConnectionImpl> myConnections = new ArrayList<MessageBusConnectionImpl>();
-
-  private Queue<DeliveryJob> myMessageQueue = new LinkedList<DeliveryJob>();
-
-  private Map<Topic, Object> mySyncPublishers = new HashMap<Topic, Object>();
-  private Map<Topic, Object> myAsyncPublishers = new HashMap<Topic, Object>();
-  private Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new HashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final List<MessageBusConnectionImpl> myConnections = new ArrayList<MessageBusConnectionImpl>();
+  private final Queue<DeliveryJob> myMessageQueue = new LinkedList<DeliveryJob>();
+  private final Map<Topic, Object> mySyncPublishers = new HashMap<Topic, Object>();
+  private final Map<Topic, Object> myAsyncPublishers = new HashMap<Topic, Object>();
+  private final Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new HashMap<Topic, List<MessageBusConnectionImpl>>();
 
   private final static Object NA = new Object();
 
@@ -31,8 +29,8 @@ public class MessageBusImpl implements MessageBus {
       this.message = message;
     }
 
-    public MessageBusConnectionImpl connection;
-    public Message message;
+    public final MessageBusConnectionImpl connection;
+    public final Message message;
   }
 
   public MessageBusConnection connectStrongly() {
@@ -90,7 +88,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private void sendMessage(Message message) {
+  private synchronized void sendMessage(Message message) {
     postMessage(message);
     pumpMessages();
   }
@@ -105,7 +103,7 @@ public class MessageBusImpl implements MessageBus {
     while (true);
   }
 
-  public void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
+  public synchronized void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
       topicSubscribers = new WeakList<MessageBusConnectionImpl>();
@@ -115,7 +113,7 @@ public class MessageBusImpl implements MessageBus {
     topicSubscribers.add(connection);
   }
 
-  public void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
+  public synchronized void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
     myConnections.remove(connection);
 
     for (List<MessageBusConnectionImpl> topicSubscribers : mySubscribers.values()) {
@@ -131,7 +129,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  public void deliverSingleMessage() {
+  public synchronized void deliverSingleMessage() {
     final DeliveryJob job = myMessageQueue.poll();
     if (job == null) return;
     job.connection.deliverMessage(job.message);
