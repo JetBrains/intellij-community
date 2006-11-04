@@ -10,5 +10,6 @@ public interface MessageBus {
   MessageBusConnection connectWeakly();
   MessageBusConnection connectStrongly();
 
-  <L> L getTopicPublisher(Topic<L> topic);
+  <L> L syncPublisher(Topic<L> topic);
+  <L> L asyncPublisher(Topic<L> topic);
 }

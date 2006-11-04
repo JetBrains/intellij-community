@@ -7,9 +7,19 @@
 package com.intellij.util.messages;
 
 public class Topic<L> {
+  private final String myDisplayName;
   private Class<L> myListenerClass;
 
-  public Topic(final Class<L> listenerClass) {
+  public Topic(String displayName, final Class<L> listenerClass) {
+    myDisplayName = displayName;
     myListenerClass = listenerClass;
+  }
+
+  public String getDisplayName() {
+    return myDisplayName;
+  }
+
+  public Class<L> getListenerClass() {
+    return myListenerClass;
   }
 }
