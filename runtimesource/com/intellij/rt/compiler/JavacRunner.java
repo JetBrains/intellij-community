@@ -1,6 +1,9 @@
 package com.intellij.rt.compiler;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Vector;
@@ -72,38 +75,35 @@ public class JavacRunner {
     for (int idx = 0; idx < args.length; idx++) {
       final String arg = args[idx];
       //noinspection HardCodedStringLiteral
-      if ("-classpath".equals(arg) || "-cp".equals(arg) || "-bootclasspath".equals(arg)) {
+      if ("-classpath".equals(arg) || "-cp".equals(arg)) {
         final String cpValue = args[idx + 1];
         if (cpValue.startsWith("@")) {
           args[idx + 1] = readClasspath(cpValue.substring(1));
         }
+        break;
       }
     }
   }
 
   public static String readClasspath(String filePath) throws IOException {
-    final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(filePath))));
+    BufferedReader reader = null;
+    final StringBuffer buf = new StringBuffer();
     try {
-      return readString(in);
+      reader = new BufferedReader(new FileReader(new File(filePath)));
+      for (String path = reader.readLine(); path != null; path = reader.readLine()) {
+        if (buf.length() > 0) {
+          buf.append(File.pathSeparator);
+        }
+        buf.append(path);
+      }
     }
     finally {
-      in.close();
+      if (reader != null) {
+        reader.close();
+      }
     }
+    return buf.toString();
   }
 
-  private static String readString(DataInput stream) throws IOException {
-    int length = stream.readInt();
-    if (length == -1) return null;
-
-    char[] chars = new char[length];
-    byte[] bytes = new byte[length*2];
-    stream.readFully(bytes);
-
-    for (int i = 0, i2 = 0; i < length; i++, i2+=2) {
-      chars[i] = (char)((bytes[i2] << 8) + (bytes[i2 + 1] & 0xFF));
-    }
-
-    return new String(chars);
-  }
 
 }
