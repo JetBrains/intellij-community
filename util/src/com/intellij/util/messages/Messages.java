@@ -9,6 +9,10 @@ public class Messages {
   private Messages() {}
 
   public static MessageBus newMessageBus() {
-    return new MessageBusImpl();
+    return new MessageBusImpl(null);
+  }
+
+  public static MessageBus newMessageBus(MessageBus parentBus) {
+    return new MessageBusImpl(parentBus);
   }
 }

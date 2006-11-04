@@ -7,9 +7,6 @@ import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -42,8 +39,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
   private FileEditorManagerListener myEditorManagerListener;
 
   private Alarm myAlarm;
-
-  private FileTypeListener myFileTypeListener;
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -97,18 +92,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
       }
     };
     FileEditorManager.getInstance(project).addFileEditorManagerListener(myEditorManagerListener);
-
-    myFileTypeListener = new FileTypeListener() {
-      public void beforeFileTypesChanged(FileTypeEvent event) {
-      }
-
-      public void fileTypesChanged(FileTypeEvent event){
-        //VirtualFile[] files = FileEditorManager.getInstance(myProject).getSelectedFiles();
-        //PsiFile psiFile = files.length != 0 ? PsiManager.getInstance(myProject).findFile(files[0]) : null;
-        //setFileEditor(psiFile);
-      }
-    };
-    FileTypeManager.getInstance().addFileTypeListener(myFileTypeListener);
   }
 
   // -------------------------------------------------------------------------
@@ -122,7 +105,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
   public void dispose() {
     myFileEditor = null;
     FileEditorManager.getInstance(myProject).removeFileEditorManagerListener(myEditorManagerListener);
-    FileTypeManager.getInstance().removeFileTypeListener(myFileTypeListener);
     rebuild();
   }
 

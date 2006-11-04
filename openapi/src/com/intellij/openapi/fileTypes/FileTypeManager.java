@@ -18,6 +18,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,8 @@ import java.util.List;
  */
 
 public abstract class FileTypeManager implements SettingsSavingComponent {
+  public static final Topic<FileTypeListener> FILE_TYPES = new Topic<FileTypeListener>("File types change", FileTypeListener.class);
+
   /**
    * Returns the singleton instance of the FileTypeManager component.
    *
@@ -123,6 +126,8 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * Adds a listener for receiving notifications about changes in the list of
    * registered file types.
    *
+   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
+   *
    * @param listener The listener instance.
    */
 
@@ -131,6 +136,8 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
   /**
    * Removes a listener for receiving notifications about changes in the list of
    * registered file types.
+
+   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
    *
    * @param listener The listener instance.
    */

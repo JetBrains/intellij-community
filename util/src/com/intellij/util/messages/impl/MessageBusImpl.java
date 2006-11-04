@@ -20,8 +20,26 @@ public class MessageBusImpl implements MessageBus {
   private final Map<Topic, Object> mySyncPublishers = new HashMap<Topic, Object>();
   private final Map<Topic, Object> myAsyncPublishers = new HashMap<Topic, Object>();
   private final Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new HashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final List<MessageBusImpl> myChildBusses = new ArrayList<MessageBusImpl>();
 
   private final static Object NA = new Object();
+  private final MessageBusImpl myParentBus;
+
+
+  public MessageBusImpl(MessageBus parentBus) {
+    myParentBus = (MessageBusImpl)parentBus;
+    if (myParentBus != null) {
+      myParentBus.notifyChildBusCreated(this);
+    }
+  }
+
+  private void notifyChildBusCreated(final MessageBusImpl messageBus) {
+    myChildBusses.add(messageBus);
+  }
+
+  private void notifyChildBusDisposed(final MessageBusImpl bus) {
+    myChildBusses.remove(bus);
+  }
 
   private static class DeliveryJob {
     public DeliveryJob(final MessageBusConnectionImpl connection, final Message message) {
@@ -77,6 +95,12 @@ public class MessageBusImpl implements MessageBus {
     return publisher;
   }
 
+  public void dispose() {
+    if (myParentBus != null) {
+      myParentBus.notifyChildBusDisposed(this);
+    }
+  }
+
   private void postMessage(Message message) {
     final Topic topic = message.getTopic();
     final List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
@@ -85,6 +109,10 @@ public class MessageBusImpl implements MessageBus {
         myMessageQueue.offer(new DeliveryJob(subscriber, message));
         subscriber.scheduleMessageDelivery(message);
       }
+    }
+
+    for (MessageBusImpl childBus : myChildBusses) {
+      childBus.postMessage(message);
     }
   }
 
@@ -101,6 +129,10 @@ public class MessageBusImpl implements MessageBus {
       job.connection.deliverMessage(job.message);
     }
     while (true);
+
+    for (MessageBusImpl childBus : myChildBusses) {
+      childBus.pumpMessages();
+    }
   }
 
   public synchronized void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {

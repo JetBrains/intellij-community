@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -29,6 +28,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,6 @@ public class FileManagerImpl implements FileManager {
   private VirtualFileListener myVirtualFileListener = null;
   private FileDocumentManagerListener myFileDocumentManagerListener = null;
   private ModuleRootListener myModuleRootListener = null;
-  private FileTypeListener myFileTypeListener = null;
   private boolean myInitialized = false;
   private boolean myDisposed = false;
   private boolean myUseRepository = true;
@@ -67,6 +67,9 @@ public class FileManagerImpl implements FileManager {
   private Set<String> myNontrivialPackagePrefixes = null;
   private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
+  private MessageBus myBus;
+  private MessageBusConnection myConnection;
+
   private static final @NonNls String JAVA_EXTENSION = ".java";
   private static final @NonNls String CLASS_EXTENSION = ".class";
   @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
@@ -78,6 +81,9 @@ public class FileManagerImpl implements FileManager {
                          ProjectRootManager projectRootManager) {
     myFileTypeManager = fileTypeManager;
     myManager = manager;
+    myBus = manager.getProject().getMessageBus();
+    myConnection = myBus.connectStrongly();
+
     myVirtualFileManager = virtualFileManager;
     myFileDocumentManager = fileDocumentManager;
     myProjectRootManager = projectRootManager;
@@ -85,10 +91,11 @@ public class FileManagerImpl implements FileManager {
 
   public void dispose() {
     if (myInitialized) {
+      myConnection.disconnect();
+
       myVirtualFileManager.removeVirtualFileListener(myVirtualFileListener);
       myFileDocumentManager.removeFileDocumentManagerListener(myFileDocumentManagerListener);
       myProjectRootManager.removeModuleRootListener(myModuleRootListener);
-      myFileTypeManager.removeFileTypeListener(myFileTypeListener);
       synchronized (PsiLock.LOCK) {
         myCachedObjectClassMap = null;
       }
@@ -167,7 +174,7 @@ public class FileManagerImpl implements FileManager {
     myModuleRootListener = new MyModuleRootListener();
     myProjectRootManager.addModuleRootListener(myModuleRootListener);
 
-    myFileTypeListener = new FileTypeListener() {
+    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
       }
 
@@ -188,8 +195,7 @@ public class FileManagerImpl implements FileManager {
           }
         );
       }
-    };
-    myFileTypeManager.addFileTypeListener(myFileTypeListener);
+    });
   }
 
   private void dispatchPendingEvents() {
@@ -205,7 +211,8 @@ public class FileManagerImpl implements FileManager {
     myVirtualFileManager.dispatchPendingEvent(myVirtualFileListener);
     myFileDocumentManager.dispatchPendingEvents(myFileDocumentManagerListener);
     myProjectRootManager.dispatchPendingEvent(myModuleRootListener);
-    ((FileTypeManagerEx)myFileTypeManager).dispatchPendingEvents(myFileTypeListener);
+
+    myConnection.deliverImmediately();
     //TODO: other listeners
   }
 

@@ -57,7 +57,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   public void deliverImmediately() {
-    while (myPendingMessages.isEmpty()) {
+    while (!myPendingMessages.isEmpty()) {
       myBus.deliverSingleMessage();
     }
   }

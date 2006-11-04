@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +72,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private boolean myVcsWasRebuilt = false;
   private boolean myInitialized = false;
   private boolean myIsActive = false;
+  private MessageBusConnection myConnection;
 
   public CommonLVCS(final Project project,
                     final ProjectRootManagerEx projectRootManager,
@@ -189,15 +191,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public String getComponentName() {
     return "LocalVcs";
   }
-
-  private final FileTypeListener myFileTypeListener = new FileTypeListener() {
-    public void beforeFileTypesChanged(FileTypeEvent event) {
-    }
-
-    public void fileTypesChanged(FileTypeEvent event) {
-      resynchronizeRoots();
-    }
-  };
 
   public synchronized void resynchronizeRoots() {
     if (!myInitialized) return;
@@ -556,7 +549,16 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   private synchronized void registerAll() {
     getVirtualFileManager().registerFileContentProvider(this);
-    myFileTypeManager.addFileTypeListener(myFileTypeListener);
+    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
+      public void beforeFileTypesChanged(FileTypeEvent event) {
+      }
+
+      public void fileTypesChanged(FileTypeEvent event) {
+        resynchronizeRoots();
+      }
+    });
+
     ProjectRootManager.getInstance(myProject).addModuleRootListener(this);
 
     getVirtualFileManager().registerRefreshUpdater(myTracker.getRefreshUpdater());
@@ -566,8 +568,9 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public synchronized void unregisterAll() {
     myIsActive = false;
     myInitialized = false;
+    myConnection.disconnect();
     getVirtualFileManager().unregisterFileContentProvider(this);
-    myFileTypeManager.removeFileTypeListener(myFileTypeListener);
+
     if (myTracker != null) {
       myTracker.dispose();
     }

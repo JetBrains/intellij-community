@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,23 +33,23 @@ import java.util.*;
 public class PropertiesReferenceManager implements ProjectComponent {
   private final Project myProject;
   private final PropertiesFilesManager myPropertiesFilesManager;
-  private final FileTypeManager myFileTypeManager;
   private final PsiManager myPsiManager;
   private final Map<String, Collection<VirtualFile>> myPropertiesMap = new THashMap<String, Collection<VirtualFile>>();
   private final List<VirtualFile> myChangedFiles = new ArrayList<VirtualFile>();
-  private final FileTypeListener myFileTypeChangedListener;
   private final Object LOCK = new Object();
+  private MessageBusConnection myConnection;
 
   public static PropertiesReferenceManager getInstance(Project project) {
     return project.getComponent(PropertiesReferenceManager.class);
   }
 
-  public PropertiesReferenceManager(Project project, PropertiesFilesManager propertiesFilesManager, FileTypeManager fileTypeManager, PsiManager psiManager) {
+  public PropertiesReferenceManager(Project project, PropertiesFilesManager propertiesFilesManager, PsiManager psiManager) {
     myProject = project;
     myPropertiesFilesManager = propertiesFilesManager;
-    myFileTypeManager = fileTypeManager;
     myPsiManager = psiManager;
-    myFileTypeChangedListener = new FileTypeListener() {
+
+    myConnection = project.getMessageBus().connectStrongly();
+    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
 
       }
@@ -60,8 +61,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
           }
         });
       }
-    };
-    fileTypeManager.addFileTypeListener(myFileTypeChangedListener);
+    });
   }
 
   public void projectOpened() {
@@ -115,7 +115,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   }
 
   public void disposeComponent() {
-    myFileTypeManager.removeFileTypeListener(myFileTypeChangedListener);
+    myConnection.disconnect();
   }
 
   @NotNull

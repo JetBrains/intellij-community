@@ -22,6 +22,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ import java.beans.PropertyChangeListener;
 public class TodoView implements ProjectComponent,JDOMExternalizable{
   private final Project myProject;
   private MyPropertyChangeListener myPropertyChangeListener;
-  private MyFileTypeListener myFileTypeListener;
+  private MessageBusConnection myConnection;
 
   private ContentManager myContentManager;
   private CurrentFileTodosPanel myCurrentFileTodos;
@@ -46,6 +47,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
   private int mySelectedIndex;
   private TodoPanelSettings myCurrentPanelSettings;
   private TodoPanelSettings myAllPanelSettings;
+
   @NonNls private static final String ATTRIBUTE_SELECTED_INDEX = "selected-index";
   @NonNls private static final String ELEMENT_TODO_PANEL = "todo-panel";
   @NonNls private static final String ATTRIBUTE_ID = "id";
@@ -112,7 +114,8 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
 
   public void projectClosed(){
     TodoConfiguration.getInstance().removePropertyChangeListener(myPropertyChangeListener);
-    FileTypeManager.getInstance().removeFileTypeListener(myFileTypeListener);
+    myConnection.disconnect();
+
     if(myAllTodos!=null){ // Panels can be null if project was closed before starup activities run
       myCurrentFileTodos.dispose();
       myAllTodos.dispose();
@@ -125,8 +128,8 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     myPropertyChangeListener=new MyPropertyChangeListener();
     TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
 
-    myFileTypeListener=new MyFileTypeListener();
-    FileTypeManager.getInstance().addFileTypeListener(myFileTypeListener);
+    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection.subscribe(FileTypeManager.FILE_TYPES, new MyFileTypeListener());
 
     StartupManager startupManager=StartupManager.getInstance(myProject);
     // it causes building caches for TODOs

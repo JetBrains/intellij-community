@@ -12,4 +12,6 @@ public interface MessageBus {
 
   <L> L syncPublisher(Topic<L> topic);
   <L> L asyncPublisher(Topic<L> topic);
+
+  void dispose();
 }

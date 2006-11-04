@@ -2,7 +2,6 @@ package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +25,4 @@ public abstract class FileTypeManagerEx extends FileTypeManager{
   public abstract void fireFileTypesChanged();
 
   public abstract void fireBeforeFileTypesChanged();
-
-  public abstract void dispatchPendingEvents(FileTypeListener listener);
 }

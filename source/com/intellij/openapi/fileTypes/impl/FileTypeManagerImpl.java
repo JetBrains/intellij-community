@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +22,8 @@ import com.intellij.psi.impl.source.jsp.el.ELLanguage;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -95,6 +98,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ATTRIBUTE_BINARY = "binary";
   @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
   @NonNls private static final String XML_EXTENSION = ".xml";
+  private final MessageBus myMessageBus;
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -106,6 +110,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (standardFileTypeRead) {
       restoreStandardFileExtensions();
     }
+    myMessageBus = ApplicationManager.getApplication().getMessageBus();
   }
 
   @NotNull
@@ -283,28 +288,31 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myPaternsTable.removeAllAssociations(type);
   }
 
-  public void dispatchPendingEvents(FileTypeListener listener) {
-    myDispatcher.dispatchPendingEvent(listener);
-  }
-
   public void fireBeforeFileTypesChanged() {
     FileTypeEvent event = new FileTypeEvent(this);
-    myDispatcher.getMulticaster().beforeFileTypesChanged(event);
+    myMessageBus.syncPublisher(FILE_TYPES).beforeFileTypesChanged(event);
   }
 
   public void fireFileTypesChanged() {
     myNotIgnoredFiles.clear();
     myIgnoredFiles.clear();
 
-    myDispatcher.getMulticaster().fileTypesChanged(new FileTypeEvent(this));
+    final FileTypeEvent event = new FileTypeEvent(this);
+    myMessageBus.syncPublisher(FILE_TYPES).fileTypesChanged(event);
   }
 
+  private Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
   public void addFileTypeListener(FileTypeListener listener) {
-    myDispatcher.addListener(listener);
-  }
+    final MessageBusConnection connection = myMessageBus.connectStrongly();
+    connection.subscribe(FILE_TYPES, listener);
+    myAdapters.put(listener, connection);
+ }
 
   public void removeFileTypeListener(FileTypeListener listener) {
-    myDispatcher.removeListener(listener);
+    final MessageBusConnection connection = myAdapters.remove(listener);
+    if (connection != null) {
+      connection.disconnect();
+    }
   }
 
   private void saveAllFileTypes() throws IOException {

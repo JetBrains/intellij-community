@@ -9,8 +9,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import org.picocontainer.PicoContainer;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
 public class MockProject extends UserDataHolderBase implements ProjectEx {
   public void dispose() {
@@ -93,6 +94,11 @@ public class MockProject extends UserDataHolderBase implements ProjectEx {
 
   public boolean hasComponent(Class interfaceClass) {
     return false;
+  }
+
+
+  public MessageBus getMessageBus() {
+    return null;
   }
 
   @NotNull

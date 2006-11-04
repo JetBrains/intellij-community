@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
@@ -100,6 +101,10 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   public GlobalSearchScope getProjectScope() {
+    return null;
+  }
+
+  public MessageBus getMessageBus() {
     return null;
   }
 

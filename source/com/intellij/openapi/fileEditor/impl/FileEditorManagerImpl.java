@@ -37,6 +37,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
@@ -74,10 +75,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * Updates tabs colors
    */
   private final MyFileStatusListener myFileStatusListener;
-  /**
-   * Updates tabs icons
-   */
-  private final MyFileTypeListener myFileTypeListener;
+
   /**
    * Removes invalid myEditor and updates "modified" status.
    */
@@ -106,6 +104,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   private boolean myDoNotTransferFocus = false;
 
   private List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
+  private MessageBusConnection myConnection;
 
 
   FileEditorManagerImpl(final Project project) {
@@ -116,7 +115,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     myPanels.add(mySplitters, BorderLayout.CENTER);
 
     myFileStatusListener = new MyFileStatusListener();
-    myFileTypeListener = new MyFileTypeListener();
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
     myVirtualFileListener = new MyVirtualFileListener();
     myUISettingsListener = new MyUISettingsListener();
@@ -917,11 +915,13 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     //myFocusWatcher.install(myWindows.getComponent ());
     mySplitters.startListeningFocus();
 
+    myConnection = myProject.getMessageBus().connectStrongly();
+
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
       fileStatusManager.addFileStatusListener(myFileStatusListener);
     }
-    FileTypeManager.getInstance().addFileTypeListener(myFileTypeListener);
+    myConnection.subscribe(FileTypeManager.FILE_TYPES, new MyFileTypeListener());
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
     UISettings.getInstance().addUISettingsListener(myUISettingsListener);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
@@ -950,12 +950,13 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     //myFocusWatcher.deinstall(myWindows.getComponent ());
     mySplitters.dispose();
 
+    myConnection.disconnect();
+
 // Remove application level listeners
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
       fileStatusManager.removeFileStatusListener(myFileStatusListener);
     }
-    FileTypeManager.getInstance().removeFileTypeListener(myFileTypeListener);
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     UISettings.getInstance().removeUISettingsListener(myUISettingsListener);
 

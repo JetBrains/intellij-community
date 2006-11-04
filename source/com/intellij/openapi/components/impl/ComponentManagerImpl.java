@@ -18,6 +18,8 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.Messages;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -68,9 +70,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private boolean myDisposed = false;
   private boolean myDisposeCompleted = false;
 
+  private MessageBus myMessageBus;
+
   protected void initComponents() {
+    final ComponentManagerImpl parent = getParentComponentManager();
+    myMessageBus = Messages.newMessageBus(parent != null ? parent.getMessageBus() : null);
     createComponents();
     getComponents(false);
+  }
+
+
+  public MessageBus getMessageBus() {
+    return myMessageBus;
   }
 
   public boolean isComponentsCreated() {
@@ -643,6 +654,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public void dispose() {
     myDisposeCompleted = true;
+
+    myMessageBus.dispose();
+    myMessageBus = null;
+
     myComponentInterfaces = null;
     myInitializedComponents = null;
     myInitializingComponents = null;
@@ -654,6 +669,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myNameToComponent = null;
     myNameToConfiguration = null;
     myPicoContainer = null;
+
   }
 
   public boolean isDisposed() {

@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -63,7 +64,6 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   private final MyEditorCaretListener myEditorCaretListener;
   private final MyDocumentListener myDocumentListener;
   private final MyEditorPropertyChangeListener myEditorPropertyChangeListener;
-  private final MyFileTypeListener myFileTypeListener;
   private final MyVirtualFileListener myVirtualFileListener;
   private final Editor myEditor;
 
@@ -75,6 +75,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
    * Whether the editor is valid or not
    */
   private boolean myValid;
+  private final MessageBusConnection myConnection;
 
   TextEditorComponent(@NotNull final Project project, @NotNull final VirtualFile file, @NotNull final TextEditorImpl textEditor) {
     super(new BorderLayout (), true);
@@ -94,8 +95,8 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     myEditorCaretListener = new MyEditorCaretListener();
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
 
-    myFileTypeListener = new MyFileTypeListener();
-    FileTypeManager.getInstance().addFileTypeListener(myFileTypeListener);
+    myConnection = project.getMessageBus().connectStrongly();
+    myConnection.subscribe(FileTypeManager.FILE_TYPES, new MyFileTypeListener());
 
     myVirtualFileListener = new MyVirtualFileListener();
     myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);
@@ -115,8 +116,8 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     myDocument.removeDocumentListener(myDocumentListener);
 
     disposeEditor(myEditor);
+    myConnection.disconnect();
 
-    FileTypeManager.getInstance().removeFileTypeListener(myFileTypeListener);
     myFile.getFileSystem().removeVirtualFileListener(myVirtualFileListener);
     //myFocusWatcher.deinstall(this);
     //removePropertyChangeListener(mySplitterPropertyChangeListener);

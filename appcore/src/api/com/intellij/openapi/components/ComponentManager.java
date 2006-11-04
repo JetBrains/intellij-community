@@ -17,6 +17,7 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
@@ -81,6 +82,8 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   @NotNull <T> T[] getComponents(Class<T> baseInterfaceClass);
 
   PicoContainer getPicoContainer();
+
+  MessageBus getMessageBus();
 
   boolean isDisposed();
 }

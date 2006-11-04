@@ -43,6 +43,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private boolean myProjectOpened = false;
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_3;
   private LanguageLevel myOriginalLanguageLevel = myLanguageLevel;
-  private FileTypeListener myFileTypeListener;
   private long myModificationCount = 0;
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
   private Runnable myReloadProjectRequest = null;
@@ -91,6 +91,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private VirtualFilePointer myCompilerOutput;
   private boolean myStartupActivityPerformed = false;
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
+  private final MessageBusConnection myConnection;
 
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -98,7 +99,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex, StartupManager startupManager) {
     myProject = (ProjectEx)project;
-    myFileTypeListener = new FileTypeListener() {
+    myConnection = project.getMessageBus().connectStrongly();
+    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
         beforeRootsChange(true);
       }
@@ -106,9 +108,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       public void fileTypesChanged(FileTypeEvent event) {
         rootsChanged(true);
       }
-    };
+    });
 
-    fileTypeManager.addFileTypeListener(myFileTypeListener);
     myProjectFileIndex = new ProjectFileIndexImpl(myProject, directoryIndex, fileTypeManager);
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
@@ -391,7 +392,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       myJdkTableMultilistener.uninstallListner(false);
       myJdkTableMultilistener = null;
     }
-    FileTypeManager.getInstance().removeFileTypeListener(myFileTypeListener);
+    myConnection.disconnect();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -754,7 +755,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     multilistener.removeListener(libraryListener);
   }
 
-  Map<LibraryTable, LibraryTableMultilistener> myLibraryTableMultilisteners = new HashMap<LibraryTable, LibraryTableMultilistener>();
+  private Map<LibraryTable, LibraryTableMultilistener> myLibraryTableMultilisteners = new HashMap<LibraryTable, LibraryTableMultilistener>();
 
   private class LibraryTableMultilistener implements LibraryTable.Listener {
     EventDispatcher<LibraryTable.Listener> myDispatcher = EventDispatcher.create(LibraryTable.Listener.class);

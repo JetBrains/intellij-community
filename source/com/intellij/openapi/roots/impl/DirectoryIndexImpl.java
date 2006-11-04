@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +39,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private Map<String, VirtualFile[]> myPackageNameToDirsMap = new THashMap<String, VirtualFile[]>();
 
   private VirtualFileListener myVirtualFileListener;
-  private FileTypeListener myFileTypeListener;
   private ModuleRootListener myRootListener;
+  private final MessageBusConnection myConnection;
 
   public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManagerEx startupManagerEx) {
     myProject = project;
+    myConnection = project.getMessageBus().connectStrongly();
 
     LAZY_MODE = !psiManagerConfiguration.REPOSITORY_ENABLED;
     startupManagerEx.registerPreStartupActivity(
@@ -64,8 +66,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   public void disposeComponent() {
     if (myInitialized) {
+      myConnection.disconnect();
       VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
-      FileTypeManager.getInstance().removeFileTypeListener(myFileTypeListener);
       ProjectRootManager.getInstance(myProject).removeModuleRootListener(myRootListener);
     }
     myDisposed = true;
@@ -148,15 +150,14 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     myVirtualFileListener = new MyVirtualFileListener();
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
 
-    myFileTypeListener = new FileTypeListener() {
+    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
       }
 
       public void fileTypesChanged(FileTypeEvent event) {
         _initialize();
       }
-    };
-    FileTypeManager.getInstance().addFileTypeListener(myFileTypeListener);
+    });
 
     myRootListener = new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
@@ -208,6 +209,10 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
   }
 
   public ModalityState getNoneModalityState() {
+    return null;
+  }
+
+  public MessageBus getMessageBus() {
     return null;
   }
 }
