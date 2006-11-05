@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class Intention implements IntentionAction{
+public abstract class Intention extends PsiElementBaseIntentionAction {
     private final PsiElementPredicate predicate;
 
     /** @noinspection AbstractMethodCallInConstructor,OverridableMethodCallInConstructor*/
@@ -178,8 +178,20 @@ public abstract class Intention implements IntentionAction{
         return null;
     }
 
-    public boolean isAvailable(Project project, Editor editor, PsiFile file){
-        return findMatchingElement(file, editor) != null;
+
+    public boolean isAvailable(Project project, Editor editor, PsiElement element) {
+      while (element != null) {
+        if (predicate.satisfiedBy(element)) {
+          return true;
+        }
+        else {
+          element = element.getParent();
+          if (element instanceof PsiFile) {
+            break;
+          }
+        }
+      }
+      return false;
     }
 
     public boolean startInWriteAction(){
