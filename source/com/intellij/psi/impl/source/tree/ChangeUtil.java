@@ -431,7 +431,6 @@ public class ChangeUtil {
     CompositeElement treeParent = original.getTreeParent();
     new DummyHolder(manager, element, treeParent == null ? null : treeParent.getPsi(), table).getTreeElement();
     encodeInformation(element, original);
-    //Helper.unindentSubtree(element, original, table);
     TreeUtil.clearCaches(element);
     saveIndentationToCopy(original, element);
     return element;

@@ -666,7 +666,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return null;
     }
 
-    ASTNode space1 = Helper.splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
+    ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
     ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER.toCharArray(), 0,
                                                      DUMMY_IDENTIFIER.length(), charTable, file.getManager());
     parent.addChild(marker, space1.getTreeNext());
@@ -1042,6 +1042,17 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         }
       }
     }
+  }
+
+  private static ASTNode splitSpaceElement(TreeElement space, int offset, CharTable charTable) {
+    LOG.assertTrue(space.getElementType() == ElementType.WHITE_SPACE);
+    char[] chars = space.textToCharArray();
+    LeafElement space1 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, 0, offset, charTable, SharedImplUtil.getManagerByTree(space));
+    LeafElement space2 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, offset, chars.length, charTable, SharedImplUtil.getManagerByTree(space));
+    ASTNode parent = space.getTreeParent();
+    parent.replaceChild(space, space1);
+    parent.addChild(space2, space1.getTreeNext());
+    return space1;
   }
 
   private static class NamesByExprInfo {

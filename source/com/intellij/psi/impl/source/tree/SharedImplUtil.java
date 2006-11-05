@@ -100,7 +100,6 @@ public class SharedImplUtil {
         if(elementCopy.getElementType() == ElementType.WHITE_SPACE)
           CodeEditUtil.setNodeGenerated(elementCopy, true);
         parent.addChild(elementCopy, null);
-        //helper.normalizeIndent(elementCopy);
       }
     }
     if (copyFirst == null) return null;
