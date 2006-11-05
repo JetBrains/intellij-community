@@ -16,6 +16,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionActionComposite;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
@@ -155,8 +156,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     Point xy = myEditor.logicalPositionToXY(caretPos);
     if (!visibleArea.contains(xy)) return;
-    Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
-    PsiFile injectedFile = injectedEditor instanceof EditorDelegate ? ((EditorDelegate)injectedEditor).getInjectedFile() : myFile;
+    final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
+    final PsiFile injectedFile = injectedEditor instanceof EditorDelegate ? ((EditorDelegate)injectedEditor).getInjectedFile() : myFile;
+    final PsiElement injectedElement = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
 
     ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     ArrayList<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
@@ -176,7 +178,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           }
         }
       }
-      else if (action.isAvailable(myProject, injectedEditor, injectedFile)) {
+      else if ((action instanceof PsiElementBaseIntentionAction && ((PsiElementBaseIntentionAction)action).isAvailable(myProject, injectedEditor, injectedElement))
+               ||  action.isAvailable(myProject, injectedEditor, injectedFile)) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
         intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
