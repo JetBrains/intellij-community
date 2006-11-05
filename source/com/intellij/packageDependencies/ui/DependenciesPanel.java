@@ -22,11 +22,14 @@ import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -36,9 +39,6 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public class DependenciesPanel extends JPanel implements Disposable, DataProvider {
   private Map<PsiFile, Set<PsiFile>> myDependencies;
@@ -340,13 +340,17 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     boolean hasFocus
   ){
       PackageDependenciesNode node = (PackageDependenciesNode)value;
-      if (expanded) {
-        setIcon(node.getOpenIcon());
+      final PsiElement element = node.getPsiElement();
+      if (element != null && element.isValid()) {
+        if (expanded) {
+          setIcon(node.getOpenIcon());
+        }
+        else {
+          setIcon(node.getClosedIcon());
+        }
+      } else {
+        append(UsageViewBundle.message("node.invalid") + " ", SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
-      else {
-        setIcon(node.getClosedIcon());
-      }
-
       append(node.toString(), node.hasMarked() && !selected ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(node.getPresentableFilesCount(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }

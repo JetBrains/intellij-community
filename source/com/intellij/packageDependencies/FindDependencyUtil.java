@@ -1,12 +1,12 @@
 package com.intellij.packageDependencies;
 
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.analysis.AnalysisScopeBundle;
 
 import java.util.*;
 
@@ -31,7 +31,7 @@ public class FindDependencyUtil {
       final Set<PsiFile> deps = depsByFile != null ? new HashSet<PsiFile>(depsByFile) : new HashSet<PsiFile>();
       deps.retainAll(searchFor);
       if (deps.isEmpty()) continue;
-
+      if (!psiFile.isValid()) continue;
       builder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
