@@ -71,18 +71,19 @@ public class JavaDocManager implements ProjectComponent {
   private ActionManagerEx myActionManagerEx;
   private AnActionListener myActionListener = new AnActionListener() {
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
-      if (action instanceof HintManager.ActionToIgnore) return;
-      if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
-      if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
-      if (action == ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
-      cancelJavadoc();
+      final JBPopup hint = getDocInfoHint();
+      if (hint != null) {
+        if (action instanceof HintManager.ActionToIgnore) return;
+        if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
+        if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
+        if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
+        if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
+        if (action == ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
+        hint.cancel();
+      }
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {
-      cancelJavadoc();
-    }
-
-    private void cancelJavadoc() {
       final JBPopup hint = getDocInfoHint();
       if (hint != null) {
         hint.cancel();
