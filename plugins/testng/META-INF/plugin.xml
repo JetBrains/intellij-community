@@ -30,6 +30,6 @@
         </component>
     </project-components>
     <change-notes>
-        <![CDATA[Updated TestNG 5.3.1.]]>
+        <![CDATA[Updated TestNG 5.3.1.  Includes patch for displaying DataProvider/Property vales.]]>
     </change-notes>
 </idea-plugin>
