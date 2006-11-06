@@ -21,7 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +30,9 @@ import javax.swing.JComponent;
 
 public class UnusedCatchParameterInspection extends StatementInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreCatchBlocksWithComments = false;
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreTestCases = false;
 
     public String getDisplayName() {
@@ -74,14 +70,9 @@ public class UnusedCatchParameterInspection extends StatementInspection {
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
-            if (m_ignoreTestCases) {
-                final PsiClass aClass =
-                        ClassUtils.getContainingClass(statement);
-                if (aClass != null &&
-                        ClassUtils.isSubclass(aClass,
-                                "junit.framework.TestCase")) {
-                    return;
-                }
+            if (m_ignoreTestCases && TestUtils.isPartOfJUnitTestMethod(
+                    statement)) {
+                return;
             }
             final PsiCatchSection[] catchSections =
                     statement.getCatchSections();

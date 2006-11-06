@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,13 +30,9 @@ import javax.swing.JComponent;
 
 public class EmptyCatchBlockInspection extends StatementInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_includeComments = true;
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreTestCases = true;
 
     public String getDisplayName() {
@@ -79,14 +75,9 @@ public class EmptyCatchBlockInspection extends StatementInspection {
           if (PsiUtil.isInJspFile(statement.getContainingFile())) {
             return;
           }
-            if (m_ignoreTestCases) {
-                final PsiClass aClass =
-                        ClassUtils.getContainingClass(statement);
-                if (aClass != null &&
-                        ClassUtils.isSubclass(aClass,
-                                "junit.framework.TestCase")) {
-                    return;
-                }
+            if (m_ignoreTestCases &&
+                    TestUtils.isPartOfJUnitTestMethod(statement)) {
+                return;
             }
             final PsiCatchSection[] catchSections =
                     statement.getCatchSections();
@@ -94,7 +85,9 @@ public class EmptyCatchBlockInspection extends StatementInspection {
                 final PsiCodeBlock block = section.getCatchBlock();
                 if (block != null && catchBlockIsEmpty(block)) {
                     final PsiElement catchToken = section.getFirstChild();
-                    registerError(catchToken);
+                    if (catchToken != null) {
+                        registerError(catchToken);
+                    }
                 }
             }
         }

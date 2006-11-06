@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,15 @@ public class TestUtils {
                 ProjectRootManager.getInstance(project);
         final ProjectFileIndex fileIndex = rootManager.getFileIndex();
         return fileIndex.isInTestSourceContent(virtualFile);
+    }
+
+    public static boolean isPartOfJUnitTestMethod(@NotNull PsiElement element) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(element,
+                PsiMethod.class);
+        if (method == null) {
+            return false;
+        }
+        return isJUnitTestMethod(method);
     }
 
     public static boolean isJUnitTestMethod(@NotNull PsiMethod method) {
