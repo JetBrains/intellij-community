@@ -6,10 +6,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -59,25 +57,6 @@ public class CompilerPathsEx extends CompilerPaths {
         }
       });
     }
-  }
-
-  public static String getCompilationClasspath(Module module) {
-    final StringBuffer classpathBuffer = new StringBuffer();
-    final OrderEntry[] orderEntries = getOrderEntries(module);
-    for (final OrderEntry orderEntry : orderEntries) {
-      final VirtualFile[] files = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
-      for (VirtualFile file : files) {
-        final String path = PathUtil.getLocalPath(file);
-        if (path == null) {
-          continue;
-        }
-        if (classpathBuffer.length() > 0) {
-          classpathBuffer.append(File.pathSeparatorChar);
-        }
-        classpathBuffer.append(path);
-      }
-    }
-    return classpathBuffer.toString();
   }
 
   public static OrderEntry[] getOrderEntries(Module module) {

@@ -155,7 +155,7 @@ public class ModuleChunk extends Chunk<Module> {
         if (skip) {
           continue;
         }
-        cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+        addClasspathRoots(module, orderEntry, cpFiles);
       }
     }
 
@@ -175,12 +175,25 @@ public class ModuleChunk extends Chunk<Module> {
           break;
         }
         else {
-          cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+          addClasspathRoots(module, orderEntry, cpFiles);
         }
       }
     }
     cpFiles.addAll(jdkFiles);
     return convertToStringPath(cpFiles);
+  }
+
+  private void addClasspathRoots(Module module, OrderEntry orderEntry, OrderedSet<VirtualFile> cpFiles) {
+    cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+    if (orderEntry instanceof ModuleSourceOrderEntry) {
+      if ((mySourcesFilter & TEST_SOURCES) == 0) {
+        // should remove test output dir (if any) if compiling production classes only
+        final VirtualFile outputPathForTests = CompilerPathsEx.getModuleOutputDirectory(module, true);
+        if (outputPathForTests != null) {
+          cpFiles.remove(outputPathForTests);
+        }
+      }
+    }
   }
 
   private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
