@@ -16,23 +16,20 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RedundantMethodOverrideInspection extends MethodInspection {
 
@@ -106,6 +103,14 @@ public class RedundantMethodOverrideInspection extends MethodInspection {
             final PsiModifierList modifierList = method.getModifierList();
             if (!EquivalenceChecker.modifierListsAreEquivalent(
                     modifierList, superModifierList)) {
+                return;
+            }
+            final PsiType superReturnType = superMethod.getReturnType();
+            if (superReturnType == null) {
+                return;
+            }
+            final PsiType returnType = method.getReturnType();
+            if (!superReturnType.equals(returnType)) {
                 return;
             }
             if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody)) {
