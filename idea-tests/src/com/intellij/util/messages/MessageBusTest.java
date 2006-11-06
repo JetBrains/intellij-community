@@ -158,6 +158,35 @@ public class MessageBusTest extends TestCase {
 
     assertEvents("c1:t11", "c2:t11", "c2:t21", "c1:t11:done", "c2:t12");
   }
+  
+  private static class ExpectedRuntimeException extends RuntimeException {}
+  public void testRuntimeExceptionIsRethrown() {
+    final MessageBusConnection connection = myBus.connectStrongly();
+    connection.subscribe(T1, new T1Listener() {
+      public void t11() {
+        throw new ExpectedRuntimeException();
+      }
+
+      public void t12() {
+      }
+    });
+
+    boolean ok = false;
+    try {
+      myBus.syncPublisher(T1).t11();
+    }
+    catch (ExpectedRuntimeException e) {
+      ok = true;
+    }
+    catch (Throwable e) {
+      fail("Wrong exception catched. Expected 'ExpectedRuntimeException' but was '" + e + "'.");
+    }
+
+    if (!ok) {
+      fail("No exception catched. Expected 'ExpectedRuntimeException'");
+    }
+
+  }
 
   private void assertEvents(String... expected) {
     String joinExpected = StringUtil.join(expected, "\n");

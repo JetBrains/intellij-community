@@ -574,7 +574,6 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     if (myTracker != null) {
       myTracker.dispose();
     }
-    ProjectRootManager.getInstance(myProject).removeModuleRootListener(this);
     getVirtualFileManager().unregisterRefreshUpdater(myTracker.getRefreshUpdater());
   }
 
