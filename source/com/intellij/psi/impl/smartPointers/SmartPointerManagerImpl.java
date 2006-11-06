@@ -5,16 +5,20 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
+import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -42,6 +46,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "SmartPointerManager";
   }
@@ -51,14 +56,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
   public void disposeComponent() {
   }
 
-  public void fastenBelts(PsiFile file) {
+  public static void fastenBelts(PsiFile file) {
     final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
     for (Language language : languages) {
       fastenBeltsInSingleFile(file.getViewProvider().getPsi(language));
     }
   }
 
-  private void fastenBeltsInSingleFile(final PsiFile file) {
+  private static void fastenBeltsInSingleFile(final PsiFile file) {
     synchronized (file) {
       file.putUserData(BELTS_ARE_FASTEN_KEY, Boolean.TRUE);
 
@@ -82,7 +87,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
     }
   }
 
-  public void unfastenBelts(PsiFile file) {
+  public static void unfastenBelts(PsiFile file) {
     final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
     for (Language language : languages) {
       final PsiFile f = file.getViewProvider().getPsi(language);
@@ -92,7 +97,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
     }
   }
 
-  public void synchronizePointers(PsiFile file) {
+  public static void synchronizePointers(PsiFile file) {
     final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
     for (Language language : languages) {
       final PsiFile f = file.getViewProvider().getPsi(language);
@@ -102,7 +107,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
     }
   }
 
-  private void _synchronizePointers(final PsiFile file) {
+  private static void _synchronizePointers(final PsiFile file) {
     ArrayList<WeakReference<SmartPointerEx>> pointers = file.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
     if (pointers == null) return;
 
@@ -122,16 +127,58 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
     }
   }
 
+  private class IdentitySmartPointer<T extends PsiElement> implements SmartPointerEx<T> {
+    private T myElement;
+
+    public IdentitySmartPointer(final T element) {
+      myElement = element;
+    }
+
+    public T getElement() {
+      if (myElement != null && !myElement.isValid()) {
+        myElement = null;
+      }
+      return myElement;
+    }
+
+    public int hashCode() {
+      final T elt = getElement();
+      return elt == null ? 0 : elt.hashCode();
+    }
+
+    public boolean equals(Object obj) {
+      if (!(obj instanceof SmartPsiElementPointer)) return false;
+      return Comparing.equal(getElement(), ((SmartPsiElementPointer)obj).getElement());
+    }
+
+    public void documentAndPsiInSync() {}
+
+    public void fastenBelt() {}
+  }
+
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(E element) {
     if (!element.isValid()) {
       LOG.assertTrue(false, "Invalid element:" + element);
     }
 
+    PsiFile file = element.getContainingFile();
+
+    if (isSafeReparseable(file)) {
+      return new IdentitySmartPointer<E>(element);
+    }
+
     SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element);
     initPointer(element, pointer);
 
     return pointer;
+  }
+
+  private static boolean isSafeReparseable(final PsiFile file) {
+    if (file == null) return false;
+    if (GrammarUtil.getGrammarByFileType(file.getFileType()) != null) return false;
+    if (file instanceof CodeFragmentElement) return false;
+    return true;
   }
 
   private <E extends PsiElement> void initPointer(E element, SmartPointerEx<E> pointer) {
@@ -252,6 +299,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
       myMap = map;
     }
 
+    @Nullable
     public PsiType getType() {
       if (myType.isValid()) return myType;
       final PsiElement classElement = myClass.getElement();
