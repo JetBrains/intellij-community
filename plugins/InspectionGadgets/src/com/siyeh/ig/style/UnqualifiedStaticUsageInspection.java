@@ -187,6 +187,10 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
                 return false;
             }
             final PsiMember member = (PsiMember) element;
+	        if (member instanceof PsiEnumConstant &&
+			        expression.getParent() instanceof PsiSwitchLabelStatement) {
+		        return false;
+	        }
             return member.hasModifierProperty(PsiModifier.STATIC);
         }
     }
