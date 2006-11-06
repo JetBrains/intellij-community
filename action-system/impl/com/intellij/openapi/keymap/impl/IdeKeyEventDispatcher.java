@@ -23,8 +23,8 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -143,6 +143,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
     } else {
       window = SwingUtilities.getWindowAncestor(component);
     }
+
+    if (window instanceof JDialog) {
+      final JDialog dialog = (JDialog)window;
+      if (!dialog.isModal()) {
+        return isModalContext(dialog.getOwner());
+      }
+    }
+
     boolean isMainFrame = window instanceof IdeFrame;
     boolean isFloatingDecorator = window instanceof FloatingDecorator;
     return !isMainFrame && !isFloatingDecorator;

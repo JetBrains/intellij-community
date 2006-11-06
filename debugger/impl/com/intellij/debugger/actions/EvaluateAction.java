@@ -28,16 +28,15 @@ import com.intellij.openapi.ui.Messages;
 
 public class EvaluateAction extends DebuggerAction {
   public void actionPerformed(final AnActionEvent e) {
-    DataContext   dataContext = e.getDataContext();
-    final Project project     = (Project)dataContext.getData(DataConstants.PROJECT);
-
+    final Project project = e.getData(DataKeys.PROJECT);
+    final DataContext dataContext = e.getDataContext();
     final DebuggerContextImpl context = DebuggerAction.getDebuggerContext(dataContext);
 
     if(project == null || context == null) {
       return;
     }
 
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final Editor editor = e.getData(DataKeys.EDITOR);
 
     TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
     if (editorText == null) {
@@ -111,7 +110,7 @@ public class EvaluateAction extends DebuggerAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = event.getData(DataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
