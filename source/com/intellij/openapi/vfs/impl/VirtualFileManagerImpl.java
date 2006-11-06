@@ -46,11 +46,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private int mySynchronousRefreshCount = 0;
   private ArrayList<Runnable> myRefreshEventsToFire = null;
   private Stack<Runnable> myPostRefreshRunnables = new Stack<Runnable>();
-  private final ProgressManager myProgressManager;
 
-
-  public VirtualFileManagerImpl(ProgressManager progressManager, VirtualFileSystem[] fileSystems) {
-    myProgressManager = progressManager;
+  public VirtualFileManagerImpl(VirtualFileSystem[] fileSystems) {
     myFileSystems = new ArrayList<VirtualFileSystem>();
     myProtocolToSystemMap = new HashMap<String, VirtualFileSystem>();
     for (VirtualFileSystem fileSystem : fileSystems) {
@@ -392,9 +389,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
 
     public void fileDeleted(VirtualFileEvent event) {
+      final VirtualFile parent = event.getParent();
       LOG.debug(
         "fileDeleted: file = " + event.getFile().getName() +
-        ", parent = " + (event.getParent() != null ? event.getParent().getUrl() : null) +
+        ", parent = " + (parent != null ? parent.getUrl() : null) +
         ", requestor = " + event.getRequestor()
       );
     }
@@ -442,10 +440,5 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ", requestor = " + event.getRequestor()
       );
     }
-  }
-
-  public void cleanupForNextTest() {
-    myRefreshCount = 0;
-    myRefreshEventsToFire = null;
   }
 }

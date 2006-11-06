@@ -3,12 +3,9 @@ package com.intellij.openapi.vfs.ex;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 public abstract class VirtualFileManagerEx extends VirtualFileManager {
 
