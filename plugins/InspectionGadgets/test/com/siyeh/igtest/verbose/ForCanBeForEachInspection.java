@@ -64,7 +64,7 @@ public class ForCanBeForEachInspection{
     public static String[] getAttributes(){
         final String[] result = new String[3];
         for(int j = 0; j < result.length; j++){
-            result[j] = "3";
+            result[j] = "3"; // can't be foreach
         }
         return result;
     }
@@ -89,7 +89,7 @@ public class ForCanBeForEachInspection{
             boolean wouldFit = it.next().getValue();
             if(wouldFit){
                 // if it would fit before, it might not now
-                it.remove();
+                it.remove(); // can't be foreach
             }
         }
     }
@@ -102,10 +102,24 @@ public class ForCanBeForEachInspection{
         }
     }
 
+    public void boomboom(char prev, char[] indices) {
+        for (int i = 0; i < indices.length; i++)
+        {
+            if (indices[i] > prev)
+                indices[i]--; // can't be foreach
+        }
+    }
+
     public void didTheyImplementLists(){
         List list = new ArrayList();
         for(int i = 0; i < list.size(); i++){
             Object o = list.get(i);
+        }
+    }
+
+    public void quickFixBoom(List numbers) {
+        for (int i = 0; i < (numbers.size()); i++) {
+            System.out.println("numbers[i]: " + numbers.get(i));
         }
     }
 }
