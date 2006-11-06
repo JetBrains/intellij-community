@@ -6,20 +6,30 @@
  */
 package com.intellij.util.messages;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 public class Topic<L> {
   private final String myDisplayName;
-  private Class<L> myListenerClass;
+  private final Class<L> myListenerClass;
 
-  public Topic(String displayName, final Class<L> listenerClass) {
+  public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
     myDisplayName = displayName;
     myListenerClass = listenerClass;
   }
 
+  @NotNull
+  @NonNls
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  @NotNull
   public Class<L> getListenerClass() {
     return myListenerClass;
+  }
+
+  public String toString() {
+    return myDisplayName;
   }
 }

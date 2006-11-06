@@ -8,7 +8,10 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 
 public class MessageBusConnectionImpl implements MessageBusConnection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
@@ -44,16 +47,16 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     myBus.notifyOnSubscription(this, topic);
   }
 
-  public Set<Topic> getSubscriptions() {
-    return mySubscriptions.keySet();
-  }
-
   public void setDefaultHandler(MessageHandler handler) {
     myDefaultHandler = handler;
   }
 
   public void disconnect() {
     myBus.notifyConnectionTerminated(this);
+  }
+
+  public void dispose() {
+    disconnect();
   }
 
   public void deliverImmediately() {
@@ -68,6 +71,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
     final Topic topic = message.getTopic();
     final Object handler = mySubscriptions.get(topic);
+    
     if (handler == myDefaultHandler) {
       myDefaultHandler.handle(message.getListenerMethod(), message.getArgs());
     }
@@ -89,5 +93,9 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   void scheduleMessageDelivery(Message message) {
     myPendingMessages.offer(message);
+  }
+
+  public String toString() {
+    return mySubscriptions.keySet().toString();
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.moduleDependencies;
 
 import com.intellij.CommonBundle;
+import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicGraphUtil;
 import com.intellij.ide.CommonActionsManager;
@@ -13,7 +14,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.*;
@@ -75,7 +75,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     add(mySplitter, BorderLayout.CENTER);
     add(createNorthPanel(), BorderLayout.NORTH);
 
-    ProjectRootManager.getInstance(myProject).addModuleRootListener(this);
+    project.getMessageBus().connectWeakly().subscribe(ProjectTopics.PROJECT_ROOTS, this);
   }
 
   private void setSplitterProportion() {

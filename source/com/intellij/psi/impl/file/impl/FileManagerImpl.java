@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.AppTopics;
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -15,7 +17,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.PsiManagerConfiguration;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -56,7 +61,6 @@ public class FileManagerImpl implements FileManager {
 
   private VirtualFileListener myVirtualFileListener = null;
   private FileDocumentManagerListener myFileDocumentManagerListener = null;
-  private ModuleRootListener myModuleRootListener = null;
   private boolean myInitialized = false;
   private boolean myDisposed = false;
   private boolean myUseRepository = true;
@@ -95,7 +99,6 @@ public class FileManagerImpl implements FileManager {
 
       myVirtualFileManager.removeVirtualFileListener(myVirtualFileListener);
       myFileDocumentManager.removeFileDocumentManagerListener(myFileDocumentManagerListener);
-      myProjectRootManager.removeModuleRootListener(myModuleRootListener);
       synchronized (PsiLock.LOCK) {
         myCachedObjectClassMap = null;
       }
@@ -171,12 +174,8 @@ public class FileManagerImpl implements FileManager {
     myFileDocumentManagerListener = new MyFileDocumentManagerAdapter();
     myFileDocumentManager.addFileDocumentManagerListener(myFileDocumentManagerListener);
 
-    myModuleRootListener = new MyModuleRootListener();
-    myProjectRootManager.addModuleRootListener(myModuleRootListener);
-
-    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
-      public void beforeFileTypesChanged(FileTypeEvent event) {
-      }
+    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+      public void beforeFileTypesChanged(FileTypeEvent event) {}
 
       public void fileTypesChanged(FileTypeEvent e) {
         ApplicationManager.getApplication().runWriteAction(
@@ -196,6 +195,8 @@ public class FileManagerImpl implements FileManager {
         );
       }
     });
+
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
   }
 
   private void dispatchPendingEvents() {
@@ -210,7 +211,6 @@ public class FileManagerImpl implements FileManager {
 
     myVirtualFileManager.dispatchPendingEvent(myVirtualFileListener);
     myFileDocumentManager.dispatchPendingEvents(myFileDocumentManagerListener);
-    myProjectRootManager.dispatchPendingEvent(myModuleRootListener);
 
     myConnection.deliverImmediately();
     //TODO: other listeners
@@ -395,8 +395,9 @@ public class FileManagerImpl implements FileManager {
     if(instance.isFileIgnored(name)) return null;
     final FileType fileTypeByFileName = instance.getFileTypeByFileName(name);
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    return ((PsiElementFactoryImpl)myManager.getElementFactory()).createFileFromText(name, fileTypeByFileName, document != null ? document.getCharsSequence() : "",
-                                                                                     vFile.getModificationStamp(), true, false);
+    return myManager.getElementFactory().createFileFromText(name, fileTypeByFileName,
+                                                            document != null ? document.getCharsSequence() : "",
+                                                            vFile.getModificationStamp(), true, false);
   }
 
   public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {

@@ -1,5 +1,6 @@
 package com.intellij.ide.scopeView;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
@@ -25,7 +26,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +43,7 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -70,7 +71,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
   private IdeView myIdeView = new  MyIdeView();
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
-  private ModuleRootListener myModuleRootListener = new MyModuleRootListener();
 
   private Tree myTree = new Tree();
   private final Project myProject;
@@ -103,14 +103,14 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   public void initListeners(){
     myInitialized = true;
+    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly(this);
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
-    ProjectRootManager.getInstance(myProject).addModuleRootListener(myModuleRootListener);
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
   }
 
   public void dispose(){
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
-    ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
 

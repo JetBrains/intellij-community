@@ -3,6 +3,8 @@
  */
 package com.intellij.util.messages.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -57,6 +59,12 @@ public class MessageBusImpl implements MessageBus {
     return connection;
   }
 
+  public MessageBusConnection connectStrongly(Disposable parentDisposable) {
+    final MessageBusConnection connection = connectStrongly();
+    Disposer.register(parentDisposable, connection);
+    return connection;
+  }
+
   public MessageBusConnection connectWeakly() {
     return new MessageBusConnectionImpl(this);
   }
@@ -96,6 +104,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public void dispose() {
+    myMessageQueue.clear();
     if (myParentBus != null) {
       myParentBus.notifyChildBusDisposed(this);
     }
@@ -117,6 +126,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private synchronized void sendMessage(Message message) {
+    pumpMessages();
     postMessage(message);
     pumpMessages();
   }

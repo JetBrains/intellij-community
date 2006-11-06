@@ -1,5 +1,6 @@
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
@@ -55,6 +56,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Icons;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -156,7 +158,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
-  private final ModuleRootListener myModuleRootListener;
+  private final MessageBusConnection myConnection;
 
   public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, ProjectRootManager rootManager) {
     myProject = project;
@@ -168,16 +170,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
     };
 
-    myModuleRootListener = new ModuleRootListener() {
-      public void beforeRootsChange(ModuleRootEvent event) {
-
-      }
+    myConnection = project.getMessageBus().connectStrongly();
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {}
 
       public void rootsChanged(ModuleRootEvent event) {
         refresh();
       }
-    };
-    rootManager.addModuleRootListener(myModuleRootListener);
+    });
+
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler();
 
     myDataProvider = new MyPanel();
@@ -195,7 +196,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     if (toolWindowManager != null) {
       toolWindowManager.unregisterToolWindow(ToolWindowId.PROJECT_VIEW);
     }
-    ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     dispose();
   }
 
@@ -594,10 +594,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private void dispose() {
+    myConnection.disconnect();
     getCurrentProjectViewPane().dispose();
     myStructureViewWrapper.dispose();
     myStructureViewWrapper = null;
   }
+
   public void rebuildStructureViewPane() {
     if (myStructureViewWrapper != null) {
       myStructureViewWrapper.rebuild();

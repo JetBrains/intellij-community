@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.AppTopics;
 import com.intellij.ide.highlighter.*;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
@@ -20,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.jsp.el.ELLanguage;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -56,7 +56,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final Set<String> myIgnoredFileMasksSet = new LinkedHashSet<String>();
   private final Set<String> myNotIgnoredFiles = Collections.synchronizedSet(new THashSet<String>());
   private final Set<String> myIgnoredFiles = Collections.synchronizedSet(new THashSet<String>());
-  private final PendingEventDispatcher<FileTypeListener> myDispatcher = PendingEventDispatcher.create(FileTypeListener.class);
   private final Map<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
   private final FileTypeAssocTable myInitialAssociations = new FileTypeAssocTable();
   private Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
@@ -266,6 +265,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return false;
   }
 
+  @SuppressWarnings({"deprecation"})
   @NotNull
   public String[] getAssociatedExtensions(FileType type) {
     return myPaternsTable.getAssociatedExtensions(type);
@@ -290,7 +290,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public void fireBeforeFileTypesChanged() {
     FileTypeEvent event = new FileTypeEvent(this);
-    myMessageBus.syncPublisher(FILE_TYPES).beforeFileTypesChanged(event);
+    myMessageBus.syncPublisher(AppTopics.FILE_TYPES).beforeFileTypesChanged(event);
   }
 
   public void fireFileTypesChanged() {
@@ -298,13 +298,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myIgnoredFiles.clear();
 
     final FileTypeEvent event = new FileTypeEvent(this);
-    myMessageBus.syncPublisher(FILE_TYPES).fileTypesChanged(event);
+    myMessageBus.syncPublisher(AppTopics.FILE_TYPES).fileTypesChanged(event);
   }
 
   private Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
   public void addFileTypeListener(FileTypeListener listener) {
     final MessageBusConnection connection = myMessageBus.connectStrongly();
-    connection.subscribe(FILE_TYPES, listener);
+    connection.subscribe(AppTopics.FILE_TYPES, listener);
     myAdapters.put(listener, connection);
  }
 
@@ -520,6 +520,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Helper methods
   // -------------------------------------------------------------------------
 
+  @Nullable
   private FileType getFileTypeByName(String name) {
     Iterator<FileType> itr = myFileTypes.iterator();
     while (itr.hasNext()) {

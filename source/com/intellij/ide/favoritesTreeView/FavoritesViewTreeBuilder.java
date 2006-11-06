@@ -4,6 +4,7 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
@@ -21,13 +22,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +40,6 @@ import java.util.Comparator;
 
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
-  private ModuleRootListener myModuleRootListener;
   private FileStatusListener myFileStatusListener;
   private CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
   private final FavoritesManager.FavoritesListener myFavoritesListener;
@@ -123,6 +124,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         return 0;
       }
     });
+
+    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly(this);
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener() {
       protected DefaultMutableTreeNode getRootNode() {
         return myRootNode;
@@ -144,16 +147,15 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         }
       }
     };
-    myModuleRootListener = new ModuleRootListener() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
       public void rootsChanged(ModuleRootEvent event) {
         myUpdater.addSubtreeToUpdate(myRootNode);
       }
-    };
+    });
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
-    ProjectRootManager.getInstance(myProject).addModuleRootListener(myModuleRootListener);
     myFileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
     myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
@@ -183,17 +185,6 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     if (isDisposed()) return;
     myUpdater.cancelAllRequests();
     super.updateFromRoot();
-  }
-
-  public void updateTree() {
-    if (isDisposed()) return;
-    myUpdater.addSubtreeToUpdate(myRootNode);
-  }
-
-  public void updateTree(Runnable runAferUpdate) {
-    if (isDisposed()) return;
-    myUpdater.runAfterUpdate(runAferUpdate);
-    updateTree();
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
@@ -253,7 +244,6 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     FavoritesManager.getInstance(myProject).removeFavoritesListener(myFavoritesListener);
 
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
-    ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
   }
@@ -272,7 +262,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       myUpdater.addSubtreeToUpdate(myRootNode);
     }
 
-    public void fileStatusChanged(VirtualFile vFile) {
+    public void fileStatusChanged(@NotNull VirtualFile vFile) {
       PsiElement element;
       PsiManager psiManager = PsiManager.getInstance(myProject);
       if (vFile.isDirectory()) {

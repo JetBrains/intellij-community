@@ -1,5 +1,6 @@
 package com.intellij.testFramework;
 
+import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -49,6 +50,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.messages.MessageBusConnection;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -71,6 +73,7 @@ import java.util.Map;
  * idea installation home that is used for test running. Place src.zip under that folder. We'd suggest this is real mock
  * so it contains classes that is really needed in order to speed up tests startup.
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 @NonNls public class LightIdeaTestCase extends UsefulTestCase implements DataProvider {
   protected static final String PROFILE = "Configurable";
   private static IdeaTestApplication ourApplication;
@@ -187,34 +190,27 @@ import java.util.Map;
 
         rootModel.commit();
 
-        ProjectRootManager.getInstance(ourProject).addModuleRootListener(new ModuleRootListener() {
+        final MessageBusConnection connection = ourProject.getMessageBus().connectStrongly();
+        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
           public void beforeRootsChange(ModuleRootEvent event) {
             if (!event.isCausedByFileTypesChange()) {
               fail("Root modification in LightIdeaTestCase is not allowed.");
             }
           }
 
-          public void rootsChanged(ModuleRootEvent event) {
-
-          }
+          public void rootsChanged(ModuleRootEvent event) {}
         });
 
-        ModuleManager.getInstance(ourProject).addModuleListener(new ModuleListener() {
+        connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
           public void moduleAdded(Project project, Module module) {
             fail("Adding modules is not permitted in LightIdeaTestCase.");
           }
 
-          public void beforeModuleRemoved(Project project, Module module) {
-          }
-
-          public void moduleRemoved(Project project, Module module) {
-
-          }
-
-          public void modulesRenamed(Project project, List<Module> modules) {
-          }
-
+          public void beforeModuleRemoved(Project project, Module module) {}
+          public void moduleRemoved(Project project, Module module) {}
+          public void modulesRenamed(Project project, List<Module> modules) {}
         });
+
 
         //((PsiManagerImpl) PsiManager.getInstance(ourProject)).runPreStartupActivity();
         ((StartupManagerImpl)StartupManager.getInstance(getProject())).runStartupActivities();

@@ -1,5 +1,6 @@
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -12,7 +13,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +38,6 @@ import java.util.Set;
 
 public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   private final ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
-  private final ModuleRootListener myModuleRootListener;
   private final MyFileStatusListener myFileStatusListener;
 
   private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
@@ -46,6 +46,9 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
   public ProjectTreeBuilder(final Project project, JTree tree, DefaultTreeModel treeModel, Comparator<NodeDescriptor> comparator, ProjectAbstractTreeStructureBase treeStructure) {
     super(project, tree, treeModel, treeStructure, comparator);
+
+    final MessageBusConnection connection = project.getMessageBus().connectStrongly(this);
+
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(){
       protected DefaultMutableTreeNode getRootNode(){
         return myRootNode;
@@ -59,15 +62,14 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         return ((AbstractProjectTreeStructure)getTreeStructure()).isFlattenPackages();
       }
     };
-    myModuleRootListener = new ModuleRootListener() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
       public void rootsChanged(ModuleRootEvent event) {
         myUpdater.addSubtreeToUpdate(myRootNode);
       }
-    };
+    });
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
-    ProjectRootManager.getInstance(myProject).addModuleRootListener(myModuleRootListener);
     myFileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
     myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
@@ -84,7 +86,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   public final void dispose() {
     super.dispose();
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
-    ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
     PropertiesFilesManager.getInstance().removePropertiesFileListener(myPropertiesFileListener);

@@ -1,12 +1,12 @@
 package com.intellij.ide.todo;
 
+import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -129,7 +129,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
 
     myConnection = myProject.getMessageBus().connectStrongly();
-    myConnection.subscribe(FileTypeManager.FILE_TYPES, new MyFileTypeListener());
+    myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
 
     StartupManager startupManager=StartupManager.getInstance(myProject);
     // it causes building caches for TODOs

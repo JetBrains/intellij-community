@@ -1,5 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.AppTopics;
+import com.intellij.ProjectTopics;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.Disposable;
@@ -100,7 +102,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex, StartupManager startupManager) {
     myProject = (ProjectEx)project;
     myConnection = project.getMessageBus().connectStrongly();
-    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
+    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
         beforeRootsChange(true);
       }
@@ -150,20 +152,24 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return myProjectFileIndex;
   }
 
+  private Map<ModuleRootListener, MessageBusConnection> myListenerAdapters = new HashMap<ModuleRootListener, MessageBusConnection>();
+
   public void addModuleRootListener(final ModuleRootListener listener) {
-    myModuleRootEventDispatcher.addListener(listener);
+    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly();
+    myListenerAdapters.put(listener, connection);
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
   }
 
   public void addModuleRootListener(ModuleRootListener listener, Disposable parentDisposable) {
-    myModuleRootEventDispatcher.addListener(listener, parentDisposable);
+    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly(parentDisposable);
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
   }
 
   public void removeModuleRootListener(ModuleRootListener listener) {
-    myModuleRootEventDispatcher.removeListener(listener);
-  }
-
-  public void dispatchPendingEvent(ModuleRootListener listener) {
-    myModuleRootEventDispatcher.dispatchPendingEvent(listener);
+    final MessageBusConnection connection = myListenerAdapters.remove(listener);
+    if (connection != null) {
+      connection.disconnect();
+    }
   }
 
   public LanguageLevel getLanguageLevel() {
@@ -469,7 +475,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
         myIsRootsChangedOnDemandStartedButNotDemanded = false;
         myRootsChangeCounter++; // blocks all firing until finishRootsChangedOnDemand
       }
-      myModuleRootEventDispatcher.getMulticaster().beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
+      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
     }
 
     myRootsChangeCounter++;
@@ -496,8 +502,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     clearScopesCaches();
 
     myModificationCount++;
-    
-    myModuleRootEventDispatcher.getMulticaster().rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
+
+    myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, filetypes));
 
     doSynchronize();
 
@@ -699,7 +705,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       else if (!myPointerChangesDetected) {
         //this is the first pointer changing validity
         myPointerChangesDetected = true;
-        myModuleRootEventDispatcher.getMulticaster().beforeRootsChange(new ModuleRootEventImpl(myProject, false));
+        myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
       }
     }
 
@@ -726,8 +732,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       myInsideRefresh = false;
       if (myPointerChangesDetected) {
         myPointerChangesDetected = false;
-        final ModuleRootEventImpl event = new ModuleRootEventImpl(myProject, false);
-        myModuleRootEventDispatcher.getMulticaster().rootsChanged(event);
+        myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, false));
 
         doSynchronize();
 

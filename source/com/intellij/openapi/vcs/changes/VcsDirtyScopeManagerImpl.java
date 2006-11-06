@@ -1,5 +1,8 @@
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -10,9 +13,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.peer.PeerFactory;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,20 +31,18 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final Map<AbstractVcs, VcsDirtyScopeImpl> myScopes = new HashMap<AbstractVcs, VcsDirtyScopeImpl>();
   private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
-  private final ProjectRootManager myRootManager;
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
   private boolean myIsDisposed = false;
   private boolean myIsInitialized = false;
   private boolean myEverythingDirty = false;
-  private ModuleRootListener myRootModelListener;
+  private MessageBusConnection myConnection;
 
   public VcsDirtyScopeManagerImpl(Project project,
                                   ProjectRootManager rootManager,
                                   ChangeListManager changeListManager,
                                   ProjectLevelVcsManager vcsManager) {
     myProject = project;
-    myRootManager = rootManager;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
     myIndex = rootManager.getFileIndex();
@@ -59,7 +59,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     });
 
-    myRootModelListener = new ModuleRootListener() {
+    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
@@ -70,9 +71,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
           }
         }, ModalityState.NON_MODAL);
       }
-    };
-
-    myRootManager.addModuleRootListener(myRootModelListener);
+    });
   }
 
   public void markEverythingDirty() {
@@ -92,7 +91,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   public void projectClosed() {
     myIsDisposed = true;
-    myRootManager.removeModuleRootListener(myRootModelListener);
+    myConnection.disconnect();
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
   }
 

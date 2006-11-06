@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -20,7 +21,6 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -921,7 +921,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     if (fileStatusManager != null) {
       fileStatusManager.addFileStatusListener(myFileStatusListener);
     }
-    myConnection.subscribe(FileTypeManager.FILE_TYPES, new MyFileTypeListener());
+    myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
     UISettings.getInstance().addUISettingsListener(myUISettingsListener);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);

@@ -1,12 +1,12 @@
 package com.intellij.lang.properties;
 
+import com.intellij.AppTopics;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -49,7 +49,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
     myPsiManager = psiManager;
 
     myConnection = project.getMessageBus().connectStrongly();
-    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
+    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
 
       }

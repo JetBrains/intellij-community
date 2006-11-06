@@ -3,7 +3,9 @@
  */
 package com.intellij.util.messages;
 
-public interface MessageBusConnection {
+import com.intellij.openapi.Disposable;
+
+public interface MessageBusConnection extends Disposable {
   <L> void subscribe(Topic<L> topic, L handler);
   <L> void subscribe(Topic<L> topic);
 

@@ -6,9 +6,12 @@
  */
 package com.intellij.util.messages;
 
+import com.intellij.openapi.Disposable;
+
 public interface MessageBus {
   MessageBusConnection connectWeakly();
   MessageBusConnection connectStrongly();
+  MessageBusConnection connectStrongly(Disposable parentDisposable);
 
   <L> L syncPublisher(Topic<L> topic);
   <L> L asyncPublisher(Topic<L> topic);

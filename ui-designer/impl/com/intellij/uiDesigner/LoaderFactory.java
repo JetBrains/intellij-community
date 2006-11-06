@@ -1,11 +1,11 @@
 package com.intellij.uiDesigner;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,24 +31,24 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
   private final Project myProject;
 
   private final WeakHashMap<Module, ClassLoader> myModule2ClassLoader;
-  private final ModuleRootListener myRootsListener = new ModuleRootListener() {
-    public void beforeRootsChange(final ModuleRootEvent event) {}
-
-    public void rootsChanged(final ModuleRootEvent event) {
-      clearClassLoaderCache();
-    }
-  };
   private ClassLoader myProjectClassLoader = null;
+  private final MessageBusConnection myConnection;
 
   public static LoaderFactory getInstance(final Project project) {
     return project.getComponent(LoaderFactory.class);
   }
   
-  LoaderFactory(final Project project, ProjectRootManager projectRootManager) {
+  LoaderFactory(final Project project) {
     myProject = project;
     myModule2ClassLoader = new WeakHashMap<Module, ClassLoader>();
-    projectRootManager.addModuleRootListener(myRootsListener);
-}
+    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(final ModuleRootEvent event) {}
+      public void rootsChanged(final ModuleRootEvent event) {
+        clearClassLoaderCache();
+      }
+    });
+  }
 
   public void projectOpened() {
   }
@@ -64,7 +65,7 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
   }
 
   public void disposeComponent() {
-    ProjectRootManager.getInstance(myProject).removeModuleRootListener(myRootsListener);
+    myConnection.disconnect();
     myModule2ClassLoader.clear();
   }
 

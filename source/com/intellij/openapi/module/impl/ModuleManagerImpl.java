@@ -1,6 +1,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.Disposable;
@@ -12,7 +13,9 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleCircularDependencyException;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -21,13 +24,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.PomModel;
-import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.MessageHandler;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -36,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -43,20 +48,10 @@ import java.util.*;
  */
 public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, JDOMExternalizable,ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
-  private final PendingEventDispatcher<ModuleListener> myModuleEventDispatcher = PendingEventDispatcher.create(ModuleListener.class);
   private final Project myProject;
   private ModuleModelImpl myModuleModel = new ModuleModelImpl();
   private PomModel myPomModel;
 
-  private final ModuleRootListener myModuleRootListener = new ModuleRootListener() {
-    public void beforeRootsChange(ModuleRootEvent event) {
-      cleanCachedStuff();
-    }
-
-    public void rootsChanged(ModuleRootEvent event) {
-      cleanCachedStuff();
-    }
-  };
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private ModulePath[] myModulePaths;
@@ -67,6 +62,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   @NonNls private static final String ATTRIBUTE_FILEPATH = "filepath";
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
   private long myModificationCount;
+  private MessageBusConnection myConnection;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -77,9 +73,15 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myCachedSortedModules = null;
   }
 
-  public ModuleManagerImpl(Project project, ProjectRootManager projectRootManager, PomModel pomModel) {
+  public ModuleManagerImpl(Project project, PomModel pomModel) {
     myProject = project;
-    projectRootManager.addModuleRootListener(myModuleRootListener);
+    myConnection = project.getMessageBus().connectStrongly();
+    myConnection.setDefaultHandler(new MessageHandler() {
+      public void handle(Method event, Object... params) {
+        cleanCachedStuff();
+      }
+    });
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
     myPomModel = pomModel;
   }
 
@@ -94,7 +96,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   public void disposeComponent() {
     myModuleModel.disposeModel();
-    ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
+    myConnection.disconnect();
   }
 
   public long getModificationCount() {
@@ -355,32 +357,34 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   private void fireModuleAdded(Module module) {
-    myModuleEventDispatcher.getMulticaster().moduleAdded(myProject, module);
+    myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).moduleAdded(myProject, module);
   }
 
   private void fireModuleRemoved(Module module) {
-    myModuleEventDispatcher.getMulticaster().moduleRemoved(myProject, module);
+    myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).moduleRemoved(myProject, module);
   }
 
   private void fireBeforeModuleRemoved(Module module) {
-    myModuleEventDispatcher.getMulticaster().beforeModuleRemoved(myProject, module);
+    myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
   }
 
-
+  private Map<ModuleListener, MessageBusConnection> myAdapters = new HashMap<ModuleListener, MessageBusConnection>();
   public void addModuleListener(@NotNull ModuleListener listener) {
-    myModuleEventDispatcher.addListener(listener);
+    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly();
+    connection.subscribe(ProjectTopics.MODULES, listener);
+    myAdapters.put(listener, connection);
   }
 
   public void addModuleListener(@NotNull ModuleListener listener, Disposable parentDisposable) {
-    myModuleEventDispatcher.addListener(listener, parentDisposable);
+    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly(parentDisposable);
+    connection.subscribe(ProjectTopics.MODULES, listener);
   }
 
   public void removeModuleListener(@NotNull ModuleListener listener) {
-    myModuleEventDispatcher.removeListener(listener);
-  }
-
-  public void dispatchPendingEvent(@NotNull ModuleListener listener) {
-    myModuleEventDispatcher.dispatchPendingEvent(listener);
+    final MessageBusConnection adapter = myAdapters.remove(listener);
+    if (adapter != null) {
+      adapter.disconnect();
+    }
   }
 
   @NotNull
@@ -435,7 +439,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   @NotNull
   public Module[] getSortedModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    ProjectRootManager.getInstance(myProject).dispatchPendingEvent(myModuleRootListener);
+    myConnection.deliverImmediately();
     if (myCachedSortedModules == null) {
       myCachedSortedModules = myModuleModel.getSortedModules();
     }
@@ -452,7 +456,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   @NotNull
   public Comparator<Module> moduleDependencyComparator() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    ProjectRootManager.getInstance(myProject).dispatchPendingEvent(myModuleRootListener);
+    myConnection.deliverImmediately();
     if (myCachedModuleComparator == null) {
       myCachedModuleComparator = myModuleModel.moduleDependencyComparator();
     }
@@ -887,7 +891,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   private void fireModulesRenamed(List<Module> modules) {
     if (!modules.isEmpty()) {
-      myModuleEventDispatcher.getMulticaster().modulesRenamed(myProject, modules);
+      myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
     }
   }
 

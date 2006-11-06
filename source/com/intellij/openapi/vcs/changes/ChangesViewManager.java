@@ -10,6 +10,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.TreeExpander;
@@ -17,11 +18,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleAdapter;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -37,6 +35,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -50,8 +49,6 @@ import java.awt.event.KeyEvent;
 import java.util.Collection;
 
 public class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
-
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
   private boolean SHOW_FLATTEN_MODE = true;
@@ -67,11 +64,11 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
   private ChangeListListener myListener = new MyChangeListListener();
   private VcsListener myVcsListener = new MyVcsListener();
-  private ModuleListener myModuleListener = new MyModuleListener();
   private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   private ToolWindow myToolWindow;
+  private final MessageBusConnection myConnection;
 
   public static ChangesViewManager getInstance(Project project) {
     return project.getComponent(ChangesViewManager.class);
@@ -83,6 +80,8 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+
+    myConnection = project.getMessageBus().connectStrongly();
   }
 
   public void projectOpened() {
@@ -95,8 +94,9 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
           myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowChanges.png"));
           updateToolWindowAvailability();
+
+          myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
           ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
-          ModuleManager.getInstance(myProject).addModuleListener(myModuleListener);
           WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
           SelectInManager.getInstance(myProject).addTarget(new SelectInChangesViewTarget(myProject));
         }
@@ -112,8 +112,9 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   public void projectClosed() {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
     ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
-    ModuleManager.getInstance(myProject).removeModuleListener(myModuleListener);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
+    myConnection.disconnect();
+
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
     myVcsChangeAlarm.cancelAllRequests();

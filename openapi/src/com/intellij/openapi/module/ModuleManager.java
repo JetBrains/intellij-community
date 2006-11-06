@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -141,6 +141,7 @@ public abstract class ModuleManager {
    * Adds a listener for receiving notifications to the module structure of the project.
    *
    * @param listener the listener instance.
+   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#MODULES} on project bus or lower.
    */
   public abstract void addModuleListener(@NotNull ModuleListener listener);
 
@@ -149,6 +150,7 @@ public abstract class ModuleManager {
    *
    * @param listener the listener instance.
    * @param parentDisposable object, after whose disposing the listener should be removed
+   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#MODULES} on project bus or lower.
    */
   public abstract void addModuleListener(@NotNull ModuleListener listener, Disposable parentDisposable);
 
@@ -156,6 +158,7 @@ public abstract class ModuleManager {
    * Removes a listener for receiving notifications to the module structure of the project.
    *
    * @param listener the listener instance.
+   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#MODULES} on project bus or lower.
    */
   public abstract void removeModuleListener(@NotNull ModuleListener listener);
 
@@ -174,10 +177,6 @@ public abstract class ModuleManager {
    */
   @NotNull public abstract ModifiableModuleModel getModifiableModel();
 
-  /**
-   * @deprecated for internal IDEA use.
-   */
-  public abstract void dispatchPendingEvent(@NotNull ModuleListener listener);
 
   /**
    * Returns the path to the group to which the specified module belongs, as an

@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,12 +29,13 @@ import java.util.Set;
  */
 public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOrderEntry, WritableOrderEntry, ClonableOrderEntry {
   @NonNls static final String ENTRY_TYPE = "module";
+  @NonNls private static final String MODULE_NAME_ATTR = "module-name";
+  @NonNls private static final String EXPORTED_ATTR = "exported";
+
   private Module myModule;
   private String myModuleName; // non-null if myProject is null
-  @NonNls private static final String MODULE_NAME_ATTR = "module-name";
-  private final MyModuleListener myListener = new MyModuleListener();
-  protected boolean myExported = false;
-  @NonNls protected static final String EXPORTED_ATTR = "exported";
+  private boolean myExported = false;
+  private MessageBusConnection myConnection;
 
   ModuleOrderEntryImpl(Module module, RootModelImpl rootModel) {
     super(rootModel);
@@ -80,7 +83,8 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   private void addListeners() {
     myListenersAdded = true;
-    ModuleManager.getInstance(myRootModel.getModule().getProject()).addModuleListener(myListener);
+    myConnection = myRootModel.getModule().getProject().getMessageBus().connectStrongly();
+    myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
   }
 
   public Module getOwnerModule() {
@@ -181,7 +185,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   protected void dispose() {
     super.dispose();
     if (myListenersAdded) {
-      ModuleManager.getInstance(myRootModel.getModule().getProject()).removeModuleListener(myListener);
+      myConnection.disconnect();
     }
   }
 

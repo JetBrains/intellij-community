@@ -1,5 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.AppTopics;
+import com.intellij.ProjectTopics;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +41,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private Map<String, VirtualFile[]> myPackageNameToDirsMap = new THashMap<String, VirtualFile[]>();
 
   private VirtualFileListener myVirtualFileListener;
-  private ModuleRootListener myRootListener;
   private final MessageBusConnection myConnection;
 
   public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManagerEx startupManagerEx) {
@@ -68,7 +69,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     if (myInitialized) {
       myConnection.disconnect();
       VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
-      ProjectRootManager.getInstance(myProject).removeModuleRootListener(myRootListener);
     }
     myDisposed = true;
   }
@@ -150,24 +150,19 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     myVirtualFileListener = new MyVirtualFileListener();
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
 
-    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
-      public void beforeFileTypesChanged(FileTypeEvent event) {
-      }
-
+    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+      public void beforeFileTypesChanged(FileTypeEvent event) {}
       public void fileTypesChanged(FileTypeEvent event) {
         _initialize();
       }
     });
 
-    myRootListener = new ModuleRootListener() {
-      public void beforeRootsChange(ModuleRootEvent event) {
-      }
-
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {}
       public void rootsChanged(ModuleRootEvent event) {
         _initialize();
       }
-    };
-    ProjectRootManager.getInstance(myProject).addModuleRootListener(myRootListener);
+    });
 
     _initialize();
   }
@@ -511,9 +506,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void dispatchPendingEvents() {
+    myConnection.deliverImmediately();
     if (myInitialized && PendingEventDispatcher.isDispatchingAnyEvent()){ // optimization
       VirtualFileManager.getInstance().dispatchPendingEvent(myVirtualFileListener);
-      ProjectRootManager.getInstance(myProject).dispatchPendingEvent(myRootListener);
       //TODO: other listners!!!
     }
   }

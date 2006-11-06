@@ -1,5 +1,7 @@
 package com.intellij.localVcs.common;
 
+import com.intellij.AppTopics;
+import com.intellij.ProjectTopics;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.localVcs.impl.OldLvcsImplemetation;
 import com.intellij.openapi.application.Application;
@@ -549,17 +551,15 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   private synchronized void registerAll() {
     getVirtualFileManager().registerFileContentProvider(this);
-    myConnection = myProject.getMessageBus().connectStrongly();
-    myConnection.subscribe(FileTypeManager.FILE_TYPES, new FileTypeListener() {
-      public void beforeFileTypesChanged(FileTypeEvent event) {
-      }
 
+    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+      public void beforeFileTypesChanged(FileTypeEvent event) {}
       public void fileTypesChanged(FileTypeEvent event) {
         resynchronizeRoots();
       }
     });
-
-    ProjectRootManager.getInstance(myProject).addModuleRootListener(this);
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, this);
 
     getVirtualFileManager().registerRefreshUpdater(myTracker.getRefreshUpdater());
     myIsActive = true;
@@ -568,8 +568,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public synchronized void unregisterAll() {
     myIsActive = false;
     myInitialized = false;
-    myConnection.disconnect();
     getVirtualFileManager().unregisterFileContentProvider(this);
+    myConnection.disconnect();
 
     if (myTracker != null) {
       myTracker.dispose();

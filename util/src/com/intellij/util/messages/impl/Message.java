@@ -29,4 +29,8 @@ public final class Message {
   public Object[] getArgs() {
     return myArgs;
   }
+
+  public String toString() {
+    return myTopic.toString() + ":" + myListenerMethod.getName();
+  }
 }

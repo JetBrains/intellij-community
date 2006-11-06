@@ -49,12 +49,15 @@ public abstract class ProjectRootManager implements ModificationTracker {
 
   /**
    * Adds a listener for receiving notifications about changes in project roots.
+   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#PROJECT_ROOTS} messages instead
    *
    * @param listener the listener instance.
    */
-  public abstract void addModuleRootListener(ModuleRootListener listener);/**
+  public abstract void addModuleRootListener(ModuleRootListener listener);
 
+  /**
    * Adds a listener for receiving notifications about changes in project roots.
+   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#PROJECT_ROOTS} messages instead
    *
    * @param listener the listener instance.
    * @param parentDisposable object, after whose disposing the listener should be removed
@@ -63,15 +66,11 @@ public abstract class ProjectRootManager implements ModificationTracker {
 
   /**
    * Removes a listener for receiving notifications about changes in project roots.
+   * @deprecated Subscribe to {@link com.intellij.ProjectTopics#PROJECT_ROOTS} messages instead
    *
    * @param listener the listener instance.
    */
   public abstract void removeModuleRootListener(ModuleRootListener listener);
-
-  /**
-   * @deprecated for IDEA internal use.
-   */
-  public abstract void dispatchPendingEvent(ModuleRootListener listener);
 
   /**
    * @deprecated
