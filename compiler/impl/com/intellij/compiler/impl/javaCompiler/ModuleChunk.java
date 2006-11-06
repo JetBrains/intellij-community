@@ -155,7 +155,7 @@ public class ModuleChunk extends Chunk<Module> {
         if (skip) {
           continue;
         }
-        addClasspathRoots(module, orderEntry, cpFiles);
+        addClasspathRoots(orderEntry, cpFiles);
       }
     }
 
@@ -175,7 +175,7 @@ public class ModuleChunk extends Chunk<Module> {
           break;
         }
         else {
-          addClasspathRoots(module, orderEntry, cpFiles);
+          addClasspathRoots(orderEntry, cpFiles);
         }
       }
     }
@@ -183,15 +183,23 @@ public class ModuleChunk extends Chunk<Module> {
     return convertToStringPath(cpFiles);
   }
 
-  private void addClasspathRoots(Module module, OrderEntry orderEntry, OrderedSet<VirtualFile> cpFiles) {
+  private void addClasspathRoots(OrderEntry orderEntry, OrderedSet<VirtualFile> cpFiles) {
     cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+    final Module module;
     if (orderEntry instanceof ModuleSourceOrderEntry) {
-      if ((mySourcesFilter & TEST_SOURCES) == 0) {
-        // should remove test output dir (if any) if compiling production classes only
-        final VirtualFile outputPathForTests = CompilerPathsEx.getModuleOutputDirectory(module, true);
-        if (outputPathForTests != null) {
-          cpFiles.remove(outputPathForTests);
-        }
+      module = orderEntry.getOwnerModule();
+    }
+    else if (orderEntry instanceof ModuleOrderEntry) {
+      module = ((ModuleOrderEntry)orderEntry).getModule();
+    }
+    else {
+      module = null;
+    }
+    if (module != null && (mySourcesFilter & TEST_SOURCES) == 0) {
+      // should remove test output dir (if any) if compiling production classes only
+      final VirtualFile outputPathForTests = CompilerPathsEx.getModuleOutputDirectory(module, true);
+      if (outputPathForTests != null) {
+        cpFiles.remove(outputPathForTests);
       }
     }
   }
@@ -230,19 +238,24 @@ public class ModuleChunk extends Chunk<Module> {
     if (getModuleCount() == 0) {
       return "";
     }
-    final StringBuffer buffer = new StringBuffer(64);
     final VirtualFile[] filteredRoots = getSourceRoots();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (VirtualFile root : filteredRoots) {
-          if (buffer.length() > 0) {
-            buffer.append(File.pathSeparatorChar);
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (VirtualFile root : filteredRoots) {
+            if (buffer.length() > 0) {
+              buffer.append(File.pathSeparatorChar);
+            }
+            buffer.append(root.getPath().replace('/', File.separatorChar));
           }
-          buffer.append(root.getPath().replace('/', File.separatorChar));
         }
-      }
-    });
-    return buffer.toString();
+      });
+      return buffer.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 
   //the check for equal language levels is done elsewhere
