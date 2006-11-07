@@ -15,6 +15,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -56,20 +58,17 @@ class SaveAndSyncHandler implements ApplicationComponent {
 
     frameStateManager.addListener(new FrameStateListener() {
       public void onFrameDeactivated() {
-        if (canSyncOrSave()) {
-          saveProjectsAndDocuments();
-        }
+        saveProjectsAndDocuments();
       }
 
       public void onFrameActivated() {
-        if (canSyncOrSave()) {
-          refreshFiles();
-        }
+        refreshFiles();
       }
     });
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "SaveAndSyncHandler";
   }
@@ -83,9 +82,7 @@ class SaveAndSyncHandler implements ApplicationComponent {
   }
 
   private boolean canSyncOrSave() {
-    if (LaterInvocator.isInModalContext()) return false;
-    if (ProgressManager.getInstance().hasModalProgressIndicator()) return false;
-    return true;
+    return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator();
   }
 
 
@@ -124,15 +121,13 @@ class SaveAndSyncHandler implements ApplicationComponent {
       VirtualFileManager.getInstance().refresh(true);
     }
     else { // referesh only opened files
-      Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
-      for (int i = 0; i < openProjects.length; i++) {
-        Project project = openProjects[i];
-        VirtualFile[] file = FileEditorManager.getInstance(project).getSelectedFiles();
-        for (int j = 0; j < file.length; j++) {
+      for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
+        VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
+        for (VirtualFile file : files) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("refresh file: " + file);
+            LOG.debug("refresh file: " + files);
           }
-          file[j].refresh(true, false);
+          file.refresh(true, false);
         }
       }
     }
