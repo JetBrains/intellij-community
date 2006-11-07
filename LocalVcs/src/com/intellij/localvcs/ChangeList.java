@@ -27,20 +27,41 @@ public class ChangeList {
     return myChangeSets;
   }
 
-  public void add(ChangeSet cs) {
+  public Snapshot applyChangeSetOn(Snapshot snapshot, ChangeSet cs) {
+    // todo copy is a performance bottleneck
+    // todo should we really make copy of current shapshot?
+
+    // todo one more cast
+    Snapshot result = new Snapshot((RootEntry)snapshot.getRoot().copy(), this);
+    cs.applyTo(result);
     myChangeSets.add(cs);
+    result.myIndex = myChangeSets.size() - 1;
+
+    return result;
   }
 
-  public void revertLastChangeSetOn(Snapshot snapshot) {
-    getLast().revertOn(snapshot);
-    myChangeSets.remove(getLast());
+  public Snapshot revertLastChangeSetOn(Snapshot snapshot) {
+    // todo not as clear as i want it to be
+    if (isEmpty()) return null; //todo throw exception
+
+    // todo get rid of thisCopy
+    ChangeList thisCopy = copy();
+    Snapshot result =
+        new Snapshot((RootEntry)snapshot.getRoot().copy(), thisCopy);
+
+    thisCopy.getLast().revertOn(result);
+    thisCopy.myChangeSets.remove(thisCopy.getLast());
+
+    result.myIndex = thisCopy.myChangeSets.size() - 1;
+
+    return result;
   }
 
   public Boolean isEmpty() {
     return myChangeSets.isEmpty();
   }
 
-  public ChangeSet getLast() {
+  private ChangeSet getLast() {
     // todo ummm... one more unpleasant check... 
     if (isEmpty()) throw new LocalVcsException();
     return myChangeSets.get(myChangeSets.size() - 1);

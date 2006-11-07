@@ -240,7 +240,8 @@ public class StreamTest extends TestCase {
   @Test
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
-    c.add(cs(new CreateFileChange(p("file"), "content")));
+    // todo a bit of hack
+    c.getChangeSets().add(cs(new CreateFileChange(p("file"), "content")));
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();
