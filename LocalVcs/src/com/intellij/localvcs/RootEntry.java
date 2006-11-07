@@ -3,6 +3,9 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class RootEntry extends DirectoryEntry {
+  // todo move it to super class and get rid of special constructor
+  private IdGenerator myIdGenerator = new IdGenerator();
+
   // todo try to crean up Entry hierarchy
   public RootEntry() {
     super(null, null);
@@ -10,6 +13,13 @@ public class RootEntry extends DirectoryEntry {
 
   public RootEntry(Stream s) throws IOException {
     super(s);
+    myIdGenerator = s.readIdGenerator();
+  }
+
+  @Override
+  public void write(Stream s) throws IOException {
+    super.write(s);
+    s.writeIdGenerator(myIdGenerator);
   }
 
   protected Path getPathAppendedWith(String name) {
@@ -18,7 +28,9 @@ public class RootEntry extends DirectoryEntry {
 
   @Override
   protected Entry copyEntry() {
-    return new RootEntry();
+    RootEntry result = new RootEntry();
+    result.myIdGenerator = myIdGenerator; // todo test it    
+    return result;
   }
 
   public boolean hasEntry(Path path) {
@@ -89,7 +101,7 @@ public class RootEntry extends DirectoryEntry {
   }
 
   private Integer getNextObjectId() {
-    return Snapshot.ourIdGenerator.getNextObjectId();
+    return myIdGenerator.getNextObjectId();
   }
 
   public void addEntry(Path parent, Entry entry) {

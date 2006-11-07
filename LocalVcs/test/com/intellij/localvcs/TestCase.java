@@ -15,7 +15,7 @@ public abstract class TestCase extends Assert {
   @Before
   public void setUp() {
     vcs = new LocalVcs();
-    s = new Snapshot();
+    s = new Snapshot(new ChangeList());
   }
 
   protected Path p(String name) {

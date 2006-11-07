@@ -18,7 +18,7 @@ public class ChangeSetTest extends TestCase {
                      new CreateFileChange(p("file3"), null));
 
     myLog = new ArrayList<Path>();
-    mySnapshot = new Snapshot() {
+    mySnapshot = new Snapshot((ChangeList)null) {
       @Override
       protected void doCreateFile(Path path, String content) {
         myLog.add(path);

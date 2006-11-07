@@ -8,7 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalVcs {
-  private Snapshot mySnapshot = new Snapshot();
+  private ChangeList myChangeList = new ChangeList();
+  private Snapshot mySnapshot = new Snapshot(myChangeList);
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs() {}
@@ -19,8 +20,7 @@ public class LocalVcs {
     try {
       Stream s = new Stream(fs);
 
-      mySnapshot = new Snapshot(s.readIdGenerator(),
-                                s.readChangeList(),
+      mySnapshot = new Snapshot(s.readChangeList(),
                                 s.readEntry(),
                                 s.readInteger());
     } finally {
@@ -37,8 +37,7 @@ public class LocalVcs {
     try {
       Stream s = new Stream(fs);
 
-      s.writeIdGenerator(mySnapshot.getIdGenerator());
-      s.writeChangeList(mySnapshot.getChangeList());
+      s.writeChangeList(myChangeList);
       s.writeEntry(mySnapshot.getRoot());
       s.writeInteger(mySnapshot.getChangeListIndex());
     } finally {
