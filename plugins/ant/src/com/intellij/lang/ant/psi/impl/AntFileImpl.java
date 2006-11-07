@@ -104,7 +104,14 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   public VirtualFile getVirtualFile() {
-    return getSourceElement().getVirtualFile();
+    VirtualFile result = getSourceElement().getVirtualFile();
+    if (result == null) {
+      final PsiFile origFile = getSourceElement().getOriginalFile();
+      if (origFile != null) {
+        result = origFile.getVirtualFile();
+      }
+    }
+    return result;
   }
 
   public AntElementRole getRole() {
@@ -164,12 +171,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @Nullable
   public VirtualFile getContainingPath() {
     VirtualFile result = getVirtualFile();
-    if (result == null) {
-      final PsiFile origFile = getSourceElement().getOriginalFile();
-      if (origFile != null) {
-        result = origFile.getVirtualFile();
-      }
-    }
     return (result == null) ? null : result.getParent();
   }
 

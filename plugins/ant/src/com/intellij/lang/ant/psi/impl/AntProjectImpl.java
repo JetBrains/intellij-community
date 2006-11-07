@@ -183,7 +183,10 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         }
         if (builder.length() > 0) {
           builder.insert(0, "\">");
-          builder.insert(0, getBaseDir());
+          final String baseDir = getBaseDir();
+          if (baseDir != null && baseDir.length() > 0) {
+            builder.insert(0, baseDir);
+          }
           builder.insert(0, "<project basedir=\"");
           builder.append("</project>");
           final PsiElementFactory elementFactory = getManager().getElementFactory();
@@ -330,7 +333,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
           builder.append("\"/>");
         }
       }
-      final VirtualFile file = getContainingFile().getVirtualFile();
+      final VirtualFile file = getAntFile().getVirtualFile();
       String basedir = getBaseDir();
       if (file != null && (basedir == null || ".".equals(basedir))) {
         final VirtualFile dir = file.getParent();
@@ -338,9 +341,11 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
           basedir = dir.getPath();
         }
       }
-      builder.append("<property name=\"basedir\" value=\"");
-      builder.append(basedir);
-      builder.append("\"/>");
+      if (basedir != null) {
+        builder.append("<property name=\"basedir\" value=\"");
+        builder.append(basedir);
+        builder.append("\"/>");
+      }
       builder.append("<property name=\"ant.home\" value=\"\"/>");
       builder.append("<property name=\"ant.version\" value=\"1.6.5\"/>");
       builder.append("<property name=\"ant.project.name\" value=\"");

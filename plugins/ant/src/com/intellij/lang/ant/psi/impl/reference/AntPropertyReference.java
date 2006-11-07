@@ -3,7 +3,6 @@ package com.intellij.lang.ant.psi.impl.reference;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntElementRole;
-import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
@@ -31,7 +30,6 @@ import java.util.Set;
 public class AntPropertyReference extends AntGenericReference {
 
   private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.ANT_PROPERTY);
-  private static final String ANT_FILE_PROPERTY = AntStringInterner.intern("ant.file");
 
   public AntPropertyReference(final GenericReferenceProvider provider,
                               final AntElement antElement,
@@ -116,7 +114,6 @@ public class AntPropertyReference extends AntGenericReference {
       finally {
         PsiElementSetSpinAllocator.dispose(elementsDepthStack);
       }
-      variants.add(new AntElementCompletionWrapper(ANT_FILE_PROPERTY, currentElement.getProject(), AntElementRole.PROPERTY_ROLE));
       return variants.toArray(new Object[variants.size()]);
     }
     finally {
