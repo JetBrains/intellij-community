@@ -16,8 +16,7 @@ public class LocalVcsStorageTest extends TempDirTestCase {
     assertTrue(result.hasEntry(p("file")));
   }
 
-  // TODO UNCOMMENT IT!!!
-  //@Test
+  @Test
   public void testStoringChangeList() throws IOException {
     vcs.createFile(p("file"), "content");
     vcs.commit();

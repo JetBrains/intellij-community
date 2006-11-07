@@ -37,7 +37,7 @@ public class ChangeList {
 
     cs.applyTo(result);
     myChangeSets.add(cs);
-    result.incrementIndex();
+    result.incrementChangeListIndex();
 
     return result;
   }
@@ -45,20 +45,20 @@ public class ChangeList {
   public Snapshot revertLastChangeSetOn(Snapshot snapshot) {
     // todo 1. not as clear as i want it to be.
     // todo 2. throw an exception instead of returning null
-    if (snapshot.getIndex() < 0) return null;
+    if (snapshot.getChangeListIndex() < 0) return null;
 
     Snapshot result = new Snapshot(snapshot);
 
     getChangeSetFor(result).revertOn(result);
-    result.decrementIndex();
+    result.decrementChangeListIndex();
 
     return result;
   }
 
   private ChangeSet getChangeSetFor(Snapshot s) {
     // todo ummm... one more unpleasant check... 
-    if (s.getIndex() < 0) throw new LocalVcsException();
-    return myChangeSets.get(s.getIndex());
+    if (s.getChangeListIndex() < 0) throw new LocalVcsException();
+    return myChangeSets.get(s.getChangeListIndex());
   }
 
   public void setLastChangeSetLabel(Snapshot s, String label) {
