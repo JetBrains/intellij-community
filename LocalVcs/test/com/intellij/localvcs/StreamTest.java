@@ -136,21 +136,6 @@ public class StreamTest extends TestCase {
   }
 
   @Test
-  public void testDeleteChange() throws IOException {
-    Change c = new DeleteChange(p("entry"));
-
-    os.writeChange(c);
-    Change read = is.readChange();
-
-    assertEquals(DeleteChange.class, read.getClass());
-
-    DeleteChange result = ((DeleteChange)read);
-
-    assertEquals(p("entry"), result.getPath());
-    assertNull(result.getAffectedEntry());
-  }
-
-  @Test
   public void testAppliedDeleteChange() throws IOException {
     Change c = new DeleteChange(p("entry"));
 
@@ -176,22 +161,6 @@ public class StreamTest extends TestCase {
   }
 
   @Test
-  public void testChangeFileContentChange() throws IOException {
-    Change c = new ChangeFileContentChange(p("entry"), "new content");
-
-    os.writeChange(c);
-    Change read = is.readChange();
-
-    assertEquals(ChangeFileContentChange.class, read.getClass());
-
-    ChangeFileContentChange result = ((ChangeFileContentChange)read);
-
-    assertEquals(p("entry"), result.getPath());
-    assertEquals("new content", result.getNewContent());
-    assertNull(result.getOldContent());
-  }
-
-  @Test
   public void testAppliedChangeFileContentChange() throws IOException {
     Change c = new ChangeFileContentChange(p("file"), "new content");
 
@@ -205,7 +174,14 @@ public class StreamTest extends TestCase {
     os.writeChange(c);
     Change read = is.readChange();
 
-    assertEquals("content", ((ChangeFileContentChange)read).getOldContent());
+    assertEquals(ChangeFileContentChange.class, read.getClass());
+
+    ChangeFileContentChange result = ((ChangeFileContentChange)read);
+
+    assertEquals(p("file"), result.getPath());
+    assertEquals("new content", result.getNewContent());
+
+    assertEquals("content", result.getOldContent());
   }
 
   @Test
@@ -252,15 +228,24 @@ public class StreamTest extends TestCase {
   }
 
   @Test
+  public void testEmptyChangeList() throws IOException {
+    ChangeList c = new ChangeList();
+
+    os.writeChangeList(c);
+    ChangeList result = is.readChangeList();
+
+    assertTrue(result.getChangeSets().isEmpty());
+  }
+
+  @Test
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
-    fail();
+    c.add(cs(new CreateFileChange(p("file"), "content")));
 
-    //os.writeChangeSet(c);
-    //ChangeSet result = is.readChangeSet();
-    //
-    //assertEquals("label", result.getLabel());
-    //assertEquals(1, result.getChanges().size());
-    //assertEquals(CreateFileChange.class, result.getChanges().get(0).getClass());
+    os.writeChangeList(c);
+    ChangeList result = is.readChangeList();
+
+    assertEquals(1, result.getChangeSets().size());
+    assertEquals(1, result.getChangeSets().get(0).getChanges().size());
   }
 }

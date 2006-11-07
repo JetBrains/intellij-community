@@ -1,10 +1,27 @@
 package com.intellij.localvcs;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChangeList {
   private List<ChangeSet> myChangeSets = new ArrayList<ChangeSet>();
+
+  public ChangeList() { }
+
+  public ChangeList(Stream s) throws IOException {
+    Integer count = s.readInteger();
+    while (count-- > 0) {
+      myChangeSets.add(s.readChangeSet());
+    }
+  }
+
+  public void write(Stream s) throws IOException {
+    s.writeInteger(myChangeSets.size());
+    for (ChangeSet c : myChangeSets) {
+      s.writeChangeSet(c);
+    }
+  }
 
   public List<ChangeSet> getChangeSets() {
     return myChangeSets;

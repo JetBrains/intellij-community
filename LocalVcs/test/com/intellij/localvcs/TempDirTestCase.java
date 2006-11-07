@@ -6,10 +6,9 @@ import java.net.URISyntaxException;
 import com.intellij.openapi.util.io.FileUtil;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
-public abstract class TempDirTest extends TestCase {
-  private File myTempDir;
+public abstract class TempDirTestCase extends TestCase {
+  protected File myTempDir;
 
   @Before
   public void createTempDir() {
@@ -28,11 +27,5 @@ public abstract class TempDirTest extends TestCase {
   public void deleteTempDir() {
     if (!FileUtil.delete(myTempDir))
       throw new RuntimeException("can't delete temp dir");
-  }
-
-  @Test
-  public void testHasOneChangeSetByDefault() {
-    ChangeList l = new ChangeList();
-    assertTrue(l.isEmpty());
   }
 }

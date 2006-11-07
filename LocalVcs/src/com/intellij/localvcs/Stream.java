@@ -33,16 +33,12 @@ public class Stream {
   }
 
   public Entry readEntry() throws IOException {
-    if (!myIs.readBoolean()) return null;
     return (Entry)readSubclass(myIs.readUTF());
   }
 
   public void writeEntry(Entry e) throws IOException {
-    myOs.writeBoolean(e != null);
-    if (e != null) {
-      myOs.writeUTF(e.getClass().getName());
-      e.write(this);
-    }
+    myOs.writeUTF(e.getClass().getName());
+    e.write(this);
   }
 
   public Change readChange() throws IOException {
@@ -62,7 +58,16 @@ public class Stream {
     c.write(this);
   }
 
+  public ChangeList readChangeList() throws IOException {
+    return new ChangeList(this);
+  }
+
+  public void writeChangeList(ChangeList c) throws IOException {
+    c.write(this);
+  }
+
   public String readString() throws IOException {
+    // todo remove null-saving after refactoring RootEntry 
     if (!myIs.readBoolean()) return null;
     return myIs.readUTF();
   }

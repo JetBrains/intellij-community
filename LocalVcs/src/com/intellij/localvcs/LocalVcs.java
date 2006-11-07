@@ -1,11 +1,49 @@
 package com.intellij.localvcs;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LocalVcs {
   private Snapshot mySnapshot = new Snapshot();
   private List<Change> myPendingChanges = new ArrayList<Change>();
+
+  public LocalVcs() {}
+
+  public LocalVcs(File dir) throws IOException {
+    File f = new File(dir, "content");
+    FileInputStream fs = new FileInputStream(f);
+    try {
+      Stream s = new Stream(fs);
+
+      mySnapshot = new Snapshot(s.readInteger(),
+                                s.readChangeList(),
+                                s.readEntry());
+    } finally {
+      // todo dont forget to test stream closing...
+      fs.close();
+    }
+  }
+
+  public void store(File dir) throws IOException {
+    File f = new File(dir, "content");
+    f.createNewFile();
+
+    FileOutputStream fs = new FileOutputStream(f);
+    try {
+      Stream s = new Stream(fs);
+
+      s.writeInteger(mySnapshot.getLastObjectId());
+      s.writeChangeList(mySnapshot.getChangeList());
+      s.writeEntry(mySnapshot.getRoot());
+    } finally {
+      // todo dont forget to test stream closing...
+      fs.close();
+    }
+  }
 
   public boolean hasEntry(Path path) {
     return mySnapshot.hasEntry(path);
