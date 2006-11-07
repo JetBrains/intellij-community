@@ -51,13 +51,13 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
   }
 
   public void processChanges() {
+    if (myDocumentChanged) return;
     for (TagChangeSet changeSet : myChangeSets.values()) {
       changeSet.processChanges();
     }
   }
 
   private TagChangeSet getChangeSet(XmlTag tag) {
-    assert !myDocumentChanged;
     assert tag != null;
     TagChangeSet changeSet = myChangeSets.get(tag);
     if (changeSet == null) {
