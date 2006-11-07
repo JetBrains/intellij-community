@@ -200,12 +200,10 @@ public class TreeModelBuilder {
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final FilePath path = getPathForObject(node.getUserObject());
 
-    final VirtualFile rootFolder = VcsDirtyScope.getRootFor(index, path);
-    if (rootFolder != null) {
-      if (path.getVirtualFile() == rootFolder) {
-        Module module = index.getModuleForFile(rootFolder);
-        return getNodeForModule(module, moduleNodesCache, rootNode);
-      }
+    VirtualFile vFile = path.getVirtualFile();
+    if (vFile != null && vFile == index.getContentRootForFile(vFile)) {
+      Module module = index.getModuleForFile(vFile);
+      return getNodeForModule(module, moduleNodesCache, rootNode);
     }
 
     FilePath parentPath = path.getParentPath();
