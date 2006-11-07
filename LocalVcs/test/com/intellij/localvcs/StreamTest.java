@@ -29,6 +29,18 @@ public class StreamTest extends TestCase {
   }
 
   @Test
+  public void testIdGenerator() throws IOException {
+    IdGenerator g = new IdGenerator();
+    g.getNextObjectId();
+    Integer id = g.getNextObjectId();
+
+    os.writeIdGenerator(g);
+    IdGenerator result = is.readIdGenerator();
+
+    assertEquals(id, result.getNextObjectId() - 1);
+  }
+
+  @Test
   public void testFileEntry() throws IOException {
     Entry e = new FileEntry(42, "file", "content");
 
@@ -137,17 +149,13 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testAppliedDeleteChange() throws IOException {
-    Change c = new DeleteChange(p("entry"));
+    Snapshot snapshot = new Snapshot();
+    snapshot.doCreateDirectory(p("entry"));
+    snapshot.doCreateFile(p("entry/file"), "");
+    snapshot.doCreateDirectory(p("entry/dir"));
 
-    c.applyTo(new Snapshot() {
-      @Override
-      public Entry getEntry(Path path) {
-        Entry e = new DirectoryEntry(1, "entry");
-        e.addChild(new FileEntry(2, "file", ""));
-        e.addChild(new DirectoryEntry(3, "dir"));
-        return e;
-      }
-    });
+    Change c = new DeleteChange(p("entry"));
+    c.applyTo(snapshot);
 
     os.writeChange(c);
     Entry result = ((DeleteChange)is.readChange()).getAffectedEntry();
@@ -162,14 +170,11 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testAppliedChangeFileContentChange() throws IOException {
-    Change c = new ChangeFileContentChange(p("file"), "new content");
+    Snapshot snapshot = new Snapshot();
+    snapshot.doCreateFile(p("file"), "content");
 
-    c.applyTo(new Snapshot() {
-      @Override
-      public Entry getEntry(Path path) {
-        return new FileEntry(null, null, "content");
-      }
-    });
+    Change c = new ChangeFileContentChange(p("file"), "new content");
+    c.applyTo(snapshot);
 
     os.writeChange(c);
     Change read = is.readChange();

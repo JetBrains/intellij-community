@@ -32,6 +32,14 @@ public class Stream {
     p.write(this);
   }
 
+  public IdGenerator readIdGenerator() throws IOException {
+    return new IdGenerator(this);
+  }
+
+  public void writeIdGenerator(IdGenerator g) throws IOException {
+    g.write(this);
+  }
+
   public Entry readEntry() throws IOException {
     return (Entry)readSubclass(myIs.readUTF());
   }

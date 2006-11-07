@@ -19,7 +19,7 @@ public class LocalVcs {
     try {
       Stream s = new Stream(fs);
 
-      mySnapshot = new Snapshot(s.readInteger(),
+      mySnapshot = new Snapshot(s.readIdGenerator(),
                                 s.readChangeList(),
                                 s.readEntry(),
                                 s.readInteger());
@@ -37,7 +37,7 @@ public class LocalVcs {
     try {
       Stream s = new Stream(fs);
 
-      s.writeInteger(mySnapshot.getLastObjectId());
+      s.writeIdGenerator(mySnapshot.getIdGenerator());
       s.writeChangeList(mySnapshot.getChangeList());
       s.writeEntry(mySnapshot.getRoot());
       s.writeInteger(mySnapshot.getChangeListIndex());
@@ -48,11 +48,11 @@ public class LocalVcs {
   }
 
   public boolean hasEntry(Path path) {
-    return mySnapshot.hasEntry(path);
+    return mySnapshot.getRoot().hasEntry(path);
   }
 
   public Entry getEntry(Path path) {
-    return mySnapshot.getEntry(path);
+    return mySnapshot.getRoot().getEntry(path);
   }
 
   public List<Entry> getEntryHistory(Path path) {
@@ -61,13 +61,13 @@ public class LocalVcs {
 
     // todo clean up this mess
     // todo should we raise exception?
-    if (!mySnapshot.hasEntry(path)) return result;
+    if (!mySnapshot.getRoot().hasEntry(path)) return result;
 
-    Integer id = mySnapshot.getEntry(path).getObjectId();
+    Integer id = mySnapshot.getRoot().getEntry(path).getObjectId();
 
     for (Snapshot snapshot : getSnapshotHistory()) {
-      if (!snapshot.hasEntry(id)) break;
-      result.add(snapshot.getEntry(id));
+      if (!snapshot.getRoot().hasEntry(id)) break;
+      result.add(snapshot.getRoot().getEntry(id));
     }
 
     return result;
@@ -97,7 +97,7 @@ public class LocalVcs {
   public void revert() {
     clearPendingChanges();
 
-    Snapshot reverted = mySnapshot.revert();
+    Snapshot reverted = mySnapshot.getChangeList().revertOn(mySnapshot);
     if (reverted == null) return;
     mySnapshot = reverted;
   }
@@ -111,12 +111,12 @@ public class LocalVcs {
   }
 
   public void putLabel(String label) {
-    mySnapshot.setLabel(label);
+    mySnapshot.getChangeList().setLabel(mySnapshot, label);
   }
 
   public Snapshot getSnapshot(String label) {
     for (Snapshot s : getSnapshotHistory()) {
-      if (label.equals(s.getLabel())) return s;
+      if (label.equals(s.getChangeList().getLabel(s))) return s;
     }
     return null;
   }
@@ -127,7 +127,7 @@ public class LocalVcs {
     Snapshot s = mySnapshot;
     while (s != null) {
       result.add(s);
-      s = s.revert();
+      s = s.getChangeList().revertOn(s);
     }
 
     // todo bad hack, maybe replace with EmptySnapshot class

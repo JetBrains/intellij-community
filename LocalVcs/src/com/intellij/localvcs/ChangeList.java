@@ -42,7 +42,7 @@ public class ChangeList {
     return result;
   }
 
-  public Snapshot revertLastChangeSetOn(Snapshot snapshot) {
+  public Snapshot revertOn(Snapshot snapshot) {
     // todo 1. not as clear as i want it to be.
     // todo 2. throw an exception instead of returning null
     if (snapshot.getChangeListIndex() < 0) return null;
@@ -61,11 +61,11 @@ public class ChangeList {
     return myChangeSets.get(s.getChangeListIndex());
   }
 
-  public void setLastChangeSetLabel(Snapshot s, String label) {
+  public void setLabel(Snapshot s, String label) {
     getChangeSetFor(s).setLabel(label);
   }
 
-  public String getLastChangeSetLabel(Snapshot s) {
+  public String getLabel(Snapshot s) {
     return getChangeSetFor(s).getLabel();
   }
 }

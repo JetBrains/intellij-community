@@ -47,6 +47,62 @@ public class RootEntry extends DirectoryEntry {
     return result;
   }
 
+  protected void doCreateFile(Path path, String content) {
+    addEntry(path.getParent(),
+             new FileEntry(getNextObjectId(), path.getName(), content));
+  }
+
+  protected void doCreateDirectory(Path path) {
+    addEntry(path.getParent(),
+             new DirectoryEntry(getNextObjectId(), path.getName()));
+  }
+
+  protected void doChangeFileContent(Path path, String content) {
+    Entry oldEntry = getEntry(path);
+    Entry newEntry = new FileEntry(oldEntry.getObjectId(),
+                                   path.getName(),
+                                   content);
+
+    removeEntry(path);
+    addEntry(path.getParent(), newEntry);
+  }
+
+  protected void doRename(Path path, String newName) {
+    if (newName.equals(path.getName())) return;
+
+    Entry oldEntry = getEntry(path);
+    Entry newEntry = oldEntry.renamed(newName);
+
+    removeEntry(path);
+    addEntry(path.getParent(), newEntry);
+  }
+
+  public void doMove(Path path, Path parent) {
+    Entry e = getEntry(path);
+
+    removeEntry(path);
+    addEntry(parent, e);
+  }
+
+  protected void doDelete(Path path) {
+    removeEntry(path);
+  }
+
+  private Integer getNextObjectId() {
+    return Snapshot.ourIdGenerator.getNextObjectId();
+  }
+
+  public void addEntry(Path parent, Entry entry) {
+    // todo quite ugly
+    if (parent == null) addChild(entry);
+    else getEntry(parent).addChild(entry);
+  }
+
+  public void removeEntry(Path path) {
+    Entry parent = path.isRoot() ? this : getEntry(path.getParent());
+    parent.removeChild(getEntry(path));
+  }
+
   private static class PathMatcher implements Matcher {
     // todo optimize it
     private Path myPath;
