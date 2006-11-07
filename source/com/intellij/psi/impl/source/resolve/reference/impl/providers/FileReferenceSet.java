@@ -137,7 +137,7 @@ public class FileReferenceSet {
     }
   }
 
-  int getStartInElement() {
+  public int getStartInElement() {
     return myStartInElement;
   }
 

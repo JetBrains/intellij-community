@@ -4,15 +4,20 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 public class AntFileReference extends FileReferenceBase implements AntReference {
 
@@ -71,10 +76,28 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    if (element instanceof PsiNamedElement) {
-      return handleElementRename(((PsiNamedElement)element).getName());
+    if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
+    final VirtualFile dstVFile = PsiUtil.getVirtualFile(element);
+    final AntStructuredElement se = getElement();
+    final PsiFile file = se.getContainingFile();
+    if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
+    VirtualFile currentFile = file.getVirtualFile();
+    if (!(se instanceof AntImport)) {
+      final String baseDir = se.getAntProject().getBaseDir();
+      if (baseDir != null && baseDir.length() > 0) {
+        final File f = new File(currentFile.getParent().getPath(), baseDir);
+        currentFile = LocalFileSystem.getInstance().findFileByPath(f.getAbsolutePath().replace(File.separatorChar, '/'));
+      }
     }
-    return getElement();
+    final String newName = VfsUtil.getPath(currentFile, dstVFile, '/');
+    if (newName == null) {
+      throw new IncorrectOperationException(
+        "Cannot find path between files; src = " + currentFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
+    }
+    final PsiElement me = getManipulatorElement();
+    TextRange range = new TextRange(getFileReferenceSet().getStartInElement(), getRangeInElement().getEndOffset());
+    range = range.shiftRight(se.getTextRange().getStartOffset() - me.getTextRange().getStartOffset());
+    return getManipulator(me).handleContentChange(me, range, newName);
   }
 
   protected ResolveResult[] innerResolve() {
