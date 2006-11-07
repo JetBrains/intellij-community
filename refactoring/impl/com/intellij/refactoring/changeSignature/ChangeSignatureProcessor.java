@@ -147,14 +147,10 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     boolean needToChangeCalls = !myGenerateDelegate && (myChangeInfo.isNameChanged || myChangeInfo.isParameterSetOrOrderChanged || myChangeInfo.isExceptionSetOrOrderChanged || myChangeInfo.isVisibilityChanged/*for checking inaccessible*/);
     if (needToChangeCalls) {
-      List<PsiReference> l = new ArrayList<PsiReference>();
-      PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
-      for (PsiReference reference : refs) {
-        l.add(reference);
-      }
-
       int parameterCount = method.getParameterList().getParametersCount();
-      for (PsiReference ref : l) {
+
+      PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
+      for (PsiReference ref : refs) {
         PsiElement element = ref.getElement();
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
         if (!isToCatchExceptions) {
@@ -478,10 +474,12 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             processMethodUsage(methodCallInfo.getElement(), myChangeInfo, methodCallInfo.isToChangeArguments(),
                                methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod());
           }
-          else {
+          else if (usage instanceof MyParameterUsageInfo) {
             String newName = ((MyParameterUsageInfo)usage).newParameterName;
             String oldName = ((MyParameterUsageInfo)usage).oldParameterName;
             processParameterUsage((PsiReferenceExpression)usage.getElement(), oldName, newName);
+          } else {
+            postponedUsages.add(usage);
           }
         }
         else if (usage.getElement() instanceof PsiEnumConstant) {
