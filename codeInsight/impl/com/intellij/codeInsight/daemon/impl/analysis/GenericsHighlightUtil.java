@@ -20,6 +20,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -876,11 +877,10 @@ public class GenericsHighlightUtil {
     PsiModifierList list = method.getModifierList();
     final PsiAnnotation overrideAnnotation = list.findAnnotation("java.lang.Override");
     if (overrideAnnotation != null) {
-      for (PsiMethod superMethod : method.findSuperMethods()) {
-        if (!superMethod.getContainingClass().isInterface()) return null;
+      if (SuperMethodsSearch.search(method, null, true, false).findFirst() == null) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
+                                                 JavaErrorMessages.message("override.annotation.violated"));
       }
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
-                                               JavaErrorMessages.message("override.annotation.violated"));
     }
     return null;
   }
