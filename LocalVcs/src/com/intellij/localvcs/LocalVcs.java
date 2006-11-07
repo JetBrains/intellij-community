@@ -11,7 +11,6 @@ public class LocalVcs {
   private ChangeList myChangeList = new ChangeList();
   private RootEntry myRoot = new RootEntry();
 
-  private Snapshot mySnapshot = new Snapshot(myChangeList, myRoot);
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs() {}
@@ -22,8 +21,8 @@ public class LocalVcs {
     try {
       Stream s = new Stream(fs);
 
-      mySnapshot = new Snapshot(s.readChangeList(),
-                                (RootEntry)s.readEntry());// todo cast!!!
+      myChangeList = s.readChangeList();
+      myRoot = (RootEntry)s.readEntry(); // todo cast!!!
     } finally {
       // todo dont forget to test stream closing...
       fs.close();
@@ -39,7 +38,7 @@ public class LocalVcs {
       Stream s = new Stream(fs);
 
       s.writeChangeList(myChangeList);
-      s.writeEntry(mySnapshot.getRoot());
+      s.writeEntry(myRoot);
     } finally {
       // todo dont forget to test stream closing...
       fs.close();
@@ -47,11 +46,11 @@ public class LocalVcs {
   }
 
   public boolean hasEntry(Path path) {
-    return mySnapshot.getRoot().hasEntry(path);
+    return myRoot.hasEntry(path);
   }
 
   public Entry getEntry(Path path) {
-    return mySnapshot.getRoot().getEntry(path);
+    return myRoot.getEntry(path);
   }
 
   public List<Entry> getEntryHistory(Path path) {
@@ -60,13 +59,13 @@ public class LocalVcs {
 
     // todo clean up this mess
     // todo should we raise exception?
-    if (!mySnapshot.getRoot().hasEntry(path)) return result;
+    if (!myRoot.hasEntry(path)) return result;
 
-    Integer id = mySnapshot.getRoot().getEntry(path).getObjectId();
+    Integer id = myRoot.getEntry(path).getObjectId();
 
-    for (Snapshot snapshot : getSnapshotHistory()) {
-      if (!snapshot.getRoot().hasEntry(id)) break;
-      result.add(snapshot.getRoot().getEntry(id));
+    for (RootEntry r : getHistory()) {
+      if (!r.hasEntry(id)) break;
+      result.add(r.getEntry(id));
     }
 
     return result;
@@ -89,16 +88,17 @@ public class LocalVcs {
   }
 
   public void commit() {
-    mySnapshot = mySnapshot.apply(new ChangeSet(myPendingChanges));
+    myRoot = myChangeList.applyChangeSetOn(
+        myRoot, new ChangeSet(myPendingChanges));
     clearPendingChanges();
   }
 
   public void revert() {
     clearPendingChanges();
 
-    Snapshot reverted = mySnapshot.getChangeList().revertOn(mySnapshot);
+    RootEntry reverted = myChangeList.revertOn(myRoot);
     if (reverted == null) return;
-    mySnapshot = reverted;
+    myRoot = reverted;
   }
 
   private void clearPendingChanges() {
@@ -110,23 +110,23 @@ public class LocalVcs {
   }
 
   public void putLabel(String label) {
-    mySnapshot.getChangeList().setLabel(mySnapshot.getRoot(), label);
+    myChangeList.setLabel(myRoot, label);
   }
 
-  public Snapshot getSnapshot(String label) {
-    for (Snapshot s : getSnapshotHistory()) {
-      if (label.equals(s.getChangeList().getLabel(s.getRoot()))) return s;
+  public RootEntry getSnapshot(String label) {
+    for (RootEntry r : getHistory()) {
+      if (label.equals(myChangeList.getLabel(r))) return r;
     }
     return null;
   }
 
-  public List<Snapshot> getSnapshotHistory() {
-    List<Snapshot> result = new ArrayList<Snapshot>();
+  public List<RootEntry> getHistory() {
+    List<RootEntry> result = new ArrayList<RootEntry>();
 
-    Snapshot s = mySnapshot;
-    while (s != null) {
-      result.add(s);
-      s = s.getChangeList().revertOn(s);
+    RootEntry r = myRoot;
+    while (r != null) {
+      result.add(r);
+      r = myChangeList.revertOn(r);
     }
 
     // todo bad hack, maybe replace with EmptySnapshot class
