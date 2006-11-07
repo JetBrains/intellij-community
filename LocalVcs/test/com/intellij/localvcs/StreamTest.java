@@ -149,7 +149,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testAppliedDeleteChange() throws IOException {
-    Snapshot snapshot = new Snapshot(new ChangeList());
+    Snapshot snapshot = new Snapshot(new ChangeList(), new RootEntry());
     snapshot.doCreateDirectory(p("entry"));
     snapshot.doCreateFile(p("entry/file"), "");
     snapshot.doCreateDirectory(p("entry/dir"));
@@ -170,7 +170,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testAppliedChangeFileContentChange() throws IOException {
-    Snapshot snapshot = new Snapshot(new ChangeList());
+    Snapshot snapshot = new Snapshot(new ChangeList(), new RootEntry());
     snapshot.doCreateFile(p("file"), "content");
 
     Change c = new ChangeFileContentChange(p("file"), "new content");

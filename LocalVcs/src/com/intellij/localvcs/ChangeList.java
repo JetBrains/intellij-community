@@ -55,6 +55,34 @@ public class ChangeList {
     return result;
   }
 
+  public RootEntry applyChangeSetOn(RootEntry root, ChangeSet cs) {
+    // todo we make bad assumption that applying is only done on current
+    // todo snapshot - not on the reverted one
+
+    // todo should we really make copy of current shapshot?
+    // todo copy is a performance bottleneck
+    RootEntry result = (RootEntry)root.copy();
+
+    cs.applyTo(result);
+    myChangeSets.add(cs);
+    result.incrementChangeListIndex();
+
+    return result;
+  }
+
+  public RootEntry revertOn(RootEntry root) {
+    // todo 1. not as clear as i want it to be.
+    // todo 2. throw an exception instead of returning null
+    if (root.getChangeListIndex() < 0) return null;
+
+    RootEntry result = (RootEntry)root.copy();
+
+    getChangeSetFor(result).revertOn(result);
+    result.decrementChangeListIndex();
+
+    return result;
+  }
+
   private ChangeSet getChangeSetFor(RootEntry e) {
     // todo ummm... one more unpleasant check... 
     if (e.getChangeListIndex() < 0) throw new LocalVcsException();

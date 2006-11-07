@@ -9,7 +9,9 @@ import java.util.List;
 
 public class LocalVcs {
   private ChangeList myChangeList = new ChangeList();
-  private Snapshot mySnapshot = new Snapshot(myChangeList);
+  private RootEntry myRoot = new RootEntry();
+
+  private Snapshot mySnapshot = new Snapshot(myChangeList, myRoot);
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs() {}
@@ -21,7 +23,7 @@ public class LocalVcs {
       Stream s = new Stream(fs);
 
       mySnapshot = new Snapshot(s.readChangeList(),
-                                s.readEntry());
+                                (RootEntry)s.readEntry());// todo cast!!!
     } finally {
       // todo dont forget to test stream closing...
       fs.close();
