@@ -113,7 +113,9 @@ public class CommonRefactoringUtil {
       }
       else {
         PsiFile file = element.getContainingFile();
-        if (!file.isWritable()) {
+        if (file == null) {
+          seenNonWritablePsiFilesWithoutVirtualFile = true;
+        } else if (!file.isWritable()) {
           final VirtualFile vFile = file.getVirtualFile();
           if (vFile != null) {
             readonly.add(vFile);
