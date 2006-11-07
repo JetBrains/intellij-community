@@ -165,21 +165,25 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         final CaretModel caretModel = editor.getCaretModel();
         final int position = caretModel.getOffset();
         PsiElement element = file.findElementAt(position);
-        while(element != null){
-            if(predicate.satisfiedBy(element)){
-                return element;
-            } else{
-                element = element.getParent();
-                if (element instanceof PsiFile) {
-                    break;
-                }
-            }
-        }
-        return null;
+        return findMatchingElement(element);
     }
 
+    @Nullable PsiElement findMatchingElement(@Nullable PsiElement element) {
+    while(element != null){
+        if(predicate.satisfiedBy(element)){
+            return element;
+        } else{
+            element = element.getParent();
+            if (element instanceof PsiFile) {
+                break;
+            }
+        }
+    }
+    return null;
+  }
 
-    public boolean isAvailable(Project project, Editor editor, PsiElement element) {
+
+  public boolean isAvailable(Project project, Editor editor, PsiElement element) {
       while (element != null) {
         if (predicate.satisfiedBy(element)) {
           return true;

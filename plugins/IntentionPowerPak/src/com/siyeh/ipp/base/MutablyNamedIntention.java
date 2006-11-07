@@ -32,7 +32,7 @@ public abstract class MutablyNamedIntention extends Intention{
     }
 
     public boolean isAvailable(Project project, Editor editor, PsiElement node) {
-      final PsiElement element = node != null ? findMatchingElement(node.getContainingFile(), editor) : null;
+      final PsiElement element = findMatchingElement(node);
       if(element != null){
           m_text = getTextForElement(element);
       }
