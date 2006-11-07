@@ -85,37 +85,6 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
             checkTypeElement(typeElement);
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
-            final PsiType type = expression.getType();
-            if(type == null){
-                return;
-            }
-            final PsiType componentType = type.getDeepComponentType();
-            if(!(componentType instanceof PsiClassType)){
-                return;
-            }
-            final PsiClass parentClass =
-                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-            final PsiAnonymousClass anonymousClass =
-                    expression.getAnonymousClass();
-            if (anonymousClass != null) {
-                final PsiClassType classType =
-                        anonymousClass.getBaseClassType();
-                if (!isSubclass(classType, parentClass)) {
-                    return;
-                }
-                registerClassError(anonymousClass, parentClass, Boolean.FALSE);
-            } else {
-                final PsiClassType classType = (PsiClassType)componentType;
-                if(!isSubclass(classType, parentClass)){
-                    return;
-                }
-                final PsiJavaCodeReferenceElement classReference =
-                        expression.getClassReference();
-                registerError(classReference, parentClass, Boolean.FALSE);
-            }
-        }
-
         private void checkTypeElement(PsiTypeElement typeElement){
             if(typeElement == null){
                 return;
@@ -126,21 +95,27 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) componentType;
+            final PsiClass aClass = classType.resolve();
+            if (aClass instanceof PsiTypeParameter) {
+                return;
+            }
             final PsiClass parentClass =
                     PsiTreeUtil.getParentOfType(typeElement, PsiClass.class);
-            if(!isSubclass(classType, parentClass)){
+            if(!isSubclass(aClass, parentClass)){
                 return;
             }
             registerError(typeElement, parentClass, Boolean.FALSE);
         }
 
-        private static boolean isSubclass(@NotNull PsiClassType childClass,
+        private static boolean isSubclass(@Nullable PsiClass childClass,
                                           @Nullable PsiClass parent){
+            if (childClass == null) {
+                return false;
+            }
             if(parent == null){
                 return false;
             }
-            final PsiClass child = childClass.resolve();
-            return child != null && child.isInheritor(parent, true);
+            return childClass.isInheritor(parent, true);
         }
     }
 }
