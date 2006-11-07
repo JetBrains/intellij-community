@@ -31,12 +31,12 @@ public class RenameChange extends Change {
   }
 
   @Override
-  public void applyTo(Snapshot snapshot) {
-    snapshot.doRename(myPath, myNewName);
+  public void applyTo(RootEntry root) {
+    root.doRename(myPath, myNewName);
   }
 
   @Override
-  public void revertOn(Snapshot snapshot) {
-    snapshot.doRename(myPath.renamedWith(myNewName), myPath.getName());
+  public void revertOn(RootEntry root) {
+    root.doRename(myPath.renamedWith(myNewName), myPath.getName());
   }
 }

@@ -42,16 +42,16 @@ public class ChangeSet {
     return myChanges;
   }
 
-  public void applyTo(Snapshot snapshot) {
+  public void applyTo(RootEntry root) {
     for (Change change : myChanges) {
-      change.applyTo(snapshot);
+      change.applyTo(root);
     }
   }
 
-  public void revertOn(Snapshot snapshot) {
+  public void revertOn(RootEntry root) {
     for (int i = myChanges.size() - 1; i >= 0; i--) {
       Change change = myChanges.get(i);
-      change.revertOn(snapshot);
+      change.revertOn(root);
     }
   }
 }

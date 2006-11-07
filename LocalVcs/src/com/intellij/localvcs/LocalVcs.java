@@ -108,12 +108,12 @@ public class LocalVcs {
   }
 
   public void putLabel(String label) {
-    mySnapshot.getChangeList().setLabel(mySnapshot, label);
+    mySnapshot.getChangeList().setLabel(mySnapshot.getRoot(), label);
   }
 
   public Snapshot getSnapshot(String label) {
     for (Snapshot s : getSnapshotHistory()) {
-      if (label.equals(s.getChangeList().getLabel(s))) return s;
+      if (label.equals(s.getChangeList().getLabel(s.getRoot()))) return s;
     }
     return null;
   }

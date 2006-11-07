@@ -31,12 +31,12 @@ public class CreateFileChange extends Change {
   }
 
   @Override
-  public void applyTo(Snapshot snapshot) {
-    snapshot.doCreateFile(myPath, myContent);
+  public void applyTo(RootEntry root) {
+    root.doCreateFile(myPath, myContent);
   }
 
   @Override
-  public void revertOn(Snapshot snapshot) {
-    snapshot.doDelete(myPath);
+  public void revertOn(RootEntry root) {
+    root.doDelete(myPath);
   }
 }

@@ -155,7 +155,7 @@ public class StreamTest extends TestCase {
     snapshot.doCreateDirectory(p("entry/dir"));
 
     Change c = new DeleteChange(p("entry"));
-    c.applyTo(snapshot);
+    c.applyTo(snapshot.getRoot());
 
     os.writeChange(c);
     Entry result = ((DeleteChange)is.readChange()).getAffectedEntry();
@@ -174,7 +174,7 @@ public class StreamTest extends TestCase {
     snapshot.doCreateFile(p("file"), "content");
 
     Change c = new ChangeFileContentChange(p("file"), "new content");
-    c.applyTo(snapshot);
+    c.applyTo(snapshot.getRoot());
 
     os.writeChange(c);
     Change read = is.readChange();

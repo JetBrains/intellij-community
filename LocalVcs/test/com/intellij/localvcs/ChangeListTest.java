@@ -7,7 +7,7 @@ public class ChangeListTest extends TestCase {
   public void testDoesNotRegisterChangeSetOnApplyingError() {
     CreateFileChange badChange = new CreateFileChange(null, null) {
       @Override
-      public void applyTo(Snapshot snapshot) {
+      public void applyTo(RootEntry root) {
         throw new SomeLocalVcsException();
       }
     };

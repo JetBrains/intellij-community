@@ -31,13 +31,13 @@ public class MoveChange extends Change {
   }
 
   @Override
-  public void applyTo(Snapshot snapshot) {
-    snapshot.doMove(myPath, myNewParent);
+  public void applyTo(RootEntry root) {
+    root.doMove(myPath, myNewParent);
   }
 
   @Override
-  public void revertOn(Snapshot snapshot) {
-    snapshot.doMove(myNewParent.appendedWith(myPath.getName()),
-                    myPath.getParent());
+  public void revertOn(RootEntry root) {
+    root.doMove(myNewParent.appendedWith(myPath.getName()),
+                myPath.getParent());
   }
 }

@@ -30,26 +30,26 @@ public class DeleteChange extends Change {
   }
 
   @Override
-  public void applyTo(Snapshot snapshot) {
-    myAffectedEntry = snapshot.getEntry(myPath);
-    snapshot.doDelete(myPath);
+  public void applyTo(RootEntry root) {
+    myAffectedEntry = root.getEntry(myPath);
+    root.doDelete(myPath);
   }
 
   @Override
-  public void revertOn(Snapshot snapshot) {
+  public void revertOn(RootEntry root) {
     // todo maybe we should create several DeleteChanges instead of saving
     // previous entry?
-    restoreEntryRecursively(snapshot, myAffectedEntry, myPath);
+    restoreEntryRecursively(root, myAffectedEntry, myPath);
   }
 
-  private void restoreEntryRecursively(Snapshot s, Entry e, Path p) {
+  private void restoreEntryRecursively(RootEntry root, Entry e, Path p) {
     if (e.isDirectory()) {
-      s.doCreateDirectory(p);
+      root.doCreateDirectory(p);
       for (Entry child : e.getChildren()) {
-        restoreEntryRecursively(s, child, p.appendedWith(child.getName()));
+        restoreEntryRecursively(root, child, p.appendedWith(child.getName()));
       }
     } else {
-      s.doCreateFile(p, e.getContent());
+      root.doCreateFile(p, e.getContent());
     }
   }
 }

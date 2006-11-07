@@ -35,9 +35,9 @@ public class ChangeList {
     // todo copy is a performance bottleneck
     Snapshot result = new Snapshot(snapshot);
 
-    cs.applyTo(result);
+    cs.applyTo(result.getRoot());
     myChangeSets.add(cs);
-    result.incrementChangeListIndex();
+    result.getRoot().incrementChangeListIndex();
 
     return result;
   }
@@ -45,27 +45,27 @@ public class ChangeList {
   public Snapshot revertOn(Snapshot snapshot) {
     // todo 1. not as clear as i want it to be.
     // todo 2. throw an exception instead of returning null
-    if (snapshot.getChangeListIndex() < 0) return null;
+    if (snapshot.getRoot().getChangeListIndex() < 0) return null;
 
     Snapshot result = new Snapshot(snapshot);
 
-    getChangeSetFor(result).revertOn(result);
-    result.decrementChangeListIndex();
+    getChangeSetFor(result.getRoot()).revertOn(result.getRoot());
+    result.getRoot().decrementChangeListIndex();
 
     return result;
   }
 
-  private ChangeSet getChangeSetFor(Snapshot s) {
+  private ChangeSet getChangeSetFor(RootEntry e) {
     // todo ummm... one more unpleasant check... 
-    if (s.getChangeListIndex() < 0) throw new LocalVcsException();
-    return myChangeSets.get(s.getChangeListIndex());
+    if (e.getChangeListIndex() < 0) throw new LocalVcsException();
+    return myChangeSets.get(e.getChangeListIndex());
   }
 
-  public void setLabel(Snapshot s, String label) {
-    getChangeSetFor(s).setLabel(label);
+  public void setLabel(RootEntry root, String label) {
+    getChangeSetFor(root).setLabel(label);
   }
 
-  public String getLabel(Snapshot s) {
-    return getChangeSetFor(s).getLabel();
+  public String getLabel(RootEntry root) {
+    return getChangeSetFor(root).getLabel();
   }
 }

@@ -23,12 +23,12 @@ public class CreateDirectoryChange extends Change {
   }
 
   @Override
-  public void applyTo(Snapshot snapshot) {
-    snapshot.doCreateDirectory(myPath);
+  public void applyTo(RootEntry root) {
+    root.doCreateDirectory(myPath);
   }
 
   @Override
-  public void revertOn(Snapshot snapshot) {
-    snapshot.doDelete(myPath);
+  public void revertOn(RootEntry root) {
+    root.doDelete(myPath);
   }
 }

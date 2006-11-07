@@ -38,13 +38,13 @@ public class ChangeFileContentChange extends Change {
   }
 
   @Override
-  public void applyTo(Snapshot snapshot) {
-    myOldContent = snapshot.getEntry(myPath).getContent();
-    snapshot.doChangeFileContent(myPath, myNewContent);
+  public void applyTo(RootEntry root) {
+    myOldContent = root.getEntry(myPath).getContent();
+    root.doChangeFileContent(myPath, myNewContent);
   }
 
   @Override
-  public void revertOn(Snapshot snapshot) {
-    snapshot.doChangeFileContent(myPath, myOldContent);
+  public void revertOn(RootEntry root) {
+    root.doChangeFileContent(myPath, myOldContent);
   }
 }
