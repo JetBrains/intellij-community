@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.idea.ActionsBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +26,12 @@ import java.util.Set;
  * @author max
  */
 public class MoveChangesToAnotherListAction extends AnAction {
+  public MoveChangesToAnotherListAction() {
+    super(ActionsBundle.actionText("ChangesView.Move"),
+          ActionsBundle.actionDescription("ChangesView.Move"),
+          IconLoader.getIcon("/actions/fileStatus.png"));
+  }
+
   public void update(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);

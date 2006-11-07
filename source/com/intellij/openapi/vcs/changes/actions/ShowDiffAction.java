@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -27,6 +28,12 @@ import java.util.List;
  * @author max
  */
 public class ShowDiffAction extends AnAction {
+  public ShowDiffAction() {
+    super(ActionsBundle.actionText("ChangesView.Diff"),
+          ActionsBundle.actionDescription("ChangesView.Diff"),
+          IconLoader.getIcon("/actions/diff.png"));
+  }
+
   public void update(AnActionEvent e) {
     Change[] changes = e.getData(DataKeys.CHANGES);
     Project project = e.getData(DataKeys.PROJECT);
