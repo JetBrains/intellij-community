@@ -147,7 +147,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   public String getFileName() {
-    return getSourceElement().getAttributeValue(AntFileImpl.FILE_ATTR);
+    return computeAttributeValue(getSourceElement().getAttributeValue(AntFileImpl.FILE_ATTR));
   }
 
   @Nullable

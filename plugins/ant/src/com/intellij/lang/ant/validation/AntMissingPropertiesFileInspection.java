@@ -8,6 +8,7 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
@@ -56,10 +57,12 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
     for (final PsiElement element : tag.getChildren()) {
       if (element instanceof AntProperty) {
         final AntProperty prop = (AntProperty)element;
-        final String filename = prop.getFileName();
-        if (filename != null && prop.getPropertiesFile() == null) {
-          problems.add(manager.createProblemDescriptor(prop, AntBundle.message("file.doesnt.exist", filename),
-                                                       EMPTY_FIXES, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        if (AntFileImpl.PROPERTY.equals(prop.getSourceElement().getName())) {
+          final String filename = prop.getFileName();
+          if (filename != null && prop.getPropertiesFile() == null) {
+            problems.add(manager.createProblemDescriptor(prop, AntBundle.message("file.doesnt.exist", filename), EMPTY_FIXES,
+                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          }
         }
       }
       else if (element instanceof AntStructuredElement) {
