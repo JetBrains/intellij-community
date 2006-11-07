@@ -117,6 +117,6 @@ public abstract class DomElementsInspection<T extends DomElement> extends LocalI
    * @param helper helper object
    */
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("checkDomElement() is not implemented in " + getClass().getName());
   }
 }
