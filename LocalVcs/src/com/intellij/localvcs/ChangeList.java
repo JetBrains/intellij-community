@@ -28,56 +28,44 @@ public class ChangeList {
   }
 
   public Snapshot applyChangeSetOn(Snapshot snapshot, ChangeSet cs) {
-    // todo copy is a performance bottleneck
-    // todo should we really make copy of current shapshot?
+    // todo we make bad assumption that applying is only done on current
+    // todo snapshot - not on the reverted one
 
-    // todo one more cast
-    Snapshot result = new Snapshot((RootEntry)snapshot.getRoot().copy(), this);
+    // todo should we really make copy of current shapshot?
+    // todo copy is a performance bottleneck
+    Snapshot result = new Snapshot(snapshot);
+
     cs.applyTo(result);
     myChangeSets.add(cs);
-    result.myIndex = myChangeSets.size() - 1;
+    result.incrementIndex();
 
     return result;
   }
 
   public Snapshot revertLastChangeSetOn(Snapshot snapshot) {
-    // todo not as clear as i want it to be
-    if (isEmpty()) return null; //todo throw exception
+    // todo 1. not as clear as i want it to be.
+    // todo 2. throw an exception instead of returning null
+    if (snapshot.getIndex() < 0) return null;
 
-    // todo get rid of thisCopy
-    ChangeList thisCopy = copy();
-    Snapshot result =
-        new Snapshot((RootEntry)snapshot.getRoot().copy(), thisCopy);
+    Snapshot result = new Snapshot(snapshot);
 
-    thisCopy.getLast().revertOn(result);
-    thisCopy.myChangeSets.remove(thisCopy.getLast());
-
-    result.myIndex = thisCopy.myChangeSets.size() - 1;
+    getChangeSetFor(result).revertOn(result);
+    result.decrementIndex();
 
     return result;
   }
 
-  public Boolean isEmpty() {
-    return myChangeSets.isEmpty();
-  }
-
-  private ChangeSet getLast() {
+  private ChangeSet getChangeSetFor(Snapshot s) {
     // todo ummm... one more unpleasant check... 
-    if (isEmpty()) throw new LocalVcsException();
-    return myChangeSets.get(myChangeSets.size() - 1);
+    if (s.getIndex() < 0) throw new LocalVcsException();
+    return myChangeSets.get(s.getIndex());
   }
 
-  public void setLastChangeSetLabel(String label) {
-    getLast().setLabel(label);
+  public void setLastChangeSetLabel(Snapshot s, String label) {
+    getChangeSetFor(s).setLabel(label);
   }
 
-  public String getLastChangeSetLabel() {
-    return getLast().getLabel();
-  }
-
-  public ChangeList copy() {
-    ChangeList result = new ChangeList();
-    result.myChangeSets.addAll(myChangeSets);
-    return result;
+  public String getLastChangeSetLabel(Snapshot s) {
+    return getChangeSetFor(s).getLabel();
   }
 }

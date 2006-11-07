@@ -1,61 +1,25 @@
 package com.intellij.localvcs;
 
-import java.io.File;
-import java.net.URISyntaxException;
-
-import com.intellij.openapi.util.io.FileUtil;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 public class ChangeListTest extends TestCase {
-  private File myTempDir;
+  @Test
+  public void testDoesNotRegisterChangeSetOnApplyingError() {
+    CreateFileChange badChange = new CreateFileChange(null, null) {
+      @Override
+      public void applyTo(Snapshot snapshot) {
+        throw new SomeLocalVcsException();
+      }
+    };
 
-  @Before
-  public void createTempDir() {
+    ChangeList l = new ChangeList();
     try {
-      File root = new File(getClass().getResource(".").toURI());
-      myTempDir = new File(root, "temp");
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+      l.applyChangeSetOn(s, cs(badChange));
+    } catch (SomeLocalVcsException e) {}
 
-    deleteTempDir();
-    myTempDir.mkdirs();
+    assertTrue(l.getChangeSets().isEmpty());
   }
 
-  @After
-  public void deleteTempDir() {
-    if (!FileUtil.delete(myTempDir))
-      throw new RuntimeException("can't delete temp dir");
-  }
-
-  @Test
-  public void testHasOneChangeSetByDefault() {
-    ChangeList l = new ChangeList();
-    assertTrue(l.hasOnlyOneChangeSet());
-  }
-
-  @Test
-  public void testSavingEmpty() {
-    ChangeList l = new ChangeList();
-    assertTrue(myTempDir.listFiles().length == 0);
-
-    l.save(myTempDir);
-    assertTrue(myTempDir.listFiles().length != 0);
-
-    ChangeList result = new ChangeList(myTempDir);
-    assertTrue(result.hasOnlyOneChangeSet());
-  }
-
-  @Test
-  public void testSavingWithChangeSets() {
-    ChangeList l = new ChangeList();
-    l.add(cs(new CreateFileChange(p("dir/file"), "content")));
-    l.save(myTempDir);
-
-    ChangeList result = new ChangeList(myTempDir);
-    //assertEquals(2, result.getChangeSets().size());
-    //assertEquals(CreateFileChange.class, result.getChangeSets().get(1));
+  private static class SomeLocalVcsException extends LocalVcsException {
   }
 }
