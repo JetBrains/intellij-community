@@ -28,6 +28,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class MissingOverrideAnnotationInspection extends MethodInspection {
 
     public String getID() {
@@ -76,6 +78,9 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
                             parent);
             final PsiModifierList modifierList =
                     parent.getModifierList();
+            if (modifierList == null) {
+                return;
+            }
             modifierList.addAfter(annotation, null);
         }
     }
@@ -126,10 +131,15 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
         private static boolean isOverride(PsiMethod method){
             final PsiMethod[] superMethods = method.findSuperMethods();
             for(PsiMethod superMethod : superMethods){
-                final PsiClass containingClass =
+                final PsiClass superContainingClass =
                         superMethod.getContainingClass();
-                if(containingClass == null || !containingClass.isInterface()){
-                    return true;
+                if(superContainingClass != null) {
+                    final PsiClass containingClass =
+                            method.getContainingClass();
+                    if(!containingClass.isInterface() ||
+                            superContainingClass.isInterface()){
+                        return true;
+                    }
                 }
             }
             return false;
