@@ -21,8 +21,7 @@ public class LocalVcs {
       Stream s = new Stream(fs);
 
       mySnapshot = new Snapshot(s.readChangeList(),
-                                s.readEntry(),
-                                s.readInteger());
+                                s.readEntry());
     } finally {
       // todo dont forget to test stream closing...
       fs.close();
@@ -39,7 +38,6 @@ public class LocalVcs {
 
       s.writeChangeList(myChangeList);
       s.writeEntry(mySnapshot.getRoot());
-      s.writeInteger(mySnapshot.getChangeListIndex());
     } finally {
       // todo dont forget to test stream closing...
       fs.close();

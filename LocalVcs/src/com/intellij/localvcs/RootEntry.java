@@ -5,6 +5,7 @@ import java.io.IOException;
 public class RootEntry extends DirectoryEntry {
   // todo move it to super class and get rid of special constructor
   private IdGenerator myIdGenerator = new IdGenerator();
+  private Integer myChangeListIndex = -1;
 
   // todo try to crean up Entry hierarchy
   public RootEntry() {
@@ -14,12 +15,26 @@ public class RootEntry extends DirectoryEntry {
   public RootEntry(Stream s) throws IOException {
     super(s);
     myIdGenerator = s.readIdGenerator();
+    myChangeListIndex = s.readInteger();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeIdGenerator(myIdGenerator);
+    s.writeIdGenerator(myIdGenerator); // todo test it
+    s.writeInteger(myChangeListIndex);
+  }
+
+  public Integer getChangeListIndex() {
+    return myChangeListIndex;
+  }
+
+  public void incrementChangeListIndex() {
+    myChangeListIndex++;
+  }
+
+  public void decrementChangeListIndex() {
+    myChangeListIndex--;
   }
 
   protected Path getPathAppendedWith(String name) {
@@ -29,7 +44,9 @@ public class RootEntry extends DirectoryEntry {
   @Override
   protected Entry copyEntry() {
     RootEntry result = new RootEntry();
-    result.myIdGenerator = myIdGenerator; // todo test it    
+    // todo test it
+    result.myIdGenerator = myIdGenerator;
+    result.myChangeListIndex = myChangeListIndex;
     return result;
   }
 
