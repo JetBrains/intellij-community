@@ -110,7 +110,7 @@ public class AnnotationUtil {
     return null;
   }
 
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, String annotationFQN, boolean checkHierarchy) {
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy) {
     if (listOwner instanceof PsiParameter) {
       // this is more efficient than getting the modifier list
       PsiAnnotation[] paramAnnotations = ((PsiParameter)listOwner).getAnnotations();
