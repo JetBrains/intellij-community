@@ -10,7 +10,6 @@ import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerProgressIndicator;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
-import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -24,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.OrderedSet;
+import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -60,15 +61,23 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myCompileDriver = compileDriver;
     myMake = isMake;
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
-    myOutputDirectories = CompilerPathsEx.getOutputDirectories(allModules);
 
-    final java.util.HashSet<VirtualFile> testOutputDirs = new java.util.HashSet<VirtualFile>();
+    final Set<VirtualFile> allDirs = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
+    final Set<VirtualFile> testOutputDirs = new java.util.HashSet<VirtualFile>();
+
     for (Module module : allModules) {
-      VirtualFile dir = ModuleRootManager.getInstance(module).getCompilerOutputPathForTests();
-      if (dir != null) {
-        testOutputDirs.add(dir);
+      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+      final VirtualFile output = manager.getCompilerOutputPath();
+      if (output != null && output.isValid()) {
+        allDirs.add(output);
+      }
+      final VirtualFile testsOutput = manager.getCompilerOutputPathForTests();
+      if (testsOutput != null && testsOutput.isValid()) {
+        allDirs.add(testsOutput);
+        testOutputDirs.add(testsOutput);
       }
     }
+    myOutputDirectories = allDirs.toArray(new VirtualFile[allDirs.size()]);
     myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
   }
 
