@@ -56,6 +56,74 @@ public class LocalVcsBasicsTest extends TestCase {
   }
 
   @Test
+  public void testIncrementingIdOnEntryCreation() {
+    vcs.createDirectory(p("dir"));
+    vcs.createFile(p("file"), null);
+    vcs.apply();
+
+    Integer id1 = vcs.getEntry(p("dir")).getObjectId();
+    Integer id2 = vcs.getEntry(p("file")).getObjectId();
+
+    assertFalse(id1.equals(id2));
+  }
+
+  @Test
+  public void testKeepingIdOnChangingFileContent() {
+    vcs.createFile(p("file"), "content");
+    vcs.apply();
+    Integer id1 = vcs.getEntry(p("file")).getObjectId();
+
+    vcs.changeFileContent(p("file"), "new content");
+    vcs.apply();
+    Integer id2 = vcs.getEntry(p("file")).getObjectId();
+
+    assertEquals(id1, id2);
+  }
+
+  @Test
+  public void testKeepingIdOnRenamingFile() {
+    vcs.createFile(p("file"), null);
+    vcs.apply();
+    Integer id1 = vcs.getEntry(p("file")).getObjectId();
+
+    vcs.rename(p("file"), "new file");
+    vcs.apply();
+    Integer id2 = vcs.getEntry(p("new file")).getObjectId();
+
+    assertEquals(id1, id2);
+  }
+
+  @Test
+  public void testKeepingIdOnMovingFile() {
+    vcs.createDirectory(p("dir1"));
+    vcs.createDirectory(p("dir2"));
+    vcs.createFile(p("dir1/file"), null);
+    vcs.apply();
+    Integer id1 = vcs.getEntry(p("dir1/file")).getObjectId();
+
+    vcs.move(p("dir1/file"), p("dir2"));
+    vcs.apply();
+    Integer id2 = vcs.getEntry(p("dir2/file")).getObjectId();
+
+    assertEquals(id1, id2);
+  }
+
+  @Test
+  public void testKeepingIdOnRestoringDeletedFile() {
+    vcs.createFile(p("file"), null);
+    vcs.apply();
+    Integer id1 = vcs.getEntry(p("file")).getObjectId();
+
+    vcs.delete(p("file"));
+    vcs.apply();
+
+    vcs.revert();
+    Integer id2 = vcs.getEntry(p("file")).getObjectId();
+
+    assertEquals(id1, id2);
+  }
+
+  @Test
   public void testHistory() {
     vcs.createFile(p("file"), "content");
     vcs.apply();

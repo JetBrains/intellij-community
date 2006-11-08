@@ -29,18 +29,6 @@ public class StreamTest extends TestCase {
   }
 
   @Test
-  public void testIdGenerator() throws IOException {
-    IdGenerator g = new IdGenerator();
-    g.getNextObjectId();
-    Integer id = g.getNextObjectId();
-
-    os.writeIdGenerator(g);
-    IdGenerator result = is.readIdGenerator();
-
-    assertEquals(id, result.getNextObjectId() - 1);
-  }
-
-  @Test
   public void testFileEntry() throws IOException {
     Entry e = new FileEntry(42, "file", "content");
 
@@ -65,7 +53,7 @@ public class StreamTest extends TestCase {
   }
 
   @Test
-  public void tesEmptyDirectoryEntry() throws IOException {
+  public void testEmptyDirectoryEntry() throws IOException {
     Entry e = new DirectoryEntry(13, "name");
 
     os.writeEntry(e);
@@ -245,8 +233,8 @@ public class StreamTest extends TestCase {
   @Test
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
-    // todo a bit of hack
-    c.getChangeSets().add(cs(new CreateFileChange(p("file"), "content", null)));
+    c.applyChangeSetOn(new RootEntry(),
+                       cs(new CreateFileChange(p("file"), "content", null)));
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();
