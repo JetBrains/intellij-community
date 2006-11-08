@@ -21,11 +21,12 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.pom.Navigatable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,6 +45,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
   private final Map<Module, Set<VirtualFile>> myModuleToRootsMap = new HashMap<Module, Set<VirtualFile>>();
   private final VirtualFile[] myOutputDirectories;
+  private final Set<VirtualFile> myTestOutputDirectories;
 
   public CompileContextImpl(Project project,
                             CompilerProgressIndicator indicator,
@@ -57,7 +59,17 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myDependencyCache = dependencyCache;
     myCompileDriver = compileDriver;
     myMake = isMake;
-    myOutputDirectories = CompilerPathsEx.getOutputDirectories(ModuleManager.getInstance(project).getModules());
+    final Module[] allModules = ModuleManager.getInstance(project).getModules();
+    myOutputDirectories = CompilerPathsEx.getOutputDirectories(allModules);
+
+    final java.util.HashSet<VirtualFile> testOutputDirs = new java.util.HashSet<VirtualFile>();
+    for (Module module : allModules) {
+      VirtualFile dir = ModuleRootManager.getInstance(module).getCompilerOutputPathForTests();
+      if (dir != null) {
+        testOutputDirs.add(dir);
+      }
+    }
+    myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
   }
 
   public DependencyCache getDependencyCache() {
@@ -229,6 +241,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   public VirtualFile[] getAllOutputDirectories() {
     return myOutputDirectories;
+  }
+
+  public Set<VirtualFile> getTestOutputDirectories() {
+    return myTestOutputDirectories;
   }
 
   public VirtualFile getModuleOutputDirectory(Module module) {

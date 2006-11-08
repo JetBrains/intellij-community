@@ -206,9 +206,7 @@ public class JavacCompiler extends ExternalCompiler {
     }
     else {
       classPath = cp;
-
       commandLine.add("-bootclasspath");
-      
       addClassPathValue(jdk, false, commandLine, bootCp, "javac_bootcp");
     }
 

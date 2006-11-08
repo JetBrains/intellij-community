@@ -7,7 +7,7 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.compiler.Chunk;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -29,11 +29,11 @@ import java.util.*;
  *         Date: Sep 29, 2004
  */
 public class ModuleChunk extends Chunk<Module> {
-  private final CompileContext myContext;
+  private final CompileContextEx myContext;
   private final Map<Module, VirtualFile[]> myModuleToFilesMap = new HashMap<Module, VirtualFile[]>();
   private int mySourcesFilter = ALL_SOURCES;
 
-  public ModuleChunk(CompileContext context, Chunk<Module> chunk, Map<Module, Set<VirtualFile>> moduleToFilesMap) {
+  public ModuleChunk(CompileContextEx context, Chunk<Module> chunk, Map<Module, Set<VirtualFile>> moduleToFilesMap) {
     super(chunk.getNodes());
     myContext = context;
     for (final Module module : chunk.getNodes()) {
@@ -155,10 +155,13 @@ public class ModuleChunk extends Chunk<Module> {
         if (skip) {
           continue;
         }
-        addClasspathRoots(orderEntry, cpFiles);
+        cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
       }
     }
-
+    if ((mySourcesFilter & TEST_SOURCES) == 0) {
+      // should remove test output dirs (if any) if compiling production classes only
+      cpFiles.removeAll(myContext.getTestOutputDirectories());
+    }
     return convertToStringPath(cpFiles);
 
   }
@@ -175,33 +178,16 @@ public class ModuleChunk extends Chunk<Module> {
           break;
         }
         else {
-          addClasspathRoots(orderEntry, cpFiles);
+          cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
         }
       }
     }
+    if ((mySourcesFilter & TEST_SOURCES) == 0) {
+      // should remove test output dirs (if any) if compiling production classes only
+      cpFiles.removeAll(myContext.getTestOutputDirectories());
+    }
     cpFiles.addAll(jdkFiles);
     return convertToStringPath(cpFiles);
-  }
-
-  private void addClasspathRoots(OrderEntry orderEntry, OrderedSet<VirtualFile> cpFiles) {
-    cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
-    final Module module;
-    if (orderEntry instanceof ModuleSourceOrderEntry) {
-      module = orderEntry.getOwnerModule();
-    }
-    else if (orderEntry instanceof ModuleOrderEntry) {
-      module = ((ModuleOrderEntry)orderEntry).getModule();
-    }
-    else {
-      module = null;
-    }
-    if (module != null && (mySourcesFilter & TEST_SOURCES) == 0) {
-      // should remove test output dir (if any) if compiling production classes only
-      final VirtualFile outputPathForTests = CompilerPathsEx.getModuleOutputDirectory(module, true);
-      if (outputPathForTests != null) {
-        cpFiles.remove(outputPathForTests);
-      }
-    }
   }
 
   private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {
