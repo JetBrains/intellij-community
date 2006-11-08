@@ -107,7 +107,7 @@ public class RootEntry extends DirectoryEntry {
   }
 
   private void addEntry(Path parent, Entry entry) {
-    // todo quite ugly
+    // todo it's quite ugly
     if (parent == null) addChild(entry);
     else getEntry(parent).addChild(entry);
   }
@@ -118,7 +118,7 @@ public class RootEntry extends DirectoryEntry {
   }
 
   public RootEntry apply(ChangeSet cs) {
-    // todo should we make a copy here?
+    // todo should we really make a copy here?
     RootEntry result = copy();
     cs.applyTo(result);
     return result;

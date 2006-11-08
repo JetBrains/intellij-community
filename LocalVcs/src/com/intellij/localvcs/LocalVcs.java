@@ -38,14 +38,12 @@ public class LocalVcs {
   }
 
   public List<Entry> getEntryHistory(Path path) {
-    //todo optimize it
+    // todo optimize me and clean up this mess
+
+    if (!hasEntry(path)) throw new LocalVcsException();
+
     List<Entry> result = new ArrayList<Entry>();
-
-    // todo clean up this mess
-    // todo should we raise exception?
-    if (!myRoot.hasEntry(path)) throw new LocalVcsException();
-
-    Integer id = myRoot.getEntry(path).getObjectId();
+    Integer id = getEntry(path).getObjectId();
 
     for (RootEntry r : getHistory()) {
       if (!r.hasEntry(id)) break;
@@ -83,6 +81,14 @@ public class LocalVcs {
     myPendingChanges.add(new DeleteChange(path));
   }
 
+  public Boolean isClean() {
+    return myPendingChanges.isEmpty();
+  }
+
+  private void clearPendingChanges() {
+    myPendingChanges = new ArrayList<Change>();
+  }
+
   public void apply() {
     ChangeSet cs = new ChangeSet(myPendingChanges);
 
@@ -96,19 +102,12 @@ public class LocalVcs {
     myRoot = myChangeList.revertOn(myRoot);
   }
 
-  private void clearPendingChanges() {
-    myPendingChanges = new ArrayList<Change>();
-  }
-
-  public Boolean isClean() {
-    return myPendingChanges.isEmpty();
-  }
-
   public void putLabel(String label) {
     myChangeList.setLabel(myRoot, label);
   }
 
   public RootEntry getSnapshot(String label) {
+    // todo rename me
     for (RootEntry r : getHistory()) {
       if (label.equals(myChangeList.getLabel(r))) return r;
     }

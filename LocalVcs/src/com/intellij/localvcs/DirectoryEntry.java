@@ -73,15 +73,12 @@ public class DirectoryEntry extends Entry {
 
   @Override
   protected Entry findEntry(Matcher m) {
-    // todo a bit messy
-    Entry result = super.findEntry(m);
-    if (result != null) return result;
+    if (m.matches(this)) return this;
 
     for (Entry child : myChildren) {
-      result = child.findEntry(m);
+      Entry result = child.findEntry(m);
       if (result != null) return result;
     }
-
     return null;
   }
 

@@ -32,7 +32,7 @@ public abstract class Entry {
   }
 
   public Path getPath() {
-    // todo try to remove this check
+    //todo try to remove this check
     if (!hasParent()) return new Path(myName);
     return myParent.getPathAppendedWith(myName);
   }

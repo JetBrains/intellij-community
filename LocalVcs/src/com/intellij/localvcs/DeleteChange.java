@@ -38,7 +38,7 @@ public class DeleteChange extends Change {
   @Override
   public void revertOn(RootEntry root) {
     // todo maybe we should create several DeleteChanges instead of saving
-    // previous entry?
+    // todo previous entry?
     restoreEntryRecursively(root, myAffectedEntry, myPath);
   }
 

@@ -74,7 +74,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
-  public void testDoesNotStoreUncommittedChanges() {
+  public void testDoesNotStoreUnappliedChanges() {
     vcs.createFile(p("file"), "content");
     vcs.store();
 

@@ -9,7 +9,7 @@ public class LocalVcsBasicsTest extends TestCase {
   private LocalVcs vcs = new LocalVcs(new TestStorage());
 
   @Test
-  public void testOnlyCommitThrowsException() {
+  public void testOnlyApplyThrowsException() {
     vcs.createFile(p("file"), "");
     vcs.createFile(p("file"), "");
 
@@ -20,7 +20,7 @@ public class LocalVcsBasicsTest extends TestCase {
   }
 
   @Test
-  public void testDoesNotApplyAnyChangeIfCommitFail() {
+  public void testDoesNotApplyAnyChangeIfOneFailed() {
     vcs.createFile(p("file1"), "");
     vcs.createFile(p("file2"), "");
     vcs.createFile(p("file2"), "");
@@ -32,7 +32,7 @@ public class LocalVcsBasicsTest extends TestCase {
   }
 
   @Test
-  public void testClearingChangesOnCommit() {
+  public void testClearingChangesOnApply() {
     vcs.createFile(p("file"), "content");
     vcs.changeFileContent(p("file"), "new content");
     vcs.rename(p("file"), "new file");
@@ -45,8 +45,7 @@ public class LocalVcsBasicsTest extends TestCase {
   }
 
   @Test
-  public void testDoesNotChangeContentBeforeCommit() {
-    // todo rename to doesNotMakeAnyChangesBeforeCommit
+  public void testDoesNotMakeAnyChangesBeforeApply() {
     vcs.createFile(p("file"), "content");
     vcs.apply();
 
@@ -162,7 +161,7 @@ public class LocalVcsBasicsTest extends TestCase {
   }
 
   @Test
-  public void testDoesNotIncludeUncommittedChangesInHistory() {
+  public void testDoesNotIncludeUnappliedChangesInHistory() {
     vcs.createFile(p("file"), "content");
     vcs.apply();
 
@@ -192,7 +191,7 @@ public class LocalVcsBasicsTest extends TestCase {
   }
 
   @Test
-  public void testCreatingAndDeletingSameFileBeforeCommit() {
+  public void testCreatingAndDeletingSameFileBeforeApply() {
     vcs.createFile(p("file"), "");
     vcs.delete(p("file"));
     vcs.apply();
@@ -201,7 +200,7 @@ public class LocalVcsBasicsTest extends TestCase {
   }
 
   @Test
-  public void testDeletingAndAddingSameFileBeforeCommit() {
+  public void testDeletingAndAddingSameFileBeforeApply() {
     vcs.createFile(p("file"), "");
     vcs.apply();
 
@@ -213,7 +212,7 @@ public class LocalVcsBasicsTest extends TestCase {
   }
 
   @Test
-  public void testAddingAndChangingSameFileBeforeCommit() {
+  public void testAddingAndChangingSameFileBeforeApply() {
     vcs.createFile(p("file"), "content");
     vcs.changeFileContent(p("file"), "new content");
     vcs.apply();
