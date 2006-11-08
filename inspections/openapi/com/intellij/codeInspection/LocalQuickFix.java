@@ -18,4 +18,6 @@ package com.intellij.codeInspection;
 /**
  * @author max
  */
-public interface LocalQuickFix extends QuickFix<ProblemDescriptor> {}
+public interface LocalQuickFix extends QuickFix<ProblemDescriptor> {
+  LocalQuickFix[] EMPTY_ARRAY = new LocalQuickFix[0];
+}

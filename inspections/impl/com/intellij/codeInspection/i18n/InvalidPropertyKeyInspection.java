@@ -173,22 +173,13 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
       if (!(value instanceof String)) return;
       String key = (String)value;
 
-      String[] resourceBundleName = new String[1];
-      Ref<PropertiesFile> missingTranslationFile = new Ref<PropertiesFile>();
-      if (!I18nUtil.isValidPropertyReference(expression, key, resourceBundleName, missingTranslationFile)) {
+      Ref<String> resourceBundleName = new Ref<String>();
+      if (!I18nUtil.isValidPropertyReference(expression, key, resourceBundleName)) {
         final String description = CodeInsightBundle.message("inspection.unresolved.property.key.reference.message", key);
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description,
-                                                                            new CreatePropertyQuickFix(key,resourceBundleName[0],expression),
+                                                                            new CreatePropertyQuickFix(key,resourceBundleName.get(),expression),
                                                                             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-        myProblems.add(problem);
-      }
-      else if (!missingTranslationFile.isNull()) {
-        final String description = CodeInsightBundle.message("inspection.missing.translation.message", missingTranslationFile.get().getName());
-        final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
-                                                                            description,
-                                                                            new CreatePropertyQuickFix(key,missingTranslationFile.get()),
-                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         myProblems.add(problem);
       }
       else if (expression.getParent() instanceof PsiNameValuePair) {

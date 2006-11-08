@@ -57,7 +57,7 @@ public class AddMethodFix implements IntentionAction {
     return result;
   }
 
-  public void setText(String text) {
+  protected void setText(String text) {
     myText = text;
   }
 
@@ -69,10 +69,6 @@ public class AddMethodFix implements IntentionAction {
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.method.family");
-  }
-
-  public void addException(String exception) {
-    myExceptions.add(exception);
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
+import com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
@@ -127,6 +128,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       UncheckedWarningLocalInspection.class,
       SuspiciousNameCombinationInspection.class,
       DuplicateThrowsInspection.class,
+      InconsistentResourceBundleInspection.class,
     };
   }
 }

@@ -38,18 +38,6 @@ public class PropertiesUtil {
     return true;
   }
 
-  public static @NotNull List<PropertiesFile> virtualFilesToProperties(Project project, List<VirtualFile> files) {
-    List<PropertiesFile> propertiesFiles = new ArrayList<PropertiesFile>(files.size());
-    PsiManager psiManager = PsiManager.getInstance(project);
-    for (VirtualFile file : files) {
-      PsiFile psiFile = psiManager.findFile(file);
-      if (psiFile instanceof PropertiesFile) {
-        propertiesFiles.add((PropertiesFile)psiFile);
-      }
-    }
-    return propertiesFiles;
-  }
-
   @NotNull
   public static String getBaseName(@NotNull VirtualFile virtualFile) {
     String name = virtualFile.getNameWithoutExtension();
@@ -70,6 +58,26 @@ public class PropertiesUtil {
     return baseName;
   }
 
+  /**
+   * messages_en.properties is a parent of the messages_en_US.properties
+   */
+  @Nullable
+  public static PropertiesFile getParent(PropertiesFile file, List<PropertiesFile> candidates) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return null;
+    String name = virtualFile.getNameWithoutExtension();
+    String[] parts = name.split("_");
+    if (parts.length == 1) return null;
+    List<String> partsList = Arrays.asList(parts);
+    for (int i=parts.length-1; i>=1;i--) {
+      String parentName = StringUtil.join(partsList.subList(0, i), "_") + "." + virtualFile.getExtension();
+      for (PropertiesFile candidate : candidates) {
+        if (parentName.equals(candidate.getName())) return candidate;
+      }
+    }
+    return null;
+  }
+
   @Nullable
   public static String getFullName(PropertiesFile psiFile) {
     PsiDirectory directory = (PsiDirectory)psiFile.getParent();
@@ -83,7 +91,7 @@ public class PropertiesUtil {
       }
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     assert virtualFile != null;
-    qName.append(PropertiesUtil.getBaseName(virtualFile));
+    qName.append(getBaseName(virtualFile));
     return qName.toString();
   }
 

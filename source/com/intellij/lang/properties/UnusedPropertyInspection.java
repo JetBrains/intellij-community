@@ -33,19 +33,22 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.UnusedPropertyInspection");
   private static final RemovePropertyLocalFix QUICK_FIX = new RemovePropertyLocalFix();
 
+  @NotNull
   public String getGroupDisplayName() {
     return PropertiesBundle.message("properties.files.inspection.group.display.name");
   }
 
+  @NotNull
   public String getDisplayName() {
-    return PropertiesBundle.message("properties.files.inspection.group.name");
+    return PropertiesBundle.message("unused.property.inspection.display.name");
   }
 
+  @NotNull
   public String getShortName() {
     return "UnusedProperty";
   }
 
-  public ProblemDescriptor[] checkFile(PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     final List<Property> properties = ((PropertiesFile)file).getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
@@ -95,7 +98,7 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
     while (prev instanceof PsiWhiteSpace || prev instanceof PsiComment) {
       if (prev instanceof PsiComment) {
         @NonNls String text = prev.getText();
-        if (text.indexOf("suppress") >= 0 && text.indexOf("\"unused property\"") >= 0) return true;
+        if (text.contains("suppress") && text.contains("\"unused property\"")) return true;
       }
       prev = prev.getPrevSibling();
     }
@@ -106,10 +109,7 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
 
     while (leaf instanceof PsiComment) {
       @NonNls String text = leaf.getText();
-      if (text.indexOf("suppress") >= 0 &&
-          text.indexOf("\"unused property\"") >= 0 &&
-          text.indexOf("file") >= 0
-        ) {
+      if (text.contains("suppress") && text.contains("\"unused property\"") && text.contains("file")) {
         return true;
       }
       leaf = leaf.getNextSibling();

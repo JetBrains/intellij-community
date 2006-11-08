@@ -49,7 +49,7 @@ public interface ProblemDescriptionsProcessor {
    * @param refEntity                the reference graph node.
    * @param commonProblemDescriptors the descriptors for the problems to register.
    */
-  void addProblemElement(final RefEntity refEntity, final CommonProblemDescriptor[] commonProblemDescriptors);
+  void addProblemElement(final RefEntity refEntity, final CommonProblemDescriptor... commonProblemDescriptors);
 
   RefEntity getElement(final CommonProblemDescriptor descriptor);
 }

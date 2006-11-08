@@ -131,8 +131,7 @@ public class I18nUtil {
     return false;
   }
 
-  public static boolean isValidPropertyReference(PsiLiteralExpression expression, final String key, String[] outResourceBundle,
-                                                 final Ref<PropertiesFile> missingTranslationFile) {
+  public static boolean isValidPropertyReference(PsiLiteralExpression expression, final String key, Ref<String> outResourceBundle) {
     final HashMap<String, Object> annotationAttributeValues = new HashMap<String, Object>();
     annotationAttributeValues.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
     if (mustBePropertyKey(expression, annotationAttributeValues)) {
@@ -146,25 +145,21 @@ public class I18nUtil {
         return false;
       }
       String bundleName = value.toString();
-      outResourceBundle[0] = bundleName;
-      return isPropertyRef(expression, key, bundleName, missingTranslationFile);
+      outResourceBundle.set(bundleName);
+      return isPropertyRef(expression, key, bundleName);
     }
     return true;
   }
 
-  public static boolean isPropertyRef(final PsiLiteralExpression expression, final String value, final String resourceBundleName, final Ref<PropertiesFile> missingTranslationFile) {
+  public static boolean isPropertyRef(final PsiLiteralExpression expression, final String key, final String resourceBundleName) {
     if (resourceBundleName == null) {
-      return !PropertiesUtil.findPropertiesByKey(expression.getProject(), value).isEmpty();
+      return !PropertiesUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
     }
     else {
       final List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
       boolean containedInPropertiesFile = false;
       for (PropertiesFile propertiesFile : propertiesFiles) {
-        boolean isItThere = propertiesFile.findPropertyByKey(value) != null;
-        containedInPropertiesFile |= isItThere;
-        if (!isItThere && missingTranslationFile != null) {
-          missingTranslationFile.set(propertiesFile);
-        }
+        containedInPropertiesFile |= propertiesFile.findPropertyByKey(key) != null;
       }
       return containedInPropertiesFile;
     }

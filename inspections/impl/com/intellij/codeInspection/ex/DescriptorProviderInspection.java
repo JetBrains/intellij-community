@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
@@ -40,11 +41,18 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   private HashMap<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
 
-  public void addProblemElement(RefEntity refElement, CommonProblemDescriptor[] descriptions) {
+  public void addProblemElement(RefEntity refElement, CommonProblemDescriptor... descriptions) {
     if (refElement == null) return;
     if (descriptions == null || descriptions.length == 0) return;
     if (ourOutputPath == null) {
-      getProblemElements().put(refElement, descriptions);
+      CommonProblemDescriptor[] problems = getProblemElements().get(refElement);
+      if (problems == null) {
+        problems = descriptions;
+      }
+      else {
+        problems = ArrayUtil.mergeArrays(problems, descriptions, CommonProblemDescriptor.class);
+      }
+      getProblemElements().put(refElement, problems);
       for (CommonProblemDescriptor description : descriptions) {
         getProblemToElements().put(description, refElement);
         collectQuickFixes(description.getFixes(), refElement);
@@ -124,7 +132,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         ArrayList<CommonProblemDescriptor> newDescriptors = new ArrayList<CommonProblemDescriptor>(Arrays.asList(descriptors));
         newDescriptors.remove(problem);
         getQuickFixActions().put(refEntity, null);
-        if (newDescriptors.size() > 0) {
+        if (!newDescriptors.isEmpty()) {
           getProblemElements().put(refEntity, newDescriptors.toArray(new ProblemDescriptor[newDescriptors.size()]));
           for (CommonProblemDescriptor descriptor : newDescriptors) {
             collectQuickFixes(descriptor.getFixes(), refEntity);
@@ -284,12 +292,11 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       }
       return false;
     } else {
-      if (getProblemElements().size() > 0) return true;
+      if (!getProblemElements().isEmpty()) return true;
     }
     return context != null &&
            context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN &&
-           myOldProblemElements != null &&
-           myOldProblemElements.size() > 0;
+           myOldProblemElements != null && !myOldProblemElements.isEmpty();
   }
 
   public void updateContent() {
