@@ -75,6 +75,10 @@ public class LocalVcs {
     myPendingChanges.add(new CreateFileChange(path, content));
   }
 
+  public void createDirectory(Path path) {
+    myPendingChanges.add(new CreateDirectoryChange(path));
+  }
+
   public void changeFileContent(Path path, String content) {
     myPendingChanges.add(new ChangeFileContentChange(path, content));
   }
@@ -83,11 +87,15 @@ public class LocalVcs {
     myPendingChanges.add(new RenameChange(path, newName));
   }
 
+  public void move(Path path, Path newParent) {
+    myPendingChanges.add(new MoveChange(path, newParent));
+  }
+
   public void delete(Path path) {
     myPendingChanges.add(new DeleteChange(path));
   }
 
-  public void commit() {
+  public void apply() {
     myRoot = myChangeList.applyChangeSetOn(
         myRoot, new ChangeSet(myPendingChanges));
     clearPendingChanges();

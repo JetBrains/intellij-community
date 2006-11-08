@@ -41,15 +41,6 @@ public class RootEntry extends DirectoryEntry {
     return new Path(name);
   }
 
-  @Override
-  protected Entry copyEntry() {
-    RootEntry result = new RootEntry();
-    // todo test it
-    result.myIdGenerator = myIdGenerator;
-    result.myChangeListIndex = myChangeListIndex;
-    return result;
-  }
-
   public boolean hasEntry(Path path) {
     return findEntry(path) != null;
   }
@@ -121,15 +112,42 @@ public class RootEntry extends DirectoryEntry {
     return myIdGenerator.getNextObjectId();
   }
 
-  public void addEntry(Path parent, Entry entry) {
+  private void addEntry(Path parent, Entry entry) {
     // todo quite ugly
     if (parent == null) addChild(entry);
     else getEntry(parent).addChild(entry);
   }
 
-  public void removeEntry(Path path) {
+  private void removeEntry(Path path) {
     Entry parent = path.isRoot() ? this : getEntry(path.getParent());
     parent.removeChild(getEntry(path));
+  }
+
+  public RootEntry apply(ChangeSet cs) {
+    RootEntry result = copy();
+    cs.applyTo(result);
+    return result;
+  }
+
+  public RootEntry revert(ChangeSet cs) {
+    RootEntry result = copy();
+    cs.revertOn(result);
+    return result;
+  }
+
+  @Override
+  public RootEntry copy() {
+    // todo just for avoid casting
+    return (RootEntry)super.copy();
+  }
+
+  @Override
+  protected Entry copyEntry() {
+    RootEntry result = new RootEntry();
+    // todo test it
+    result.myIdGenerator = myIdGenerator;
+    result.myChangeListIndex = myChangeListIndex;
+    return result;
   }
 
   private static class PathMatcher implements Matcher {

@@ -13,7 +13,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.createFile(p("file"), "");
 
     try {
-      vcs.commit();
+      vcs.apply();
       fail();
     } catch (LocalVcsException e) { }
   }
@@ -24,7 +24,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.createFile(p("file2"), "");
     vcs.createFile(p("file2"), "");
 
-    try { vcs.commit(); } catch (LocalVcsException e) { }
+    try { vcs.apply(); } catch (LocalVcsException e) { }
 
     assertFalse(vcs.hasEntry(p("file1")));
     assertFalse(vcs.hasEntry(p("file2")));
@@ -39,7 +39,7 @@ public class LocalVcsBasicsTest extends TestCase {
 
     assertFalse(vcs.isClean());
 
-    vcs.commit();
+    vcs.apply();
     assertTrue(vcs.isClean());
   }
 
@@ -47,7 +47,7 @@ public class LocalVcsBasicsTest extends TestCase {
   public void testDoesNotChangeContentBeforeCommit() {
     // todo rename to doesNotMakeAnyChangesBeforeCommit
     vcs.createFile(p("file"), "content");
-    vcs.commit();
+    vcs.apply();
 
     vcs.changeFileContent(p("file"), "new content");
 
@@ -57,10 +57,10 @@ public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testHistory() {
     vcs.createFile(p("file"), "content");
-    vcs.commit();
+    vcs.apply();
 
     vcs.changeFileContent(p("file"), "new content");
-    vcs.commit();
+    vcs.apply();
 
     assertEntiesContents(new String[]{"new content", "content"},
                          vcs.getEntryHistory(p("file")));
@@ -69,7 +69,7 @@ public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testHistoryOfAnUnknownFile() {
     vcs.createFile(p("file"), "");
-    vcs.commit();
+    vcs.apply();
 
     assertTrue(vcs.getEntryHistory(p("unknown file")).isEmpty());
   }
@@ -77,10 +77,10 @@ public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testHistoryOfDeletedFile() {
     vcs.createFile(p("file"), "content");
-    vcs.commit();
+    vcs.apply();
 
     vcs.delete(p("file"));
-    vcs.commit();
+    vcs.apply();
 
     // todo what should we return?
     assertTrue(vcs.getEntryHistory(p("file")).isEmpty());
@@ -89,7 +89,7 @@ public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testDoesNotIncludeUncommittedChangesInHistory() {
     vcs.createFile(p("file"), "content");
-    vcs.commit();
+    vcs.apply();
 
     vcs.changeFileContent(p("file"), "new content");
 
@@ -100,10 +100,10 @@ public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testRenamingKeepsOldNameAndContent() {
     vcs.createFile(p("file"), "content");
-    vcs.commit();
+    vcs.apply();
 
     vcs.rename(p("file"), "new file");
-    vcs.commit();
+    vcs.apply();
 
     List<Entry> revs = vcs.getEntryHistory(p("new file"));
 
@@ -120,7 +120,7 @@ public class LocalVcsBasicsTest extends TestCase {
   public void testCreatingAndDeletingSameFileBeforeCommit() {
     vcs.createFile(p("file"), "");
     vcs.delete(p("file"));
-    vcs.commit();
+    vcs.apply();
 
     assertFalse(vcs.hasEntry(p("file")));
   }
@@ -128,11 +128,11 @@ public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testDeletingAndAddingSameFileBeforeCommit() {
     vcs.createFile(p("file"), "");
-    vcs.commit();
+    vcs.apply();
 
     vcs.delete(p("file"));
     vcs.createFile(p("file"), "");
-    vcs.commit();
+    vcs.apply();
 
     assertTrue(vcs.hasEntry(p("file")));
   }
@@ -141,7 +141,7 @@ public class LocalVcsBasicsTest extends TestCase {
   public void testAddingAndChangingSameFileBeforeCommit() {
     vcs.createFile(p("file"), "content");
     vcs.changeFileContent(p("file"), "new content");
-    vcs.commit();
+    vcs.apply();
 
     assertEquals("new content", vcs.getEntry(p("file")).getContent());
   }
@@ -149,11 +149,11 @@ public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testDeletingFileAndCreatingNewOneWithSameName() {
     vcs.createFile(p("file"), "old");
-    vcs.commit();
+    vcs.apply();
 
     vcs.delete(p("file"));
     vcs.createFile(p("file"), "new");
-    vcs.commit();
+    vcs.apply();
 
     assertEntiesContents(new String[]{"new"}, vcs.getEntryHistory(p("file")));
   }
@@ -161,11 +161,11 @@ public class LocalVcsBasicsTest extends TestCase {
   @Test
   public void testRenamingFileAndCreatingNewOneWithSameName() {
     vcs.createFile(p("file1"), "content1");
-    vcs.commit();
+    vcs.apply();
 
     vcs.rename(p("file1"), "file2");
     vcs.createFile(p("file1"), "content2");
-    vcs.commit();
+    vcs.apply();
 
     assertEntiesContents(new String[]{"content1", "content1"},
                          vcs.getEntryHistory(p("file2")));

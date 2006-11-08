@@ -8,7 +8,7 @@ public class LocalVcsStorageTest extends TempDirTestCase {
   @Test
   public void testStoringEntries() throws IOException {
     vcs.createFile(p("file"), "content");
-    vcs.commit();
+    vcs.apply();
 
     vcs.store(myTempDir);
     LocalVcs result = new LocalVcs(myTempDir);
@@ -19,9 +19,9 @@ public class LocalVcsStorageTest extends TempDirTestCase {
   @Test
   public void testStoringChangeList() throws IOException {
     vcs.createFile(p("file"), "content");
-    vcs.commit();
+    vcs.apply();
     vcs.changeFileContent(p("file"), "new content");
-    vcs.commit();
+    vcs.apply();
 
     vcs.store(myTempDir);
     LocalVcs result = new LocalVcs(myTempDir);
@@ -39,13 +39,13 @@ public class LocalVcsStorageTest extends TempDirTestCase {
   public void testStoringObjectsCounter() throws IOException {
     vcs.createFile(p("file1"), "content1");
     vcs.createFile(p("file2"), "content2");
-    vcs.commit();
+    vcs.apply();
 
     vcs.store(myTempDir);
     LocalVcs result = new LocalVcs(myTempDir);
 
     result.createFile(p("file3"), "content3");
-    result.commit();
+    result.apply();
 
     Integer id2 = result.getEntry(p("file2")).getObjectId();
     Integer id3 = result.getEntry(p("file3")).getObjectId();

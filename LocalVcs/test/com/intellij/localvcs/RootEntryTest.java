@@ -63,4 +63,24 @@ public class RootEntryTest extends TestCase {
     assertNotSame(child, copy.getChildren().get(0));
     assertEquals("child", copy.getChildren().get(0).getName());
   }
+
+  @Test
+  public void testApplyingReturnsCopy() {
+    RootEntry original = new RootEntry();
+    RootEntry result = original.apply(cs(new CreateFileChange(p("file"), "")));
+
+    assertFalse(original.hasEntry(p("file")));
+    assertTrue(result.hasEntry(p("file")));
+  }
+
+  @Test
+  public void testRevertingReturnsCopy() {
+    ChangeSet cs = cs(new CreateFileChange(p("file"), ""));
+
+    RootEntry original = new RootEntry().apply(cs);
+    RootEntry result = original.revert(cs);
+
+    assertTrue(original.hasEntry(p("file")));
+    assertFalse(result.hasEntry(p("file")));
+  }
 }
