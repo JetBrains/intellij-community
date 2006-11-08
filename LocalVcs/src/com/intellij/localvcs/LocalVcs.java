@@ -1,8 +1,6 @@
 package com.intellij.localvcs;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,35 +16,19 @@ public class LocalVcs {
   public LocalVcs() {}
 
   public LocalVcs(File dir) throws IOException {
-    File f = new File(dir, "content");
-    FileInputStream fs = new FileInputStream(f);
-    try {
-      Stream s = new Stream(fs);
+    Storage s = new Storage(dir);
 
-      myChangeList = s.readChangeList();
-      myRoot = (RootEntry)s.readEntry(); // todo cast!!!
-      myEntryCounter = s.readInteger();
-    } finally {
-      // todo dont forget to test stream closing...
-      fs.close();
-    }
+    myChangeList = s.loadChangeList();
+    myRoot = s.loadRootEntry();
+    myEntryCounter = s.loadCounter();
   }
 
   public void store(File dir) throws IOException {
-    File f = new File(dir, "content");
-    f.createNewFile();
+    Storage s = new Storage(dir);
 
-    FileOutputStream fs = new FileOutputStream(f);
-    try {
-      Stream s = new Stream(fs);
-
-      s.writeChangeList(myChangeList);
-      s.writeEntry(myRoot);
-      s.writeInteger(myEntryCounter); // todo test it
-    } finally {
-      // todo dont forget to test stream closing...
-      fs.close();
-    }
+    s.storeChangeList(myChangeList);
+    s.storeRootEntry(myRoot);
+    s.storeCounter(myEntryCounter); // todo test it
   }
 
   public boolean hasEntry(Path path) {
