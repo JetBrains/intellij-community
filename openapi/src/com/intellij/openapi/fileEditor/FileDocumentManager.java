@@ -40,9 +40,18 @@ public abstract class FileDocumentManager {
   public abstract boolean isDocumentUnsaved(Document document);
   public abstract boolean isFileModified(VirtualFile file);
 
+  public abstract void addFileDocumentSynchronizationVetoer(FileDocumentSynchronizationVetoListener vetoer);
+  public abstract void removeFileDocumentSynchronizationVetoer(FileDocumentSynchronizationVetoListener vetoer);
+
+  /**
+   * @deprecated Subscribe to {@link com.intellij.AppTopics#FILE_DOCUMENT_SYNC} on any level bus.
+   */
   public abstract void addFileDocumentManagerListener(FileDocumentManagerListener listener);
+
+  /**
+   * @deprecated Subscribe to {@link com.intellij.AppTopics#FILE_DOCUMENT_SYNC} on any level bus.
+   */
   public abstract void removeFileDocumentManagerListener(FileDocumentManagerListener listener);
-  public abstract void dispatchPendingEvents(FileDocumentManagerListener listener);
 
   public abstract void reloadFromDisk(Document document);
 

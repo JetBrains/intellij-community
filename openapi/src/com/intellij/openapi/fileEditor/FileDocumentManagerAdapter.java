@@ -19,13 +19,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class FileDocumentManagerAdapter implements FileDocumentManagerListener{
-  public void beforeDocumentSaving(Document document) throws VetoDocumentSavingException {
+  public void beforeDocumentSaving(Document document) {
   }
 
   public void fileWithNoDocumentChanged(VirtualFile file) {
   }
 
-  public void beforeFileContentReload(VirtualFile file, Document document) throws VetoDocumentReloadException {
+  public void beforeFileContentReload(VirtualFile file, Document document) {
   }
 
   public void fileContentReloaded(VirtualFile file, Document document) {

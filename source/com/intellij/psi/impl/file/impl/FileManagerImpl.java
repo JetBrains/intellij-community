@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,7 +32,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakValueHashMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +58,6 @@ public class FileManagerImpl implements FileManager {
   private WeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
 
   private VirtualFileListener myVirtualFileListener = null;
-  private FileDocumentManagerListener myFileDocumentManagerListener = null;
   private boolean myInitialized = false;
   private boolean myDisposed = false;
   private boolean myUseRepository = true;
@@ -71,7 +68,6 @@ public class FileManagerImpl implements FileManager {
   private Set<String> myNontrivialPackagePrefixes = null;
   private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
-  private MessageBus myBus;
   private MessageBusConnection myConnection;
 
   private static final @NonNls String JAVA_EXTENSION = ".java";
@@ -85,8 +81,7 @@ public class FileManagerImpl implements FileManager {
                          ProjectRootManager projectRootManager) {
     myFileTypeManager = fileTypeManager;
     myManager = manager;
-    myBus = manager.getProject().getMessageBus();
-    myConnection = myBus.connectStrongly();
+    myConnection = manager.getProject().getMessageBus().connectStrongly();
 
     myVirtualFileManager = virtualFileManager;
     myFileDocumentManager = fileDocumentManager;
@@ -98,7 +93,6 @@ public class FileManagerImpl implements FileManager {
       myConnection.disconnect();
 
       myVirtualFileManager.removeVirtualFileListener(myVirtualFileListener);
-      myFileDocumentManager.removeFileDocumentManagerListener(myFileDocumentManagerListener);
       synchronized (PsiLock.LOCK) {
         myCachedObjectClassMap = null;
       }
@@ -171,9 +165,6 @@ public class FileManagerImpl implements FileManager {
     myVirtualFileListener = new MyVirtualFileListener();
     myVirtualFileManager.addVirtualFileListener(myVirtualFileListener);
 
-    myFileDocumentManagerListener = new MyFileDocumentManagerAdapter();
-    myFileDocumentManager.addFileDocumentManagerListener(myFileDocumentManagerListener);
-
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {}
 
@@ -197,6 +188,7 @@ public class FileManagerImpl implements FileManager {
     });
 
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
+    myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
   }
 
   private void dispatchPendingEvents() {
@@ -210,7 +202,6 @@ public class FileManagerImpl implements FileManager {
     if (!ApplicationManager.getApplication().isDispatchThread()) return;
 
     myVirtualFileManager.dispatchPendingEvent(myVirtualFileListener);
-    myFileDocumentManager.dispatchPendingEvents(myFileDocumentManagerListener);
 
     myConnection.deliverImmediately();
     //TODO: other listeners
@@ -262,6 +253,7 @@ public class FileManagerImpl implements FileManager {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
+  @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     LOG.assertTrue(vFile.isValid());
@@ -388,6 +380,7 @@ public class FileManagerImpl implements FileManager {
     return myNontrivialPackagePrefixes;
   }
 
+  @Nullable
   private PsiFile createFileCopyWithNewName(VirtualFile vFile, String name) {
     // TODO[ik] remove this. Event handling and generation must be in view providers mechanism since we
     // need to track changes in _all_ psi views (e.g. namespace changes in XML)
@@ -400,6 +393,7 @@ public class FileManagerImpl implements FileManager {
                                                             vFile.getModificationStamp(), true, false);
   }
 
+  @Nullable
   public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     LOG.assertTrue(myInitialized, "Access to psi files should be performed only after startup activity");
     LOG.assertTrue(!myDisposed, "Access to psi files should not be performed after disposal");
@@ -429,6 +423,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
+  @Nullable
   public PsiPackage findPackage(@NotNull String packageName) {
     Query<VirtualFile> dirs = myProjectRootManager.getFileIndex().getDirsByPackageName(packageName, false);
     if (dirs.findFirst() == null) return null;
@@ -459,6 +454,7 @@ public class FileManagerImpl implements FileManager {
       return result.toArray(new PsiClass[result.size()]);
     }
 
+  @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     if (!myUseRepository) {
       return findClassWithoutRepository(qName);
@@ -489,6 +485,7 @@ public class FileManagerImpl implements FileManager {
     return _findClass(qName, scope);
   }
 
+  @Nullable
   private PsiClass findClassWithoutRepository(String qName) {
     synchronized (PsiLock.LOCK) {
       if (myNameToClassMap.containsKey(qName)) return myNameToClassMap.get(qName);
@@ -499,6 +496,7 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
+  @Nullable
   private PsiClass _findClassWithoutRepository(String qName) {
     PsiClass aClass = myNameToClassMap.get(qName);
     if (aClass != null) return aClass;
@@ -572,6 +570,7 @@ public class FileManagerImpl implements FileManager {
     return null;
   }
 
+  @Nullable
   private static PsiClass findClassByName(PsiJavaFile scope, String name) {
     PsiClass[] classes = scope.getClasses();
     for (PsiClass aClass : classes) {
@@ -582,6 +581,7 @@ public class FileManagerImpl implements FileManager {
     return null;
   }
 
+  @Nullable
   private static PsiClass findClassByName(PsiClass scope, String name) {
     PsiClass[] classes = scope.getInnerClasses();
     for (PsiClass aClass : classes) {
@@ -592,6 +592,7 @@ public class FileManagerImpl implements FileManager {
     return null;
   }
 
+  @Nullable
   private PsiClass _findClass(String qName, GlobalSearchScope scope) {
     RepositoryManager repositoryManager = myManager.getRepositoryManager();
     RepositoryIndex index = repositoryManager.getIndex();
@@ -642,7 +643,8 @@ public class FileManagerImpl implements FileManager {
     return true;
   }
 
-  public PsiFile getCachedPsiFileInner(VirtualFile file) {
+  @Nullable
+  private PsiFile getCachedPsiFileInner(VirtualFile file) {
     final FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
     return fileViewProvider != null ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
@@ -757,6 +759,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
+    @SuppressWarnings({"EmptyMethod"})
     public void contentsChanged(final VirtualFileEvent event) {
       // handled by FileDocumentManagerListener
     }
@@ -971,6 +974,8 @@ public class FileManagerImpl implements FileManager {
 
     private boolean isExcludeRoot(VirtualFile file) {
       VirtualFile parent = file.getParent();
+      if (parent == null) return false;
+
       Module module = myProjectRootManager.getFileIndex().getModuleForFile(parent);
       if (module == null) return false;
       VirtualFile[] excludeRoots = ModuleRootManager.getInstance(module).getExcludeRoots();

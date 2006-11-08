@@ -8,7 +8,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -83,19 +82,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
       catch (AbstractMethodError e) {
         //Do nothing. This listener just does not implement something newly added yet.
       }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (InvocationTargetException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof RuntimeException) {
-          throw (RuntimeException)cause;
-        }
-        else {
-          LOG.error(cause);
-        }
-      }      
-      catch(Exception e) {
+      catch(Throwable e) {
         LOG.error(e.getCause());
       }
     }

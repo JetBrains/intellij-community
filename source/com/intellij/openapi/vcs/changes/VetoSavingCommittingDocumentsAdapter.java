@@ -10,16 +10,18 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.openapi.fileEditor.VetoDocumentSavingException;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener;
+import com.intellij.openapi.fileEditor.VetoDocumentReloadException;
+import com.intellij.openapi.fileEditor.VetoDocumentSavingException;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class VetoSavingCommittingDocumentsAdapter extends FileDocumentManagerAdapter implements ApplicationComponent {
+public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponent, FileDocumentSynchronizationVetoListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.VetoSavingCommittingDocumentsAdapter");
 
   private FileDocumentManager myFileDocumentManager;
@@ -37,16 +39,20 @@ public class VetoSavingCommittingDocumentsAdapter extends FileDocumentManagerAda
     }
   }
 
+
+  public void beforeFileContentReload(VirtualFile file, Document document) throws VetoDocumentReloadException {
+  }
+
   @NonNls @NotNull
   public String getComponentName() {
     return "VetoSavingComittingDocumentsAdapter";
   }
 
   public void initComponent() {
-    myFileDocumentManager.addFileDocumentManagerListener(this);
+    myFileDocumentManager.addFileDocumentSynchronizationVetoer(this);
   }
 
   public void disposeComponent() {
-    myFileDocumentManager.removeFileDocumentManagerListener(this);
+    myFileDocumentManager.removeFileDocumentSynchronizationVetoer(this);
   }
 }

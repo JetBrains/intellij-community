@@ -20,12 +20,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.EventListener;
 
-public interface FileDocumentManagerListener extends EventListener{
-  void beforeDocumentSaving(Document document) throws VetoDocumentSavingException;
+public interface FileDocumentManagerListener extends EventListener {
+  /**
+   * NOTE: Vetoing facility is deprecated in this listener implement {@link com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener} instead.
+   */
+  void beforeDocumentSaving(Document document);
+
+  /**
+   * NOTE: Vetoing facility is deprecated in this listener implement {@link com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener} instead.
+   */
+  void beforeFileContentReload(VirtualFile file, Document document);
+
   void fileWithNoDocumentChanged(VirtualFile file);
-
-  void beforeFileContentReload(VirtualFile file, Document document) throws VetoDocumentReloadException;
   void fileContentReloaded(VirtualFile file, Document document);
-
   void fileContentLoaded(VirtualFile file, Document document);
 }

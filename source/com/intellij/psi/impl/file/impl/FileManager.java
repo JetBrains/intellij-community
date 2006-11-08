@@ -17,17 +17,21 @@ public interface FileManager {
   @Nullable
   PsiFile findFile(@NotNull VirtualFile vFile);
 
+  @Nullable
   PsiDirectory findDirectory(@NotNull VirtualFile vFile);
 
+  @Nullable
   PsiPackage findPackage(@NotNull String packageName);
 
   PsiDirectory[] getRootDirectories(int rootType);
 
+  @Nullable
   PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope);
   PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope);
 
   void reloadFromDisk(@NotNull PsiFile file); //Q: move to PsiFile(Impl)?
 
+  @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
 
   @NotNull GlobalSearchScope getResolveScope(@NotNull PsiElement element);

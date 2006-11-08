@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.AppTopics;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -17,10 +18,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.VetoDocumentReloadException;
-import com.intellij.openapi.fileEditor.VetoDocumentSavingException;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -41,6 +39,8 @@ import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.PendingEventDispatcher;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,9 +51,7 @@ import java.io.Writer;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
@@ -69,10 +67,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private boolean myDummyProjectInitialized = false;
   private final Object myDummyProjectInitializationLock = new Object();
 
-  private PendingEventDispatcher<FileDocumentManagerListener> myEventDispatcher = PendingEventDispatcher.create(FileDocumentManagerListener.class);
+  private PendingEventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = PendingEventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
+
   private final PsiManagerConfiguration myPsiManagerConfiguration;
   private final ProjectManagerEx myProjectManagerEx;
   private VirtualFileManager myVirtualFileManager;
+  private MessageBus myBus;
 
 
   public FileDocumentManagerImpl(VirtualFileManager virtualFileManager,
@@ -83,7 +83,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myVirtualFileManager = virtualFileManager;
 
     myVirtualFileManager.addVirtualFileListener(this);
-    addFileDocumentManagerListener(new TrailingSpacesStripper());
+
+    myBus = ApplicationManager.getApplication().getMessageBus();
+    myBus.connectStrongly().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new TrailingSpacesStripper());
   }
 
   @NotNull
@@ -238,13 +240,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       }
 
       try {
-        for(FileDocumentManagerListener listener: myEventDispatcher.getListeners()) {
+        for(FileDocumentSynchronizationVetoListener listener: myVetoDispatcher.getListeners()) {
           listener.beforeDocumentSaving(document);
         }
       }
       catch (VetoDocumentSavingException e) {
         return;
       }
+
+      myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeDocumentSaving(document);
 
       LOG.assertTrue(file.isValid());
 
@@ -315,19 +319,26 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return doc != null && doc.getModificationStamp() != file.getModificationStamp();
   }
 
+  public void addFileDocumentSynchronizationVetoer(FileDocumentSynchronizationVetoListener vetoer) {
+    myVetoDispatcher.addListener(vetoer);
+  }
+
+  public void removeFileDocumentSynchronizationVetoer(FileDocumentSynchronizationVetoListener vetoer) {
+    myVetoDispatcher.removeListener(vetoer);
+  }
+
+  private Map<FileDocumentManagerListener, MessageBusConnection> myAdapters = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
   public void addFileDocumentManagerListener(FileDocumentManagerListener listener) {
-    myEventDispatcher.addListener(listener);
+    final MessageBusConnection connection = myBus.connectStrongly();
+    myAdapters.put(listener, connection);
+    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
   }
 
   public void removeFileDocumentManagerListener(FileDocumentManagerListener listener) {
-    myEventDispatcher.removeListener(listener);
-  }
-
-  public void dispatchPendingEvents(FileDocumentManagerListener listener) {
-    if (!myEventDispatcher.isDispatching()) {
-      myVirtualFileManager.dispatchPendingEvent(this);
+    final MessageBusConnection connection = myAdapters.remove(listener);
+    if (connection != null) {
+      connection.disconnect();
     }
-    myEventDispatcher.dispatchPendingEvent(listener);
   }
 
   public void propertyChanged(final VirtualFilePropertyEvent event) {
@@ -352,7 +363,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     final VirtualFile file = event.getFile();
     final Document document = getCachedDocument(file);
     if (document == null) {
-      myEventDispatcher.getMulticaster().fileWithNoDocumentChanged(file);
+      myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileWithNoDocumentChanged(file);
       return;
     }
 
@@ -511,20 +522,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private void fireFileContentReloaded(final VirtualFile file, final Document document) {
-    List<FileDocumentManagerListener> listeners = myEventDispatcher.getListeners();
-    for (FileDocumentManagerListener listener : listeners) {
-      try {
-        listener.fileContentReloaded(file, document);
-      }
-      catch (AbstractMethodError e) {
-        // Do nothing. Some listener just does not implement this method yet.
-      }
-    }
+    myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentReloaded(file, document);
   }
 
   private void fireBeforeFileContentReload(final VirtualFile file, final Document document) throws VetoDocumentReloadException {
-    List<FileDocumentManagerListener> listeners = myEventDispatcher.getListeners();
-    for (FileDocumentManagerListener listener : listeners) {
+    List<FileDocumentSynchronizationVetoListener> listeners = myVetoDispatcher.getListeners();
+    for (FileDocumentSynchronizationVetoListener listener : listeners) {
       try {
         listener.beforeFileContentReload(file, document);
       }
@@ -532,17 +535,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         // Do nothing. Some listener just does not implement this method yet.
       }
     }
+
+    myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).beforeFileContentReload(file, document);
   }
 
   private void fireFileContentLoaded(VirtualFile file, DocumentEx document) {
-    List<FileDocumentManagerListener> listeners = myEventDispatcher.getListeners();
-    for (FileDocumentManagerListener listener : listeners) {
-      try {
-        listener.fileContentLoaded(file, document);
-      }
-      catch (AbstractMethodError e) {
-        // Do nothing. Some listener just does not implement this method yet.
-      }
-    }
+    myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
   }
 }
