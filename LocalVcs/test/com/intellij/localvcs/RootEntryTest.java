@@ -43,14 +43,48 @@ public class RootEntryTest extends TestCase {
   }
 
   @Test
+  public void testGettingEntry() {
+    Entry e1 = root.getEntry(p("child"));
+    Entry e2 = root.getEntry(e1.getObjectId());
+
+    assertSame(child, e1);
+    assertSame(child, e2);
+  }
+
+  @Test
+  public void testGettingEntryUnderDirectory() {
+    root = new RootEntry();
+    root.doCreateDirectory(p("dir1"), 1);
+    root.doCreateDirectory(p("dir1/dir2"), 2);
+    root.doCreateFile(p("dir1/file"), "content", 3);
+
+    Entry e1 = root.getEntry(p("dir1/dir2"));
+    Entry e2 = root.getEntry(p("dir1/file"));
+
+    assertEquals("dir2", e1.getName());
+    assertEquals("file", e2.getName());
+    assertEquals("content", e2.getContent());
+
+    assertSame(e1, root.getEntry(e1.getObjectId()));
+    assertSame(e2, root.getEntry(e2.getObjectId()));
+  }
+
+  @Test
   public void testDoesNotFindUnknownEntry() {
     assertNull(root.findEntry(p("unknown entry")));
     assertNull(root.findEntry(p("root/unknown entry")));
   }
 
-  @Test(expected = LocalVcsException.class)
   public void testGettingUnknownEntryThrowsException() {
-    root.getEntry(p("unknown entry"));
+    try {
+      root.getEntry(p("unknown entry"));
+      fail();
+    } catch (LocalVcsException e) {}
+
+    try {
+      root.getEntry(42);
+      fail();
+    } catch (LocalVcsException e) {}
   }
 
   @Test

@@ -112,10 +112,7 @@ public class LocalVcs {
 
   public void revert() {
     clearPendingChanges();
-
-    RootEntry reverted = myChangeList.revertOn(myRoot);
-    if (reverted == null) return;
-    myRoot = reverted;
+    myRoot = myChangeList.revertOn(myRoot);
   }
 
   private void clearPendingChanges() {
@@ -134,7 +131,7 @@ public class LocalVcs {
     for (RootEntry r : getHistory()) {
       if (label.equals(myChangeList.getLabel(r))) return r;
     }
-    return null;
+    throw new LocalVcsException();
   }
 
   public List<RootEntry> getHistory() {

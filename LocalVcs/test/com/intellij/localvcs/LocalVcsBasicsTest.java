@@ -5,7 +5,7 @@ import java.util.List;
 import org.junit.Test;
 
 public class LocalVcsBasicsTest extends TestCase {
-  // todo test basic file and directory operations
+  // todo clean up LocalVcs tests
   private LocalVcs vcs = new LocalVcs();
 
   @Test
