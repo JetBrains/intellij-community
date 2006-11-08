@@ -77,9 +77,9 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
           if (myHaveSetDisplayedMnemonicIndex) {
             generator.loadLocal(componentLocal);
             generator.push(textWithMnemonic.myMnemonicIndex);
-            generator.invokeStatic(Type.getType(SupportCode.class),
-                                   new Method("setDisplayedMnemonicIndex",
-                                              Type.VOID_TYPE, new Type[] { Type.getType(JComponent.class), Type.INT_TYPE } ));
+            generator.invokeVirtual(Type.getType(componentClass),
+                                    new Method("setDisplayedMnemonicIndex",
+                                               Type.VOID_TYPE, new Type[] { Type.INT_TYPE } ));
           }
           return true;
         }
