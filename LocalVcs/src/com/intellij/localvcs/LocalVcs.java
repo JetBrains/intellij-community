@@ -14,17 +14,19 @@ public class LocalVcs {
 
   public LocalVcs(Storage s) {
     myStorage = s;
+    load();
+  }
 
+  private void load() {
     myChangeList = myStorage.loadChangeList();
     myRoot = myStorage.loadRootEntry();
     myEntryCounter = myStorage.loadCounter();
   }
 
   protected void store() {
-    // make it private
     myStorage.storeChangeList(myChangeList);
     myStorage.storeRootEntry(myRoot);
-    myStorage.storeCounter(myEntryCounter); // todo test it
+    myStorage.storeCounter(myEntryCounter);
   }
 
   public boolean hasEntry(Path path) {
@@ -41,7 +43,7 @@ public class LocalVcs {
 
     // todo clean up this mess
     // todo should we raise exception?
-    if (!myRoot.hasEntry(path)) return result;
+    if (!myRoot.hasEntry(path)) throw new LocalVcsException();
 
     Integer id = myRoot.getEntry(path).getObjectId();
 

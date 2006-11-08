@@ -13,80 +13,61 @@ public class Storage {
   }
 
   public ChangeList loadChangeList() {
-    File f = new File(myDir, "changeList");
-    if (!f.exists()) return new ChangeList();
-
-    try {
-      FileInputStream fs = new FileInputStream(f);
-      try {
-        Stream s = new Stream(fs);
+    return load("list", new ChangeList(), new Loader<ChangeList>() {
+      public ChangeList load(Stream s) throws IOException {
         return s.readChangeList();
-      } finally {
-        fs.close();
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
-  public void storeChangeList(ChangeList c) {
-    File f = new File(myDir, "changeList");
-    try {
-      f.createNewFile();
-      FileOutputStream fs = new FileOutputStream(f);
-      try {
-        Stream s = new Stream(fs);
+  public void storeChangeList(final ChangeList c) {
+    store("list", new Storer() {
+      public void store(Stream s) throws IOException {
         s.writeChangeList(c);
-      } finally {
-        fs.close();
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
   public RootEntry loadRootEntry() {
-    File f = new File(myDir, "rootEntry");
-    if (!f.exists()) return new RootEntry();
-
-    try {
-      FileInputStream fs = new FileInputStream(f);
-      try {
-        Stream s = new Stream(fs);
+    return load("root", new RootEntry(), new Loader<RootEntry>() {
+      public RootEntry load(Stream s) throws IOException {
         return (RootEntry)s.readEntry(); // todo cast!!!
-      } finally {
-        fs.close();
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
-  public void storeRootEntry(RootEntry e) {
-    File f = new File(myDir, "rootEntry");
-    try {
-      f.createNewFile();
-      FileOutputStream fs = new FileOutputStream(f);
-      try {
-        Stream s = new Stream(fs);
+  public void storeRootEntry(final RootEntry e) {
+    store("root", new Storer() {
+      public void store(Stream s) throws IOException {
         s.writeEntry(e);
-      } finally {
-        fs.close();
       }
-    } catch (IOException e1) {
-      throw new RuntimeException(e1);
-    }
+    });
   }
 
   public Integer loadCounter() {
-    File f = new File(myDir, "counter");
-    if (!f.exists()) return 0;
+    return load("counter", 0, new Loader<Integer>() {
+      public Integer load(Stream s) throws IOException {
+        return s.readInteger();
+      }
+    });
+  }
+
+  public void storeCounter(final Integer i) {
+    store("counter", new Storer() {
+      public void store(Stream s) throws IOException {
+        s.writeInteger(i);
+      }
+    });
+  }
+
+  private <T> T load(String fileName, T def, Loader<T> loader) {
+    File f = new File(myDir, fileName);
+    if (!f.exists()) return def;
 
     try {
       FileInputStream fs = new FileInputStream(f);
       try {
-        Stream s = new Stream(fs);
-        return s.readInteger();
+        return loader.load(new Stream(fs));
       } finally {
         fs.close();
       }
@@ -95,19 +76,26 @@ public class Storage {
     }
   }
 
-  public void storeCounter(Integer i) {
-    File f = new File(myDir, "counter");
+  public void store(String fileName, Storer storer) {
+    File f = new File(myDir, fileName);
     try {
       f.createNewFile();
       FileOutputStream fs = new FileOutputStream(f);
       try {
-        Stream s = new Stream(fs);
-        s.writeInteger(i);
+        storer.store(new Stream(fs));
       } finally {
         fs.close();
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static interface Loader<T> {
+    T load(Stream s) throws IOException;
+  }
+
+  private static interface Storer {
+    void store(Stream s) throws IOException;
   }
 }

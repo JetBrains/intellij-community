@@ -140,7 +140,10 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.createFile(p("file"), "");
     vcs.apply();
 
-    assertTrue(vcs.getEntryHistory(p("unknown file")).isEmpty());
+    try {
+      vcs.getEntryHistory(p("unknown file"));
+      fail();
+    } catch (LocalVcsException e) {}
   }
 
   @Test
@@ -152,7 +155,10 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.apply();
 
     // todo what should we return?
-    assertTrue(vcs.getEntryHistory(p("file")).isEmpty());
+    try {
+      vcs.getEntryHistory(p("file"));
+      fail();
+    } catch (LocalVcsException e) {}
   }
 
   @Test

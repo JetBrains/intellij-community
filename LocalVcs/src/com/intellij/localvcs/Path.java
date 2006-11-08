@@ -34,7 +34,7 @@ public class Path {
     List<String> parts = getParts();
     parts.remove(parts.size() - 1);
 
-    if (parts.isEmpty()) return null;
+    if (parts.isEmpty()) return null; // todo throw exception?
 
     String result = "";
     for (String p : parts) {
