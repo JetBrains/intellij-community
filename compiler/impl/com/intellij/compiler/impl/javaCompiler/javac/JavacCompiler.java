@@ -208,8 +208,8 @@ public class JavacCompiler extends ExternalCompiler {
       classPath = cp;
 
       commandLine.add("-bootclasspath");
-      // important: need to quote boot classpath if path to jdk contain spaces
-      addClassPathValue(jdk, false, commandLine, CompilerUtil.quotePath(bootCp), "javac_bootcp");
+      
+      addClassPathValue(jdk, false, commandLine, bootCp, "javac_bootcp");
     }
 
     commandLine.add("-classpath");
