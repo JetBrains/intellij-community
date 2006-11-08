@@ -19,12 +19,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSubstitutorImpl");
   private final Map<PsiTypeParameter, PsiType> mySubstitutionMap;
 
-  protected PsiSubstitutorImpl(Map<PsiTypeParameter, PsiType> map) {
+  private PsiSubstitutorImpl(Map<PsiTypeParameter, PsiType> map) {
     mySubstitutionMap = map;
   }
 
   public PsiSubstitutorImpl() {
-    mySubstitutionMap = new HashMap<PsiTypeParameter, PsiType>();
+    mySubstitutionMap = new HashMap<PsiTypeParameter, PsiType>(2);
   }
 
   public PsiType substitute(PsiTypeParameter typeParameter){
@@ -156,7 +156,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
           return substituteTypeParameter(typeParameter);
         }
       }
-      final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<PsiTypeParameter, PsiType>();
+      final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<PsiTypeParameter, PsiType>(2);
       if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {
         return null;
       }
