@@ -3,8 +3,9 @@
 <font face="verdana" size="-1">This inspection reports any instances of the forward (/) or backward (\) slash in a string or
 character literal.  These characters are commonly used as file separators, and portability may suffer if their use is hardcoded.
 This will not report instances of the forward slash immediately following a '&lt;' character,
-or immediately preceeding a '&gt;' character, as those often indicate XML or HTML tags, rather than file names,
-nor instances where the string name is an IANA-registered MIME media type.
+or immediately preceding a '&gt;' character, as those often indicate XML or HTML tags rather than file names,
+instances where the string represents a <b><font color="#000080">java.util.TimeZone</font></b> ID, instances where
+the string is a valid regular expression or instances where the string is an IANA-registered MIME media type.
 <p>
 Normally, usage of the <b>example/*</b> MIME media type outside of an example (<em>e.g.</em> in a <b><font color="#000080">Content-Type</font></b>
 header) is an error.  Use the checkbox below to include <b>example/*</b> in the set of recognized media types.

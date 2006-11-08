@@ -15,31 +15,33 @@
  */
 package com.siyeh.ig.portability.mediatype;
 
+import org.jetbrains.annotations.NonNls;
+
 public enum MessageMediaType
 {
-  CPIM("message/CPIM"),
-  DELIVERY_STATUS("message/delivery-status"),
-  DISPOSITION_NOTIFICATION("message/disposition-notification"),
-  EXAMPLE("message/example"),
-  EXTERNAL_BODY("message/external-body"),
-  HTTP("message/http"),
-  NEWS("message/news"),
-  PARTIAL("message/partial"),
-  RFC822("message/rfc822"),
-  S_HTTP("message/s-http"),
-  SIP("message/sip"),
-  SIPFRAG("message/sipfrag"),
-  TRACKING_STATUS("message/tracking-status");
+    CPIM("message/CPIM"),
+    DELIVERY_STATUS("message/delivery-status"),
+    DISPOSITION_NOTIFICATION("message/disposition-notification"),
+    EXAMPLE("message/example"),
+    EXTERNAL_BODY("message/external-body"),
+    HTTP("message/http"),
+    NEWS("message/news"),
+    PARTIAL("message/partial"),
+    RFC822("message/rfc822"),
+    S_HTTP("message/s-http"),
+    SIP("message/sip"),
+    SIPFRAG("message/sipfrag"),
+    TRACKING_STATUS("message/tracking-status");
 
-  private final String contentType;
+    private final String contentType;
 
-  MessageMediaType(String contentType)
-  {
-    this.contentType = contentType;
-  }
+    MessageMediaType(@NonNls String contentType)
+    {
+        this.contentType = contentType;
+    }
 
-  public String toString()
-  {
-    return contentType;
-  }
+    public String toString()
+    {
+        return contentType;
+    }
 }

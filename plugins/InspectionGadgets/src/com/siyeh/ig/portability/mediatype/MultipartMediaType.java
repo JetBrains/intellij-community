@@ -15,32 +15,34 @@
  */
 package com.siyeh.ig.portability.mediatype;
 
+import org.jetbrains.annotations.NonNls;
+
 public enum MultipartMediaType
 {
-  ALTERNATIVE("multipart/alternative"),
-  APPLEDOUBLE("multipart/appledouble"),
-  BYTERANGES("multipart/byteranges"),
-  DIGEST("multipart/digest"),
-  ENCRYPTED("multipart/encrypted"),
-  EXAMPLE("multipart/example"),
-  FORM_DATA("multipart/form-data"),
-  HEADER_SET("multipart/header-set"),
-  MIXED("multipart/mixed"),
-  PARALLEL("multipart/parallel"),
-  RELATED("multipart/related"),
-  REPORT("multipart/report"),
-  SIGNED("multipart/signed"),
-  VOICE_MESSAGE("multipart/voice-message");
+    ALTERNATIVE("multipart/alternative"),
+    APPLEDOUBLE("multipart/appledouble"),
+    BYTERANGES("multipart/byteranges"),
+    DIGEST("multipart/digest"),
+    ENCRYPTED("multipart/encrypted"),
+    EXAMPLE("multipart/example"),
+    FORM_DATA("multipart/form-data"),
+    HEADER_SET("multipart/header-set"),
+    MIXED("multipart/mixed"),
+    PARALLEL("multipart/parallel"),
+    RELATED("multipart/related"),
+    REPORT("multipart/report"),
+    SIGNED("multipart/signed"),
+    VOICE_MESSAGE("multipart/voice-message");
 
-  private final String contentType;
+    private final String contentType;
 
-  MultipartMediaType(String contentType)
-  {
-    this.contentType = contentType;
-  }
+    MultipartMediaType(@NonNls String contentType)
+    {
+        this.contentType = contentType;
+    }
 
-  public String toString()
-  {
-    return contentType;
-  }
+    public String toString()
+    {
+        return contentType;
+    }
 }

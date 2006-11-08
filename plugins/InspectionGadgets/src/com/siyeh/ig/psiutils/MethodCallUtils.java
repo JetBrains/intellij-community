@@ -18,11 +18,26 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class MethodCallUtils {
+
+    /** @noinspection StaticCollection*/
+    @NonNls private static final Set<String> regexMethodNames =
+            new HashSet<String>(5);
+
+    static{
+        regexMethodNames.add("compile");
+        regexMethodNames.add("matches");
+        regexMethodNames.add("replaceFirst");
+        regexMethodNames.add("replaceAll");
+        regexMethodNames.add("split");
+    }
 
     private MethodCallUtils() {
         super();
@@ -192,5 +207,26 @@ public class MethodCallUtils {
             }
         }
         return true;
+    }
+
+    public static boolean isCallToRegexMethod(
+            PsiMethodCallExpression expression){
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        final String name = methodExpression.getReferenceName();
+        if(!regexMethodNames.contains(name)){
+            return false;
+        }
+        final PsiMethod method = expression.resolveMethod();
+        if(method == null){
+            return false;
+        }
+        final PsiClass containingClass = method.getContainingClass();
+        if(containingClass == null){
+            return false;
+        }
+        final String className = containingClass.getQualifiedName();
+        return "java.lang.String".equals(className) ||
+                       "java.util.regex.Pattern".equals(className);
     }
 }

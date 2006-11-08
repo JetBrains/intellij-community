@@ -16,34 +16,23 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class MalformedRegexInspection extends ExpressionInspection{
-
-    /** @noinspection StaticCollection*/
-    @NonNls private static final Set<String> regexMethodNames =
-            new HashSet<String>(5);
-
-    static{
-        regexMethodNames.add("compile");
-        regexMethodNames.add("matches");
-        regexMethodNames.add("replaceFirst");
-        regexMethodNames.add("replaceAll");
-        regexMethodNames.add("split");
-    }
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
@@ -101,7 +90,7 @@ public class MalformedRegexInspection extends ExpressionInspection{
             if(value == null){
                 return;
             }
-            if(!callTakesRegex(expression)){
+            if(!MethodCallUtils.isCallToRegexMethod(expression)){
                 return;
             }
             //noinspection UnusedCatchParameter,ProhibitedExceptionCaught
@@ -112,27 +101,6 @@ public class MalformedRegexInspection extends ExpressionInspection{
             } catch(NullPointerException e){
                 registerError(regexArg); // due to a bug in the sun regex code
             }
-        }
-
-        private static boolean callTakesRegex(
-                PsiMethodCallExpression expression){
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String name = methodExpression.getReferenceName();
-            if(!regexMethodNames.contains(name)){
-                return false;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if(method == null){
-                return false;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null){
-                return false;
-            }
-            final String className = containingClass.getQualifiedName();
-            return "java.lang.String".equals(className) ||
-                           "java.util.regex.Pattern".equals(className);
         }
     }
 }

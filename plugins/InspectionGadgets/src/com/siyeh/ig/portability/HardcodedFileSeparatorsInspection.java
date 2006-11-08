@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers, Mark Scott
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,27 @@
 package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.ig.portability.mediatype.ApplicationMediaType;
-import com.siyeh.ig.portability.mediatype.AudioMediaType;
-import com.siyeh.ig.portability.mediatype.ImageMediaType;
-import com.siyeh.ig.portability.mediatype.MessageMediaType;
-import com.siyeh.ig.portability.mediatype.ModelMediaType;
-import com.siyeh.ig.portability.mediatype.MultipartMediaType;
-import com.siyeh.ig.portability.mediatype.TextMediaType;
-import com.siyeh.ig.portability.mediatype.VideoMediaType;
+import com.siyeh.ig.portability.mediatype.*;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Set;
-import java.util.HashSet;
-
-import javax.swing.JComponent;
 
 public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
 
@@ -100,6 +97,14 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
     }
 
     /**
+     * All {@link TimeZone} IDs.
+     */
+    private static final Set<String> timeZoneIds = new HashSet();
+    static {
+        timeZoneIds.addAll(Arrays.asList(TimeZone.getAvailableIDs()));
+    }
+
+    /**
      * @noinspection PublicField
      */
     public boolean m_recognizeExampleMediaType = false;
@@ -146,10 +151,20 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
             final PsiType type = expression.getType();
             if(TypeUtils.isJavaLangString(type)){
                 final String value = (String) expression.getValue();
-
-                if(isHardcodedFilenameString(value)){
-                    registerError(expression);
+                if (!isHardcodedFilenameString(value)) {
+                    return;
                 }
+                final PsiElement parent = expression.getParent();
+                final PsiElement grandParent = parent.getParent();
+                if (grandParent instanceof PsiMethodCallExpression) {
+                    final PsiMethodCallExpression methodCallExpression =
+                            (PsiMethodCallExpression)grandParent;
+                    if (MethodCallUtils.isCallToRegexMethod(
+                            methodCallExpression)) {
+                        return;
+                    }
+                }
+                registerError(expression);
             } else if(type != null && type.equals(PsiType.CHAR)){
                 final Character value = (Character) expression.getValue();
                 if(value == null){
@@ -170,8 +185,8 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
          * that the string is a filename.
          *
          * @param string The string to examine.
-         * @return <code>true</font></b> if the string is likely to be a filename
-         *         with hardcoded file separators, <code>false</font></b>
+         * @return <code>true</code> if the string is likely to be a filename
+         *         with hardcoded file separators, <code>false</code>
          *         otherwise.
          */
         private boolean isHardcodedFilenameString(String string){
@@ -192,11 +207,13 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
             if(isDateFormatString(string)){
                 return false;
             }
-
             if(isURLString(string)){
                 return false;
             }
-            return !isMediaTypeString(string);
+            if(isMediaTypeString(string)){
+                return false;
+            }
+            return !isTimeZoneIdString(string);
         }
 
         /**
@@ -204,8 +221,8 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
          * likely to be a fragment of XML.
          *
          * @param string The string to examine.
-         * @return <code>true</font></b> if the string is likely to be an XML
-         *         fragment, or <code>false</font></b> if not.
+         * @return <code>true</code> if the string is likely to be an XML
+         *         fragment, or <code>false</code> if not.
          */
         private boolean isXMLString(String string){
             return string.contains("</") || string.contains("/>");
@@ -216,8 +233,8 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
          * likely to be a date format string.
          *
          * @param string The string to check.
-         * @return <code>true</font></b> if the string is likely to be a date
-         *         string, <code>false</font></b> if not.
+         * @return <code>true</code> if the string is likely to be a date
+         *         string, <code>false</code> if not.
          */
         private boolean isDateFormatString(String string){
             if(string.length() < 3){
@@ -244,8 +261,8 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
          * likely to be a URL.
          *
          * @param string The string to check.
-         * @return <code>true</font></b> if the string is likely to be a URL,
-         *         <code>false</font></b> if not.
+         * @return <code>true</code> if the string is likely to be a URL,
+         *         <code>false</code> if not.
          */
         private boolean isURLString(String string){
             final Matcher urlMatcher = URL_PATTERN.matcher(string);
@@ -259,17 +276,10 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
          * documents for registered MIME media types.
          *
          * @param string The string to check.
-         * @return <code>true</font></b> if the string is likely to be a MIME
-         *         media type, <code>false</font></b> if not.
+         * @return <code>true</code> if the string is likely to be a MIME
+         *         media type, <code>false</code> if not.
          */
         private boolean isMediaTypeString(String string){
-            // No need to go further if we have a \ or don't have a /
-            //
-            if(string.indexOf((int) '\\') != -1 ||
-                    string.indexOf((int) '/') == -1){
-                return false;
-            }
-
             // IANA doesn't specify a pattern for the subtype of example content
             // types but other subtypes seem to be one or more groups of
             // alphanumerics characters, the groups being separated by a single
@@ -292,6 +302,18 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
                 return true;
             }
             return mimeTypes.contains(string);
+        }
+
+        /**
+         * Checks whether a string containing at least one '/' character is
+         * likely to be a {@link TimeZone} ID.
+         *
+         * @param string The string to check.
+         * @return <code>true</code> if the string is likely to be a
+         *         TimeZone ID, <code>false</code> if not.
+         */
+        private boolean isTimeZoneIdString(String string){
+            return timeZoneIds.contains(string);
         }
     }
 }
