@@ -185,19 +185,6 @@ public class CtrlMouseHandler implements ProjectComponent {
   }
 
   private static class JavaInfoGenerator {
-
-    @Nullable
-    private static String generateAttributeValueInfo(PsiAntElement antElement) {
-      if (antElement instanceof PsiAntTarget) return null;
-
-      PsiElement navigationElement = antElement.getNavigationElement();
-      if (navigationElement instanceof XmlAttributeValue) {
-        return PsiTreeUtil.getParentOfType(navigationElement, XmlTag.class).getText();
-      }
-
-      return null;
-    }
-
     private static String generateFileInfo(PsiFile file) {
       return file.getVirtualFile().getPresentableUrl();
     }
@@ -215,11 +202,8 @@ public class CtrlMouseHandler implements ProjectComponent {
 
       if (element instanceof PsiFile) {
         return generateFileInfo((PsiFile) element);
-      } else if (element instanceof PsiAntElement) {
-        return generateAttributeValueInfo((PsiAntElement)element);
-      } else {
-        return null;
       }
+      return null;
     }
   }
 

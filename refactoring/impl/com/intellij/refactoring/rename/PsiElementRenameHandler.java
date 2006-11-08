@@ -1,20 +1,18 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.ant.impl.dom.impl.PsiAntTarget;
-import com.intellij.ant.impl.tasks.properties.PsiAntProperty;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
@@ -94,10 +92,6 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   static boolean canRename(PsiElement element, Project project) {
-    if (element instanceof PsiAntTarget || element instanceof PsiAntProperty) {
-      return CommonRefactoringUtil.checkReadOnlyStatus(project, element.getNavigationElement());
-    }
-
     final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
     if (element instanceof XmlTag && !(((XmlTag)element).getMetaData() instanceof PsiWritableMetaData) ||
         !(element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {

@@ -310,46 +310,40 @@ public class PsiFormatUtil {
     if (list == null) return "";
     PsiClass parentClass = element.getParent() instanceof PsiClass ? (PsiClass)element.getParent() : null;
     StringBuffer buffer = new StringBuffer();
-    if (list.hasModifierProperty(PsiModifier.PUBLIC)){
-      if ((options & SHOW_REDUNDANT_MODIFIERS) != 0 || parentClass == null || !parentClass.isInterface()){
-        appendModifier(buffer, PsiModifier.PUBLIC);
-      }
-    }
+    if ((options & SHOW_REDUNDANT_MODIFIERS) != 0
+        ? list.hasModifierProperty(PsiModifier.PUBLIC)
+        : list.hasExplicitModifier(PsiModifier.PUBLIC)) appendModifier(buffer, PsiModifier.PUBLIC);
+
     if (list.hasModifierProperty(PsiModifier.PROTECTED)){
       appendModifier(buffer, PsiModifier.PROTECTED);
     }
     if (list.hasModifierProperty(PsiModifier.PRIVATE)){
       appendModifier(buffer, PsiModifier.PRIVATE);
     }
-    if (list.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && (options & SHOW_PACKAGE_LOCAL) != 0){
-      if (element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField){
-        if (element instanceof PsiClass && element.getParent() instanceof PsiDeclarationStatement){// local class
-          appendModifier(buffer, PsiBundle.message("local.class.preposition"));
-        }
-        else{
-          appendModifier(buffer, PsiBundle.message("package.local.visibility"));
-        }
+
+    if ((options & SHOW_REDUNDANT_MODIFIERS) != 0
+        ? list.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
+        : list.hasExplicitModifier(PsiModifier.PACKAGE_LOCAL)) {
+      if (element instanceof PsiClass && element.getParent() instanceof PsiDeclarationStatement) {// local class
+        appendModifier(buffer, PsiBundle.message("local.class.preposition"));
+      }
+      else {
+        appendModifier(buffer, PsiBundle.message("package.local.visibility"));
       }
     }
-    if (list.hasModifierProperty(PsiModifier.STATIC)){
-      if ((options & SHOW_REDUNDANT_MODIFIERS) != 0 ||
-        !(element instanceof PsiField && parentClass != null && parentClass.isInterface())){
-        appendModifier(buffer, PsiModifier.STATIC);
-      }
-    }
-    if (list.hasModifierProperty(PsiModifier.ABSTRACT)){
-      if ((options & SHOW_REDUNDANT_MODIFIERS) != 0 ||
-        !(element instanceof PsiClass && ((PsiClass)element).isInterface()
-          || element instanceof PsiMethod && parentClass != null && parentClass.isInterface())){
-        appendModifier(buffer, PsiModifier.ABSTRACT);
-      }
-    }
-    if (list.hasModifierProperty(PsiModifier.FINAL)){
-      if ((options & SHOW_REDUNDANT_MODIFIERS) != 0 ||
-        !(element instanceof PsiField && parentClass != null && parentClass.isInterface())){
-        appendModifier(buffer, PsiModifier.FINAL);
-      }
-    }
+
+    if ((options & SHOW_REDUNDANT_MODIFIERS) != 0
+        ? list.hasModifierProperty(PsiModifier.STATIC)
+        : list.hasExplicitModifier(PsiModifier.STATIC)) appendModifier(buffer, PsiModifier.STATIC);
+
+    if ((options & SHOW_REDUNDANT_MODIFIERS) != 0
+        ? list.hasModifierProperty(PsiModifier.ABSTRACT)
+        : list.hasExplicitModifier(PsiModifier.ABSTRACT)) appendModifier(buffer, PsiModifier.ABSTRACT);
+
+    if ((options & SHOW_REDUNDANT_MODIFIERS) != 0
+        ? list.hasModifierProperty(PsiModifier.FINAL)
+        : list.hasExplicitModifier(PsiModifier.FINAL)) appendModifier(buffer, PsiModifier.FINAL);
+
     if (list.hasModifierProperty(PsiModifier.NATIVE) && (options & JAVADOC_MODIFIERS_ONLY) == 0){
       appendModifier(buffer, PsiModifier.NATIVE);
     }
