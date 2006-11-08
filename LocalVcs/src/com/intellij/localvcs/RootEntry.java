@@ -2,26 +2,22 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 
+// todo try to crean up Entry hierarchy
 public class RootEntry extends DirectoryEntry {
-  // todo move generator outside of class  
-  private IdGenerator myIdGenerator = new IdGenerator();
   private Integer myChangeListIndex = -1;
 
-  // todo try to crean up Entry hierarchy
   public RootEntry() {
     super(null, null);
   }
 
   public RootEntry(Stream s) throws IOException {
     super(s);
-    myIdGenerator = s.readIdGenerator();
     myChangeListIndex = s.readInteger();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeIdGenerator(myIdGenerator); // todo test it
     s.writeInteger(myChangeListIndex);
   }
 
@@ -106,11 +102,6 @@ public class RootEntry extends DirectoryEntry {
     removeEntry(path);
   }
 
-  protected Integer getNextObjectId() {
-    // todo make it private
-    return myIdGenerator.getNextObjectId();
-  }
-
   private void addEntry(Path parent, Entry entry) {
     // todo quite ugly
     if (parent == null) addChild(entry);
@@ -144,7 +135,6 @@ public class RootEntry extends DirectoryEntry {
   protected Entry copyEntry() {
     RootEntry result = new RootEntry();
     // todo test it
-    result.myIdGenerator = myIdGenerator;
     result.myChangeListIndex = myChangeListIndex;
     return result;
   }

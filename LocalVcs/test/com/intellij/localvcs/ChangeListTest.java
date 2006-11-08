@@ -5,7 +5,7 @@ import org.junit.Test;
 public class ChangeListTest extends TestCase {
   @Test
   public void testDoesNotRegisterChangeSetOnApplyingError() {
-    CreateFileChange badChange = new CreateFileChange(null, null) {
+    CreateFileChange badChange = new CreateFileChange(null, null, null) {
       @Override
       public void applyTo(RootEntry root) {
         throw new SomeLocalVcsException();

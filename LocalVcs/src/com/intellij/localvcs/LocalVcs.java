@@ -10,6 +10,7 @@ import java.util.List;
 public class LocalVcs {
   private ChangeList myChangeList = new ChangeList();
   private RootEntry myRoot = new RootEntry();
+  private Integer myEntryCounter = 0;
 
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
@@ -23,6 +24,7 @@ public class LocalVcs {
 
       myChangeList = s.readChangeList();
       myRoot = (RootEntry)s.readEntry(); // todo cast!!!
+      myEntryCounter = s.readInteger();
     } finally {
       // todo dont forget to test stream closing...
       fs.close();
@@ -39,6 +41,7 @@ public class LocalVcs {
 
       s.writeChangeList(myChangeList);
       s.writeEntry(myRoot);
+      s.writeInteger(myEntryCounter); // todo test it
     } finally {
       // todo dont forget to test stream closing...
       fs.close();
@@ -72,11 +75,15 @@ public class LocalVcs {
   }
 
   public void createFile(Path path, String content) {
-    myPendingChanges.add(new CreateFileChange(path, content));
+    myPendingChanges.add(new CreateFileChange(path, content, getNextId()));
   }
 
   public void createDirectory(Path path) {
-    myPendingChanges.add(new CreateDirectoryChange(path));
+    myPendingChanges.add(new CreateDirectoryChange(path, getNextId()));
+  }
+
+  private Integer getNextId() {
+    return myEntryCounter++;
   }
 
   public void changeFileContent(Path path, String content) {

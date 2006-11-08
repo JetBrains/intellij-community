@@ -125,7 +125,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testCreateFileChange() throws IOException {
-    Change c = new CreateFileChange(p("file"), "content");
+    Change c = new CreateFileChange(p("file"), "content", null);
 
     os.writeChange(c);
     Change result = is.readChange();
@@ -138,7 +138,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testCreateDirectoryChange() throws IOException {
-    Change c = new CreateDirectoryChange(p("dir"));
+    Change c = new CreateDirectoryChange(p("dir"), null);
 
     os.writeChange(c);
     Change result = is.readChange();
@@ -221,7 +221,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testChangeSet() throws IOException {
-    ChangeSet c = cs(new CreateFileChange(p(""), ""));
+    ChangeSet c = cs(new CreateFileChange(p(""), "", null));
     c.setLabel("label");
 
     os.writeChangeSet(c);
@@ -246,7 +246,7 @@ public class StreamTest extends TestCase {
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
     // todo a bit of hack
-    c.getChangeSets().add(cs(new CreateFileChange(p("file"), "content")));
+    c.getChangeSets().add(cs(new CreateFileChange(p("file"), "content", null)));
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();

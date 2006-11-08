@@ -13,9 +13,9 @@ public class ChangeSetTest extends TestCase {
 
   @Before
   public void setUp() {
-    changeSet = cs(new CreateFileChange(p("file1"), null),
-                   new CreateFileChange(p("file2"), null),
-                   new CreateFileChange(p("file3"), null));
+    changeSet = cs(new CreateFileChange(p("file1"), null, null),
+                   new CreateFileChange(p("file2"), null, null),
+                   new CreateFileChange(p("file3"), null, null));
 
     log = new ArrayList<Path>();
     root = new RootEntry() {

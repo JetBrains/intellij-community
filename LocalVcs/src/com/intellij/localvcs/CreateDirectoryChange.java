@@ -4,9 +4,11 @@ import java.io.IOException;
 
 public class CreateDirectoryChange extends Change {
   private Path myPath;
+  private Integer myId;
 
-  public CreateDirectoryChange(Path path) {
+  public CreateDirectoryChange(Path path, Integer id) {
     myPath = path;
+    myId = id;
   }
 
   public CreateDirectoryChange(Stream s) throws IOException {
@@ -24,7 +26,7 @@ public class CreateDirectoryChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateDirectory(myPath, root.getNextObjectId());
+    root.doCreateDirectory(myPath, myId);
   }
 
   @Override

@@ -5,10 +5,12 @@ import java.io.IOException;
 public class CreateFileChange extends Change {
   private Path myPath;
   private String myContent;
+  private Integer myId;
 
-  public CreateFileChange(Path path, String content) {
+  public CreateFileChange(Path path, String content, Integer id) {
     myPath = path;
     myContent = content;
+    myId = id;
   }
 
   public CreateFileChange(Stream s) throws IOException {
@@ -32,7 +34,7 @@ public class CreateFileChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateFile(myPath, myContent, root.getNextObjectId());
+    root.doCreateFile(myPath, myContent, myId);
   }
 
   @Override

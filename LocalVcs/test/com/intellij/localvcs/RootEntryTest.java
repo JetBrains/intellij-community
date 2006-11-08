@@ -67,7 +67,8 @@ public class RootEntryTest extends TestCase {
   @Test
   public void testApplyingReturnsCopy() {
     RootEntry original = new RootEntry();
-    RootEntry result = original.apply(cs(new CreateFileChange(p("file"), "")));
+    RootEntry result
+        = original.apply(cs(new CreateFileChange(p("file"), null, null)));
 
     assertFalse(original.hasEntry(p("file")));
     assertTrue(result.hasEntry(p("file")));
@@ -75,7 +76,7 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testRevertingReturnsCopy() {
-    ChangeSet cs = cs(new CreateFileChange(p("file"), ""));
+    ChangeSet cs = cs(new CreateFileChange(p("file"), null, null));
 
     RootEntry original = new RootEntry().apply(cs);
     RootEntry result = original.revert(cs);
