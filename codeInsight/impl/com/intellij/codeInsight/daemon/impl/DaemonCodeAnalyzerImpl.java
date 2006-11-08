@@ -182,7 +182,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void projectOpened() {
-    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly();
+    final MessageBusConnection connection = myProject.getMessageBus().connect();
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     myDocumentListener = new DocumentAdapter() {

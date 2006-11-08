@@ -95,7 +95,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     myEditorCaretListener = new MyEditorCaretListener();
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
 
-    myConnection = project.getMessageBus().connectStrongly();
+    myConnection = project.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
 
     myVirtualFileListener = new MyVirtualFileListener();

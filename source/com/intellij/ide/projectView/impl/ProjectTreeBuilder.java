@@ -47,7 +47,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   public ProjectTreeBuilder(final Project project, JTree tree, DefaultTreeModel treeModel, Comparator<NodeDescriptor> comparator, ProjectAbstractTreeStructureBase treeStructure) {
     super(project, tree, treeModel, treeStructure, comparator);
 
-    final MessageBusConnection connection = project.getMessageBus().connectStrongly(this);
+    final MessageBusConnection connection = project.getMessageBus().connect(this);
 
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(){
       protected DefaultMutableTreeNode getRootNode(){

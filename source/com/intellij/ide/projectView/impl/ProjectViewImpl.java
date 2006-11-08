@@ -170,7 +170,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
     };
 
-    myConnection = project.getMessageBus().connectStrongly();
+    myConnection = project.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {}
 

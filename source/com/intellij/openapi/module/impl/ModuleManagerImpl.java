@@ -78,7 +78,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public ModuleManagerImpl(Project project, PomModel pomModel, MessageBus bus) {
     myProject = project;
     myMessageBus = bus;
-    myConnection = bus.connectStrongly();
+    myConnection = bus.connect();
 
     myConnection.setDefaultHandler(new MessageHandler() {
       public void handle(Method event, Object... params) {
@@ -374,13 +374,13 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   private Map<ModuleListener, MessageBusConnection> myAdapters = new HashMap<ModuleListener, MessageBusConnection>();
   public void addModuleListener(@NotNull ModuleListener listener) {
-    final MessageBusConnection connection = myMessageBus.connectStrongly();
+    final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(ProjectTopics.MODULES, listener);
     myAdapters.put(listener, connection);
   }
 
   public void addModuleListener(@NotNull ModuleListener listener, Disposable parentDisposable) {
-    final MessageBusConnection connection = myMessageBus.connectStrongly(parentDisposable);
+    final MessageBusConnection connection = myMessageBus.connect(parentDisposable);
     connection.subscribe(ProjectTopics.MODULES, listener);
   }
 

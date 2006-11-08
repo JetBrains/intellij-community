@@ -190,7 +190,7 @@ import java.util.Map;
 
         rootModel.commit();
 
-        final MessageBusConnection connection = ourProject.getMessageBus().connectStrongly();
+        final MessageBusConnection connection = ourProject.getMessageBus().connect();
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
           public void beforeRootsChange(ModuleRootEvent event) {
             if (!event.isCausedByFileTypesChange()) {

@@ -552,7 +552,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private synchronized void registerAll() {
     getVirtualFileManager().registerFileContentProvider(this);
 
-    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {}
       public void fileTypesChanged(FileTypeEvent event) {

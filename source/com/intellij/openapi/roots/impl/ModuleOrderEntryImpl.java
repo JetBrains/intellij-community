@@ -83,7 +83,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   private void addListeners() {
     myListenersAdded = true;
-    myConnection = myRootModel.getModule().getProject().getMessageBus().connectStrongly();
+    myConnection = myRootModel.getModule().getProject().getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
   }
 

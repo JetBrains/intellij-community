@@ -70,17 +70,17 @@ public class MessageBusTest extends TestCase {
   }
 
   public void testSingleMessage() {
-    final MessageBusConnection connection = myBus.connectStrongly();
+    final MessageBusConnection connection = myBus.connect();
     connection.subscribe(T1, new T1Handler("c"));
     myBus.syncPublisher(T1).t11();
     assertEvents("c:t11");
   }
 
   public void testSingleMessageToTwoConnections() {
-    final MessageBusConnection c1 = myBus.connectStrongly();
+    final MessageBusConnection c1 = myBus.connect();
     c1.subscribe(T1, new T1Handler("c1"));
 
-    final MessageBusConnection c2 = myBus.connectStrongly();
+    final MessageBusConnection c2 = myBus.connect();
     c2.subscribe(T1, new T1Handler("c2"));
 
     myBus.syncPublisher(T1).t11();
@@ -88,7 +88,7 @@ public class MessageBusTest extends TestCase {
   }
 
   public void testTwoMessagesWithSingleSubscription() {
-    final MessageBusConnection connection = myBus.connectStrongly();
+    final MessageBusConnection connection = myBus.connect();
     connection.subscribe(T1, new T1Handler("c"));
     myBus.syncPublisher(T1).t11();
     myBus.syncPublisher(T1).t12();
@@ -97,10 +97,10 @@ public class MessageBusTest extends TestCase {
   }
 
   public void testTwoMessagesWithDoubleSubscription() {
-    final MessageBusConnection c1 = myBus.connectStrongly();
+    final MessageBusConnection c1 = myBus.connect();
     c1.subscribe(T1, new T1Handler("c1"));
 
-    final MessageBusConnection c2 = myBus.connectStrongly();
+    final MessageBusConnection c2 = myBus.connect();
     c2.subscribe(T1, new T1Handler("c2"));
 
     myBus.syncPublisher(T1).t11();
@@ -110,7 +110,7 @@ public class MessageBusTest extends TestCase {
   }
 
   public void testEventFiresAnotherEvent() {
-    final MessageBusConnection c1 = myBus.connectStrongly();
+    final MessageBusConnection c1 = myBus.connect();
     c1.subscribe(T1, new T1Listener() {
       public void t11() {
         myLog.add("c1:t11");
@@ -123,7 +123,7 @@ public class MessageBusTest extends TestCase {
       }
     });
 
-    final MessageBusConnection c2 = myBus.connectStrongly();
+    final MessageBusConnection c2 = myBus.connect();
     c2.subscribe(T1, new T1Handler("c2"));
     c2.subscribe(T2, new T2Handler("c2"));
 
@@ -134,7 +134,7 @@ public class MessageBusTest extends TestCase {
   }
 
   public void testConnectionTerminatedInDispatch() {
-    final MessageBusConnection c1 = myBus.connectStrongly();
+    final MessageBusConnection c1 = myBus.connect();
     c1.subscribe(T1, new T1Listener() {
       public void t11() {
         c1.disconnect();
@@ -149,7 +149,7 @@ public class MessageBusTest extends TestCase {
     });
     c1.subscribe(T2, new T2Handler("c1"));
 
-    final MessageBusConnection c2 = myBus.connectStrongly();
+    final MessageBusConnection c2 = myBus.connect();
     c2.subscribe(T1, new T1Handler("c2"));
     c2.subscribe(T2, new T2Handler("c2"));
 

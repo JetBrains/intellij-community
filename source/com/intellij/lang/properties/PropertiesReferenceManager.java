@@ -48,7 +48,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
     myPropertiesFilesManager = propertiesFilesManager;
     myPsiManager = psiManager;
 
-    myConnection = project.getMessageBus().connectStrongly();
+    myConnection = project.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
 

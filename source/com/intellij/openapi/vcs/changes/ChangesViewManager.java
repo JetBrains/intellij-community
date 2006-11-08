@@ -81,7 +81,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
 
-    myConnection = project.getMessageBus().connectStrongly();
+    myConnection = project.getMessageBus().connect();
   }
 
   public void projectOpened() {

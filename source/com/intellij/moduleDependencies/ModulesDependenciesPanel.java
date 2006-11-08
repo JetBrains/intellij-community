@@ -8,6 +8,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -39,7 +40,7 @@ import java.util.List;
  * User: anna
  * Date: Feb 10, 2005
  */
-public class ModulesDependenciesPanel extends JPanel implements ModuleRootListener{
+public class ModulesDependenciesPanel extends JPanel implements ModuleRootListener, Disposable {
   @NonNls private static final String DIRECTION = "FORWARD_ANALIZER";
   private Content myContent;
   private Project myProject;
@@ -75,7 +76,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     add(mySplitter, BorderLayout.CENTER);
     add(createNorthPanel(), BorderLayout.NORTH);
 
-    project.getMessageBus().connectWeakly().subscribe(ProjectTopics.PROJECT_ROOTS, this);
+    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, this);
   }
 
   private void setSplitterProportion() {
@@ -90,6 +91,9 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     } else {
       mySplitter.setProportion(0.5f);
     }
+  }
+
+  public void dispose() {
   }
 
   public ModulesDependenciesPanel(final Project project) {

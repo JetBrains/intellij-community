@@ -45,7 +45,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManagerEx startupManagerEx) {
     myProject = project;
-    myConnection = project.getMessageBus().connectStrongly();
+    myConnection = project.getMessageBus().connect();
 
     LAZY_MODE = !psiManagerConfiguration.REPOSITORY_ENABLED;
     startupManagerEx.registerPreStartupActivity(

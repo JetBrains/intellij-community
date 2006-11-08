@@ -41,7 +41,7 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
   LoaderFactory(final Project project) {
     myProject = project;
     myModule2ClassLoader = new WeakHashMap<Module, ClassLoader>();
-    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(final ModuleRootEvent event) {}
       public void rootsChanged(final ModuleRootEvent event) {

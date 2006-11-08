@@ -103,7 +103,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   public void initListeners(){
     myInitialized = true;
-    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly(this);
+    final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);

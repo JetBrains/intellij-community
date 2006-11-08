@@ -5,7 +5,6 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -53,20 +52,14 @@ public class MessageBusImpl implements MessageBus {
     public final Message message;
   }
 
-  public MessageBusConnection connectStrongly() {
-    final MessageBusConnectionImpl connection = new MessageBusConnectionImpl(this);
-    myConnections.add(connection);
-    return connection;
+  public MessageBusConnection connect() {
+    return new MessageBusConnectionImpl(this);
   }
 
-  public MessageBusConnection connectStrongly(Disposable parentDisposable) {
-    final MessageBusConnection connection = connectStrongly();
+  public MessageBusConnection connect(Disposable parentDisposable) {
+    final MessageBusConnection connection = connect();
     Disposer.register(parentDisposable, connection);
     return connection;
-  }
-
-  public MessageBusConnection connectWeakly() {
-    return new MessageBusConnectionImpl(this);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -148,7 +141,7 @@ public class MessageBusImpl implements MessageBus {
   public synchronized void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
-      topicSubscribers = new WeakList<MessageBusConnectionImpl>();
+      topicSubscribers = new ArrayList<MessageBusConnectionImpl>();
       mySubscribers.put(topic, topicSubscribers);
     }
 
@@ -156,8 +149,6 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public synchronized void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
-    myConnections.remove(connection);
-
     for (List<MessageBusConnectionImpl> topicSubscribers : mySubscribers.values()) {
       topicSubscribers.remove(connection);
     }

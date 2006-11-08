@@ -915,7 +915,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     //myFocusWatcher.install(myWindows.getComponent ());
     mySplitters.startListeningFocus();
 
-    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection = myProject.getMessageBus().connect();
 
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {

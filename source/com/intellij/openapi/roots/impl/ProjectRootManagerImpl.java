@@ -101,7 +101,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public ProjectRootManagerImpl(Project project, FileTypeManager fileTypeManager, DirectoryIndex directoryIndex, StartupManager startupManager) {
     myProject = (ProjectEx)project;
-    myConnection = project.getMessageBus().connectStrongly();
+    myConnection = project.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
         beforeRootsChange(true);
@@ -155,13 +155,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private Map<ModuleRootListener, MessageBusConnection> myListenerAdapters = new HashMap<ModuleRootListener, MessageBusConnection>();
 
   public void addModuleRootListener(final ModuleRootListener listener) {
-    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly();
+    final MessageBusConnection connection = myProject.getMessageBus().connect();
     myListenerAdapters.put(listener, connection);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
   }
 
   public void addModuleRootListener(ModuleRootListener listener, Disposable parentDisposable) {
-    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly(parentDisposable);
+    final MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
   }
 

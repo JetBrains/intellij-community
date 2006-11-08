@@ -125,7 +125,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
     });
 
-    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly(this);
+    final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener() {
       protected DefaultMutableTreeNode getRootNode() {
         return myRootNode;

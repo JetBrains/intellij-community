@@ -128,7 +128,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     myPropertyChangeListener=new MyPropertyChangeListener();
     TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
 
-    myConnection = myProject.getMessageBus().connectStrongly();
+    myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
 
     StartupManager startupManager=StartupManager.getInstance(myProject);

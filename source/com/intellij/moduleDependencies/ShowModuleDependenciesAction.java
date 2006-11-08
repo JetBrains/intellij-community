@@ -1,5 +1,6 @@
 package com.intellij.moduleDependencies;
 
+import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -12,7 +13,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
-import com.intellij.analysis.AnalysisScopeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,6 +57,7 @@ public class ShowModuleDependenciesAction extends AnAction{
                                                                                     "module.dependencies.toolwindow.title",
                                                                                     project.getName()),
                                                                                   false);
+    content.setDisposer(panel);
     panel.setContent(content);
     DependenciesAnalyzeManager.getInstance(project).addContent(content);
   }

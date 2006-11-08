@@ -302,7 +302,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
   public void addFileTypeListener(FileTypeListener listener) {
-    final MessageBusConnection connection = myMessageBus.connectStrongly();
+    final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(AppTopics.FILE_TYPES, listener);
     myAdapters.put(listener, connection);
  }

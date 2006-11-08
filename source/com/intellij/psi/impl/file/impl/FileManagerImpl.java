@@ -81,7 +81,7 @@ public class FileManagerImpl implements FileManager {
                          ProjectRootManager projectRootManager) {
     myFileTypeManager = fileTypeManager;
     myManager = manager;
-    myConnection = manager.getProject().getMessageBus().connectStrongly();
+    myConnection = manager.getProject().getMessageBus().connect();
 
     myVirtualFileManager = virtualFileManager;
     myFileDocumentManager = fileDocumentManager;

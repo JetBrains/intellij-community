@@ -85,7 +85,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myVirtualFileManager.addVirtualFileListener(this);
 
     myBus = ApplicationManager.getApplication().getMessageBus();
-    myBus.connectStrongly().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new TrailingSpacesStripper());
+    myBus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new TrailingSpacesStripper());
   }
 
   @NotNull
@@ -329,7 +329,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private Map<FileDocumentManagerListener, MessageBusConnection> myAdapters = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
   public void addFileDocumentManagerListener(FileDocumentManagerListener listener) {
-    final MessageBusConnection connection = myBus.connectStrongly();
+    final MessageBusConnection connection = myBus.connect();
     myAdapters.put(listener, connection);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
   }
