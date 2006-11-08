@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.junit.Test;
 
 public class LocalVcsStorageTest extends TempDirTestCase {
+  private LocalVcs vcs = new LocalVcs();
+
   @Test
   public void testStoringEntries() throws IOException {
     vcs.createFile(p("file"), "content");

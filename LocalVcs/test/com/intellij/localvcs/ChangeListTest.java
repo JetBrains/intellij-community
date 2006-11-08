@@ -14,7 +14,7 @@ public class ChangeListTest extends TestCase {
 
     ChangeList l = new ChangeList();
     try {
-      l.applyChangeSetOn(s, cs(badChange));
+      l.applyChangeSetOn(new RootEntry(), cs(badChange));
     } catch (SomeLocalVcsException e) {}
 
     assertTrue(l.getChangeSets().isEmpty());

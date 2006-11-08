@@ -6,18 +6,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Before;
 
 public abstract class TestCase extends Assert {
-  protected LocalVcs vcs;
-  protected Snapshot s;
-
-  @Before
-  public void setUp() {
-    vcs = new LocalVcs();
-    s = new Snapshot(new ChangeList(), new RootEntry());
-  }
-
   protected Path p(String name) {
     return new Path(name);
   }

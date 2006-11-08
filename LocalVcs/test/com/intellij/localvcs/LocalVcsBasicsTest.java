@@ -6,6 +6,7 @@ import org.junit.Test;
 
 public class LocalVcsBasicsTest extends TestCase {
   // todo test basic file and directory operations
+  private LocalVcs vcs = new LocalVcs();
 
   @Test
   public void testOnlyCommitThrowsException() {
