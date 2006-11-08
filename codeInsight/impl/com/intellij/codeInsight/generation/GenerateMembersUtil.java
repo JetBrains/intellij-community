@@ -258,9 +258,9 @@ public class GenerateMembersUtil {
         if (paramName == null) paramName = "p" + i;
 
         PsiParameter newParameter = factory.createParameter(paramName, substituted);
+        newParameter.getModifierList().replace(parameter.getModifierList());
         newMethod.getParameterList().add(newParameter);
       }
-
 
       for (PsiTypeParameter typeParam : typeParams) {
         if (substitutor.substitute(typeParam) != null) newMethod.getTypeParameterList().add(typeParam);
