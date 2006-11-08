@@ -1,32 +1,46 @@
 package com.intellij.localvcs;
 
-import java.io.IOException;
-
+import org.junit.Before;
 import org.junit.Test;
 
 public class LocalVcsStorageTest extends TempDirTestCase {
-  private LocalVcs vcs = new LocalVcs();
+  private LocalVcs vcs;
+
+  @Before
+  public void setUp() {
+    vcs = createVcs();
+  }
+
+  private LocalVcs createVcs() {
+    return new LocalVcs(new Storage(myTempDir));
+  }
+
+  private LocalVcs createVcsAndLoad() {
+    LocalVcs result = createVcs();
+    result.load();
+    return result;
+  }
 
   @Test
-  public void testStoringEntries() throws IOException {
+  public void testStoringEntries() {
     vcs.createFile(p("file"), "content");
     vcs.apply();
 
-    vcs.store(myTempDir);
-    LocalVcs result = new LocalVcs(myTempDir);
+    vcs.store();
+    LocalVcs result = createVcsAndLoad();
 
     assertTrue(result.hasEntry(p("file")));
   }
 
   @Test
-  public void testStoringChangeList() throws IOException {
+  public void testStoringChangeList() {
     vcs.createFile(p("file"), "content");
     vcs.apply();
     vcs.changeFileContent(p("file"), "new content");
     vcs.apply();
 
-    vcs.store(myTempDir);
-    LocalVcs result = new LocalVcs(myTempDir);
+    vcs.store();
+    LocalVcs result = createVcsAndLoad();
 
     assertEquals("new content", result.getEntry(p("file")).getContent());
 
@@ -38,13 +52,13 @@ public class LocalVcsStorageTest extends TempDirTestCase {
   }
 
   @Test
-  public void testStoringObjectsCounter() throws IOException {
+  public void testStoringObjectsCounter() {
     vcs.createFile(p("file1"), "content1");
     vcs.createFile(p("file2"), "content2");
     vcs.apply();
 
-    vcs.store(myTempDir);
-    LocalVcs result = new LocalVcs(myTempDir);
+    vcs.store();
+    LocalVcs result = createVcsAndLoad();
 
     result.createFile(p("file3"), "content3");
     result.apply();
@@ -56,11 +70,11 @@ public class LocalVcsStorageTest extends TempDirTestCase {
   }
 
   @Test
-  public void testDoesNotStoreUncommittedChanges() throws IOException {
+  public void testDoesNotStoreUncommittedChanges() {
     vcs.createFile(p("file"), "content");
 
-    vcs.store(myTempDir);
-    LocalVcs result = new LocalVcs(myTempDir);
+    vcs.store();
+    LocalVcs result = createVcsAndLoad();
 
     assertTrue(result.isClean());
   }
