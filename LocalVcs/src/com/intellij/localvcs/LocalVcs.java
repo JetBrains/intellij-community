@@ -14,9 +14,6 @@ public class LocalVcs {
 
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
-  // todo introduce Storage class
-  public LocalVcs() {}
-
   public LocalVcs(Storage s) {
     myStorage = s;
   }
@@ -103,6 +100,7 @@ public class LocalVcs {
 
     myRoot = myChangeList.applyChangeSetOn(myRoot, cs);
     clearPendingChanges();
+    store();
   }
 
   public void revert() {

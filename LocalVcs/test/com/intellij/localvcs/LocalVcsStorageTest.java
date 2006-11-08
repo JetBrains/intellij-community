@@ -22,6 +22,19 @@ public class LocalVcsStorageTest extends TempDirTestCase {
   }
 
   @Test
+  public void testStoringOnApply() {
+    final boolean[] isCalled = new boolean[]{false};
+
+    LocalVcs vcs = new LocalVcs(null) {
+      @Override
+      protected void store() { isCalled[0] = true; }
+    };
+
+    vcs.apply();
+    assertTrue(isCalled[0]);
+  }
+
+  @Test
   public void testStoringEntries() {
     vcs.createFile(p("file"), "content");
     vcs.apply();
