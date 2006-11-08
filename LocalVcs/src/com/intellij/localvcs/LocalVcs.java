@@ -14,6 +14,7 @@ public class LocalVcs {
 
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
+  // todo introduce Storage class
   public LocalVcs() {}
 
   public LocalVcs(File dir) throws IOException {
@@ -103,8 +104,9 @@ public class LocalVcs {
   }
 
   public void apply() {
-    myRoot = myChangeList.applyChangeSetOn(
-        myRoot, new ChangeSet(myPendingChanges));
+    ChangeSet cs = new ChangeSet(myPendingChanges);
+
+    myRoot = myChangeList.applyChangeSetOn(myRoot, cs);
     clearPendingChanges();
   }
 
@@ -139,13 +141,10 @@ public class LocalVcs {
     List<RootEntry> result = new ArrayList<RootEntry>();
 
     RootEntry r = myRoot;
-    while (r != null) {
+    while (r.canBeReverted()) {
       result.add(r);
       r = myChangeList.revertOn(r);
     }
-
-    // todo bad hack, maybe replace with EmptySnapshot class
-    result.remove(result.size() - 1);
 
     return result;
   }

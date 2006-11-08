@@ -25,6 +25,10 @@ public class RootEntry extends DirectoryEntry {
     return myChangeListIndex;
   }
 
+  public boolean canBeReverted() {
+    return myChangeListIndex >= 0;
+  }
+
   public void incrementChangeListIndex() {
     myChangeListIndex++;
   }

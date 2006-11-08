@@ -33,32 +33,32 @@ public class ChangeList {
 
     // todo should we really make copy of current shapshot?
     // todo copy is a performance bottleneck
-    RootEntry result = (RootEntry)root.copy();
 
-    cs.applyTo(result);
+    RootEntry result = root.apply(cs);
     myChangeSets.add(cs);
-    result.incrementChangeListIndex();
+    result.incrementChangeListIndex(); // todo do something with it
 
     return result;
   }
 
   public RootEntry revertOn(RootEntry root) {
     // todo 1. not as clear as i want it to be.
-    // todo 2. throw an exception instead of returning null
-    if (root.getChangeListIndex() < 0) return null;
+    if (!root.canBeReverted()) throw new LocalVcsException();
 
-    RootEntry result = (RootEntry)root.copy();
+    ChangeSet cs = getChangeSetFor(root);
 
-    getChangeSetFor(result).revertOn(result);
+    RootEntry result = root.revert(cs);
     result.decrementChangeListIndex();
 
     return result;
   }
 
-  private ChangeSet getChangeSetFor(RootEntry e) {
-    // todo ummm... one more unpleasant check... 
-    if (e.getChangeListIndex() < 0) throw new LocalVcsException();
-    return myChangeSets.get(e.getChangeListIndex());
+  private ChangeSet getChangeSetFor(RootEntry root) {
+    // todo ummm... one more unpleasant check...
+
+    // todo VERY BAD!!! something wring with changeListIndex!! 
+    if (!root.canBeReverted()) throw new LocalVcsException();
+    return myChangeSets.get(root.getChangeListIndex());
   }
 
   public void setLabel(RootEntry root, String label) {
