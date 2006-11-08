@@ -12,72 +12,102 @@ public class Storage {
     myDir = dir;
   }
 
-  public ChangeList loadChangeList() throws IOException {
+  public ChangeList loadChangeList() {
     File f = new File(myDir, "changeList");
-    FileInputStream fs = new FileInputStream(f);
+    if (!f.exists()) return new ChangeList();
+
     try {
-      Stream s = new Stream(fs);
-      return s.readChangeList();
-    } finally {
-      fs.close();
+      FileInputStream fs = new FileInputStream(f);
+      try {
+        Stream s = new Stream(fs);
+        return s.readChangeList();
+      } finally {
+        fs.close();
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  public void storeChangeList(ChangeList c) throws IOException {
+  public void storeChangeList(ChangeList c) {
     File f = new File(myDir, "changeList");
-    f.createNewFile();
-    FileOutputStream fs = new FileOutputStream(f);
     try {
-      Stream s = new Stream(fs);
-      s.writeChangeList(c);
-    } finally {
-      fs.close();
+      f.createNewFile();
+      FileOutputStream fs = new FileOutputStream(f);
+      try {
+        Stream s = new Stream(fs);
+        s.writeChangeList(c);
+      } finally {
+        fs.close();
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  public RootEntry loadRootEntry() throws IOException {
+  public RootEntry loadRootEntry() {
     File f = new File(myDir, "rootEntry");
-    FileInputStream fs = new FileInputStream(f);
+    if (!f.exists()) return new RootEntry();
+
     try {
-      Stream s = new Stream(fs);
-      return (RootEntry)s.readEntry(); // todo cast!!!
-    } finally {
-      fs.close();
+      FileInputStream fs = new FileInputStream(f);
+      try {
+        Stream s = new Stream(fs);
+        return (RootEntry)s.readEntry(); // todo cast!!!
+      } finally {
+        fs.close();
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  public void storeRootEntry(RootEntry e) throws IOException {
+  public void storeRootEntry(RootEntry e) {
     File f = new File(myDir, "rootEntry");
-    f.createNewFile();
-    FileOutputStream fs = new FileOutputStream(f);
     try {
-      Stream s = new Stream(fs);
-      s.writeEntry(e);
-    } finally {
-      fs.close();
+      f.createNewFile();
+      FileOutputStream fs = new FileOutputStream(f);
+      try {
+        Stream s = new Stream(fs);
+        s.writeEntry(e);
+      } finally {
+        fs.close();
+      }
+    } catch (IOException e1) {
+      throw new RuntimeException(e1);
     }
   }
 
-  public Integer loadCounter() throws IOException {
+  public Integer loadCounter() {
     File f = new File(myDir, "counter");
-    FileInputStream fs = new FileInputStream(f);
+    if (!f.exists()) return 0;
+
     try {
-      Stream s = new Stream(fs);
-      return s.readInteger();
-    } finally {
-      fs.close();
+      FileInputStream fs = new FileInputStream(f);
+      try {
+        Stream s = new Stream(fs);
+        return s.readInteger();
+      } finally {
+        fs.close();
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  public void storeCounter(Integer i) throws IOException {
+  public void storeCounter(Integer i) {
     File f = new File(myDir, "counter");
-    f.createNewFile();
-    FileOutputStream fs = new FileOutputStream(f);
     try {
-      Stream s = new Stream(fs);
-      s.writeInteger(i);
-    } finally {
-      fs.close();
+      f.createNewFile();
+      FileOutputStream fs = new FileOutputStream(f);
+      try {
+        Stream s = new Stream(fs);
+        s.writeInteger(i);
+      } finally {
+        fs.close();
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }

@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import org.junit.Before;
 import org.junit.Test;
 
-public class LocalVcsStorageTest extends TempDirTestCase {
+public class LocalVcsStoringTest extends TempDirTestCase {
   private LocalVcs vcs;
 
   @Before
@@ -12,20 +12,14 @@ public class LocalVcsStorageTest extends TempDirTestCase {
   }
 
   private LocalVcs createVcs() {
-    return new LocalVcs(new Storage(myTempDir));
-  }
-
-  private LocalVcs createVcsAndLoad() {
-    LocalVcs result = createVcs();
-    result.load();
-    return result;
+    return new LocalVcs(new Storage(tempDir));
   }
 
   @Test
   public void testStoringOnApply() {
     final boolean[] isCalled = new boolean[]{false};
 
-    LocalVcs vcs = new LocalVcs(null) {
+    LocalVcs vcs = new LocalVcs(new TestStorage()) {
       @Override
       protected void store() { isCalled[0] = true; }
     };
@@ -39,8 +33,7 @@ public class LocalVcsStorageTest extends TempDirTestCase {
     vcs.createFile(p("file"), "content");
     vcs.apply();
 
-    vcs.store();
-    LocalVcs result = createVcsAndLoad();
+    LocalVcs result = createVcs();
 
     assertTrue(result.hasEntry(p("file")));
   }
@@ -52,8 +45,7 @@ public class LocalVcsStorageTest extends TempDirTestCase {
     vcs.changeFileContent(p("file"), "new content");
     vcs.apply();
 
-    vcs.store();
-    LocalVcs result = createVcsAndLoad();
+    LocalVcs result = createVcs();
 
     assertEquals("new content", result.getEntry(p("file")).getContent());
 
@@ -70,8 +62,7 @@ public class LocalVcsStorageTest extends TempDirTestCase {
     vcs.createFile(p("file2"), "content2");
     vcs.apply();
 
-    vcs.store();
-    LocalVcs result = createVcsAndLoad();
+    LocalVcs result = createVcs();
 
     result.createFile(p("file3"), "content3");
     result.apply();
@@ -85,10 +76,9 @@ public class LocalVcsStorageTest extends TempDirTestCase {
   @Test
   public void testDoesNotStoreUncommittedChanges() {
     vcs.createFile(p("file"), "content");
-
     vcs.store();
-    LocalVcs result = createVcsAndLoad();
 
+    LocalVcs result = createVcs();
     assertTrue(result.isClean());
   }
 }

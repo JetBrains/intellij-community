@@ -6,13 +6,7 @@ import org.junit.Test;
 
 public class LocalVcsBasicsTest extends TestCase {
   // todo clean up LocalVcs tests
-  private LocalVcs vcs = new LocalVcs(null) {
-    @Override
-    public void load() {}
-
-    @Override
-    protected void store() {}
-  };
+  private LocalVcs vcs = new LocalVcs(new TestStorage());
 
   @Test
   public void testOnlyCommitThrowsException() {

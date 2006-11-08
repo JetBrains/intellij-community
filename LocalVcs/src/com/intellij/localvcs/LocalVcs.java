@@ -1,44 +1,30 @@
 package com.intellij.localvcs;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LocalVcs {
   private Storage myStorage;
 
-  // todo remove initialization
-  private ChangeList myChangeList = new ChangeList();
-  private RootEntry myRoot = new RootEntry();
-  private Integer myEntryCounter = 0;
+  private ChangeList myChangeList;
+  private RootEntry myRoot;
+  private Integer myEntryCounter;
 
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs(Storage s) {
     myStorage = s;
-  }
 
-  public void load() {
-    // todo remove this method
-    try {
-      myChangeList = myStorage.loadChangeList();
-      myRoot = myStorage.loadRootEntry();
-      myEntryCounter = myStorage.loadCounter();
-    } catch (IOException e) {
-      // todo move exception handling to Storage class
-      throw new RuntimeException(e);
-    }
+    myChangeList = myStorage.loadChangeList();
+    myRoot = myStorage.loadRootEntry();
+    myEntryCounter = myStorage.loadCounter();
   }
 
   protected void store() {
     // make it private
-    try {
-      myStorage.storeChangeList(myChangeList);
-      myStorage.storeRootEntry(myRoot);
-      myStorage.storeCounter(myEntryCounter); // todo test it
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    myStorage.storeChangeList(myChangeList);
+    myStorage.storeRootEntry(myRoot);
+    myStorage.storeCounter(myEntryCounter); // todo test it
   }
 
   public boolean hasEntry(Path path) {

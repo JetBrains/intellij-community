@@ -8,24 +8,24 @@ import org.junit.After;
 import org.junit.Before;
 
 public abstract class TempDirTestCase extends TestCase {
-  protected File myTempDir;
+  protected File tempDir;
 
   @Before
   public void createTempDir() {
     try {
       File root = new File(getClass().getResource(".").toURI());
-      myTempDir = new File(root, "temp");
+      tempDir = new File(root, "temp");
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
 
     deleteTempDir();
-    myTempDir.mkdirs();
+    tempDir.mkdirs();
   }
 
   @After
   public void deleteTempDir() {
-    if (!FileUtil.delete(myTempDir))
+    if (!FileUtil.delete(tempDir))
       throw new RuntimeException("can't delete temp dir");
   }
 }
