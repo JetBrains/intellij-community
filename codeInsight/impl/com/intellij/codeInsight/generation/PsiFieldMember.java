@@ -20,9 +20,10 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements E
   }
 
   @Nullable
-  public PsiMethod generateGetter() {
+  public PsiGenerationInfo generateGetter() {
     PsiField field = getElement();
-    return createMethodIfNotExists(field, PropertyUtil.generateGetterPrototype(field));
+    final PsiMethod method = createMethodIfNotExists(field, PropertyUtil.generateGetterPrototype(field));
+    return method != null ? new PsiGenerationInfo(method) : null;
   }
 
   @Nullable
@@ -32,11 +33,12 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements E
   }
 
   @Nullable
-  public PsiMethod generateSetter() {
+  public PsiGenerationInfo generateSetter() {
     PsiField field = getElement();
     if (field.hasModifierProperty(PsiModifier.FINAL)) {
       return null;
     }
-    return createMethodIfNotExists(field, PropertyUtil.generateSetterPrototype(field));
+    final PsiMethod method = createMethodIfNotExists(field, PropertyUtil.generateSetterPrototype(field));
+    return method == null ? null : new PsiGenerationInfo(method);
   }
 }

@@ -116,7 +116,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return members;
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     ArrayList<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();
     ArrayList<PsiElement> fieldsVector = new ArrayList<PsiElement>();
     for (ClassMember member1 : members) {
@@ -130,23 +130,20 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     }
     PsiField[] fields = fieldsVector.toArray(new PsiField[fieldsVector.size()]);
 
-    PsiMethod[] constructors;
-    if (baseConstructors.size() > 0){
-      constructors = new PsiMethod[baseConstructors.size()];
+    GenerationInfo[] constructors;
+    if (baseConstructors.size() > 0) {
+      constructors = new GenerationInfo[baseConstructors.size()];
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseConstructors.get(0).getContainingClass(), aClass, PsiSubstitutor.EMPTY);
       for(int i = 0; i < baseConstructors.size(); i++){
         PsiMethod baseConstructor = baseConstructors.get(i);
         if (substitutor != PsiSubstitutor.EMPTY) {
           baseConstructor = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor);
         }
-        constructors[i] = generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields);
+        constructors[i] = new PsiGenerationInfo(generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields));
       }
+      return constructors;
     }
-    else{
-      constructors = new PsiMethod[1];
-      constructors[0] = generateConstructorPrototype(aClass, null, false, fields);
-    }
-    return constructors;
+    return new GenerationInfo[]{new PsiGenerationInfo(generateConstructorPrototype(aClass, null, false, fields))};
   }
 
   public static PsiMethod generateConstructorPrototype(PsiClass aClass, PsiMethod baseConstructor, boolean copyJavaDoc, PsiField[] fields) throws IncorrectOperationException {
@@ -178,7 +175,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     if (baseConstructor != null){
       PsiClass superClass = aClass.getSuperClass();
       LOG.assertTrue(superClass != null);
-      if (!"java.lang.Enum".equals(superClass.getQualifiedName())) {
+      if (!CommonClassNames.JAVA_LANG_ENUM.equals(superClass.getQualifiedName())) {
         if (baseConstructor instanceof PsiCompiledElement){ // to get some parameter names
           PsiClass dummyClass = factory.createClass("Dummy");
           baseConstructor = (PsiMethod)dummyClass.add(baseConstructor);
@@ -233,7 +230,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return constructor;
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
+  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
     LOG.assertTrue(false);
     return null;
   }

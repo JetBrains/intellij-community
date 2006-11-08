@@ -7,6 +7,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
@@ -95,7 +96,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     myContext = null;
   }
 
-  public boolean handleInsertInner(CompletionContext context,
+  private boolean handleInsertInner(CompletionContext context,
                            int startOffset, LookupData data, LookupItem item,
                            final boolean signatureSelected, final char completionChar) {
 
@@ -511,7 +512,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         }
       }
     );
-    return;
   }
 
   private int processTail(int tailType, int caretOffset, int tailOffset) {
@@ -894,9 +894,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
                 ApplicationManager.getApplication().runWriteAction(new Runnable() {
                   public void run() {
                     try{
-                      PsiMethod[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, candidatesToImplement, false, false);
-                      Object[] resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                      GenerateMembersUtil.positionCaret(myEditor, (PsiElement)resultMembers[0], true);
+                      PsiGenerationInfo[] prototypes = OverrideImplementUtil.convert2GenerationInfos(OverrideImplementUtil.overrideOrImplementMethods(aClass, candidatesToImplement, false, false));
+                      PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
+                      GenerateMembersUtil.positionCaret(myEditor, resultMembers[0].getPsiMember(), true);
                     }
                     catch(IncorrectOperationException ioe){
                       LOG.error(ioe);
@@ -938,11 +938,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     try{
       PsiMethodMember[] selectedArray = selected.toArray(new PsiMethodMember[selected.size()]);
-      final PsiMethod[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selectedArray, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
+      final PsiGenerationInfo<PsiMethod>[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selectedArray, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
 
-      for (PsiMethod prototype : prototypes) {
-        PsiStatement[] statements = prototype.getBody().getStatements();
-        if (statements.length > 0 && prototype.getReturnType() == PsiType.VOID) {
+      for (PsiGenerationInfo<PsiMethod> prototype : prototypes) {
+        PsiStatement[] statements = prototype.getPsiMember().getBody().getStatements();
+        if (statements.length > 0 && prototype.getPsiMember().getReturnType() == PsiType.VOID) {
           statements[0].delete(); // remove "super(..)" call
         }
       }
@@ -951,8 +951,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try{
-            Object[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
-            GenerateMembersUtil.positionCaret(editor, (PsiElement)resultMembers[0], true);
+            PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
+            GenerateMembersUtil.positionCaret(editor, resultMembers[0].getPsiMember(), true);
           }
           catch(IncorrectOperationException e){
             LOG.error(e);

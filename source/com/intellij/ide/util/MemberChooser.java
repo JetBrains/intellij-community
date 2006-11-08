@@ -377,7 +377,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     if (!myShowClasses || myClassNodes.size() == 0) {
       List<ParentNode> otherObjects = new ArrayList<ParentNode>();
       Enumeration<ParentNode<T>> children = getRootNodeChildren();
-      ParentNode<T> newRoot = new ParentNode<T>(root, new MemberChooserObjectBase(IdeBundle.message("node.memberchooser.all.classes")), new Ref<Integer>(0));
+      ParentNode<T> newRoot = new ParentNode<T>(null, new MemberChooserObjectBase(IdeBundle.message("node.memberchooser.all.classes")), new Ref<Integer>(0));
       while (children.hasMoreElements()) {
         final ParentNode nextElement = children.nextElement();
         if (nextElement instanceof ClassNode) {
@@ -392,7 +392,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
       }
       replaceChildren(root, otherObjects);
       sortNode(newRoot, mySorted);
-      if (!newRoot.children().hasMoreElements()) root.remove(newRoot);
+      if (newRoot.children().hasMoreElements()) root.add(newRoot);
     }
     else {
       Enumeration<ParentNode<T>> children = getRootNodeChildren();
@@ -503,11 +503,13 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     private int myOrder;
     private final MemberChooserObject myDelegate;
 
-    public ElementNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
+    public ElementNode(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       myOrder = order.get();
       order.set(myOrder + 1);
       myDelegate = delegate;
-      parent.add(this);
+      if (parent != null) {
+        parent.add(this);
+      }
     }
 
     public MemberChooserObject getDelegate() {
@@ -531,7 +533,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
   }
 
   private static class ParentNode<T extends ClassMember> extends ElementNode {
-    public ParentNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
+    public ParentNode(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
 

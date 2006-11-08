@@ -50,14 +50,14 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
         try {
           int offset = editor.getCaretModel().getOffset();
 
-          PsiMethod[] prototypes = new PsiMethod[candidates.length];
+          PsiGenerationInfo<PsiMethod>[] prototypes = new PsiGenerationInfo[candidates.length];
           for (int i = 0; i < candidates.length; i++) {
             prototypes[i] = generateDelegatePrototype(candidates[i], target);
           }
 
-          Object[] results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
+          PsiGenerationInfo<PsiMethod>[] results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
 
-          PsiMethod firstMethod = (PsiMethod)results[0];
+          PsiMethod firstMethod = results[0].getPsiMember();
           final PsiCodeBlock block = firstMethod.getBody();
           final PsiElement first = block.getFirstBodyElement();
           LOG.assertTrue(first != null);
@@ -76,8 +76,8 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  private PsiMethod generateDelegatePrototype(PsiMethodMember methodCandidate, PsiElement target) throws IncorrectOperationException {
-    PsiMethod method = GenerateMembersUtil.substituteGenericMethod((PsiMethod)methodCandidate.getElement(), methodCandidate.getSubstitutor());
+  private static PsiGenerationInfo<PsiMethod> generateDelegatePrototype(PsiMethodMember methodCandidate, PsiElement target) throws IncorrectOperationException {
+    PsiMethod method = GenerateMembersUtil.substituteGenericMethod(methodCandidate.getElement(), methodCandidate.getSubstitutor());
     clearMethod(method);
 
     clearModifiers(method);
@@ -134,7 +134,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
     method.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
 
-    return method;
+    return new PsiGenerationInfo<PsiMethod>(method);
   }
 
   private static void clearMethod(PsiMethod method) throws IncorrectOperationException {

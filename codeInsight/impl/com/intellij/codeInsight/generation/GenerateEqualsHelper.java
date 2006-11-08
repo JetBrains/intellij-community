@@ -113,7 +113,7 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
-  public PsiElement[] generateMembers() throws IncorrectOperationException {
+  public PsiMethod[] generateMembers() throws IncorrectOperationException {
     PsiMethod equals = null;
     if (myEqualsFields != null && findMethod(myClass, getEqualsSignature(myProject, myClass.getResolveScope())) == null) {
       equals = createEquals();
@@ -141,7 +141,7 @@ public class GenerateEqualsHelper implements Runnable {
       return new PsiMethod[]{hashCode};
     }
     else {
-      return PsiElement.EMPTY_ARRAY;
+      return PsiMethod.EMPTY_ARRAY;
     }
   }
 

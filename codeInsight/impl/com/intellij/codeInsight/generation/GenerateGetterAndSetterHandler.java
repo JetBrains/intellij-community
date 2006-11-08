@@ -14,16 +14,16 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
     super(CodeInsightBundle.message("generate.getter.setter.title"));
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
-    ArrayList<Object> array = new ArrayList<Object>();
-    Object[] getters = myGenerateGetterHandler.generateMemberPrototypes(aClass, original);
-    Object[] setters = myGenerateSetterHandler.generateMemberPrototypes(aClass, original);
+  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
+    ArrayList<GenerationInfo> array = new ArrayList<GenerationInfo>();
+    GenerationInfo[] getters = myGenerateGetterHandler.generateMemberPrototypes(aClass, original);
+    GenerationInfo[] setters = myGenerateSetterHandler.generateMemberPrototypes(aClass, original);
 
     if (getters.length > 0 && setters.length > 0){
       array.add(getters[0]);
       array.add(setters[0]);
     }
 
-    return array.toArray(new Object[array.size()]);
+    return array.toArray(new GenerationInfo[array.size()]);
   }
 }

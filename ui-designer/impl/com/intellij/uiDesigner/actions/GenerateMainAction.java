@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -89,8 +90,8 @@ public class GenerateMainAction extends AnAction {
           public void run() {
             try {
               PsiMethod method = file.getManager().getElementFactory().createMethodFromText(mainBuilder.toString(), file);
-              Object[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(file, offset, new Object[]{method});
-              GenerateMembersUtil.positionCaret(editor, (PsiElement)resultMembers[0], false);
+              PsiGenerationInfo[] resultMembers = GenerateMembersUtil.insertMembersAtOffset(file, offset, new PsiGenerationInfo[]{new PsiGenerationInfo(method)});
+              GenerateMembersUtil.positionCaret(editor, resultMembers[0].getPsiMember(), false);
             }
             catch (IncorrectOperationException e1) {
               LOG.error(e1);

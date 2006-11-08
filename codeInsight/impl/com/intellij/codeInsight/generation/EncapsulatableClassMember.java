@@ -14,10 +14,12 @@ public interface EncapsulatableClassMember extends ClassMember{
   /**
    * @return PsiElement or TemplateGenerationInfo
    */
-  @Nullable Object generateGetter() throws IncorrectOperationException;
+  @Nullable
+  GenerationInfo generateGetter() throws IncorrectOperationException;
 
   /**
    * @return PsiElement or TemplateGenerationInfo
    */
-  @Nullable Object generateSetter() throws IncorrectOperationException;
+  @Nullable
+  GenerationInfo generateSetter() throws IncorrectOperationException;
 }

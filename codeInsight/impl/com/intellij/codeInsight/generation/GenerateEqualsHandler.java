@@ -14,7 +14,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
 
 /**
  * @author dsl
@@ -81,11 +80,11 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return DUMMY_RESULT;
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
+  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     try {
       Project project = aClass.getProject();
       GenerateEqualsHelper helper = new GenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields);
-      return helper.generateMembers();
+      return OverrideImplementUtil.convert2GenerationInfos(helper.generateMembers());
     }
     catch (GenerateEqualsHelper.NoObjectClassException e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -94,7 +93,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
                                      CodeInsightBundle.message("generate.equals.and.hashcode.error.no.object.class.title"));
           }
         });
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return GenerationInfo.EMPTY_ARRAY;
     }
   }
 
@@ -102,7 +101,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return null;
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
+  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) {
     return null;
   }
 

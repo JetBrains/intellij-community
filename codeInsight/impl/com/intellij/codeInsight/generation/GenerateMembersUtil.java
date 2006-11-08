@@ -14,12 +14,10 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class GenerateMembersUtil {
@@ -28,8 +26,9 @@ public class GenerateMembersUtil {
   private GenerateMembersUtil() {
   }
 
-  public static Object[] insertMembersAtOffset(PsiFile file, int offset, Object[] memberPrototypes) throws IncorrectOperationException {
-    if (memberPrototypes.length == 0) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  @Nullable
+  public static <T extends GenerationInfo> T[] insertMembersAtOffset(PsiFile file, int offset, T[] memberPrototypes) throws IncorrectOperationException {
+    if (memberPrototypes.length == 0) return memberPrototypes;
     PsiElement anchor = findAnchor(file, offset);
     if (anchor == null) return null;
     PsiClass aClass = (PsiClass) anchor.getParent();
@@ -78,36 +77,15 @@ public class GenerateMembersUtil {
     }
   }
 
-  public static Object[] insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, Object[] memberPrototypes)
+  public static <T extends GenerationInfo> T[] insertMembersBeforeAnchor(PsiClass aClass, PsiElement anchor, T[] memberPrototypes)
       throws IncorrectOperationException {
-    List<Object> newMembersList = new ArrayList<Object>();
-
     boolean before = true;
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(aClass.getProject());
-    for (Object memberPrototype : memberPrototypes) {
-      if (memberPrototype instanceof PsiElement) {
-        PsiElement prototype = (PsiElement)memberPrototype;
-
-        PsiElement newMember = insert(aClass, prototype, anchor, before);
-        newMember = codeStyleManager.shortenClassReferences(newMember);
-
-        newMembersList.add(newMember);
-        anchor = newMember;
-        before = false;
-      }
-      else if (memberPrototype instanceof TemplateGenerationInfo) {
-        TemplateGenerationInfo info = (TemplateGenerationInfo)memberPrototype;
-        info.element = insert(aClass, info.element, anchor, before);
-        newMembersList.add(info);
-        anchor = info.element;
-        before = false;
-      }
-      else {
-        LOG.error("unknown element: " + memberPrototype);
-      }
+    for (T memberPrototype : memberPrototypes) {
+      memberPrototype.insert(aClass, anchor, before);
+      before = false;
+      anchor = memberPrototype.getPsiMember();
     }
-
-    return newMembersList.toArray();
+    return memberPrototypes;
   }
 
   public static void positionCaret(Editor editor, PsiElement firstMember, boolean toEditBody) {
@@ -155,7 +133,7 @@ public class GenerateMembersUtil {
     editor.getSelectionModel().removeSelection();
   }
 
-  private static PsiElement insert(PsiElement parent, PsiElement element, PsiElement anchor, boolean before)
+  static PsiElement insert(PsiElement parent, PsiElement element, PsiElement anchor, boolean before)
       throws IncorrectOperationException {
     if (anchor != null) {
       return before ? parent.addBefore(element, anchor) : parent.addAfter(element, anchor);
@@ -165,6 +143,7 @@ public class GenerateMembersUtil {
     }
   }
 
+  @Nullable
   private static PsiElement findAnchor(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
@@ -182,7 +161,6 @@ public class GenerateMembersUtil {
             }
             else if ((child instanceof PsiJavaToken && ",".equals(child.getText())) || child instanceof PsiEnumConstant) {
               lastChild = child;
-              continue;
             }
           }
           if (lastChild != null) {

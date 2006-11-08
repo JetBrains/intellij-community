@@ -3,7 +3,6 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
@@ -18,14 +17,14 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
     return super.chooseOriginalMembers(aClass, project);
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
+  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
     if (original instanceof EncapsulatableClassMember) {
       final EncapsulatableClassMember encapsulatableClassMember = (EncapsulatableClassMember)original;
-      final Object getter = encapsulatableClassMember.generateGetter();
+      final GenerationInfo getter = encapsulatableClassMember.generateGetter();
       if (getter != null) {
-        return new Object[]{getter};
+        return new GenerationInfo[]{getter};
       }
     }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return GenerationInfo.EMPTY_ARRAY;
   }
 }

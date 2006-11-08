@@ -1,13 +1,20 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +42,7 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), project)){
         return;
       }
-   }
+    }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();
@@ -66,9 +73,9 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     int line = editor.getCaretModel().getLogicalPosition().line;
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
-    Object[] newMembers;
+    GenerationInfo[] newMembers;
     try{
-      Object[] prototypes = generateMemberPrototypes(aClass, members);
+      GenerationInfo[] prototypes = generateMemberPrototypes(aClass, members);
       newMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
     }
     catch(IncorrectOperationException e){
@@ -79,19 +86,48 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
 
     final ArrayList<TemplateGenerationInfo> templates = new ArrayList<TemplateGenerationInfo>();
-    for (Object member : newMembers) {
+    for (GenerationInfo member : newMembers) {
       if (member instanceof TemplateGenerationInfo) {
         templates.add((TemplateGenerationInfo) member);
       }
     }
 
     if (!templates.isEmpty()){
-      new ProcessTemplatesRunnable(project, templates, editor).run();
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+      runTemplates(project, editor, templates, 0);
     }
     else if (newMembers.length > 0){
-      positionCaret(editor, (PsiElement)newMembers[0]);
+      GenerateMembersUtil.positionCaret(editor, newMembers[0].getPsiMember(), false);
     }
   }
+
+  private static void runTemplates(final Project myProject, final Editor editor, final List<TemplateGenerationInfo> templates, final int index) {
+    TemplateGenerationInfo info = templates.get(index);
+    final Template template = info.getTemplate();
+
+    final PsiElement element = info.getPsiMember();
+    final TextRange range = element.getTextRange();
+    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    int offset = range.getStartOffset();
+    editor.getCaretModel().moveToOffset(offset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    TemplateManager.getInstance(myProject).startTemplate(editor, template, new TemplateEditingAdapter() {
+      public void templateFinished(Template template) {
+        if (index + 1 < templates.size()){
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              new WriteCommandAction(myProject) {
+                protected void run(Result result) throws Throwable {
+                  runTemplates(myProject, editor, templates, index + 1);
+                }
+              }.execute();
+            }
+          });
+        }
+      }
+    });
+  }
+
 
   @Nullable
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
@@ -99,6 +135,7 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     return chooseMembers(allMembers, false, false, project);
   }
 
+  @Nullable
   protected final ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
     MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project);
     chooser.setTitle(myChooserTitle);
@@ -109,24 +146,20 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     return list == null ? null : list.toArray(new ClassMember[list.size()]);
   }
 
-  protected Object[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
-    ArrayList<Object> array = new ArrayList<Object>();
+  protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+    ArrayList<GenerationInfo> array = new ArrayList<GenerationInfo>();
     for (ClassMember member : members) {
-      Object[] prototypes = generateMemberPrototypes(aClass, member);
+      GenerationInfo[] prototypes = generateMemberPrototypes(aClass, member);
       if (prototypes != null) {
         array.addAll(Arrays.asList(prototypes));
       }
     }
-    return array.toArray(new Object[array.size()]);
+    return array.toArray(new GenerationInfo[array.size()]);
   }
 
   protected abstract ClassMember[] getAllOriginalMembers(PsiClass aClass);
 
-  protected abstract Object[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) throws IncorrectOperationException;
-
-  protected void positionCaret(Editor editor, PsiElement firstMember) {
-    GenerateMembersUtil.positionCaret(editor, firstMember, false);
-  }
+  protected abstract GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember originalMember) throws IncorrectOperationException;
 
   public boolean startInWriteAction() {
     return false;
