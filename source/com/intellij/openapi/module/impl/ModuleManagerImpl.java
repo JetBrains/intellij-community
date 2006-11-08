@@ -30,6 +30,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import gnu.trove.THashMap;
@@ -63,6 +64,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
   private long myModificationCount;
   private MessageBusConnection myConnection;
+  private final MessageBus myMessageBus;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -73,9 +75,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myCachedSortedModules = null;
   }
 
-  public ModuleManagerImpl(Project project, PomModel pomModel) {
+  public ModuleManagerImpl(Project project, PomModel pomModel, MessageBus bus) {
     myProject = project;
-    myConnection = project.getMessageBus().connectStrongly();
+    myMessageBus = bus;
+    myConnection = bus.connectStrongly();
+
     myConnection.setDefaultHandler(new MessageHandler() {
       public void handle(Method event, Object... params) {
         cleanCachedStuff();
@@ -357,26 +361,26 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   private void fireModuleAdded(Module module) {
-    myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).moduleAdded(myProject, module);
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleAdded(myProject, module);
   }
 
   private void fireModuleRemoved(Module module) {
-    myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).moduleRemoved(myProject, module);
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(myProject, module);
   }
 
   private void fireBeforeModuleRemoved(Module module) {
-    myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
   }
 
   private Map<ModuleListener, MessageBusConnection> myAdapters = new HashMap<ModuleListener, MessageBusConnection>();
   public void addModuleListener(@NotNull ModuleListener listener) {
-    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly();
+    final MessageBusConnection connection = myMessageBus.connectStrongly();
     connection.subscribe(ProjectTopics.MODULES, listener);
     myAdapters.put(listener, connection);
   }
 
   public void addModuleListener(@NotNull ModuleListener listener, Disposable parentDisposable) {
-    final MessageBusConnection connection = myProject.getMessageBus().connectStrongly(parentDisposable);
+    final MessageBusConnection connection = myMessageBus.connectStrongly(parentDisposable);
     connection.subscribe(ProjectTopics.MODULES, listener);
   }
 
@@ -891,7 +895,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   private void fireModulesRenamed(List<Module> modules) {
     if (!modules.isEmpty()) {
-      myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
+      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
     }
   }
 

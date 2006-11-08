@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesFileType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -103,13 +102,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Constructor
   // -------------------------------------------------------------------------
 
-  public FileTypeManagerImpl() {
+  public FileTypeManagerImpl(MessageBus bus) {
     registerStandardFileTypes();
     boolean standardFileTypeRead = loadAllFileTypes();
     if (standardFileTypeRead) {
       restoreStandardFileExtensions();
     }
-    myMessageBus = ApplicationManager.getApplication().getMessageBus();
+    myMessageBus = bus;
   }
 
   @NotNull

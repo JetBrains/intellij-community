@@ -72,9 +72,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private MessageBus myMessageBus;
 
+
   protected void initComponents() {
     final ComponentManagerImpl parent = getParentComponentManager();
     myMessageBus = Messages.newMessageBus(parent != null ? parent.getMessageBus() : null);
+    getPicoContainer().registerComponentInstance(MessageBus.class, myMessageBus);
+
     createComponents();
     getComponents(false);
   }
