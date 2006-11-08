@@ -20,7 +20,7 @@ public class ChangeSetTest extends TestCase {
     log = new ArrayList<Path>();
     root = new RootEntry() {
       @Override
-      protected void doCreateFile(Path path, String content) {
+      protected void doCreateFile(Path path, String content, Integer id) {
         log.add(path);
       }
 

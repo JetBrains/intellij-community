@@ -44,12 +44,12 @@ public class DeleteChange extends Change {
 
   private void restoreEntryRecursively(RootEntry root, Entry e, Path p) {
     if (e.isDirectory()) {
-      root.doCreateDirectory(p);
+      root.doCreateDirectory(p, e.getObjectId());
       for (Entry child : e.getChildren()) {
         restoreEntryRecursively(root, child, p.appendedWith(child.getName()));
       }
     } else {
-      root.doCreateFile(p, e.getContent());
+      root.doCreateFile(p, e.getContent(), e.getObjectId());
     }
   }
 }

@@ -27,34 +27,6 @@ public class ChangeList {
     return myChangeSets;
   }
 
-  public Snapshot applyChangeSetOn(Snapshot snapshot, ChangeSet cs) {
-    // todo we make bad assumption that applying is only done on current
-    // todo snapshot - not on the reverted one
-
-    // todo should we really make copy of current shapshot?
-    // todo copy is a performance bottleneck
-    Snapshot result = new Snapshot(snapshot);
-
-    cs.applyTo(result.getRoot());
-    myChangeSets.add(cs);
-    result.getRoot().incrementChangeListIndex();
-
-    return result;
-  }
-
-  public Snapshot revertOn(Snapshot snapshot) {
-    // todo 1. not as clear as i want it to be.
-    // todo 2. throw an exception instead of returning null
-    if (snapshot.getRoot().getChangeListIndex() < 0) return null;
-
-    Snapshot result = new Snapshot(snapshot);
-
-    getChangeSetFor(result.getRoot()).revertOn(result.getRoot());
-    result.getRoot().decrementChangeListIndex();
-
-    return result;
-  }
-
   public RootEntry applyChangeSetOn(RootEntry root, ChangeSet cs) {
     // todo we make bad assumption that applying is only done on current
     // todo snapshot - not on the reverted one

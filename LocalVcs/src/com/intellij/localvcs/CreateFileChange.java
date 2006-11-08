@@ -32,7 +32,7 @@ public class CreateFileChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateFile(myPath, myContent);
+    root.doCreateFile(myPath, myContent, root.getNextObjectId());
   }
 
   @Override

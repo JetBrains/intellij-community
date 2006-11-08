@@ -149,13 +149,13 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testAppliedDeleteChange() throws IOException {
-    Snapshot snapshot = new Snapshot(new ChangeList(), new RootEntry());
-    snapshot.doCreateDirectory(p("entry"));
-    snapshot.doCreateFile(p("entry/file"), "");
-    snapshot.doCreateDirectory(p("entry/dir"));
+    RootEntry root = new RootEntry();
+    root.doCreateDirectory(p("entry"), null);
+    root.doCreateFile(p("entry/file"), "", null);
+    root.doCreateDirectory(p("entry/dir"), null);
 
     Change c = new DeleteChange(p("entry"));
-    c.applyTo(snapshot.getRoot());
+    c.applyTo(root);
 
     os.writeChange(c);
     Entry result = ((DeleteChange)is.readChange()).getAffectedEntry();
@@ -170,11 +170,11 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testAppliedChangeFileContentChange() throws IOException {
-    Snapshot snapshot = new Snapshot(new ChangeList(), new RootEntry());
-    snapshot.doCreateFile(p("file"), "content");
+    RootEntry root = new RootEntry();
+    root.doCreateFile(p("file"), "content", null);
 
     Change c = new ChangeFileContentChange(p("file"), "new content");
-    c.applyTo(snapshot.getRoot());
+    c.applyTo(root);
 
     os.writeChange(c);
     Change read = is.readChange();

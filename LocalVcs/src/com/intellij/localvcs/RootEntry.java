@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class RootEntry extends DirectoryEntry {
-  // todo move it to super class and get rid of special constructor
+  // todo move generator outside of class  
   private IdGenerator myIdGenerator = new IdGenerator();
   private Integer myChangeListIndex = -1;
 
@@ -67,14 +67,12 @@ public class RootEntry extends DirectoryEntry {
     return result;
   }
 
-  protected void doCreateFile(Path path, String content) {
-    addEntry(path.getParent(),
-             new FileEntry(getNextObjectId(), path.getName(), content));
+  protected void doCreateFile(Path path, String content, Integer id) {
+    addEntry(path.getParent(), new FileEntry(id, path.getName(), content));
   }
 
-  protected void doCreateDirectory(Path path) {
-    addEntry(path.getParent(),
-             new DirectoryEntry(getNextObjectId(), path.getName()));
+  protected void doCreateDirectory(Path path, Integer id) {
+    addEntry(path.getParent(), new DirectoryEntry(id, path.getName()));
   }
 
   protected void doChangeFileContent(Path path, String content) {
@@ -108,7 +106,8 @@ public class RootEntry extends DirectoryEntry {
     removeEntry(path);
   }
 
-  private Integer getNextObjectId() {
+  protected Integer getNextObjectId() {
+    // todo make it private
     return myIdGenerator.getNextObjectId();
   }
 

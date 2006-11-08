@@ -24,7 +24,7 @@ public class CreateDirectoryChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateDirectory(myPath);
+    root.doCreateDirectory(myPath, root.getNextObjectId());
   }
 
   @Override
