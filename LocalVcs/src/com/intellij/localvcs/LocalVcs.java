@@ -37,22 +37,6 @@ public class LocalVcs {
     return myRoot.getEntry(path);
   }
 
-  public List<Entry> getEntryHistory(Path path) {
-    // todo optimize me and clean up this mess
-
-    if (!hasEntry(path)) throw new LocalVcsException();
-
-    List<Entry> result = new ArrayList<Entry>();
-    Integer id = getEntry(path).getObjectId();
-
-    for (RootEntry r : getHistory()) {
-      if (!r.hasEntry(id)) break;
-      result.add(r.getEntry(id));
-    }
-
-    return result;
-  }
-
   public void createFile(Path path, String content) {
     myPendingChanges.add(new CreateFileChange(path, content, getNextId()));
   }
@@ -112,6 +96,22 @@ public class LocalVcs {
       if (label.equals(myChangeList.getLabel(r))) return r;
     }
     throw new LocalVcsException();
+  }
+
+  public List<Entry> getEntryHistory(Path path) {
+    // todo optimize me and clean up this mess
+
+    if (!hasEntry(path)) throw new LocalVcsException();
+
+    List<Entry> result = new ArrayList<Entry>();
+    Integer id = getEntry(path).getObjectId();
+
+    for (RootEntry r : getHistory()) {
+      if (!r.hasEntry(id)) break;
+      result.add(r.getEntry(id));
+    }
+
+    return result;
   }
 
   public List<RootEntry> getHistory() {
