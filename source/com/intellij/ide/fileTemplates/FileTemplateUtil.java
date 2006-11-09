@@ -362,7 +362,7 @@ public class FileTemplateUtil{
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, methodName);
   }
 
-  public static void setPackageNameAttribute (Properties properties, PsiDirectory directory) {
+  public static void setPackageNameAttribute (Properties properties, @NotNull PsiDirectory directory) {
     PsiPackage aPackage = directory.getPackage();
     if (aPackage != null) {
       String packageName = aPackage.getQualifiedName();

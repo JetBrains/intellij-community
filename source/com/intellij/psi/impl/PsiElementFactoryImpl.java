@@ -545,7 +545,10 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     Properties props = new Properties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
     if (context != null && context.isPhysical()) {
-      FileTemplateUtil.setPackageNameAttribute(props, context.getContainingFile().getContainingDirectory());
+      PsiDirectory directory = context.getContainingFile().getContainingDirectory();
+      if (directory != null) {
+        FileTemplateUtil.setPackageNameAttribute(props, directory);
+      }
     }
     PsiCodeBlock codeBlockFromText;
     try {
