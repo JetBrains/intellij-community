@@ -544,11 +544,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
         final CompositeElement prevParent = prev.getTreeParent();
         final JspWhileStatement outerWhile = PsiTreeUtil.getParentOfType(outer, JspWhileStatement.class);
 
-        if (prevParent != null && prevParent.getElementType() == JspElementType.JSP_TEMPLATE_EXPRESSION || outerWhile != null) {
+        final JspWhileStatement prevWhile = PsiTreeUtil.getParentOfType(prev, JspWhileStatement.class);
 
-          final JspWhileStatement prevWhile = PsiTreeUtil.getParentOfType(prev, JspWhileStatement.class);
-
-          if (prevWhile == null || prevWhile == outerWhile || prevWhile.getStartOffset() != prev.getStartOffset()) {
+        if (prevParent != null && prevParent.getElementType() == JspElementType.JSP_TEMPLATE_EXPRESSION || outerWhile != null || prevWhile != null) {
+          if (prevWhile == outerWhile) {
             toRemove.add(prev);
             prev = mergeOuterLanguageElements(outer, prev);
           }
