@@ -37,7 +37,11 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
-    set.addAll(myRegisteredFiles);
+    for (PsiFile psiFile : myRegisteredFiles) {
+      if (psiFile != null && psiFile.isValid()) {
+        set.add(psiFile);
+      }
+    }
   }
 
   public void addFile(PsiFile file, boolean isMarked) {
@@ -153,5 +157,9 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public Object getUserObject() {
     return toString();
+  }
+
+  public boolean isValid() {
+    return true;
   }
 }

@@ -112,4 +112,9 @@ public class FileNode extends PackageDependenciesNode {
       return VfsUtil.getRelativePath(virtualFile, contentRoot, '/');
     }
   }
+
+
+  public boolean isValid() {
+    return myFile != null && myFile.isValid();
+  }
 }

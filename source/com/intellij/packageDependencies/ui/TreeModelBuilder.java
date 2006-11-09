@@ -318,6 +318,7 @@ public class TreeModelBuilder {
       indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
 
+    if (file == null || !file.isValid()) return;
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
     if (isMarked) myMarkedFileCount++;
     if (isMarked || myAddUnmarkedFiles) {

@@ -65,4 +65,9 @@ public class ModuleNode extends PackageDependenciesNode {
   public int hashCode() {
     return myModule == null ? 0 : myModule.hashCode();
   }
+
+
+  public boolean isValid() {
+    return myModule != null && !myModule.isDisposed();
+  }
 }

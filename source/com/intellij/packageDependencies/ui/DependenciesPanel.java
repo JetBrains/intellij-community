@@ -241,7 +241,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           myIllegalsInRightTree.addAll(illegalDeps.get(rule));
         }
       }
-      deps.addAll(myDependencies.get(psiFile));
+      final Set<PsiFile> psiFiles = myDependencies.get(psiFile);
+      if (psiFiles != null) {
+        for (PsiFile file : psiFiles) {
+          if (file != null && file.isValid()) {
+            deps.add(file);
+          }
+        }
+      }
     }
     deps.removeAll(scope);
     myRightTreeExpansionMonitor.freeze();
@@ -340,8 +347,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     boolean hasFocus
   ){
       PackageDependenciesNode node = (PackageDependenciesNode)value;
-      final PsiElement element = node.getPsiElement();
-      if (element != null && element.isValid()) {
+      if (node.isValid()) {
         if (expanded) {
           setIcon(node.getOpenIcon());
         }

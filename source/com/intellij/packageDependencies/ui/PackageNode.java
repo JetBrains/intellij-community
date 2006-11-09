@@ -88,4 +88,9 @@ public class PackageNode extends PackageDependenciesNode {
   public Icon getClosedIcon() {
     return Icons.PACKAGE_ICON;
   }
+
+
+  public boolean isValid() {
+    return myPackage != null && myPackage.isValid();
+  }
 }

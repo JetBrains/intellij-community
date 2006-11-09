@@ -184,4 +184,9 @@ public class DirectoryNode extends PackageDependenciesNode {
   public void removeUpReference() {
     myWrapper = null;
   }
+
+
+  public boolean isValid() {
+    return myDirectory != null && myDirectory.isValid();
+  }
 }

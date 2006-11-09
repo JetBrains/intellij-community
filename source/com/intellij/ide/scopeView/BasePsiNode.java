@@ -84,4 +84,9 @@ public class BasePsiNode<T extends PsiMember> extends PackageDependenciesNode {
   public PsiFile getContainingFile() {
     return myFile;
   }
+
+  public boolean isValid() {
+    final PsiElement element = getPsiElement();
+    return element != null && element.isValid();
+  }
 }
