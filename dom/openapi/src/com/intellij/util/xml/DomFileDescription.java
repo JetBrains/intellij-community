@@ -31,6 +31,8 @@ import java.util.*;
 
 /**
  * @author peter
+ *
+ * @see com.intellij.util.xml.MergingFileDescription
  */
 public abstract class DomFileDescription<T> {
   private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
