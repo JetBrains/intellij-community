@@ -100,7 +100,11 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         // do not log problems caused by malformed and/or ignored external resources
         return true;
       }
-        
+
+      if (ex instanceof NullPointerException) {
+        return true; // workaround for NPE at org.apache.xerces.impl.dtd.XMLDTDProcessor.checkDeclaredElements
+      }
+
       return false;
     }
 
@@ -399,7 +403,10 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       if (needsSchemaChecking()) {
         factory.setValidating(true);
         factory.setNamespaceAware(true);
-        factory.setXIncludeAware(true);
+        //jdk 1.5 API
+        try {
+          factory.setXIncludeAware(true);
+        } catch(NoSuchMethodError e) {}
         schemaChecking = true;
       }
       
@@ -440,7 +447,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         parser.getXMLReader().setFeature("http://apache.org/xml/features/xinclude",Boolean.TRUE);
       } catch(SAXNotRecognizedException ex) {
         // it is possible to continue work with configured parser
-        LOG.warn("Xml parser installation seems screwed", ex);
+        LOG.info("Xml parser installation seems screwed", ex);
       }
 
       return parser;
