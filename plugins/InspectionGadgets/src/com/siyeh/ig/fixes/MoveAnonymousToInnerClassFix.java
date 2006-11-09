@@ -29,10 +29,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
 
+    private String name;
+
+    public MoveAnonymousToInnerClassFix(String name) {
+        this.name = name;
+    }
+
+    public MoveAnonymousToInnerClassFix() {
+        name = InspectionGadgetsBundle.message(
+                "move.anonymous.to.inner.quickfix");
+    }
+
     @NotNull
     public String getName() {
-        return InspectionGadgetsBundle.message(
-                "move.anonymous.to.inner.quickfix");
+        return name;
     }
 
     public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {

@@ -46,7 +46,9 @@ public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new MoveAnonymousToInnerClassFix();
+        return new MoveAnonymousToInnerClassFix(
+                InspectionGadgetsBundle.message(
+                        "anonymous.inner.may.be.named.static.inner.class.quickfix"));
     }
 
     public BaseInspectionVisitor buildVisitor() {
