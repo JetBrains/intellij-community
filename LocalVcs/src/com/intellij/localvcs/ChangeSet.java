@@ -39,6 +39,7 @@ public class ChangeSet {
   }
 
   public List<Change> getChanges() {
+    // todo bad method
     return myChanges;
   }
 

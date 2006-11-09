@@ -26,6 +26,7 @@ public class RootEntry extends DirectoryEntry {
   }
 
   public boolean canBeReverted() {
+    // todo bad methdo
     return myChangeListIndex >= 0;
   }
 

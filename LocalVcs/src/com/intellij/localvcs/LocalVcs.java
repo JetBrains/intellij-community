@@ -90,12 +90,8 @@ public class LocalVcs {
     myChangeList.setLabel(myRoot, label);
   }
 
-  public RootEntry getSnapshot(String label) {
-    // todo rename me
-    for (RootEntry r : getHistory()) {
-      if (label.equals(myChangeList.getLabel(r))) return r;
-    }
-    throw new LocalVcsException();
+  public SnapshotList getSnapshotList() {
+    return new SnapshotList(myChangeList, myRoot);
   }
 
   public List<Entry> getEntryHistory(Path path) {

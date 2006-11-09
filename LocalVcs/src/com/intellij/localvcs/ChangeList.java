@@ -56,7 +56,7 @@ public class ChangeList {
   private ChangeSet getChangeSetFor(RootEntry root) {
     // todo ummm... one more unpleasant check...
 
-    // todo VERY BAD!!! something wring with changeListIndex!! 
+    // todo VERY BAD!!! something wring with changeListIndex!!
     if (!root.canBeReverted()) throw new LocalVcsException();
     return myChangeSets.get(root.getChangeListIndex());
   }
