@@ -11,12 +11,16 @@ public class PerformanceTest extends TempDirTestCase {
     vcs = new LocalVcs(new Storage(tempDir));
 
     createChildren(p(""), 3);
+    vcs.apply();
   }
 
   private void createChildren(Path parent, Integer countdown) {
     if (countdown == 0) return;
 
-    for (Integer i = 0; i < 50; i++) {
+    for (Integer i = 0; i < 10; i++) {
+      vcs.createFile(parent.appendedWith("file" + (i + 1)),
+                     "content" + (i + 1));
+
       Path child = parent.appendedWith("dir" + (i + 1));
       vcs.createDirectory(child);
       createChildren(child, countdown - 1);
@@ -24,12 +28,24 @@ public class PerformanceTest extends TempDirTestCase {
   }
 
   @Test
-  public void test() {
-    fail();
+  public void testAddingEntries() {
+    assertExecutionTime(10, new Task() {
+      public void execute() {
+        vcs.createFile(p("test"), "content");
+        vcs.apply();
+      }
+    });
   }
 
-  private void assertExecutionTime(long time, Task task) {
+  private void assertExecutionTime(long expectedTime, final Task task) {
+    long start = System.currentTimeMillis();
+    task.execute();
 
+    long actualTime = System.currentTimeMillis() - start;
+
+    assertTrue("task took more time: expected "
+               + expectedTime + " actual " + actualTime,
+               actualTime < expectedTime);
   }
 
   private interface Task {
