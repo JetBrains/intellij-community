@@ -30,6 +30,10 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     myIndex = index;
   }
 
+  public boolean isValid() {
+    return super.isValid() && getParentHandler().isValid();
+  }
+
   final boolean isIndicator() {
     final SubTag annotation = getAnnotation(SubTag.class);
     return annotation != null && annotation.indicator();

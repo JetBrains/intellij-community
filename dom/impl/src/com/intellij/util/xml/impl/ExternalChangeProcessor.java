@@ -77,7 +77,6 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
   }
 
   public void visitDocumentChanged(final XmlDocumentChanged change) {
-    assert myChangeSets.isEmpty();
     documentChanged((XmlFile)change.getDocument().getParent());
   }
 

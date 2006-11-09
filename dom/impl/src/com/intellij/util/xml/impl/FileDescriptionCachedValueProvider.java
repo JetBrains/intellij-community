@@ -85,6 +85,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
         computeCachedValue(ArrayUtil.EMPTY_OBJECT_ARRAY);
         if (fireEvents && myLastResult != null) {
           myDomManager.getFileDescriptions().get(myFileDescription).remove(myLastResult);
+          myLastResult.resetRoot(true);
           return Arrays.<DomEvent>asList(new ElementUndefinedEvent(myLastResult));
         }
         return Collections.emptyList();
@@ -198,6 +199,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     if (oldValue != null) {
       assert oldFileDescription != null;
       myDomManager.getFileDescriptions().get(oldFileDescription).remove(oldValue);
+      oldValue.resetRoot(true);
       if (fireEvents) {
         events.add(new ElementUndefinedEvent(oldValue));
       }

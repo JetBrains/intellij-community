@@ -42,7 +42,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.*;
 
 /**
- * @author peter
+ * @author peter                  
  */
 public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
@@ -71,6 +71,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private XmlTag myXmlTag;
 
   private XmlFile myFile;
+  private DomFileElementImpl myRoot;
   private final DomElement myProxy;
   private final Set<String> myInitializedChildren = new THashSet<String>();
   private final Map<Pair<String, Integer>, IndexedElementInvocationHandler> myFixedChildren =
@@ -128,7 +129,10 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   @NotNull
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
     LOG.assertTrue(isValid());
-    return (DomFileElementImpl<T>)myParent.getRoot();
+    if (myRoot == null) {
+      myRoot = myParent.getRoot();
+    }
+    return myRoot;
   }
 
   @Nullable
@@ -161,7 +165,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     }
 
     final XmlTag tag = ensureTagExists();
-    detach(false);
+    if (!(this instanceof CollectionElementInvocationHandler)) {
+      detach(false);
+    }
     synchronized (PsiLock.LOCK) {
       myManager.runChange(new Runnable() {
         public void run() {
@@ -247,33 +253,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public boolean isValid() {
-    if (myInvalidated) return false;
-
-    if (myXmlTag != null) {
-      if (!myXmlTag.isValid()) {
-        return invalidate();
-      }
-    } else if (myParent != null && !myParent.isValidLight()) {
-      return invalidate();
-    }
-
-    return myParent == null || myParent.isValid() || invalidate();
-  }
-
-  protected boolean isValidLight() {
-    if (myInvalidated) return false;
-
-    if (myXmlTag != null && !myXmlTag.isValid()) {
-      return invalidate();
-    }
-
-    return myParent == null || myParent.isValidLight() || invalidate();
-  }
-
-  @SuppressWarnings({"SameReturnValue"})
-  private boolean invalidate() {
-    myInvalidated = true;
-    return false;
+    return !myInvalidated;
   }
 
   @NotNull

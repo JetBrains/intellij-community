@@ -43,6 +43,10 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     return tag;
   }
 
+  public boolean isValid() {
+    return super.isValid() && getParentHandler().isValid();
+  }
+
   protected boolean isAttribute() {
     return true;
   }

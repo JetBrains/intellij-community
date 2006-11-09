@@ -71,6 +71,7 @@ public interface DomElement extends AnnotatedElement{
 
   GlobalSearchScope getResolveScope();
 
+  @Nullable
   <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict);
 
   @Nullable

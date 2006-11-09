@@ -18,6 +18,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.lang.annotation.Annotation;
@@ -42,7 +43,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       return 0;
     }
 
-    public String getTagName(Method method) {
+    public @NonNls
+    String getTagName(Method method) {
       return "NO TAG NAME";
     }
 
@@ -116,6 +118,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private DomRootInvocationHandler myRootHandler;
   private Map<Key,Object> myUserData = new HashMap<Key, Object>();
   private long myModificationCount;
+  private boolean myInvalidated;
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
@@ -127,6 +130,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     myManager = manager;
   }
 
+  @NotNull
   public final XmlFile getFile() {
     return myFile;
   }
@@ -152,6 +156,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
+  @NotNull
   public final DomManagerImpl getManager() {
     return myManager;
   }
@@ -168,11 +173,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   public ElementPresentation getPresentation() {
     return new DomElementPresentation() {
 
-      public String getElementName() {
+      public @NonNls String getElementName() {
         return "<ROOT>";
       }
 
-      public String getTypeName() {
+      public @NonNls String getTypeName() {
         return "<ROOT>";
       }
 
@@ -186,6 +191,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myFile.getResolveScope();
   }
 
+  @Nullable
   public <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict) {
     return DomFileElement.class.isAssignableFrom(requiredClass) && !strict ? (T)this : null;
   }
@@ -204,6 +210,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public final <T extends DomElement> T createStableCopy() {
     return myManager.createStableValue(new Factory<T>() {
+      @Nullable
       public T create() {
         return (T)myManager.getFileElement(myFile);
       }
@@ -211,7 +218,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public Collection<DomElement> getAllChildren() {
-    return (Collection<DomElement>)Collections.singleton(getRootElement());
+    return Collections.<DomElement>singleton(getRootElement());
   }
 
   @NotNull
@@ -229,14 +236,15 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     }
   }
 
-  protected final void resetRoot() {
+  protected final void resetRoot(boolean invalidate) {
+    myInvalidated = invalidate;
     if (myRootHandler != null) {
       myRootHandler.detach(true);
       myRootHandler = null;
     }
   }
 
-  public String toString() {
+  public @NonNls String toString() {
     return "File " + myFile.toString();
   }
 
@@ -249,8 +257,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   @NotNull
-  public DomFileElementImpl getRoot() {
-    return this;
+  public <T extends DomElement> DomFileElementImpl<T> getRoot() {
+    return (DomFileElementImpl<T>)this;
   }
 
   @Nullable
@@ -274,7 +282,9 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   public final boolean isValid() {
-    return myFile.isValid() && isValidLight();
+    if (myInvalidated) return false;
+    myInvalidated = !myFile.isValid() || !isValidLight();
+    return !myInvalidated;
   }
 
   protected final boolean isValidLight() {

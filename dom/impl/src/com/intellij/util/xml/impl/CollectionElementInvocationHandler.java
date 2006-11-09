@@ -29,6 +29,17 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called");
   }
 
+  public boolean isValid() {
+    if (!super.isValid()) {
+      return false;
+    }
+    final XmlTag tag = getXmlTag();
+    if (tag == null || !tag.isValid()) {
+      return false;
+    }
+    return true;
+  }
+
   public final void undefineInternal() {
     final DomElement parent = getParent();
     final XmlTag tag = getXmlTag();
@@ -48,6 +59,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     final String tagName = getXmlElementName();
     final int index = Arrays.asList(parent.getXmlTag().findSubTags(tagName)).indexOf(getXmlTag());
     return getManager().createStableValue(new Factory<T>() {
+      @Nullable
       public T create() {
         if (!parentCopy.isValid()) return null;
         final XmlTag tag = parentCopy.getXmlTag();
