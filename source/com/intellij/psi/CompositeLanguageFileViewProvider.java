@@ -198,7 +198,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     ChameleonTransforming.transformChildren(newFileTree, true);
     ChameleonTransforming.transformChildren(oldFileTree, true);
     CompositeLanguageParsingUtil.mergeTreeElements((TreeElement)newFileTree.getFirstChildNode(),
-                                                   (TreeElement)oldFileTree.getFirstChildNode(), (CompositeElement)oldFileTree);
+                                                   (TreeElement)oldFileTree.getFirstChildNode(),
+                                                   (CompositeElement)oldFileTree,
+                                                   this
+                                                   );
     checkConsistensy(cachedRoot);
   }
 
@@ -371,6 +374,8 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       String message = "Check consistency failed for: " + oldFile;
       message += "\n     oldFile.getNode().getTextLength() = " + oldFile.getNode().getTextLength();
       message += "\n     getContents().length() = " + getContents().length();
+      message += "\n     language = " + oldFile.getLanguage();
+
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {
         message += "\n     oldFileText:\n" + oldFile.getNode().getText();
         message += "\n     contentsText:\n" + getContents().toString();

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -568,7 +569,27 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       if (!element2.isPhysical()) element2 = element2.getOriginalElement();
       return element1 == element2;
     }
-    
+
+    if (element1 instanceof JspImplicitVariable) {
+      if (element2 instanceof JspImplicitVariable) {
+        final JspImplicitVariable implicitVariable = (JspImplicitVariable)element1;
+        final JspImplicitVariable implicitVariable2 = (JspImplicitVariable)element2;
+
+        final String name = implicitVariable.getName();
+        return name != null &&
+               name.equals(implicitVariable2.getName()) &&
+               areElementsEquivalent(
+                 implicitVariable.getDeclaration(),
+                 implicitVariable2.getDeclaration()
+               );
+      } else if (areElementsEquivalent(((JspImplicitVariable)element1).getDeclaration(), element2)) {
+        return true;
+      }
+    } else if (element2 instanceof JspImplicitVariable) {
+      if (areElementsEquivalent(((JspImplicitVariable)element2).getDeclaration(), element1)) {
+        return true;
+      }
+    }
     return false;
   }
 

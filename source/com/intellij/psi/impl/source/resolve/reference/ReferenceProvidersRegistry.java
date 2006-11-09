@@ -513,18 +513,6 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       jsfProvider
     );
 
-    registerReferenceProvider(
-      new AndFilter(
-        new OrFilter(
-          new FileTypeFilter(StdFileTypes.JSP),
-          new FileTypeFilter(StdFileTypes.JSPX)
-        ),
-        new ClassFilter(XmlAttributeValue.class)
-      ),
-      XmlAttributeValue.class,
-      new JspImplicitVariableReferenceProvider()
-    );
-
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
     //registerReferenceProvider(null, XmlEntityDecl.class,dtdReferencesProvider);
     registerReferenceProvider(null, XmlEntityRef.class,dtdReferencesProvider);
