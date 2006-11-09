@@ -36,18 +36,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-     
+
 public class CopyReferenceAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CopyReferenceAction");
 
@@ -84,6 +86,7 @@ public class CopyReferenceAction extends AnAction {
     }
   }
 
+  @Nullable
   private static PsiElement getElementToCopy(final Editor editor, final DataContext dataContext) {
     PsiElement element = null;
     if (editor != null) {
@@ -102,6 +105,7 @@ public class CopyReferenceAction extends AnAction {
     return element;
   }
 
+  @Nullable
   private static PsiElement getMember(final PsiElement element) {
     if (element instanceof PsiMember || element instanceof PsiFile) return element;
     if (element instanceof PsiReference) {
@@ -273,6 +277,7 @@ public class CopyReferenceAction extends AnAction {
     }
   }
 
+  @Nullable
   private static String getCopiedFqn() {
     final Transferable contents = CopyPasteManager.getInstance().getContents();
     if (contents == null) return null;
@@ -312,12 +317,14 @@ public class CopyReferenceAction extends AnAction {
       return OUR_DATA_FLAVOR.equals(flavor) || DataFlavor.stringFlavor.equals(flavor);
     }
 
+    @Nullable
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
       if (!isDataFlavorSupported(flavor)) return null;
       return fqn;
     }
   }
 
+  @Nullable
   public static String elementToFqn(final PsiElement element) {
     final String fqn;
     if (element instanceof PsiClass) {
@@ -337,6 +344,7 @@ public class CopyReferenceAction extends AnAction {
     return fqn;
   }
 
+  @NotNull
   private static String getFileFqn(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
@@ -362,6 +370,7 @@ public class CopyReferenceAction extends AnAction {
     return virtualFile.getPath();
   }
 
+  @Nullable
   private static PsiNamedElement fqnToElement(final Project project, final String fqn) {
     PsiClass aClass = PsiManager.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
     if (aClass != null) {
