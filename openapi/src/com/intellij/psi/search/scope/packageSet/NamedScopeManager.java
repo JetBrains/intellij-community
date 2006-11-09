@@ -18,9 +18,13 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class NamedScopeManager extends NamedScopesHolder implements ProjectComponent {
+  private static final Icon LOCAL_SCOPES = IconLoader.getIcon("/ide/localScope.png");
   public static NamedScopeManager getInstance(Project project) {
     return project.getComponent(NamedScopeManager.class);
   }
@@ -37,5 +41,9 @@ public class NamedScopeManager extends NamedScopesHolder implements ProjectCompo
 
   public String getDisplayName() {
     return IdeBundle.message("local.scopes.node.text");
+  }
+
+  public Icon getIcon() {
+    return LOCAL_SCOPES;
   }
 }

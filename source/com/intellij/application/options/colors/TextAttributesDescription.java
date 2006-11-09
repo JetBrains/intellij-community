@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class TextAttributesDescription extends ColorAndFontDescription {
@@ -17,8 +18,8 @@ public abstract class TextAttributesDescription extends ColorAndFontDescription 
                                    String group,
                                    TextAttributes attributes,
                                    TextAttributesKey type,
-                                   EditorColorsScheme scheme) {
-    super(name, group, type == null ? null : type.getExternalName(), scheme);
+                                   EditorColorsScheme scheme, Icon icon, final String toolTip) {
+    super(name, group, type == null ? null : type.getExternalName(), scheme, icon, toolTip);
     myAttributes = attributes;
     initCheckedStatus();
   }

@@ -93,6 +93,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
     PsiFile root = jspFile.getBaseLanguageRoot();
     root.accept(new PsiRecursiveElementVisitor(){
       public void visitElement(PsiElement element) {
+        if (!result.get().booleanValue()) return;
         TextRange elementRange = element.getTextRange();
         if (elementRange.intersectsStrict(selectedRange)) {
           if (element instanceof OuterLanguageElement ||

@@ -23,10 +23,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 public abstract class NamedScopesHolder implements JDOMExternalizable {
   private List<NamedScope> myScopes = new ArrayList<NamedScope>();
@@ -35,6 +36,7 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   @NonNls private static final String PATTERN_ATT = "pattern";
 
   public abstract String getDisplayName();
+  public abstract Icon getIcon();
 
   public static interface ScopeListener {
     void scopesChanged();

@@ -4,23 +4,28 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class ColorAndFontDescription extends TextAttributes implements EditorSchemeAttributeDescriptor {
-  private String myName;
-  private String myGroup;
-  private String myType;
-  private EditorColorsScheme myScheme;
+  private final String myName;
+  private final String myGroup;
+  private final String myType;
+  private final Icon myIcon;
+  private final String myToolTip;
+  private final EditorColorsScheme myScheme;
   private boolean isForegroundChecked;
   private boolean isBackgroundChecked;
-  private boolean myIsEffectsColorChecked;
+  private boolean isEffectsColorChecked;
   private boolean isErrorStripeChecked;
 
-  public ColorAndFontDescription(String name, String group, String type, EditorColorsScheme scheme) {
+  public ColorAndFontDescription(String name, String group, String type, EditorColorsScheme scheme, final Icon icon, final String toolTip) {
     myName = name;
     myGroup = group;
     myType = type;
     myScheme = scheme;
+    myIcon = icon;
+    myToolTip = toolTip;
   }
 
   public String toString() {
@@ -39,11 +44,19 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     return myScheme;
   }
 
+  public Icon getIcon() {
+    return myIcon;
+  }
+
+  public String getToolTip() {
+    return myToolTip;
+  }
+
   protected void initCheckedStatus() {
     isForegroundChecked = getExternalForeground() != null;
     isBackgroundChecked = getExternalBackground() != null;
     isErrorStripeChecked = getExternalErrorStripe() != null;
-    myIsEffectsColorChecked = getExternalEffectColor() != null;
+    isEffectsColorChecked = getExternalEffectColor() != null;
     super.setForegroundColor(getExternalForeground());
     super.setBackgroundColor(getExternalBackground());
     super.setEffectColor(getExternalEffectColor());
@@ -101,7 +114,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
 
   public final void setEffectColor(Color col) {
     super.setEffectColor(col);
-    if (myIsEffectsColorChecked) {
+    if (isEffectsColorChecked) {
       setExternalEffectColor(col);
     } else {
       setExternalEffectColor(null);
@@ -126,7 +139,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   }
 
   public boolean isEffectsColorChecked() {
-    return myIsEffectsColorChecked;
+    return isEffectsColorChecked;
   }
 
   public final void setForegroundChecked(boolean val) {
@@ -145,7 +158,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   }
 
   public final void setEffectsColorChecked(boolean val) {
-    myIsEffectsColorChecked = val;
+    isEffectsColorChecked = val;
     setEffectColor(getEffectColor());
     setEffectType(getEffectType());
   }

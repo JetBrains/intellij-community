@@ -29,12 +29,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private List<DependencyRule> myRules = new ArrayList<DependencyRule>();
-  private Project myProject;
+  private final Project myProject;
   private ContentManager myContentManager;
   @NonNls private static final String DENY_RULE_KEY = "deny_rule";
   @NonNls private static final String FROM_SCOPE_KEY = "from_scope";
@@ -45,6 +46,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private NamedScope myProjectProductionScope;
   private List<NamedScope> myPredifinedScopes;
   private NamedScope myProblemsScope;
+  private static final Icon SHARED_SCOPES = IconLoader.getIcon("/ide/sharedScope.png");
 
   public DependencyValidationManagerImpl(Project project) {
     myProject = project;
@@ -104,7 +106,12 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       myProjectProductionScope = new NamedScope(IdeBundle.message("predefined.scope.production.name"), new PackageSet() {
         public boolean contains(PsiFile file, NamedScopesHolder holder) {
           final VirtualFile virtualFile = file.getVirtualFile();
-          return file.getProject() == myProject && virtualFile != null && !index.isInTestSourceContent(virtualFile);
+          return file.getProject() == myProject
+                 && virtualFile != null
+                 && !index.isInTestSourceContent(virtualFile)
+                 && !index.isInLibraryClasses(virtualFile)
+                 && !index.isInLibrarySource(virtualFile)
+            ;
         }
 
         public PackageSet createCopy() {
@@ -250,6 +257,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   public String getDisplayName() {
     return IdeBundle.message("shared.scopes.node.text");
+  }
+
+  public Icon getIcon() {
+    return SHARED_SCOPES;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

@@ -41,7 +41,8 @@ class PatternDialog extends DialogWrapper{
 
     TextAttributes attributes = myPattern.getAttributes().getTextAttributes();
 
-    myColorAndFontDescription = new TextAttributesDescription(null, null, attributes, null, EditorColorsManager.getInstance().getGlobalScheme()) {
+    myColorAndFontDescription = new TextAttributesDescription(null, null, attributes, null, EditorColorsManager.getInstance().getGlobalScheme(),
+                                                              null, null) {
       public void apply(EditorColorsScheme scheme) {
 
       }

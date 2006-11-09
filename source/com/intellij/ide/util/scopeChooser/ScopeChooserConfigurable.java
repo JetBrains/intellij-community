@@ -40,6 +40,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,13 +51,11 @@ import java.util.Set;
  * Date: 01-Jul-2006
  */
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements ProjectComponent {
-  private static final Icon SHARED_SCOPES = IconLoader.getIcon("/ide/sharedScope.png");
-  private static final Icon LOCAL_SCOPES = IconLoader.getIcon("/ide/localScope.png");
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
 
-  private NamedScopeManager myLocalScopesManager;
-  private DependencyValidationManager mySharedScopesManager;
+  private NamedScopesHolder myLocalScopesManager;
+  private NamedScopesHolder mySharedScopesManager;
 
   private Project myProject;
 
@@ -118,10 +117,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   public boolean isModified() {
-    if (super.isModified()) return true;
-    if (isScopesModified(myLocalScopesManager, myLocalScopesNode)) return true;
-    if (isScopesModified(mySharedScopesManager, mySharedScopesNode)) return true;
-    return false;
+    return super.isModified() || isScopesModified(myLocalScopesManager, myLocalScopesNode) ||
+           isScopesModified(mySharedScopesManager, mySharedScopesNode);
   }
 
   private static boolean isScopesModified(NamedScopesHolder holder, MyNode root) {
@@ -148,28 +145,28 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     holder.removeAllSets();
     for (int i = 0; i < root.getChildCount(); i++) {
       final MyNode node = (MyNode)root.getChildAt(i);
-      holder.addScope(((NamedScope)node.getConfigurable().getEditableObject()));
+      holder.addScope((NamedScope)node.getConfigurable().getEditableObject());
     }
   }
 
   private void reloadTree() {
     myRoot.removeAllChildren();
 
-    myLocalScopesNode = new MyNode(new ScopesGroupConfigurable(myLocalScopesManager, LOCAL_SCOPES), true);
-    loadScopes(myLocalScopesManager, myLocalScopesNode, LOCAL_SCOPES);
+    myLocalScopesNode = new MyNode(new ScopesGroupConfigurable(myLocalScopesManager), true);
+    loadScopes(myLocalScopesManager, myLocalScopesNode);
     myRoot.add(myLocalScopesNode);
 
-    mySharedScopesNode = new MyNode(new ScopesGroupConfigurable(mySharedScopesManager, SHARED_SCOPES), true);
-    loadScopes(mySharedScopesManager, mySharedScopesNode, SHARED_SCOPES);
+    mySharedScopesNode = new MyNode(new ScopesGroupConfigurable(mySharedScopesManager), true);
+    loadScopes(mySharedScopesManager, mySharedScopesNode);
 
     myRoot.add(mySharedScopesNode);
   }
 
-  private void loadScopes(final NamedScopesHolder holder, final MyNode localScopesNode, final Icon icon) {
+  private void loadScopes(final NamedScopesHolder holder, final MyNode localScopesNode) {
     final NamedScope[] scopes = holder.getScopes();
     for (NamedScope scope : scopes) {
       if (isPredefinedScope(scope)) continue;
-      localScopesNode.add(new MyNode(new ScopeConfigurable(scope, myProject, myLocalScopesManager, icon, TREE_UPDATER)));
+      localScopesNode.add(new MyNode(new ScopeConfigurable(scope, myProject, myLocalScopesManager, TREE_UPDATER)));
     }
   }
 
@@ -268,18 +265,16 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private static void obtainCurrentScopes(final HashSet<String> scopes, final MyNode root) {
     for (int i = 0; i < root.getChildCount(); i++) {
-      final MyNode node = ((MyNode)root.getChildAt(i));
-      final NamedScope scope = ((NamedScope)node.getConfigurable().getEditableObject());
+      final MyNode node = (MyNode)root.getChildAt(i);
+      final NamedScope scope = (NamedScope)node.getConfigurable().getEditableObject();
       scopes.add(scope.getName());
     }
   }
 
   private void addNewScope(final NamedScope scope, final boolean isLocal) {
-    final NamedScopesHolder holder = (NamedScopesHolder)(isLocal ? myLocalScopesManager : mySharedScopesManager);
-    final Icon icon = isLocal ? LOCAL_SCOPES : SHARED_SCOPES;
+    final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
     final MyNode nodeToAdd = new MyNode(new ScopeConfigurable(scope,
-                                                              myProject, holder, icon,
-                                                              TREE_UPDATER));
+                                                              myProject, holder, TREE_UPDATER));
     final MyNode root = isLocal ? myLocalScopesNode : mySharedScopesNode;
     root.add(nodeToAdd);
     ((DefaultTreeModel)myTree.getModel()).reload(root);
@@ -331,13 +326,13 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       if (myChildren == null) {
         myChildren = new AnAction[2];
         myChildren[0] =
-          new AnAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"), LOCAL_SCOPES) {
+          new AnAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"), myLocalScopesManager.getIcon()) {
             public void actionPerformed(AnActionEvent e) {
               createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
             }
           };
         myChildren[1] = new AnAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
-                                     SHARED_SCOPES) {
+                                     mySharedScopesManager.getIcon()) {
           public void actionPerformed(AnActionEvent e) {
             createScope(false, IdeBundle.message("add.scope.dialog.title"), null);
           }
@@ -406,11 +401,9 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private class MyCopyAction extends AnAction {
-
     public MyCopyAction() {
-      super(ExecutionBundle.message("copy.configuration.action.name"), ExecutionBundle.message("copy.configuration.action.name"),
-            COPY_ICON);
-      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
+      super(ExecutionBundle.message("copy.configuration.action.name"), ExecutionBundle.message("copy.configuration.action.name"), COPY_ICON);
+      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
 
     public void actionPerformed(AnActionEvent e) {

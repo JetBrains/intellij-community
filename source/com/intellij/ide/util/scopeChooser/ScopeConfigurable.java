@@ -27,17 +27,13 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   private ScopeEditorPanel myPanel;
   private String myPackageSet;
   
-  public ScopeConfigurable(final NamedScope scope,
-                           final Project project,
-                           final NamedScopesHolder holder,
-                           final Icon icon,
-                           final Runnable updateTree) {
+  public ScopeConfigurable(final NamedScope scope, final Project project, final NamedScopesHolder holder, final Runnable updateTree) {
     super(true, updateTree);
     myScope = scope;
     final PackageSet packageSet = scope.getValue();
     myPackageSet = packageSet != null ? packageSet.getText() : null;
     myPanel = new ScopeEditorPanel(project, holder);
-    myIcon = icon;
+    myIcon = holder.getIcon();
   }
 
   public void setDisplayName(final String name) {

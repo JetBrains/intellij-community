@@ -156,6 +156,7 @@ public class HighlightNamesUtil {
   private static TextAttributes getScopeAttributes(PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
+    TextAttributes result = null;
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     List<Pair<NamedScope,NamedScopesHolder>> scopes = DaemonCodeAnalyzer.getInstance(element.getProject()).getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
@@ -165,9 +166,12 @@ public class HighlightNamesUtil {
       if (packageSet != null && packageSet.contains(file, scopesHolder)) {
         TextAttributesKey scopeKey = ColorAndFontOptions.getScopeTextAttributeKey(namedScope.getName());
         TextAttributes attributes = scheme.getAttributes(scopeKey);
-        if (attributes != null) return attributes;
+        if (attributes == null || attributes.isEmpty()) {
+          continue;
+        }
+        result = TextAttributes.merge(attributes, result);
       }
     }
-    return null;
+    return result;
   }
 }

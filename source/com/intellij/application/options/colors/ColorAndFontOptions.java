@@ -25,12 +25,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,7 +215,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     String group = page.getDisplayName();
     AttributesDescriptor[] attributeDescriptors = page.getAttributeDescriptors();
     for (AttributesDescriptor descriptor : attributeDescriptors) {
-      addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme);
+      addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
     }
 
     ColorDescriptor[] colorDescriptors = page.getColorDescriptors();
@@ -241,31 +245,45 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     }
   }
   private static void initScopesDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
-    List<NamedScope> namedScopes = new ArrayList<NamedScope>();
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
-      for (NamedScopesHolder holder : holders) {
-        NamedScope[] scopes = holder.getScopes();
-        namedScopes.addAll(Arrays.asList(scopes));
+    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new THashSet<Pair<NamedScope,NamedScopesHolder>>(new TObjectHashingStrategy<Pair<NamedScope,NamedScopesHolder>>() {
+      public int computeHashCode(final Pair<NamedScope, NamedScopesHolder> object) {
+        return object.getFirst().getName().hashCode();
       }
-    }
-    Collections.sort(namedScopes, new Comparator<NamedScope>() {
-      public int compare(final NamedScope o1, final NamedScope o2) {
-        return o1.getName().compareTo(o2.getName());
+
+      public boolean equals(final Pair<NamedScope, NamedScopesHolder> o1, final Pair<NamedScope, NamedScopesHolder> o2) {
+        return o1.getFirst().getName().equals(o2.getFirst().getName());
       }
     });
-    for (NamedScope namedScope : namedScopes) {
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+      List<Pair<NamedScope,NamedScopesHolder>> cachedScopes = codeAnalyzer.getScopeBasedHighlightingCachedScopes();
+      namedScopes.addAll(cachedScopes);
+    }
+
+    List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<Pair<NamedScope, NamedScopesHolder>>(namedScopes);
+
+    Collections.sort(list, new Comparator<Pair<NamedScope,NamedScopesHolder>>() {
+      public int compare(final Pair<NamedScope,NamedScopesHolder> o1, final Pair<NamedScope,NamedScopesHolder> o2) {
+        return o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName());
+      }
+    });
+    for (Pair<NamedScope,NamedScopesHolder> pair : list) {
+      NamedScope namedScope = pair.getFirst();
       String name = namedScope.getName();
       TextAttributesKey textAttributesKey = getScopeTextAttributeKey(name);
       if (scheme.getAttributes(textAttributesKey) == null) {
         scheme.setAttributes(textAttributesKey, new TextAttributes());
       }
+      NamedScopesHolder holder = pair.getSecond();
+
+      PackageSet value = namedScope.getValue();
+      String toolTip = holder.getDisplayName() + (value==null ? "" : ": "+ value.getText());
       addSchemedDescription(descriptions,
                             name,
                             SCOPES_GROUP,
                             textAttributesKey,
-                            scheme);
+                            scheme, holder.getIcon(), toolTip);
     }
   }
 
@@ -273,7 +291,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     return TextAttributesKey.find("SCOPE_KEY_" + scope);
   }
 
-  private static ColorAndFontDescription addEditorSettingDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
+  private static void addEditorSettingDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
                                                                      String name,
                                                                      String group,
                                                                      ColorKey backgroundKey,
@@ -290,17 +308,14 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     }
     ColorAndFontDescription descr = new EditorSettingColorDescription(name, group, backgroundKey, foregroundKey, type, scheme);
     array.add(descr);
-    return descr;
   }
 
-  private static ColorAndFontDescription addSchemedDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
-                                                               String name,
-                                                               String group,
-                                                               TextAttributesKey key,
-                                                               EditorColorsScheme scheme) {
-    ColorAndFontDescription descr = new SchemeTextAttributesDescription(name, group, key, scheme);
+  private static void addSchemedDescription(ArrayList<EditorSchemeAttributeDescriptor> array, String name, String group, TextAttributesKey key,
+                                            EditorColorsScheme scheme,
+                                            Icon icon,
+                                            String toolTip) {
+    ColorAndFontDescription descr = new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip);
     array.add(descr);
-    return descr;
   }
 
   public String getDisplayName() {
@@ -328,12 +343,13 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     private TextAttributes myAttributesToApply;
     private TextAttributesKey key;
 
-    public SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, EditorColorsScheme scheme) {
+    public SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, EditorColorsScheme scheme, Icon icon,
+                                           String toolTip) {
       super(name, group,
             scheme.getAttributes(key) == null
             ? new TextAttributes()
             : scheme.getAttributes(key).clone(),
-            key, scheme);
+            key, scheme, icon, toolTip);
       this.key = key;
       myAttributesToApply = scheme.getAttributes(key);
       initCheckedStatus();
@@ -398,7 +414,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
                                          ColorKey foregroundKey,
                                          String type,
                                          EditorColorsScheme scheme) {
-      super(name, group, type, scheme);
+      super(name, group, type, scheme, null, null);
       if (backgroundKey != null) {
         myGetSetBackground = new GetSetColor(backgroundKey, scheme);
       }
