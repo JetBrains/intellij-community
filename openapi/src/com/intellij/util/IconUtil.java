@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -33,9 +32,6 @@ import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.PixelGrabber;
 
 
 public class IconUtil {
@@ -72,7 +68,7 @@ public class IconUtil {
     return icon;
   }
 
-  public static Icon getBaseIcon(final VirtualFile file, final int flags, final Project project) {
+  private static Icon getBaseIcon(final VirtualFile file, final int flags, final Project project) {
     Icon providersIcon = getProvidersIcon(file, flags, project);
     Icon icon = providersIcon == null ? file.getIcon() : providersIcon;
 
@@ -105,7 +101,7 @@ public class IconUtil {
   }
 
   @Nullable
-  public static Icon getProvidersIcon(VirtualFile file, int flags, Project project) {
+  private static Icon getProvidersIcon(VirtualFile file, int flags, Project project) {
     if(project == null) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -122,54 +118,10 @@ public class IconUtil {
     return null;
   }
 
-  public static IconProvider[] getIconProviders() {
+  private static IconProvider[] getIconProviders() {
     if (ourIconProviders == null) {
       ourIconProviders = ApplicationManager.getApplication().getComponents(IconProvider.class);
     }
     return ourIconProviders;
-  }
-  
-  public static Icon redden(Icon icon) {
-    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    GraphicsConfiguration gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
-
-    BufferedImage compatibleImage = gc.createCompatibleImage(icon.getIconWidth(),icon.getIconHeight(),Transparency.TRANSLUCENT);
-    Graphics g = compatibleImage.getGraphics();
-    icon.paintIcon(new JComponent(){},g, 0,0);
-    //g.drawImage(tempImage,0,0,null);
-
-    g.dispose();
-    Image redden = reddenImage(compatibleImage, icon.getIconWidth(), icon.getIconHeight());
-    return IconLoader.getIcon(redden);
-  }
-  public static Image reddenImage(Image image, final int width, final int height) {
-    PixelGrabber grabber = new PixelGrabber(image, 0, 0, -1, -1, true);
-    try {
-      grabber.grabPixels();
-    }
-    catch (InterruptedException e) {
-      //
-    }
-    int[] pixels = (int[])grabber.getPixels();
-    System.arraycopy(pixels, 0, pixels=new int[pixels.length],0,pixels.length);
-    for (int i = 0; i < pixels.length; i++) {
-      int pixel = pixels[i];
-      int alpha = (pixel >> 24) & 0xff;
-      if (alpha == 0) continue;
-      int red = (pixel >> 16) & 0xFF;
-      red = 0xff;
-      int green = (pixel >> 8) & 0xFF;
-      int blue = (pixel >> 0) & 0xFF;
-      int value;
-      value = ((alpha & 0xFF) << 24) | ((red & 0xFF) << 16) | ((green & 0xFF) << 8) | ((blue & 0xFF) << 0);
-      //float[] hsb = Color.RGBtoHSB(red, green, blue, null);
-      //value = ((alpha & 0xFF) << 24) | Color.HSBtoRGB(hsb[0], Math.min(1,hsb[1]*1.4f), hsb[2]);
-      pixels[i] = value;
-    }
-
-    final BufferedImage buffered = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    buffered.setRGB(0,0, width, height, pixels, 0, width);
-    image = buffered;
-    return image;
   }
 }
