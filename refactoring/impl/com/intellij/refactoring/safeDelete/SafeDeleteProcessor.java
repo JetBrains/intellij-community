@@ -234,18 +234,20 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
 
     if (conflicts.size() > 0) {
-      UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
-      dialog.show();
-      if (!dialog.isOK()) {
-        final int exitCode = dialog.getExitCode();
-        prepareSuccessful(); // dialog is always dismissed
-        if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
-          showUsages(usages);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
+        dialog.show();
+        if (!dialog.isOK()) {
+          final int exitCode = dialog.getExitCode();
+          prepareSuccessful(); // dialog is always dismissed
+          if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
+            showUsages(usages);
+          }
+          return false;
         }
-        return false;
-      }
-      else {
-        myPreviewNonCodeUsages = false;
+        else {
+          myPreviewNonCodeUsages = false;
+        }
       }
     }
 

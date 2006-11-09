@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
@@ -101,7 +102,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet)) return;
 
     final PsiElement[] elementsToDelete = fullElementsSet.toArray(new PsiElement[fullElementsSet.size()]);
-    SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, new SafeDeleteDialog.Callback() {
+    final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
       public void run(final SafeDeleteDialog dialog) {
         SafeDeleteProcessor.createInstance(project, new Runnable() {
           public void run() {
@@ -110,8 +111,13 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
         }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
       }
 
-    });
+    };
+    SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);
 
-    dialog.show();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      callback.run(dialog);
+    } else {
+      dialog.show();
+    }
   }
 }
