@@ -1,7 +1,6 @@
 package com.intellij.localvcs;
 
 import org.junit.Before;
-import org.junit.Test;
 
 public class PerformanceTest extends TempDirTestCase {
   private LocalVcs vcs;
@@ -27,7 +26,7 @@ public class PerformanceTest extends TempDirTestCase {
     }
   }
 
-  @Test
+  //@Test
   public void testAddingEntries() {
     assertExecutionTime(10, new Task() {
       public void execute() {
