@@ -42,6 +42,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   private static final int IS_EJB_DECLARATION_MASK = 0x800000;
   private static final int IS_EJB_IMPLEMENTATION_MASK = 0x1000000;
   private static final int IS_TEST_METHOD_MASK = 0x4000000;
+  private static final int IS_CALLED_ON_SUBCLASS = 0x8000000;
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
 
@@ -220,19 +221,6 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
         mySuperMethods = new ArrayList<RefMethod>(1);
       }
       mySuperMethods.add(refSuperMethod);
-    }
-  }
-
-  public void addReference(RefElement refWhat, PsiElement psiWhat, PsiElement psiFrom, boolean forWriting, boolean forReading, PsiReferenceExpression expression) {
-    if (refWhat instanceof RefParameter) {
-      if (forWriting) {
-        ((RefParameterImpl)refWhat).parameterReferenced(true);
-      }
-      if (forReading) {
-        ((RefParameterImpl)refWhat).parameterReferenced(false);
-      }
-    } else {
-      super.addReference(refWhat, psiWhat, psiFrom, forWriting, forReading, expression);
     }
   }
 
@@ -732,4 +720,13 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   public PsiModifierListOwner getElement() {
     return (PsiModifierListOwner)super.getElement();
   }
+
+  public boolean isCalledOnSubClass() {
+    return checkFlag(IS_CALLED_ON_SUBCLASS);
+  }
+
+  public void setCalledOnSubClass(boolean isCalledOnSubClass){
+    setFlag(isCalledOnSubClass, IS_CALLED_ON_SUBCLASS);
+  }
+
 }

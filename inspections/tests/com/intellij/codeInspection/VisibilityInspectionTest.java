@@ -64,4 +64,10 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     doTest();
   }
+
+  public void testIDEADEV10883() throws Exception {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
+    doTest();
+  }
 }

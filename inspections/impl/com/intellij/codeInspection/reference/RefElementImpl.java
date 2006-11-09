@@ -233,6 +233,14 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   public void addReference(RefElement refWhat, PsiElement psiWhat, PsiElement psiFrom, boolean forWriting, boolean forReading, PsiReferenceExpression expression) {
     if (refWhat != null) {
+      if (refWhat instanceof RefParameter) {
+        if (forWriting) {
+          ((RefParameterImpl)refWhat).parameterReferenced(true);
+        }
+        if (forReading) {
+          ((RefParameterImpl)refWhat).parameterReferenced(false);
+        }
+      }
       addOutReference(refWhat);
       ((RefElementImpl)refWhat).markReferenced(this, psiFrom, psiWhat, forWriting, forReading, expression);
     }

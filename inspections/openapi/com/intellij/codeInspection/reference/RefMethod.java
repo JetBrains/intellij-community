@@ -155,4 +155,6 @@ public interface RefMethod extends RefElement{
   RefClass getOwnerClass();
 
   PsiModifierListOwner getElement();
+
+  boolean isCalledOnSubClass();
 }
