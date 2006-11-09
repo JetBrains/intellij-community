@@ -22,11 +22,12 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.Alarm;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -69,6 +71,8 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   private JLabel myWarningLabel = new JLabel("");
   private ModulesConfigurator myModulesConfigurator;
   private JPanel myWholePanel;
+
+  private boolean myFreeze = false;
 
   public ProjectConfigurable(Project project, ModulesConfigurator configurator, ProjectJdksModel model) {
     myProject = project;
@@ -107,6 +111,13 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
     //myWarningLabel.setUI(new MultiLineLabelUI());
     myPanel.add(myWarningLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
                                                        GridBagConstraints.BOTH, new Insets(10, 6, 10, 0), 0, 0));
+
+    myProjectCompilerOutput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        if (myFreeze) return;
+        myModulesConfigurator.processModuleCompilerOutputChanged(getCompilerOutputUrl());
+      }
+    });
   }
 
   public void disposeUIResources() {
@@ -117,13 +128,19 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
   }
 
   public void reset() {
-    myProjectJdkConfigurable.reset();
-    final String compilerOutput = ProjectRootManager.getInstance(myProject).getCompilerOutputUrl();
-    if (compilerOutput != null) {
-      myProjectCompilerOutput.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutput)));
+    myFreeze = true;
+    try {
+      myProjectJdkConfigurable.reset();
+      final String compilerOutput = ProjectRootManager.getInstance(myProject).getCompilerOutputUrl();
+      if (compilerOutput != null) {
+        myProjectCompilerOutput.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutput)));
+      }
+      myLanguageLevelCombo.reset(myProject);
+      updateCircularDependencyWarning();
     }
-    myLanguageLevelCombo.reset(myProject);
-    updateCircularDependencyWarning();
+    finally {
+      myFreeze = false;
+    }
   }
 
   void updateCircularDependencyWarning() {
@@ -251,6 +268,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
 
   public void setStartModuleWizardOnShow(final boolean show) {
     myStartModuleWizardOnShow = show;
+  }
+
+  public String getCompilerOutputUrl() {
+    return VfsUtil.pathToUrl(myProjectCompilerOutput.getText().trim());
   }
 
   private class MyJPanel extends JPanel {

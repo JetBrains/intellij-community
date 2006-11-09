@@ -1122,6 +1122,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myReloadProjectAlarm.addRequest(runnable, 300, ModalityState.NON_MODAL);
   }
 
+  public String getCompilerOutputUrl() {
+    return isInitialized(myProjectConfigurable) ? myProjectConfigurable.getCompilerOutputUrl() : ProjectRootManager.getInstance(myProject).getCompilerOutputUrl();
+  }
+
   /*public void initDependantsPanel(final OrderPanel<ModifiableRootModel> dependantsPanel) {
     final Module[] modules = myModulesConfigurator.getModules();
     for (Module module : modules) {

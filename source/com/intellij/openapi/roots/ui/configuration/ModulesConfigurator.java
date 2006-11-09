@@ -92,7 +92,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @Nullable
   public Module getModule(String name) {
-    return myModuleModel.findModuleByName(name);
+    final Module moduleByName = myModuleModel.findModuleByName(name);
+    if (moduleByName != null) {
+      return moduleByName;
+    }
+    return myModuleModel.getModuleToBeRenamed(name); //if module was renamed
   }
 
   @Nullable
@@ -323,6 +327,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
+  public void processModuleCompilerOutputChanged(String baseUrl) {
+    for (ModuleEditor moduleEditor : myModuleEditors) {
+      moduleEditor.updateCompilerOutputPathChanged(baseUrl, moduleEditor.getName());
+    }
+  }
 
   public synchronized boolean isModified() {
     if (myModuleModel.isChanged()) {
@@ -359,6 +368,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (ModuleEditor moduleEditor : myModuleEditors) {
       if (Comparing.strEqual(moduleEditor.getName(), oldName)) {
         moduleEditor.setModuleName(name);
+        moduleEditor.updateCompilerOutputPathChanged(ProjectRootConfigurable.getInstance(myProject).getCompilerOutputUrl(), name);
         return;
       }
     }

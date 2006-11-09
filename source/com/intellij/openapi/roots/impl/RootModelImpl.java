@@ -18,6 +18,7 @@ import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -37,7 +38,7 @@ class RootModelImpl implements ModifiableRootModel {
   private final ModuleLibraryTable myModuleLibraryTable;
   final ModuleRootManagerImpl myModuleRootManager;
   private boolean myWritable;
-  private final VirtualFilePointerListener myVirtualFilePointerListener;
+  private VirtualFilePointerListener myVirtualFilePointerListener;
   private VirtualFilePointerManager myFilePointerManager;
   VirtualFilePointer myCompilerOutputPath;
   VirtualFilePointer myCompilerOutputPathForTests;
@@ -57,9 +58,6 @@ class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String URL_ATTR = ATTRIBUTE_URL;
   @NonNls private static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
   @NonNls private static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
-
-  @NonNls private static final String PRODUCTION = "production";
-  @NonNls private static final String TEST = "test";
 
   private boolean myDisposed = false;
   private final OrderEntryProperties myOrderEntryProperties;
@@ -733,6 +731,7 @@ class RootModelImpl implements ModifiableRootModel {
     return myVirtualFilePointerListener;
   }
 
+  @Nullable
   public String getCompilerOutputUrl() {
     if (myInheritedCompilerOutput){
       final String projectOutputPath = myProjectRootManager.getCompilerOutputUrl();
@@ -747,6 +746,7 @@ class RootModelImpl implements ModifiableRootModel {
     }
   }
 
+  @Nullable
   public String getCompilerOutputUrlForTests() {
     if (myInheritedCompilerOutput){
       final String projectOutputPath = myProjectRootManager.getCompilerOutputUrl();
@@ -962,6 +962,8 @@ class RootModelImpl implements ModifiableRootModel {
     for (VirtualFilePointer pointer : myPointersToDispose) {
       myFilePointerManager.kill(pointer);
     }
+    myPointersToDispose.clear();
+    myVirtualFilePointerListener = null;
     myDisposed = true;
   }
 

@@ -20,7 +20,9 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Model of roots that should be used by clients to modify module roots.
@@ -29,6 +31,9 @@ import org.jetbrains.annotations.NotNull;
  * @see ModuleRootManager#getModifiableModel()
  */
 public interface ModifiableRootModel extends ModuleRootModel {
+  @NonNls String PRODUCTION = "production";
+  @NonNls String TEST = "test";
+
   /**
    * Adds the specified directory as a content root.
    *
@@ -131,11 +136,13 @@ public interface ModifiableRootModel extends ModuleRootModel {
   /**
    * @deprecated Use {@link #getCompilerOutputPathUrl()} instead
    */
+  @Nullable
   String getCompilerOutputUrl();
 
   /**
    * @deprecated Use {@link #getCompilerOutputPathForTestsUrl()} instead
    */
+  @Nullable
   String getCompilerOutputUrlForTests();
 
   @NotNull VirtualFile[] getOrderedRoots(OrderRootType type);

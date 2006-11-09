@@ -448,7 +448,7 @@ public class VfsUtil {
     return protocol + "://" + path;
   }
 
-  public static String urlToPath(String url) {
+  public static String urlToPath(@NonNls String url) {
     if (url == null) return "";
     return VirtualFileManager.extractPath(url);
   }

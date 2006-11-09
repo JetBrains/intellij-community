@@ -59,6 +59,13 @@ public class OutputEditor extends ModuleElementsEditor {
     myJavadocEditor.moduleStateChanged();
   }
 
+
+  public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {
+    super.moduleCompileOutputChanged(baseUrl, moduleName);
+    myCompilerOutputEditor.moduleCompileOutputChanged(baseUrl, moduleName);
+    myJavadocEditor.moduleCompileOutputChanged(baseUrl, moduleName);
+  }
+
   @Nullable
   @NonNls
   public String getHelpTopic() {

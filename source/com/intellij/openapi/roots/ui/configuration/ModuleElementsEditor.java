@@ -34,6 +34,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   public void apply() throws ConfigurationException {}
   public void reset() {}
   public void moduleStateChanged() {}
+  public void moduleCompileOutputChanged(final String baseUrl, final String moduleName){}
 
   public void disposeUIResources() {
     for (Disposable disposable : myDisposables) {

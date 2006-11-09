@@ -19,7 +19,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
@@ -133,23 +132,23 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   private void updateOutputPathPresentation() {
     final VirtualFile compilerOutputPath = myModel.getCompilerOutputPath();
     if (compilerOutputPath != null) {
-      myOutputPathPanel.setText(compilerOutputPath.getPath().replace('/', File.separatorChar));
+      myOutputPathPanel.setText(FileUtil.toSystemDependentName(compilerOutputPath.getPath()));
     }
     else {
       final String compilerOutputUrl = myModel.getCompilerOutputPathUrl();
       if (compilerOutputUrl != null) {
-        myOutputPathPanel.setText(VirtualFileManager.extractPath(compilerOutputUrl).replace('/', File.separatorChar));
+        myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutputUrl)));
       }
     }
 
     final VirtualFile testsOutputPath = myModel.getCompilerOutputPathForTests();
     if (testsOutputPath != null) {
-      myTestsOutputPathPanel.setText(testsOutputPath.getPath().replace('/', File.separatorChar));
+      myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(testsOutputPath.getPath()));
     }
     else {
       final String testsOutputUrl = myModel.getCompilerOutputPathForTestsUrl();
       if (testsOutputUrl != null) {
-        myTestsOutputPathPanel.setText(VirtualFileManager.extractPath(testsOutputUrl).replace('/', File.separatorChar));
+        myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(testsOutputUrl)));
       }
     }
   }
@@ -230,6 +229,18 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   public void moduleStateChanged() {
     //if content enties tree was changed
     myCbExcludeOutput.setSelected(myModel.isExcludeOutput());
+  }
+
+  public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {
+    if (myModel.isCompilerOutputPathInherited()) {
+      if (baseUrl != null) {
+        myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(baseUrl + "/" + ModifiableRootModel.PRODUCTION + "/" + moduleName)));
+        myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(baseUrl + "/" + ModifiableRootModel.TEST + "/" + moduleName)));
+      } else {
+        myOutputPathPanel.setText(null);
+        myTestsOutputPathPanel.setText(null);
+      }
+    }
   }
 
   private static interface CommitPathRunnable {

@@ -188,6 +188,15 @@ public class ModuleEditor {
     myEventDispatcher.getMulticaster().moduleStateChanged(getModifiableRootModelProxy());
   }
 
+  public void updateCompilerOutputPathChanged(String baseUrl, String moduleName){
+    getPanel();  //init editor if needed
+    for (final ModuleConfigurationEditor myEditor : myEditors) {
+      if (myEditor instanceof ModuleElementsEditor) {
+        ((ModuleElementsEditor)myEditor).moduleCompileOutputChanged(baseUrl, moduleName);
+      }
+    }
+  }
+
   public ModifiableRootModel dispose() {
     try {
       for (final ModuleConfigurationEditor myEditor : myEditors) {
