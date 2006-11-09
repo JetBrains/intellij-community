@@ -1004,7 +1004,6 @@ public class CompileDriver {
                                  final CompileContextImpl context,
                                  final Set<String> toDelete,
                                  final CompilerConfiguration compilerConfiguration) {
-    final List<String> toRemove = new ArrayList<String>();
     final CompileScope scope = context.getCompileScope();
     for (Iterator<String> it = cache.getOutputUrlsIterator(); it.hasNext();) {
       final String outputPath = it.next();
@@ -1057,16 +1056,12 @@ public class CompileDriver {
         if (sourceFile != null && scope.belongs(sourceUrl)) {
           if (!compilerConfiguration.isExcludedFromCompilation(sourceFile)) {
             toCompile.add(sourceFile);
-            toRemove.add(outputPath);
           }
         }
       }
       if (sourceFile == null) {
         urlsWithSourceRemoved.add(outputPath);
       }
-    }
-    for (final String aToRemove : toRemove) {
-      cache.remove(aToRemove);
     }
   }
 
@@ -1522,16 +1517,16 @@ public class CompileDriver {
         }
       }
       final Boolean refreshSuccess = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            LocalFileSystem.getInstance().refreshIoFiles(nonExistingOutputPaths);
-            for (File file : nonExistingOutputPaths) {
-              if (LocalFileSystem.getInstance().findFileByIoFile(file) == null) {
-                return Boolean.FALSE;
-              }
+        public Boolean compute() {
+          LocalFileSystem.getInstance().refreshIoFiles(nonExistingOutputPaths);
+          for (File file : nonExistingOutputPaths) {
+            if (LocalFileSystem.getInstance().findFileByIoFile(file) == null) {
+              return Boolean.FALSE;
             }
-            return Boolean.TRUE;
           }
-        });
+          return Boolean.TRUE;
+        }
+      });
       if (!refreshSuccess.booleanValue()) {
         return false;
       }
