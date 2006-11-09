@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
@@ -57,7 +58,8 @@ public class FileReferenceSet {
 
     if (element instanceof XmlAttributeValue) {
       text = ((XmlAttributeValue)element).getValue();
-      offset = 1;
+      String s = element.getText();
+      offset = StringUtil.startsWithChar(s, '"') || StringUtil.startsWithChar(s, '\'') ? 1 : 0;
     }
     else if (element instanceof XmlTag) {
       final XmlTag tag = ((XmlTag)element);
@@ -72,7 +74,7 @@ public class FileReferenceSet {
     if (text != null) {
       text = WebUtil.trimURL(text);
     }
-    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed, false) {
+    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed, true) {
       protected boolean isSoft() {
         return soft;
       }

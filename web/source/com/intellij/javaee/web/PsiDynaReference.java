@@ -48,15 +48,22 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
 
-  public TextRange getRangeInElement(){
-    final TextRange range = myReferences.get(0).getRangeInElement();
+  public TextRange getRangeInElement() {
+    PsiReference resolved = null;
+    PsiReference reference = myReferences.get(0);
+    if (reference.resolve() != null) {
+      resolved = reference;
+    }
+    final TextRange range = reference.getRangeInElement();
     int start = range.getStartOffset();
     int end = range.getEndOffset();
     for (int i = 1; i < myReferences.size(); i++) {
-      PsiReference reference = myReferences.get(i);
+      reference = myReferences.get(i);
       final TextRange textRange = getRange(reference);
       start = Math.min(start, textRange.getStartOffset());
-      end = Math.max(end, textRange.getEndOffset());
+      if (resolved == null) {
+        end = Math.max(end, textRange.getEndOffset());
+      }
     }
     return new TextRange(start, end);
   }
