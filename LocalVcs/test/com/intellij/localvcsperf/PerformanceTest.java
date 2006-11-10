@@ -1,5 +1,9 @@
-package com.intellij.localvcs;
+package com.intellij.localvcsperf;
 
+import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.Path;
+import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.TempDirTestCase;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
