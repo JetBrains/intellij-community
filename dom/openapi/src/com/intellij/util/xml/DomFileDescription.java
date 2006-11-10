@@ -34,14 +34,14 @@ import java.util.*;
  *
  * @see com.intellij.util.xml.MergingFileDescription
  */
-public abstract class DomFileDescription<T> {
+public class DomFileDescription<T> {
   private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
   private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
 
-  protected DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
+  public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
   }
@@ -67,7 +67,7 @@ public abstract class DomFileDescription<T> {
     return true;
   }
 
-  protected abstract void initializeFileDescription();
+  protected void initializeFileDescription() {}
 
   /**
    * Create custom DOM annotator that will be used when error-highlighting DOM. The results will be collected to
