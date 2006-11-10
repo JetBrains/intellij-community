@@ -149,37 +149,46 @@ public class LocalVcsHistoryTest extends TestCase {
   }
 
   @Test
-  public void testGettingLabeledSnapshot() {
-    vcs.createFile(p("file"), "content");
-    vcs.apply();
-
-    vcs.putLabel("label");
-
-    vcs.changeFileContent(p("file"), "new content");
-    vcs.apply();
-
-    RootEntry r = vcs.getSnapshot("label");
-    assertNotNull(r);
-    assertEquals("content", r.getEntry(p("file")).getContent());
-  }
-
-  @Test
-  public void testGettingSnapshotWithUnknownLabelThrowsException() {
-    vcs.createFile(p("file"), null);
-    vcs.apply();
-    vcs.putLabel("label");
-
-    try {
-      vcs.getSnapshot("unknown label");
-      fail();
-    } catch (LocalVcsException e) {}
-  }
-
-  @Test
   public void testLabelingEmptyLocalVcsThrowsException() {
     try {
       vcs.putLabel("label");
       fail();
     } catch (LocalVcsException e) {}
+  }
+
+  @Test
+  public void testChangeList() {
+    vcs.createFile(p("file1"), "content1");
+    vcs.apply();
+    vcs.putLabel("label1");
+
+    vcs.createFile(p("file2"), "content2");
+    vcs.apply();
+    vcs.putLabel("label2");
+
+    SnapshotList result = vcs.getSnapshotList();
+    assertEquals(2, result.getSnapshot().size());
+
+    assertEquals("label1", result.getSnapshot().get(0).getLabel());
+    assertEquals("label2", result.getSnapshot().get(1).getLabel());
+  }
+
+  @Test
+  public void testChangeListChanges() {
+    vcs.createFile(p("file1"), "content1");
+    vcs.createFile(p("file2"), "content2");
+    vcs.apply();
+
+    vcs.changeFileContent(p("file1"), "new content1");
+    vcs.rename(p("file2"), "new file2");
+    vcs.apply();
+
+    SnapshotList result = vcs.getSnapshotList();
+    Snapshot s1 = result.getSnapshot().get(0);
+    Snapshot s2 = result.getSnapshot().get(1);
+
+    assertTrue(s1.getDifferences().isEmpty());
+
+    //assertEquals(2, s1.getDifferences().size());
   }
 }
