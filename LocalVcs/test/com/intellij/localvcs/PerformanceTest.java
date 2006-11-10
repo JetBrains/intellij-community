@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import org.junit.Before;
 
 public class PerformanceTest extends TempDirTestCase {
-  private LocalVcs vcs;
+  protected LocalVcs vcs;
 
   @Before
   public void setUp() {
@@ -17,26 +17,21 @@ public class PerformanceTest extends TempDirTestCase {
     if (countdown == 0) return;
 
     for (Integer i = 0; i < 10; i++) {
-      vcs.createFile(parent.appendedWith("file" + (i + 1)),
-                     "content" + (i + 1));
+      int entryIndex = (i + 1);
+      vcs.createFile(parent.appendedWith("file" + entryIndex),
+                     createContent(entryIndex));
 
-      Path child = parent.appendedWith("dir" + (i + 1));
+      Path child = parent.appendedWith("dir" + entryIndex);
       vcs.createDirectory(child);
       createChildren(child, countdown - 1);
     }
   }
 
-  //@Test
-  public void testAddingEntries() {
-    assertExecutionTime(10, new Task() {
-      public void execute() {
-        vcs.createFile(p("test"), "content");
-        vcs.apply();
-      }
-    });
+  private String createContent(int entryIndex) {
+    return "content" + entryIndex;
   }
 
-  private void assertExecutionTime(long expectedTime, final Task task) {
+  protected void assertExecutionTime(long expectedTime, final Task task) {
     long start = System.currentTimeMillis();
     task.execute();
 
@@ -47,7 +42,7 @@ public class PerformanceTest extends TempDirTestCase {
                actualTime < expectedTime);
   }
 
-  private interface Task {
+  protected interface Task {
     void execute();
   }
 }
