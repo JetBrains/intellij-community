@@ -43,6 +43,16 @@ public class DirectoryEntryTest extends TestCase {
   }
 
   @Test
+  public void testIdPath() {
+    Entry dir = new DirectoryEntry(1, null);
+    Entry file = new FileEntry(2, null, null);
+
+    dir.addChild(file);
+
+    assertEquals(idp(1, 2), file.getIdPath());
+  }
+
+  @Test
   public void testPath() {
     Entry dir = new DirectoryEntry(null, "dir");
     Entry file = new FileEntry(null, "file", null);
@@ -63,7 +73,7 @@ public class DirectoryEntryTest extends TestCase {
     Entry dir = new DirectoryEntry(42, "name");
     Entry copy = dir.copy();
 
-    assertEquals(42, copy.getObjectId());
+    assertEquals(42, copy.getId());
     assertEquals(p("name"), copy.getPath());
   }
 
@@ -98,9 +108,9 @@ public class DirectoryEntryTest extends TestCase {
     Entry copyChild2 = children.get(1);
     Entry copyChild3 = copyChild2.getChildren().get(0);
 
-    assertEquals(1, copyChild1.getObjectId());
-    assertEquals(2, copyChild2.getObjectId());
-    assertEquals(3, copyChild3.getObjectId());
+    assertEquals(1, copyChild1.getId());
+    assertEquals(2, copyChild2.getId());
+    assertEquals(3, copyChild3.getId());
 
     assertSame(copy, copyChild1.getParent());
     assertSame(copy, copyChild2.getParent());
@@ -142,7 +152,7 @@ public class DirectoryEntryTest extends TestCase {
     List<Entry> newChildren = renamed.getChildren();
     assertEquals(1, renamed.getChildren().size());
 
-    assertEquals(44, newChildren.get(0).getObjectId());
+    assertEquals(44, newChildren.get(0).getId());
 
     assertSame(dir, child.getParent());
     assertSame(renamed, newChildren.get(0).getParent());

@@ -8,6 +8,10 @@ import java.util.List;
 import org.junit.Assert;
 
 public abstract class TestCase extends Assert {
+  protected static IdPath idp(Integer... parts) {
+    return new IdPath(parts);
+  }
+
   protected static Path p(String name) {
     return new Path(name);
   }

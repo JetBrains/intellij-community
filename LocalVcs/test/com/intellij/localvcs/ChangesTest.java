@@ -13,58 +13,58 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryIdForCreateFileChange() {
-    Change c = new CreateFileChange(p("name"), null, 1);
+    Change c = new CreateFileChange(1, p("name"), null);
     c.applyTo(root);
 
-    assertEquals(1, c.getAffectedEntryId());
+    assertEquals(idp(1), c.getAffectedEntryIdPath());
   }
 
   @Test
   public void testAffectedEntryIdForCreateDirectoryChange() {
-    Change c = new CreateDirectoryChange(p("name"), 2);
+    Change c = new CreateDirectoryChange(2, p("name"));
     c.applyTo(root);
 
-    assertEquals(2, c.getAffectedEntryId());
+    assertEquals(idp(2), c.getAffectedEntryIdPath());
   }
 
   @Test
   public void testAffectedEntryIdForChangeFileContentChange() {
-    root.doCreateFile(p("file"), "content", 16);
+    root.doCreateFile(16, p("file"), "content");
 
     Change c = new ChangeFileContentChange(p("file"), "new content");
     c.applyTo(root);
 
-    assertEquals(16, c.getAffectedEntryId());
+    assertEquals(idp(16), c.getAffectedEntryIdPath());
   }
 
   @Test
   public void testAffectedEntryIdForRenameChange() {
-    root.doCreateFile(p("name"), null, 42);
+    root.doCreateFile(42, p("name"), null);
 
     Change c = new RenameChange(p("name"), "new name");
     c.applyTo(root);
 
-    assertEquals(42, c.getAffectedEntryId());
+    assertEquals(idp(42), c.getAffectedEntryIdPath());
   }
 
   @Test
   public void testAffectedEntryIdForMoveChange() {
-    root.doCreateFile(p("file"), null, 13);
-    root.doCreateDirectory(p("dir"), null);
+    root.doCreateFile(13, p("file"), null);
+    root.doCreateDirectory(null, p("dir"));
 
     Change c = new MoveChange(p("file"), p("dir"));
     c.applyTo(root);
 
-    assertEquals(13, c.getAffectedEntryId());
+    assertEquals(idp(13), c.getAffectedEntryIdPath());
   }
 
   @Test
   public void testAffectedEntryIdForDeleteChange() {
-    root.doCreateFile(p("file"), null, 7);
+    root.doCreateFile(7, p("file"), null);
 
     Change c = new DeleteChange(p("file"));
     c.applyTo(root);
 
-    assertEquals(7, c.getAffectedEntryId());
+    assertEquals(idp(7), c.getAffectedEntryIdPath());
   }
 }

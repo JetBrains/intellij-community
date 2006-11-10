@@ -36,7 +36,7 @@ public class StreamTest extends TestCase {
     Entry result = is.readEntry();
 
     assertEquals(FileEntry.class, result.getClass());
-    assertEquals(42, result.getObjectId());
+    assertEquals(42, result.getId());
     assertEquals("file", result.getName());
     assertEquals("content", result.getContent());
   }
@@ -60,7 +60,7 @@ public class StreamTest extends TestCase {
     Entry result = is.readEntry();
 
     assertEquals(DirectoryEntry.class, result.getClass());
-    assertEquals(13, result.getObjectId());
+    assertEquals(13, result.getId());
     assertEquals("name", result.getName());
   }
 
@@ -98,7 +98,7 @@ public class StreamTest extends TestCase {
     Entry result = is.readEntry();
 
     assertEquals(RootEntry.class, result.getClass());
-    assertNull(result.getObjectId());
+    assertNull(result.getId());
     assertNull(result.getName());
 
     List<Entry> children = result.getChildren();
@@ -113,7 +113,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testCreateFileChange() throws IOException {
-    Change c = new CreateFileChange(p("file"), "content", null);
+    Change c = new CreateFileChange(null, p("file"), "content");
 
     os.writeChange(c);
     Change result = is.readChange();
@@ -126,7 +126,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testCreateDirectoryChange() throws IOException {
-    Change c = new CreateDirectoryChange(p("dir"), null);
+    Change c = new CreateDirectoryChange(null, p("dir"));
 
     os.writeChange(c);
     Change result = is.readChange();
@@ -138,9 +138,9 @@ public class StreamTest extends TestCase {
   @Test
   public void testAppliedDeleteChange() throws IOException {
     RootEntry root = new RootEntry();
-    root.doCreateDirectory(p("entry"), null);
-    root.doCreateFile(p("entry/file"), "", null);
-    root.doCreateDirectory(p("entry/dir"), null);
+    root.doCreateDirectory(null, p("entry"));
+    root.doCreateFile(null, p("entry/file"), "");
+    root.doCreateDirectory(null, p("entry/dir"));
 
     Change c = new DeleteChange(p("entry"));
     c.applyTo(root);
@@ -159,7 +159,7 @@ public class StreamTest extends TestCase {
   @Test
   public void testAppliedChangeFileContentChange() throws IOException {
     RootEntry root = new RootEntry();
-    root.doCreateFile(p("file"), "content", null);
+    root.doCreateFile(null, p("file"), "content");
 
     Change c = new ChangeFileContentChange(p("file"), "new content");
     c.applyTo(root);
@@ -209,7 +209,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testChangeSet() throws IOException {
-    ChangeSet c = cs(new CreateFileChange(p(""), "", null));
+    ChangeSet c = cs(new CreateFileChange(null, p(""), ""));
     c.setLabel("label");
 
     os.writeChangeSet(c);
@@ -234,7 +234,7 @@ public class StreamTest extends TestCase {
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
     c.applyChangeSetOn(new RootEntry(),
-                       cs(new CreateFileChange(p("file"), "content", null)));
+                       cs(new CreateFileChange(null, p("file"), "content")));
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();

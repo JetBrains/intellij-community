@@ -70,8 +70,8 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     result.createFile(p("file3"), "content3");
     result.apply();
 
-    Integer id2 = result.getEntry(p("file2")).getObjectId();
-    Integer id3 = result.getEntry(p("file3")).getObjectId();
+    Integer id2 = result.getEntry(p("file2")).getId();
+    Integer id3 = result.getEntry(p("file3")).getId();
 
     assertTrue(id2 < id3);
   }

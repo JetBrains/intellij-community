@@ -6,7 +6,7 @@ public class ChangeFileContentChange extends Change {
   private Path myPath;
   private String myNewContent;
   private String myOldContent;
-  private Integer myAffectedEntryId;
+  private IdPath myAffectedEntryIdPath;
 
   public ChangeFileContentChange(Path path, String newContent) {
     myPath = path;
@@ -43,7 +43,7 @@ public class ChangeFileContentChange extends Change {
     Entry affectedEntry = root.getEntry(myPath);
 
     myOldContent = affectedEntry.getContent();
-    myAffectedEntryId = affectedEntry.getObjectId();
+    myAffectedEntryIdPath = affectedEntry.getIdPath();
 
     root.doChangeFileContent(myPath, myNewContent);
   }
@@ -54,7 +54,7 @@ public class ChangeFileContentChange extends Change {
   }
 
   @Override
-  public Integer getAffectedEntryId() {
-    return myAffectedEntryId;
+  protected IdPath getAffectedEntryIdPath() {
+    return myAffectedEntryIdPath;
   }
 }

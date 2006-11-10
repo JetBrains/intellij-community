@@ -6,8 +6,8 @@ public class FileEntry extends Entry {
   // todo change String to ByteArray or something else
   private String myContent;
 
-  public FileEntry(Integer objectId, String name, String content) {
-    super(objectId, name);
+  public FileEntry(Integer id, String name, String content) {
+    super(id, name);
     myContent = content;
   }
 
@@ -29,6 +29,6 @@ public class FileEntry extends Entry {
 
   @Override
   public Entry copy() {
-    return new FileEntry(myObjectId, myName, myContent);
+    return new FileEntry(myId, myName, myContent);
   }
 }

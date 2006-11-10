@@ -5,8 +5,9 @@ import java.io.IOException;
 public class CreateDirectoryChange extends Change {
   private Path myPath;
   private Integer myId;
+  private IdPath myAffectedEntryIdPath;
 
-  public CreateDirectoryChange(Path path, Integer id) {
+  public CreateDirectoryChange(Integer id, Path path) {
     myPath = path;
     myId = id;
   }
@@ -26,7 +27,8 @@ public class CreateDirectoryChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateDirectory(myPath, myId);
+    root.doCreateDirectory(myId, myPath);
+    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
   }
 
   @Override
@@ -35,7 +37,7 @@ public class CreateDirectoryChange extends Change {
   }
 
   @Override
-  public Integer getAffectedEntryId() {
-    return myId;
+  protected IdPath getAffectedEntryIdPath() {
+    return myAffectedEntryIdPath;
   }
 }

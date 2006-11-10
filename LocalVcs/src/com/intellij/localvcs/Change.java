@@ -9,7 +9,9 @@ public abstract class Change {
 
   public abstract void revertOn(RootEntry root);
 
-  public Integer getAffectedEntryId() {
-    return null;
+  public boolean affects(Entry entry) {
+    return entry.getIdPath().isPrefixOf(getAffectedEntryIdPath());
   }
+
+  protected abstract IdPath getAffectedEntryIdPath();
 }

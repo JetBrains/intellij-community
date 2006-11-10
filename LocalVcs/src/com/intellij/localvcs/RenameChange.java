@@ -5,7 +5,7 @@ import java.io.IOException;
 public class RenameChange extends Change {
   private Path myPath;
   private String myNewName;
-  private Integer myAffectedEntryId;
+  private IdPath myAffectedEntryIdPath;
 
   public RenameChange(Path path, String newName) {
     myPath = path;
@@ -33,7 +33,7 @@ public class RenameChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myAffectedEntryId = root.getEntry(myPath).getObjectId();
+    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
     root.doRename(myPath, myNewName);
   }
 
@@ -43,7 +43,7 @@ public class RenameChange extends Change {
   }
 
   @Override
-  public Integer getAffectedEntryId() {
-    return myAffectedEntryId;
+  protected IdPath getAffectedEntryIdPath() {
+    return myAffectedEntryIdPath;
   }
 }

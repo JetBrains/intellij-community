@@ -13,19 +13,21 @@ public class ChangeSetTest extends TestCase {
 
   @Before
   public void setUp() {
-    changeSet = cs(new CreateFileChange(p("file1"), null, null),
-                   new CreateFileChange(p("file2"), null, null),
-                   new CreateFileChange(p("file3"), null, null));
+    changeSet = cs(new CreateFileChange(null, p("file1"), null),
+                   new CreateFileChange(null, p("file2"), null),
+                   new CreateFileChange(null, p("file3"), null));
 
     log = new ArrayList<Path>();
     root = new RootEntry() {
       @Override
-      protected void doCreateFile(Path path, String content, Integer id) {
+      protected void doCreateFile(Integer id, Path path, String content) {
+        super.doCreateFile(id, path, content);
         log.add(path);
       }
 
       @Override
       protected void doDelete(Path path) {
+        super.doDelete(path);
         log.add(path);
       }
     };
@@ -39,6 +41,9 @@ public class ChangeSetTest extends TestCase {
 
   @Test
   public void testRevertingIsLIFO() {
+    changeSet.applyTo(root);
+    log.clear();
+
     changeSet.revertOn(root);
     assertElements(new Object[]{p("file3"), p("file2"), p("file1")}, log);
   }

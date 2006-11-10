@@ -6,8 +6,9 @@ public class CreateFileChange extends Change {
   private Path myPath;
   private String myContent;
   private Integer myId;
+  private IdPath myAffectedEntryIdPath;
 
-  public CreateFileChange(Path path, String content, Integer id) {
+  public CreateFileChange(Integer id, Path path, String content) {
     myPath = path;
     myContent = content;
     myId = id;
@@ -34,7 +35,8 @@ public class CreateFileChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateFile(myPath, myContent, myId);
+    root.doCreateFile(myId, myPath, myContent);
+    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
   }
 
   @Override
@@ -43,7 +45,7 @@ public class CreateFileChange extends Change {
   }
 
   @Override
-  public Integer getAffectedEntryId() {
-    return myId;
+  protected IdPath getAffectedEntryIdPath() {
+    return myAffectedEntryIdPath;
   }
 }

@@ -43,6 +43,14 @@ public class ChangeSet {
     return myChanges;
   }
 
+  public List<Change> getChangesFor(Entry e) {
+    List<Change> result = new ArrayList<Change>();
+    for (Change c : myChanges) {
+      if (c.affects(e)) result.add(c);
+    }
+    return result;
+  }
+
   public void applyTo(RootEntry root) {
     for (Change change : myChanges) {
       change.applyTo(root);

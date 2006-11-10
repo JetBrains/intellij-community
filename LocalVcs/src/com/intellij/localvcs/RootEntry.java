@@ -38,6 +38,10 @@ public class RootEntry extends DirectoryEntry {
     myChangeListIndex--;
   }
 
+  protected IdPath getIdPathAppendedWith(Integer id) {
+    return new IdPath(id);
+  }
+
   protected Path getPathAppendedWith(String name) {
     return new Path(name);
   }
@@ -68,17 +72,17 @@ public class RootEntry extends DirectoryEntry {
     return result;
   }
 
-  protected void doCreateFile(Path path, String content, Integer id) {
+  protected void doCreateFile(Integer id, Path path, String content) {
     addEntry(path.getParent(), new FileEntry(id, path.getName(), content));
   }
 
-  protected void doCreateDirectory(Path path, Integer id) {
+  protected void doCreateDirectory(Integer id, Path path) {
     addEntry(path.getParent(), new DirectoryEntry(id, path.getName()));
   }
 
   protected void doChangeFileContent(Path path, String content) {
     Entry oldEntry = getEntry(path);
-    Entry newEntry = new FileEntry(oldEntry.getObjectId(),
+    Entry newEntry = new FileEntry(oldEntry.getId(),
                                    path.getName(),
                                    content);
 
@@ -118,14 +122,12 @@ public class RootEntry extends DirectoryEntry {
     parent.removeChild(getEntry(path));
   }
 
-  public RootEntry apply(ChangeSet cs) {
-    // todo should we really make a copy here?
-    RootEntry result = copy();
-    cs.applyTo(result);
-    return result;
+  public void apply(ChangeSet cs) {
+    cs.applyTo(this);
   }
 
   public RootEntry revert(ChangeSet cs) {
+    // todo maybe revert should not return copy too 
     RootEntry result = copy();
     cs.revertOn(result);
     return result;
@@ -159,6 +161,6 @@ public class RootEntry extends DirectoryEntry {
 
     public IdMatcher(Integer id) { myId = id; }
 
-    public boolean matches(Entry e) { return myId.equals(e.myObjectId); }
+    public boolean matches(Entry e) { return myId.equals(e.myId); }
   }
 }

@@ -27,18 +27,16 @@ public class ChangeList {
     return myChangeSets;
   }
 
-  public RootEntry applyChangeSetOn(RootEntry root, ChangeSet cs) {
+  public void applyChangeSetOn(RootEntry root, ChangeSet cs) {
     // todo we make bad assumption that applying is only done on current
     // todo snapshot - not on the reverted one
 
     // todo should we really make copy of current shapshot?
     // todo copy is a performance bottleneck
 
-    RootEntry result = root.apply(cs);
+    root.apply(cs);
     myChangeSets.add(cs);
-    result.incrementChangeListIndex(); // todo do something with it
-
-    return result;
+    root.incrementChangeListIndex(); // todo do something with it
   }
 
   public RootEntry revertOn(RootEntry root) {
@@ -65,11 +63,10 @@ public class ChangeList {
     return new DifferenceList(this, e);
   }
 
-  public void setLabel(RootEntry root, String label) {
-    getChangeSetFor(root).setLabel(label);
-  }
+  public void labelLastChangeSet(String label) {
+    if (myChangeSets.isEmpty()) throw new LocalVcsException();
 
-  public String getLabel(RootEntry root) {
-    return getChangeSetFor(root).getLabel();
+    ChangeSet last = myChangeSets.get(myChangeSets.size() - 1);
+    last.setLabel(label);
   }
 }

@@ -38,11 +38,11 @@ public class LocalVcs {
   }
 
   public void createFile(Path path, String content) {
-    myPendingChanges.add(new CreateFileChange(path, content, getNextId()));
+    myPendingChanges.add(new CreateFileChange(getNextId(), path, content));
   }
 
   public void createDirectory(Path path) {
-    myPendingChanges.add(new CreateDirectoryChange(path, getNextId()));
+    myPendingChanges.add(new CreateDirectoryChange(getNextId(), path));
   }
 
   private Integer getNextId() {
@@ -76,7 +76,7 @@ public class LocalVcs {
   public void apply() {
     ChangeSet cs = new ChangeSet(myPendingChanges);
 
-    myRoot = myChangeList.applyChangeSetOn(myRoot, cs);
+    myChangeList.applyChangeSetOn(myRoot, cs);
     clearPendingChanges();
   }
 
@@ -86,12 +86,8 @@ public class LocalVcs {
   }
 
   public void putLabel(String label) {
-    myChangeList.setLabel(myRoot, label);
+    myChangeList.labelLastChangeSet(label);
   }
-
-  //public DifferenceList getDifferenceList() {
-  //  return new DifferenceList(myChangeList, myRoot);
-  //}
 
   public List<Entry> getEntryHistory(Path path) {
     // todo remove this method
@@ -100,7 +96,7 @@ public class LocalVcs {
     if (!hasEntry(path)) throw new LocalVcsException();
 
     List<Entry> result = new ArrayList<Entry>();
-    Integer id = getEntry(path).getObjectId();
+    Integer id = getEntry(path).getId();
 
     for (RootEntry r : getHistory()) {
       if (!r.hasEntry(id)) break;

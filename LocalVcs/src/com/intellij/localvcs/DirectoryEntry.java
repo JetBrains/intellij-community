@@ -7,8 +7,8 @@ import java.util.List;
 public class DirectoryEntry extends Entry {
   private List<Entry> myChildren = new ArrayList<Entry>();
 
-  public DirectoryEntry(Integer objectId, String name) {
-    super(objectId, name);
+  public DirectoryEntry(Integer id, String name) {
+    super(id, name);
   }
 
   public DirectoryEntry(Stream s) throws IOException {
@@ -30,6 +30,10 @@ public class DirectoryEntry extends Entry {
     }
   }
 
+  protected IdPath getIdPathAppendedWith(Integer id) {
+    return getIdPath().appendedWith(id);
+  }
+
   protected Path getPathAppendedWith(String name) {
     return getPath().appendedWith(name);
   }
@@ -42,11 +46,6 @@ public class DirectoryEntry extends Entry {
   @Override
   public void addChild(Entry child) {
     checkThatEntryDoesNotExists(child);
-    myChildren.add(child);
-    child.setParent(this);
-  }
-
-  private void addChildUnckecked(Entry child) {
     myChildren.add(child);
     child.setParent(this);
   }
@@ -96,6 +95,6 @@ public class DirectoryEntry extends Entry {
   }
 
   protected DirectoryEntry copyEntry() {
-    return new DirectoryEntry(myObjectId, myName);
+    return new DirectoryEntry(myId, myName);
   }
 }

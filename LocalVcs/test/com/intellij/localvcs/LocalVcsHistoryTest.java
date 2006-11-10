@@ -114,9 +114,9 @@ public class LocalVcsHistoryTest extends TestCase {
     vcs.changeFileContent(p("file1"), "new content1");
     vcs.apply();
 
-    Integer id1 = vcs.getEntry(p("file1")).getObjectId();
-    Integer id2 = vcs.getEntry(p("file2")).getObjectId();
-    Integer id3 = vcs.getEntry(p("file3")).getObjectId();
+    Integer id1 = vcs.getEntry(p("file1")).getId();
+    Integer id2 = vcs.getEntry(p("file2")).getId();
+    Integer id3 = vcs.getEntry(p("file3")).getId();
 
     List<RootEntry> rootEntries = vcs.getHistory();
     assertEquals(2, rootEntries.size());
@@ -138,7 +138,7 @@ public class LocalVcsHistoryTest extends TestCase {
   private void assertEntries(Object[] expected, RootEntry root) {
     List<String> actual = new ArrayList<String>();
     for (Entry e : root.getChildren()) {
-      actual.add(e.getObjectId() + e.getName() + e.getContent());
+      actual.add(e.getId() + e.getName() + e.getContent());
     }
     assertElements(expected, actual);
   }

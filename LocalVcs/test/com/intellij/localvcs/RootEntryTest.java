@@ -15,8 +15,12 @@ public class RootEntryTest extends TestCase {
   }
 
   @Test
+  public void testIdPathToChildren() {
+    assertEquals(idp(1), child.getIdPath());
+  }
+
+  @Test
   public void testPathToChildren() {
-    assertSame(root, child.getParent());
     assertEquals(p("child"), child.getPath());
   }
 
@@ -45,7 +49,7 @@ public class RootEntryTest extends TestCase {
   @Test
   public void testGettingEntry() {
     Entry e1 = root.getEntry(p("child"));
-    Entry e2 = root.getEntry(e1.getObjectId());
+    Entry e2 = root.getEntry(e1.getId());
 
     assertSame(child, e1);
     assertSame(child, e2);
@@ -54,9 +58,9 @@ public class RootEntryTest extends TestCase {
   @Test
   public void testGettingEntryUnderDirectory() {
     root = new RootEntry();
-    root.doCreateDirectory(p("dir1"), 1);
-    root.doCreateDirectory(p("dir1/dir2"), 2);
-    root.doCreateFile(p("dir1/file"), "content", 3);
+    root.doCreateDirectory(1, p("dir1"));
+    root.doCreateDirectory(2, p("dir1/dir2"));
+    root.doCreateFile(3, p("dir1/file"), "content");
 
     Entry e1 = root.getEntry(p("dir1/dir2"));
     Entry e2 = root.getEntry(p("dir1/file"));
@@ -65,8 +69,8 @@ public class RootEntryTest extends TestCase {
     assertEquals("file", e2.getName());
     assertEquals("content", e2.getContent());
 
-    assertSame(e1, root.getEntry(e1.getObjectId()));
-    assertSame(e2, root.getEntry(e2.getObjectId()));
+    assertSame(e1, root.getEntry(e1.getId()));
+    assertSame(e2, root.getEntry(e2.getId()));
   }
 
   @Test
@@ -75,6 +79,7 @@ public class RootEntryTest extends TestCase {
     assertNull(root.findEntry(p("root/unknown entry")));
   }
 
+  @Test
   public void testGettingUnknownEntryThrowsException() {
     try {
       root.getEntry(p("unknown entry"));
@@ -99,20 +104,12 @@ public class RootEntryTest extends TestCase {
   }
 
   @Test
-  public void testApplyingReturnsCopy() {
-    RootEntry original = new RootEntry();
-    RootEntry result
-        = original.apply(cs(new CreateFileChange(p("file"), null, null)));
-
-    assertFalse(original.hasEntry(p("file")));
-    assertTrue(result.hasEntry(p("file")));
-  }
-
-  @Test
   public void testRevertingReturnsCopy() {
-    ChangeSet cs = cs(new CreateFileChange(p("file"), null, null));
+    ChangeSet cs = cs(new CreateFileChange(null, p("file"), null));
 
-    RootEntry original = new RootEntry().apply(cs);
+    RootEntry original = new RootEntry();
+    original.apply(cs);
+
     RootEntry result = original.revert(cs);
 
     assertTrue(original.hasEntry(p("file")));
@@ -121,10 +118,10 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testRevertingSeveralTimesOnSameSnapshot() {
-    root = root.apply(cs(new CreateFileChange(p("file"), "content", null)));
+    root.apply(cs(new CreateFileChange(null, p("file"), "content")));
 
     ChangeSet cs = cs(new ChangeFileContentChange(p("file"), "new content"));
-    root = root.apply(cs);
+    root.apply(cs);
 
     RootEntry result1 = root.revert(cs);
     RootEntry result2 = root.revert(cs);
