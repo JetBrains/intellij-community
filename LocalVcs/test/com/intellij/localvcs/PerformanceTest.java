@@ -1,19 +1,27 @@
 package com.intellij.localvcs;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 public class PerformanceTest extends TempDirTestCase {
   protected LocalVcs vcs;
 
-  @Before
-  public void setUp() {
-    vcs = new LocalVcs(new Storage(tempDir));
-
-    createChildren(p(""), 3);
+  @BeforeClass
+  public static void prepareVcs() {
+    LocalVcs vcs = new LocalVcs(new Storage(classTempDir));
+    createChildren(vcs, p(""), 3);
     vcs.apply();
+    vcs.store();
   }
 
-  private void createChildren(Path parent, Integer countdown) {
+  @Before
+  public void loadVcs() {
+    vcs = new LocalVcs(new Storage(classTempDir));
+  }
+
+  private static void createChildren(LocalVcs vcs,
+                                     Path parent,
+                                     Integer countdown) {
     if (countdown == 0) return;
 
     for (Integer i = 0; i < 10; i++) {
@@ -23,12 +31,11 @@ public class PerformanceTest extends TempDirTestCase {
 
       Path child = parent.appendedWith("dir" + entryIndex);
       vcs.createDirectory(child);
-      createChildren(child, countdown - 1);
+      createChildren(vcs, child, countdown - 1);
     }
   }
 
-  private String createContent(int entryIndex) {
-
+  private static String createContent(int entryIndex) {
     return "content" + entryIndex;
   }
 
