@@ -33,8 +33,8 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
   private JCheckBox myReportInconsistentPropertiesCheckBox;
   private JPanel myOptionsPanel;
 
-  public boolean REPORT_MISSING_TRANSLATIONS = true;
-  public boolean REPORT_INCONSISTENT_PROPERTIES = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_MISSING_TRANSLATIONS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_INCONSISTENT_PROPERTIES = true;
 
 
   public InconsistentResourceBundleInspection() {
