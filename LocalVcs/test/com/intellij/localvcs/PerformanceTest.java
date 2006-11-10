@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 public class PerformanceTest extends TempDirTestCase {
+  private static String contentCache;
   protected LocalVcs vcs;
 
   @BeforeClass
@@ -27,7 +28,7 @@ public class PerformanceTest extends TempDirTestCase {
     for (Integer i = 0; i < 10; i++) {
       int entryIndex = (i + 1);
       vcs.createFile(parent.appendedWith("file" + entryIndex),
-                     createContent(entryIndex));
+                     create10kContent());
 
       Path child = parent.appendedWith("dir" + entryIndex);
       vcs.createDirectory(child);
@@ -35,8 +36,15 @@ public class PerformanceTest extends TempDirTestCase {
     }
   }
 
-  private static String createContent(int entryIndex) {
-    return "content" + entryIndex;
+  private static String create10kContent() {
+    if (contentCache == null) {
+      StringBuffer buffer = new StringBuffer();
+      for (int i = 0; i < 3000; i++) {
+        buffer.append(i);
+      }
+      contentCache = buffer.toString();
+    }
+    return contentCache;
   }
 
   protected void assertExecutionTime(long expectedTime, final Task task) {
