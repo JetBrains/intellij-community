@@ -22,12 +22,12 @@ import java.util.Properties;
 
 public class CreateFromTemplateDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog");
-  protected PsiDirectory myDirectory;
-  protected Project myProject;
-  protected PsiElement myCreatedElement;
-  protected CreateFromTemplatePanel myAttrPanel;
-  protected JComponent myAttrComponent;
-  protected FileTemplate myTemplate;
+  private final PsiDirectory myDirectory;
+  private final Project myProject;
+  private PsiElement myCreatedElement;
+  private final CreateFromTemplatePanel myAttrPanel;
+  private final JComponent myAttrComponent;
+  private final FileTemplate myTemplate;
 
   public CreateFromTemplateDialog(Project project, PsiDirectory directory, FileTemplate template) throws ParseException {
     super(project, true);
@@ -65,12 +65,11 @@ public class CreateFromTemplateDialog extends DialogWrapper {
         return;
       }
     }
-    PsiElement[] element = new PsiElement[1];
     try{
-      if(FileTemplateUtil.createFromTemplate(element, myTemplate, fileName, props, myProject, myDirectory)){
-        myCreatedElement = element[0];
-        super.doOKAction();
-      }
+      PsiElement[] element = new PsiElement[1];
+      FileTemplateUtil.createFromTemplate(element, myTemplate, fileName, props, myProject, myDirectory);
+      myCreatedElement = element[0];
+      super.doOKAction();
     }
     catch (Exception e){
       showErrorMessage(myAttrComponent, myTemplate, e);

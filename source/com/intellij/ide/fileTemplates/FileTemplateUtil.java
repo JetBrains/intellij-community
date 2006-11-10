@@ -207,7 +207,7 @@ public class FileTemplateUtil{
     return result[0];
   }
 
-  public static boolean createFromTemplate(final PsiElement[] myCreatedElement, @NotNull final FileTemplate template, final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
+  public static void createFromTemplate(final PsiElement[] myCreatedElement, @NotNull final FileTemplate template, final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
     if (props == null) {
       props = FileTemplateManager.getInstance().getDefaultProperties();
     }
@@ -262,7 +262,6 @@ public class FileTemplateUtil{
     if(commandException[0] != null){
       throw commandException[0];
     }
-    return true;
   }
 
   public static PsiClass createClassOrInterface(Project project,
@@ -309,10 +308,7 @@ public class FileTemplateUtil{
 
   public static String indent(String methodText, Project project, FileType fileType) {
     int indent = CodeStyleSettingsManager.getSettings(project).getIndentSize(fileType);
-    StringBuffer buf = new StringBuffer();
-    for(int i = 0; i < indent; i++) buf.append(' ');
-
-    return methodText.replaceAll("\n", "\n" + buf.toString());
+    return methodText.replaceAll("\n", "\n" + StringUtil.repeatSymbol(' ',indent));
   }
 
   @NonNls private static final String INCLUDES_PATH = "fileTemplates/includes/";
@@ -321,8 +317,7 @@ public class FileTemplateUtil{
     @NonNls private static final String FT_EXTENSION = ".ft";
 
     public synchronized InputStream getResourceStream(String name) throws ResourceNotFoundException{
-      InputStream resourceStream = super.getResourceStream(INCLUDES_PATH + name + FT_EXTENSION);
-      return resourceStream;
+      return super.getResourceStream(INCLUDES_PATH + name + FT_EXTENSION);
     }
   }
 
