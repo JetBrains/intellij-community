@@ -6,6 +6,7 @@ public class ChangeFileContentChange extends Change {
   private Path myPath;
   private String myNewContent;
   private String myOldContent;
+  private Integer myAffectedEntryId;
 
   public ChangeFileContentChange(Path path, String newContent) {
     myPath = path;
@@ -39,12 +40,21 @@ public class ChangeFileContentChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myOldContent = root.getEntry(myPath).getContent();
+    Entry affectedEntry = root.getEntry(myPath);
+
+    myOldContent = affectedEntry.getContent();
+    myAffectedEntryId = affectedEntry.getObjectId();
+
     root.doChangeFileContent(myPath, myNewContent);
   }
 
   @Override
   public void revertOn(RootEntry root) {
     root.doChangeFileContent(myPath, myOldContent);
+  }
+
+  @Override
+  public Integer getAffectedEntryId() {
+    return myAffectedEntryId;
   }
 }

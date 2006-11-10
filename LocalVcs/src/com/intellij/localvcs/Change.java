@@ -8,4 +8,8 @@ public abstract class Change {
   public abstract void applyTo(RootEntry root);
 
   public abstract void revertOn(RootEntry root);
+
+  public Integer getAffectedEntryId() {
+    return null;
+  }
 }

@@ -156,39 +156,39 @@ public class LocalVcsHistoryTest extends TestCase {
     } catch (LocalVcsException e) {}
   }
 
-  @Test
-  public void testChangeList() {
-    vcs.createFile(p("file1"), "content1");
-    vcs.apply();
-    vcs.putLabel("label1");
-
-    vcs.createFile(p("file2"), "content2");
-    vcs.apply();
-    vcs.putLabel("label2");
-
-    SnapshotList result = vcs.getSnapshotList();
-    assertEquals(2, result.getSnapshot().size());
-
-    assertEquals("label1", result.getSnapshot().get(0).getLabel());
-    assertEquals("label2", result.getSnapshot().get(1).getLabel());
-  }
-
-  @Test
-  public void testChangeListChanges() {
-    vcs.createFile(p("file1"), "content1");
-    vcs.createFile(p("file2"), "content2");
-    vcs.apply();
-
-    vcs.changeFileContent(p("file1"), "new content1");
-    vcs.rename(p("file2"), "new file2");
-    vcs.apply();
-
-    SnapshotList result = vcs.getSnapshotList();
-    Snapshot s1 = result.getSnapshot().get(0);
-    Snapshot s2 = result.getSnapshot().get(1);
-
-    assertTrue(s1.getDifferences().isEmpty());
-
-    //assertEquals(2, s1.getDifferences().size());
-  }
+  //@Test
+  //public void testDifferenceList() {
+  //  vcs.createFile(p("file1"), "content1");
+  //  vcs.apply();
+  //  vcs.putLabel("label1");
+  //
+  //  vcs.createFile(p("file2"), "content2");
+  //  vcs.apply();
+  //  vcs.putLabel("label2");
+  //
+  //  DifferenceList result = vcs.getDifferenceList();
+  //  assertEquals(2, result.getDifferenceSets().size());
+  //
+  //  assertEquals("label1", result.getDifferenceSets().get(0).getLabel());
+  //  assertEquals("label2", result.getDifferenceSets().get(1).getLabel());
+  //}
+  //
+  //@Test
+  //public void testDifferences() {
+  //  vcs.createFile(p("file1"), "content1");
+  //  vcs.createFile(p("file2"), "content2");
+  //  vcs.apply();
+  //
+  //  vcs.changeFileContent(p("file1"), "new content1");
+  //  vcs.rename(p("file2"), "new file2");
+  //  vcs.apply();
+  //
+  //  DifferenceList result = vcs.getDifferenceList();
+  //  DifferenceSet s1 = result.getDifferenceSets().get(0);
+  //  DifferenceSet s2 = result.getDifferenceSets().get(1);
+  //
+  //  assertTrue(s1.getDifferences().isEmpty());
+  //
+  //  //assertEquals(2, s1.getDifferences().size());
+  //}
 }

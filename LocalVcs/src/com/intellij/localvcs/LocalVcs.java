@@ -89,9 +89,9 @@ public class LocalVcs {
     myChangeList.setLabel(myRoot, label);
   }
 
-  public SnapshotList getSnapshotList() {
-    return new SnapshotList(myChangeList, myRoot);
-  }
+  //public DifferenceList getDifferenceList() {
+  //  return new DifferenceList(myChangeList, myRoot);
+  //}
 
   public List<Entry> getEntryHistory(Path path) {
     // todo remove this method

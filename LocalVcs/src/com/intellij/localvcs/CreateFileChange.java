@@ -41,4 +41,9 @@ public class CreateFileChange extends Change {
   public void revertOn(RootEntry root) {
     root.doDelete(myPath);
   }
+
+  @Override
+  public Integer getAffectedEntryId() {
+    return myId;
+  }
 }

@@ -52,4 +52,9 @@ public class DeleteChange extends Change {
       root.doCreateFile(p, e.getContent(), e.getObjectId());
     }
   }
+
+  @Override
+  public Integer getAffectedEntryId() {
+    return myAffectedEntry.getObjectId();
+  }
 }

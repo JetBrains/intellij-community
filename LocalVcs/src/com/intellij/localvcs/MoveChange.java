@@ -5,6 +5,7 @@ import java.io.IOException;
 public class MoveChange extends Change {
   private Path myPath;
   private Path myNewParent;
+  private Integer myAffectedEntryId;
 
   public MoveChange(Path path, Path newParent) {
     myPath = path;
@@ -32,6 +33,7 @@ public class MoveChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
+    myAffectedEntryId = root.getEntry(myPath).getObjectId();
     root.doMove(myPath, myNewParent);
   }
 
@@ -39,5 +41,10 @@ public class MoveChange extends Change {
   public void revertOn(RootEntry root) {
     root.doMove(myNewParent.appendedWith(myPath.getName()),
                 myPath.getParent());
+  }
+
+  @Override
+  public Integer getAffectedEntryId() {
+    return myAffectedEntryId;
   }
 }
