@@ -16,7 +16,9 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VariableAccessUtils{
 
@@ -25,7 +27,7 @@ public class VariableAccessUtils{
     }
 
     public static boolean variableIsAssignedFrom(@NotNull PsiVariable variable,
-                                                 PsiElement context){
+                                                 @NotNull PsiElement context){
         final VariableAssignedFromVisitor visitor =
                 new VariableAssignedFromVisitor(variable);
         context.accept(visitor);
@@ -88,9 +90,10 @@ public class VariableAccessUtils{
         return visitor.isUsedInInnerClass();
     }
 
-    public static boolean mayEvaluateToVariable(PsiExpression expression,
-                                                PsiVariable variable){
-        if(expression == null){
+    public static boolean mayEvaluateToVariable(
+            @Nullable PsiExpression expression,
+            @NotNull PsiVariable variable) {
+        if (expression == null){
             return false;
         }
         if(expression instanceof PsiBinaryExpression) {
@@ -134,7 +137,8 @@ public class VariableAccessUtils{
     }
 
     public static boolean evaluatesToVariable(
-            PsiExpression expression, PsiVariable variable) {
+            @Nullable PsiExpression expression,
+            @NotNull PsiVariable variable) {
         final PsiExpression strippedExpression =
                 ParenthesesUtils.stripParentheses(expression);
         if(strippedExpression == null){
@@ -146,17 +150,85 @@ public class VariableAccessUtils{
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression) expression;
         final PsiElement referent = referenceExpression.resolve();
-        if(referent == null){
-            return false;
-        }
-        return referent.equals(variable);
+        return variable.equals(referent);
     }
 
-    public static boolean variableIsUsed(PsiVariable variable,
-                                         PsiElement context){
+    public static boolean variableIsUsed(@NotNull PsiVariable variable,
+                                         @NotNull PsiElement context){
         final VariableUsedVisitor visitor
                 = new VariableUsedVisitor(variable);
         context.accept(visitor);
         return visitor.isUsed();
+    }
+
+    public static boolean variableIsIncremented(PsiLocalVariable variable,
+                                                 PsiStatement statement) {
+        if (!(statement instanceof PsiExpressionStatement)) {
+            return false;
+        }
+        final PsiExpressionStatement expressionStatement =
+                (PsiExpressionStatement)statement;
+        PsiExpression expression = expressionStatement.getExpression();
+        expression = ParenthesesUtils.stripParentheses(expression);
+        if (expression instanceof PsiPrefixExpression) {
+            final PsiPrefixExpression prefixExpression =
+                    (PsiPrefixExpression)expression;
+            final PsiJavaToken sign = prefixExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
+                return false;
+            }
+            final PsiExpression operand = prefixExpression.getOperand();
+            return evaluatesToVariable(operand,
+                    variable);
+        } else if (expression instanceof PsiPostfixExpression) {
+            final PsiPostfixExpression postfixExpression =
+                    (PsiPostfixExpression)expression;
+            final PsiJavaToken sign = postfixExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
+                return false;
+            }
+            final PsiExpression operand = postfixExpression.getOperand();
+            return evaluatesToVariable(operand,
+                    variable);
+        } else if (expression instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression) expression;
+            final IElementType tokenType =
+                    assignmentExpression.getOperationTokenType();
+            PsiExpression lhs = assignmentExpression.getLExpression();
+            lhs = ParenthesesUtils.stripParentheses(lhs);
+            if (!evaluatesToVariable(lhs, variable)) {
+                return false;
+            }
+            PsiExpression rhs = assignmentExpression.getRExpression();
+            rhs = ParenthesesUtils.stripParentheses(rhs);
+            if (tokenType == JavaTokenType.EQ) {
+                if (!(rhs instanceof PsiBinaryExpression)) {
+                    return false;
+                }
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) rhs;
+                PsiExpression lOperand = binaryExpression.getLOperand();
+                lOperand = ParenthesesUtils.stripParentheses(lOperand);
+                PsiExpression rOperand = binaryExpression.getROperand();
+                rOperand = ParenthesesUtils.stripParentheses(rOperand);
+                if (ExpressionUtils.isOne(lOperand)) {
+                    if (evaluatesToVariable(rOperand, variable)) {
+                        return true;
+                    }
+                } else if (ExpressionUtils.isOne(rOperand)) {
+                    if (evaluatesToVariable(lOperand, variable)) {
+                        return true;
+                    }
+                }
+            } else if (tokenType == JavaTokenType.PLUSEQ) {
+                if (ExpressionUtils.isOne(rhs)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

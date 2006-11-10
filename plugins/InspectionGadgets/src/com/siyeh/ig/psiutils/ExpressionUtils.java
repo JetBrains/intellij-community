@@ -43,10 +43,13 @@ public class ExpressionUtils {
 
     public static boolean isZero(PsiExpression expression) {
         final PsiType expressionType = expression.getType();
-        final Object value =
-                ConstantExpressionUtil.computeCastTo(expression, expressionType);
+        final Object value = ConstantExpressionUtil.computeCastTo(expression,
+                expressionType);
         if(value == null){
             return false;
+        }
+        if(value instanceof Double && ((Double) value).doubleValue() == 0.0) {
+            return true;
         }
         if(value instanceof Integer && ((Integer) value).intValue() == 0){
             return true;
@@ -61,6 +64,12 @@ public class ExpressionUtils {
             return true;
         }
         return value instanceof Byte && ((Byte) value).byteValue() == 0;
+    }
+
+    public static boolean isOne(PsiExpression expression) {
+        final Object value = ConstantExpressionUtil.computeCastTo(
+                expression, PsiType.INT);
+        return value instanceof Integer && ((Integer) value).intValue() == 1;
     }
 
     public static boolean isNegation(@Nullable PsiExpression condition,
@@ -100,5 +109,72 @@ public class ExpressionUtils {
         } else {
             return false;
         }
+    }
+
+    public static boolean isOffsetArrayAccess(PsiExpression expression,
+                                               PsiLocalVariable variable) {
+        final PsiExpression strippedExpression =
+                ParenthesesUtils.stripParentheses(expression);
+        if (!(strippedExpression instanceof PsiArrayAccessExpression)) {
+            return false;
+        }
+        final PsiArrayAccessExpression arrayExpression =
+                (PsiArrayAccessExpression)strippedExpression;
+        final PsiExpression index = arrayExpression.getIndexExpression();
+        if (index == null) {
+            return false;
+        }
+        return expressionIsOffsetVariableLookup(index, variable);
+    }
+
+    private static boolean expressionIsOffsetVariableLookup(
+            PsiExpression expression, PsiLocalVariable variable) {
+        final PsiExpression strippedExpression =
+                ParenthesesUtils.stripParentheses(expression);
+        if (VariableAccessUtils.evaluatesToVariable(strippedExpression,
+                variable)) {
+            return true;
+        }
+        if (!(strippedExpression instanceof PsiBinaryExpression)) {
+            return false;
+        }
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression)strippedExpression;
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
+        final IElementType tokenType = sign.getTokenType();
+        if (!JavaTokenType.PLUS.equals(tokenType) &&
+                !JavaTokenType.MINUS.equals(tokenType)) {
+            return false;
+        }
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        if (expressionIsOffsetVariableLookup(lhs, variable)) {
+            return true;
+        }
+        final PsiExpression rhs = binaryExpression.getROperand();
+        return expressionIsOffsetVariableLookup(rhs, variable) &&
+                !JavaTokenType.MINUS.equals(tokenType);
+    }
+
+    public static boolean isComparison(PsiExpression expression,
+                                        PsiLocalVariable variable) {
+        expression =
+                ParenthesesUtils.stripParentheses(expression);
+        if (!(expression instanceof PsiBinaryExpression)) {
+            return false;
+        }
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression)expression;
+        final PsiJavaToken sign = binaryExpression.getOperationSign();
+        final IElementType tokenType = sign.getTokenType();
+        if (tokenType.equals(JavaTokenType.LT)) {
+            PsiExpression lhs = binaryExpression.getLOperand();
+            lhs = ParenthesesUtils.stripParentheses(lhs);
+            return VariableAccessUtils.evaluatesToVariable(lhs, variable);
+        } else if (tokenType.equals(JavaTokenType.GT)) {
+            PsiExpression rhs = binaryExpression.getROperand();
+            rhs = ParenthesesUtils.stripParentheses(rhs);
+            return VariableAccessUtils.evaluatesToVariable(rhs, variable);
+        }
+        return false;
     }
 }
