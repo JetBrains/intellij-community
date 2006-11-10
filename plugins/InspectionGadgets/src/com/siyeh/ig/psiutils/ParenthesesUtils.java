@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,13 +82,7 @@ public class ParenthesesUtils{
     @Nullable
     public static PsiExpression stripParentheses(
             @Nullable PsiExpression expression){
-        PsiExpression parenthesized = expression;
-        while(parenthesized instanceof PsiParenthesizedExpression){
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)parenthesized;
-            parenthesized = parenthesizedExpression.getExpression();
-        }
-        return parenthesized;
+        return PsiUtil.deparenthesizeExpression(expression);
     }
 
     public static boolean isCommutativeBinaryOperator(

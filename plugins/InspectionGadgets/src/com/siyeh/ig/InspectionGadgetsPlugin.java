@@ -905,6 +905,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(JavaLangReflectInspection.class);
         m_inspectionClasses.add(LengthOneStringInIndexOfInspection.class);
         m_inspectionClasses.add(LengthOneStringsInConcatenationInspection.class);
+        m_inspectionClasses.add(ManualArrayToCollectionCopyInspection.class);
         m_inspectionClasses.add(ManualArrayCopyInspection.class);
         m_inspectionClasses.add(MapReplaceableByEnumMapInspection.class);
         m_inspectionClasses.add(MethodMayBeStaticInspection.class);

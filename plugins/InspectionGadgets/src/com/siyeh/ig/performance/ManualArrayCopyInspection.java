@@ -20,15 +20,15 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,16 +88,18 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
         private static String getSystemArrayCopyText(
                 PsiForStatement forStatement)
                 throws IncorrectOperationException {
-            final PsiBinaryExpression condition =
-                    (PsiBinaryExpression)forStatement.getCondition();
-            if (condition == null) {
+            final PsiExpression condition = forStatement.getCondition();
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(
+                            condition);
+            if (binaryExpression == null) {
                 return null;
             }
             final PsiExpression limit;
-            if (condition.getOperationTokenType() == JavaTokenType.LT)  {
-                limit = condition.getROperand();
+            if (binaryExpression.getOperationTokenType() == JavaTokenType.LT)  {
+                limit = binaryExpression.getROperand();
             } else {
-                limit = condition.getLOperand();
+                limit = binaryExpression.getLOperand();
             }
             if (limit == null) {
                 return null;
@@ -126,7 +128,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                     (PsiAssignmentExpression)body.getExpression();
             final PsiExpression lExpression = assignment.getLExpression();
             final PsiArrayAccessExpression lhs = (PsiArrayAccessExpression)
-                    ParenthesesUtils.stripParentheses(lExpression);
+                    PsiUtil.deparenthesizeExpression(lExpression);
             if (lhs == null) {
                 return null;
             }
@@ -134,7 +136,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             final String toArrayText = lArray.getText();
             final PsiExpression rExpression = assignment.getRExpression();
             final PsiArrayAccessExpression rhs = (PsiArrayAccessExpression)
-                    ParenthesesUtils.stripParentheses(rExpression);
+                    PsiUtil.deparenthesizeExpression(rExpression);
             if (rhs == null) {
                 return null;
             }
@@ -165,7 +167,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
         private static String getLengthText(PsiExpression expression,
                                             PsiLocalVariable variable) {
             expression =
-                    ParenthesesUtils.stripParentheses(expression);
+                    PsiUtil.deparenthesizeExpression(expression);
             if (expression == null) {
                 return null;
             }
@@ -185,7 +187,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                                             PsiLocalVariable variable)
                 throws IncorrectOperationException {
             expression =
-                    ParenthesesUtils.stripParentheses(expression);
+                    PsiUtil.deparenthesizeExpression(expression);
             if (expression == null) {
                 return null;
             }
@@ -314,7 +316,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
         private static boolean expressionIsArrayCopy(
                 PsiExpression expression, PsiLocalVariable variable) {
             final PsiExpression strippedExpression =
-                    ParenthesesUtils.stripParentheses(expression);
+                    PsiUtil.deparenthesizeExpression(expression);
             if (strippedExpression == null) {
                 return false;
             }
