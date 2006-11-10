@@ -12,12 +12,12 @@ public class ChangeListTest extends TestCase {
       }
     };
 
-    ChangeList l = new ChangeList();
+    ChangeList c = new ChangeList();
     try {
-      l.applyChangeSetOn(new RootEntry(), cs(badChange));
+      c.applyChangeSetOn(new RootEntry(), cs(badChange));
     } catch (SomeLocalVcsException e) {}
 
-    assertTrue(l.getChangeSets().isEmpty());
+    assertTrue(c.getChangeSets().isEmpty());
   }
 
   private static class SomeLocalVcsException extends LocalVcsException {
