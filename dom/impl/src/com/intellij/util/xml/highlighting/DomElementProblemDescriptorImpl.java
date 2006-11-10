@@ -8,11 +8,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.xml.DomElement;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescriptor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementProblemDescriptorImpl");
   private final DomElement myDomElement;
   private final HighlightSeverity myType;
   private final String myMessage;
@@ -25,6 +28,10 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, final String message, final HighlightSeverity type, final LocalQuickFix... fixes) {
     myDomElement = domElement;
+    final XmlElement element = domElement.getXmlElement();
+    if (element != null) {
+      LOG.assertTrue(element.isPhysical(), "Problems may not be created for non-physical DOM elements");
+    }
     myType = type;
     myMessage = message;
     myFixes = fixes;
