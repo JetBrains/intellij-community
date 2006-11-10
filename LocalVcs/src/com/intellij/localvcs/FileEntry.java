@@ -31,11 +31,4 @@ public class FileEntry extends Entry {
   public Entry copy() {
     return new FileEntry(myObjectId, myName, myContent);
   }
-
-  public Difference getDifferenceWith(FileEntry e) {
-    if (myName.equals(e.myName)
-        && myContent.equals(e.myContent)) return null;
-
-    return new ModifiedDifference(this, e);
-  }
 }

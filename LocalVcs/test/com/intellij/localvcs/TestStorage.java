@@ -11,13 +11,4 @@ class TestStorage extends Storage {
 
   @Override
   public Integer loadCounter() { return 0; }
-
-  @Override
-  public void storeChangeList(ChangeList c) {}
-
-  @Override
-  public void storeRootEntry(RootEntry e) {}
-
-  @Override
-  public void storeCounter(Integer i) {}
 }

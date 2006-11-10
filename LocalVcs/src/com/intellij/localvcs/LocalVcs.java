@@ -23,7 +23,7 @@ public class LocalVcs {
     myEntryCounter = myStorage.loadCounter();
   }
 
-  protected void store() {
+  public void store() {
     myStorage.storeChangeList(myChangeList);
     myStorage.storeRootEntry(myRoot);
     myStorage.storeCounter(myEntryCounter);
@@ -78,7 +78,6 @@ public class LocalVcs {
 
     myRoot = myChangeList.applyChangeSetOn(myRoot, cs);
     clearPendingChanges();
-    store();
   }
 
   public void revert() {
@@ -95,6 +94,7 @@ public class LocalVcs {
   }
 
   public List<Entry> getEntryHistory(Path path) {
+    // todo remove this method
     // todo optimize me and clean up this mess
 
     if (!hasEntry(path)) throw new LocalVcsException();
@@ -111,6 +111,7 @@ public class LocalVcs {
   }
 
   public List<RootEntry> getHistory() {
+    // todo remove this method
     List<RootEntry> result = new ArrayList<RootEntry>();
 
     RootEntry r = myRoot;

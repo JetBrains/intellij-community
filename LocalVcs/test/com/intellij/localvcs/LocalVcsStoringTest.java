@@ -16,23 +16,11 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
-  public void testStoringOnApply() {
-    final boolean[] isCalled = new boolean[]{false};
-
-    LocalVcs vcs = new LocalVcs(new TestStorage()) {
-      @Override
-      protected void store() { isCalled[0] = true; }
-    };
-
-    vcs.apply();
-    assertTrue(isCalled[0]);
-  }
-
-  @Test
   public void testStoringEntries() {
     vcs.createFile(p("file"), "content");
     vcs.apply();
 
+    vcs.store();
     LocalVcs result = createVcs();
 
     assertTrue(result.hasEntry(p("file")));
@@ -45,6 +33,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     vcs.changeFileContent(p("file"), "new content");
     vcs.apply();
 
+    vcs.store();
     LocalVcs result = createVcs();
 
     assertEquals("new content", result.getEntry(p("file")).getContent());
@@ -62,6 +51,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     vcs.createFile(p("file2"), "content2");
     vcs.apply();
 
+    vcs.store();
     LocalVcs result = createVcs();
 
     result.createFile(p("file3"), "content3");
@@ -78,6 +68,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     vcs.createFile(p("file"), "content");
     vcs.store();
 
+    vcs.store();
     LocalVcs result = createVcs();
     assertTrue(result.isClean());
   }
