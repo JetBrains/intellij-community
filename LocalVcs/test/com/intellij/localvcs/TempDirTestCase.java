@@ -5,27 +5,50 @@ import java.net.URISyntaxException;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 public abstract class TempDirTestCase extends TestCase {
+  protected static File classTempDir;
   protected File tempDir;
+
+  @BeforeClass
+  public static void createClassTempDir() {
+    classTempDir = createDir("classTempDir");
+  }
 
   @Before
   public void createTempDir() {
-    try {
-      File root = new File(getClass().getResource(".").toURI());
-      tempDir = new File(root, "temp");
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+    tempDir = createDir("tempDir");
+  }
 
-    deleteTempDir();
-    tempDir.mkdirs();
+  @AfterClass
+  public static void deleteClassTempDir() {
+    deleteDir(classTempDir);
   }
 
   @After
   public void deleteTempDir() {
-    if (!FileUtil.delete(tempDir))
-      throw new RuntimeException("can't delete temp dir");
+    deleteDir(tempDir);
+  }
+
+  private static File createDir(String name) {
+    try {
+      File root = new File(TempDirTestCase.class.getResource(".").toURI());
+      File result = new File(root, name);
+
+      deleteDir(result);
+      result.mkdirs();
+
+      return result;
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void deleteDir(File dir) {
+    if (!FileUtil.delete(dir))
+      throw new RuntimeException("can't delete dir <" + dir.getName() + ">");
   }
 }

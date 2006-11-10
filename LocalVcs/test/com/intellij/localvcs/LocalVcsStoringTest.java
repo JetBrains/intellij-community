@@ -16,6 +16,19 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
+  public void testCleanStorage() {
+    Storage s = new Storage(tempDir);
+
+    ChangeList changeList = s.loadChangeList();
+    RootEntry entry = s.loadRootEntry();
+    Integer counter = s.loadCounter();
+
+    assertTrue(changeList.getChangeSets().isEmpty());
+    assertTrue(entry.getChildren().isEmpty());
+    assertEquals(0, counter);
+  }
+
+  @Test
   public void testStoringEntries() {
     vcs.createFile(p("file"), "content");
     vcs.apply();

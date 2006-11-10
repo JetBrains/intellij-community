@@ -28,6 +28,7 @@ public class PerformanceTest extends TempDirTestCase {
   }
 
   private String createContent(int entryIndex) {
+
     return "content" + entryIndex;
   }
 
