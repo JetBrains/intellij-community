@@ -7,34 +7,38 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.builders.WebModuleFixtureBuilder;
+import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.fixtures.ModuleFixture;
+import com.intellij.util.containers.FactoryMap;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.defaults.DefaultPicoContainer;
 
+import java.lang.reflect.Field;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author mike
 */
 class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
-
-  private final Map<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder> myModuleFixtureBuilderFactory = new HashMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder>();
+  private final FactoryMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder> myModuleFixtureBuilderFactory;
 
   private HeavyIdeaTestFixtureImpl myFixture;
 
-  public HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture) {
+  public HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture, final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> providers) {
     myFixture = fixture;
 
-    myModuleFixtureBuilderFactory.put(JavaModuleFixtureBuilder.class, new JavaModuleFixtureBuilderImpl<ModuleFixture>(this) {
-      protected ModuleFixture instantiateFixture() {
-        return new ModuleFixtureImpl(this);
+    final MutablePicoContainer container = new DefaultPicoContainer();
+    container.registerComponentInstance(this);
+
+    myModuleFixtureBuilderFactory = new FactoryMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder>() {
+      protected ModuleFixtureBuilder create(Class<? extends ModuleFixtureBuilder> key) {
+        Class<? extends ModuleFixtureBuilder> implClass = providers.get(key);
+        container.registerComponentImplementation(implClass);
+        return (ModuleFixtureBuilder)container.getComponentInstanceOfType(implClass);
       }
-    });
-    myModuleFixtureBuilderFactory.put(WebModuleFixtureBuilder.class, new WebModuleFixtureBuilderImpl(this));
+    };
   }
 
   public TestFixtureBuilder<IdeaProjectTestFixture> setModuleType(final ModuleType moduleType) {
@@ -51,8 +55,20 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
   }
 
   public <M extends ModuleFixtureBuilder> M addModule(final Class<M> builderClass) {
+    loadClassConstants(builderClass);
     final M builder = (M)myModuleFixtureBuilderFactory.get(builderClass);
     myFixture.addModuleFixtureBuilder(builder);
     return builder;
+  }
+
+  private static void loadClassConstants(final Class builderClass) {
+    try {
+      for (final Field field : builderClass.getFields()) {
+        field.get(null);
+      }
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

@@ -17,6 +17,8 @@
 
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.testFramework.builders.ModuleFixtureBuilder;
+
 /**
  * This is to be provided by IDEA and not by plugin authors.
  */
@@ -36,6 +38,15 @@ public abstract class IdeaTestFixtureFactory {
   public static IdeaTestFixtureFactory getFixtureFactory() {
     return ourInstance;
   }
+
+  /**
+   * @param aClass test fixture builder interface class
+   * @param implClass implementation class. Should have accessible constructor, which
+   * may take {@link com.intellij.testFramework.fixtures.TestFixtureBuilder} as argument.
+   */
+  public abstract <T extends ModuleFixtureBuilder> void registerFixtureBuilder(Class<T> aClass, Class<? extends T> implClass);
+
+  public abstract void registerFixtureBuilder(Class<? extends ModuleFixtureBuilder> aClass, String implClassName);
 
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
 
