@@ -138,7 +138,7 @@ public class RootEntry extends DirectoryEntry {
   }
 
   @Override
-  protected Entry copyEntry() {
+  protected DirectoryEntry copyEntry() {
     RootEntry result = new RootEntry();
     // todo test it
     result.myChangeListIndex = myChangeListIndex;

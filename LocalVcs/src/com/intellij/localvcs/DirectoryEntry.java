@@ -42,7 +42,11 @@ public class DirectoryEntry extends Entry {
   @Override
   public void addChild(Entry child) {
     checkThatEntryDoesNotExists(child);
+    myChildren.add(child);
+    child.setParent(this);
+  }
 
+  private void addChildUnckecked(Entry child) {
     myChildren.add(child);
     child.setParent(this);
   }
@@ -84,14 +88,14 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public Entry copy() {
-    Entry result = copyEntry();
+    DirectoryEntry result = copyEntry();
     for (Entry child : myChildren) {
       result.addChild(child.copy());
     }
     return result;
   }
 
-  protected Entry copyEntry() {
+  protected DirectoryEntry copyEntry() {
     return new DirectoryEntry(myObjectId, myName);
   }
 }

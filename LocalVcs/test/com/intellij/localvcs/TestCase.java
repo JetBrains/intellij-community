@@ -16,6 +16,7 @@ public abstract class TestCase extends Assert {
     return new ChangeSet(Arrays.asList(changes));
   }
 
+  //@SuppressWarnings("unchecked")
   protected static void assertElements(Object[] expected, Collection actual) {
     assertEquals(expected.length, actual.size());
     assertTrue(actual.containsAll(Arrays.asList(expected)));
