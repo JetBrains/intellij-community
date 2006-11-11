@@ -544,10 +544,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
       if (file == null) continue;
       PsiFile psiFile = myPsiManager.findFile(file);
       if (psiFile != null) {
+        AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
         psiFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
       }
       if (!(psiFile instanceof AntFile)) continue;
-      AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
       AntBuildFileBase buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
       buildFile.readProperties(element);
       myBuildFiles.add(buildFile);
