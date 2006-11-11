@@ -10,11 +10,11 @@
     classname="com.yworks.yguard.ObfuscatorTask"
     classpath="${project.path}/build/libs/yguard.jar"/>
 
-  <<error>taskdef</error> name="obfuscate"
+  <taskdef name="obfuscate"
     classname="com.yworks.yguard.ObfuscatorTask"
     classpath="${project.path2}/yguard.jar"/>
 
-    <<warning>obfuscate</warning>>
+    <obfuscate>
       <property name="naming-scheme" value="mix"/>
       <property name="language-conformity" value="legal"/>
       <inoutpair in="${idea.path}/WS.zip" out="${idea.path}/WebServices.jar"/>

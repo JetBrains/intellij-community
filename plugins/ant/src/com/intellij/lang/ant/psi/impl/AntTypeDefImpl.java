@@ -291,32 +291,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
   }
 
-  private void loadClass(@Nullable final String classname, @Nullable final String name, @Nullable final String uri) {
-    final AntTypeDefinitionImpl def = loadClassAndCreateDefinition(classname, name, uri);
-    if (def == null) return;
-    myNewDefinitions = ArrayUtil.append(myNewDefinitions, def);
-    def.setDefiningElement(this);
-    final AntStructuredElement parent = getAntParent();
-    if (parent != null) {
-      parent.registerCustomType(def);
-      final AntFile antFile = parent.getAntFile();
-      if (antFile != null) {
-        for (final AntTypeId typeId : def.getNestedElements()) {
-          final String nestedClassName = def.getNestedClassName(typeId);
-          AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)antFile.getBaseTypeDefinition(nestedClassName);
-          if (nestedDef == null) {
-            nestedDef = loadClassAndCreateDefinition(nestedClassName, typeId.getName(), uri);
-          }
-          if (nestedDef != null) {
-            nestedDef.setDefiningElement(this);
-            parent.registerCustomType(nestedDef);
-          }
-        }
-      }
-    }
-  }
-
-  private AntTypeDefinitionImpl loadClassAndCreateDefinition(@Nullable final String classname,
+  private AntTypeDefinitionImpl loadClass(@Nullable final String classname,
                                                              @Nullable final String name,
                                                              @Nullable final String uri) {
     if (classname == null || name == null || name.length() == 0) return null;
@@ -359,6 +334,28 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
     if (newlyLoaded && clazz != null) {
       CLASS_CACHE.setClass(urls, classname, clazz);
+    }
+    if (def != null) {
+      myNewDefinitions = ArrayUtil.append(myNewDefinitions, def);
+      def.setDefiningElement(this);
+      final AntStructuredElement parent = getAntParent();
+      if (parent != null) {
+        parent.registerCustomType(def);
+        final AntFile antFile = parent.getAntFile();
+        if (antFile != null) {
+          for (final AntTypeId typeId : def.getNestedElements()) {
+            final String nestedClassName = def.getNestedClassName(typeId);
+            AntTypeDefinitionImpl nestedDef = (AntTypeDefinitionImpl)antFile.getBaseTypeDefinition(nestedClassName);
+            if (nestedDef == null) {
+              nestedDef = loadClass(nestedClassName, typeId.getName(), uri);
+            }
+            if (nestedDef != null) {
+              nestedDef.setDefiningElement(this);
+              parent.registerCustomType(nestedDef);
+            }
+          }
+        }
+      }
     }
     return def;
   }
