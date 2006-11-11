@@ -12,13 +12,11 @@ import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -359,20 +357,24 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   @Nullable
   private static PsiElement resolvePropertyInChildishPropertyFiles(final AntStructuredElement element, final String propName) {
     PsiElement result = null;
-    for (PsiElement child : element.getChildren()) {
-      if (child instanceof AntProperty) {
-        final AntProperty prop = (AntProperty)child;
-        final PropertiesFile propFile = prop.getPropertiesFile();
-        if (propFile != null) {
-          String prefix = prop.getPrefix();
-          if (prefix != null && !prefix.endsWith(".")) {
-            prefix += '.';
-          }
-          final String key = (prefix == null) ? propName : prefix + propName;
-          final Property property = propFile.findPropertyByKey(key);
-          if (property != null) {
-            result = property;
-            break;
+    final XmlTag se = element.getSourceElement();
+    for (final XmlTag tag : se.getSubTags()) {
+      if (AntFileImpl.PROPERTY.equals(tag.getName())) {
+        final String name = element.computeAttributeValue(tag.getAttributeValue(AntFileImpl.FILE_ATTR));
+        if (name != null) {
+          final PsiFile psiFile = element.findFileByName(name, null);
+          if (psiFile instanceof PropertiesFile) {
+            final PropertiesFile propFile = (PropertiesFile)psiFile;
+            String prefix = element.computeAttributeValue(tag.getAttributeValue(AntFileImpl.PREFIX_ATTR));
+            if (prefix != null && !prefix.endsWith(".")) {
+              prefix += '.';
+            }
+            final String key = (prefix == null) ? propName : prefix + propName;
+            final Property property = propFile.findPropertyByKey(key);
+            if (property != null) {
+              result = property;
+              break;
+            }
           }
         }
       }

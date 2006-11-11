@@ -382,15 +382,30 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     URL[] urls = ClassEntry.EMPTY_URL_ARRAY;
     final String classpath = getClassPath();
     if (classpath != null) {
+      final AntFile antFile = getAntFile();
+      final AntProject project = antFile.getAntProject();
+      VirtualFile vFile = antFile.getContainingPath();
+      String projectPath = (vFile != null) ? vFile.getPath() : "";
+      final String baseDir = project.getBaseDir();
+      if (baseDir != null && baseDir.length() > 0) {
+        projectPath = new File(projectPath, baseDir).getAbsolutePath();
+      }
+      File file;
       try {
         if (classpath.indexOf(File.pathSeparatorChar) < 0) {
-          final File file = new File(computeAttributeValue(classpath));
+          file = new File(classpath);
+          if (!file.isAbsolute()) {
+            file = new File(projectPath, classpath);
+          }
           urls = new URL[]{file.toURL()};
         }
         else {
           final List<URL> urlList = new ArrayList<URL>();
           for (final String path : classpath.split(File.pathSeparator)) {
-            final File file = new File(computeAttributeValue(path));
+            file = new File(path);
+            if (!file.isAbsolute()) {
+              file = new File(projectPath, path);
+            }
             urlList.add(file.toURL());
           }
           urls = urlList.toArray(new URL[urlList.size()]);
@@ -421,7 +436,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   private boolean isSupported() {
-    return getSourceElement().findFirstSubTag("classpath") == null;
+    final XmlTag se = getSourceElement();
+    return se.getAttributeValue("classpathref") == null && se.findFirstSubTag("classpath") == null;
   }
 
   private static PsiFile createDummyFile(@NonNls final String name,
