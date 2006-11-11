@@ -4,8 +4,8 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.tree.TreeBuilder;
@@ -20,7 +20,6 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
-import javax.swing.tree.MutableTreeNode;
 import java.util.Map;
 
 public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTreeNode{
@@ -79,9 +78,10 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   }
 
   public void clear() {
-    super.clear();
+    removeAllChildren();
     myIcon = null;
     myText = null;
+    super.clear();
   }
 
   private void update(final DebuggerContextImpl context, final Runnable runnable, boolean labelOnly) {
