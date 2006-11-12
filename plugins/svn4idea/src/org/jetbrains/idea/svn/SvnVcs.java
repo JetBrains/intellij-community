@@ -36,7 +36,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -74,13 +73,15 @@ import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
-  private static final Key<SVNStatusHolder> STATUS_KEY = Key.create("svn.status");
-  private static final Key<SVNInfoHolder> INFO_KEY = Key.create("svn.info");
+  private final Map<VirtualFile, SVNStatusHolder> myStatuses = new HashMap<VirtualFile, SVNStatusHolder>();
+  private final Map<VirtualFile, SVNInfoHolder> myInfos = new HashMap<VirtualFile, SVNInfoHolder>();
 
   private SvnConfiguration myConfiguration;
   private SvnEntriesFileListener myEntriesFileListener;
@@ -296,7 +297,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     if (vFile == null) {
       return null;
     }
-    SVNStatusHolder value = vFile.getUserData(STATUS_KEY);
+    SVNStatusHolder value = myStatuses.get(vFile);
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     File lockFile = new File(entriesFile.getParentFile(), SvnUtil.LOCK_FILE_NAME);
@@ -313,14 +314,15 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     }
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
-    vFile.putUserData(STATUS_KEY, new SVNStatusHolder(entriesFile.lastModified(), vFile.getTimeStamp(), status));
+    myStatuses.put(vFile, new SVNStatusHolder(entriesFile.lastModified(), vFile.getTimeStamp(), status));
   }
 
   public SVNInfoHolder getCachedInfo(VirtualFile vFile) {
     if (vFile == null) {
       return null;
     }
-    SVNInfoHolder value = vFile.getUserData(INFO_KEY);
+
+    SVNInfoHolder value = myInfos.get(vFile);
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
     if (value != null && value.getEntriesTimestamp() == entriesFile.lastModified() &&
@@ -336,7 +338,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     }
     File file = new File(vFile.getPath());
     File entriesFile = getEntriesFile(file);
-    vFile.putUserData(INFO_KEY, new SVNInfoHolder(entriesFile.lastModified(), vFile.getTimeStamp(), info));
+    myInfos.put(vFile, new SVNInfoHolder(entriesFile.lastModified(), vFile.getTimeStamp(), info));
   }
 
   public boolean fileExistsInVcs(FilePath path) {
