@@ -28,6 +28,11 @@
                 com.theoryinpractice.testng.intention.ConvertOldAnnotationIntention
             </implementation-class>
         </component>
+        <component>
+            <implementation-class>com.theoryinpractice.testng.TestNGDefaultConfigurationComponent</implementation-class>
+            <option name="workspace" value="true"/>
+        </component>
+
     </project-components>
     <change-notes>
         <![CDATA[Updated TestNG 5.3.1.  Includes patch for displaying DataProvider/Property vales.]]>
