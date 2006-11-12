@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,8 +67,7 @@ public class InspectionApplication {
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         try {
           logMessage(1, InspectionsBundle.message("inspection.application.starting.up"));
-          application.doNotSave();
-          application.load(PathManager.getOptionsPath());
+          application.doNotSave();          
           logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
           InspectionApplication.this.run();
@@ -137,6 +135,11 @@ public class InspectionApplication {
         public void run() {
           PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object", GlobalSearchScope.allScope(myProject));
           if (psiObjectClass == null) {
+            if (ModuleManager.getInstance(myProject).getModules().length == 0) {
+              logError(InspectionsBundle.message("inspection.no.modules.error.message"));
+              System.exit(1);
+              return;
+            }
             logError(InspectionsBundle.message("inspection.no.jdk.error.message"));
             logError(InspectionsBundle.message("offline.inspections.jdk.not.found",
                                                ProjectRootManager.getInstance(myProject).getProjectJdkName()));
