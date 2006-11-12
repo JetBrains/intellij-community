@@ -182,6 +182,12 @@ public class TestNGRunnableState extends JavaCommandLineState
             javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.ANNOTATIONS_COMMAND_OPT, "javadoc");
         }
 
+        TestNGDefaultConfigurationComponent testng = project.getComponent(TestNGDefaultConfigurationComponent.class);
+        String outputDirectory = testng.getDefaultSettings().getOutputDirectory();
+        if (outputDirectory != null && !"".equals(outputDirectory)) {
+            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, "\"" + outputDirectory + "\"");
+        }
+
         // Always include the source paths - just makes things easier :)
         VirtualFile[] sources;
         if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT || module == null)
@@ -268,8 +274,7 @@ public class TestNGRunnableState extends JavaCommandLineState
                 }
             }
 
-            Map<String, String> testParams = convertPropertiesFileToMap(data.PROPERTIES_FILE);
-            testParams.putAll(data.TEST_PROPERTIES);
+            Map<String, String> testParams = buildTestParameters(project, data);
 
             String annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
             LOGGER.info("Using annotationType of " + annotationType);
@@ -286,10 +291,7 @@ public class TestNGRunnableState extends JavaCommandLineState
                 for (XmlSuite suite : suites) {
                     Map<String, String> params = suite.getParameters();
 
-                    Map<String, String> testParams = convertPropertiesFileToMap(data.PROPERTIES_FILE);
-                    params.putAll(testParams);
-
-                    params.putAll(data.TEST_PROPERTIES);
+                    params.putAll(buildTestParameters(project, data));
 
                     //String annotationType = is15 ? TestNG.JDK5_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
                     //LOGGER.info("Using annotationType of " + annotationType);
@@ -327,6 +329,20 @@ public class TestNGRunnableState extends JavaCommandLineState
         }
 
         return javaParameters;
+    }
+
+    private Map<String, String> buildTestParameters(Project project, TestData data) {
+        Map<String, String> testParams = new HashMap<String, String>();
+
+        // Get default parameters
+        TestNGDefaultConfigurationComponent config = project.getComponent(TestNGDefaultConfigurationComponent.class);
+        testParams.putAll(config.getDefaultSettings().getDefaultParameters());
+
+        // Override with those from the test runner configuration
+        testParams.putAll(convertPropertiesFileToMap(data.PROPERTIES_FILE));
+        testParams.putAll(data.TEST_PROPERTIES);
+
+        return testParams;
     }
 
     private Map<String, String> convertPropertiesFileToMap(String properties_file) {

@@ -25,9 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.table.TableView;
-import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.table.TableView;
 import com.intellij.uiDesigner.core.*;
 import static com.intellij.uiDesigner.core.GridConstraints.*;
 import com.theoryinpractice.testng.model.*;
@@ -383,7 +383,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
             }
         };
 
-        textFieldWithBrowseButton.addBrowseFolderListener("TestNG-J", "Select .properties file for test properties", project, propertiesFileDescriptor);
+        textFieldWithBrowseButton.addBrowseFolderListener("TestNG", "Select .properties file for test properties", project, propertiesFileDescriptor);
 
         testNGPropertiesPanel.add(propertiesFile, BorderLayout.NORTH);
 
