@@ -1,7 +1,6 @@
 package com.intellij.openapi.project.impl.convertors;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.javaee.web.WebRoot;
 import com.intellij.javaee.J2EEFileTemplateNames;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +8,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -247,12 +245,8 @@ public class Convertor34 {
     component.addContent(webRoots);
     Element root  = new Element("root");
     webRoots.addContent(root);
-    try {
-      new WebRoot(moduleDirectory, "/").writeExternal(root);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
+    root.setAttribute("url", moduleDirectory.getUrl());
+    root.setAttribute("relative", "/");
     return component;
   }
 
