@@ -82,6 +82,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     myComputing = true;
     try {
       if (!myXmlFile.isValid()) {
+        myModCount++;
         computeCachedValue(ArrayUtil.EMPTY_OBJECT_ARRAY);
         if (fireEvents && myLastResult != null) {
           myDomManager.getFileDescriptions().get(myFileDescription).remove(myLastResult);
