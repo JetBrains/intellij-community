@@ -10,10 +10,10 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -33,7 +33,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -411,7 +410,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     List<String> paths = new ArrayList<String>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (VirtualFile virtualFile : allPropertiesFiles) {
-      if (projectFileIndex.isInSource(virtualFile) || WebUtil.isInsideWebRoots(virtualFile, myProject)) {
+      if (projectFileIndex.isInContent(virtualFile)) {
         String path = FileUtil.toSystemDependentName(virtualFile.getPath());
         paths.add(path);
       }
