@@ -48,7 +48,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private PsiElement myPrimaryElement;
   private String myNewName = null;
 
-  boolean mySearchInComments;
+  private boolean mySearchInComments;
   private boolean mySearchTextOccurrences;
   private String myCommandName;
   private boolean myShouldRenameVariables;
@@ -71,6 +71,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     setNewName(newName);
   }
+  public RenameProcessor(Project project, PsiElement element) {
+    this(project, element, null, false, false);
+  }
 
   public Set<PsiElement> getElements() {
     return Collections.unmodifiableSet(myAllRenames.keySet());
@@ -87,11 +90,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public void setShouldRenameForms(final boolean shouldRenameForms) {
     myShouldRenameForms = shouldRenameForms;
-  }
-
-  public RenameProcessor(Project project, PsiElement element) {
-    super(project);
-    myPrimaryElement = element;
   }
 
   public boolean isVariable() {
@@ -133,7 +131,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected void prepareClassRenaming(final PsiClass aClass, final String newName) {
+  private void prepareClassRenaming(final PsiClass aClass, final String newName) {
     final PsiMethod[] constructors = aClass.getConstructors();
     for (PsiMethod constructor : constructors) {
       myAllRenames.put(constructor, newName);
@@ -166,7 +164,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected String getHelpID() {
+  private String getHelpID() {
     return HelpID.getRenameHelpID(myPrimaryElement);
   }
 
@@ -195,7 +193,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         );
       }
       else if (myPrimaryElement instanceof PsiClass) {
-        final PsiClass aClass = ((PsiClass)myPrimaryElement);
+        final PsiClass aClass = (PsiClass)myPrimaryElement;
         if (myNewName.equals(aClass.getName())) return;
         final PsiClass containingClass = aClass.getContainingClass();
         if (containingClass != null) { // innerClass
@@ -228,7 +226,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     conflicts.addAll(RenameUtil.getConflictDescriptions(usagesIn));
     addExistingNameConflicts(conflicts);
-    if (conflicts.size() > 0) {
+    if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
@@ -299,7 +297,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
                                               newName);
   }
 
-  protected void prepareFieldRenaming(PsiField field, String newName) {
+  private void prepareFieldRenaming(PsiField field, String newName) {
     // search for getters/setters
     PsiClass aClass = field.getContainingClass();
 
@@ -322,7 +320,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     String newGetterName = "";
-    String newSetterName = "";
 
     if (getter != null) {
       String getterId = getter.getName();
@@ -333,6 +330,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    String newSetterName = "";
     if (setter != null) {
       newSetterName = PropertyUtil.suggestSetterName(newPropertyName);
       final String newSetterParameterName = manager.propertyNameToVariableName(newPropertyName, VariableKind.PARAMETER);
@@ -367,7 +365,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName) {
+  private boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
     return Messages.showYesNoDialog(myProject, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != 0;
@@ -508,7 +506,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
   }
 
-  protected void prepareMethodRenaming(PsiMethod method, String newName) {
+  private void prepareMethodRenaming(PsiMethod method, String newName) {
     for (EjbMethodRole role : EjbHelper.getEjbHelper().getEjbRoles(method)) {
       if (role instanceof EjbDeclMethodRole) {
         final PsiMethod[] implementations = ((EjbDeclMethodRole)role).findAllImplementations();
@@ -549,5 +547,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return mySearchTextOccurrences;
   }
 
-
+  public void setCommandName(final String commandName) {
+    myCommandName = commandName;
+  }
 }

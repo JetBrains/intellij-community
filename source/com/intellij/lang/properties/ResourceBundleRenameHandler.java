@@ -105,6 +105,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
           .getExtension();
         renameProcessor.addElement(propertiesFile,  newName);
       }
+      renameProcessor.setCommandName(PropertiesBundle.message("rename.resource.bundle.dialog.title"));
       renameProcessor.doRun();
       return true;
     }
