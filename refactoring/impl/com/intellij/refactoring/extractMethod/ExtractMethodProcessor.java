@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -650,7 +649,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public void processMatch(Match match) throws IncorrectOperationException {
-    if (RefactoringUtil.isInStaticContext(match.getMatchStart())) {
+    if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       myExtractedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
     }
     final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression());
@@ -979,7 +978,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   @NotNull
   public String getConfirmDuplicatePrompt(Match match) {
-    if (RefactoringUtil.isInStaticContext(match.getMatchStart()) && !myExtractedMethod.hasModifierProperty(PsiModifier.STATIC)) {
+    if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass()) && !myExtractedMethod.hasModifierProperty(PsiModifier.STATIC)) {
       return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
     return RefactoringBundle.message("replace.this.code.fragment");

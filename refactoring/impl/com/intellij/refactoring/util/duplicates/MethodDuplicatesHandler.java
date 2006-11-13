@@ -133,7 +133,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     }
 
     public void processMatch(Match match) throws IncorrectOperationException {
-      if (RefactoringUtil.isInStaticContext(match.getMatchStart())) {
+      if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass())) {
         myMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
       final PsiElementFactory factory = myMethod.getManager().getElementFactory();
@@ -161,7 +161,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
     @NotNull
     public String getConfirmDuplicatePrompt(Match match) {
-      if (RefactoringUtil.isInStaticContext(match.getMatchStart()) && !myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myMethod.getContainingClass()) && !myMethod.hasModifierProperty(PsiModifier.STATIC)) {
       return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
     return RefactoringBundle.message("replace.this.code.fragment");

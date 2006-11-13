@@ -79,8 +79,8 @@ public class RefactoringUtil {
     return Comparing.equal(virtualFile, sourceRootForFile);
   }
 
-  public static boolean isInStaticContext(PsiElement element) {
-    return PsiUtil.getEnclosingStaticElement(element, null) != null;
+  public static boolean isInStaticContext(PsiElement element, final PsiClass aClass) {
+    return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
   public static boolean isResolvableType(PsiType type) {

@@ -3,6 +3,8 @@ package com.intellij.refactoring.util.occurences;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 
 import java.util.ArrayList;
@@ -43,11 +45,12 @@ public class ExpressionOccurenceManager extends BaseOccurenceManager {
       return defaultOccurences();
     }
     final PsiExpression[] expressionOccurrences = CodeInsightUtil.findExpressionOccurrences(myScope, myMainOccurence);
-    if (myMaintainStaticContext && expressionOccurrences.length > 1 && !RefactoringUtil.isInStaticContext(myMainOccurence)) {
+    final PsiClass scopeClass = PsiTreeUtil.getNonStrictParentOfType(myScope, PsiClass.class);
+    if (myMaintainStaticContext && expressionOccurrences.length > 1 && !RefactoringUtil.isInStaticContext(myMainOccurence, scopeClass)) {
       final ArrayList<PsiExpression> expressions = new ArrayList<PsiExpression>(Arrays.asList(expressionOccurrences));
       for (Iterator<PsiExpression> iterator = expressions.iterator(); iterator.hasNext();) {
         final PsiExpression expression = iterator.next();
-        if(RefactoringUtil.isInStaticContext(expression)) {
+        if(RefactoringUtil.isInStaticContext(expression, scopeClass)) {
           iterator.remove();
         }
       }
