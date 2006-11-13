@@ -37,6 +37,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private int myLastFoundElementOffset = -1;
   private AntElement myLastFoundElement;
   private boolean myIsImported;
+  private boolean myComputingAttrValue;
   protected boolean myInGettingChildren;
   @NonNls private static final String ANTLIB_NS_PREFIX = "antlib:";
   @NonNls private static final String ANTLIB_XML = "antlib.xml";
@@ -207,14 +208,18 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   @Nullable
   public String computeAttributeValue(final String value) {
-    if (value == null) return null;
-    final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
-    try {
-      return computeAttributeValue(value, set);
+    if (value != null && !myComputingAttrValue) {
+      myComputingAttrValue = true;
+      final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
+      try {
+        return computeAttributeValue(value, set);
+      }
+      finally {
+        PsiElementSetSpinAllocator.dispose(set);
+        myComputingAttrValue = false;
+      }
     }
-    finally {
-      PsiElementSetSpinAllocator.dispose(set);
-    }
+    return null;
   }
 
   public boolean hasNameElement() {
@@ -344,7 +349,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
    * @param elementStack
    * @return
    */
-  protected String computeAttributeValue(String value, Set<PsiElement> elementStack) {
+  protected String computeAttributeValue(String value, final Set<PsiElement> elementStack) {
     elementStack.add(this);
     int startProp = 0;
     while ((startProp = value.indexOf("${", startProp)) >= 0) {
