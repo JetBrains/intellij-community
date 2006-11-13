@@ -237,7 +237,8 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
       if (ENABLE_SWING_INSPECTOR && myLastSnapShooterPort != -1) {
         params.getProgramParametersList().prepend(MAIN_CLASS_NAME);
         params.getProgramParametersList().prepend(Integer.toString(myLastSnapShooterPort));
-        params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size()));
+        // add +1 because idea_rt.jar will be added as the last entry to the classpath
+        params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size() + 1));
         Set<String> paths = new TreeSet<String>();
         paths.add(PathUtil.getJarPathForClass(SnapShooter.class));         // ui-designer-impl
         paths.add(PathUtil.getJarPathForClass(BaseComponent.class));       // appcore-api
