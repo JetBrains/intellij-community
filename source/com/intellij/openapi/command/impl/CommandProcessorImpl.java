@@ -89,6 +89,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
                              final Object groupId,
                              UndoConfirmationPolicy undoConfirmationPolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (project != null && project.isDisposed()) return;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId);
@@ -187,7 +188,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   @Nullable
   public String getCurrentCommandName() {
     if (myCurrentCommand != null) return myCurrentCommand.myName;
-    if (myInterruptedCommands.size() > 0) {
+    if (!myInterruptedCommands.isEmpty()) {
       final CommandDescriptor command = myInterruptedCommands.peek();
       return command != null ? command.myName : null;
     }
@@ -197,7 +198,7 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   @Nullable
   public Object getCurrentCommandGroupId() {
     if (myCurrentCommand != null) return myCurrentCommand.myGroupId;
-    if (myInterruptedCommands.size() > 0) {
+    if (!myInterruptedCommands.isEmpty()) {
       final CommandDescriptor command = myInterruptedCommands.peek();
       return command != null ? command.myGroupId : null;
     }

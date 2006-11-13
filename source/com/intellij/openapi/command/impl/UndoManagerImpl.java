@@ -36,9 +36,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   public static final int GLOBAL_UNDO_LIMIT = 10;
   public static final int LOCAL_UNDO_LIMIT = 100;
-  public static final int COMMANDS_TO_KEEP_LIVE_QUEUES = 100;
-  public static final int COMMAND_TO_RUN_COMPACT = 20;
-  public static final int FREE_QUEUES_LIMIT = 30;
+  private static final int COMMANDS_TO_KEEP_LIVE_QUEUES = 100;
+  private static final int COMMAND_TO_RUN_COMPACT = 20;
+  private static final int FREE_QUEUES_LIMIT = 30;
 
   private ProjectEx myProject;
 
@@ -57,7 +57,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder();
 
 
-  DocumentEditingUndoProvider myDocumentEditingUndoProvider;
+  private DocumentEditingUndoProvider myDocumentEditingUndoProvider;
   private CommandMerger myCurrentMerger;
   private CurrentEditorProvider myCurrentEditorProvider;
   private FileOperationsUndoProvider myFileOperationUndoProvider;
@@ -65,10 +65,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private Project myCurrentActionProject = DummyProject.getInstance();
   private int myCommandCounter = 1;
   private MyBeforeDeletionListener myBeforeFileDeletionListener;
-  private CommandProcessor myCommandProcessor;
-  private EditorFactory myEditorFactory;
-  private VirtualFileManager myVirtualFileManager;
-  private StartupManager myStartupManager;
+  private final CommandProcessor myCommandProcessor;
+  private final EditorFactory myEditorFactory;
+  private final VirtualFileManager myVirtualFileManager;
+  private final StartupManager myStartupManager;
 
   public UndoManagerImpl(Project project,
                          Application application,
@@ -84,18 +84,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
     init(application);
   }
-
   public UndoManagerImpl(Application application,
                          CommandProcessor commandProcessor,
                          EditorFactory editorFactory,
                          VirtualFileManager virtualFileManager) {
-    myProject = null;
-    myCommandProcessor = commandProcessor;
-    myEditorFactory = editorFactory;
-    myVirtualFileManager = virtualFileManager;
-
-    init(application);
+    this(null, application, commandProcessor, editorFactory, virtualFileManager, null);
   }
+
 
   private void init(Application application) {
     if (myProject == null || application.isUnitTestMode() && !myProject.isDefault() && !myProject.isDummy()) {
@@ -130,7 +125,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   }
 
-  public void runStartupActivity() {
+  private void runStartupActivity() {
     myCurrentEditorProvider = new FocusBasedCurrentEditorProvider();
     myCommandListener = new CommandAdapter() {
       private boolean myFakeCommandStarted = false;
@@ -166,7 +161,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myVirtualFileManager.addVirtualFileListener(myBeforeFileDeletionListener);
   }
 
-  public void onCommandFinished(final Project project,
+  private void onCommandFinished(final Project project,
                                 final String commandName,
                                 final Object commandGroupId) {
     commandFinished(commandName, commandGroupId);
@@ -238,7 +233,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     clearUndoRedoQueue(DocumentReferenceByDocument.createDocumentReference(document));
   }
 
-  public void clearUndoRedoQueue(DocumentReference docRef) {
+  private void clearUndoRedoQueue(DocumentReference docRef) {
     myLastMerger.flushCurrentCommand();
     disposeCurrentMerger();
 

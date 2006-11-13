@@ -933,7 +933,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
           public void run() {
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
               public void run() {
-                if (myProject.isDisposed()) return;
                 setTabsMode(UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
                 mySplitters.openFiles();
 // group 1
