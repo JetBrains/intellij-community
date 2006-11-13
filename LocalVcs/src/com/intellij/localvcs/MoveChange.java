@@ -1,11 +1,13 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MoveChange extends Change {
   private Path myPath;
   private Path myNewParent;
-  private IdPath myAffectedEntryIdPath;
+  private List<IdPath> myAffectedEntryIdPaths = new ArrayList<IdPath>();
 
   public MoveChange(Path path, Path newParent) {
     myPath = path;
@@ -33,18 +35,22 @@ public class MoveChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
+    myAffectedEntryIdPaths.add(root.getEntry(myPath).getIdPath());
     root.doMove(myPath, myNewParent);
+    myAffectedEntryIdPaths.add(root.getEntry(getNewPath()).getIdPath());
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doMove(myNewParent.appendedWith(myPath.getName()),
-                myPath.getParent());
+    root.doMove(getNewPath(), myPath.getParent());
+  }
+
+  private Path getNewPath() {
+    return myNewParent.appendedWith(myPath.getName());
   }
 
   @Override
-  protected IdPath getAffectedEntryIdPath() {
-    return myAffectedEntryIdPath;
+  protected List<IdPath> getAffectedEntryIdPaths() {
+    return myAffectedEntryIdPaths;
   }
 }

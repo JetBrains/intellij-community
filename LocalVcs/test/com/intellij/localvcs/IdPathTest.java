@@ -17,7 +17,7 @@ public class IdPathTest extends TestCase {
   }
 
   @Test
-  public void testContains() {
+  public void testPrefix() {
     IdPath p = new IdPath(1, 2);
 
     assertTrue(p.isPrefixOf(new IdPath(1, 2)));
@@ -25,5 +25,15 @@ public class IdPathTest extends TestCase {
 
     assertFalse(p.isPrefixOf(new IdPath(1)));
     assertFalse(p.isPrefixOf(new IdPath(1, 3)));
+  }
+
+  @Test
+  public void testContains() {
+    IdPath p = new IdPath(1, 2);
+
+    assertTrue(p.contains(1));
+    assertTrue(p.contains(2));
+
+    assertFalse(p.contains(3));
   }
 }

@@ -1,6 +1,8 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class RenameChange extends Change {
   private Path myPath;
@@ -43,7 +45,7 @@ public class RenameChange extends Change {
   }
 
   @Override
-  protected IdPath getAffectedEntryIdPath() {
-    return myAffectedEntryIdPath;
+  protected List<IdPath> getAffectedEntryIdPaths() {
+    return Arrays.asList(myAffectedEntryIdPath);
   }
 }

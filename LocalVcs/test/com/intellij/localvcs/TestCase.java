@@ -20,10 +20,15 @@ public abstract class TestCase extends Assert {
     return new ChangeSet(Arrays.asList(changes));
   }
 
-  //@SuppressWarnings("unchecked")
+  @SuppressWarnings("unchecked")
   protected static void assertElements(Object[] expected, Collection actual) {
-    assertEquals(expected.length, actual.size());
-    assertTrue(actual.containsAll(Arrays.asList(expected)));
+    List<Object> expectedList = Arrays.asList(expected);
+    String message = "elements are not equal:\n"
+                     + "\texpected: " + expectedList + "\n"
+                     + "\tactual: " + actual;
+
+    assertTrue(message, expectedList.size() == actual.size());
+    assertTrue(message, actual.containsAll(expectedList));
   }
 
   protected static void assertEntiesContents(String[] expectedContents,

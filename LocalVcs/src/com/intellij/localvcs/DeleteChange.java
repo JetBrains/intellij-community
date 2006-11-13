@@ -1,6 +1,8 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class DeleteChange extends Change {
   private Path myPath;
@@ -54,7 +56,7 @@ public class DeleteChange extends Change {
   }
 
   @Override
-  protected IdPath getAffectedEntryIdPath() {
-    return myAffectedEntry.getIdPath();
+  protected List<IdPath> getAffectedEntryIdPaths() {
+    return Arrays.asList(myAffectedEntry.getIdPath());
   }
 }

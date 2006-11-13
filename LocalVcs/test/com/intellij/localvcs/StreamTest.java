@@ -111,6 +111,8 @@ public class StreamTest extends TestCase {
     assertEquals("dir", children.get(1).getName());
   }
 
+  // todo test AffectedEntyPath saving for Changes 
+
   @Test
   public void testCreateFileChange() throws IOException {
     Change c = new CreateFileChange(null, p("file"), "content");

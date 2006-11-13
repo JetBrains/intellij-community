@@ -18,6 +18,7 @@ public class IdPath {
   }
 
   public boolean isPrefixOf(IdPath p) {
+    // todo does it stll needed
     if (myPath.size() > p.myPath.size()) return false;
 
     for (int i = 0; i < myPath.size(); i++) {
@@ -25,6 +26,10 @@ public class IdPath {
     }
 
     return true;
+  }
+
+  public boolean contains(Integer id) {
+    return myPath.contains(id);
   }
 
   @Override
