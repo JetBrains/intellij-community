@@ -13,6 +13,7 @@ import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,11 +34,12 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     myFilePointerManager = filePointerManager;
   }
 
+  @NotNull
   public Library[] getLibraries() {
-    final ArrayList result = new ArrayList();
-    final Iterator libraryIterator = getLibraryIterator();
+    final ArrayList<Library> result = new ArrayList<Library>();
+    final Iterator<Library> libraryIterator = getLibraryIterator();
     ContainerUtil.addAll(result, libraryIterator);
-    return (Library[]) result.toArray(new Library[result.size()]);
+    return result.toArray(new Library[result.size()]);
   }
 
   public Library createLibrary() {
@@ -47,15 +49,15 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   }
 
   public Library createLibrary(String name) {
-    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, myRootModel, myProjectRootManager, VirtualFilePointerManager.getInstance());
+    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, myRootModel, myProjectRootManager, myFilePointerManager);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }
 
-  public void removeLibrary(Library library) {
-    final Iterator orderIterator = myRootModel.getOrderIterator();
+  public void removeLibrary(@NotNull Library library) {
+    final Iterator<OrderEntry> orderIterator = myRootModel.getOrderIterator();
     while (orderIterator.hasNext()) {
-      OrderEntry orderEntry = (OrderEntry) orderIterator.next();
+      OrderEntry orderEntry = orderIterator.next();
       if (orderEntry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry) orderEntry;
         if (libraryOrderEntry.isModuleLevel()) {
@@ -68,10 +70,11 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
     }
   }
 
-  public Iterator getLibraryIterator() {
-    return new ConvertingIterator(
-            new FilteringIterator(myRootModel.getOrderIterator(), MODULE_LIBRARY_ORDER_ENTRY_FILTER),
-            ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
+  @NotNull
+  public Iterator<Library> getLibraryIterator() {
+    FilteringIterator<OrderEntry, LibraryOrderEntry> filteringIterator =
+      new FilteringIterator<OrderEntry, LibraryOrderEntry>(myRootModel.getOrderIterator(), MODULE_LIBRARY_ORDER_ENTRY_FILTER);
+    return new ConvertingIterator<LibraryOrderEntry, Library>(filteringIterator, ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
   }
 
   public String getTableLevel() {
@@ -79,10 +82,10 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   }
 
   @Nullable
-  public Library getLibraryByName(String name) {
-    final Iterator libraryIterator = getLibraryIterator();
+  public Library getLibraryByName(@NotNull String name) {
+    final Iterator<Library> libraryIterator = getLibraryIterator();
     while (libraryIterator.hasNext()) {
-      Library library = (Library) libraryIterator.next();
+      Library library = libraryIterator.next();
       if (name.equals(library.getName())) return library;
     }
     return null;
@@ -104,13 +107,13 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
 
   private static class ModuleLibraryOrderEntryCondition implements Condition<OrderEntry> {
     public boolean value(OrderEntry entry) {
-      return (entry instanceof LibraryOrderEntry) && ((LibraryOrderEntry)entry).isModuleLevel() && ((LibraryOrderEntry)entry).getLibrary() != null;
+      return entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel() && ((LibraryOrderEntry)entry).getLibrary() != null;
     }
   }
 
-  private static class OrderEntryToLibraryConvertor implements Convertor {
-    public Object convert(Object o) {
-      return ((LibraryOrderEntry) o).getLibrary();
+  private static class OrderEntryToLibraryConvertor implements Convertor<LibraryOrderEntry, Library> {
+    public Library convert(LibraryOrderEntry o) {
+      return o.getLibrary();
     }
   }
 

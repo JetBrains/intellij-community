@@ -37,11 +37,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements ApplicationComponent {
-  static final Map<String, LibraryTable> myLibraryTables = new HashMap<String, LibraryTable>();
+  private static final Map<String, LibraryTable> myLibraryTables = new HashMap<String, LibraryTable>();
 
   public LibraryTable getLibraryTable() {
     return ApplicationManager.getApplication().getComponent(LibraryTable.class);
@@ -76,6 +77,7 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
     return table;
   }
 
+  @NotNull
   public String getComponentName() {
     return "LibraryTablesRegistrar";
   }

@@ -27,11 +27,11 @@ import java.util.NoSuchElementException;
  *  @author dyoma
  */
 public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
-  private final Iterator<E> myBaseIterator;
+  private final Iterator<Dom> myBaseIterator;
   private final Condition<Dom> myFilter;
   private boolean myNextObtained = false;
   private boolean myCurrentIsValid = false;
-  private E myCurrent;
+  private Dom myCurrent;
   private Boolean myCurrentPassedFilter = null;
   public static final Condition NOT_NULL = new Condition() {
     public boolean value(Object t) {
@@ -39,7 +39,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     }
   };
 
-  public FilteringIterator(Iterator<E> baseIterator, Condition<Dom> filter) {
+  public FilteringIterator(Iterator<Dom> baseIterator, Condition<Dom> filter) {
     myBaseIterator = baseIterator;
     myFilter = filter;
   }
@@ -58,14 +58,14 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     if (!myCurrentIsValid) return false;
     boolean value = isCurrentPassesFilter();
     while (!value && myBaseIterator.hasNext()) {
-      E next = myBaseIterator.next();
+      Dom next = myBaseIterator.next();
       setCurrent(next);
       value = isCurrentPassesFilter();
     }
     return value;
   }
 
-  private void setCurrent(E next) {
+  private void setCurrent(Dom next) {
     myCurrent = next;
     myCurrentPassedFilter = null;
   }
@@ -79,7 +79,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
 
   public E next() {
     if (!hasNext()) throw new NoSuchElementException();
-    E result = myCurrent;
+    E result = (E)myCurrent;
     myNextObtained = false;
     return result;
   }
@@ -97,12 +97,8 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     return create(iterator, NOT_NULL);
   }
 
-  public static <Dom, T extends Dom> Iterator<T> create(Iterator<T> iterator, Condition<Dom> condition) {
+  public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<Dom> condition) {
     return new FilteringIterator<Dom, T>(iterator, condition);
-  }
-
-  public static <Dom, T extends Dom> Iterator<T> create(T[] array, Condition<Dom> condition) {
-    return create(ContainerUtil.iterate(array), condition);
   }
 
   public static <T> Condition<T> alwaysTrueCondition(Class<T> aClass) {
@@ -113,7 +109,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     return new InstanceOf<T>(aClass);
   }
 
-  public static <T> Iterator<T> createInstanceOf(Iterator iterator, Class<T> aClass) {
+  public static <T> Iterator<T> createInstanceOf(Iterator<?> iterator, Class<T> aClass) {
     return create(iterator, instanceOf(aClass));
   }
 

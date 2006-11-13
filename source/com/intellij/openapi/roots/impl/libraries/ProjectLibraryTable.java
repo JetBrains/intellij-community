@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
  *  @author dsl
  */
 public class ProjectLibraryTable extends LibraryTableBase implements ProjectComponent {
-  ProjectLibraryTable (Project project) {
+  ProjectLibraryTable() {
 
   }
   public static LibraryTable getInstance(Project project) {
@@ -20,11 +20,6 @@ public class ProjectLibraryTable extends LibraryTableBase implements ProjectComp
   }
 
   public void projectClosed() {
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public String getTableLevel() {

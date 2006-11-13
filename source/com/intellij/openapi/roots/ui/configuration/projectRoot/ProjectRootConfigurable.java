@@ -159,7 +159,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myTree.setCellRenderer(new ColoredTreeCellRenderer(){
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (value instanceof MyNode) {
-          final MyNode node = ((MyNode)value);
+          final MyNode node = (MyNode)value;
           final String displayName = node.getDisplayName();
           final Icon icon = node.getConfigurable().getIcon();
           setIcon(icon);
@@ -310,7 +310,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     }
     final Set<String> dependencies = getCachedDependencies(object, node, false);
-    return dependencies != null && dependencies.size() == 0;
+    return dependencies != null && dependencies.isEmpty();
   }
 
   protected ArrayList<AnAction> getAdditionalActions() {
@@ -319,7 +319,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return result;
   }
 
-  protected void reloadTree() {
+  private void reloadTree() {
 
     myRoot.removeAllChildren();
 
@@ -504,7 +504,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           if (library != null) {
             if (orderEntry.getPresentableName() == null) continue;
             final LibraryConfigurable libraryConfigurable =
-              new LibraryConfigurable(libraryTableModelProvider, library, trancateModuleLibraryName(orderEntry), myProject, TREE_UPDATER);
+              new LibraryConfigurable(libraryTableModelProvider, library, truncateModuleLibraryName(orderEntry), myProject, TREE_UPDATER);
             addNode(new MyNode(libraryConfigurable), moduleNode);
           }
         }
@@ -512,7 +512,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
   }
 
-  public static String trancateModuleLibraryName(LibraryOrderEntry entry) {
+  private static String truncateModuleLibraryName(LibraryOrderEntry entry) {
     final String presentableName = entry.getPresentableName();
     String independantName = FileUtil.toSystemIndependentName(presentableName);
     if (independantName.lastIndexOf('/') + 1 == independantName.length() && independantName.length() > 1){
@@ -755,12 +755,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return project.getComponent(ProjectRootConfigurable.class);
   }
 
-  public void createNode(final NamedConfigurable<ProjectJdk> configurable, final MyNode parentNode) {
-    final MyNode node = new MyNode(configurable);
-    addNode(node, parentNode);
-    selectNodeInTree(node);
-  }
-
   public MyNode createLibraryNode(Library library, String presentableName, Module module) {
     final LibraryTable table = library.getTable();
     if (table != null){
@@ -833,7 +827,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           final Set<String> dep = dependencies.compute();
           SwingUtilities.invokeLater(new Runnable(){
             public void run() {
-              if (dep != null && dep.size() == 0 && !myDisposed){
+              if (dep != null && dep.isEmpty() && !myDisposed){
                 myTree.repaint();
               }
             }
@@ -920,7 +914,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public DefaultMutableTreeNode createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
-    final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(model), libraryOrderEntry.getLibrary(), trancateModuleLibraryName(libraryOrderEntry), myProject, TREE_UPDATER);
+    final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(model), libraryOrderEntry.getLibrary(), truncateModuleLibraryName(libraryOrderEntry), myProject, TREE_UPDATER);
     final MyNode node = new MyNode(configurable);
     addNode(node, findNodeByObject(myModulesNode, libraryOrderEntry.getOwnerModule()));
     return node;
@@ -965,7 +959,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   @Nullable
-  private static Library findLibraryModel(final String libraryName, final LibrariesModifiableModel model) {
+  private static Library findLibraryModel(final String libraryName, @NotNull LibrariesModifiableModel model) {
     final Library library = model.getLibraryByName(libraryName);
     return findLibraryModel(library, model);
   }
@@ -1329,7 +1323,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       final Object selectedObject = getSelectedObject();
       final MyNode selectedNode = (MyNode)myTree.getSelectionPath().getLastPathComponent();
       final Set<String> dependencies = getCachedDependencies(selectedObject, selectedNode, true);
-      if (dependencies == null || dependencies.size() == 0) {
+      if (dependencies == null || dependencies.isEmpty()) {
         Messages.showInfoMessage(myTree, FindBundle.message("find.usage.view.no.usages.text"),
                                  FindBundle.message("find.pointcut.applications.not.found.title"));
         return;

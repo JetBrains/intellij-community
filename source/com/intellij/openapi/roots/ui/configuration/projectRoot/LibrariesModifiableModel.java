@@ -7,6 +7,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -31,7 +32,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
     return library;
   }
 
-  public void removeLibrary(Library library) {
+  public void removeLibrary(@NotNull Library library) {
     myRemovedLibraries.add(library);
     myLibrary2EditorMap.remove(library);
     myLibrariesModifiableModel.removeLibrary(library);
@@ -41,14 +42,16 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
     //do nothing  - do deffered commit
   }
 
+  @NotNull
   public Iterator getLibraryIterator() {
     return myLibrariesModifiableModel.getLibraryIterator();
   }
 
-  public Library getLibraryByName(String name) {
+  public Library getLibraryByName(@NotNull String name) {
     return myLibrariesModifiableModel.getLibraryByName(name);
   }
 
+  @NotNull
   public Library[] getLibraries() {
     return myLibrariesModifiableModel.getLibraries();
   }
@@ -57,9 +60,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
     for (LibraryEditor libraryEditor : myLibrary2EditorMap.values()) {
       if (libraryEditor.hasChanges()) return true;
     }
-    final boolean changed = myLibrariesModifiableModel.isChanged();
-    if (changed) return true;
-    return false;
+    return myLibrariesModifiableModel.isChanged();
   }
 
   public void deferredCommit(){

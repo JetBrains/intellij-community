@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -24,11 +25,6 @@ public class ApplicationLibraryTable extends LibraryTableBase implements NamedJD
     myPathMacros = pathMacros;
   }
 
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
   public String getTableLevel() {
     return LibraryTablesRegistrar.APPLICATION_LEVEL;
   }
@@ -37,10 +33,12 @@ public class ApplicationLibraryTable extends LibraryTableBase implements NamedJD
     return "applicationLibraries";
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("library.global.settings");
   }

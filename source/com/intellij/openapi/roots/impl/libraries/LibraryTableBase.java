@@ -10,16 +10,19 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 /**
  *  @author dsl
  */
-public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTable {
+public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTable, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.libraries.LibraryTableBase");
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   private LibraryModel myModel = new LibraryModel();
@@ -37,15 +40,17 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     myModel.writeExternal(element);
   }
 
+  @NotNull
   public Library[] getLibraries() {
     return myModel.getLibraries();
   }
 
-  public Iterator getLibraryIterator() {
+  @NotNull
+  public Iterator<Library> getLibraryIterator() {
     return myModel.getLibraryIterator();
   }
 
-  public Library getLibraryByName(String name) {
+  public Library getLibraryByName(@NotNull String name) {
     return myModel.getLibraryByName(name);
   }
 
@@ -69,15 +74,21 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     myDispatcher.getMulticaster().beforeLibraryRemoved(library);
   }
 
+  @NotNull
+  @NonNls
+  public String getComponentName() {
+    return "libraryTable";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
 
   public Library createLibrary() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     return createLibrary(null);
-  }
-
-  @NonNls
-  public String getComponentName() {
-    return "libraryTable";
   }
 
   public void fireLibraryRenamed(LibraryImpl library) {
@@ -91,13 +102,13 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     return library;
   }
 
-  public void removeLibrary(Library library) {
+  public void removeLibrary(@NotNull Library library) {
     final LibraryTable.ModifiableModel modifiableModel = getModifiableModel();
     modifiableModel.removeLibrary(library);
     modifiableModel.commit();
   }
 
-  public void commit(LibraryModel model) {
+  private void commit(LibraryModel model) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     List<Library> addedLibraries = new ArrayList<Library>(model.myLibraries);
     addedLibraries.removeAll(myModel.myLibraries);
@@ -138,11 +149,12 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
       LibraryTableBase.this.commit(this);
     }
 
-    public Iterator getLibraryIterator() {
+    @NotNull
+    public Iterator<Library> getLibraryIterator() {
       return Collections.unmodifiableList(myLibraries).iterator();
     }
 
-    public Library getLibraryByName(String name) {
+    public Library getLibraryByName(@NotNull String name) {
       for (Library myLibrary : myLibraries) {
         LibraryImpl library = (LibraryImpl)myLibrary;
         if (Comparing.equal(name, library.getName())) return library;
@@ -158,6 +170,7 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
     }
 
 
+    @NotNull
     public Library[] getLibraries() {
       return myLibraries.toArray(new Library[myLibraries.size()]);
     }
@@ -173,15 +186,15 @@ public abstract class LibraryTableBase implements JDOMExternalizable, LibraryTab
       return library;
     }
 
-    public void removeLibrary(Library library) {
+    public void removeLibrary(@NotNull Library library) {
       assertWritable();
       myLibraries.remove(library);
     }
 
     public boolean isChanged() {
       if (!myWritable) return false;
-      Set<Library> thisLibraries = new com.intellij.util.containers.HashSet<Library>(myLibraries);
-      Set<Library> thatLibraries = new com.intellij.util.containers.HashSet<Library>(myModel.myLibraries);
+      Set<Library> thisLibraries = new HashSet<Library>(myLibraries);
+      Set<Library> thatLibraries = new HashSet<Library>(myModel.myLibraries);
       return !thisLibraries.equals(thatLibraries);
     }
 

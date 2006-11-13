@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -91,15 +92,16 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     addListeners();
   }
 
-  private void searchForLibrary(String level, String name) {
+  private void searchForLibrary(@NotNull String level, @NotNull String name) {
     if (myLibrary != null) return;
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, myRootModel.getModule().getProject());
-    final Library library = (libraryTable != null)? libraryTable.getLibraryByName(name) : null;
+    final Library library = libraryTable != null ? libraryTable.getLibraryByName(name) : null;
     if (library == null) {
       myLibraryName = name;
       myLibraryLevel = level;
       myLibrary = null;
-    } else {
+    }
+    else {
       myLibraryName = null;
       myLibraryLevel = null;
       myLibrary = library;
@@ -122,9 +124,11 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     if (ApplicationManager.getApplication().isUnitTestMode()) return myLibrary;
     final Project project = getRootModel().getModule().getProject();
     final ProjectRootConfigurable rootConfigurable = ProjectRootConfigurable.getInstance(project);
-    Library library;
+    Library library = null;
     if (myLibrary == null) {
-      library = rootConfigurable.getLibrary(myLibraryName, myLibraryLevel);
+      if (myLibraryName != null) {
+        library = rootConfigurable.getLibrary(myLibraryName, myLibraryLevel);
+      }
     } else {
       library = rootConfigurable.getLibrary(myLibrary.getName(), myLibrary.getTable().getTableLevel());
     }
@@ -193,7 +197,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   public String getLibraryName() {
     if (myLibrary != null) {
       return myLibrary.getName();
-    } else {
+    }
+    else {
       return myLibraryName;
     }
   }
@@ -221,7 +226,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   }
 
 
-  public void afterLibraryAdded(Library newLibrary) {
+  private void afterLibraryAdded(Library newLibrary) {
     if (myLibrary == null) {
       if (Comparing.equal(myLibraryName, newLibrary.getName())) {
         myLibrary = newLibrary;
@@ -232,8 +237,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     }
   }
 
-
-  public void beforeLibraryRemoved(Library library) {
+  private void beforeLibraryRemoved(Library library) {
     if (library == myLibrary) {
       myLibraryName = myLibrary.getName();
       myLibraryLevel = myLibrary.getTable().getTableLevel();
