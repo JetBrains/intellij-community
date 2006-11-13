@@ -2,6 +2,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -15,12 +16,13 @@ public class Utils{
 
   private Utils() {}
 
-  private static void handleUpdateException(AnAction action,Presentation presentation,Throwable exc){
-    String id=ActionManager.getInstance().getId(action);
-    if(id!=null){
-      LOG.error("update failed for AnAction with ID="+id,exc);
-    }else{
-      LOG.error("update failed for ActionGroup: "+action+"["+presentation.getText()+"]",exc);
+  private static void handleUpdateException(AnAction action, Presentation presentation, Throwable exc) {
+    String id = ActionManager.getInstance().getId(action);
+    if (id != null) {
+      LOG.error("update failed for AnAction with ID=" + id, exc);
+    }
+    else {
+      LOG.error("update failed for ActionGroup: " + action + "[" + presentation.getText() + "]", exc);
     }
   }
 
@@ -42,18 +44,13 @@ public class Utils{
       actionManager,
       0
     );
-    try{
-      group.update(e);
-    }catch(Throwable exc){
-      handleUpdateException(group,presentation,exc);
-      return;
-    }
+    if (!doUpdate(group, e, presentation)) return;
 
     if(!presentation.isVisible()){ // don't process invisible groups
       return;
     }
     AnAction[] children=group.getChildren(e);
-    for(int i=0;i<children.length;i++){
+    for (int i = 0; i < children.length; i++) {
       AnAction child = children[i];
       if (child == null) {
         String groupId = ActionManager.getInstance().getId(group);
@@ -61,36 +58,49 @@ public class Utils{
         continue;
       }
 
-      presentation=presentationFactory.getPresentation(child);
-      AnActionEvent e1 = new AnActionEvent(null,context, place, presentation, actionManager, 0);
+      presentation = presentationFactory.getPresentation(child);
+      AnActionEvent e1 = new AnActionEvent(null, context, place, presentation, actionManager, 0);
       e1.setInjectedContext(child.isInInjectedContext());
-      try{
-        child.update(e1);
-      } catch(Throwable exc){
-        handleUpdateException(child,presentation,exc);
+      if (!doUpdate(child, e1, presentation)) continue;
+      if (!presentation.isVisible()) { // don't create invisible items in the menu
         continue;
       }
-      if(!presentation.isVisible()){ // don't create invisible items in the menu
-        continue;
-      }
-      if(child instanceof ActionGroup){
-        ActionGroup actionGroup=(ActionGroup)child;
-        if(actionGroup.isPopup()){ // popup menu has its own presentation
+      if (child instanceof ActionGroup) {
+        ActionGroup actionGroup = (ActionGroup)child;
+        if (actionGroup.isPopup()) { // popup menu has its own presentation
           // disable group if it contains no visible actions
           final boolean enabled = hasVisibleChildren(actionGroup, presentationFactory, context, place);
           presentation.setEnabled(enabled);
           list.add(child);
-        }else{
-          expandActionGroup((ActionGroup)child,list, presentationFactory, context, place, actionManager);
         }
-      }else if (child instanceof Separator){
-        if (list.size() > 0 && !(list.get(list.size() - 1) instanceof Separator)){
+        else {
+          expandActionGroup((ActionGroup)child, list, presentationFactory, context, place, actionManager);
+        }
+      }
+      else if (child instanceof Separator) {
+        if (!list.isEmpty() && !(list.get(list.size() - 1) instanceof Separator)) {
           list.add(child);
         }
-      }else{
+      }
+      else {
         list.add(child);
       }
     }
+  }
+
+  // returns false if exception was thrown and handled
+  private static boolean doUpdate(final AnAction group, final AnActionEvent e, final Presentation presentation) throws ProcessCanceledException {
+    try {
+      group.update(e);
+    }
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
+    catch (Throwable exc) {
+      handleUpdateException(group, presentation, exc);
+      return false;
+    }
+    return true;
   }
 
   private static boolean hasVisibleChildren(ActionGroup group, PresentationFactory factory, DataContext context, String place) {
@@ -109,15 +119,11 @@ public class Utils{
 
         // popup menu must be visible itself
         if (childGroup.isPopup()) {
-          try {
-            AnActionEvent event1 = new AnActionEvent(null, context, place, factory.getPresentation(childGroup), ActionManager.getInstance(), 0);
-            event1.setInjectedContext(childGroup.isInInjectedContext());
-            childGroup.update(event1);
-          }
-          catch (Throwable exc) {
-            handleUpdateException(childGroup, factory.getPresentation(childGroup), exc);
-          }
-          if (!factory.getPresentation(childGroup).isVisible()) {
+          final Presentation presentation = factory.getPresentation(childGroup);
+          AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
+          event1.setInjectedContext(childGroup.isInInjectedContext());
+          doUpdate(childGroup, event1, presentation);
+          if (!presentation.isVisible()) {
             continue;
           }
         }
@@ -127,15 +133,11 @@ public class Utils{
         }
       }
       else {
-        try {
-          AnActionEvent event1 = new AnActionEvent(null, context, place, factory.getPresentation(anAction), ActionManager.getInstance(), 0);
-          event1.setInjectedContext(anAction.isInInjectedContext());
-          anAction.update(event1);
-        }
-        catch (Throwable exc) {
-          handleUpdateException(anAction, factory.getPresentation(anAction), exc);
-        }
-        if (factory.getPresentation(anAction).isVisible()) {
+        final Presentation presentation = factory.getPresentation(anAction);
+        AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
+        event1.setInjectedContext(anAction.isInInjectedContext());
+        doUpdate(anAction, event1, presentation);
+        if (presentation.isVisible()) {
           return true;
         }
       }
@@ -149,15 +151,17 @@ public class Utils{
     ArrayList<AnAction> list = new ArrayList<AnAction>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
 
-    for (int i=0; i<list.size(); i++) {
+    for (int i = 0; i < list.size(); i++) {
       AnAction action = list.get(i);
       if (action instanceof Separator) {
-        if (i>0 && i<list.size()-1) {
+        if (i > 0 && i < list.size() - 1) {
           component.add(new JPopupMenu.Separator());
         }
-      } else if (action instanceof ActionGroup) {
+      }
+      else if (action instanceof ActionGroup) {
         component.add(new ActionMenu(context, place, (ActionGroup)action, presentationFactory));
-      } else {
+      }
+      else {
         component.add(new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context));
       }
     }
