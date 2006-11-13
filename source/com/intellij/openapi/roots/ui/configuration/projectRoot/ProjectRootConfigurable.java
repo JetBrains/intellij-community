@@ -1026,7 +1026,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public Module[] getModules() {
-    return myModulesConfigurator.getModuleModel().getModules();
+    return myModulesConfigurator != null ? myModulesConfigurator.getModuleModel().getModules() : myModuleManager.getModules();
   }
 
   public void addLibraryOrderEntry(final Module module, final Library library) {
