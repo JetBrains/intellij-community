@@ -17,14 +17,8 @@ public class IdPathTest extends TestCase {
   }
 
   @Test
-  public void testPrefix() {
-    IdPath p = new IdPath(1, 2);
-
-    assertTrue(p.isPrefixOf(new IdPath(1, 2)));
-    assertTrue(p.isPrefixOf(new IdPath(1, 2, 3)));
-
-    assertFalse(p.isPrefixOf(new IdPath(1)));
-    assertFalse(p.isPrefixOf(new IdPath(1, 3)));
+  public void testName() {
+    assertEquals(3, new IdPath(1, 2, 3).getName());
   }
 
   @Test

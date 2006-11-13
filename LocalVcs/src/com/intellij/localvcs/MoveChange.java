@@ -2,12 +2,15 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class MoveChange extends Change {
   private Path myPath;
   private Path myNewParent;
-  private List<IdPath> myAffectedEntryIdPaths = new ArrayList<IdPath>();
+  private IdPath myFromIdPath;
+  private IdPath myToIdPath;
 
   public MoveChange(Path path, Path newParent) {
     myPath = path;
@@ -35,9 +38,9 @@ public class MoveChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myAffectedEntryIdPaths.add(root.getEntry(myPath).getIdPath());
+    myFromIdPath = root.getEntry(myPath).getIdPath();
     root.doMove(myPath, myNewParent);
-    myAffectedEntryIdPaths.add(root.getEntry(getNewPath()).getIdPath());
+    myToIdPath = root.getEntry(getNewPath()).getIdPath();
   }
 
   @Override
@@ -51,6 +54,25 @@ public class MoveChange extends Change {
 
   @Override
   protected List<IdPath> getAffectedEntryIdPaths() {
-    return myAffectedEntryIdPaths;
+    return Arrays.asList(myFromIdPath, myToIdPath);
+  }
+
+  @Override
+  public List<Difference> getDifferencesFor(Entry e) {
+    if (!affects(e)) return Collections.emptyList();
+
+    if (myFromIdPath.getName().equals(e.getId()))
+      return Collections
+          .singletonList(new Difference(Difference.Kind.MODIFIED));
+
+    List<Difference> result = new ArrayList<Difference>();
+
+    if (myFromIdPath.contains(e.getId()))
+      result.add(new Difference(Difference.Kind.DELETED));
+
+    if (myToIdPath.contains(e.getId()))
+      result.add(new Difference(Difference.Kind.CREATED));
+
+    return result;
   }
 }

@@ -11,21 +11,14 @@ public class IdPath {
     myPath = Arrays.asList(parts);
   }
 
+  public Integer getName() {
+    return myPath.get(myPath.size() - 1);
+  }
+
   public IdPath appendedWith(Integer id) {
     List<Integer> newPath = new ArrayList<Integer>(myPath);
     newPath.add(id);
     return new IdPath(newPath.toArray(new Integer[0]));
-  }
-
-  public boolean isPrefixOf(IdPath p) {
-    // todo does it stll needed
-    if (myPath.size() > p.myPath.size()) return false;
-
-    for (int i = 0; i < myPath.size(); i++) {
-      if (!myPath.get(i).equals(p.myPath.get(i))) return false;
-    }
-
-    return true;
   }
 
   public boolean contains(Integer id) {

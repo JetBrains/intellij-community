@@ -2,6 +2,7 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class CreateDirectoryChange extends Change {
@@ -41,5 +42,11 @@ public class CreateDirectoryChange extends Change {
   @Override
   protected List<IdPath> getAffectedEntryIdPaths() {
     return Arrays.asList(myAffectedEntryIdPath);
+  }
+
+  @Override
+  public List<Difference> getDifferencesFor(Entry e) {
+    if (!affects(e)) return Collections.emptyList();
+    return Collections.singletonList(new Difference(Difference.Kind.CREATED));
   }
 }
