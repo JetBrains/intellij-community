@@ -521,16 +521,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void processIconsRow(int line, ArrayList<GutterIconRenderer> row, LineGutterIconRendererProcessor processor) {
-    int middleSize = 0;
     int middleCount = 0;
-
-    final Point point = myEditor.logicalPositionToXY(new LogicalPosition(line, 0));
-    final int y = point.y;
-
+    int middleSize = 0;
     int x = getLineMarkerAreaOffset() + 1;
+    final int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
+
     for (GutterIconRenderer r : row) {
-      Icon icon = r.getIcon();
       final GutterIconRenderer.Alignment alignment = r.getAlignment();
+      final Icon icon = r.getIcon();
       if (alignment == GutterIconRenderer.Alignment.LEFT) {
         processor.process(x, y + getTextAlignmentShift(icon), r);
         x += icon.getIconWidth() + GAP_BETWEEN_ICONS;
@@ -543,7 +541,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
 
-    int leftSize = x - getLineMarkerAreaOffset();
+    final int leftSize = x - getLineMarkerAreaOffset();
 
     x = getLineMarkerAreaOffset() + myIconsAreaWidth;
     for (GutterIconRenderer r : row) {
