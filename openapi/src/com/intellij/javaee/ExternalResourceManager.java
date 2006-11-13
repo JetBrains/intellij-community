@@ -17,6 +17,7 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -26,12 +27,12 @@ public abstract class ExternalResourceManager {
     return ApplicationManager.getApplication().getComponent(ExternalResourceManager.class);
   }
 
-  public abstract void addResource(String url, String location);
+  public abstract void addResource(@NonNls String url, @NonNls String location);
   public abstract void removeResource(String url);
 
-  public abstract void addStdResource(String resource, String fileName);
-  public abstract void addStdResource(String resource, String fileName, Class klass);
+  public abstract void addStdResource(@NonNls String resource, @NonNls String fileName);
+  public abstract void addStdResource(@NonNls String resource, @NonNls String fileName, Class klass);
 
-  public abstract String getResourceLocation(String url);
+  public abstract String getResourceLocation(@NonNls String url);
   public abstract String[] getResourceUrls(FileType fileType, final boolean includeStandard);
 }
