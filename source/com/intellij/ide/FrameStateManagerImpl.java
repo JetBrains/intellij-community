@@ -57,7 +57,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
   }
 
   public void propertyChange(PropertyChangeEvent e) {
-    KeyboardFocusManager focusManager = (KeyboardFocusManager)e.getSource();
+    final KeyboardFocusManager focusManager = (KeyboardFocusManager)e.getSource();
     Window activeWindow = focusManager.getActiveWindow();
 
     if (activeWindow != null) {
@@ -68,11 +68,13 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
       }
     }
     else{
-      myShouldSynchronize = true;
       mySyncAlarm.cancelAllRequests();
       mySyncAlarm.addRequest(new Runnable() {
         public void run() {
-          fireDeactivationEvent();
+          if (focusManager.getActiveWindow() == null) {
+            myShouldSynchronize = true;
+            fireDeactivationEvent();
+          }
         }
       }, 200);
     }
