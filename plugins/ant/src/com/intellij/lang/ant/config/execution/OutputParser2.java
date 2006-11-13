@@ -39,7 +39,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
         InputRequestHandler.processInput(getProject(), reader, getProcessHandler());
       }
       catch (IOException e) {
-        MessagesEx.error(getProject(), e.getMessage());
+        MessagesEx.error(getProject(), e.getMessage()).showLater();
       }
     }
     else {

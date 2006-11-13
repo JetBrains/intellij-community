@@ -11,10 +11,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -26,10 +28,12 @@ public class RenameFileFix implements IntentionAction {
     myNewName = newName;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("rename.file.fix");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("rename.file.fix");
   }
@@ -52,9 +56,8 @@ public class RenameFileFix implements IntentionAction {
       vFile.rename(file.getManager(), newName);
     }
     catch(IOException e){
-      throw new IncorrectOperationException(null,e);
+      MessagesEx.error(project, e.getMessage()).showNow();
     }
-
     DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
   }
 
