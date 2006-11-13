@@ -19,12 +19,11 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 
 /**
  * @author Vladimir Kondratyev
  */
-public final class ToolWindowsGroup extends ActionGroup{
+public final class ToolWindowsGroup extends ActionGroup {
   private static final HashMap<String, MyDescriptor> ourId2Text;
   static{
     ourId2Text = new HashMap<String, MyDescriptor>();
@@ -40,15 +39,14 @@ public final class ToolWindowsGroup extends ActionGroup{
     ourId2Text.put(ToolWindowId.HIERARCHY, new MyDescriptor(IdeBundle.message("action.toolwindow.hierarchy"), IconLoader.getIcon("/general/toolWindowHierarchy.png")));
     ourId2Text.put(ToolWindowId.TODO_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.todo"), IconLoader.getIcon("/general/toolWindowTodo.png")));
     ourId2Text.put(ToolWindowId.INSPECTION, new MyDescriptor(IdeBundle.message("action.toolwindow.inspection"), IconLoader.getIcon("/general/toolWindowInspection.png")));
-    ourId2Text.put(ToolWindowId.ASPECTS_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.aspects"), IconLoader.getIcon("/general/toolWindowInspection.png")));
     ourId2Text.put(ToolWindowId.FAVORITES_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.favorites"), IconLoader.getIcon("/general/toolWindowFavorites.png")));
   }
 
-  private final ArrayList<AnAction> myChildren;
+  private final ArrayList<ActivateToolWindowAction> myChildren;
   private final MyToolWindowManagerListener myToolWindowManagerListener;
 
   public ToolWindowsGroup(ProjectManager projectManager){
-    myChildren = new ArrayList<AnAction>();
+    myChildren = new ArrayList<ActivateToolWindowAction>();
     myToolWindowManagerListener=new MyToolWindowManagerListener();
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
   }
@@ -62,9 +60,8 @@ public final class ToolWindowsGroup extends ActionGroup{
    */
   private void addActionForToolWindow(final String id){
     // Check that tool window with the same ID isn't already registered
-    for(Iterator i=myChildren.iterator();i.hasNext();){
-      ActivateToolWindowAction action=(ActivateToolWindowAction)i.next();
-      if(action.getToolWindowId().equals(id)){
+    for (final ActivateToolWindowAction action : myChildren) {
+      if (action.getToolWindowId().equals(id)) {
         return;
       }
     }
@@ -98,23 +95,20 @@ public final class ToolWindowsGroup extends ActionGroup{
     }
   }
 
-  private static final class MyActionComparator implements Comparator{
+  private static final class MyActionComparator implements Comparator<ActivateToolWindowAction> {
     public static final MyActionComparator ourInstance=new MyActionComparator();
 
     private MyActionComparator(){}
 
-    public int compare(Object obj1,Object obj2){
-      ActivateToolWindowAction action1=(ActivateToolWindowAction)obj1;
+    public int compare(ActivateToolWindowAction action1, ActivateToolWindowAction action2){
       int mnemonic1=ActivateToolWindowAction.getMnemonicForToolWindow(action1.getToolWindowId());
-
-      ActivateToolWindowAction action2=(ActivateToolWindowAction)obj2;
       int mnemonic2=ActivateToolWindowAction.getMnemonicForToolWindow(action2.getToolWindowId());
 
       if(mnemonic1!=-1&&mnemonic2==-1){
         return -1;
       }else if(mnemonic1==-1&&mnemonic2!=-1){
         return 1;
-      }else if(mnemonic1!=-1&&mnemonic2!=-1){
+      }else if(mnemonic1!=-1){
         return mnemonic1-mnemonic2;
       }else{ // Both actions have no mnemonic, therefore they are sorted alphabetically
         return action1.getToolWindowId().compareToIgnoreCase(action2.getToolWindowId());

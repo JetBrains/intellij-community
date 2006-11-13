@@ -31,10 +31,7 @@ public interface ToolWindowId {
   String HIERARCHY = UIBundle.message("tool.window.name.hierarchy");
   String INSPECTION = UIBundle.message("tool.window.name.inspection");
   String TODO_VIEW = UIBundle.message("tool.window.name.todo");
-  String ASPECTS_VIEW = UIBundle.message("tool.window.name.aspects");
-  String HOT_SWAP_VIEW = UIBundle.message("tool.window.name.hot.swap");
   String DEPENDENCIES = UIBundle.message("tool.window.name.dependency.viewer");
   String VCS = UIBundle.message("tool.window.name.version.control");
   String MODULES_DEPENDENCIES = UIBundle.message("tool.window.name.module.dependencies");
-  String SCOPE_VIEW = "Scope View";
 }

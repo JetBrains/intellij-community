@@ -35,6 +35,9 @@ public class ActivateToolWindowAction extends AnAction {
     ToolWindow toolWindow=ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId);
     presentation.setEnabled(toolWindow!=null&&toolWindow.isAvailable());
     presentation.setVisible(toolWindow!=null);
+    if (toolWindow != null) {
+      presentation.setIcon(toolWindow.getIcon());
+    }
   }
 
   public void actionPerformed(AnActionEvent e){
