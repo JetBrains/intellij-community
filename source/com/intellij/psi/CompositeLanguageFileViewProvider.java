@@ -390,6 +390,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     return new LanguageExtension[0];
   }
 
+  protected void removeFile(Language lang) {
+    myRoots.remove(lang);
+  }
+
   @Nullable
   protected PsiFile createFile(Language lang) {
     final PsiFile psiFile = super.createFile(lang);
