@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.HashSet;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -94,16 +95,21 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   public boolean isEnumerated() {
     final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(myTag);
 
-    return elementDescriptor != null &&
-           elementDescriptor.getType() instanceof ComplexTypeDescriptor &&
-           getEnumeratedValues(elementDescriptor).length != 0;
+    if (elementDescriptor != null &&
+        elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
+      final EnumerationData data = getEnumeratedValuesImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration());
+      return data != null && data.exaustive;
+    }
+
+    return false;
   }
 
   public String[] getEnumeratedValues() {
     final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(myTag);
 
     if (elementDescriptor!=null && elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
-      return getEnumeratedValues(elementDescriptor);
+      final EnumerationData data = getEnumeratedValuesImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration());
+      return data != null? data.enumeratedValues:ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     final String namespacePrefix = myTag.getNamespacePrefix();
@@ -112,28 +118,35 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     );
 
     if (type != null) {
-      return getEnumeratedValuesImpl(type);
+      final EnumerationData data = getEnumeratedValuesImpl(type);
+      return data != null? data.enumeratedValues:ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  private String[] getEnumeratedValuesImpl(final XmlTag declaration) {
+  static class EnumerationData {
+    final String[] enumeratedValues;
+    final boolean exaustive;
+
+    EnumerationData(@NotNull String[] _values, boolean _exaustive) {
+      enumeratedValues = _values;
+      exaustive = _exaustive;
+    }
+  }
+
+  private static EnumerationData getEnumeratedValuesImpl(final XmlTag declaration) {
     if ("boolean".equals(declaration.getAttributeValue("name"))) {
-      return new String[] {"true", "false"};
+      return new EnumerationData(new String[] {"true", "false"}, true);
     }
 
     final HashSet<String> variants = new HashSet<String>();
-    XmlUtil.collectEnumerationValues(declaration,variants);
+    final boolean exaustive = XmlUtil.collectEnumerationValues(declaration, variants);
 
     if (variants.size() > 0) {
-      return variants.toArray(new String[variants.size()]);
+      return new EnumerationData(variants.toArray(new String[variants.size()]), exaustive);
     }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-
-  private String[] getEnumeratedValues(final XmlElementDescriptorImpl elementDescriptor) {
-    return getEnumeratedValuesImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration());
+    return null;
   }
 
   public String getName(PsiElement context){

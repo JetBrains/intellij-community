@@ -754,7 +754,8 @@ public class XmlUtil {
     return elementDescriptor;
   }
 
-  public static void collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+    boolean exaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {
       @NonNls final String localName = tag.getLocalName();
@@ -764,14 +765,15 @@ public class XmlUtil {
         if (attributeValue != null) variants.add(attributeValue);
       }
       else if (localName.equals("union")) {
-        variants.clear();
-        return;
+        exaustiveEnum = false;
+        collectEnumerationValues(tag, variants);
       }
       else if (!localName.equals("annotation")) {
         // don't go into annotation
-        collectEnumerationValues(tag, variants);
+        exaustiveEnum &= collectEnumerationValues(tag, variants);
       }
     }
+    return exaustiveEnum;
   }
 
   public static XmlTag createChildTag(final XmlTag xmlTag,
