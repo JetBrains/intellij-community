@@ -41,7 +41,7 @@ public class DomElementsHighlightingUtil {
   };
 
   public static List<ProblemDescriptor> createProblemDescriptors(final DomElementProblemDescriptor problemDescriptor) {
-    final ProblemHighlightType type = problemDescriptor instanceof DomElementResolveProblemDescriptor ? ProblemHighlightType.LIKE_UNKNOWN_SYMBOL : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, ProblemDescriptor>() {
       public ProblemDescriptor fun(final Pair<TextRange, PsiElement> s) {
         final PsiElement element = s.second;
@@ -58,7 +58,17 @@ public class DomElementsHighlightingUtil {
       }
     });
   }
-  
+
+  private static ProblemHighlightType getProblemHighlightType(final DomElementProblemDescriptor problemDescriptor) {
+    if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
+      final TextRange range = ((DomElementResolveProblemDescriptor)problemDescriptor).getPsiReference().getRangeInElement();
+      if (range.getStartOffset() != range.getEndOffset()) {
+        return ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
+      }
+    }
+    return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+  }
+
   public static List<Annotation> createAnnotations(final DomElementProblemDescriptor problemDescriptor) {
 
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, Annotation>() {
@@ -85,7 +95,7 @@ public class DomElementsHighlightingUtil {
       final TextRange referenceRange = reference.getRangeInElement();
       final TextRange errorRange;
       if (referenceRange.getStartOffset() == referenceRange.getEndOffset()) {
-        errorRange = element.getTextRange();
+        errorRange = TextRange.from(referenceRange.getStartOffset() + startOffset, 1);
       } else {
         errorRange = referenceRange.shiftRight(startOffset);
       }
