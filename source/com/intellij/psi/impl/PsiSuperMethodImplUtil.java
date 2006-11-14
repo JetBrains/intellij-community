@@ -86,15 +86,22 @@ public class PsiSuperMethodImplUtil {
       final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, substitutor);
       final HierarchicalMethodSignatureImpl signatureHierarchical = new HierarchicalMethodSignatureImpl(signature);
       final HierarchicalMethodSignatureImpl existing = signatures.get(signature);
-      if (existing != null &&
-          !existing.getMethod().isConstructor() &&
-          !aClass.equals(existing.getMethod().getContainingClass())) {
-        existing.addSuperSignature(signatureHierarchical);
-        toRestore.put(signature, existing);
+      if (existing != null) {
+        final PsiMethod hisMethod = existing.getMethod();
+        final PsiClass hisClass = hisMethod.getContainingClass();
+        if (!hisMethod.isConstructor() && !aClass.equals(hisClass) &&
+            //only public methods from java.lang.Object are considered to be overridden in interface
+            !(hisClass.isInterface() && "java.lang.Object".equals(aClass.getQualifiedName()) && !method.hasModifierProperty(PsiModifier.PUBLIC))) {
+          existing.addSuperSignature(signatureHierarchical);
+          toRestore.put(signature, existing);
+        } else {
+          result.put(signature, signatureHierarchical);
+        }
       }
       else {
         result.put(signature, signatureHierarchical);
       }
+
       signatures.put(signature, signatureHierarchical);
     }
 
