@@ -416,9 +416,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       nextSibling = nextSibling.getNextSibling();
     }
 
-    if (nextSibling == null) {
-      final PsiFile containingFile = element.getContainingFile();
+    final PsiFile containingFile = element.getContainingFile();
 
+    if (nextSibling == null) {
       if (PsiUtil.isInJspFile(containingFile)) {
         final JspxFileViewProvider viewProvider = (JspxFileViewProvider)containingFile.getViewProvider();
         nextSibling = viewProvider.findElementAt(element.getTextOffset() + 1, viewProvider.getTemplateDataLanguage());
@@ -459,6 +459,12 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         prevLeaf.getTextRange().getEndOffset() != element.getContainingFile().getTextLength()
        ) {
       return true;
+    }
+
+    PsiElement grandPrevLeaf = prevLeaf != null ? PsiTreeUtil.prevLeaf(prevLeaf):null;
+    if (grandPrevLeaf != null && containingFile.getFileType() == StdFileTypes.JSPX) {
+      final ELExpressionHolder languageElement = PsiTreeUtil.getParentOfType(grandPrevLeaf, ELExpressionHolder.class);
+      if (languageElement != null) return true;
     }
 
     return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null || (nextIsOuterLanguageElement && prevLeaf == null);
