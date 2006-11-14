@@ -23,6 +23,7 @@ import com.intellij.idea.LoggerFactory;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
+import com.intellij.jsp.impl.JspNsDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -46,6 +47,7 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaDataBase;
@@ -54,6 +56,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -1236,6 +1239,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         Arrays.sort(possibleTldUris);
         int i = 0;
+        final String localName = tag.getLocalName();
 
         for(String uri:possibleTldUris) {
           if (pi != null) {
@@ -1245,7 +1249,22 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           }
 
           final XmlFile tldFileByUri = instance.getTldFileByUri(uri, jspFile);
+          final boolean[] wordFound = new boolean[1];
+          IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
+            public void run(char[] chars, int start, int end) {
+              if (end - start != localName.length() || wordFound[0]) return;
+              for(int i = 0; i < localName.length(); ++i) {
+                if (chars[start + i] != localName.charAt(i)) return;
+              }
+              wordFound[0] = true;
+            }
+          };
+
           if (tldFileByUri == null) continue;
+          final CharSequence contents = tldFileByUri.getViewProvider().getContents();
+          wordFound[0] = false;
+          IdTableBuilding.scanWords(wordProcessor, CharArrayUtil.fromSequence(contents), 0, contents.length());
+          if (!wordFound[0]) continue;
           final PsiMetaDataBase metaData = tldFileByUri.getDocument().getMetaData();
 
           if (metaData instanceof TldDescriptor) {
@@ -1253,6 +1272,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               possibleUris.add(uri);
             }
           }
+        }
+
+        if (file.getFileType() == StdFileTypes.JSPX && possibleUris.size() == 0) {
+          final JspManager jspManager = JspManager.getInstance(file.getProject());
+          final XmlElementDescriptor descriptor = ((JspNsDescriptor)jspManager.getActionsLibrary()).getElementDescriptor(localName, XmlUtil.JSP_URI);
+          if (descriptor != null) possibleUris.add(XmlUtil.JSP_URI);
         }
       }
 
@@ -1292,7 +1317,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         file,
         project,
         taglib,
-        !(file instanceof JspFile) || file.getFileType() == StdFileTypes.JSPX
+        !(file instanceof JspFile)// || file.getFileType() == StdFileTypes.JSPX
       );
 
       if (namespaces.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -1335,7 +1360,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           createPopup().
           showInBestPositionFor(editor);
       } else {
-        String defaultNs = taglib ? XmlUtil.JSTL_CORE_URIS[0]:MY_DEFAULT_XML_NS;
+        String defaultNs = ApplicationManager.getApplication().isUnitTestMode() ? (taglib ? XmlUtil.JSTL_CORE_URIS[0]:MY_DEFAULT_XML_NS):"";
         final XmlAttribute xmlAttribute = insertNsDeclaration(file, namespaces.length > 0 ? namespaces[0] : defaultNs, project);
 
         if (namespaces.length == 0) {
@@ -1346,7 +1371,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             project,
             new Runnable() {
               public void run() {
-                editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+                if (valueToken instanceof XmlToken &&
+                    ((XmlToken)valueToken).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+                   ) {
+                  editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+                }
                 editor.getCaretModel().moveToOffset(textRange.getStartOffset());
               }
             },
