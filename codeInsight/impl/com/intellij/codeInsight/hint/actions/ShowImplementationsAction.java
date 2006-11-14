@@ -200,9 +200,7 @@ public class ShowImplementationsAction extends AnAction {
     };
 
     final PsiElement[] handlerImplementations = handler.searchImplementations(editor, file, element, true);
-    if (handlerImplementations != null && handlerImplementations.length > 0) {
-      return handlerImplementations;
-    }
+    if (handlerImplementations.length > 0) return handlerImplementations;
 
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) {

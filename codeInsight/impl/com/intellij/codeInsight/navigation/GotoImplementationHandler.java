@@ -26,6 +26,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GotoImplementationHandler implements CodeInsightActionHandler {
   protected interface ResultsFilter {
     boolean acceptClass(PsiClass aClass);
@@ -40,23 +42,25 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
                 | TargetElementUtil.THIS_ACCEPTED
                 | TargetElementUtil.SUPER_ACCEPTED;
     final PsiElement element = TargetElementUtil.findTargetElement(editor, flags);
+    boolean isInvokedOnReferenceElement = TargetElementUtil.findTargetElement(editor, flags & ~TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED) == null;
 
-    PsiElement[] result = searchImplementations(editor, file, element, false);
-    if (result != null && result.length != 0) {
+    PsiElement[] result = searchImplementations(editor, file, element, isInvokedOnReferenceElement);
+    if (result.length > 0) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.implementation");
       show(editor, element, result);
     }
   }
 
-  public PsiElement[] searchImplementations(Editor editor, PsiFile file, final PsiElement element, boolean includeSelf) {
-    if (element == null) return null;
+  @NotNull
+  public PsiElement[] searchImplementations(Editor editor, PsiFile file, final PsiElement element, final boolean includeSelf) {
+    if (element == null) return PsiElement.EMPTY_ARRAY;
     final PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         result[0] = DefinitionsSearch.search(element).toArray(PsiElement.EMPTY_ARRAY);
       }
     }, CodeInsightBundle.message("searching.for.implementations"), true, element.getProject())) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
 
     if (result[0] != null && result[0].length > 0) {
@@ -138,10 +142,6 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
       }
     }, psiClass, psiClass.getUseScope(), true);
 
-    if (!psiClass.isInterface()) {
-      list.add(psiClass);
-    }
-
     return list.toArray(new PsiClass[list.size()]);
   }
 
@@ -170,10 +170,6 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
 
     getOverridingMethods(method, result);
-    if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      result.add(0, method);
-    }
-
     return result.toArray(new PsiMethod[result.size()]);
   }
 
