@@ -15,14 +15,13 @@
  */
 package com.intellij.uiDesigner.compiler;
 
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
-import org.objectweb.asm.Type;
 import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -31,7 +30,7 @@ import java.awt.*;
  */
 public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type ourFontType = Type.getType(Font.class);
-  private static final Type ourUIManagerType = Type.getType(UIManager.class);
+  private static final Type ourUIManagerType = Type.getType("Ljavax/swing/UIManager;");
   private static final Type ourObjectType = Type.getType(Object.class);
   private static final Type ourStringType = Type.getType(String.class);
 
