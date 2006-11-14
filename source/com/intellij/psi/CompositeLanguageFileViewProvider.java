@@ -209,7 +209,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     for (Map.Entry<Language, PsiFile> entry : myRoots.entrySet()) {
       final PsiFile psiFile = entry.getValue();
       final Language updatedLanguage = entry.getKey();
-      if (languagesToSkip.contains(updatedLanguage)) continue;
+      if (languagesToSkip.contains(updatedLanguage) || isNotRelevantLanguageDueToContentChange(updatedLanguage)) continue;
       Set<OuterLanguageElement> outerSet = myOuterLanguageElements.get(psiFile);
       if (outerSet == null) // not parsed yet
       {
@@ -304,6 +304,10 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     }
   }
 
+  protected boolean isNotRelevantLanguageDueToContentChange(final Language updatedLanguage) {
+    return false;
+  }
+
   private Set<OuterLanguageElement> recalcOuterElements(final PsiFile psiFile) {
     psiFile.accept(new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -392,6 +396,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   protected void removeFile(Language lang) {
     myRoots.remove(lang);
+    myOuterLanguageElements.remove(lang);
   }
 
   @Nullable
