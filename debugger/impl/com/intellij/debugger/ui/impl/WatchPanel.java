@@ -7,22 +7,20 @@ package com.intellij.debugger.ui.impl;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
-import com.intellij.debugger.impl.DebuggerStateManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Enumeration;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class WatchPanel extends DebuggerPanel {
   @NonNls private static final String HELP_ID = "debugging.debugWatches";
@@ -49,7 +47,7 @@ public abstract class WatchPanel extends DebuggerPanel {
       }
     }
 
-    rebuildWhenVisible(event);
+    rebuildIfVisible();
   }
 
   protected ActionPopupMenu createPopupMenu() {

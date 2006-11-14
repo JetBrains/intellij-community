@@ -20,11 +20,12 @@ import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,8 +33,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NonNls;
 
 public class FramePanel extends DebuggerPanel implements DataProvider{
   private JComboBox myThreadsCombo;
@@ -75,13 +74,13 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     });
   }
 
-  protected void rebuild(int event) {
+  protected void rebuild() {
     myThreadsCombo.removeAllItems();
     myFramesCombo.removeAllItems();
 
     getContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramePanelCommand());
 
-    super.rebuild(event);
+    super.rebuild();
   }
 
   protected DebuggerTree createTreeView() {

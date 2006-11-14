@@ -27,8 +27,7 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
   private final Project myProject;
   private final DebuggerTree myTree;
   private final DebuggerStateManager myStateManager;
-  private int myEvent = DebuggerSession.EVENT_REFRESH;
-  private boolean myNeedsRefresh = true;
+  private volatile boolean myRefreshNeeded = true;
   private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   public DebuggerPanel(Project project, DebuggerStateManager stateManager) {
@@ -71,50 +70,42 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
   protected abstract DebuggerTree createTreeView();
 
   protected void changeEvent(DebuggerContextImpl newContext, int event) {
-    if(newContext.getDebuggerSession() == null) return;
-
-    rebuildWhenVisible(event);
+    if (newContext.getDebuggerSession() != null) {
+      rebuildIfVisible();
+    }
   }
 
-  protected boolean shouldRebuildNow() {
+  protected boolean isViewVisible() {
     return true;
   }
 
-  public boolean isNeedsRefresh() {
-    return myNeedsRefresh;
-  }
-
-  public final void rebuildWhenVisible() {
-    rebuildWhenVisible(myEvent);
-  }
-
-  protected final void rebuildWhenVisible(int event) {
-    myEvent = event;
-    if(shouldRebuildNow()) {
-      myNeedsRefresh = false;
-      scheduleRebuild(event);
-    }
-    else {
-      myNeedsRefresh = true;
-    }
+  public boolean isRefreshNeeded() {
+    return myRefreshNeeded;
   }
 
   private final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private void scheduleRebuild(final int event) {
-    myRebuildAlarm.cancelAllRequests();
-    myRebuildAlarm.addRequest(new Runnable() {
-      public void run() {
-        try {
-          rebuild(event);
+
+  public final void rebuildIfVisible() {
+    if(isViewVisible()) {
+      myRefreshNeeded = false;
+      myRebuildAlarm.cancelAllRequests();
+      myRebuildAlarm.addRequest(new Runnable() {
+        public void run() {
+          try {
+            rebuild();
+          }
+          catch (VMDisconnectedException e) {
+            // ignored
+          }
         }
-        catch (VMDisconnectedException e) {
-          // ignored
-        }
-      }
-    }, 100);
+      }, 100);
+    }
+    else {
+      myRefreshNeeded = true;
+    }
   }
 
-  protected void rebuild(int event) {
+  protected void rebuild() {
     DebuggerSession debuggerSession = getContext().getDebuggerSession();
     if(debuggerSession == null) {
       return;
@@ -132,6 +123,7 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
   }
 
   public void dispose() {
+    myRebuildAlarm.dispose();
     for (Disposable disposable : myDisposables) {
       disposable.dispose();
     }

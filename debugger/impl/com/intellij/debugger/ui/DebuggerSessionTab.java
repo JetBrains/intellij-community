@@ -150,20 +150,20 @@ public class DebuggerSessionTab implements LogConsoleManager {
     }
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager()) {
-      protected boolean shouldRebuildNow() {
+      protected boolean isViewVisible() {
         return myViewsContentManager.getSelectedContent().getComponent() == this;
       }
     };
     updateWatchTreeTab();
 
     myFramePanel = new FramePanel(getProject(), getContextManager()) {
-      protected boolean shouldRebuildNow() {
+      protected boolean isViewVisible() {
         return myViewsContentManager.getSelectedContent().getComponent() == this;
       }
     };
 
     myThreadsPanel = new ThreadsPanel(getProject(), getContextManager()) {
-      protected boolean shouldRebuildNow() {
+      protected boolean isViewVisible() {
         return myViewsContentManager.getSelectedContent().getComponent() == this;
       }
     };
@@ -196,8 +196,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
           JComponent component = selectedContent.getComponent();
           if (component instanceof DebuggerPanel) {
             DebuggerPanel panel = (DebuggerPanel)component;
-            if (panel.isNeedsRefresh()) {
-              panel.rebuildWhenVisible();
+            if (panel.isRefreshNeeded()) {
+              panel.rebuildIfVisible();
             }
           }
         }

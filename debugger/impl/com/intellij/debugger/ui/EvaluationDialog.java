@@ -116,6 +116,10 @@ public abstract class EvaluationDialog extends DialogWrapper {
       setOKActionEnabled(true);
     }
     getEditor().addRecent(getCodeToEvaluate());
+
+    final DebuggerStateManager manager = myEvaluationPanel.getContextManager();
+    final DebuggerContextImpl context = manager.getContext();
+    manager.setState(context, context.getDebuggerSession().getState(), DebuggerSession.EVENT_REFRESH, null);
   }
 
   protected TextWithImports getCodeToEvaluate() {

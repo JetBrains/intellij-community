@@ -27,7 +27,7 @@ public class InspectDialog extends DialogWrapper implements DebuggerContextListe
     init();
 
     myDebuggerContext.getDebuggerSession().getContextManager().addListener(this);
-    getInspectView().rebuildWhenVisible();
+    getInspectView().rebuildIfVisible();
   }
 
   protected JComponent createCenterPanel() {
