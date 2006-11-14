@@ -5,7 +5,7 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 
 import java.util.ArrayList;
 
-class DiffFragmentsProcessor {
+public class DiffFragmentsProcessor {
   public ArrayList<LineFragment> process(DiffFragment[] fragments) {
     LineFragmentsCollector collector = new LineFragmentsCollector();
     for (int i = 0; i < fragments.length; i++) {

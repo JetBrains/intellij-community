@@ -24,6 +24,7 @@ public class SessionDialog extends DialogWrapper {
   private final String myCommitMessage;
 
   private final JPanel myCenterPanel = new JPanel(new BorderLayout());
+  private JComponent myConfigurationComponent;
 
   public SessionDialog(String title, Project project,
                        CommitSession session, List<Change> changes,
@@ -32,6 +33,7 @@ public class SessionDialog extends DialogWrapper {
     mySession = session;
     myChanges = changes;
     myCommitMessage = commitMessage;
+    myConfigurationComponent = mySession.getAdditionalConfigurationUI();
     setTitle(title);
     init();
     updateButtons();
@@ -40,8 +42,13 @@ public class SessionDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    myCenterPanel.add(mySession.getAdditionalConfigurationUI(), BorderLayout.CENTER);
+    myCenterPanel.add(myConfigurationComponent, BorderLayout.CENTER);
     return myCenterPanel;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myConfigurationComponent;
   }
 
   private void updateButtons() {

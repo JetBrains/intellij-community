@@ -93,6 +93,10 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>
