@@ -70,6 +70,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
 
   private FileViewProvider myViewProvider = null;
 
+  @NotNull
   public FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
@@ -136,14 +137,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
     return myPhysical;
   }
 
-  /**
-   * @fabrique
-   */
-  public void setPhysical(boolean physical) {
-    myPhysical = physical;
-  }
-
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitCodeFragment(this);
   }
 
@@ -184,16 +178,14 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
     if (i == ElementType.TYPE_TEXT || i == ElementType.EXPRESSION_STATEMENT || i == ElementType.REFERENCE_TEXT) {
       return true;
     } else {
+      processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
+      if (lastParent == null)
+      // Parent element should not see our vars
       {
-        processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-        if (lastParent == null)
-        // Parent element should not see our vars
-        {
-          return true;
-        }
-
-        return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+        return true;
       }
+
+      return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
     }
   }
 

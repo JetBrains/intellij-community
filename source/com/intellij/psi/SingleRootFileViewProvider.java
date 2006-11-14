@@ -113,8 +113,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
   }
 
-  boolean myPostProcessReformafingStatus = false;
-
   public void beforeContentsSynchronized() {
   }
 
@@ -182,7 +180,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
   }
 
-  protected PsiFile createFile() {
+  private PsiFile createFile() {
     final VirtualFile vFile = getVirtualFile();
 
     try {
@@ -332,8 +330,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public FileViewProvider clone() {
-    return new SingleRootFileViewProvider(getManager(), new LightVirtualFile(getVirtualFile().getName(), getRealFileType(), getContents(),
-                                                                             getModificationStamp()), false);
+    LightVirtualFile copy = new LightVirtualFile(getVirtualFile().getName(), getRealFileType(), getContents(), getModificationStamp());
+    copy.setCharset(getVirtualFile().getCharset());
+    return new SingleRootFileViewProvider(getManager(), copy, false);
   }
 
   public PsiReference findReferenceAt(final int offset) {
@@ -365,7 +364,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  protected static PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {
+  private static PsiReference findReferenceAt(final PsiFile psiFile, final int offset) {
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
     while (child != null) {

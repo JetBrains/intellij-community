@@ -156,12 +156,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   private static boolean isWritable(PhysicalFile physicalFile, boolean isDirectory) {
-    if (Patches.ALL_FOLDERS_ARE_WRITABLE && isDirectory) {
-      return true;
-    }
-    else {
-      return physicalFile.canWrite();
-    }
+    return Patches.ALL_FOLDERS_ARE_WRITABLE && isDirectory || physicalFile.canWrite();
   }
 
   public boolean isDirectory() {
@@ -428,7 +423,7 @@ public class VirtualFileImpl extends VirtualFile {
     refresh(asynchronous, recursive, false, postRunnable);
   }
 
-  public boolean nameEquals(@NotNull String name) {
+  protected boolean nameEquals(@NotNull String name) {
     return SystemInfo.isFileSystemCaseSensitive ? getName().equals(name) : getName().equalsIgnoreCase(name);
   }
 
@@ -664,6 +659,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   void setName(String name) {
+    //noinspection RedundantStringConstructorCall
     myName = new String(name);
   }
 

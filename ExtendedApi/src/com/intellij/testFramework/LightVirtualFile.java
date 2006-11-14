@@ -4,7 +4,10 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.LocalTimeCounter;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
@@ -15,31 +18,34 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 
 public class LightVirtualFile extends VirtualFile {
   private FileType myFileType;
-  protected CharSequence myContent = "";
-  protected String myName = "";
-  public long myModStamp = LocalTimeCounter.currentTime();
+  private CharSequence myContent = "";
+  private String myName = "";
+  private long myModStamp = LocalTimeCounter.currentTime();
   private boolean myIsWritable = true;
   private VirtualFileListener myListener = null;
-  @NonNls private static final Charset CHARSET = Charset.forName(CharsetToolkit.UTF8);
 
   public LightVirtualFile() {
+    this("");
   }
 
   public LightVirtualFile(@NonNls String name) {
-    myName = name;
+    this(name, "");
   }
 
   public LightVirtualFile(@NonNls String name, CharSequence content) {
-    myName = name;
-    myContent = content;
+    this(name, null, content, LocalTimeCounter.currentTime());
   }
 
   public LightVirtualFile(final String name, final FileType fileType, final CharSequence text) {
     this(name, fileType, text, LocalTimeCounter.currentTime());
+  }
+
+  public LightVirtualFile(VirtualFile original, final CharSequence text, long modificationStamp) {
+    this(original.getName(), original.getFileType(), text, modificationStamp);
+    setCharset(original.getCharset());
   }
 
   public LightVirtualFile(final String name, final FileType fileType, final CharSequence text, final long modificationStamp) {
@@ -196,10 +202,6 @@ public class LightVirtualFile extends VirtualFile {
     }
   }
 
-  public VirtualFile self() {
-    return this;
-  }
-
   public void setWritable(boolean b) {
     myIsWritable = b;
   }
@@ -210,9 +212,5 @@ public class LightVirtualFile extends VirtualFile {
 
   public CharSequence getContent() {
     return myContent;
-  }
-
-  public Charset getCharset() {
-    return CHARSET;
   }
 }

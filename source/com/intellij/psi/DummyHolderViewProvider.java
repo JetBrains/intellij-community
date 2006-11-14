@@ -26,7 +26,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   private DummyHolder myHolder;
   private PsiManager myManager;
   private final long myModificationStamp;
-  final LightVirtualFile myLightVirtualFile = new LightVirtualFile("DummyHolder");
+  private final LightVirtualFile myLightVirtualFile = new LightVirtualFile("DummyHolder");
 
   public DummyHolderViewProvider(final PsiManager manager) {
     myManager = manager;

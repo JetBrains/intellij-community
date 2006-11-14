@@ -30,10 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 
 public class CopyHandler {
-  public static final int NOT_SUPPORTED = 0;
-  public static final int CLASS = 1;
-  public static final int FILES = 2;
-  public static final int DIRECTORIES = 3;
+  private static final int NOT_SUPPORTED = 0;
+  private static final int CLASS = 1;
+  private static final int FILES = 2;
+  private static final int DIRECTORIES = 3;
 
   public static boolean canCopy(PsiElement[] elements) {
     int moveType = getCopyType(elements);
@@ -67,7 +67,7 @@ public class CopyHandler {
 
   private static boolean canCopyFiles(PsiElement[] elements) {
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(PsiUtil.isInJspFile(element)))) {
+      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element))) {
         return false;
       }
     }
@@ -266,7 +266,7 @@ public class CopyHandler {
                 element = ref.bindToElement(newClass);
                 final PsiElement parent = element.getParent();
                 if (parent instanceof PsiReferenceExpression && element.equals(((PsiReferenceExpression)parent).getQualifierExpression())) {
-                  final PsiReferenceExpression refExpr = ((PsiReferenceExpression)parent);
+                  final PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
                   final PsiElement resolved = refExpr.resolve();
                   if (resolved == null) continue;
                   final PsiReferenceExpression copy;
