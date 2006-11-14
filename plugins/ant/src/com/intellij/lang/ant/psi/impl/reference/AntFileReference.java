@@ -2,9 +2,9 @@ package com.intellij.lang.ant.psi.impl.reference;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntStructuredElement;
-import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -14,12 +14,14 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class AntFileReference extends FileReferenceBase implements AntReference {
+  @NonNls private static final String BASEDIR_PROPERTY_REFERENCE = "${basedir}";
 
   public AntFileReference(final AntFileReferenceSet set, final TextRange range, final int index, final String text) {
     super(set, range, index, text);
@@ -27,7 +29,11 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
 
   @Nullable
   protected String getText() {
-    return getElement().computeAttributeValue(super.getText());
+    final String path = super.getText();
+    if (getIndex() == 0 && path != null && path.equals(BASEDIR_PROPERTY_REFERENCE) && getFileReferenceSet().isAbsolutePathReference()) {
+      return ".";
+    }
+    return getElement().computeAttributeValue(path);
   }
 
   public AntStructuredElement getElement() {

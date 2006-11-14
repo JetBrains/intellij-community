@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -335,10 +337,18 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       }
       final VirtualFile file = getAntFile().getVirtualFile();
       String basedir = getBaseDir();
-      if (file != null && (basedir == null || ".".equals(basedir))) {
+      if (basedir == null) {
+        basedir = ".";
+      }
+      if (file != null) {
         final VirtualFile dir = file.getParent();
         if (dir != null) {
-          basedir = dir.getPath();
+          try {
+            basedir = new File(dir.getPath(), basedir).getCanonicalPath();
+          }
+          catch (IOException e) {
+            // ignore
+          }
         }
       }
       if (basedir != null) {
