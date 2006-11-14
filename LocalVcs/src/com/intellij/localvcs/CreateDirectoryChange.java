@@ -36,7 +36,7 @@ public class CreateDirectoryChange extends Change {
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doDelete(myPath);
+    root.doDelete(myId);
   }
 
   @Override

@@ -18,6 +18,7 @@ public class ChangeFileContentChange extends Change {
 
   public ChangeFileContentChange(Stream s) throws IOException {
     myPath = s.readPath();
+    myAffectedEntryIdPath = s.readIdPath();
     myNewContent = s.readString();
     myOldContent = s.readString();
   }
@@ -25,6 +26,7 @@ public class ChangeFileContentChange extends Change {
   @Override
   public void write(Stream s) throws IOException {
     s.writePath(myPath);
+    s.writeIdPath(myAffectedEntryIdPath);
     s.writeString(myNewContent);
     s.writeString(myOldContent);
   }
@@ -48,12 +50,12 @@ public class ChangeFileContentChange extends Change {
     myOldContent = affectedEntry.getContent();
     myAffectedEntryIdPath = affectedEntry.getIdPath();
 
-    root.doChangeFileContent(myPath, myNewContent);
+    root.doChangeFileContent(affectedEntry.getId(), myNewContent);
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doChangeFileContent(myPath, myOldContent);
+    root.doChangeFileContent(myAffectedEntryIdPath.getName(), myOldContent);
   }
 
   @Override

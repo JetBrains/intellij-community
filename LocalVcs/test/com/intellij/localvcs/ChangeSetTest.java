@@ -1,5 +1,6 @@
 package com.intellij.localvcs;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,43 +9,53 @@ import org.junit.Test;
 
 public class ChangeSetTest extends TestCase {
   private ChangeSet changeSet;
-  private List<Path> log;
-  private RootEntry root;
+  private ArrayList<Integer> log;
 
   @Before
   public void setUp() {
-    changeSet = cs(new CreateFileChange(null, p("file1"), null),
-                   new CreateFileChange(null, p("file2"), null),
-                   new CreateFileChange(null, p("file3"), null));
-
-    log = new ArrayList<Path>();
-    root = new RootEntry() {
-      @Override
-      protected void doCreateFile(Integer id, Path path, String content) {
-        super.doCreateFile(id, path, content);
-        log.add(path);
-      }
-
-      @Override
-      protected void doDelete(Path path) {
-        super.doDelete(path);
-        log.add(path);
-      }
-    };
+    changeSet = cs(new LoggingChange(1),
+                   new LoggingChange(2),
+                   new LoggingChange(3));
+    log = new ArrayList<Integer>();
   }
 
   @Test
   public void testApplyingIsFIFO() {
-    changeSet.applyTo(root);
-    assertElements(new Object[]{p("file1"), p("file2"), p("file3")}, log);
+    changeSet.applyTo(null);
+    assertElements(new Object[]{1, 2, 3}, log);
   }
 
   @Test
   public void testRevertingIsLIFO() {
-    changeSet.applyTo(root);
-    log.clear();
+    changeSet.revertOn(null);
+    assertElements(new Object[]{3, 2, 1}, log);
+  }
 
-    changeSet.revertOn(root);
-    assertElements(new Object[]{p("file3"), p("file2"), p("file1")}, log);
+  private class LoggingChange extends Change {
+    private Integer myId;
+
+    public LoggingChange(Integer id) {
+      myId = id;
+    }
+
+    public void applyTo(RootEntry root) {
+      log.add(myId);
+    }
+
+    public void revertOn(RootEntry root) {
+      log.add(myId);
+    }
+
+    public void write(Stream s) throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    protected List<IdPath> getAffectedEntryIdPaths() {
+      throw new UnsupportedOperationException();
+    }
+
+    public List<Difference> getDifferences(RootEntry r, Entry e) {
+      throw new UnsupportedOperationException();
+    }
   }
 }

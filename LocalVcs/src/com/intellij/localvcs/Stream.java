@@ -32,6 +32,14 @@ public class Stream {
     p.write(this);
   }
 
+  public IdPath readIdPath() throws IOException {
+    return new IdPath(this);
+  }
+
+  public void writeIdPath(IdPath p) throws IOException {
+    p.write(this);
+  }
+
   public Entry readEntry() throws IOException {
     return (Entry)readSubclass(myIs.readUTF());
   }

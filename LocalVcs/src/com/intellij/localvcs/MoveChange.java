@@ -39,13 +39,13 @@ public class MoveChange extends Change {
   @Override
   public void applyTo(RootEntry root) {
     myFromIdPath = root.getEntry(myPath).getIdPath();
-    root.doMove(myPath, myNewParent);
+    root.doMove(myFromIdPath.getName(), myNewParent);
     myToIdPath = root.getEntry(getNewPath()).getIdPath();
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doMove(getNewPath(), myPath.getParent());
+    root.doMove(myFromIdPath.getName(), myPath.getParent());
   }
 
   private Path getNewPath() {
@@ -61,9 +61,10 @@ public class MoveChange extends Change {
   public List<Difference> getDifferences(RootEntry r, Entry e) {
     if (!affects(e)) return Collections.emptyList();
 
-    if (myFromIdPath.getName().equals(e.getId()))
-      return Collections
-          .singletonList(new Difference(Difference.Kind.MODIFIED));
+    if (myFromIdPath.getName().equals(e.getId())) {
+      Difference d = new Difference(Difference.Kind.MODIFIED);
+      return Collections.singletonList(d);
+    }
 
     List<Difference> result = new ArrayList<Difference>();
 

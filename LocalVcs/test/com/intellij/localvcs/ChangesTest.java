@@ -30,8 +30,8 @@ public class ChangesTest extends TestCase {
     Change c = new CreateFileChange(1, p("file"), "content");
     c.applyTo(root);
 
-    root.doRename(p("file"), "new file");
-    root.doChangeFileContent(p("new file"), "new content");
+    root.doRename(1, "new file");
+    root.doChangeFileContent(1, "new content");
 
     List<Difference> diffs =
         c.getDifferences(root, root.getEntry(p("new file")));
@@ -118,8 +118,8 @@ public class ChangesTest extends TestCase {
     Change c = new ChangeFileContentChange(p("dir/file"), "b");
     c.applyTo(root);
 
-    root.doRename(p("dir/file"), "new file");
-    root.doChangeFileContent(p("dir/new file"), "c");
+    root.doRename(2, "new file");
+    root.doChangeFileContent(2, "c");
 
     List<Difference> d1 =
         c.getDifferences(root, root.getEntry(p("dir/new file")));
@@ -188,10 +188,13 @@ public class ChangesTest extends TestCase {
   public void testCollectingDifferencesForMoveChange() {
     root.doCreateDirectory(1, p("dir1"));
     root.doCreateDirectory(2, p("dir2"));
-    root.doCreateFile(3, p("dir1/file"), null);
+    root.doCreateFile(3, p("dir1/file"), "content");
 
     Change c = new MoveChange(p("dir1/file"), p("dir2"));
     c.applyTo(root);
+
+    root.doRename(3, "new file");
+    root.doChangeFileContent(3, "new content");
 
     List<Difference> d1 = c.getDifferences(root, root.getEntry(p("dir1")));
     assertEquals(1, d1.size());
@@ -201,9 +204,16 @@ public class ChangesTest extends TestCase {
     assertEquals(1, d2.size());
     assertTrue(d2.get(0).isCreated());
 
-    List<Difference> d3 = c.getDifferences(root, root.getEntry(p("dir2/file")));
+    List<Difference> d3 =
+        c.getDifferences(root, root.getEntry(p("dir2/new file")));
     assertEquals(1, d3.size());
     assertTrue(d3.get(0).isModified());
+    //
+    //assertEquals("file", d3.get(0).getOlderEntry().getName());
+    //assertEquals("content", d3.get(0).getOlderEntry().getContent());
+    //
+    //assertEquals("new file", d3.get(0).getCurrentEntry().getName());
+    //assertEquals("new content", d3.get(0).getCurrentEntry().getContent());
   }
 
   @Test

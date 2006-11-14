@@ -72,54 +72,63 @@ public class RootEntry extends DirectoryEntry {
     return result;
   }
 
-  protected void doCreateFile(Integer id, Path path, String content) {
+  public void doCreateFile(Integer id, Path path, String content) {
     addEntry(path.getParent(), new FileEntry(id, path.getName(), content));
   }
 
-  protected void doCreateDirectory(Integer id, Path path) {
+  public void doCreateDirectory(Integer id, Path path) {
     addEntry(path.getParent(), new DirectoryEntry(id, path.getName()));
   }
 
-  protected void doChangeFileContent(Path path, String content) {
-    Entry oldEntry = getEntry(path);
+  public void doChangeFileContent(Integer id, String content) {
+    Entry oldEntry = getEntry(id);
+
     Entry newEntry = new FileEntry(oldEntry.getId(),
-                                   path.getName(),
+                                   oldEntry.getName(),
                                    content);
 
-    removeEntry(path);
+    Path path = oldEntry.getPath();
+    removeEntry(id);
     addEntry(path.getParent(), newEntry);
   }
 
-  protected void doRename(Path path, String newName) {
-    if (newName.equals(path.getName())) return;
+  public void doRename(Integer id, String newName) {
+    Entry oldEntry = getEntry(id);
+    if (newName.equals(oldEntry.getName())) return;
 
-    Entry oldEntry = getEntry(path);
     Entry newEntry = oldEntry.renamed(newName);
 
-    removeEntry(path);
+    Path path = oldEntry.getPath();
+
+    removeEntry(id);
     addEntry(path.getParent(), newEntry);
   }
 
-  public void doMove(Path path, Path parent) {
-    Entry e = getEntry(path);
+  public void doMove(Integer id, Path parent) {
+    Entry e = getEntry(id);
 
-    removeEntry(path);
+    removeEntry(id);
     addEntry(parent, e);
   }
 
-  protected void doDelete(Path path) {
-    removeEntry(path);
+  public void doDelete(Integer id) {
+    removeEntry(id);
   }
 
   private void addEntry(Path parent, Entry entry) {
+    // todo chenge parameter from path to id
+    // todo just for testing...
+    assert entry.getId() == null || !hasEntry(entry.getId());
+
     // todo it's quite ugly
     if (parent == null) addChild(entry);
     else getEntry(parent).addChild(entry);
   }
 
-  private void removeEntry(Path path) {
-    Entry parent = path.isRoot() ? this : getEntry(path.getParent());
-    parent.removeChild(getEntry(path));
+  private void removeEntry(Integer id) {
+    Entry e = getEntry(id);
+    Entry parent = e.getParent() == null ? this : e.getParent();
+    parent.removeChild(e);
   }
 
   public void apply(ChangeSet cs) {

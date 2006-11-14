@@ -1,5 +1,6 @@
 package com.intellij.localvcs;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +10,22 @@ public class IdPath {
 
   public IdPath(Integer... parts) {
     myPath = Arrays.asList(parts);
+  }
+
+  public IdPath(Stream s) throws IOException {
+    myPath = new ArrayList<Integer>();
+
+    int count = s.readInteger();
+    while (count-- > 0) {
+      myPath.add(s.readInteger());
+    }
+  }
+
+  public void write(Stream s) throws IOException {
+    s.writeInteger(myPath.size());
+    for (Integer id : myPath) {
+      s.writeInteger(id);
+    }
   }
 
   public Integer getName() {

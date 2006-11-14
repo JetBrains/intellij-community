@@ -29,6 +29,13 @@ public class StreamTest extends TestCase {
   }
 
   @Test
+  public void testIdPath() throws IOException {
+    IdPath p = new IdPath(1, 2, 3);
+    os.writeIdPath(p);
+    assertEquals(p, is.readIdPath());
+  }
+
+  @Test
   public void testFileEntry() throws IOException {
     Entry e = new FileEntry(42, "file", "content");
 
@@ -140,9 +147,10 @@ public class StreamTest extends TestCase {
   @Test
   public void testAppliedDeleteChange() throws IOException {
     RootEntry root = new RootEntry();
-    root.doCreateDirectory(null, p("entry"));
-    root.doCreateFile(null, p("entry/file"), "");
-    root.doCreateDirectory(null, p("entry/dir"));
+
+    root.doCreateDirectory(1, p("entry"));
+    root.doCreateFile(2, p("entry/file"), "");
+    root.doCreateDirectory(3, p("entry/dir"));
 
     Change c = new DeleteChange(p("entry"));
     c.applyTo(root);
@@ -161,7 +169,7 @@ public class StreamTest extends TestCase {
   @Test
   public void testAppliedChangeFileContentChange() throws IOException {
     RootEntry root = new RootEntry();
-    root.doCreateFile(null, p("file"), "content");
+    root.doCreateFile(1, p("file"), "content");
 
     Change c = new ChangeFileContentChange(p("file"), "new content");
     c.applyTo(root);
@@ -177,7 +185,10 @@ public class StreamTest extends TestCase {
     assertEquals("new content", result.getNewContent());
 
     assertEquals("content", result.getOldContent());
+    assertElements(new IdPath[]{idp(1)}, result.getAffectedEntryIdPaths());
   }
+
+  // todo test affected paths storing for all changes and other theirs props
 
   @Test
   public void testRenameChange() throws IOException {

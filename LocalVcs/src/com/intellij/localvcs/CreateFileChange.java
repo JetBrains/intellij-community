@@ -19,12 +19,14 @@ public class CreateFileChange extends Change {
 
   public CreateFileChange(Stream s) throws IOException {
     myPath = s.readPath();
+    myId = s.readInteger();
     myContent = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     s.writePath(myPath);
+    s.writeInteger(myId);
     s.writeString(myContent);
   }
 
@@ -44,7 +46,7 @@ public class CreateFileChange extends Change {
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doDelete(myPath);
+    root.doDelete(myId);
   }
 
   @Override

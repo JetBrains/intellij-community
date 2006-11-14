@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class RenameChange extends Change {
+  // todo remove unnecessary fields from all changes (such as path)
   private Path myPath;
   private String myNewName;
   private IdPath myAffectedEntryIdPath;
@@ -37,12 +38,12 @@ public class RenameChange extends Change {
   @Override
   public void applyTo(RootEntry root) {
     myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
-    root.doRename(myPath, myNewName);
+    root.doRename(myAffectedEntryIdPath.getName(), myNewName);
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doRename(myPath.renamedWith(myNewName), myPath.getName());
+    root.doRename(myAffectedEntryIdPath.getName(), myPath.getName());
   }
 
   @Override

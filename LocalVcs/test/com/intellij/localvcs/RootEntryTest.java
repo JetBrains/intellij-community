@@ -105,7 +105,7 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testRevertingReturnsCopy() {
-    ChangeSet cs = cs(new CreateFileChange(null, p("file"), null));
+    ChangeSet cs = cs(new CreateFileChange(1, p("file"), null));
 
     RootEntry original = new RootEntry();
     original.apply(cs);
@@ -118,7 +118,7 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testRevertingSeveralTimesOnSameSnapshot() {
-    root.apply(cs(new CreateFileChange(null, p("file"), "content")));
+    root.apply(cs(new CreateFileChange(2, p("file"), "content")));
 
     ChangeSet cs = cs(new ChangeFileContentChange(p("file"), "new content"));
     root.apply(cs);
