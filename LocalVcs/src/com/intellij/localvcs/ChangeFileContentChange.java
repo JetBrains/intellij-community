@@ -62,8 +62,14 @@ public class ChangeFileContentChange extends Change {
   }
 
   @Override
-  public List<Difference> getDifferencesFor(Entry e) {
+  public List<Difference> getDifferences(RootEntry r, Entry e) {
     if (!affects(e)) return Collections.emptyList();
-    return Collections.singletonList(new Difference(Difference.Kind.MODIFIED));
+
+    Entry current = r.getEntry(myAffectedEntryIdPath.getName());
+    Entry older = new FileEntry(null, myPath.getName(), myNewContent);
+
+    return Collections.singletonList(new Difference(Difference.Kind.MODIFIED,
+                                                    older,
+                                                    current));
   }
 }

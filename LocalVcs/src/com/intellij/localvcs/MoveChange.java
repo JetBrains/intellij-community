@@ -58,7 +58,7 @@ public class MoveChange extends Change {
   }
 
   @Override
-  public List<Difference> getDifferencesFor(Entry e) {
+  public List<Difference> getDifferences(RootEntry r, Entry e) {
     if (!affects(e)) return Collections.emptyList();
 
     if (myFromIdPath.getName().equals(e.getId()))

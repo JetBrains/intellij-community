@@ -53,8 +53,12 @@ public class CreateFileChange extends Change {
   }
 
   @Override
-  public List<Difference> getDifferencesFor(Entry e) {
+  public List<Difference> getDifferences(RootEntry r, Entry e) {
     if (!affects(e)) return Collections.emptyList();
-    return Collections.singletonList(new Difference(Difference.Kind.CREATED));
+    Entry newer = r.getEntry(myId);
+    Entry older = new FileEntry(null, myPath.getName(), myContent);
+
+    Difference d = new Difference(Difference.Kind.CREATED, older, newer);
+    return Collections.singletonList(d);
   }
 }

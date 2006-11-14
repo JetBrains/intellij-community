@@ -45,7 +45,7 @@ public class CreateDirectoryChange extends Change {
   }
 
   @Override
-  public List<Difference> getDifferencesFor(Entry e) {
+  public List<Difference> getDifferences(RootEntry r, Entry e) {
     if (!affects(e)) return Collections.emptyList();
     return Collections.singletonList(new Difference(Difference.Kind.CREATED));
   }

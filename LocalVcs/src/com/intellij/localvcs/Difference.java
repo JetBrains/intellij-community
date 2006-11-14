@@ -7,9 +7,17 @@ public class Difference {
   }
 
   private Kind myKind;
+  private Entry myOlderEntry;
+  private Entry myCurrentEntry;
 
   public Difference(Kind k) {
     myKind = k;
+  }
+
+  public Difference(Kind k, Entry olderEntry, Entry currentEntry) {
+    myKind = k;
+    myOlderEntry = olderEntry;
+    myCurrentEntry = currentEntry;
   }
 
   public boolean isCreated() {
@@ -22,5 +30,13 @@ public class Difference {
 
   public boolean isDeleted() {
     return myKind.equals(Kind.DELETED);
+  }
+
+  public Entry getOlderEntry() {
+    return myOlderEntry;
+  }
+
+  public Entry getCurrentEntry() {
+    return myCurrentEntry;
   }
 }

@@ -59,8 +59,8 @@ public class ChangeList {
     return myChangeSets.get(root.getChangeListIndex());
   }
 
-  public DifferenceList getDifferenceListFor(Entry e) {
-    return new DifferenceList(this, e);
+  public DifferenceList getDifferenceListFor(RootEntry r, Entry e) {
+    return new DifferenceList(this, r, e);
   }
 
   public void labelLastChangeSet(String label) {

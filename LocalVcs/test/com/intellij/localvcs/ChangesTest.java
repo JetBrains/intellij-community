@@ -27,13 +27,23 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testCollectingDifferencesForCreateFileChange() {
-    Change c = new CreateFileChange(1, p("file"), null);
+    Change c = new CreateFileChange(1, p("file"), "content");
     c.applyTo(root);
 
-    List<Difference> d = c.getDifferencesFor(root.getEntry(p("file")));
+    root.doRename(p("file"), "new file");
+    root.doChangeFileContent(p("new file"), "new content");
 
-    assertEquals(1, d.size());
-    assertTrue(d.get(0).isCreated());
+    List<Difference> diffs =
+        c.getDifferences(root, root.getEntry(p("new file")));
+
+    assertEquals(1, diffs.size());
+    assertTrue(diffs.get(0).isCreated());
+
+    assertEquals("file", diffs.get(0).getOlderEntry().getName());
+    assertEquals("content", diffs.get(0).getOlderEntry().getContent());
+
+    assertEquals("new file", diffs.get(0).getCurrentEntry().getName());
+    assertEquals("new content", diffs.get(0).getCurrentEntry().getContent());
   }
 
   @Test
@@ -42,7 +52,8 @@ public class ChangesTest extends TestCase {
     c.applyTo(root);
     root.doCreateFile(2, p("another file"), null);
 
-    List<Difference> d = c.getDifferencesFor(root.getEntry(p("another file")));
+    List<Difference> d =
+        c.getDifferences(root, root.getEntry(p("another file")));
     assertTrue(d.isEmpty());
   }
 
@@ -53,9 +64,12 @@ public class ChangesTest extends TestCase {
     Change c = new CreateFileChange(2, p("dir/file"), null);
     c.applyTo(root);
 
-    List<Difference> d = c.getDifferencesFor(root.getEntry(p("dir")));
-    assertEquals(1, d.size());
-    assertTrue(d.get(0).isCreated());
+    List<Difference> diffs = c.getDifferences(root, root.getEntry(p("dir")));
+    assertEquals(1, diffs.size());
+    assertTrue(diffs.get(0).isCreated());
+
+    assertEquals("file", diffs.get(0).getOlderEntry().getName());
+    assertEquals("file", diffs.get(0).getCurrentEntry().getName());
   }
 
   @Test
@@ -74,14 +88,14 @@ public class ChangesTest extends TestCase {
     Change c = new CreateDirectoryChange(3, p("dir2/dir3"));
     c.applyTo(root);
 
-    List<Difference> d1 = c.getDifferencesFor(root.getEntry(p("dir1")));
+    List<Difference> d1 = c.getDifferences(root, root.getEntry(p("dir1")));
     assertTrue(d1.isEmpty());
 
-    List<Difference> d2 = c.getDifferencesFor(root.getEntry(p("dir2")));
+    List<Difference> d2 = c.getDifferences(root, root.getEntry(p("dir2")));
     assertEquals(1, d2.size());
     assertTrue(d2.get(0).isCreated());
 
-    List<Difference> d3 = c.getDifferencesFor(root.getEntry(p("dir2/dir3")));
+    List<Difference> d3 = c.getDifferences(root, root.getEntry(p("dir2/dir3")));
     assertEquals(1, d3.size());
     assertTrue(d3.get(0).isCreated());
   }
@@ -99,18 +113,34 @@ public class ChangesTest extends TestCase {
   @Test
   public void testCollectingDifferencesForFileContentChange() {
     root.doCreateDirectory(1, p("dir"));
-    root.doCreateFile(2, p("dir/file"), null);
+    root.doCreateFile(2, p("dir/file"), "a");
 
-    Change c = new ChangeFileContentChange(p("dir/file"), null);
+    Change c = new ChangeFileContentChange(p("dir/file"), "b");
     c.applyTo(root);
 
-    List<Difference> d1 = c.getDifferencesFor(root.getEntry(p("dir/file")));
+    root.doRename(p("dir/file"), "new file");
+    root.doChangeFileContent(p("dir/new file"), "c");
+
+    List<Difference> d1 =
+        c.getDifferences(root, root.getEntry(p("dir/new file")));
     assertEquals(1, d1.size());
     assertTrue(d1.get(0).isModified());
 
-    List<Difference> d2 = c.getDifferencesFor(root.getEntry(p("dir")));
+    assertEquals("file", d1.get(0).getOlderEntry().getName());
+    assertEquals("b", d1.get(0).getOlderEntry().getContent());
+
+    assertEquals("new file", d1.get(0).getCurrentEntry().getName());
+    assertEquals("c", d1.get(0).getCurrentEntry().getContent());
+
+    List<Difference> d2 = c.getDifferences(root, root.getEntry(p("dir")));
     assertEquals(1, d2.size());
     assertTrue(d2.get(0).isModified());
+
+    assertEquals("file", d2.get(0).getOlderEntry().getName());
+    assertEquals("b", d2.get(0).getOlderEntry().getContent());
+
+    assertEquals("new file", d2.get(0).getCurrentEntry().getName());
+    assertEquals("c", d2.get(0).getCurrentEntry().getContent());
   }
 
   @Test
@@ -131,11 +161,12 @@ public class ChangesTest extends TestCase {
     Change c = new RenameChange(p("dir/file"), "new name");
     c.applyTo(root);
 
-    List<Difference> d1 = c.getDifferencesFor(root.getEntry(p("dir/new name")));
+    List<Difference> d1 =
+        c.getDifferences(root, root.getEntry(p("dir/new name")));
     assertEquals(1, d1.size());
     assertTrue(d1.get(0).isModified());
 
-    List<Difference> d2 = c.getDifferencesFor(root.getEntry(p("dir")));
+    List<Difference> d2 = c.getDifferences(root, root.getEntry(p("dir")));
     assertEquals(1, d2.size());
     assertTrue(d2.get(0).isModified());
   }
@@ -162,15 +193,15 @@ public class ChangesTest extends TestCase {
     Change c = new MoveChange(p("dir1/file"), p("dir2"));
     c.applyTo(root);
 
-    List<Difference> d1 = c.getDifferencesFor(root.getEntry(p("dir1")));
+    List<Difference> d1 = c.getDifferences(root, root.getEntry(p("dir1")));
     assertEquals(1, d1.size());
     assertTrue(d1.get(0).isDeleted());
 
-    List<Difference> d2 = c.getDifferencesFor(root.getEntry(p("dir2")));
+    List<Difference> d2 = c.getDifferences(root, root.getEntry(p("dir2")));
     assertEquals(1, d2.size());
     assertTrue(d2.get(0).isCreated());
 
-    List<Difference> d3 = c.getDifferencesFor(root.getEntry(p("dir2/file")));
+    List<Difference> d3 = c.getDifferences(root, root.getEntry(p("dir2/file")));
     assertEquals(1, d3.size());
     assertTrue(d3.get(0).isModified());
   }
@@ -183,7 +214,7 @@ public class ChangesTest extends TestCase {
     Change c = new MoveChange(p("file"), p("dir"));
     c.applyTo(root);
 
-    List<Difference> d = c.getDifferencesFor(root.getEntry(p("dir/file")));
+    List<Difference> d = c.getDifferences(root, root.getEntry(p("dir/file")));
     assertEquals(1, d.size());
     assertTrue(d.get(0).isModified());
   }
@@ -198,7 +229,7 @@ public class ChangesTest extends TestCase {
     Change c = new MoveChange(p("root/dir1/file"), p("root/dir2"));
     c.applyTo(root);
 
-    List<Difference> d = c.getDifferencesFor(root.getEntry(p("root")));
+    List<Difference> d = c.getDifferences(root, root.getEntry(p("root")));
     assertEquals(2, d.size());
     assertTrue(d.get(0).isDeleted());
     assertTrue(d.get(1).isCreated());
@@ -223,7 +254,7 @@ public class ChangesTest extends TestCase {
     Change c = new DeleteChange(p("dir/file"));
     c.applyTo(root);
 
-    List<Difference> d = c.getDifferencesFor(root.getEntry(p("dir")));
+    List<Difference> d = c.getDifferences(root, root.getEntry(p("dir")));
     assertEquals(1, d.size());
     assertTrue(d.get(0).isDeleted());
   }
