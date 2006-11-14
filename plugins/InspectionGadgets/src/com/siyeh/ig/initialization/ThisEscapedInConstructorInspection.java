@@ -62,7 +62,9 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             if(!isInInitialization){
                 return;
             }
-            if(newExpression.getClassReference() == null){
+            final PsiJavaCodeReferenceElement refElement =
+                    newExpression.getClassReference();
+            if(refElement == null){
                 return;
             }
             final PsiThisExpression thisExposed =
@@ -70,20 +72,15 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             if(thisExposed == null){
                 return;
             }
-            final PsiJavaCodeReferenceElement refElement =
-                    newExpression.getClassReference();
-            if(refElement != null){
-                final PsiClass constructorClass =
-                        (PsiClass) refElement.resolve();
-                if(constructorClass != null){
-                    // Skips inner classes and containing classes (as well as
-                    // top level package class with file-named class)
-                    final PsiFile containingFile =
-                            constructorClass.getContainingFile();
-                    if(containingFile.equals(
-                            newExpression.getContainingFile())){
-                        return;
-                    }
+            final PsiClass constructorClass = (PsiClass)refElement.resolve();
+            if(constructorClass != null){
+                // Skips inner classes and containing classes (as well as
+                // top level package class with file-named class)
+                final PsiFile containingFile =
+                        constructorClass.getContainingFile();
+                if(containingFile.equals(
+                        newExpression.getContainingFile())){
+                    return;
                 }
             }
             registerError(thisExposed);
@@ -102,7 +99,6 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             }
             final PsiExpression psiExpression =
                     getLastRightExpression(assignment);
-
             if(psiExpression == null ||
                        !(psiExpression instanceof PsiThisExpression)){
                 return;
@@ -128,7 +124,6 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             if(containingFile.equals(assignment.getContainingFile())){
                 return;
             }
-
             // Inheritance check
             final PsiClass cls = ClassUtils.getContainingClass(assignment);
             if(cls==null){
@@ -137,7 +132,6 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             if(cls.isInheritor(field.getContainingClass(), true)){
                 return;
             }
-
             registerError(thisExpression);
         }
 
@@ -157,7 +151,6 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             if(calledMethod.isConstructor()){
                 return;
             }
-
             final PsiClass calledMethodClass =
                     calledMethod.getContainingClass();
             final PsiClass methodClass =
@@ -206,7 +199,6 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
         @Nullable
         private static PsiExpression getLastRightExpression(
                 PsiAssignmentExpression assignmentExp){
-
             if(assignmentExp == null){
                 return null;
             }
@@ -223,7 +215,6 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
         }
 
         /**
-         * @param call
          * @return true if CallExpression is in a constructor, instance
          *         initializer, or field initializaer. Otherwise it returns
          *         false
@@ -241,10 +232,8 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             }
             final PsiClassInitializer classInitializer =
                     PsiTreeUtil.getParentOfType(call, PsiClassInitializer.class);
-            if (classInitializer != null) {
-                return !classInitializer.hasModifierProperty(PsiModifier.STATIC);
-            }
-            return false;
+            return classInitializer != null &&
+                    !classInitializer.hasModifierProperty(PsiModifier.STATIC);
         }
 
         // If there are more than two of 'this' as arguments, only marks the
