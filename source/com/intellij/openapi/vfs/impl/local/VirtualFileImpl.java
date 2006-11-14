@@ -411,8 +411,7 @@ public class VirtualFileImpl extends VirtualFile {
             LOG.debug("Executing request:" + this);
           }
 
-          ApplicationManager.getApplication().runReadAction(runnable);
-
+          runnable.run();
           endTask.run();
         }
       };
