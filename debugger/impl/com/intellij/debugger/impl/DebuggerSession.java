@@ -454,7 +454,7 @@ public class DebuggerSession {
   /*Presentation*/
 
   public void showExecutionPoint() {
-    getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, getSuspendContext()), STATE_PAUSED, EVENT_REFRESH, null);
+    getContextManager().setState(DebuggerContextUtil.createDebuggerContext(this, getSuspendContext()), STATE_PAUSED, EVENT_REFRESH, null);
   }
 
   public void refresh() {

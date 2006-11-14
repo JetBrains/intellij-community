@@ -49,7 +49,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class PositionHighlighter {
-  public static final Key<Boolean> HIGHLIGHTER_USERDATA_KEY = new Key<Boolean>("HIGHLIGHTER_USERDATA_KEY");
+  private static final Key<Boolean> HIGHLIGHTER_USERDATA_KEY = new Key<Boolean>("HIGHLIGHTER_USERDATA_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.PositionHighlighter");
   private final Project myProject;
   private DebuggerContextImpl myContext = DebuggerContextImpl.EMPTY_CONTEXT;
