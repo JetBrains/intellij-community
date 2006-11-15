@@ -31,6 +31,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.ArrayList;
@@ -412,18 +413,24 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return true;
   }
 
+  @Nullable
   private JavaResolveResult[] getGuess(final String name){
-    final Map<String,SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
-    final Reference<JavaResolveResult[]> ref = guessForFile != null ? guessForFile.get(name) : null;
+    synchronized (myGuessCache) {
+      final Map<String,SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
+      final Reference<JavaResolveResult[]> ref = guessForFile != null ? guessForFile.get(name) : null;
 
-    return ref != null ? ref.get() : null;
+      return ref != null ? ref.get() : null;
+    }
   }
 
   private void setGuess(final String name, final JavaResolveResult[] cached){
-    Map<String,SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
-    if(guessForFile == null){
-      guessForFile = new HashMap<String, SoftReference<JavaResolveResult[]>>();
-      myGuessCache.put(this, guessForFile);
+    Map<String,SoftReference<JavaResolveResult[]>> guessForFile;
+    synchronized (myGuessCache) {
+      guessForFile = myGuessCache.get(this);
+      if(guessForFile == null){
+        guessForFile = new HashMap<String, SoftReference<JavaResolveResult[]>>();
+        myGuessCache.put(this, guessForFile);
+      }
     }
     guessForFile.put(name, new SoftReference<JavaResolveResult[]>(cached));
   }
