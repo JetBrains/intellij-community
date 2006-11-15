@@ -6,6 +6,7 @@ package com.intellij.ide;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -19,5 +20,5 @@ public interface IconProvider extends ApplicationComponent {
    * @see com.intellij.openapi.util.Iconable
    */
   @Nullable
-  Icon getIcon(PsiElement element, int flags);
+  Icon getIcon(@NotNull PsiElement element, int flags);
 }
