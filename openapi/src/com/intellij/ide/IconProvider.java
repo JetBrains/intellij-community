@@ -13,6 +13,11 @@ import javax.swing.*;
  * @author peter
  */
 public interface IconProvider extends ApplicationComponent {
+  /**
+   * @param element for which icon is shown
+   * @param flags used for customizing the icon appearance. Flags are listed in {@link com.intellij.openapi.util.Iconable}
+   * @see com.intellij.openapi.util.Iconable
+   */
   @Nullable
   Icon getIcon(PsiElement element, int flags);
 }
