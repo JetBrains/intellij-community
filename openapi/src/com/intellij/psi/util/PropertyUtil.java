@@ -325,9 +325,10 @@ public class PropertyUtil {
 
       PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
       for(PsiAnnotation ann: annotations) {
-        if (AnnotationUtil.NULLABLE.equals(ann.getQualifiedName()) ||
-            AnnotationUtil.NOT_NULL.equals(ann.getQualifiedName())) {
-          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + ann.getQualifiedName(), getMethod);
+        final String qName = ann.getQualifiedName();
+        if (AnnotationUtil.NULLABLE.equals(qName) ||
+            AnnotationUtil.NOT_NULL.equals(qName)) {
+          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + qName, getMethod);
           getMethod.getModifierList().addAfter(annotation, null);
           break;
         }
@@ -361,8 +362,10 @@ public class PropertyUtil {
 
       PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
       for(PsiAnnotation ann: annotations) {
-        if (AnnotationUtil.NOT_NULL.equals(ann.getQualifiedName())) {
-          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + ann.getQualifiedName(), param);
+        final String qName = ann.getQualifiedName();
+        if (AnnotationUtil.NOT_NULL.equals(qName) ||
+            AnnotationUtil.NULLABLE.equals(qName)) {
+          final PsiAnnotation annotation = factory.createAnnotationFromText("@" + qName, param);
           param.getModifierList().addAfter(annotation, null);
           break;
         }

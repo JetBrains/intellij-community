@@ -22,9 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -40,6 +38,10 @@ public class AnnotationUtil {
    */
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
 
+  @NonNls public static final String NOT_NULL_SIMPLE_NAME = "NotNull";
+
+  @NonNls public static final String NULLABLE_SIMPLE_NAME = "Nullable";
+
   /**
    * The full qualified name of the standard NonNls annotation.
    * @since 5.0.1
@@ -48,7 +50,7 @@ public class AnnotationUtil {
   public static final String PROPERTY_KEY = "org.jetbrains.annotations.PropertyKey";
   @NonNls public static final String PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER = "resourceBundle";
 
-  private final static Set<String> ALL_ANNOTATIONS;
+  public final static Set<String> ALL_ANNOTATIONS;
 
   static {
     ALL_ANNOTATIONS = new HashSet<String>(2);
@@ -65,6 +67,24 @@ public class AnnotationUtil {
   public static boolean isNotNull(PsiModifierListOwner owner) {
     final PsiAnnotation ann = findAnnotationInHierarchy(owner, ALL_ANNOTATIONS);
     return ann != null && NOT_NULL.equals(ann.getQualifiedName());
+  }
+
+  @Nullable
+  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, String annotationName) {
+    final PsiModifierList list = listOwner.getModifierList();
+    final PsiAnnotation[] allAnnotations = list.getAnnotations();
+    for (PsiAnnotation annotation : allAnnotations) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (annotationName.equals(qualifiedName)) {
+        return annotation;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, String... annotationNames) {
+    return findAnnotation(listOwner, new HashSet<String> (Arrays.asList(annotationNames)));
   }
 
   @Nullable

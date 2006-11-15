@@ -7,8 +7,10 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.AnnotateMethodFix;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
   public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
   public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
+  public boolean REPORT_NOT_ANNOTATED_GETTER = true;
+  public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
 
   @Nullable
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -44,6 +48,41 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         }
         if ((isDeclaredNotNull || isDeclaredNullable) && TypeConversionUtil.isPrimitive(field.getType().getCanonicalText())) {
           reportPrimitiveType(holder, field.getNameIdentifier());
+        }
+        if ((isDeclaredNotNull || isDeclaredNullable)) {
+          final String anno = isDeclaredNotNull ? AnnotationUtil.NOT_NULL : AnnotationUtil.NULLABLE;
+          final String simpleName = isDeclaredNotNull ? AnnotationUtil.NOT_NULL_SIMPLE_NAME : AnnotationUtil.NULLABLE_SIMPLE_NAME;
+
+          final String propName = field.getManager().getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+          final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+          if (REPORT_NOT_ANNOTATED_GETTER) {
+            final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
+            if (getter != null) {
+              final boolean getterAnnotated = AnnotationUtil.findAnnotation(getter, AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL) != null;
+              if (!getterAnnotated) {
+                holder.registerProblem(getter.getNameIdentifier(),
+                                 InspectionsBundle.message("inspection.nullable.problems.annotated.field.getter.not.annotated", simpleName),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 new AnnotateMethodFix(anno));
+              }
+            }
+          }
+
+          if (REPORT_NOT_ANNOTATED_SETTER_PARAMETER) {
+            final PsiMethod setter = PropertyUtil.findPropertySetter(field.getContainingClass(), propName, isStatic, false);
+            if (setter != null) {
+              final PsiParameter[] parameters = setter.getParameterList().getParameters();
+              assert parameters.length == 1;
+              final PsiParameter parameter = parameters[0];
+              final boolean parameterAnnotated = AnnotationUtil.findAnnotation(parameter, AnnotationUtil.NULLABLE, AnnotationUtil.NOT_NULL) != null;
+              if (!parameterAnnotated) {
+                holder.registerProblem(parameter.getNameIdentifier(),
+                                 InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated", simpleName),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 new AnnotateQuickFix(parameter, anno));
+              }
+            }
+          }
         }
       }
 
@@ -167,6 +206,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     private JCheckBox myNMethodOverridesNN;
     private JCheckBox myNAParameterOverridesNN;
     private JPanel myPanel;
+    private JCheckBox myReportNotAnnotatedSetterParameter;
+    private JCheckBox myReportNotAnnotatedGetter;
 
     private OptionsPanel() {
       super(new BorderLayout());
@@ -189,6 +230,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       myNAMethodOverridesNN.setSelected(REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL);
       myNMethodOverridesNN.setSelected(REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL);
       myNAParameterOverridesNN.setSelected(REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL);
+      myReportNotAnnotatedGetter.setSelected(REPORT_NOT_ANNOTATED_GETTER);
+      myReportNotAnnotatedSetterParameter.setSelected(REPORT_NOT_ANNOTATED_SETTER_PARAMETER);
     }
 
     private void apply() {
@@ -196,6 +239,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = myNNParameterOverridesN.isSelected();
       REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = myNMethodOverridesNN.isSelected();
       REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = myNAParameterOverridesNN.isSelected();
+      REPORT_NOT_ANNOTATED_SETTER_PARAMETER = myReportNotAnnotatedSetterParameter.isSelected();
+      REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
     }
   }
 }
