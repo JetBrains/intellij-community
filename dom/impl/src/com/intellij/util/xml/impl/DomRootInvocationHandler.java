@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -13,6 +14,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Annotation;
 
@@ -26,7 +28,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   public DomRootInvocationHandler(final Class aClass,
                                   final XmlTag tag,
                                   final DomFileElementImpl fileElement,
-                                  @NotNull final String tagName
+                                  @NotNull final EvaluatedXmlName tagName
   ) {
     super(aClass, tag, null, tagName, fileElement.getManager());
     myParent = fileElement;
@@ -48,6 +50,11 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
 
   public boolean isValid() {
     return super.isValid() && myParent.isValid();
+  }
+
+  @NotNull
+  public String getXmlElementNamespace() {
+    return getXmlName().getNamespace(getFile());
   }
 
   @Nullable
@@ -75,12 +82,16 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     });
   }
 
-  protected XmlTag setXmlTag(final XmlTag tag) {
+  protected XmlTag setEmptyXmlTag() {
     final XmlTag[] result = new XmlTag[]{null};
     getManager().runChange(new Runnable() {
       public void run() {
         try {
-          result[0] = ((XmlDocument)getFile().getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
+          final String namespace = getXmlName().getNamespace(getFile());
+          @NonNls final String nsDecl = StringUtil.isEmpty(namespace) ? "" : " xmlns=\"" + namespace + "\"";
+          final XmlFile xmlFile = getFile();
+          final XmlTag tag = xmlFile.getManager().getElementFactory().createTagFromText("<" + getXmlElementName() + nsDecl + "/>");
+          result[0] = ((XmlDocument)xmlFile.getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

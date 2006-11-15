@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -22,6 +23,17 @@ import java.util.List;
 public class DomReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomReflectionUtil");
   private DomReflectionUtil() {
+  }
+
+  @Nullable
+  public static Method getMethod(Class aClass, @NonNls String name, Class... paramTypes) {
+    try {
+      return aClass.getMethod(name, paramTypes);
+    }
+    catch (NoSuchMethodException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public static Object invokeMethod(final JavaMethodSignature method, final Object object, final Object... args) {

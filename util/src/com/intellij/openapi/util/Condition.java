@@ -19,7 +19,7 @@ package com.intellij.openapi.util;
  * @author dsl
  */
 public interface Condition<T> {
-  boolean value(T object);
+  boolean value(T t);
 
   Condition<Object> NOT_NULL = new Condition<Object>() {
     public boolean value(final Object object) {

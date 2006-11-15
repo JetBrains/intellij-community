@@ -21,15 +21,19 @@ import java.util.List;
  * @author peter
  */
 public abstract class DomChildDescriptionImpl implements DomChildrenDescription {
-  private final String myTagName;
+  private final XmlName myTagName;
   private final Type myType;
 
-  protected DomChildDescriptionImpl(final String tagName, final Type type) {
+  protected DomChildDescriptionImpl(final XmlName tagName, final Type type) {
     myTagName = tagName;
     myType = type;
   }
 
   public String getXmlElementName() {
+    return myTagName.getLocalName();
+  }
+
+  public final XmlName getXmlName() {
     return myTagName;
   }
 

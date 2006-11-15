@@ -30,7 +30,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   private final JavaMethod myInvertedIndexedClassAdderMethod;
   @NonNls private static final String ES = "es";
 
-  public CollectionChildDescriptionImpl(final String tagName,
+  public CollectionChildDescriptionImpl(final XmlName tagName,
                                         final Type type,
                                         final JavaMethod adderMethod,
                                         final JavaMethod classAdderMethod,
@@ -71,7 +71,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     try {
       final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
       assert handler != null;
-      return handler.addChild(getXmlElementName(), type, index);
+      return handler.addChild(getXmlName().createEvaluatedXmlName(handler), type, index);
     }
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);

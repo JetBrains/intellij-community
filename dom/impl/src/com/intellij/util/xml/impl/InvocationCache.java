@@ -9,6 +9,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.ui.DomUIFactory;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -30,14 +31,15 @@ public class InvocationCache {
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {
         public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
           final XmlTag tag = handler.getXmlTag();
-          return tag != null ? tag.getAttribute(handler.getXmlElementName(), null) : null;
+          return tag != null ? tag.getAttribute(handler.getXmlElementName(), handler.getXmlElementNamespace()) : null;
         }
       });
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttributeValue")), new Invocation() {
+        @Nullable
         public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
           final XmlTag tag = handler.getXmlTag();
           if (tag != null) {
-            final XmlAttribute attribute = tag.getAttribute(handler.getXmlElementName(), null);
+            final XmlAttribute attribute = tag.getAttribute(handler.getXmlElementName(), handler.getXmlElementNamespace());
             if (attribute != null) {
               return attribute.getValueElement();
             }

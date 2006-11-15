@@ -22,9 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -39,7 +37,6 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.ant.AntPropertyDeclaration;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -794,7 +791,7 @@ public class XmlUtil {
       String tagStart;
       try {
         tagStartBuilder.append(qname);
-        if (xmlTag.getPrefixByNamespace(namespace) == null) {
+        if (xmlTag.getPrefixByNamespace(namespace) == null && !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))) {
           tagStartBuilder.append(" xmlns=\"");
           tagStartBuilder.append(namespace);
           tagStartBuilder.append("\"");

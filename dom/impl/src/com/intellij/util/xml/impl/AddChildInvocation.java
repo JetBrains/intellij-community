@@ -13,14 +13,14 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public class AddChildInvocation implements Invocation{
-  private final String myTagName;
+  private final XmlName myTagName;
   private final Type myType;
   private final Function<Object[],Integer> myIndexGetter;
   private final Function<Object[], Type> myClassGetter;
 
   public AddChildInvocation(final Function<Object[], Type> classGetter,
                             final Function<Object[], Integer> indexGetter,
-                            final String tagName,
+                            final XmlName tagName,
                             final Type type) {
     myClassGetter = classGetter;
     myIndexGetter = indexGetter;
@@ -30,7 +30,7 @@ public class AddChildInvocation implements Invocation{
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     final Type type = myClassGetter.fun(args);
-    final DomElement domElement = handler.addChild(myTagName, type, myIndexGetter.fun(args));
+    final DomElement domElement = handler.addChild(myTagName.createEvaluatedXmlName(handler), type, myIndexGetter.fun(args));
     final DomManagerImpl manager = handler.getManager();
     final boolean b = manager.setChanging(true);
     try {

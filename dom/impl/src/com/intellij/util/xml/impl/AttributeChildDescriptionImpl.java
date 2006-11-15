@@ -19,7 +19,7 @@ import java.util.List;
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription {
   private final JavaMethod myGetterMethod;
 
-  protected AttributeChildDescriptionImpl(final String attributeName, final JavaMethod getter) {
+  protected AttributeChildDescriptionImpl(final XmlName attributeName, final JavaMethod getter) {
     super(attributeName, getter.getGenericReturnType());
     myGetterMethod = getter;
   }

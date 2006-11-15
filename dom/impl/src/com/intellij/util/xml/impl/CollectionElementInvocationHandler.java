@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
@@ -20,12 +20,13 @@ import java.util.Arrays;
 public class CollectionElementInvocationHandler extends DomInvocationHandler{
 
   public CollectionElementInvocationHandler(final Type type,
+                                            final EvaluatedXmlName name,
                                             @NotNull final XmlTag tag,
                                             final DomInvocationHandler parent) {
-    super(type, tag, parent, tag.getName(), parent.getManager());
+    super(type, tag, parent, name, parent.getManager());
   }
 
-  protected final XmlTag setXmlTag(final XmlTag tag) {
+  protected final XmlTag setEmptyXmlTag() {
     throw new UnsupportedOperationException("CollectionElementInvocationHandler.setXmlTag() shouldn't be called");
   }
 
@@ -43,32 +44,33 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   public final void undefineInternal() {
     final DomElement parent = getParent();
     final XmlTag tag = getXmlTag();
+    final String namespace = tag.getNamespace();
     detach(true);
     deleteTag(tag);
-    getManager().fireEvent(new CollectionElementRemovedEvent(getProxy(), parent, getXmlElementName()));
+    getManager().fireEvent(new CollectionElementRemovedEvent(getProxy(), parent, getXmlElementName(), namespace));
   }
 
   @Nullable
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return getParentHandler().getGenericInfo().getCollectionChildDescription(getXmlElementName()).getAnnotation(annotationClass);
+    return getParentHandler().getGenericInfo().getCollectionChildDescription(getXmlName().getXmlName()).getAnnotation(annotationClass);
   }
 
   public <T extends DomElement> T createStableCopy() {
     final DomElement parent = findCallerProxy(CREATE_STABLE_COPY_METHOD).getParent();
     final DomElement parentCopy = parent.createStableCopy();
-    final String tagName = getXmlElementName();
-    final int index = Arrays.asList(parent.getXmlTag().findSubTags(tagName)).indexOf(getXmlTag());
+    final EvaluatedXmlName tagName = getXmlName();
+    final int index = DomImplUtil.findSubTags(parent.getXmlTag(), tagName, this).indexOf(getXmlTag());
     return getManager().createStableValue(new Factory<T>() {
       @Nullable
       public T create() {
         if (!parentCopy.isValid()) return null;
         final XmlTag tag = parentCopy.getXmlTag();
         if (tag == null) return null;
-        final XmlTag[] subTags = tag.findSubTags(tagName);
-        if (subTags.length <= index) {
+        final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, tagName, DomManagerImpl.getDomInvocationHandler(parentCopy));
+        if (subTags.size() <= index) {
           return null;
         }
-        return (T)getManager().getDomElement(subTags[index]);
+        return (T)getManager().getDomElement(subTags.get(index));
       }
     });
   }

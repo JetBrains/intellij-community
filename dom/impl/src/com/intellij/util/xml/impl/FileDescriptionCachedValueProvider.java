@@ -208,7 +208,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
     myFileDescription = description;
     myLastResult = description == null ? null : new DomFileElementImpl<T>(myXmlFile, description.getRootElementClass(),
-                                                                          description.getRootTagName(), myDomManager);
+                                                                          XmlName.create(description.getRootTagName(), description.getRootElementClass()).createEvaluatedXmlName(null), myDomManager);
     setInModel(changedRoot, events, oldValue, fireEvents);
     if (description == null) {
       computeCachedValue(getAllDependencyItems());

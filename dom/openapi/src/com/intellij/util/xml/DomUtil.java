@@ -108,15 +108,16 @@ public class DomUtil {
   @Nullable
   private static JavaMethod getGetterMethod(final DomElement element, final DomElement parent) {
     final String xmlElementName = element.getXmlElementName();
+    final String namespace = element.getXmlElementNamespaceKey();
     final DomGenericInfo genericInfo = parent.getGenericInfo();
 
     if (element instanceof GenericAttributeValue) {
-      final DomAttributeChildDescription description = genericInfo.getAttributeChildDescription(xmlElementName);
+      final DomAttributeChildDescription description = genericInfo.getAttributeChildDescription(xmlElementName, namespace);
       assert description != null;
       return description.getGetterMethod();
     }
 
-    final DomFixedChildDescription description = genericInfo.getFixedChildDescription(xmlElementName);
+    final DomFixedChildDescription description = genericInfo.getFixedChildDescription(xmlElementName, namespace);
     return description != null ? description.getGetterMethod(description.getValues(parent).indexOf(element)) : null;
   }
 
@@ -143,7 +144,7 @@ public class DomUtil {
           final DomElement parent = element.getManager().getIdentityScope(element);
           final DomGenericInfo domGenericInfo = parent.getGenericInfo();
           final String tagName = element.getXmlElementName();
-          final DomCollectionChildDescription childDescription = domGenericInfo.getCollectionChildDescription(tagName);
+          final DomCollectionChildDescription childDescription = domGenericInfo.getCollectionChildDescription(tagName, element.getXmlElementNamespaceKey());
           if (childDescription != null) {
             final ArrayList<DomElement> list = new ArrayList<DomElement>(childDescription.getValues(parent));
             list.remove(element);

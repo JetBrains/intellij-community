@@ -98,11 +98,26 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     }
 
     @Nullable
+    public DomFixedChildDescription getFixedChildDescription(@NonNls String tagName, @NonNls String namespace) {
+      return null;
+    }
+
+    @Nullable
     public DomCollectionChildDescription getCollectionChildDescription(String tagName) {
       return null;
     }
 
+    @Nullable
+    public DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName, @NonNls String namespace) {
+      return null;
+    }
+
     public DomAttributeChildDescription getAttributeChildDescription(String attributeName) {
+      return null;
+    }
+
+    @Nullable
+    public DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace) {
       return null;
     }
 
@@ -113,7 +128,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   private final XmlFile myFile;
   private final Class<T> myRootElementClass;
-  private final String myRootTagName;
+  private final EvaluatedXmlName myRootTagName;
   private final DomManagerImpl myManager;
   private DomRootInvocationHandler myRootHandler;
   private Map<Key,Object> myUserData = new HashMap<Key, Object>();
@@ -122,7 +137,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
-                               final String rootTagName,
+                               final EvaluatedXmlName rootTagName,
                                final DomManagerImpl manager) {
     myFile = file;
     myRootElementClass = rootElementClass;
@@ -149,7 +164,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     final XmlDocument document = myFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
-      if (tag != null && myRootTagName.equals(tag.getName())) {
+      if (tag != null && myRootTagName.getLocalName().equals(tag.getName()) && myRootTagName.isNamespaceAllowed(this, tag.getNamespace())) {
         return tag;
       }
     }
@@ -217,8 +232,15 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     });
   }
 
-  public Collection<DomElement> getAllChildren() {
-    return Collections.<DomElement>singleton(getRootElement());
+  @NotNull
+  public String getXmlElementNamespace() {
+    return "";
+  }
+
+  @Nullable
+  @NonNls
+  public String getXmlElementNamespaceKey() {
+    return null;
   }
 
   @NotNull
@@ -283,12 +305,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public final boolean isValid() {
     if (myInvalidated) return false;
-    myInvalidated = !myFile.isValid() || !isValidLight();
+    myInvalidated = !myFile.isValid() || myManager.getFileElement(myFile) != this;
     return !myInvalidated;
-  }
-
-  protected final boolean isValidLight() {
-    return myManager.getFileElement(myFile) == this;
   }
 
   @NotNull

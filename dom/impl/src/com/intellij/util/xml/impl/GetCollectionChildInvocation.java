@@ -14,9 +14,9 @@ import java.util.List;
  * @author peter
  */
 public class GetCollectionChildInvocation implements Invocation {
-  private final String myQname;
+  private final XmlName myQname;
 
-  public GetCollectionChildInvocation(final String qname) {
+  public GetCollectionChildInvocation(final XmlName qname) {
     myQname = qname;
   }
 
@@ -25,11 +25,12 @@ public class GetCollectionChildInvocation implements Invocation {
     XmlTag tag = handler.getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    handler.checkInitialized(myQname);
-    final XmlTag[] subTags = tag.findSubTags(myQname);
-    if (subTags.length == 0) return Collections.emptyList();
+    final EvaluatedXmlName xmlName = myQname.createEvaluatedXmlName(handler);
+    handler.checkInitialized(xmlName);
+    final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, xmlName, handler);
+    if (subTags.isEmpty()) return Collections.emptyList();
 
-    List<DomElement> elements = new ArrayList<DomElement>(subTags.length);
+    List<DomElement> elements = new ArrayList<DomElement>(subTags.size());
     for (XmlTag subTag : subTags) {
       final DomInvocationHandler element = DomManagerImpl.getCachedElement(subTag);
       if (element != null) {

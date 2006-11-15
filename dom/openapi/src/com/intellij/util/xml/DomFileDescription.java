@@ -19,8 +19,12 @@ package com.intellij.util.xml;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +44,7 @@ public class DomFileDescription<T> {
   protected final String myRootTagName;
   private final Map<Class<? extends DomElement>,Class<? extends DomElement>> myImplementations = new HashMap<Class<? extends DomElement>, Class<? extends DomElement>>();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
+  private final Map<String, NotNullFunction<XmlTag,List<String>>> myNamespacePolicies = new THashMap<String, NotNullFunction<XmlTag, List<String>>>();
 
   public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName) {
     myRootElementClass = rootElementClass;
@@ -48,6 +53,32 @@ public class DomFileDescription<T> {
 
   protected final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     myImplementations.put(domElementClass, implementationClass);
+  }
+
+  /**
+   * @param namespaceKey namespace identifier
+   * @see @com.intellij.util.xml.Namespace()
+   * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URL. This
+   * function shouldn't use DOM since it may be not initialized for the file at the moment
+   */
+  protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
+    myNamespacePolicies.put(namespaceKey, policy);
+  }
+
+  @SuppressWarnings({"MethodMayBeStatic"})
+  @NotNull
+  public List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
+    final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(namespaceKey);
+    if (function != null) {
+      final XmlDocument document = file.getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null) {
+          return function.fun(tag);
+        }
+      }
+    }
+    return Collections.emptyList();
   }
 
   @Deprecated

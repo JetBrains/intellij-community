@@ -51,9 +51,11 @@ public interface DomElement extends AnnotatedElement{
   @NotNull
   DomGenericInfo getGenericInfo();
 
-  @NotNull
-  @NonNls
-  String getXmlElementName();
+  @NotNull @NonNls String getXmlElementName();
+
+  @NotNull @NonNls String getXmlElementNamespace();
+
+  @Nullable @NonNls String getXmlElementNamespaceKey();
 
   void accept(final DomElementVisitor visitor);
 
@@ -88,7 +90,7 @@ public interface DomElement extends AnnotatedElement{
    * are sure that nothing serious will happen during the lifetime of the stable copy. The most usual use
    * case is when one creates something inside {@link com.intellij.openapi.command.WriteCommandAction} and
    * wants to use it outside the action. Due to formatting done on the command finish the element may become
-   * invalidated, but the stable copy will survive, because nothing in fact has changed in its 'XPath'. 
+   * invalidated, but the stable copy will survive, because nothing in fact has changed in its 'XPath'.
    */
   <T extends DomElement> T createStableCopy();
 

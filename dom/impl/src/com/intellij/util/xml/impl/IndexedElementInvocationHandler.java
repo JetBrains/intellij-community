@@ -10,9 +10,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.SubTag;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * @author peter
@@ -24,7 +26,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
   public IndexedElementInvocationHandler(final Type aClass,
                                          final XmlTag tag,
                                          final DomInvocationHandler parent,
-                                         final String tagName,
+                                         final EvaluatedXmlName tagName,
                                          final int index) {
     super(aClass, tag, parent, tagName, parent.getManager());
     myIndex = index;
@@ -39,15 +41,16 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     return annotation != null && annotation.indicator();
   }
 
-  protected XmlTag setXmlTag(final XmlTag tag) {
+  protected XmlTag setEmptyXmlTag() {
     final DomInvocationHandler parent = getParentHandler();
-    parent.createFixedChildrenTags(getXmlElementName(), myIndex);
+    parent.createFixedChildrenTags(getXmlName(), myIndex);
     final XmlTag[] newTag = new XmlTag[1];
     getManager().runChange(new Runnable() {
       public void run() {
         try {
-          newTag[0] = (XmlTag)parent.getXmlTag().add(tag);
-          if (getParentHandler().getFixedChildrenClass(tag.getName()) != null) {
+          final XmlTag parentTag = parent.getXmlTag();
+          newTag[0] = (XmlTag)parentTag.add(parent.createChildTag(getXmlName()));
+          if (getParentHandler().getFixedChildrenClass(getXmlName()) != null) {
             getManager().getTypeChooserManager().getTypeChooser(getChildDescription().getType()).distinguishTag(newTag[0], getDomElementType());
           }
         }
@@ -64,13 +67,13 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     final XmlTag parentTag = parent.getXmlTag();
     if (parentTag == null) return;
 
-    final String xmlElementName = getXmlElementName();
+    final EvaluatedXmlName xmlElementName = getXmlName();
     parent.checkInitialized(xmlElementName);
 
-    final int totalCount = parent.getGenericInfo().getFixedChildrenCount(xmlElementName);
+    final int totalCount = parent.getGenericInfo().getFixedChildrenCount(xmlElementName.getXmlName());
 
-    final XmlTag[] subTags = parentTag.findSubTags(xmlElementName);
-    if (subTags.length <= myIndex) {
+    final List<XmlTag> subTags = DomImplUtil.findSubTags(parentTag, xmlElementName, this);
+    if (subTags.size() <= myIndex) {
       return;
     }
 
@@ -79,15 +82,15 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
       XmlTag tag = getXmlTag();
       assert tag != null;
       detach(false);
-      if (totalCount == myIndex + 1 && subTags.length >= myIndex + 1) {
-        for (int i = myIndex; i < subTags.length; i++) {
-          subTags[i].delete();
+      if (totalCount == myIndex + 1 && subTags.size() >= myIndex + 1) {
+        for (int i = myIndex; i < subTags.size(); i++) {
+          subTags.get(i).delete();
         }
       }
-      else if (subTags.length == myIndex + 1) {
+      else if (subTags.size() == myIndex + 1) {
         tag.delete();
       } else {
-        attach((XmlTag) tag.replace(createEmptyTag()));
+        attach((XmlTag) tag.replace(parent.createChildTag(getXmlName())));
       }
     }
     catch (IncorrectOperationException e) {
@@ -113,7 +116,10 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
     });
   }
 
+  @NotNull
   private FixedChildDescriptionImpl getChildDescription() {
-    return getParentHandler().getGenericInfo().getFixedChildDescription(getXmlElementName());
+    final FixedChildDescriptionImpl description = getParentHandler().getGenericInfo().getFixedChildDescription(getXmlName().getXmlName());
+    assert description != null;
+    return description;
   }
 }

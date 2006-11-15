@@ -4,10 +4,11 @@
 package com.intellij.util.xml;
 
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.NonNls;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.annotation.Annotation;
 
 /**
  * @author peter
@@ -72,6 +73,7 @@ public final class JavaMethod implements AnnotatedElement{
     return "JavaMethod: " + myMethod.toString();
   }
 
+  @NonNls
   public final String getName() {
     return myMethod.getName();
   }

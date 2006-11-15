@@ -15,8 +15,8 @@ import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 /**
  * @author peter
@@ -28,23 +28,17 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   protected AttributeChildInvocationHandler(final Type type,
                                             final XmlTag tag,
                                             final DomInvocationHandler parent,
-                                            final String attributeName,
+                                            final EvaluatedXmlName attributeName,
                                             final DomManagerImpl manager) {
     super(type, tag, parent, attributeName, manager);
-    if (tag != null && tag.getAttributeValue(attributeName) != null) {
-      myWasDefined = true;
-    }
+    myWasDefined = getXmlElement() != null;
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
   }
 
-  protected final XmlTag setXmlTag(final XmlTag tag) {
-    return tag;
-  }
-
-  public boolean isValid() {
-    return super.isValid() && getParentHandler().isValid();
+  protected final XmlTag setEmptyXmlTag() {
+    return ensureTagExists();
   }
 
   protected boolean isAttribute() {
@@ -53,7 +47,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
 
   public final XmlAttribute getXmlElement() {
     final XmlTag tag = getXmlTag();
-    return tag == null ? null : tag.getAttribute(getXmlElementName(), null);
+    return tag == null ? null : tag.getAttribute(getXmlElementName(), getXmlElementNamespace());
   }
 
   public final XmlAttribute ensureXmlElementExists() {
@@ -63,7 +57,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     final DomManagerImpl manager = getManager();
     final boolean b = manager.setChanging(true);
     try {
-      xmlAttribute = ensureTagExists().setAttribute(getXmlElementName(), "");
+      xmlAttribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlElementNamespace(), "");
       manager.fireEvent(new ElementDefinedEvent(getProxy()));
       return xmlAttribute;
     }
@@ -87,7 +81,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
   }
 
   private AttributeChildDescriptionImpl getChildDescription() {
-    return getParentHandler().getGenericInfo().getAttributeChildDescription(getXmlElementName());
+    return getParentHandler().getGenericInfo().getAttributeChildDescription(getXmlName().getXmlName());
   }
 
   protected final void cacheInTag(final XmlTag tag) {
@@ -120,7 +114,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
       getManager().runChange(new Runnable() {
         public void run() {
           try {
-            tag.setAttribute(getXmlElementName(), null);
+            tag.setAttribute(getXmlElementName(), getXmlElementNamespace(), null);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);

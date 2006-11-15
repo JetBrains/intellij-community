@@ -25,7 +25,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   private final JavaMethod[] myGetterMethods;
   private final int myCount;
 
-  public FixedChildDescriptionImpl(final String tagName, final Type type, final int count, final JavaMethod[] getterMethods) {
+  public FixedChildDescriptionImpl(final XmlName tagName, final Type type, final int count, final JavaMethod[] getterMethods) {
     super(tagName, type);
     assert getterMethods.length == count;
     myCount = count;
@@ -39,7 +39,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
   public void initConcreteClass(final DomElement parent, final Class<? extends DomElement> aClass) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     assert handler != null;
-    handler.setFixedChildClass(getXmlElementName(), aClass);
+    handler.setFixedChildClass(getXmlName().createEvaluatedXmlName(handler), aClass);
   }
 
   @Nullable

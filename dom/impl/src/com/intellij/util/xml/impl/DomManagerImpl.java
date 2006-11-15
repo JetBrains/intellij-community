@@ -482,8 +482,14 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     final DomInvocationHandler handler = _getDomElement(attribute.getParent());
     final String attributeName = attribute.getLocalName();
     if (handler == null) return null;
-    if (handler.getGenericInfo().getAttributeChildDescription(attributeName) == null) return null;
-    return (GenericAttributeValue)handler.getAttributeChild(attributeName).getProxy();
+    final List<AttributeChildDescriptionImpl> list = handler.getGenericInfo().getAttributeChildrenDescriptions();
+    final AttributeChildDescriptionImpl description = ContainerUtil.find(list, new Condition<AttributeChildDescriptionImpl>() {
+      public boolean value(AttributeChildDescriptionImpl attributeChildDescription) {
+        final EvaluatedXmlName name = attributeChildDescription.getXmlName().createEvaluatedXmlName(handler);
+        return attribute.getLocalName().equals(name.getLocalName()) && name.isNamespaceAllowed(handler, attribute.getNamespace());
+      }
+    });
+    return (GenericAttributeValue)handler.getAttributeChild(description.getXmlName().createEvaluatedXmlName(handler)).getProxy();
   }
 
   @Nullable
@@ -517,7 +523,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   @Nullable
-  public final DomFileDescription getDomFileDescription(PsiElement element) {
+  public final DomFileDescription<?> getDomFileDescription(PsiElement element) {
     if (element instanceof XmlElement) {
       final PsiFile psiFile = element.getContainingFile();
       if (psiFile instanceof XmlFile) {
@@ -528,7 +534,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   @Nullable
-  private DomFileDescription getDomFileDescription(final XmlFile xmlFile) {
+  public final DomFileDescription<?> getDomFileDescription(final XmlFile xmlFile) {
     if (getFileElement(xmlFile) != null) {
       return getOrCreateCachedValueProvider(xmlFile).getFileDescription();
     }

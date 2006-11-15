@@ -4,10 +4,17 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -37,12 +44,12 @@ public class DomImplUtil {
     return false;
   }
 
-  static boolean hasTagValueAnnotation(final JavaMethod method) {
+  private static boolean hasTagValueAnnotation(final JavaMethod method) {
     return method.getAnnotation(TagValue.class) != null;
   }
 
   public static boolean isGetter(final JavaMethod method) {
-    final String name = method.getName();
+    @NonNls final String name = method.getName();
     if (method.getGenericParameterTypes().length != 0) {
       return false;
     }
@@ -59,6 +66,7 @@ public class DomImplUtil {
     return setter && (hasTagValueAnnotation(method) || "setValue".equals(method.getName()));
   }
 
+  @Nullable
   public static DomNameStrategy getDomNameStrategy(final Class<?> rawType, boolean isAttribute) {
     Class aClass = null;
     if (isAttribute) {
@@ -87,5 +95,30 @@ public class DomImplUtil {
       }
     }
     return null;
+  }
+
+  public static List<XmlTag> findSubTags(XmlTag tag, final EvaluatedXmlName name, final DomInvocationHandler handler) {
+    return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
+      public boolean value(XmlTag childTag) {
+        return isNameSuitable(name, childTag, handler);
+      }
+    });
+  }
+
+  public static boolean isNameSuitable(final XmlName name, final XmlTag tag, final DomInvocationHandler handler) {
+    return isNameSuitable(name.createEvaluatedXmlName(handler), tag, handler);
+  }
+
+  public static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final DomInvocationHandler handler) {
+    final String localName = evaluatedXmlName.getLocalName();
+    return localName.equals(tag.getLocalName()) && evaluatedXmlName.isNamespaceAllowed(handler, tag.getNamespace());
+  }
+
+  public static boolean containsTagName(final Set<XmlName> qnames1, final XmlTag subTag, final DomInvocationHandler handler) {
+    return ContainerUtil.find(qnames1, new Condition<XmlName>() {
+      public boolean value(XmlName name) {
+        return isNameSuitable(name, subTag, handler);
+      }
+    }) != null;
   }
 }

@@ -18,7 +18,6 @@ import java.lang.reflect.Type;
  */
 public interface DomGenericInfo {
 
-
   @Nullable
   String getElementName(DomElement element);
 
@@ -35,16 +34,22 @@ public interface DomGenericInfo {
   List<? extends DomAttributeChildDescription> getAttributeChildrenDescriptions();
 
   @Nullable
+  @Deprecated
   DomChildrenDescription getChildDescription(@NonNls String tagName);
 
-  @Nullable
-  DomFixedChildDescription getFixedChildDescription(@NonNls String tagName);
+  @Nullable DomFixedChildDescription getFixedChildDescription(@NonNls String tagName);
 
-  @Nullable
-  DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName);
+  @Nullable DomFixedChildDescription getFixedChildDescription(@NonNls String tagName, @NonNls String namespace);
+
+  @Nullable DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName);
+
+  @Nullable DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName, @NonNls String namespace);
 
   @Nullable
   DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName);
+
+  @Nullable
+  DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace);
 
   Type[] getConcreteInterfaceVariants();
 
@@ -58,6 +63,7 @@ public interface DomGenericInfo {
    * @param element
    * @return {@link com.intellij.psi.xml.XmlAttributeValue} or {@link com.intellij.psi.xml.XmlTag}
    */
+  @Deprecated
   @Nullable
   XmlElement getNameElement(DomElement element);
 
