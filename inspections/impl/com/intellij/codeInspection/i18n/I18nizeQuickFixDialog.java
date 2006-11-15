@@ -10,6 +10,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -49,8 +50,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -72,8 +73,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   private JPanel myHyperLinkPanel;
   private JPanel myResourceBundleSuggester;
   private EditorComboBox myRBEditorTextField;
-  private JLabel _P;
-  private JLabel _E;
   private JPanel myJavaCodeInfoPanel;
   private JPanel myPreviewPanel;
   private PsiClassType myResourceBundleType;
@@ -126,25 +125,20 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
           somethingChanged();
         }
       });
-      _E.setLabelFor(myRBEditorTextField);
     }
 
     myPropertiesFile = new TextFieldWithHistory();
-    JPanel panel = GuiUtils.constructFieldWithBrowseButton(myPropertiesFile, new ActionListener() {
+    myPropertiesFilePanel.add(GuiUtils.constructFieldWithBrowseButton(myPropertiesFile, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(myProject);
         TreeFileChooser fileChooser = chooserFactory.createFileChooser(
-          CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), getPropertiesFile(),
-          StdFileTypes.PROPERTIES, null);
+          CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), getPropertiesFile(), StdFileTypes.PROPERTIES, null);
         fileChooser.showDialog();
         PsiFile selectedFile = fileChooser.getSelectedFile();
         if (selectedFile == null) return;
         myPropertiesFile.setText(FileUtil.toSystemDependentName(selectedFile.getVirtualFile().getPath()));
       }
-    });
-    myPropertiesFilePanel.setLayout(new BorderLayout());
-    myPropertiesFilePanel.add(panel, BorderLayout.CENTER);
-    _P.setLabelFor(myPropertiesFile);
+    }), BorderLayout.CENTER);
     populatePropertiesFiles();
 
     myPropertiesFile.addDocumentListener(new DocumentAdapter() {
@@ -194,6 +188,14 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     if (!myShowPreview) {
       myPreviewPanel.setVisible(false);
     }
+    @NonNls final String KEY = "I18NIZE_DIALOG_USE_RESOURCE_BUNDLE";
+    final boolean useBundleByDefault = !PropertiesComponent.getInstance().isValueSet(KEY) || PropertiesComponent.getInstance().isTrueValue(KEY);
+    myUseResourceBundle.setSelected(useBundleByDefault);
+    myUseResourceBundle.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        PropertiesComponent.getInstance().setValue(KEY, Boolean.valueOf(myUseResourceBundle.isSelected()).toString());
+      }
+    });
 
     propertiesFileChanged();
     somethingChanged();
@@ -214,7 +216,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     if (myShowJavaCodeInfo) {
       FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(getTemplateName());
       boolean showResourceBundleSuggester = template.getText().contains("${" + RESOURCE_BUNDLE_OPTION_KEY + "}");
-      //GuiUtils.enableChildren(myJavaCodeInfoPanel, showResourceBundleSuggester, null);
       myJavaCodeInfoPanel.setVisible(showResourceBundleSuggester);
     }
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(myLiteralExpression, "");
@@ -335,7 +336,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     PropertiesFile propertiesFile = getPropertiesFile();
     boolean hasResourceBundle = propertiesFile != null && propertiesFile.getResourceBundle().getPropertiesFiles(propertiesFile.getProject()).size() > 1;
     myUseResourceBundle.setEnabled(hasResourceBundle);
-    myUseResourceBundle.setSelected(hasResourceBundle);
   }
 
   private void setKeyValueEditBoxes() {
@@ -521,7 +521,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   }
 
   private boolean isUseResourceBundle() {
-    return myUseResourceBundle.isSelected();
+    return myUseResourceBundle.isEnabled() && myUseResourceBundle.isSelected();
   }
 
   protected String getDimensionServiceKey() {

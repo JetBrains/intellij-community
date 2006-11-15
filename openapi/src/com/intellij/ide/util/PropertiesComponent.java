@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class PropertiesComponent {
-
   public static PropertiesComponent getInstance(Project project) {
     return project.getComponent(PropertiesComponent.class);
   }

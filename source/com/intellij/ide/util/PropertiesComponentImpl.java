@@ -39,8 +39,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Iterator;
+import org.jetbrains.annotations.NotNull;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements JDOMExternalizable, ProjectComponent, ApplicationComponent {
   private HashMap<String, String> myMap = new HashMap<String, String>();
@@ -49,6 +48,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements JDOM
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
 
 
+  @NotNull
   public String getComponentName() {
     return "PropertiesComponent";
   }
@@ -59,11 +59,10 @@ public class PropertiesComponentImpl extends PropertiesComponent implements JDOM
   public void initComponent() {}
   public void projectClosed() {}
   public void projectOpened() {}
-  public void moduleAdded() {}
 
   public void readExternal(Element parentNode) throws InvalidDataException {
-    for (Iterator iterator = parentNode.getChildren(ELEMENT_PROPERTY).iterator(); iterator.hasNext();) {
-      Element e = (Element)iterator.next();
+    for (final Object o : parentNode.getChildren(ELEMENT_PROPERTY)) {
+      Element e = (Element)o;
 
       String name = e.getAttributeValue(ATTRIBUTE_NAME);
       String value = e.getAttributeValue(ATTRIBUTE_VALUE);
@@ -75,8 +74,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements JDOM
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
-    for(Iterator iterator = myMap.keySet().iterator(); iterator.hasNext();){
-      String key = (String)iterator.next();
+    for (final String key : myMap.keySet()) {
       String value = myMap.get(key);
       if (value != null) {
         Element element = new Element(ELEMENT_PROPERTY);
