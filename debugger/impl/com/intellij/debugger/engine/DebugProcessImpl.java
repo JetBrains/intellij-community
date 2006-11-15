@@ -863,6 +863,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
       Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), invokeThread);
       final ThreadReference invokeThreadRef = invokeThread.getThreadReference();
+      if (invokeThreadRef == null) {
+        // the thread has been collected
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.cannot.invoke.method.in.collected.thread"));
+      }
       for (final SuspendContextImpl suspendingContext : suspendingContexts) {
         final ThreadReferenceProxyImpl suspendContextThread = suspendingContext.getThread();
         if (suspendContextThread != invokeThread) {
