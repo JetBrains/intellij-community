@@ -67,7 +67,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final ProjectEx myProject;
   private ProjectFileIndex myProjectFileIndex;
 
-  private final PendingEventDispatcher<ModuleRootListener> myModuleRootEventDispatcher = PendingEventDispatcher.create(ModuleRootListener.class);
   private final PendingEventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = PendingEventDispatcher.create(ProjectJdkListener.class);
 
   private final MyVirtualFilePointerListener myVirtualFilePointerListener = new MyVirtualFilePointerListener();

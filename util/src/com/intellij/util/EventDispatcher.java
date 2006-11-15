@@ -3,8 +3,8 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 
@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.EventListener;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -102,5 +103,9 @@ public class EventDispatcher <T extends EventListener>{
 
   public synchronized boolean hasListeners() {
     return myListeners.size() > 0;
+  }
+
+  public List<T> getListeners() {
+    return myListeners;
   }
 }

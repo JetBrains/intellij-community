@@ -38,7 +38,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.PendingEventDispatcher;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +67,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private boolean myDummyProjectInitialized = false;
   private final Object myDummyProjectInitializationLock = new Object();
 
-  private PendingEventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = PendingEventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
+  private EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
 
   private final PsiManagerConfiguration myPsiManagerConfiguration;
   private final ProjectManagerEx myProjectManagerEx;

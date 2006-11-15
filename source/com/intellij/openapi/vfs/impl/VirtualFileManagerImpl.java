@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   private PendingEventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = PendingEventDispatcher.create(VirtualFileListener.class);
   private List<VirtualFileManagerListener> myVirtualFileManagerListeners = new CopyOnWriteArrayList<VirtualFileManagerListener>();
-  private PendingEventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = PendingEventDispatcher.create(ModificationAttemptListener.class);
+  private EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = EventDispatcher.create(ModificationAttemptListener.class);
 
   private ProgressIndicator myRefreshIndicator = new StatusBarProgress();
   private ProgressIndicator myAsyncRefreshIndicator = new StatusBarProgress();
