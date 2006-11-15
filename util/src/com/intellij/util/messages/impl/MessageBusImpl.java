@@ -13,15 +13,15 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MessageBusImpl implements MessageBus {
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"}) // Holds strong connections to prevent them from GC-ing.
-  private final List<MessageBusConnectionImpl> myConnections = new ArrayList<MessageBusConnectionImpl>();
-  private final Queue<DeliveryJob> myMessageQueue = new LinkedList<DeliveryJob>();
-  private final Map<Topic, Object> mySyncPublishers = new HashMap<Topic, Object>();
-  private final Map<Topic, Object> myAsyncPublishers = new HashMap<Topic, Object>();
-  private final Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new HashMap<Topic, List<MessageBusConnectionImpl>>();
-  private final List<MessageBusImpl> myChildBusses = new ArrayList<MessageBusImpl>();
+  private final Queue<DeliveryJob> myMessageQueue = new ConcurrentLinkedQueue<DeliveryJob>();
+  private final Map<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
+  private final Map<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
+  private final Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
+  private final List<MessageBusImpl> myChildBusses = Collections.synchronizedList(new ArrayList<MessageBusImpl>());
 
   private final static Object NA = new Object();
   private final MessageBusImpl myParentBus;
@@ -118,7 +118,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private synchronized void sendMessage(Message message) {
+  private void sendMessage(Message message) {
     pumpMessages();
     postMessage(message);
     pumpMessages();
@@ -138,7 +138,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  public synchronized void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
+  public void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
       topicSubscribers = new ArrayList<MessageBusConnectionImpl>();
@@ -148,7 +148,7 @@ public class MessageBusImpl implements MessageBus {
     topicSubscribers.add(connection);
   }
 
-  public synchronized void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
+  public void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
     for (List<MessageBusConnectionImpl> topicSubscribers : mySubscribers.values()) {
       topicSubscribers.remove(connection);
     }
@@ -162,7 +162,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  public synchronized void deliverSingleMessage() {
+  public void deliverSingleMessage() {
     final DeliveryJob job = myMessageQueue.poll();
     if (job == null) return;
     job.connection.deliverMessage(job.message);
