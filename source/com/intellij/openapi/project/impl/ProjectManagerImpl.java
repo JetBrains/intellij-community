@@ -232,17 +232,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
     
     // there are undefined macros, need to define them before loading components
-    final String text = ProjectBundle.message("project.load.undefined.path.variables.message");
-    return showMacrosConfigurationDialog(project, text, usedMacros);
+    return showMacrosConfigurationDialog(project, usedMacros);
   }
 
-  private static boolean showMacrosConfigurationDialog(Project project, final String text, final Set<String> usedMacros) {
+  public static boolean showMacrosConfigurationDialog(Project project, final Set<String> undefinedMacros) {
+    final String text = ProjectBundle.message("project.load.undefined.path.variables.message");
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
-      throw new RuntimeException(text + ": " + StringUtil.join(usedMacros, ", "));
+      throw new RuntimeException(text + ": " + StringUtil.join(undefinedMacros, ", "));
     }
     final UndefinedMacrosConfigurable configurable =
-      new UndefinedMacrosConfigurable(text, usedMacros.toArray(new String[usedMacros.size()]));
+      new UndefinedMacrosConfigurable(text, undefinedMacros.toArray(new String[undefinedMacros.size()]));
     final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable) {
       protected void doOKAction() {
         if (!getConfigurable().isModified()) {
