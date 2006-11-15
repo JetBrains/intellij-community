@@ -247,7 +247,7 @@ import java.util.Map;
                       final LocalInspectionTool[] localInspectionTools,
                       final Map<String, LocalInspectionTool> availableToolsMap,
                       final Map<String, LocalInspectionToolWrapper> availableLocalTools) throws Exception {
-    assertNull("Previous test " + ourTestCase + " haven't called tearDown(). Probably overriden without super call.",
+    assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overriden without super call.",
                ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 

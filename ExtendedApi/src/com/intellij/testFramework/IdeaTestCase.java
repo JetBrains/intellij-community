@@ -104,7 +104,7 @@ import java.util.HashSet;
     super.setUp();
     if (ourTestCase != null) {
       String message = "Previous test " + ourTestCase +
-                       " haven't called tearDown(). Probably overriden without super call.";
+                       " hasn't called tearDown(). Probably overriden without super call.";
       ourTestCase = null;
       fail(message);
     }
