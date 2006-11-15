@@ -1,8 +1,8 @@
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -56,7 +56,7 @@ public class SetValueAction extends DebuggerAction {
   private void update(final DebuggerContextImpl context) {
     DebuggerInvocationUtil.invokeLater(context.getProject(), new Runnable() {
       public void run() {
-        context.getDebuggerSession().refresh();
+        context.getDebuggerSession().refresh(false);
       }
     });
     //node.setState(context);

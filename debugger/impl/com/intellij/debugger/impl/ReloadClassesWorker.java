@@ -306,7 +306,7 @@ class ReloadClassesWorker {
           LOG.debug("requests updated");
           LOG.debug("time stamp set");
         }
-        myDebuggerSession.refresh();
+        myDebuggerSession.refresh(false);
 
         getDebugProcess().getManagerThread().invokeLater(new DebuggerCommandImpl() {
           protected void action() throws Exception {

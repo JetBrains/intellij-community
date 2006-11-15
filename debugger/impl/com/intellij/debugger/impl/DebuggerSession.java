@@ -63,6 +63,7 @@ public class DebuggerSession {
   public static final int EVENT_CONTEXT = 8;
   public static final int EVENT_START_WAIT_ATTACH = 9;
   public static final int EVENT_DISPOSE = 10;
+  public static final int EVENT_REFRESH_VIEWS_ONLY = 11;
 
   private boolean myIsEvaluating;
 
@@ -457,11 +458,11 @@ public class DebuggerSession {
     getContextManager().setState(DebuggerContextUtil.createDebuggerContext(this, getSuspendContext()), STATE_PAUSED, EVENT_REFRESH, null);
   }
 
-  public void refresh() {
+  public void refresh(final boolean refreshViewsOnly) {
     if (getState() == DebuggerSession.STATE_PAUSED) {
       DebuggerContextImpl context = myContextManager.getContext();
       DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(this, context.getSuspendContext(), context.getThreadProxy(), context.getFrameProxy());
-      myContextManager.setState(newContext, DebuggerSession.STATE_PAUSED, EVENT_REFRESH, null);
+      myContextManager.setState(newContext, DebuggerSession.STATE_PAUSED, refreshViewsOnly? EVENT_REFRESH_VIEWS_ONLY : EVENT_REFRESH, null);
     }
   }
 

@@ -62,7 +62,9 @@ public class PositionHighlighter {
     stateManager.addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
         myContext = newContext;
-        refresh();
+        if (event != DebuggerSession.EVENT_REFRESH_VIEWS_ONLY) {
+          refresh();
+        }
       }
     });
   }

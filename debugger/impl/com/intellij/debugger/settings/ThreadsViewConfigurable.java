@@ -1,8 +1,7 @@
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.project.Project;
@@ -54,7 +53,7 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
     for (int i = 0; i < openProjects.length; i++) {
       Project project = openProjects[i];
       for (Iterator iterator = (DebuggerManagerEx.getInstanceEx(project)).getSessions().iterator(); iterator.hasNext();) {
-        ((DebuggerSession)iterator.next()).refresh();
+        ((DebuggerSession)iterator.next()).refresh(false);
       }
     }
   }
