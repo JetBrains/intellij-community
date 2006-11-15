@@ -1,8 +1,6 @@
 package com.intellij.localvcs;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,10 +29,11 @@ public class ChangeSetTest extends TestCase {
     assertElements(new Object[]{3, 2, 1}, log);
   }
 
-  private class LoggingChange extends Change {
+  private class LoggingChange extends CreateFileChange {
     private Integer myId;
 
     public LoggingChange(Integer id) {
+      super(null, null, null);
       myId = id;
     }
 
@@ -44,18 +43,6 @@ public class ChangeSetTest extends TestCase {
 
     public void revertOn(RootEntry root) {
       log.add(myId);
-    }
-
-    public void write(Stream s) throws IOException {
-      throw new UnsupportedOperationException();
-    }
-
-    protected List<IdPath> getAffectedEntryIdPaths() {
-      throw new UnsupportedOperationException();
-    }
-
-    public List<Difference> getDifferences(RootEntry r, Entry e) {
-      throw new UnsupportedOperationException();
     }
   }
 }

@@ -6,51 +6,65 @@ import java.util.Arrays;
 import java.util.List;
 
 public class IdPath {
-  private List<Integer> myPath;
+  private List<Integer> myParts;
 
   public IdPath(Integer... parts) {
-    myPath = Arrays.asList(parts);
+    this(Arrays.asList(parts));
+  }
+
+  public IdPath(List<Integer> parts) {
+    myParts = parts;
   }
 
   public IdPath(Stream s) throws IOException {
-    myPath = new ArrayList<Integer>();
+    myParts = new ArrayList<Integer>();
 
     int count = s.readInteger();
     while (count-- > 0) {
-      myPath.add(s.readInteger());
+      myParts.add(s.readInteger());
     }
   }
 
   public void write(Stream s) throws IOException {
-    s.writeInteger(myPath.size());
-    for (Integer id : myPath) {
+    s.writeInteger(myParts.size());
+    for (Integer id : myParts) {
       s.writeInteger(id);
     }
   }
 
   public Integer getName() {
-    return myPath.get(myPath.size() - 1);
+    return myParts.get(myParts.size() - 1);
+  }
+
+  public IdPath getParent() {
+    List<Integer> result = new ArrayList<Integer>(myParts);
+    result.remove(result.size() - 1);
+    return result.isEmpty() ? null : new IdPath(result);
+  }
+
+  public List<Integer> getParts() {
+    return myParts;
   }
 
   public IdPath appendedWith(Integer id) {
-    List<Integer> newPath = new ArrayList<Integer>(myPath);
+    List<Integer> newPath = new ArrayList<Integer>(myParts);
     newPath.add(id);
-    return new IdPath(newPath.toArray(new Integer[0]));
+    return new IdPath(newPath);
   }
 
   public boolean contains(Integer id) {
-    return myPath.contains(id);
+    return myParts.contains(id);
   }
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "(" + myPath + ")";
+    return getClass().getSimpleName() + "(" + myParts + ")";
   }
 
   @Override
   public boolean equals(Object o) {
     if (o == null || !o.getClass().equals(getClass())) return false;
-    return myPath.equals(((IdPath)o).myPath);
+    return myParts.equals(((IdPath)o).myParts);
   }
 
   @Override

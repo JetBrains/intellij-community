@@ -2,7 +2,6 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class CreateFileChange extends Change {
@@ -52,15 +51,5 @@ public class CreateFileChange extends Change {
   @Override
   protected List<IdPath> getAffectedEntryIdPaths() {
     return Arrays.asList(myAffectedEntryIdPath);
-  }
-
-  @Override
-  public List<Difference> getDifferences(RootEntry r, Entry e) {
-    if (!affects(e)) return Collections.emptyList();
-    Entry newer = r.getEntry(myId);
-    Entry older = new FileEntry(null, myPath.getName(), myContent);
-
-    Difference d = new Difference(Difference.Kind.CREATED, older, newer);
-    return Collections.singletonList(d);
   }
 }

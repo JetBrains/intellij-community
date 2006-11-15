@@ -1,42 +1,71 @@
 package com.intellij.localvcs;
 
+import java.util.ArrayList;
+import java.util.List;
+
+// todo make it abstract
 public class Difference {
-
   public enum Kind {
-    CREATED, MODIFIED, DELETED
+    NOT_CHANGED, CREATED, MODIFIED, DELETED
   }
 
+  private boolean myIsFile;
+  private Integer myId;
+  private String myOldName;
+  private String myNewName;
   private Kind myKind;
-  private Entry myOlderEntry;
-  private Entry myCurrentEntry;
 
-  public Difference(Kind k) {
+  private List<Difference> myChildren = new ArrayList<Difference>();
+
+  public Difference(Integer id, String oldName, String newName) {
+    myIsFile = false;
+    myKind = Kind.NOT_CHANGED;
+    myId = id;
+    myOldName = oldName;
+    myNewName = newName;
+  }
+
+  public Integer getId() {
+    return myId;
+  }
+
+  public boolean isFile() {
+    return myIsFile;
+  }
+
+  public void setIsFile(boolean b) {
+    myIsFile = b;
+  }
+
+  public String getOldName() {
+    return myOldName;
+  }
+
+  public void setOldName(String s) {
+    myOldName = s;
+  }
+
+  public String getNewName() {
+    return myNewName;
+  }
+
+  public void setNewName(String s) {
+    myNewName = s;
+  }
+
+  public Kind getKind() {
+    return myKind;
+  }
+
+  public void setKind(Kind k) {
     myKind = k;
   }
 
-  public Difference(Kind k, Entry olderEntry, Entry currentEntry) {
-    myKind = k;
-    myOlderEntry = olderEntry;
-    myCurrentEntry = currentEntry;
+  public void addChild(Difference d) {
+    myChildren.add(d);
   }
 
-  public boolean isCreated() {
-    return myKind.equals(Kind.CREATED);
-  }
-
-  public boolean isModified() {
-    return myKind.equals(Kind.MODIFIED);
-  }
-
-  public boolean isDeleted() {
-    return myKind.equals(Kind.DELETED);
-  }
-
-  public Entry getOlderEntry() {
-    return myOlderEntry;
-  }
-
-  public Entry getCurrentEntry() {
-    return myCurrentEntry;
+  public List<Difference> getChildren() {
+    return myChildren;
   }
 }

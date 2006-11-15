@@ -1,9 +1,7 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class MoveChange extends Change {
@@ -57,23 +55,23 @@ public class MoveChange extends Change {
     return Arrays.asList(myFromIdPath, myToIdPath);
   }
 
-  @Override
-  public List<Difference> getDifferences(RootEntry r, Entry e) {
-    if (!affects(e)) return Collections.emptyList();
-
-    if (myFromIdPath.getName().equals(e.getId())) {
-      Difference d = new Difference(Difference.Kind.MODIFIED);
-      return Collections.singletonList(d);
-    }
-
-    List<Difference> result = new ArrayList<Difference>();
-
-    if (myFromIdPath.contains(e.getId()))
-      result.add(new Difference(Difference.Kind.DELETED));
-
-    if (myToIdPath.contains(e.getId()))
-      result.add(new Difference(Difference.Kind.CREATED));
-
-    return result;
-  }
+  //@Override
+  //public List<Difference> getDifferences(RootEntry r, Entry e) {
+  //  if (!affects(e)) return Collections.emptyList();
+  //
+  //  if (myFromIdPath.getName().equals(e.getId())) {
+  //    Difference d = new Difference(Difference.Kind.MODIFIED);
+  //    return Collections.singletonList(d);
+  //  }
+  //
+  //  List<Difference> result = new ArrayList<Difference>();
+  //
+  //  if (myFromIdPath.contains(e.getId()))
+  //    result.add(new Difference(Difference.Kind.DELETED));
+  //
+  //  if (myToIdPath.contains(e.getId()))
+  //    result.add(new Difference(Difference.Kind.CREATED));
+  //
+  //  return result;
+  //}
 }
