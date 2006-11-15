@@ -16,7 +16,7 @@ public class ChangeSet {
     myLabel = s.readString();
 
     Integer count = s.readInteger();
-    for (int i = 0; i < count; i++) {
+    while (count-- > 0) {
       myChanges.add(s.readChange());
     }
   }
@@ -43,12 +43,11 @@ public class ChangeSet {
     return myChanges;
   }
 
-  public List<Change> getChangesFor(Entry e) {
-    List<Change> result = new ArrayList<Change>();
+  public boolean hasChangesFor(Entry e) {
     for (Change c : myChanges) {
-      if (c.affects(e)) result.add(c);
+      if (c.affects(e)) return true;
     }
-    return result;
+    return false;
   }
 
   public void applyTo(RootEntry root) {

@@ -15,7 +15,7 @@ public class DirectoryEntry extends Entry {
     super(s);
 
     int count = s.readInteger();
-    for (int i = 0; i < count; i++) {
+    while (count-- > 0) {
       myChildren.add(s.readEntry());
     }
   }

@@ -27,6 +27,16 @@ public class ChangeList {
     return myChangeSets;
   }
 
+  public List<ChangeSet> getChangeSetsFor(Entry e) {
+    List<ChangeSet> result = new ArrayList<ChangeSet>();
+
+    for (ChangeSet cs : myChangeSets) {
+      if (cs.hasChangesFor(e)) result.add(cs);
+    }
+
+    return result;
+  }
+
   public void applyChangeSetOn(RootEntry root, ChangeSet cs) {
     // todo we make bad assumption that applying is only done on current
     // todo snapshot - not on the reverted one
@@ -57,10 +67,6 @@ public class ChangeList {
     // todo VERY BAD!!! something wring with changeListIndex!!
     if (!root.canBeReverted()) throw new LocalVcsException();
     return myChangeSets.get(root.getChangeListIndex());
-  }
-
-  public DifferenceList getDifferenceListFor(RootEntry r, Entry e) {
-    return new DifferenceList(this, r, e);
   }
 
   public void labelLastChangeSet(String label) {

@@ -86,6 +86,7 @@ public class LocalVcs {
   }
 
   public void putLabel(String label) {
+    // todo maybe join with apply method
     myChangeList.labelLastChangeSet(label);
   }
 
