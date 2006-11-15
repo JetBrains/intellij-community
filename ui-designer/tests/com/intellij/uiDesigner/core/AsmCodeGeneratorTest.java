@@ -23,7 +23,7 @@ import java.nio.charset.Charset;
 /**
  * @author yole
  */
-public abstract class AsmCodeGeneratorTest extends TestCase {
+public class AsmCodeGeneratorTest extends TestCase {
   private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className) throws Exception {
     final String testDataPath = PathManagerEx.getTestDataPath() + File.separatorChar + "uiDesigner" + File.separatorChar;
     String formPath = testDataPath + formFileName;

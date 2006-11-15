@@ -415,7 +415,9 @@ public class AsmCodeGenerator {
 
       if (lwComponent instanceof LwContainer) {
         LwContainer lwContainer = (LwContainer) lwComponent;
-        getComponentCodeGenerator(lwContainer).generateContainerLayout(lwContainer, generator, componentLocal);
+        if (!lwContainer.isCustomCreate() || lwContainer.getComponentCount() > 0) {
+          getComponentCodeGenerator(lwContainer).generateContainerLayout(lwContainer, generator, componentLocal);
+        }
       }
 
       generateComponentProperties(lwComponent, componentClass, generator, componentLocal);

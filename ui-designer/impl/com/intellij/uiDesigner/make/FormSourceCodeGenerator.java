@@ -398,7 +398,10 @@ public final class FormSourceCodeGenerator {
     }
 
     if (component instanceof LwContainer) {
-      getComponentLayoutGenerator((LwContainer) component).generateContainerLayout((LwContainer) component, this, variable);
+      final LwContainer container = (LwContainer)component;
+      if (!container.isCustomCreate() || container.getComponentCount() > 0) {
+        getComponentLayoutGenerator(container).generateContainerLayout(container, this, variable);
+      }
     }
 
     // introspected properties
