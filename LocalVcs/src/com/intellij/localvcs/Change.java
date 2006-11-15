@@ -19,6 +19,4 @@ public abstract class Change {
   }
 
   protected abstract List<IdPath> getAffectedEntryIdPaths();
-
-  public abstract List<Difference> getDifferences(RootEntry r, Entry e);
 }
