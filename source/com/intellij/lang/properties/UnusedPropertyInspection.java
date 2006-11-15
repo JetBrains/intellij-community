@@ -2,11 +2,13 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CustomSuppressableInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -30,8 +32,6 @@ import java.util.List;
  * @author cdr
  */
 public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.UnusedPropertyInspection");
-  private static final RemovePropertyLocalFix QUICK_FIX = new RemovePropertyLocalFix();
 
   @NotNull
   public String getGroupDisplayName() {
@@ -74,7 +74,7 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
             ASTNode[] nodes = propertyNode.getChildren(null);
             PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
             String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, QUICK_FIX, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             descriptors.add(descriptor);
           }
         }
@@ -127,30 +127,6 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
 
     public boolean isCanceled() {
       return myOriginal.isCanceled();
-    }
-  }
-
-  private static class RemovePropertyLocalFix implements LocalQuickFix {
-    @NotNull
-    public String getName() {
-      return PropertiesBundle.message("remove.property.quick.fix.name");
-    }
-
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
-      if (property == null) return;
-      try {
-        new RemovePropertyFix(property).invoke(project, null, property.getContainingFile());
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 

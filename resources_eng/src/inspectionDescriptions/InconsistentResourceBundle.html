@@ -27,6 +27,19 @@
 
       Property <font color="#000080"><b>abc</b></font> translation here is not available for any language except French,
       and, thus, will be reported as missing in the (default) properties file <b>messages.properties</b>.
+
+<ul>
+    <li>
+
+      <b>Report properties overridden with the same value</b>
+    </li>
+    </ul>
+  option checks for properties which are copy-pasted into several properties files verbatim.<br>
+  E.g. in this resource bundle:<br>
+  <b>messages_fr.properties</b>: <font color="#000080"><b>abc=xxx</b></font><br>
+  <b>messages.properties</b>: <font color="#000080"><b>abc=xxx</b></font><br>
+
+  Property <font color="#000080"><b>abc</b></font> will be reported as unnecessarily inherited in the file <b>messages_fr.properties</b>.
   <br>
 </font>
 </body>

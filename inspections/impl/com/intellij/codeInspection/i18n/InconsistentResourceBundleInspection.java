@@ -8,11 +8,13 @@ import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.RemovePropertyLocalFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.openapi.util.Comparing;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,20 +34,23 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
   private JCheckBox myReportMissingTranslationsCheckBox;
   private JCheckBox myReportInconsistentPropertiesCheckBox;
   private JPanel myOptionsPanel;
+  private JCheckBox myReportDuplicatedPropertiesCheckBox;
 
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_MISSING_TRANSLATIONS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_INCONSISTENT_PROPERTIES = true;
-
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_DUPLICATED_PROPERTIES = true;
 
   public InconsistentResourceBundleInspection() {
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         REPORT_INCONSISTENT_PROPERTIES = myReportInconsistentPropertiesCheckBox.isSelected();
         REPORT_MISSING_TRANSLATIONS = myReportMissingTranslationsCheckBox.isSelected();
+        REPORT_DUPLICATED_PROPERTIES = myReportDuplicatedPropertiesCheckBox.isSelected();
       }
     };
     myReportInconsistentPropertiesCheckBox.addActionListener(listener);
     myReportMissingTranslationsCheckBox.addActionListener(listener);
+    myReportDuplicatedPropertiesCheckBox.addActionListener(listener);
   }
 
   @NotNull
@@ -76,6 +81,7 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
   public JComponent createOptionsPanel() {
     myReportInconsistentPropertiesCheckBox.setSelected(REPORT_INCONSISTENT_PROPERTIES);
     myReportMissingTranslationsCheckBox.setSelected(REPORT_MISSING_TRANSLATIONS);
+    myReportDuplicatedPropertiesCheckBox.setSelected(REPORT_DUPLICATED_PROPERTIES);
     return myOptionsPanel;
   }
 
@@ -123,6 +129,35 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
     }
     if (REPORT_INCONSISTENT_PROPERTIES) {
       checkConsistency(parents, files, keysUpToParent, manager);
+    }
+    if (REPORT_DUPLICATED_PROPERTIES) {
+      checkDuplicatedProperties(parents, files, keysUpToParent, manager);
+    }
+  }
+
+  private void checkDuplicatedProperties(final BidirectionalMap<PropertiesFile, PropertiesFile> parents, final List<PropertiesFile> files,
+                                         final Map<PropertiesFile, Set<String>> keysUpToParent, final InspectionManager manager) {
+    for (PropertiesFile file : files) {
+      PropertiesFile parent = parents.get(file);
+      if (parent == null) continue;
+      Set<String> parentKeys = keysUpToParent.get(parent);
+      Set<String> overriddenKeys = new THashSet<String>(file.getNamesMap().keySet());
+      overriddenKeys.retainAll(parentKeys);
+      for (String overriddenKey : overriddenKeys) {
+        Property property = file.findPropertyByKey(overriddenKey);
+        assert property != null;
+        while (parent != null) {
+          Property parentProperty = parent.findPropertyByKey(overriddenKey);
+          if (parentProperty != null && Comparing.strEqual(property.getValue(), parentProperty.getValue())) {
+            String message = InspectionsBundle.message("inconsistent.bundle.property.inherited.with.the.same.value", parent.getName());
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message,
+                                                                           RemovePropertyLocalFix.INSTANCE,
+                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            addProblemElement(getRefManager().getReference(file), descriptor);
+          }
+          parent = parents.get(parent);
+        }
+      }
     }
   }
 
