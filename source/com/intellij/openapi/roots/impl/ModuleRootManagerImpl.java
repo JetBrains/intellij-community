@@ -15,7 +15,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -26,7 +25,6 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -48,8 +46,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private final ModuleFileIndexImpl myFileIndex;
   private boolean myIsDisposed = false;
   private boolean isModuleAdded = false;
-  private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedFiles;
-  private final Map<OrderRootType, Set<VirtualFilePointer>> myCachedExportedFiles;
+  private final Map<OrderRootType, VirtualFile[]> myCachedFiles;
+  private final Map<OrderRootType, VirtualFile[]> myCachedExportedFiles;
 
   private @NonNls String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
   private @Nullable LanguageLevel myLanguageLevel;
@@ -63,8 +61,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myFilePointerManager = filePointerManager;
 
     myFileIndex = new ModuleFileIndexImpl(myModule, directoryIndex);
-    myCachedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
-    myCachedExportedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
+    myCachedFiles = new THashMap<OrderRootType, VirtualFile[]>();
+    myCachedExportedFiles = new THashMap<OrderRootType, VirtualFile[]>();
     myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
   }
 
@@ -186,41 +184,29 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   @NotNull
   private VirtualFile[] getFiles(OrderRootType type, Set<Module> processed) {
-    Set<VirtualFilePointer> cachedFiles = myCachedFiles.get(type);
+    VirtualFile[] cachedFiles = myCachedFiles.get(type);
     if (cachedFiles == null) {
-      cachedFiles = new THashSet<VirtualFilePointer>();
+      final LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>();
       final Iterator orderIterator = myRootModel.getOrderIterator();
       while (orderIterator.hasNext()) {
         OrderEntry entry = (OrderEntry)orderIterator.next();
-        final String [] urls;
+        final VirtualFile[] files;
         if (entry instanceof ModuleOrderEntry) {
-          urls = ((ModuleOrderEntryImpl)entry).getUrls(type, processed);
+          files = ((ModuleOrderEntryImpl)entry).getFiles(type, processed);
         }
         else {
-          urls = entry.getUrls(type);
+          files = entry.getFiles(type);
         }
-        final VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
-        for (String url : urls) {
-          if (url != null) {
-            cachedFiles.add(virtualFilePointerManager.create(url, null));
+        for (VirtualFile file : files) {
+          if (file != null) {
+            result.add(file);
           }
         }
       }
+      cachedFiles = result.toArray(new VirtualFile[result.size()]);
       myCachedFiles.put(type, cachedFiles);
     }
-    return convertPointers(cachedFiles);
-  }
-
-  private static VirtualFile[] convertPointers(final Set<VirtualFilePointer> cachedFiles) {
-    final LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>();
-    for (VirtualFilePointer cachedFile : cachedFiles) {
-      final VirtualFile virtualFile = cachedFile.getFile();
-      if (virtualFile != null) {
-        result.add(virtualFile);
-      }
-    }
-
-    return result.toArray(new VirtualFile[result.size()]);
+    return cachedFiles;
   }
 
   @NotNull
@@ -380,36 +366,30 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   @NotNull
   VirtualFile[] getFilesForOtherModules(OrderRootType rootType, Set<Module> processed) {
-    Set<VirtualFilePointer> files = myCachedExportedFiles.get(rootType);
+    VirtualFile[] files = myCachedExportedFiles.get(rootType);
     if (files == null) {
-      files = new THashSet<VirtualFilePointer>();
-      List<String> result = new ArrayList<String>();
+      List<VirtualFile> result = new ArrayList<VirtualFile>();
       if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)) {
-        myRootModel.addExportedUrs(rootType, result, processed);
-      }
-      else if (OrderRootType.CLASSES.equals(rootType)) {
-        myRootModel.addExportedUrs(rootType, result, processed);
-      }
-      else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
-        return getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
+        myRootModel.addExportedFiles(rootType, result, processed);
+        files = result.toArray(new VirtualFile[result.size()]);
       }
       else if (OrderRootType.JAVADOC.equals(rootType)) {
-        return getFiles(OrderRootType.JAVADOC, processed);
+        files = VirtualFile.EMPTY_ARRAY;
+      }
+      else if (OrderRootType.CLASSES.equals(rootType)) {
+        myRootModel.addExportedFiles(rootType, result, processed);
+        files = result.toArray(new VirtualFile[result.size()]);
+      }
+      else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
+        files = getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
       }
       else {
         LOG.error("Unknown root type: " + rootType);
         return null;
       }
-      final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
-      for (String url : result) {
-        if (url != null) {
-          files.add(pointerManager.create(url, null));
-        }
-      }
       myCachedExportedFiles.put(rootType, files);
     }
-
-    return convertPointers(files);
+    return files;
   }
 
   @NotNull
@@ -545,19 +525,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void dropCaches() {
-    VirtualFilePointerManager manager = VirtualFilePointerManager.getInstance();
-    killPointers(manager, myCachedFiles);
-    killPointers(manager, myCachedExportedFiles);
     myCachedFiles.clear();
     myCachedExportedFiles.clear();
-  }
-
-  private void killPointers(final VirtualFilePointerManager manager, Map<OrderRootType, Set<VirtualFilePointer>> cach) {
-    for (Set<VirtualFilePointer> pointers : cach.values()) {
-      for (VirtualFilePointer pointer : pointers) {
-        manager.kill(pointer);
-      }
-    }
   }
 
   static void checkCircularDependencies(ModifiableRootModel[] _rootModels, ModifiableModuleModel moduleModel)
