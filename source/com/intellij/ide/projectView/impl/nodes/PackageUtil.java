@@ -32,6 +32,7 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.ide.IconProvider;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -46,11 +47,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
-import com.intellij.util.JavaeeIcons;
 
 import javax.swing.*;
 import java.util.*;
@@ -281,7 +282,7 @@ public class PackageUtil {
       }
       else {
         if (!isSourceRoot(psiDirectory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
-          parentValue instanceof PsiDirectory) {
+            parentValue instanceof PsiDirectory) {
           final PsiPackage parentPackageInTree = ((PsiDirectory)parentValue).getPackage();
           PsiPackage parentPackage = aPackage.getParentPackage();
           final StringBuilder buf = new StringBuilder();
@@ -308,20 +309,34 @@ public class PackageUtil {
     data.setPresentableText(name);
     data.setLocationString(packagePrefix);
 
+    for (final IconProvider provider : psiDirectory.getProject().getComponents(IconProvider.class)) {
+      final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
+      if (openIcon != null) {
+        final Icon closedIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED);
+        if (closedIcon != null) {
+          data.setOpenIcon(addReadMark(openIcon, isWritable));
+          data.setClosedIcon(addReadMark(closedIcon, isWritable));
+          return;
+        }
+      }
+    }
+
     boolean inTestSource = isInTestSource(virtualFile, psiDirectory.getProject());
     boolean isSourceOrTestRoot = isSourceOrTestRoot(virtualFile, psiDirectory.getProject());
-    if (isPackage(psiDirectory)) {
-      data.setOpenIcon(addReadMark(isSourceOrTestRoot ? IconSet.getSourceRootIcon(inTestSource, true) : IconSet.getSourceFolderIcon(inTestSource, true), isWritable));
-      data.setClosedIcon(addReadMark(isSourceOrTestRoot ? IconSet.getSourceRootIcon(inTestSource, false) : IconSet.getSourceFolderIcon(inTestSource, false), isWritable));
-    }
-    else if (isWebRoot(psiDirectory)) {
-      data.setOpenIcon(addReadMark(JavaeeIcons.WEB_FOLDER_OPEN, isWritable));
-      data.setClosedIcon(addReadMark(JavaeeIcons.WEB_FOLDER_CLOSED, isWritable));
-    }
-    else {
-      data.setOpenIcon(addReadMark(isSourceOrTestRoot ? IconSet.getSourceRootIcon(inTestSource, true) : Icons.DIRECTORY_OPEN_ICON, isWritable));
-      data.setClosedIcon(addReadMark(isSourceOrTestRoot ? IconSet.getSourceRootIcon(inTestSource, false) : Icons.DIRECTORY_CLOSED_ICON, isWritable));
-    }
+    boolean isPackage = isPackage(psiDirectory);
+    data.setOpenIcon(addReadMark(isSourceOrTestRoot
+                                 ? IconSet.getSourceRootIcon(inTestSource, true)
+                                 : isPackage
+                                   ? IconSet.getSourceFolderIcon(inTestSource, true)
+                                   : Icons.DIRECTORY_OPEN_ICON,
+                                 isWritable));
+    data.setClosedIcon(addReadMark(isSourceOrTestRoot
+                                   ? IconSet.getSourceRootIcon(inTestSource, false)
+                                   : isPackage
+                                     ? IconSet.getSourceFolderIcon(inTestSource, false)
+                                     : Icons.DIRECTORY_CLOSED_ICON,
+                                   isWritable));
+
   }
 
   public static boolean isSourceOrTestRoot(final VirtualFile virtualFile, final Project project) {
