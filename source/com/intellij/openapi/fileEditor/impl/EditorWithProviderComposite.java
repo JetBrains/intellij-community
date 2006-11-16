@@ -2,8 +2,8 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -18,7 +18,7 @@ public class EditorWithProviderComposite extends EditorComposite {
     final VirtualFile file,
     final FileEditor[] editors,
     final FileEditorProvider[] providers,
-    final FileEditorManager fileEditorManager
+    final FileEditorManagerEx fileEditorManager
     ) {
     super(file, editors, fileEditorManager);
     myProviders = providers;

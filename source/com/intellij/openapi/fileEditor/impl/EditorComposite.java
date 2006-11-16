@@ -1,14 +1,16 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +30,6 @@ import java.util.Map;
 public abstract class EditorComposite{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorComposite");
 
-  private final EventDispatcher<FileEditorManagerListener> myEventDispatcher = EventDispatcher.create(FileEditorManagerListener.class);
   /**
    * File for which composite is created
    */
@@ -53,7 +54,7 @@ public abstract class EditorComposite{
    * Currently selected myEditor
    */
   private FileEditor mySelectedEditor;
-  private final FileEditorManager myFileEditorManager;
+  private final FileEditorManagerEx myFileEditorManager;
   private final long myInitialFileModificationStamp;
   private Map<FileEditor, FileEditorInfoPane> myInfoPanes = new HashMap<FileEditor, FileEditorInfoPane>();
 
@@ -74,7 +75,7 @@ public abstract class EditorComposite{
   EditorComposite(
     @NotNull final VirtualFile file,
     @NotNull final FileEditor[] editors,
-    @NotNull final FileEditorManager fileEditorManager
+    @NotNull final FileEditorManagerEx fileEditorManager
   ){
     myFile = file;
     myEditors = editors;
@@ -152,19 +153,14 @@ public abstract class EditorComposite{
     myPinned = pinned;
   }
 
-  void addEditorManagerListener(@NotNull final FileEditorManagerListener listener){
-    myEventDispatcher.addListener(listener);
-  }
-
-  public void removeEditorManagerListener(@NotNull final FileEditorManagerListener listener){
-    myEventDispatcher.removeListener(listener);
-  }
-
   private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
-    FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
-    // source of event is null because the event will be retranslated by the EditorManagerImpl
-    myEventDispatcher.getMulticaster().selectionChanged(event);
+    if (!myFileEditorManager.isInsideChange() && !Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
+      final FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
+      final FileEditorManagerListener publisher = myFileEditorManager.getProject().getMessageBus().syncPublisher(ProjectTopics.FILE_EDITOR_MANAGER);
+      publisher.selectionChanged(event);
+    }
   }
+
 
   /**
    * @return preferred focused component inside myEditor composite. Composite uses FocusWatcher to

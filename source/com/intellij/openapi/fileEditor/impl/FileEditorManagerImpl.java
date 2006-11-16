@@ -1,6 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
+import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -36,7 +37,6 @@ import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -48,9 +48,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -68,7 +66,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   private final JPanel myPanels;
   public Project myProject;
 
-  private final EventDispatcher<FileEditorManagerListener> myDispatcher = EventDispatcher.create(FileEditorManagerListener.class);
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
   /**
@@ -89,10 +86,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    */
   private final MyUISettingsListener myUISettingsListener;
 
-  /**
-   * Push forward events from composite
-   */
-  private final MyEditorManagerListener myEditorManagerListener;
   /**
    * Updates icons for open files when project roots change
    */
@@ -118,7 +111,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
     myVirtualFileListener = new MyVirtualFileListener();
     myUISettingsListener = new MyUISettingsListener();
-    myEditorManagerListener = new MyEditorManagerListener();
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
     myProblemListener = new MyProblemListener();
   }
@@ -340,7 +332,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
               LocalFileSystem.getInstance().removeWatchedRoot(request);
             }
           }
-          myDispatcher.getMulticaster().fileClosed(FileEditorManagerImpl.this, file);
         }
       }
     }, IdeBundle.message("command.close.active.editor"), null);
@@ -402,7 +393,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
           }
         }
       }
-      myDispatcher.getMulticaster().fileClosed(this, file);
     }
     finally {
       --mySplitters.myInsideChange;
@@ -500,7 +490,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
         // After that we have to select opened editor.
         newSelectedComposite = new EditorWithProviderComposite(file, editors, providers, this);
-        newSelectedComposite.addEditorManagerListener(myEditorManagerListener);
       }
 
       window.setEditor(newSelectedComposite);
@@ -551,7 +540,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       newSelectedComposite.getSelectedEditor().selectNotify();
 
       if (newEditorCreated) {
-        myDispatcher.getMulticaster().fileOpened(this, file);
+        getProject().getMessageBus().syncPublisher(ProjectTopics.FILE_EDITOR_MANAGER).fileOpened(this, file);
 
         //Add request to watch this editor's virtual file
         final VirtualFile parentDir = file.getParent();
@@ -894,19 +883,33 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
+  private final Map<FileEditorManagerListener, MessageBusConnection> myListenerToConnectionMap = new HashMap<FileEditorManagerListener, MessageBusConnection>();
+
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
     assertThread();
-    myDispatcher.addListener(listener);
+    final MessageBusConnection connection = getProject().getMessageBus().connect();
+    connection.subscribe(ProjectTopics.FILE_EDITOR_MANAGER, listener);
+    myListenerToConnectionMap.put(listener, connection);
   }
 
-  public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, Disposable parentDisposable) {
+  public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener, final Disposable parentDisposable) {
     assertThread();
-    myDispatcher.addListener(listener, parentDisposable);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        myListenerToConnectionMap.remove(listener);
+      }
+    });
+    final MessageBusConnection connection = getProject().getMessageBus().connect(parentDisposable);
+    connection.subscribe(ProjectTopics.FILE_EDITOR_MANAGER, listener);
+    myListenerToConnectionMap.put(listener, connection);
   }
 
   public void removeFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
     assertThread();
-    myDispatcher.removeListener(listener);
+    final MessageBusConnection connection = myListenerToConnectionMap.remove(listener);
+    if (connection != null) {
+      connection.disconnect();
+    }
   }
 
 // ProjectComponent methods
@@ -1018,7 +1021,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     if (!filesEqual || !editorsEqual) {
       final FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
-      myDispatcher.getMulticaster().selectionChanged(event);
+      final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(ProjectTopics.FILE_EDITOR_MANAGER);
+      publisher.selectionChanged(event);
     }
   }
 
@@ -1037,8 +1041,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       editor.getSelectedEditor().deselectNotify();
       mySplitters.setCurrentWindow(null, false);
     }
-
-    editor.removeEditorManagerListener(myEditorManagerListener);
 
     final FileEditor[] editors = editor.getEditors();
     final FileEditorProvider[] providers = editor.getProviders();
@@ -1151,29 +1153,8 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
 }
 */
 
-  private final class MyEditorManagerListener extends FileEditorManagerAdapter {
-    public void selectionChanged(final FileEditorManagerEvent event) {
-      final VirtualFile oldSelectedFile = event.getOldFile();
-      final VirtualFile newSelectedFile = event.getNewFile();
-      LOG.assertTrue(oldSelectedFile != null);
-      LOG.assertTrue(oldSelectedFile.equals(newSelectedFile));
-      if (mySplitters.myInsideChange > 0) { // do not react on own events
-        return;
-      }
-      fireSelectionChanged(oldSelectedFile, event.getOldEditor(), event.getNewEditor());
-    }
-
-    private void fireSelectionChanged(final VirtualFile selectedFile,
-                                      final FileEditor oldSelectedEditor,
-                                      final FileEditor newSelectedEditor) {
-      LOG.assertTrue(selectedFile != null);
-      if (!Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
-        final FileEditorManagerEvent event =
-          new FileEditorManagerEvent(FileEditorManagerImpl.this, selectedFile, oldSelectedEditor, selectedFile, newSelectedEditor);
-        myDispatcher.getMulticaster().selectionChanged(event);
-      }
-    }
-
+  public boolean isInsideChange() {
+    return mySplitters.myInsideChange > 0;
   }
 
   private final class MyEditorPropertyChangeListener implements PropertyChangeListener {

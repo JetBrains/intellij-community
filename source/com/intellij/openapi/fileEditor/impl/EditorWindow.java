@@ -1,10 +1,12 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Splitter;
@@ -99,12 +101,13 @@ public class EditorWindow {
   }
 
   public void closeFile(final VirtualFile file, final boolean unsplit) {
-    getManager().mySplitters.myInsideChange++;
+    final FileEditorManagerImpl editorManager = getManager();
+    editorManager.mySplitters.myInsideChange++;
     try {
-      final List<EditorWithProviderComposite> editors = getManager().getEditorComposites(file);
+      final List<EditorWithProviderComposite> editors = editorManager.getEditorComposites(file);
       LOG.assertTrue(!editors.isEmpty());
       final EditorWithProviderComposite editor = findFileComposite(file);
-      getManager().disposeComposite(editor);
+      editorManager.disposeComposite(editor);
 
       if (myTabbedPane != null) {
         final int componentIndex = findComponentIndex(editor.getComponent());
@@ -119,7 +122,7 @@ public class EditorWindow {
           // Dirty hack [max].
           final VirtualFile selectedFile = getSelectedFile();
           if (selectedFile != null) {
-            getManager().openFileImpl3(this, selectedFile, false, null);
+            editorManager.openFileImpl3(this, selectedFile, false, null);
           }
         }
       }
@@ -136,7 +139,10 @@ public class EditorWindow {
       }
     }
     finally {
-      getManager().mySplitters.myInsideChange--;
+      editorManager.mySplitters.myInsideChange--;
+      final FileEditorManagerListener publisher =
+        editorManager.getProject().getMessageBus().syncPublisher(ProjectTopics.FILE_EDITOR_MANAGER);
+      publisher.fileClosed(editorManager, file);
     }
   }
 

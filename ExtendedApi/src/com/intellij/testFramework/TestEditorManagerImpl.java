@@ -1,6 +1,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +18,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -44,6 +44,10 @@ import java.util.Map;
     Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
     final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider (fileEditor)});
+  }
+
+  public boolean isInsideChange() {
+    return false;
   }
 
   public void moveFocusToNextEditor() {

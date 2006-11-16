@@ -109,4 +109,6 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   public abstract EditorWindow getNextWindow(final EditorWindow window);
 
   public abstract EditorWindow getPrevWindow(final EditorWindow window);
+
+  public abstract boolean isInsideChange();
 }
