@@ -18,14 +18,16 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.io.IOException;
 
 public class PatchReader {
   private String[] myLines;
   private int myLineIndex = 0;
   @NonNls private Pattern myHunkStartPattern = Pattern.compile("@@ -(\\d+),\\d+ \\+(\\d+),\\d+ @@");
 
-  public PatchReader(VirtualFile virtualFile) {
-    CharSequence patchText = LoadTextUtil.loadText(virtualFile);
+  public PatchReader(VirtualFile virtualFile) throws IOException {
+    byte[] patchContents = virtualFile.contentsToByteArray();
+    CharSequence patchText = LoadTextUtil.getTextByBinaryPresentation(patchContents, virtualFile);
     myLines = LineTokenizer.tokenize(patchText, false);
   }
 
