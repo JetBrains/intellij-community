@@ -6,7 +6,7 @@ import java.util.List;
 // todo make it abstract
 public class Difference {
   public enum Kind {
-    NOT_CHANGED, CREATED, MODIFIED, DELETED
+    NOT_MODIFIED, CREATED, MODIFIED, DELETED
   }
 
   private boolean myIsFile;
@@ -19,7 +19,7 @@ public class Difference {
 
   public Difference(Integer id, String oldName, String newName) {
     myIsFile = false;
-    myKind = Kind.NOT_CHANGED;
+    myKind = Kind.NOT_MODIFIED;
     myId = id;
     myOldName = oldName;
     myNewName = newName;
@@ -63,6 +63,17 @@ public class Difference {
 
   public void addChild(Difference d) {
     myChildren.add(d);
+  }
+
+  public Difference findChild(Integer id) {
+    if (myId.equals(id)) return this;
+
+    for (Difference d : myChildren) {
+      Difference result = d.findChild(id);
+      if (result != null) return result;
+    }
+
+    return null;
   }
 
   public List<Difference> getChildren() {
