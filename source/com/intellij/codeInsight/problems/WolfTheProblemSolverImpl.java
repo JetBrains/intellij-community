@@ -235,6 +235,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return;
     final Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return;
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     String oldInfo = null;
