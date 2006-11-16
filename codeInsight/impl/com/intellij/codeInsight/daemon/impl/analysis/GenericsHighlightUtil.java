@@ -78,24 +78,23 @@ public class GenericsHighlightUtil {
                                                                        final PsiSubstitutor substitutor) {
     if (!(resolved instanceof PsiTypeParameterListOwner)) return null;
     final PsiTypeParameterListOwner typeParameterListOwner = (PsiTypeParameterListOwner)resolved;
-    return checkReferenceTypeParametersList(typeParameterListOwner, referenceElement, substitutor, true);
+    return checkReferenceTypeArgumentList(typeParameterListOwner, referenceElement.getParameterList(), substitutor, true);
   }
 
-  public static HighlightInfo checkReferenceTypeParametersList(final PsiTypeParameterListOwner typeParameterListOwner,
-                                                               final PsiJavaCodeReferenceElement referenceElement,
-                                                               final PsiSubstitutor substitutor, boolean registerIntentions) {
-    if (PsiUtil.getLanguageLevel(referenceElement).compareTo(LanguageLevel.JDK_1_5) < 0) {
-      final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-      if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
+  public static HighlightInfo checkReferenceTypeArgumentList(final PsiTypeParameterListOwner typeParameterListOwner,
+                                                             final PsiReferenceParameterList referenceParameterList,
+                                                             final PsiSubstitutor substitutor,
+                                                             boolean registerIntentions) {
+    if (referenceParameterList != null && PsiUtil.getLanguageLevel(referenceParameterList).compareTo(LanguageLevel.JDK_1_5) < 0) {
+      if (referenceParameterList.getTypeParameterElements().length > 0) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                 parameterList,
+                                                 referenceParameterList,
                                                  GENERICS_ARE_NOT_SUPPORTED);
       }
     }
 
     final PsiTypeParameter[] typeParameters = typeParameterListOwner.getTypeParameters();
     final int targetParametersNum = typeParameters.length;
-    final PsiReferenceParameterList referenceParameterList = referenceElement.getParameterList();
     final int refParametersNum = referenceParameterList == null ? 0 : referenceParameterList.getTypeParameterElements().length;
     if (targetParametersNum != refParametersNum && refParametersNum != 0) {
       final String description;
@@ -112,15 +111,14 @@ public class GenericsHighlightUtil {
         );
       }
 
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                            referenceParameterList,
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList,
                                                                             description);
       if (registerIntentions) {
-        PsiElement parent = referenceElement.getParent();
-        if (parent instanceof PsiTypeElement) {
-          PsiElement variable = parent.getParent();
+        PsiElement pparent = referenceParameterList.getParent().getParent();
+        if (pparent instanceof PsiTypeElement) {
+          PsiElement variable = pparent.getParent();
           if (variable instanceof PsiVariable) {
-            VariableParameterizedTypeFix.registerIntentions(highlightInfo, (PsiVariable)variable, referenceElement);
+            VariableParameterizedTypeFix.registerIntentions(highlightInfo, (PsiVariable)variable, referenceParameterList);
           }
         }
       }

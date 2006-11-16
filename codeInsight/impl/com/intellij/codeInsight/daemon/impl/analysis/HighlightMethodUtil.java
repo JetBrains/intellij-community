@@ -1110,6 +1110,10 @@ public class HighlightMethodUtil {
           HighlightInfo highlightInfo = GenericsHighlightUtil.checkUncheckedCall(result, constructorCall);
           if (highlightInfo != null) return highlightInfo;
           if (constructorCall instanceof PsiNewExpression) {
+            highlightInfo = GenericsHighlightUtil.checkReferenceTypeArgumentList(constructor, 
+                                                                                 ((PsiNewExpression)constructorCall).getTypeArgumentList(),
+                                                                                 result.getSubstitutor(), false);
+            if (highlightInfo != null) return highlightInfo;
             highlightInfo = GenericsHighlightUtil.checkGenericCallWithRawArguments(result, (PsiCallExpression)constructorCall);
           }
           if (highlightInfo != null) return highlightInfo;

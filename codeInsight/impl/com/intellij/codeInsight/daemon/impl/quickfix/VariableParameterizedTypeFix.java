@@ -9,18 +9,18 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import java.util.HashMap;
 
 public class VariableParameterizedTypeFix {
-  public static void registerIntentions(HighlightInfo highlightInfo, PsiVariable variable, PsiJavaCodeReferenceElement referenceElement) {
+  public static void registerIntentions(HighlightInfo highlightInfo, PsiVariable variable, PsiReferenceParameterList parameterList) {
     PsiType type = variable.getType();
     if (!(type instanceof PsiClassType)) return;
 
     String shortName = ((PsiClassType)type).getClassName();
-    PsiManager manager = referenceElement.getManager();
+    PsiManager manager = parameterList.getManager();
     PsiShortNamesCache shortNamesCache = manager.getShortNamesCache();
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(manager.getProject()));
     PsiElementFactory factory = manager.getElementFactory();
     for (PsiClass aClass : classes) {
-      if (GenericsHighlightUtil.checkReferenceTypeParametersList(aClass, referenceElement, PsiSubstitutor.EMPTY, false) == null) {
-        PsiType[] actualTypeParameters = referenceElement.getTypeParameters();
+      if (GenericsHighlightUtil.checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false) == null) {
+        PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
         HashMap<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
         for (int j = 0; j < classTypeParameters.length; j++) {
