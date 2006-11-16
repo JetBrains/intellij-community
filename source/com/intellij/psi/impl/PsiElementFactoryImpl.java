@@ -827,6 +827,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     }
     TreeUtil.addChildren(holderElement, typeElement);
     PsiTypeElement psiTypeElement = (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(typeElement);
+    if (psiTypeElement == null) {
+      throw new IncorrectOperationException("PSI is null for element "+typeElement);
+    }
     holderElement.acceptTree(new GeneratedMarkerVisitor());
     return psiTypeElement.getType();
   }
