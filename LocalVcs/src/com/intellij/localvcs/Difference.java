@@ -58,7 +58,7 @@ public class Difference {
   }
 
   public void setKind(Kind k) {
-    myKind = k;
+    if (myKind.equals(Kind.NOT_MODIFIED)) myKind = k;
   }
 
   public void addChild(Difference d) {
