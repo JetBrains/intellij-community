@@ -34,7 +34,12 @@ import java.util.List;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
-  private static final byte[] BUFFER = new byte[1024 * 20];
+  private static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
+    protected byte[] initialValue() {
+      return new byte[1024 * 20];
+    }
+  };
+  //private static final byte[] BUFFER = new byte[1024 * 20];
 
   @Nullable
   public static String getRelativePath(File base, File file) {
@@ -385,12 +390,11 @@ public class FileUtil {
   }
 
   public static void copy(InputStream inputStream, OutputStream outputStream) throws IOException {
-    synchronized (BUFFER) {
-      while (true) {
-        int read = inputStream.read(BUFFER);
-        if (read < 0) break;
-        outputStream.write(BUFFER, 0, read);
-      }
+    final byte[] buffer = BUFFER.get();
+    while (true) {
+      int read = inputStream.read(buffer);
+      if (read < 0) break;
+      outputStream.write(buffer, 0, read);
     }
   }
 
