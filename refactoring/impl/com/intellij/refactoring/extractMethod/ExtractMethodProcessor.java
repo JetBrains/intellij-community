@@ -489,7 +489,9 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         }
         if (exitStatementCopy == null) {
-          exitStatementCopy = (PsiStatement)exitStatement.copy();
+          if (needExitStatement(exitStatement)) {
+            exitStatementCopy = (PsiStatement)exitStatement.copy();
+          }
         }
         PsiElement result = exitStatement.replace(returnStatement);
         if (index >= 0) {
@@ -588,6 +590,18 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return methodCall;
+  }
+
+  private boolean needExitStatement(final PsiStatement exitStatement) {
+    if (exitStatement instanceof PsiContinueStatement) {
+      //IDEADEV-11748
+      PsiStatement statement = ((PsiContinueStatement)exitStatement).findContinuedStatement();
+      if (statement == null) return true;
+      if (statement instanceof PsiLoopStatement) statement = ((PsiLoopStatement)statement).getBody();
+      int endOffset = myControlFlow.getEndOffset(statement);
+      return endOffset > myFlowEnd;
+    }
+    return true;
   }
 
   private void adjustFinalParameters(final PsiMethod method) throws IncorrectOperationException {
