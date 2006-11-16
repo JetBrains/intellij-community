@@ -228,10 +228,6 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     return myStep;
   }
 
-  JList getList() {
-    return myList;
-  }
-
   private class MyMouseMotionListener extends MouseMotionAdapter {
 
     public void mouseMoved(MouseEvent e) {
@@ -262,13 +258,6 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
       }
       handleSelect(handleFinalChoices);
       stopTimer();
-    }
-  }
-
-  private static void ensureIndexIsVisible(JList list, int index) {
-    Rectangle cellBounds = list.getCellBounds(index, index);
-    if (cellBounds != null) {
-      list.scrollRectToVisible(cellBounds);
     }
   }
 

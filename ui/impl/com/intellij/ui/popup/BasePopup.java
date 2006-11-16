@@ -24,35 +24,37 @@ import com.intellij.ui.popup.util.SpeedSearch;
 import com.intellij.util.ui.BlockBorder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.Popup;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.lang.reflect.Method;
 
-public abstract class BasePopup implements ActionListener, ElementFilter, com.intellij.openapi.ui.popup.JBPopup {
+public abstract class BasePopup implements ActionListener, ElementFilter, JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.BasePopup");
 
   private static final int AUTO_POPUP_DELAY = 1000;
-  protected static final Color TITLE_BACKGROUND = new Color(180, 193, 215);
-  protected static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
+  private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
 
   protected static final int STEP_X_PADDING = 2;
 
-  protected javax.swing.Popup myPopup;
+  private Popup myPopup;
 
-  protected BasePopup myParent;
+  private BasePopup myParent;
 
   protected JPanel myContainer;
 
   protected PopupStep myStep;
   protected BasePopup myChild;
 
-  protected JScrollPane myScrollPane;
+  private JScrollPane myScrollPane;
   @Nullable
-  protected JLabel myTitle;
+  private JLabel myTitle;
 
   protected JComponent myContent;
 
@@ -68,7 +70,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
   private SpeedSearchPane mySpeedSearchPane;
 
   private MnemonicsSearch myMnemonicsSearch;
-  protected Object myParentValue;
+  private Object myParentValue;
   private Component myOldFocusOwner;
 
   public BasePopup(PopupStep aStep) {
@@ -92,8 +94,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     myContent = createContent();
 
     myScrollPane = new JScrollPane(myContent);
-    myScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    myScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.getHorizontalScrollBar().setBorder(null);
 
     myScrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
@@ -109,7 +111,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     final String title = aStep.getTitle();
     if (title != null) {
       myTitle = new BoldLabel(title);
-      myTitle.setHorizontalAlignment(JLabel.CENTER);
+      myTitle.setHorizontalAlignment(SwingConstants.CENTER);
       myTitle.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
       //myTitle.setBackground(TITLE_BACKGROUND);
     } else {
@@ -118,7 +120,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     myTitle.setOpaque(true);
     myContainer.add(myTitle, BorderLayout.NORTH);
 
-    registerAction("disposeAll", KeyEvent.VK_ESCAPE, KeyEvent.SHIFT_MASK, new AbstractAction() {
+    registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         if (mySpeedSearch.isHoldingFilter()) {
           mySpeedSearch.reset();
@@ -205,7 +207,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y);
   }
 
-  public void showInScreenCoordinates(Component owner, Point point) {
+  public void showInScreenCoordinates(@NotNull Component owner, Point point) {
     show(owner, point.x, point.y);
   }
 
@@ -262,7 +264,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     });
   }
 
-  private PopupFactory setupPopupFactory() {
+  private static PopupFactory setupPopupFactory() {
     final PopupFactory factory = PopupFactory.getSharedInstance();
     if (!SystemInfo.isWindows) {
       try {
@@ -297,7 +299,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     return myContent;
   }
 
-  public void showInCenterOf(Component aContainer) {
+  public void showInCenterOf(@NotNull Component aContainer) {
     final JComponent component = getTargetComponent(aContainer);
 
     Point containerScreenPoint = component.getVisibleRect().getLocation();
@@ -307,7 +309,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     show(aContainer, popupPoint.x, popupPoint.y);
   }
 
-  private JComponent getTargetComponent(Component aComponent) {
+  private static JComponent getTargetComponent(Component aComponent) {
     if (aComponent instanceof JComponent) {
       return (JComponent) aComponent;
     }
@@ -345,14 +347,14 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     show(aComponent, point.x, point.y);
   }
 
-  private Point getCenterPoint(Rectangle aContainerRec, Dimension aPopupSize) {
+  private static Point getCenterPoint(Rectangle aContainerRec, Dimension aPopupSize) {
     Point result = new Point();
 
     Point containerLocation = aContainerRec.getLocation();
     Dimension containerSize = aContainerRec.getSize();
 
-    result.x = containerLocation.x + ((containerSize.width / 2) - aPopupSize.width / 2);
-    result.y = containerLocation.y + ((containerSize.height / 2) - aPopupSize.height / 2);
+    result.x = containerLocation.x + (containerSize.width / 2 - aPopupSize.width / 2);
+    result.y = containerLocation.y + (containerSize.height / 2 - aPopupSize.height / 2);
 
     return result;
   }
@@ -372,15 +374,11 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
   protected abstract InputMap getInputMap();
   protected abstract ActionMap getActionMap();
 
-  protected Dimension getContentPreferredSize() {
-    return myContent.getPreferredSize();
-  }
-
   protected final void setParentValue(Object parentValue) {
     myParentValue = parentValue;
   }
 
-  private class MyContainer extends OpaquePanel implements DataProvider {
+  private static class MyContainer extends OpaquePanel implements DataProvider {
     MyContainer() {
       super(new BorderLayout(), Color.white);
       setFocusCycleRoot(true);
@@ -394,9 +392,9 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
       return computeNotBiggerDimension(super.getPreferredSize());
     }
 
-    private Dimension computeNotBiggerDimension(Dimension ofContent) {
-      int resultWidth = (ofContent.width > MAX_SIZE.width) ? MAX_SIZE.width : ofContent.width;
-      int resultHeight = (ofContent.height > MAX_SIZE.height) ? MAX_SIZE.height : ofContent.height;
+    private static Dimension computeNotBiggerDimension(Dimension ofContent) {
+      int resultWidth = ofContent.width > MAX_SIZE.width ? MAX_SIZE.width : ofContent.width;
+      int resultHeight = ofContent.height > MAX_SIZE.height ? MAX_SIZE.height : ofContent.height;
 
       return new Dimension(resultWidth, resultHeight);
     }
@@ -444,7 +442,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, com.in
     return myContainer;
   }
 
-  protected BasePopup createPopup(BasePopup parent, PopupStep step, Object parentValue) {
+  protected static BasePopup createPopup(BasePopup parent, PopupStep step, Object parentValue) {
     if (step instanceof ListPopupStep) {
       return new ListPopupImpl(parent, (ListPopupStep) step, parentValue);
     }

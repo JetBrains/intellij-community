@@ -31,9 +31,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class TreePopupImpl extends BasePopup implements TreePopup {
-
   private MyTree myWizardTree;
-  private Dimension myPreferredSize = new Dimension(0, 0);
 
   private MouseMotionListener myMouseMotionListener;
   private MouseListener myMouseListener;
@@ -162,17 +160,10 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     super.dispose();
   }
 
-  protected Dimension getContentPreferredSize() {
-    return myPreferredSize;
-  }
-
   protected void beforeShow() {
     addListeners();
 
     expandAll();
-
-    myPreferredSize = new Dimension(myWizardTree.getPreferredSize());
-    myPreferredSize.width += 10;
 
     collapseAll();
 
@@ -199,7 +190,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
 
 
   private void restoreExpanded() {
-    if (mySavedExpanded.size() == 0) {
+    if (mySavedExpanded.isEmpty()) {
       expandAll();
       return;
     }
@@ -337,18 +328,17 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
 
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final boolean shouldPaintSelected = (getTreeStep().isSelectable(value, extractUserObject(value)) && selected) || (getTreeStep().isSelectable(value, extractUserObject(value)) && hasFocus);
-      final boolean shouldPaintFocus = (!getTreeStep().isSelectable(value, extractUserObject(value)) && selected)
-          || (shouldPaintSelected)
-          || (hasFocus);
+      final boolean shouldPaintFocus =
+        !getTreeStep().isSelectable(value, extractUserObject(value)) && selected || shouldPaintSelected || hasFocus;
 
       super.customizeCellRenderer(tree, value, shouldPaintSelected, expanded, leaf, row, shouldPaintFocus);
     }
   }
 
-  public static boolean isLocationInExpandControl(JTree aTree, TreePath path, int mouseX, int mouseY) {
+  private static boolean isLocationInExpandControl(JTree aTree, TreePath path, int mouseX, int mouseY) {
     TreeModel treeModel = aTree.getModel();
 
-    final BasicTreeUI basicTreeUI = ((BasicTreeUI) aTree.getUI());
+    final BasicTreeUI basicTreeUI = (BasicTreeUI)aTree.getUI();
     Icon expandedIcon = basicTreeUI.getExpandedIcon();
 
     if (path != null && !treeModel.isLeaf(path.getLastPathComponent())) {
@@ -362,15 +352,14 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
         boxWidth = 8;
       }
 
-      int boxLeftX = (i != null) ? i.left : 0;
+      int boxLeftX = i != null ? i.left : 0;
 
       boolean leftToRight = aTree.getComponentOrientation().isLeftToRight();
       int depthOffset = getDepthOffset(aTree);
       int totalChildIndent = basicTreeUI.getLeftChildIndent() + basicTreeUI.getRightChildIndent();
 
       if (leftToRight) {
-        boxLeftX += (((path.getPathCount() + depthOffset - 2) *
-            totalChildIndent) + basicTreeUI.getLeftChildIndent()) -
+        boxLeftX += ((path.getPathCount() + depthOffset - 2) * totalChildIndent + basicTreeUI.getLeftChildIndent()) -
             boxWidth / 2;
       }
       int boxRightX = boxLeftX + boxWidth;
@@ -401,7 +390,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     myWizardTree.processKeyEvent(aEvent);
   }
 
-  protected Object extractUserObject(Object aNode) {
+  private Object extractUserObject(Object aNode) {
     Object object = ((DefaultMutableTreeNode) aNode).getUserObject();
     if (object instanceof TreePopupStructure.Node) {
       return ((TreePopupStructure.Node) object).getDelegate();
@@ -445,7 +434,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     }
   }
 
-  public Project getProject() {
+  private Project getProject() {
     return getTreeStep().getProject();
   }
 
@@ -482,7 +471,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
         wasSelected = myWizardTree.select(this, new SimpleNodeVisitor() {
           public boolean accept(SimpleNode simpleNode) {
             if (simpleNode instanceof TreePopupStructure.Node) {
-              TreePopupStructure.Node node = ((TreePopupStructure.Node) simpleNode);
+              TreePopupStructure.Node node = (TreePopupStructure.Node)simpleNode;
               return node.getDelegate().equals(toSelect);
             }
             else {
@@ -496,7 +485,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
         myWizardTree.select(this, new SimpleNodeVisitor() {
           public boolean accept(SimpleNode simpleNode) {
             if (simpleNode instanceof TreePopupStructure.Node) {
-              TreePopupStructure.Node node = ((TreePopupStructure.Node) simpleNode);
+              TreePopupStructure.Node node = (TreePopupStructure.Node)simpleNode;
               if (getTreeStep().isSelectable(node, node.getDelegate())) {
                 return true;
               }
