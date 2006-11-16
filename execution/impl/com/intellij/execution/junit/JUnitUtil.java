@@ -110,7 +110,7 @@ public class JUnitUtil {
   }
 
   public static boolean isTestClass(final PsiClass psiClass) {
-    if (!ExecutionUtil.isRunnableClass(psiClass)) return false;
+    if (!ExecutionUtil.isRunnableClass(psiClass, true)) return false;
     if (isTestCaseInheritor(psiClass)) return true;
     if (psiClass.getModifierList().findAnnotation("org.junit.runner.RunWith") != null) return true;
 
@@ -122,7 +122,7 @@ public class JUnitUtil {
   }
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass) {
-    if (!ExecutionUtil.isRunnableClass(psiClass)) return false;
+    if (!ExecutionUtil.isRunnableClass(psiClass, true)) return false;
 
     if (psiClass.getModifierList().findAnnotation("org.junit.runner.RunWith") != null) return true;
     for (final PsiMethod method : psiClass.getMethods()) {

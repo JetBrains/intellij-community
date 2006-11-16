@@ -231,7 +231,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (JUnitUtil.isTestClass(aClass)) {
       return CLASS_KIND_JUNIT_TEST;
     }
-    if (ExecutionUtil.isRunnableClass(aClass) && ApplicationConfigurationType.findMainMethod(aClass) != null) {
+    if (ExecutionUtil.isRunnableClass(aClass, false) && ApplicationConfigurationType.findMainMethod(aClass) != null) {
       return CLASS_KIND_RUNNABLE;
     }
     return CLASS_KIND_CLASS;

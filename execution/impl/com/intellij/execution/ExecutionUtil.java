@@ -150,11 +150,11 @@ public class ExecutionUtil {
     }
   }
 
-  public static boolean isRunnableClass(final PsiClass aClass) {
+  public static boolean isRunnableClass(final PsiClass aClass, final boolean mustBePublic) {
     if (aClass instanceof PsiAnonymousClass) return false;
     if (aClass.isInterface()) return false;
-    if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
+    if (mustBePublic && !aClass.hasModifierProperty(PsiModifier.PUBLIC)) return false;
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
   }
 }
