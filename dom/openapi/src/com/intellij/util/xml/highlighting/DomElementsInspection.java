@@ -50,8 +50,10 @@ public abstract class DomElementsInspection<T extends DomElement> extends LocalI
       DomElementAnnotationsManager.getInstance(domFileElement.getManager().getProject()).getHighlightingHelper();
     domFileElement.accept(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
-        element.acceptChildren(this);
-        checkDomElement(element, holder, helper);
+        if (element.getXmlElement() != null) {
+          element.acceptChildren(this);
+          checkDomElement(element, holder, helper);
+        }
       }
     });
   }
