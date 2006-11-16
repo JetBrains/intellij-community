@@ -32,7 +32,7 @@ public class PatchHunk {
   }
 
   public void apply(final List<String> lines) throws ApplyPatchException {
-    int curLine = myStartLineBefore-1;
+    int curLine = findStartLine(lines);
     for(PatchLine line: myLines) {
       switch (line.getType()) {
         case CONTEXT:
@@ -55,6 +55,55 @@ public class PatchHunk {
           break;
       }
     }
+  }
+
+  private int findStartLine(final List<String> lines) throws ApplyPatchException {
+    int totalContextLines = countContextLines();
+    if (getLinesMatchingContext(lines, myStartLineBefore-1) == totalContextLines) {
+      return myStartLineBefore-1;
+    }
+    int maxContextStartLine = -1;
+    int maxContextLines = 0;
+    for(int i=0;i< lines.size(); i++) {
+      int contextLines = getLinesMatchingContext(lines, i);
+      if (contextLines == totalContextLines) {
+        return i;
+      }
+      if (contextLines > maxContextLines) {
+        maxContextLines = contextLines;
+        maxContextStartLine = i;
+      }
+    }
+    if (maxContextLines < 2) {
+      throw new ApplyPatchException("couldn't find context");
+    }
+    return maxContextStartLine;
+  }
+
+  private int countContextLines() {
+    int count = 0;
+    for(PatchLine line: myLines) {
+      if (line.getType() == PatchLine.Type.CONTEXT || line.getType() == PatchLine.Type.REMOVE) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private int getLinesMatchingContext(final List<String> lines, int startLine) {
+    int count = 0;
+    for(PatchLine line: myLines) {
+      PatchLine.Type type = line.getType();
+      if (type == PatchLine.Type.REMOVE || type == PatchLine.Type.CONTEXT) {
+        // TODO: smarter algorithm (search outward from non-context lines)
+        if (startLine >= lines.size() || !line.getText().equals(lines.get(startLine))) {
+          return count;
+        }
+        count++;
+        startLine++;
+      }
+    }
+    return count;
   }
 
   public boolean isNewContent() {

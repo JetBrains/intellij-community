@@ -55,6 +55,7 @@ public class PatchReader {
           curPatch.addHunk(hunk);
         }
       }
+      myLineIndex++;
     }
     return curPatch;
   }
