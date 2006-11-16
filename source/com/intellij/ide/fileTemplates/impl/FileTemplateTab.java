@@ -7,6 +7,8 @@ import javax.swing.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Alexey Kudravtsev
  */
@@ -20,6 +22,7 @@ abstract class FileTemplateTab {
 
   public abstract JComponent getComponent();
 
+  @Nullable
   public abstract FileTemplate getSelectedTemplate();
 
   public abstract void selectTemplate(FileTemplate template);

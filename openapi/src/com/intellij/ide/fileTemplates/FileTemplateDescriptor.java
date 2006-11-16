@@ -15,13 +15,18 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class FileTemplateDescriptor {
-  private Icon myIcon;
-  private String myFileName;
+  private final Icon myIcon;
+  private final String myFileName;
+
+  public FileTemplateDescriptor(@NonNls String fileName) {
+    this(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
+  }
 
   public FileTemplateDescriptor(@NonNls String fileName, Icon icon) {
     myIcon = icon;
@@ -30,6 +35,10 @@ public class FileTemplateDescriptor {
 
   public Icon getIcon() {
     return myIcon;
+  }
+
+  public String getDisplayName() {
+    return getFileName();
   }
 
   public String getFileName() {

@@ -3,13 +3,10 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.javaee.J2EEFileTemplateNames;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -19,6 +16,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +27,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 /*
  * @author: MYakovlev
@@ -50,7 +47,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   private TabbedPaneWrapper myTabbedPane;
   private FileTemplateConfigurable myEditor;
   private boolean myModified = false;
-  protected JComponent myEditorComponent;
+  private JComponent myEditorComponent;
   private final static int TEMPLATE_ID = 0;
   private final static int PATTERN_ID = 1;
   private final static int CODE_ID = 2;
@@ -62,8 +59,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
 
-  @NonNls public static final String CURRENT_TAB = "FileTemplates.CurrentTab";
-  @NonNls public static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
+  @NonNls private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
+  @NonNls private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
 
   public void disposeComponent() {
   }
@@ -173,72 +170,24 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
         onListSelectionChanged();
       }
 
-      protected FileTemplateTabAsTree.TreeNode initModel() {
-        ArrayList<TreeNode> categories = new ArrayList<TreeNode>();
-        categories.add(new TreeNode(IdeBundle.message("template.node.ejb"), ModuleType.EJB.getNodeIcon(true), new TreeNode[]{
-          new TreeNode(IdeBundle.message("template.node.java.code.templates"), StdFileTypes.JAVA.getIcon(), new TreeNode[]{
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.ENTITY_CLASS_BMP_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.ENTITY_CLASS_CMP_1x_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.ENTITY_CLASS_CMP_2x_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.ENTITY_HOME_INTERFACE_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.ENTITY_LOCAL_HOME_INTERFACE_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.LOCAL_INTERFACE_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.REMOTE_INTERFACE_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATEFUL_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATEFUL_TEMPLATE_3),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATELESS_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_CLASS_STATELESS_TEMPLATE_3),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_HOME_INTERFACE_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_LOCAL_HOME_INTERFACE_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SESSION_SERVICE_ENDPOINT_INTERFACE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.MESSAGE_CLASS_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.MESSAGE_CLASS_TEMPLATE_3),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.PERSISTENT_ENTITY_CLASS_TEMPLATE_3),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.PERSISTENT_EMBEDDABLE_CLASS_TEMPLATE_3),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.INTERCEPTOR_TEMPLATE_3),
-          }),
-          new TreeNode(IdeBundle.message("template.node.deployment.descriptors"), StdFileTypes.XML.getIcon(), new TreeNode[]{
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_1_1),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_2_0),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_2_1),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.EJB_JAR_XML_3_0),
-          }),
-        }));
-        categories.add(new TreeNode(IdeBundle.message("template.node.application"), ModuleType.J2EE_APPLICATION.getNodeIcon(true), new TreeNode[]{
-          new TreeNode(IdeBundle.message("template.node.deployment.descriptors"), StdFileTypes.XML.getIcon(), new TreeNode[]{
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_2),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_3),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_1_4),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.APPLICATION_XML_5_0),
-          }),
-        }));
-        categories.add(new TreeNode(IdeBundle.message("template.node.web"), ModuleType.WEB.getNodeIcon(true), new TreeNode[]{
-          new TreeNode(IdeBundle.message("template.node.java.code.templates"), StdFileTypes.JAVA.getIcon(), new TreeNode[]{
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.SERVLET_CLASS_TEMPLATE),
-            new TreeNode(StdFileTypes.JAVA.getIcon(), J2EEFileTemplateNames.FILTER_CLASS_TEMPLATE),
-          }),
-          new TreeNode(IdeBundle.message("template.node.deployment.descriptors"), StdFileTypes.XML.getIcon(), new TreeNode[]{
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_22),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_23),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_24),
-            new TreeNode(StdFileTypes.XML.getIcon(), J2EEFileTemplateNames.WEB_XML_25),
-          }),
-          new TreeNode(IdeBundle.message("template.node.jsp.files"), StdFileTypes.JSP.getIcon(), new TreeNode[]{
-            new TreeNode(StdFileTypes.JSP.getIcon(), J2EEFileTemplateNames.JSP_FILE),
-            new TreeNode(StdFileTypes.JSPX.getIcon(), J2EEFileTemplateNames.JSPX_FILE)
-          }),
-        }));
+      protected FileTemplateTabAsTree.FileTemplateNode initModel() {
+        SortedSet<FileTemplateGroupDescriptor> categories = new TreeSet<FileTemplateGroupDescriptor>(new Comparator<FileTemplateGroupDescriptor>() {
+          public int compare(FileTemplateGroupDescriptor o1, FileTemplateGroupDescriptor o2) {
+            return o1.getTitle().compareTo(o2.getTitle());
+          }
+        });
 
         FileTemplateGroupDescriptorFactory[] templateGroupFactories = ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class);
         for (FileTemplateGroupDescriptorFactory templateGroupFactory : templateGroupFactories) {
-          FileTemplateGroupDescriptor fileTemplatesDescriptor = templateGroupFactory.getFileTemplatesDescriptor();
-          if (fileTemplatesDescriptor != null) {
-            categories.add(createNode(fileTemplatesDescriptor));
-          }
+          ContainerUtil.addIfNotNull(templateGroupFactory.getFileTemplatesDescriptor(), categories);
         }
 
         //noinspection HardCodedStringLiteral
-        return new TreeNode("ROOT", null, categories.toArray(new TreeNode[categories.size()]));
+        return new FileTemplateNode("ROOT", null, ContainerUtil.map2List(categories, new Function<FileTemplateGroupDescriptor, FileTemplateNode>() {
+          public FileTemplateNode fun(FileTemplateGroupDescriptor s) {
+            return new FileTemplateNode(s);
+          }
+        }));
       }
     };
     myTabs = new FileTemplateTab[]{myTemplatesList, myPatternsList, myCodeTemplatesList, myJ2eeTemplatesList};
@@ -342,19 +291,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
     myMainPanel.setPreferredSize(new Dimension(700, 500));
 
     return myMainPanel;
-  }
-
-  private static FileTemplateTabAsTree.TreeNode createNode(FileTemplateDescriptor descriptor) {
-    if (descriptor instanceof FileTemplateGroupDescriptor) {
-      FileTemplateDescriptor[] children = ((FileTemplateGroupDescriptor)descriptor).getTemplates();
-      FileTemplateTabAsTree.TreeNode[] nodes = new FileTemplateTabAsTree.TreeNode[children.length];
-      for (int i = 0; i < nodes.length; i++) {
-        nodes[i] = createNode(children[i]);
-      }
-      return new FileTemplateTabAsTree.TreeNode(((FileTemplateGroupDescriptor)descriptor).getTitle(), descriptor.getIcon(), nodes);
-    }
-
-    return new FileTemplateTabAsTree.TreeNode(descriptor.getIcon(), descriptor.getFileName());
   }
 
   private void onReset() {
@@ -497,14 +433,14 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   /**
    * If apply is acceptable, returns true. If no, returns false and fills error string.
    */
-  public boolean canApply(final boolean showErrorDialog, String[] errorString) {
+  private boolean canApply(final boolean showErrorDialog, String[] errorString) {
     for (FileTemplateTab list : myTabs) {
       if (!canApply(showErrorDialog, errorString, list)) return false;
     }
     return true;
   }
 
-  public boolean canApply(final boolean showErrorDialog, String[] errorString, FileTemplateTab list) {
+  private boolean canApply(final boolean showErrorDialog, String[] errorString, FileTemplateTab list) {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
     ArrayList<String> allNames = new ArrayList<String>();
     FileTemplate itemWithError = null;
@@ -741,10 +677,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
       myEditorComponent = null;
     }
     myMainPanel = null;
-  }
-
-  public JComponent getPreferredFocusedComponent() {
-    return myCurrentTab.getComponent();
   }
 
   public void createNewTemplate(String preferredName, String extension, String text) {

@@ -14,7 +14,7 @@ public class FileTemplateDescriptionImpl {
     myIcon = icon;
   }
 
-  protected FileTemplateTabAsTree.TreeNode createTreeNode(){
-    return new FileTemplateTabAsTree.TreeNode(myIcon, myTitle);
+  protected FileTemplateTabAsTree.FileTemplateNode createTreeNode(){
+    return new FileTemplateTabAsTree.FileTemplateNode(myIcon, myTitle);
   }
 }

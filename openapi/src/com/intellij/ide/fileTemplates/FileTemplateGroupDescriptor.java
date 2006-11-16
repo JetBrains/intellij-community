@@ -16,16 +16,22 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NonNls;
-
 public class FileTemplateGroupDescriptor extends FileTemplateDescriptor {
-  private String myTitle;
-  private List<FileTemplateDescriptor> myTemplates = new ArrayList<FileTemplateDescriptor>();
+  private final String myTitle;
+  private final List<FileTemplateDescriptor> myTemplates = new ArrayList<FileTemplateDescriptor>();
+
+  public FileTemplateGroupDescriptor(String title, Icon icon, FileTemplateDescriptor... children) {
+    this(title, icon);
+    for (final FileTemplateDescriptor child : children) {
+      addTemplate(child);
+    }
+  }
 
   public FileTemplateGroupDescriptor(String title, Icon icon) {
     super(null, icon);
@@ -40,12 +46,15 @@ public class FileTemplateGroupDescriptor extends FileTemplateDescriptor {
     return myTemplates.toArray(new FileTemplateDescriptor[myTemplates.size()]);
   }
 
+  public String getDisplayName() {
+    return getTitle();
+  }
+
   public void addTemplate(FileTemplateDescriptor descriptor) {
     myTemplates.add(descriptor);
   }
 
   public void addTemplate(@NonNls String fileName) {
-    final Icon icon = FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon();
-    myTemplates.add(new FileTemplateDescriptor(fileName, icon));
+    addTemplate(new FileTemplateDescriptor(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon()));
   }
 }
