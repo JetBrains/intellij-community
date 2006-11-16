@@ -15,12 +15,16 @@ import java.util.List;
 
 public class PatchHunk {
   private int myStartLineBefore;
+  private int myEndLineBefore;
   private int myStartLineAfter;
+  private int myEndLineAfter;
   private List<PatchLine> myLines = new ArrayList<PatchLine>();
 
-  public PatchHunk(final int lineBefore, final int lineAfter) {
-    myStartLineBefore = lineBefore;
-    myStartLineAfter = lineAfter;
+  public PatchHunk(final int startLineBefore, final int endLineBefore, final int startLineAfter, final int endLineAfter) {
+    myStartLineBefore = startLineBefore;
+    myEndLineBefore = endLineBefore;
+    myStartLineAfter = startLineAfter;
+    myEndLineAfter = endLineAfter;
   }
 
   public void addLine(final PatchLine line) {
@@ -51,5 +55,21 @@ public class PatchHunk {
           break;
       }
     }
+  }
+
+  public boolean isNewContent() {
+    return myStartLineBefore == 0 && myEndLineBefore == 0;
+  }
+
+  public boolean isDeletedContent() {
+    return myStartLineAfter == 0 && myEndLineAfter == 0;
+  }
+
+  public String getText() {
+    StringBuilder builder = new StringBuilder();
+    for(PatchLine line: myLines) {
+      builder.append(line.getText()).append("\n");
+    }
+    return builder.toString();
   }
 }

@@ -23,7 +23,7 @@ import java.io.IOException;
 public class PatchReader {
   private String[] myLines;
   private int myLineIndex = 0;
-  @NonNls private Pattern myHunkStartPattern = Pattern.compile("@@ -(\\d+),\\d+ \\+(\\d+),\\d+ @@");
+  @NonNls private Pattern myHunkStartPattern = Pattern.compile("@@ -(\\d+),(\\d+) \\+(\\d+),(\\d+) @@");
 
   public PatchReader(VirtualFile virtualFile) throws IOException {
     byte[] patchContents = virtualFile.contentsToByteArray();
@@ -76,9 +76,11 @@ public class PatchReader {
     if (!m.matches()) {
       throw new PatchSyntaxException(myLineIndex, "Unknown hunk start syntax");
     }
-    int lineBefore = Integer.parseInt(m.group(1));
-    int lineAfter = Integer.parseInt(m.group(2));
-    PatchHunk hunk = new PatchHunk(lineBefore, lineAfter);
+    int startLineBefore = Integer.parseInt(m.group(1));
+    int endLineBefore = Integer.parseInt(m.group(2));
+    int startLineAfter = Integer.parseInt(m.group(3));
+    int endLineAfter = Integer.parseInt(m.group(4));
+    PatchHunk hunk = new PatchHunk(startLineBefore, endLineBefore, startLineAfter, endLineAfter);
     myLineIndex++;
     while(myLineIndex < myLines.length) {
       curLine = myLines [myLineIndex];
