@@ -5,9 +5,11 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +39,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
   public I18nQuickFixHandler getHandler(final AnActionEvent e) {
     final Editor editor = getEditor(e);
     if (editor == null) return null;
-    PsiFile psiFile = (PsiFile)e.getDataContext().getData(DataConstants.PSI_FILE);
+    PsiFile psiFile = e.getData(DataKeys.PSI_FILE);
     if (psiFile == null) return null;
     final PsiLiteralExpression literalExpression = getEnclosingStringLiteral(psiFile, editor);
     TextRange range = getSelectedRange(getEditor(e), psiFile);
@@ -96,7 +98,9 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
         if (!result.get().booleanValue()) return;
         TextRange elementRange = element.getTextRange();
         if (elementRange.intersectsStrict(selectedRange)) {
-          if (element instanceof OuterLanguageElement ||
+          // in JSPX base language root is a Jspx file itself
+          if (jspFile.getLanguage() != StdLanguages.JSPX && element instanceof OuterLanguageElement ||
+
               element instanceof XmlTag
               && !selectedRange.contains(elementRange)
               && (!elementRange.contains(selectedRange) || !((XmlTag)element).getValue().getTextRange().contains(selectedRange))) {
