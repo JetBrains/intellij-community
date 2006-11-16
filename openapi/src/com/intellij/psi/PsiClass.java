@@ -31,7 +31,7 @@ import java.util.List;
  * @see PsiJavaFile#getClasses() 
  */
 public interface PsiClass
-  extends PsiElement, PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {
+  extends PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */
@@ -349,5 +349,6 @@ public interface PsiClass
    * @return the collection of signatures.
    * @since 5.1 
    */
-  @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures();
+  @NotNull
+  Collection<HierarchicalMethodSignature> getVisibleSignatures();
 }

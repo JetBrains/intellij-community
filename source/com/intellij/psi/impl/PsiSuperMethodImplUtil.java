@@ -94,7 +94,8 @@ public class PsiSuperMethodImplUtil {
             !(hisClass.isInterface() && "java.lang.Object".equals(aClass.getQualifiedName()) && !method.hasModifierProperty(PsiModifier.PUBLIC))) {
           existing.addSuperSignature(signatureHierarchical);
           toRestore.put(signature, existing);
-        } else {
+        }
+        else {
           result.put(signature, signatureHierarchical);
         }
       }

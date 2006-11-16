@@ -15,20 +15,17 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBackedByPsiMethod");
-
   private final PsiMethod myMethod;
   private final boolean myIsRaw;
   private boolean myIsInGenericContext;
 
-  protected MethodSignatureBackedByPsiMethod(PsiMethod method,
+  protected MethodSignatureBackedByPsiMethod(@NotNull PsiMethod method,
                                              PsiSubstitutor substitutor,
                                              boolean isRaw,
                                              final boolean isInGenericContext, PsiType[] parameterTypes,
@@ -36,7 +33,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
     myIsInGenericContext = isInGenericContext;
-    assert (method.isValid());
+    assert method.isValid();
     myMethod = method;
   }
 
@@ -62,6 +59,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return super.equals(o);
   }
 
+  @NotNull
   public PsiMethod getMethod() {
     return myMethod;
   }

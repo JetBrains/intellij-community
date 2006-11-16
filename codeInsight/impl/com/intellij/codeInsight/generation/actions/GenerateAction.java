@@ -40,7 +40,7 @@ public class GenerateAction extends AnAction {
     presentation.setEnabled(!groupEmpty);
   }
 
-  private DefaultActionGroup getGroup() {
+  private static DefaultActionGroup getGroup() {
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE);
   }
 }

@@ -24,13 +24,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class CodeStyleSettingsManager implements ApplicationComponent, ProjectComponent, JDOMExternalizable {
-  private Project myProject;
-
   public CodeStyleSettings PER_PROJECT_SETTINGS = null;
   public boolean USE_PER_PROJECT_SETTINGS = false;
   private CodeStyleSettings myTemporarySettings;
@@ -43,7 +42,8 @@ public class CodeStyleSettingsManager implements ApplicationComponent, ProjectCo
     return ApplicationManager.getApplication().getComponent(CodeStyleSettingsManager.class);
   }
 
-  public CodeStyleSettingsManager(Project project) { myProject = project; }
+  public CodeStyleSettingsManager(Project project) {
+  }
   public CodeStyleSettingsManager() {}
 
   public static CodeStyleSettings getSettings(Project project) {
@@ -70,6 +70,7 @@ public class CodeStyleSettingsManager implements ApplicationComponent, ProjectCo
   public void projectOpened() {}
   public void projectClosed() {}
 
+  @NotNull
   public String getComponentName() {
     return "CodeStyleSettingsManager";
   }
