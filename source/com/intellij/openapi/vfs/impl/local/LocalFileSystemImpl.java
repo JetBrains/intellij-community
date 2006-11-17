@@ -599,22 +599,25 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                boolean asynchronous,
                final boolean isRoot,
                final boolean noWatcher) {
+    final List<String> manualPaths;
     synchronized (LOCK) {
-      if (!myFilePathsToWatchManual.isEmpty()) {
-        final String filePath = file.getPath();
-        for (int i = 0; i < myFilePathsToWatchManual.size(); i++) {
-          String pathToWatchManual = myFilePathsToWatchManual.get(i);
-          if (FileUtil.startsWith(filePath, pathToWatchManual)) {
-            ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
-            if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) {
-              VirtualFile[] children = file.getChildren();
-              for (int j = 0; j < children.length; j++) {
-                VirtualFile child = children[j];
-                refreshInner(child, recursive, modalityState, asynchronous, false, true);
-              }
+      manualPaths = new ArrayList<String>(myFilePathsToWatchManual);
+    }
+
+    if (!manualPaths.isEmpty()) {
+      final String filePath = file.getPath();
+      for (int i = 0; i < manualPaths.size(); i++) {
+        String pathToWatchManual = manualPaths.get(i);
+        if (FileUtil.startsWith(filePath, pathToWatchManual)) {
+          ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
+          if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) {
+            VirtualFile[] children = file.getChildren();
+            for (int j = 0; j < children.length; j++) {
+              VirtualFile child = children[j];
+              refreshInner(child, recursive, modalityState, asynchronous, false, true);
             }
-            return;
           }
+          return;
         }
       }
     }
