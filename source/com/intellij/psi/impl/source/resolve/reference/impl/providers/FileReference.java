@@ -93,7 +93,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     for (final PsiElement context : contexts) {
       PsiElement resolved = null;
       if (context instanceof WebDirectoryElement) {
-        if (".".equals(text)) {
+        if (".".equals(text) || "/".equals(text)) {
           resolved = context;
         }
         else if ("..".equals(text)) {
@@ -119,7 +119,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
         }
       }
       else if (context instanceof PsiDirectory) {
-        if (".".equals(text)) {
+        if (".".equals(text) ||  "/".equals(text)) {
           resolved = context;
         }
         else if ("..".equals(text)) {
@@ -153,6 +153,10 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   public Object[] getVariants(){
+    final String s = getText();
+    if (s != null && s.equals("/")) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;      
+    }
     try{
       final List ret = new ArrayList();
       final PsiScopeProcessor proc = myFileReferenceSet.createProcessor(ret, getSoftenType());

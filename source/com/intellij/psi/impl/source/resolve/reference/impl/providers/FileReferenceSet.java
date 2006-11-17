@@ -159,12 +159,19 @@ public class FileReferenceSet {
     if (currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == SEPARATOR) currentSlash++;
     int index = 0;
 
+    if (str.equals(SEPARATOR_STRING)) {
+      final FileReference fileReference =
+        createFileReference(new TextRange(myStartInElement, myStartInElement + 1), index++, SEPARATOR_STRING);
+      referencesList.add(fileReference);
+    }
+
     while (true) {
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
       if (subreferenceText.length() > 0 || myAllowEmptyFileReferenceAtEnd) { // ? check at end
         final FileReference currentContextRef = createFileReference(
-          new TextRange(myStartInElement + currentSlash + 1, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())), index++,
+          new TextRange(myStartInElement + currentSlash + 1, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
+          index++,
           subreferenceText);
         referencesList.add(currentContextRef);
       }
