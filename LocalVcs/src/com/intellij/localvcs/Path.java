@@ -26,10 +26,6 @@ public class Path {
     return getParts().get(getParts().size() - 1);
   }
 
-  public boolean isRoot() {
-    return getParent() == null;
-  }
-
   public Path getParent() {
     List<String> parts = getParts();
     parts.remove(parts.size() - 1);

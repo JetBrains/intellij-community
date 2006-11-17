@@ -2,11 +2,13 @@ package com.intellij.localvcs;
 
 import java.util.List;
 
+import static com.intellij.localvcs.Difference.Kind.CREATED;
 import static com.intellij.localvcs.Difference.Kind.MODIFIED;
 import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 import org.junit.Test;
 
 public class LocalVcsDifferencesTest extends TestCase {
+  // todo test difference on root does not work!!!
   private LocalVcs vcs = new LocalVcs(new TestStorage());
 
   @Test
@@ -164,8 +166,47 @@ public class LocalVcsDifferencesTest extends TestCase {
     Label two = labels.get(0);
 
     Difference d = one.getDifferenceWith(two);
-    assertEquals(NOT_MODIFIED, d.getKind());
+    assertFalse(d.hasDifference());
   }
 
-  // todo test difference on root does not work!!!
+  @Test
+  public void testDifferenceForDirectory() {
+    vcs.createDirectory(p("dir"));
+    vcs.apply();
+
+    vcs.createFile(p("dir/file"), null);
+    vcs.apply();
+
+    List<Label> labels = vcs.getLabelsFor(p("dir"));
+    assertEquals(2, labels.size());
+
+    Label one = labels.get(0);
+    Label two = labels.get(1);
+
+    Difference d = one.getDifferenceWith(two);
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertEquals(1, d.getChildren().size());
+
+    d = d.getChildren().get(0);
+    assertEquals(CREATED, d.getKind());
+    assertNull(d.getLeft());
+    assertEquals("file", d.getRight().getName());
+  }
+
+  @Test
+  public void testNoDifferenceForDirectoryWithRestoredContent() {
+    vcs.createDirectory(p("dir"));
+    vcs.apply();
+
+    vcs.createFile(p("dir/file"), null);
+    vcs.apply();
+
+    vcs.delete(p("dir/file"));
+    vcs.apply();
+
+    List<Label> labels = vcs.getLabelsFor(p("dir"));
+
+    Difference d = labels.get(0).getDifferenceWith(labels.get(2));
+    assertFalse(d.hasDifference());
+  }
 }

@@ -45,4 +45,14 @@ public class Difference {
   public List<Difference> getChildren() {
     return myChildren;
   }
+
+  public boolean hasDifference() {
+    if (myKind.equals(Kind.MODIFIED)) return true;
+
+    for (Difference child : myChildren) {
+      if (child.hasDifference()) return true;
+    }
+
+    return false;
+  }
 }
