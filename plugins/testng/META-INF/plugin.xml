@@ -35,6 +35,7 @@
 
     </project-components>
     <change-notes>
-        <![CDATA[Updated TestNG 5.3.1.  Includes patch for displaying DataProvider/Property vales.]]>
+        <![CDATA[Fixed 100% CPU usage if a class accidentally extends itself<br>
+        Fixed occassional ConcurrentModificationException error<br>]]>
     </change-notes>
 </idea-plugin>
