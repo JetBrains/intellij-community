@@ -51,10 +51,10 @@ public class LocalVcsStoringTest extends TempDirTestCase {
 
     assertEquals("new content", result.getEntry(p("file")).getContent());
 
-    result.revert();
+    result._revert();
     assertEquals("content", result.getEntry(p("file")).getContent());
 
-    result.revert();
+    result._revert();
     assertFalse(result.hasEntry(p("file")));
   }
 

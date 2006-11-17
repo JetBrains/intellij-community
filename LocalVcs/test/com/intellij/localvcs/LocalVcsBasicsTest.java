@@ -102,7 +102,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.delete(p("file"));
     vcs.apply();
 
-    vcs.revert();
+    vcs._revert();
     Integer id2 = vcs.getEntry(p("file")).getId();
 
     assertEquals(id1, id2);
@@ -144,7 +144,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.apply();
     assertTrue(vcs.hasEntry(p("file")));
 
-    vcs.revert();
+    vcs._revert();
     assertFalse(vcs.hasEntry(p("file")));
   }
 
@@ -159,11 +159,11 @@ public class LocalVcsBasicsTest extends TestCase {
     assertTrue(vcs.hasEntry(p("file1")));
     assertTrue(vcs.hasEntry(p("file2")));
 
-    vcs.revert();
+    vcs._revert();
     assertTrue(vcs.hasEntry(p("file1")));
     assertFalse(vcs.hasEntry(p("file2")));
 
-    vcs.revert();
+    vcs._revert();
     assertFalse(vcs.hasEntry(p("file1")));
     assertFalse(vcs.hasEntry(p("file2")));
   }
@@ -176,14 +176,14 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.createFile(p("file2"), null);
     assertFalse(vcs.isClean());
 
-    vcs.revert();
+    vcs._revert();
     assertTrue(vcs.isClean());
   }
 
   @Test
   public void testRevertingWhenNoPreviousVersions() {
     try {
-      vcs.revert();
+      vcs._revert();
       fail();
     } catch (LocalVcsException e) {}
   }
@@ -196,7 +196,7 @@ public class LocalVcsBasicsTest extends TestCase {
     assertTrue(vcs.hasEntry(p("file")));
     assertEquals("content", vcs.getEntry(p("file")).getContent());
 
-    vcs.revert();
+    vcs._revert();
     assertFalse(vcs.hasEntry(p("file")));
   }
 
@@ -206,7 +206,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.apply();
     assertTrue(vcs.hasEntry(p("dir")));
 
-    vcs.revert();
+    vcs._revert();
     assertFalse(vcs.hasEntry(p("dir")));
   }
 
@@ -219,7 +219,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.apply();
     assertTrue(vcs.hasEntry(p("dir/file")));
 
-    vcs.revert();
+    vcs._revert();
     assertFalse(vcs.hasEntry(p("dir/file")));
     assertTrue(vcs.hasEntry(p("dir")));
   }
@@ -234,7 +234,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.apply();
     assertEquals("new content", vcs.getEntry(p("file")).getContent());
 
-    vcs.revert();
+    vcs._revert();
     assertEquals("content", vcs.getEntry(p("file")).getContent());
   }
 
@@ -249,7 +249,7 @@ public class LocalVcsBasicsTest extends TestCase {
     assertFalse(vcs.hasEntry(p("file")));
     assertTrue(vcs.hasEntry(p("new file")));
 
-    vcs.revert();
+    vcs._revert();
     assertTrue(vcs.hasEntry(p("file")));
     assertFalse(vcs.hasEntry(p("new file")));
   }
@@ -269,7 +269,7 @@ public class LocalVcsBasicsTest extends TestCase {
 
     assertFalse(vcs.hasEntry(p("dir1/dir2")));
 
-    vcs.revert();
+    vcs._revert();
 
     assertTrue(vcs.hasEntry(p("dir1/dir2")));
     assertTrue(vcs.hasEntry(p("dir1/dir2/file")));
@@ -290,7 +290,7 @@ public class LocalVcsBasicsTest extends TestCase {
     assertTrue(vcs.hasEntry(p("dir2/file")));
     assertFalse(vcs.hasEntry(p("dir1/file")));
 
-    vcs.revert();
+    vcs._revert();
 
     assertFalse(vcs.hasEntry(p("dir2/file")));
     assertTrue(vcs.hasEntry(p("dir1/file")));
@@ -311,7 +311,7 @@ public class LocalVcsBasicsTest extends TestCase {
     assertTrue(vcs.hasEntry(p("root2/dir/file")));
     assertFalse(vcs.hasEntry(p("root1/dir")));
 
-    vcs.revert();
+    vcs._revert();
 
     assertTrue(vcs.hasEntry(p("root1/dir")));
     assertTrue(vcs.hasEntry(p("root1/dir/file")));
@@ -327,7 +327,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.apply();
     assertFalse(vcs.hasEntry(p("file")));
 
-    vcs.revert();
+    vcs._revert();
     assertTrue(vcs.hasEntry(p("file")));
     assertEquals("content", vcs.getEntry(p("file")).getContent());
   }
@@ -346,7 +346,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.apply();
     assertFalse(vcs.hasEntry(p("dir1")));
 
-    vcs.revert();
+    vcs._revert();
     assertTrue(vcs.hasEntry(p("dir1")));
     assertTrue(vcs.hasEntry(p("dir1/dir2")));
     assertTrue(vcs.hasEntry(p("dir1/file1")));
@@ -366,7 +366,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.delete(p("file"));
     vcs.apply();
 
-    vcs.revert();
+    vcs._revert();
     Integer restoredId = vcs.getEntry(p("file")).getId();
 
     assertEquals(originalId, restoredId);
@@ -384,7 +384,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.delete(p("dir"));
     vcs.apply();
 
-    vcs.revert();
+    vcs._revert();
     Integer restoredDirId = vcs.getEntry(p("dir")).getId();
     Integer restoredFileId = vcs.getEntry(p("dir/file")).getId();
 

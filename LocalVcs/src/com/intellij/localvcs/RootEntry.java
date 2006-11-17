@@ -54,8 +54,12 @@ public class RootEntry extends DirectoryEntry {
     return findEntry(new PathMatcher(path));
   }
 
+  public Entry findEntry(Integer id) {
+    return findEntry(new IdMatcher(id));
+  }
+
   public boolean hasEntry(Integer id) {
-    return findEntry(new IdMatcher(id)) != null;
+    return findEntry(id) != null;
   }
 
   public Entry getEntry(Path path) {
@@ -131,11 +135,11 @@ public class RootEntry extends DirectoryEntry {
     parent.removeChild(e);
   }
 
-  public void apply(ChangeSet cs) {
+  public void apply_old(ChangeSet cs) {
     cs.applyTo(this);
   }
 
-  public RootEntry revert(ChangeSet cs) {
+  public RootEntry revert_old(ChangeSet cs) {
     // todo maybe revert should not return copy too 
     RootEntry result = copy();
     cs.revertOn(result);

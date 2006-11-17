@@ -76,13 +76,13 @@ public class LocalVcs {
   public void apply() {
     ChangeSet cs = new ChangeSet(myPendingChanges);
 
-    myChangeList.applyChangeSetOn(myRoot, cs);
+    myChangeList.applyChangeSetOn_old(myRoot, cs);
     clearPendingChanges();
   }
 
-  public void revert() {
+  public void _revert() {
     clearPendingChanges();
-    myRoot = myChangeList.revertOn(myRoot);
+    myRoot = myChangeList.revertOn_old(myRoot);
   }
 
   public void putLabel(String label) {
@@ -90,31 +90,14 @@ public class LocalVcs {
     myChangeList.labelLastChangeSet(label);
   }
 
-  public List<Entry> getEntryHistory(Path path) {
-    // todo remove this method
-    // todo optimize me and clean up this mess
+  public List<Label> getLabelsFor(Path path) {
+    List<Label> result = new ArrayList<Label>();
 
-    if (!hasEntry(path)) throw new LocalVcsException();
+    Entry e = getEntry(path);
+    ChangeList cl = myChangeList.getChangeListFor(e);
 
-    List<Entry> result = new ArrayList<Entry>();
-    Integer id = getEntry(path).getId();
-
-    for (RootEntry r : getHistory()) {
-      if (!r.hasEntry(id)) break;
-      result.add(r.getEntry(id));
-    }
-
-    return result;
-  }
-
-  public List<RootEntry> getHistory() {
-    // todo remove this method
-    List<RootEntry> result = new ArrayList<RootEntry>();
-
-    RootEntry r = myRoot;
-    while (r.canBeReverted()) {
-      result.add(r);
-      r = myChangeList.revertOn(r);
+    for (ChangeSet cs : cl.getChangeSets()) {
+      result.add(new Label(e, cl, cs, myRoot));
     }
 
     return result;

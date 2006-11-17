@@ -3,6 +3,7 @@ package com.intellij.localvcs;
 import static com.intellij.localvcs.Difference.Kind.CREATED;
 import static com.intellij.localvcs.Difference.Kind.DELETED;
 import static com.intellij.localvcs.Difference.Kind.MODIFIED;
+import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 import org.junit.Test;
 
 public class FileEntryTest extends TestCase {
@@ -69,7 +70,10 @@ public class FileEntryTest extends TestCase {
     FileEntry e1 = new FileEntry(null, "name", "content");
     FileEntry e2 = new FileEntry(null, "name", "content");
 
-    assertNull(e1.getDifferenceWith(e2));
+    Difference d = e1.getDifferenceWith(e2);
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertSame(e1, d.getLeft());
+    assertSame(e2, d.getRight());
   }
 
   @Test

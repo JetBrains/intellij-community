@@ -16,29 +16,30 @@ public class ChangeListTest extends TestCase {
   }
 
   @Test
-  public void testDoesNotRegisterChangeSetOnApplyingError() {
-    CreateFileChange badChange = new CreateFileChange(null, null, null) {
-      @Override
-      public void applyTo(RootEntry root) {
-        throw new SomeLocalVcsException();
-      }
-    };
+  public void testReverting() {
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, p("file1"), null)));
+    cl.labelLastChangeSet("1");
 
-    try {
-      cl.applyChangeSetOn(r, cs(badChange));
-    } catch (SomeLocalVcsException e) {}
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(2, p("file2"), null)));
+    cl.labelLastChangeSet("2");
 
-    assertTrue(cl.getChangeSets().isEmpty());
+    RootEntry copy = r.copy();
+    cl.revertUpToChangeSetOn(copy, cl.getChangeSets().get(1));
+    assertTrue(copy.hasEntry(1));
+    assertTrue(copy.hasEntry(2));
+
+    copy = r.copy();
+    cl.revertUpToChangeSetOn(copy, cl.getChangeSets().get(0));
+    assertTrue(copy.hasEntry(1));
+    assertFalse(copy.hasEntry(2));
   }
-
-  // todo all the tests are incomplete
 
   @Test
   public void tesChangesForFile() {
-    cl.applyChangeSetOn(r, cs(new CreateFileChange(1, p("file"), null)));
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, p("file"), null)));
     cl.labelLastChangeSet("1");
 
-    cl.applyChangeSetOn(r, cs(new ChangeFileContentChange(p("file"), null)));
+    cl.applyChangeSetTo(r, cs(new ChangeFileContentChange(p("file"), null)));
     cl.labelLastChangeSet("2");
 
     List<ChangeSet> result = getChangeSetsFor("file");
@@ -51,7 +52,7 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testSeveralChangesForSameFileInOneChangeSet() {
-    cl.applyChangeSetOn(r, cs(new CreateFileChange(1, p("file"), null),
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, p("file"), null),
                               new ChangeFileContentChange(p("file"), null)));
 
     assertEquals(1, getChangeSetsFor("file").size());
@@ -59,7 +60,7 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testChangeSetsWithChangesForAnotherFile() {
-    cl.applyChangeSetOn(r, cs(new CreateFileChange(1, p("file1"), null),
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, p("file1"), null),
                               new CreateFileChange(2, p("file2"), null)));
 
     assertEquals(1, getChangeSetsFor("file1").size());
@@ -67,13 +68,13 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testDoesNotIncludeNonrelativeChangeSet() {
-    cl.applyChangeSetOn(r, cs(new CreateFileChange(1, p("file1"), null)));
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, p("file1"), null)));
     cl.labelLastChangeSet("1");
 
-    cl.applyChangeSetOn(r, cs(new CreateFileChange(2, p("file2"), null)));
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(2, p("file2"), null)));
     cl.labelLastChangeSet("2");
 
-    cl.applyChangeSetOn(r, cs(new ChangeFileContentChange(p("file1"), null)));
+    cl.applyChangeSetTo(r, cs(new ChangeFileContentChange(p("file1"), null)));
     cl.labelLastChangeSet("3");
 
     List<ChangeSet> result = getChangeSetsFor("file1");
@@ -85,22 +86,22 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testChangeSetsForDirectories() {
-    cl.applyChangeSetOn(r, cs(new CreateDirectoryChange(1, p("dir"))));
-    cl.applyChangeSetOn(r, cs(new CreateFileChange(2, p("dir/file"), null)));
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, p("dir"))));
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(2, p("dir/file"), null)));
 
     assertEquals(2, getChangeSetsFor("dir").size());
   }
 
   @Test
   public void testChangeSetsForDirectoriesWithFilesMovedAround() {
-    cl.applyChangeSetOn(r, cs(new CreateDirectoryChange(1, p("dir1")),
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, p("dir1")),
                               new CreateDirectoryChange(2, p("dir2"))));
     cl.labelLastChangeSet("1");
 
-    cl.applyChangeSetOn(r, cs(new CreateFileChange(3, p("dir1/file"), null)));
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(3, p("dir1/file"), null)));
     cl.labelLastChangeSet("2");
 
-    cl.applyChangeSetOn(r, cs(new MoveChange(p("dir1/file"), p("dir2"))));
+    cl.applyChangeSetTo(r, cs(new MoveChange(p("dir1/file"), p("dir2"))));
     cl.labelLastChangeSet("3");
 
     List<ChangeSet> cs1 = getChangeSetsFor("dir1");
@@ -118,38 +119,38 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testChangeSetsForMovedFiles() {
-    cl.applyChangeSetOn(r, cs(new CreateDirectoryChange(1, p("dir1")),
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, p("dir1")),
                               new CreateDirectoryChange(2, p("dir2"))));
 
-    cl.applyChangeSetOn(r, cs(new CreateFileChange(3, p("dir1/file"), null)));
-    cl.applyChangeSetOn(r, cs(new MoveChange(p("dir1/file"), p("dir2"))));
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(3, p("dir1/file"), null)));
+    cl.applyChangeSetTo(r, cs(new MoveChange(p("dir1/file"), p("dir2"))));
 
     assertEquals(2, getChangeSetsFor("dir2/file").size());
   }
 
   @Test
   public void testChangingParentDoesNotChangesItsChildren() {
-    cl.applyChangeSetOn(r, cs(new CreateDirectoryChange(1, p("d1")),
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, p("d1")),
                               new CreateDirectoryChange(2, p("d2")),
                               new CreateFileChange(3, p("d1/file"), null)));
 
     assertEquals(1, getChangeSetsFor("d1/file").size());
 
-    cl.applyChangeSetOn(r, cs(new MoveChange(p("d1"), p("d2"))));
+    cl.applyChangeSetTo(r, cs(new MoveChange(p("d1"), p("d2"))));
 
     assertEquals(1, getChangeSetsFor("d2/d1/file").size());
   }
 
   @Test
   public void testChangeSetsForComplexMovingCase() {
-    cl.applyChangeSetOn(r, cs(new CreateDirectoryChange(1, p("d1")),
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, p("d1")),
                               new CreateFileChange(2, p("d1/file"), null),
                               new CreateDirectoryChange(3, p("d1/d11")),
                               new CreateDirectoryChange(4, p("d1/d12")),
                               new CreateDirectoryChange(5, p("d2"))));
 
-    cl.applyChangeSetOn(r, cs(new MoveChange(p("d1/file"), p("d1/d11"))));
-    cl.applyChangeSetOn(r, cs(new MoveChange(p("d1/d11/file"), p("d1/d12"))));
+    cl.applyChangeSetTo(r, cs(new MoveChange(p("d1/file"), p("d1/d11"))));
+    cl.applyChangeSetTo(r, cs(new MoveChange(p("d1/d11/file"), p("d1/d12"))));
 
     assertEquals(3, getChangeSetsFor("d1").size());
     assertEquals(3, getChangeSetsFor("d1/d12/file").size());
@@ -157,7 +158,7 @@ public class ChangeListTest extends TestCase {
     assertEquals(2, getChangeSetsFor("d1/d12").size());
     assertEquals(1, getChangeSetsFor("d2").size());
 
-    cl.applyChangeSetOn(r, cs(new MoveChange(p("d1/d12"), p("d2"))));
+    cl.applyChangeSetTo(r, cs(new MoveChange(p("d1/d12"), p("d2"))));
 
     assertEquals(4, getChangeSetsFor("d1").size());
     assertEquals(3, getChangeSetsFor("d2/d12/file").size());
@@ -166,9 +167,6 @@ public class ChangeListTest extends TestCase {
   }
 
   private List<ChangeSet> getChangeSetsFor(String path) {
-    return cl.getChangeSetsFor(r.getEntry(p(path)));
-  }
-
-  private static class SomeLocalVcsException extends LocalVcsException {
+    return cl.getChangeListFor(r.getEntry(p(path))).getChangeSets();
   }
 }

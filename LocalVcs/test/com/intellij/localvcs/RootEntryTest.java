@@ -108,9 +108,9 @@ public class RootEntryTest extends TestCase {
     ChangeSet cs = cs(new CreateFileChange(1, p("file"), null));
 
     RootEntry original = new RootEntry();
-    original.apply(cs);
+    original.apply_old(cs);
 
-    RootEntry result = original.revert(cs);
+    RootEntry result = original.revert_old(cs);
 
     assertTrue(original.hasEntry(p("file")));
     assertFalse(result.hasEntry(p("file")));
@@ -118,13 +118,13 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testRevertingSeveralTimesOnSameSnapshot() {
-    root.apply(cs(new CreateFileChange(2, p("file"), "content")));
+    root.apply_old(cs(new CreateFileChange(2, p("file"), "content")));
 
     ChangeSet cs = cs(new ChangeFileContentChange(p("file"), "new content"));
-    root.apply(cs);
+    root.apply_old(cs);
 
-    RootEntry result1 = root.revert(cs);
-    RootEntry result2 = root.revert(cs);
+    RootEntry result1 = root.revert_old(cs);
+    RootEntry result2 = root.revert_old(cs);
 
     assertEquals("new content", root.getEntry(p("file")).getContent());
     assertEquals("content", result1.getEntry(p("file")).getContent());

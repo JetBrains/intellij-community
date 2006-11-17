@@ -27,52 +27,72 @@ public class ChangeList {
     return myChangeSets;
   }
 
-  public List<ChangeSet> getChangeSetsFor(Entry e) {
-    List<ChangeSet> result = new ArrayList<ChangeSet>();
+  public ChangeList getChangeListFor(Entry e) {
+    List<ChangeSet> sets = new ArrayList<ChangeSet>();
 
     for (ChangeSet cs : myChangeSets) {
-      if (cs.hasChangesFor(e)) result.add(cs);
+      if (cs.hasChangesFor(e)) sets.add(cs);
     }
 
-    return result;
+    ChangeList cl = new ChangeList();
+    cl.myChangeSets = sets;
+    return cl;
   }
 
-  public void applyChangeSetOn(RootEntry root, ChangeSet cs) {
+  public void applyChangeSetTo(RootEntry root, ChangeSet cs) {
+    cs.applyTo(root);
+    myChangeSets.add(cs);
+  }
+
+  public void revertUpToChangeSetOn(RootEntry root, ChangeSet cs) {
+    for (int i = myChangeSets.size() - 1; i >= 0; i--) {
+      ChangeSet changeSet = myChangeSets.get(i);
+      if (changeSet == cs) return;
+      changeSet.revertOn(root);
+    }
+  }
+
+  public void labelLastChangeSet(String label) {
+    // todo try to remove this check 
+    if (myChangeSets.isEmpty()) throw new LocalVcsException();
+
+    ChangeSet last = myChangeSets.get(myChangeSets.size() - 1);
+    last.setLabel(label);
+  }
+
+  //
+  // candidates fo removal
+  //
+
+  public void applyChangeSetOn_old(RootEntry root, ChangeSet cs) {
     // todo we make bad assumption that applying is only done on current
     // todo snapshot - not on the reverted one
 
     // todo should we really make copy of current shapshot?
     // todo copy is a performance bottleneck
 
-    root.apply(cs);
+    root.apply_old(cs);
     myChangeSets.add(cs);
     root.incrementChangeListIndex(); // todo do something with it
   }
 
-  public RootEntry revertOn(RootEntry root) {
+  public RootEntry revertOn_old(RootEntry root) {
     // todo 1. not as clear as i want it to be.
     if (!root.canBeReverted()) throw new LocalVcsException();
 
-    ChangeSet cs = getChangeSetFor(root);
+    ChangeSet cs = getChangeSetFor_old(root);
 
-    RootEntry result = root.revert(cs);
+    RootEntry result = root.revert_old(cs);
     result.decrementChangeListIndex();
 
     return result;
   }
 
-  private ChangeSet getChangeSetFor(RootEntry root) {
+  private ChangeSet getChangeSetFor_old(RootEntry root) {
     // todo ummm... one more unpleasant check...
 
     // todo VERY BAD!!! something wring with changeListIndex!!
     if (!root.canBeReverted()) throw new LocalVcsException();
     return myChangeSets.get(root.getChangeListIndex());
-  }
-
-  public void labelLastChangeSet(String label) {
-    if (myChangeSets.isEmpty()) throw new LocalVcsException();
-
-    ChangeSet last = myChangeSets.get(myChangeSets.size() - 1);
-    last.setLabel(label);
   }
 }

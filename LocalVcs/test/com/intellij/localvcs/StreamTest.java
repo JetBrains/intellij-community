@@ -246,8 +246,9 @@ public class StreamTest extends TestCase {
   @Test
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
-    c.applyChangeSetOn(new RootEntry(),
-                       cs(new CreateFileChange(null, p("file"), "content")));
+    c.applyChangeSetOn_old(new RootEntry(),
+                           cs(new CreateFileChange(null, p("file"),
+                                                   "content")));
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();

@@ -182,7 +182,10 @@ public class DirectoryEntryTest extends TestCase {
     DirectoryEntry e1 = new DirectoryEntry(null, "name");
     DirectoryEntry e2 = new DirectoryEntry(null, "name");
 
-    assertNull(e1.getDifferenceWith(e2));
+    Difference d = e1.getDifferenceWith(e2);
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertSame(e1, d.getLeft());
+    assertSame(e2, d.getRight());
   }
 
   @Test
@@ -321,7 +324,15 @@ public class DirectoryEntryTest extends TestCase {
     e2.addChild(child2);
 
     Difference d = e1.getDifferenceWith(e2);
-    assertNull(d);
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertSame(e1, d.getLeft());
+    assertSame(e2, d.getRight());
+
+    assertEquals(1, d.getChildren().size());
+    d = d.getChildren().get(0);
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertSame(child1, d.getLeft());
+    assertSame(child2, d.getRight());
   }
 
   @Test

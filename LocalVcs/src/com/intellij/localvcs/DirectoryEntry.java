@@ -117,13 +117,13 @@ public class DirectoryEntry extends Entry {
     DirectoryEntry e = (DirectoryEntry)right;
 
     Difference.Kind kind = myName.equals(e.myName) ? NOT_MODIFIED : MODIFIED;
-    Difference d = new Difference(false, kind, this, e);
+    Difference result = new Difference(false, kind, this, e);
 
-    addCreatedChildren(e, d);
-    addDeletedChildren(e, d);
-    addModifiedChildren(e, d);
+    addCreatedChildren(e, result);
+    addDeletedChildren(e, result);
+    addModifiedChildren(e, result);
 
-    return d.getChildren().isEmpty() && kind.equals(NOT_MODIFIED) ? null : d;
+    return result;
   }
 
   private void addCreatedChildren(DirectoryEntry e, Difference d) {
@@ -147,7 +147,7 @@ public class DirectoryEntry extends Entry {
       Entry itsChild = e.getChild(myChild.getId());
       if (itsChild != null) {
         Difference childDiff = myChild.getDifferenceWith(itsChild);
-        if (childDiff != null) d.addChild(childDiff);
+        d.addChild(childDiff);
       }
     }
   }

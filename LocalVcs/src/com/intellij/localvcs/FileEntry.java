@@ -5,6 +5,7 @@ import java.io.IOException;
 import static com.intellij.localvcs.Difference.Kind.CREATED;
 import static com.intellij.localvcs.Difference.Kind.DELETED;
 import static com.intellij.localvcs.Difference.Kind.MODIFIED;
+import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 
 public class FileEntry extends Entry {
   // todo change String to ByteArray or something else
@@ -40,10 +41,10 @@ public class FileEntry extends Entry {
   public Difference getDifferenceWith(Entry right) {
     FileEntry e = (FileEntry)right;
 
-    if (myName.equals(e.myName)
-        && myContent.equals(e.myContent)) return null;
+    boolean modified = !myName.equals(e.myName) ||
+                       !myContent.equals(e.myContent);
 
-    return new Difference(true, MODIFIED, this, e);
+    return new Difference(true, modified ? MODIFIED : NOT_MODIFIED, this, e);
   }
 
   @Override
