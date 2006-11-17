@@ -1,6 +1,3 @@
-/**
- * @author cdr
- */
 /*
  * Copyright 2000-2005 JetBrains s.r.o.
  *
@@ -16,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.make;
+package com.intellij.openapi.compiler.make;
+
 
 import com.intellij.openapi.compiler.CompileContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+public interface J2EEModuleBuildInstruction extends BuildInstruction {
+  ModuleBuildProperties getBuildProperties();
 
-public interface JarAndCopyBuildInstruction extends FileCopyInstruction {
-  void makeJar(@NotNull CompileContext context,
-               @NotNull File jarFile,
-               @Nullable FileFilter fileFilter) throws IOException;
-  File getJarFile();
+  BuildRecipe getChildInstructions(CompileContext context);
 }

@@ -1,9 +1,10 @@
 /**
  * @author cdr
  */
-package com.intellij.javaee.make;
+package com.intellij.compiler.impl.make;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.compiler.make.BuildInstruction;
 import gnu.trove.THashSet;
 
 import java.io.File;

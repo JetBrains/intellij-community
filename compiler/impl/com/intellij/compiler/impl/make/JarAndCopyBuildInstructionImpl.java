@@ -1,11 +1,12 @@
-package com.intellij.javaee.make;
+package com.intellij.compiler.impl.make;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.javaee.J2EEBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +96,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
         if (!ok) {
           String dirPath = getFile().getPath();
           MakeUtil.reportRecursiveCopying(context, dirPath, jarFile.getPath(), "",
-                                          J2EEBundle.message("message.text.setup.jar.outside.directory.path", dirPath));
+                                          CompilerBundle.message("message.text.setup.jar.outside.directory.path", dirPath));
         }
       }
       finally {

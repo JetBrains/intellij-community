@@ -1,10 +1,14 @@
 /**
  * @author cdr
  */
-package com.intellij.javaee.make;
+package com.intellij.compiler.impl.make;
 
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.make.BuildInstruction;
+import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
+import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.MakeUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.javaee.J2EEBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +73,7 @@ public class BuildRecipeImpl implements BuildRecipe {
   }
 
   public String toString() {
-    String s = J2EEBundle.message("message.text.build.recipe");
+    String s = CompilerBundle.message("message.text.build.recipe");
     for (BuildInstruction buildInstruction : myInstructions) {
       s += "\n" + buildInstruction + "; ";
     }

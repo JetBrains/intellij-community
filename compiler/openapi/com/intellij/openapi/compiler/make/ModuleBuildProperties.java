@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.make;
+package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.javaee.JavaeeModuleProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +50,7 @@ public abstract class ModuleBuildProperties implements ModuleComponent {
   public abstract J2EEBuildParticipant getBuildParticipant();
 
   @Nullable
-  public abstract UnnamedConfigurable getBuildConfigurable(JavaeeModuleProperties moduleProperties, ModifiableRootModel rootModel);
+  public abstract UnnamedConfigurable getBuildConfigurable(ModuleContainer moduleProperties, ModifiableRootModel rootModel);
 
   public String getPresentableName() {
     return getModule().getName();

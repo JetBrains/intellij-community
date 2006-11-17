@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.make;
+package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 

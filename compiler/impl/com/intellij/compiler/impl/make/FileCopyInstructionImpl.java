@@ -1,6 +1,11 @@
-package com.intellij.javaee.make;
+package com.intellij.compiler.impl.make;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.make.MakeUtil;
+import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.FileCopyInstruction;
+import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -89,7 +94,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       boolean ok = ZipUtil.addFileOrDirRecursively(outputStream, jarFile, file, outputRelativePath, fileFilter, writtenRelativePaths);
       if (!ok) {
         MakeUtil.reportRecursiveCopying(context, file.getPath(), jarFile.getPath(), "",
-                                        J2EEBundle.message("message.text.setup.jar.outside.directory.path", file.getPath()));
+                                        CompilerBundle.message("message.text.setup.jar.outside.directory.path", file.getPath()));
       }
     }
   }
@@ -97,14 +102,14 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
   public String toString() {
     if (myChangedSet == null) {
       if (getModule() != null) {
-        return J2EEBundle.message("file.copy.instraction.file.from.module.to.file.message.text", getFile(),
+        return CompilerBundle.message("file.copy.instruction.file.from.module.to.file.message.text", getFile(),
                                   ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
       } else {
-        return J2EEBundle.message("file.copy.instruction.file.to.file.message.text", getFile(), getOutputRelativePath());
+        return CompilerBundle.message("file.copy.instruction.file.to.file.message.text", getFile(), getOutputRelativePath());
       }
     }
     else {
-      StringBuilder builder = new StringBuilder(J2EEBundle.message("file.copy.instruction.message.text", myFile));
+      StringBuilder builder = new StringBuilder(CompilerBundle.message("file.copy.instruction.message.text", myFile));
       for (FileCopyInstruction fileCopyInstruction : myChangedSet) {
         builder.append(fileCopyInstruction).append(", ");
       }

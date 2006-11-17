@@ -1,30 +1,30 @@
-package com.intellij.javaee.make;
+package com.intellij.compiler.impl.make;
 
-import com.intellij.javaee.make.impl.MakeUtilImpl;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.javaee.J2EEBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
-import java.util.ArrayList;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.jar.JarFile;
 
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.make.J2EEModuleBuildInstructionImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
 
   private final ModuleBuildProperties myBuildProperties;
   @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
@@ -44,7 +44,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
     final BuildRecipe buildRecipe = getChildInstructions(context);
     try {
-      File fromFile = new File(ModuleBuilder.getOrCreateExplodedDir(myBuildProperties.getModule()));
+      File fromFile = new File(MakeUtilImpl.getOrCreateExplodedDir(myBuildProperties.getModule()));
       boolean builtAlready = ModuleBuilder.willBuildExploded(myBuildProperties);
       if (!builtAlready) {
         ModuleBuilder.getInstance(getModule()).buildExploded(fromFile, context, new ArrayList<File>());
@@ -155,7 +155,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     if (manifest == null) {
       File file = MakeUtil.getInstance().findUserSuppliedManifestFile(buildRecipe);
       LOG.assertTrue(file != null);
-      context.addMessage(CompilerMessageCategory.WARNING, J2EEBundle.message("message.text.using.user.supplied.manifest", file.getAbsolutePath()), null, -1, -1);
+      context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("message.text.using.user.supplied.manifest", file.getAbsolutePath()), null, -1, -1);
     }
     FileUtil.createParentDirs(jarFile);
     final BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(jarFile));
@@ -197,7 +197,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
   }
 
   public String toString() {
-    return J2EEBundle
+    return CompilerBundle
       .message("j2ee.build.instruction.module.to.file.message", ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
   }
 
