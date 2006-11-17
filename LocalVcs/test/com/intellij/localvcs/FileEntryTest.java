@@ -1,5 +1,8 @@
 package com.intellij.localvcs;
 
+import static com.intellij.localvcs.Difference.Kind.CREATED;
+import static com.intellij.localvcs.Difference.Kind.DELETED;
+import static com.intellij.localvcs.Difference.Kind.MODIFIED;
 import org.junit.Test;
 
 public class FileEntryTest extends TestCase {
@@ -59,5 +62,59 @@ public class FileEntryTest extends TestCase {
       file.getChildren();
       fail();
     } catch (LocalVcsException e) {}
+  }
+
+  @Test
+  public void testNoDifference() {
+    FileEntry e1 = new FileEntry(null, "name", "content");
+    FileEntry e2 = new FileEntry(null, "name", "content");
+
+    assertNull(e1.getDifferenceWith(e2));
+  }
+
+  @Test
+  public void testDifferenceInName() {
+    FileEntry e1 = new FileEntry(null, "name", "content");
+    FileEntry e2 = new FileEntry(null, "another name", "content");
+
+    Difference d = e1.getDifferenceWith(e2);
+    assertEquals(MODIFIED, d.getKind());
+    assertSame(e1, d.getLeft());
+    assertSame(e2, d.getRight());
+  }
+
+  @Test
+  public void testDifferenceInContent() {
+    FileEntry e1 = new FileEntry(null, "name", "content");
+    FileEntry e2 = new FileEntry(null, "name", "another content");
+
+    Difference d = e1.getDifferenceWith(e2);
+    assertEquals(MODIFIED, d.getKind());
+    assertSame(e1, d.getLeft());
+    assertSame(e2, d.getRight());
+  }
+
+  @Test
+  public void testAsCreatedDifference() {
+    FileEntry e = new FileEntry(null, null, null);
+
+    Difference d = e.asCreatedDifference();
+
+    assertEquals(CREATED, d.getKind());
+    assertTrue(d.isFile());
+    assertNull(d.getLeft());
+    assertSame(e, d.getRight());
+  }
+
+  @Test
+  public void testAsDeletedDifference() {
+    FileEntry e = new FileEntry(null, null, null);
+
+    Difference d = e.asDeletedDifference();
+
+    assertEquals(DELETED, d.getKind());
+    assertTrue(d.isFile());
+    assertSame(e, d.getLeft());
+    assertNull(d.getRight());
   }
 }

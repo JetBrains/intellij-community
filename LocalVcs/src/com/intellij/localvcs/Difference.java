@@ -14,8 +14,25 @@ public class Difference {
   private String myOldName;
   private String myNewName;
   private Kind myKind;
+  private Entry myLeft;
+  private Entry myRight;
 
   private List<Difference> myChildren = new ArrayList<Difference>();
+
+  public Difference(boolean isFile, Kind k, Entry left, Entry right) {
+    myIsFile = isFile;
+    myKind = k;
+    myLeft = left;
+    myRight = right;
+  }
+
+  public Entry getLeft() {
+    return myLeft;
+  }
+
+  public Entry getRight() {
+    return myRight;
+  }
 
   public Difference(Integer id, String oldName, String newName) {
     myIsFile = false;

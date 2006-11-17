@@ -2,6 +2,10 @@ package com.intellij.localvcs;
 
 import java.util.List;
 
+import static com.intellij.localvcs.Difference.Kind.CREATED;
+import static com.intellij.localvcs.Difference.Kind.DELETED;
+import static com.intellij.localvcs.Difference.Kind.MODIFIED;
+import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 import org.junit.Test;
 
 public class DirectoryEntryTest extends TestCase {
@@ -40,6 +44,21 @@ public class DirectoryEntryTest extends TestCase {
     dir.removeChild(file);
     assertTrue(dir.getChildren().isEmpty());
     assertNull(file.getParent());
+  }
+
+  @Test
+  public void testChildById() {
+    Entry dir = new DirectoryEntry(null, null);
+    Entry file1 = new FileEntry(1, "file1", null);
+    Entry file2 = new FileEntry(2, "file2", null);
+
+    dir.addChild(file1);
+    dir.addChild(file2);
+
+    assertSame(file1, dir.getChild(1));
+    assertSame(file2, dir.getChild(2));
+
+    assertNull(dir.getChild(99));
   }
 
   @Test
@@ -156,5 +175,177 @@ public class DirectoryEntryTest extends TestCase {
 
     assertSame(dir, child.getParent());
     assertSame(renamed, newChildren.get(0).getParent());
+  }
+
+  @Test
+  public void testNoDifference() {
+    DirectoryEntry e1 = new DirectoryEntry(null, "name");
+    DirectoryEntry e2 = new DirectoryEntry(null, "name");
+
+    assertNull(e1.getDifferenceWith(e2));
+  }
+
+  @Test
+  public void testDifferenceInName() {
+    DirectoryEntry e1 = new DirectoryEntry(null, "name");
+    DirectoryEntry e2 = new DirectoryEntry(null, "another name");
+
+    Difference d = e1.getDifferenceWith(e2);
+
+    assertEquals(MODIFIED, d.getKind());
+    assertFalse(d.isFile());
+    assertSame(e1, d.getLeft());
+    assertSame(e2, d.getRight());
+  }
+
+  @Test
+  public void testDifferenceWithCreatedChild() {
+    Entry e1 = new DirectoryEntry(null, "name");
+    Entry e2 = new DirectoryEntry(null, "name");
+
+    // todo test with different identity but same id
+    Entry child = new FileEntry(1, "name", "content");
+    e2.addChild(child);
+
+    Difference d = e1.getDifferenceWith(e2);
+
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertEquals(1, d.getChildren().size());
+
+    d = d.getChildren().get(0);
+
+    assertEquals(CREATED, d.getKind());
+    assertTrue(d.isFile());
+    assertNull(d.getLeft());
+    assertSame(child, d.getRight());
+  }
+
+  @Test
+  public void testDifferenceWithCreatedChildWithSubChildren() {
+    Entry dir1 = new DirectoryEntry(null, "name");
+    Entry dir2 = new DirectoryEntry(null, "name");
+
+    Entry subDir = new DirectoryEntry(null, "subDir");
+    Entry subSubFile = new FileEntry(null, "subSubFile", null);
+
+    dir2.addChild(subDir);
+    subDir.addChild(subSubFile);
+
+    Difference d = dir1.getDifferenceWith(dir2);
+
+    assertEquals(1, d.getChildren().size());
+    d = d.getChildren().get(0);
+
+    assertEquals(CREATED, d.getKind());
+    assertFalse(d.isFile());
+    assertNull(d.getLeft());
+    assertSame(subDir, d.getRight());
+    assertEquals(1, d.getChildren().size());
+
+    d = d.getChildren().get(0);
+
+    assertEquals(CREATED, d.getKind());
+    assertTrue(d.isFile());
+    assertNull(d.getLeft());
+    assertSame(subSubFile, d.getRight());
+  }
+
+  @Test
+  public void testDifferenceWithDeletedChild() {
+    Entry dir1 = new DirectoryEntry(null, "name");
+    Entry dir2 = new DirectoryEntry(null, "name");
+
+    Entry subDir = new DirectoryEntry(1, "subDir");
+    Entry subSubFile = new FileEntry(2, "subSubFile", null);
+
+    dir1.addChild(subDir);
+    subDir.addChild(subSubFile);
+
+    Difference d = dir1.getDifferenceWith(dir2);
+
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertFalse(d.isFile());
+    assertSame(dir1, d.getLeft());
+    assertSame(dir2, d.getRight());
+
+    assertEquals(1, d.getChildren().size());
+    d = d.getChildren().get(0);
+
+    assertEquals(DELETED, d.getKind());
+    assertFalse(d.isFile());
+    assertSame(subDir, d.getLeft());
+    assertNull(d.getRight());
+
+    assertEquals(1, d.getChildren().size());
+    d = d.getChildren().get(0);
+
+    assertEquals(DELETED, d.getKind());
+    assertTrue(d.isFile());
+    assertSame(subSubFile, d.getLeft());
+    assertNull(d.getRight());
+  }
+
+  @Test
+  public void testDifferenceWithModifiedChild() {
+    Entry e1 = new DirectoryEntry(null, "name");
+    Entry e2 = new DirectoryEntry(null, "name");
+
+    Entry child1 = new FileEntry(1, "name1", "content");
+    Entry child2 = new FileEntry(1, "name2", "content");
+
+    e1.addChild(child1);
+    e2.addChild(child2);
+
+    Difference d = e1.getDifferenceWith(e2);
+
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertEquals(1, d.getChildren().size());
+
+    d = d.getChildren().get(0);
+
+    assertEquals(MODIFIED, d.getKind());
+    assertTrue(d.isFile());
+    assertSame(child1, d.getLeft());
+    assertSame(child2, d.getRight());
+  }
+
+  @Test
+  public void testDifferenceWithNotModifiedChildWithDifferentIdentity() {
+    Entry e1 = new DirectoryEntry(null, "name");
+    Entry e2 = new DirectoryEntry(null, "name");
+
+    Entry child1 = new FileEntry(1, "name", "content");
+    Entry child2 = new FileEntry(1, "name", "content");
+
+    e1.addChild(child1);
+    e2.addChild(child2);
+
+    Difference d = e1.getDifferenceWith(e2);
+    assertNull(d);
+  }
+
+  @Test
+  public void testDifferenceWithModifiedBothSubjectAndChild() {
+    Entry e1 = new DirectoryEntry(null, "name1");
+    Entry e2 = new DirectoryEntry(null, "name2");
+
+    Entry child1 = new FileEntry(1, "name1", "content");
+    Entry child2 = new FileEntry(1, "name2", "content");
+
+    e1.addChild(child1);
+    e2.addChild(child2);
+
+    Difference d = e1.getDifferenceWith(e2);
+
+    assertEquals(MODIFIED, d.getKind());
+    assertSame(e1, d.getLeft());
+    assertSame(e2, d.getRight());
+
+    assertEquals(1, d.getChildren().size());
+    d = d.getChildren().get(0);
+
+    assertEquals(MODIFIED, d.getKind());
+    assertSame(child1, d.getLeft());
+    assertSame(child2, d.getRight());
   }
 }

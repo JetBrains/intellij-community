@@ -75,6 +75,10 @@ public abstract class Entry {
     throw new LocalVcsException();
   }
 
+  protected Entry getChild(Integer id) {
+    throw new LocalVcsException();
+  }
+
   protected Entry findEntry(Matcher m) {
     return m.matches(this) ? this : null;
   }
@@ -86,6 +90,12 @@ public abstract class Entry {
     result.myName = newName;
     return result;
   }
+
+  public abstract Difference getDifferenceWith(Entry e);
+
+  protected abstract Difference asCreatedDifference();
+
+  protected abstract Difference asDeletedDifference();
 
   protected interface Matcher {
     boolean matches(Entry entry);
