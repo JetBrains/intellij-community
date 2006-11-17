@@ -314,7 +314,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
         updateRegisteredActions();
       }
     };
-    myStartupManager.registerStartupActivity(new Runnable() {
+    myStartupManager.registerPostStartupActivity(new Runnable() {
       public void run() {
         LOG.info("Start up");
         ApplicationManager.getApplication().runReadAction(action);
