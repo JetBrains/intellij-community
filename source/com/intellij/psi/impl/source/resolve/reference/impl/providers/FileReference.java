@@ -2,26 +2,18 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
-import com.intellij.codeInsight.daemon.quickFix.WebRootQuickFixProvider;
-import com.intellij.javaee.web.WebModuleProperties;
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.file.PsiDirectoryImpl;
-import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -43,6 +35,11 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   private TextRange myRange;
   private final String myText;
   @NotNull private final FileReferenceSet myFileReferenceSet;
+  private final Condition<String> myEqualsToCondition = new Condition<String>() {
+    public boolean value(String s) {
+      return equalsTo(s);
+    }
+  };
 
   public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text){
     super(fileReferenceSet.getProvider());
@@ -67,6 +64,16 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     }
   }
 
+  @Nullable
+  public static PsiDirectory getPsiDirectory(PsiElement element) {
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      final PsiDirectory directory = helper.getPsiDirectory(element);
+      if (directory != null) {
+        return directory;
+      }
+    }
+    return null;
+  }
 
   @Nullable
   public PsiElement getContext() {
@@ -85,77 +92,48 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return innerResolve();
   }
 
+  @NotNull
+  private FileReferenceContext getFileReferenceContext(PsiElement context) {
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      final FileReferenceContext referenceContext = helper.getFileReferenceContext(context);
+      if (referenceContext != null) {
+        return referenceContext;
+      }
+    }
+    return new FileReferenceContext() {
+      @Nullable
+      public PsiElement innerResolve(String text, final Condition<String> equalsTo) {
+        return null;
+      }
+
+      public boolean processVariants(PsiScopeProcessor processor) {
+        if(getContextReference() == null){
+        myFileReferenceSet.getProvider().handleEmptyContext(processor, getElement());
+      }
+        return true;
+      }
+    };
+  }
+
   protected ResolveResult[] innerResolve() {
     final String text = getText();
     final Collection<PsiElement> contexts = getContexts();
     final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
 
     for (final PsiElement context : contexts) {
-      PsiElement resolved = null;
-      if (context instanceof WebDirectoryElement) {
-        if (".".equals(text) || "/".equals(text)) {
-          resolved = context;
-        }
-        else if ("..".equals(text)) {
-          resolved = ((WebDirectoryElement)context).getParentDirectory();
-        }
-        else {
-          final PsiElement[] processingChildrenResult = new PsiElement[1];
-
-          final WebDirectoryElement dirContext = ((WebDirectoryElement)context);
-          dirContext.processChildren(new WebDirectoryElement.WebDirectoryProcessor() {
-            public boolean execute(final String name, boolean isDirectory) throws Exception {
-              if (equalsTo(name)) {
-                final WebDirectoryElement element = dirContext.createElement(name, isDirectory);
-                assert element != null;
-                processingChildrenResult[0] = element.isDirectory() ? element:element.getOriginalFile();
-                return false;
-              }
-
-              return true;
-            }
-          });
-          resolved = processingChildrenResult[0];
-        }
-      }
-      else if (context instanceof PsiDirectory) {
-        if (".".equals(text) ||  "/".equals(text)) {
-          resolved = context;
-        }
-        else if ("..".equals(text)) {
-          resolved = ((PsiDirectory)context).getParentDirectory();
-        }
-        else {
-          final PsiElement[] processingChildrenResult = new PsiElement[1];
-
-          ((PsiDirectoryImpl)context).processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
-            public boolean execute(final PsiFileSystemItem element) {
-              if (equalsTo(element.getName())) {
-                processingChildrenResult[0] = element;
-                return false;
-              }
-
-              return true;
-            }
-          });
-          resolved = processingChildrenResult[0];
-        }
-      }
+      PsiElement resolved = getFileReferenceContext(context).innerResolve(text, myEqualsToCondition);
       if (resolved != null) {
         result.add(new PsiElementResolveResult(resolved));
       }
     }
     final int resultCount = result.size();
-    if (resultCount > 0) {
-      return result.toArray(new ResolveResult[resultCount]);
-    }
-    return ResolveResult.EMPTY_ARRAY;
+    return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
   }
 
   public Object[] getVariants(){
     final String s = getText();
     if (s != null && s.equals("/")) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;      
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
     try{
       final List ret = new ArrayList();
@@ -170,27 +148,9 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   public void processVariants(@NotNull final PsiScopeProcessor processor) {
-    final Collection<PsiElement> contexts = getContexts();
-    for (PsiElement context : contexts) {
-      if (context instanceof WebDirectoryElement) {
-        WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
-        for (WebDirectoryElement child : children) {
-          PsiFileSystemItem item = child.isDirectory() ? child : child.getOriginalFile();
-          if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
-        }
-      } else if (context instanceof PsiDirectory) {
-        final PsiElement[] children = context.getChildren();
-
-        for (PsiElement child : children) {
-          PsiFileSystemItem item = (PsiFileSystemItem)child;
-          if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
-        }
-      }
-      else if(getContextReference() == null){
-        myFileReferenceSet.getProvider().handleEmptyContext(processor, getElement());
-      }
+    for (PsiElement context : getContexts()) {
+      if (!getFileReferenceContext(context).processVariants(processor)) return;
     }
-
   }
 
   @Nullable
@@ -222,22 +182,22 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (element instanceof WebDirectoryElement || element instanceof PsiFile || element instanceof PsiDirectory) {
-      final PsiElement myResolve = resolve();
-      
-      if (myResolve instanceof WebDirectoryElement && element instanceof PsiDirectory) {
-        WebDirectoryElement webDir = (WebDirectoryElement)myResolve;
-        final VirtualFile originalVirtualFile = webDir.getOriginalVirtualFile();
+    if (!isTargetAccepted(element)) return false;
 
-        if (originalVirtualFile != null) {
-          final PsiDirectory directory = element.getManager().findDirectory(originalVirtualFile);
-
-          if (directory != null) {
-            return element.getManager().areElementsEquivalent(element,directory);
-          }
-        }
+    final PsiElement resolveResult = resolve();
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      if (helper.isReferenceTo(element, resolveResult)) {
+        return true;
       }
-      return element.getManager().areElementsEquivalent(element, myResolve);
+    }
+    return false;
+  }
+
+  private static boolean isTargetAccepted(final PsiElement element) {
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      if (helper.isTargetAccepted(element)) {
+        return true;
+      }
     }
     return false;
   }
@@ -280,29 +240,29 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     VirtualFile dstVFile = PsiUtil.getVirtualFile(fileSystemItem);
 
     final PsiFile file = getElement().getContainingFile();
-    String newName = null;
-    final WebModuleProperties properties = WebUtil.getWebModuleProperties(file);
-
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
+
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      if (helper.doNothingOnBind(file, this)) {
+        return element;
+      }
+    }
+
     final VirtualFile currentFile = file.getVirtualFile();
     LOG.assertTrue(currentFile != null);
 
-    if (properties != null) {
-      if (myFileReferenceSet.isAbsolutePathReference()) {
-        return element;
-      } else {
-        final WebDirectoryElement dstWebElement = JspManager.getInstance(element.getProject()).findWebDirectoryByFile(dstVFile, properties);
-        final WebDirectoryElement srcWebElement = JspManager.getInstance(element.getProject()).findWebDirectoryByFile(currentFile, properties);
-        newName = WebUtil.getRelativePath(srcWebElement, dstWebElement);
+    String newName = null;
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      final String s = helper.getRelativePath(file.getProject(), currentFile, dstVFile);
+      if (s != null) {
+        newName = s;
+        break;
       }
     }
 
     if (newName == null) {
-      newName = VfsUtil.getPath(currentFile, dstVFile, '/');
-      if (newName == null) {
-        throw new IncorrectOperationException("Cannot find path between files; src = " +
-                                              currentFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
-      }
+      throw new IncorrectOperationException("Cannot find path between files; src = " +
+                                            currentFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
     }
 
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
@@ -314,8 +274,9 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   public void registerQuickfix(HighlightInfo info, FileReference reference) {
-    FileReferenceQuickFixProvider.registerQuickFix(info, reference);
-    WebRootQuickFixProvider.registerQuickFix(info, reference);
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      helper.registerQuickfix(info, reference);
+    }
   }
 
   public int getIndex() {

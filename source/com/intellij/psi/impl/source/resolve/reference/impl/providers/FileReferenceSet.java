@@ -1,17 +1,14 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.javaee.web.WebModuleProperties;
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBundle;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
-import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -71,9 +68,14 @@ public class FileReferenceSet {
     else {
       return null;
     }
-    if (text != null) {
-      text = WebUtil.trimURL(text);
+    if (text == null) {
+      return null;
     }
+
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      text = helper.trimUrl(text);
+    }
+
     return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed, true) {
       protected boolean isSoft() {
         return soft;
@@ -99,7 +101,7 @@ public class FileReferenceSet {
     this(str, element, startInElement, type, provider, isCaseSensitive, true, false);
   }
 
-  public FileReferenceSet(String str,
+  public FileReferenceSet(@NotNull String str,
                           PsiElement element,
                           int startInElement,
                           @NotNull ReferenceType type,
@@ -183,7 +185,7 @@ public class FileReferenceSet {
     setReferences(referencesList.toArray(new FileReference[referencesList.size()]));
   }
 
-  protected void setReferences(final FileReference[] references) {
+  private void setReferences(final FileReference[] references) {
     myReferences = references;
   }
 
@@ -227,11 +229,10 @@ public class FileReferenceSet {
       }
     }
 
-    final WebModuleProperties properties = WebUtil.getWebModuleProperties(file);
 
     PsiElement result = null;
     if (isAbsolutePathReference()) {
-      result = getAbsoluteTopLevelDirLocation(properties, project, file);
+      result = getAbsoluteTopLevelDirLocation(file);
     }
     else {
       if (myUseIncludingJspFileAsContext) {
@@ -249,14 +250,12 @@ public class FileReferenceSet {
         }
       }
 
-      final PsiDirectory dir = file.getContainingDirectory();
-      if (dir != null) {
-        if (properties != null) {
-          result = JspManager.getInstance(project).findWebDirectoryByFile(dir.getVirtualFile(), properties);
-          if (result == null) result = dir;
-        }
-        else {
-          result = dir;
+      final List<FileReferenceHelper> helpers = FileReferenceHelperRegistrar.getHelpers();
+      for (final FileReferenceHelper helper : helpers) {
+        final PsiFileSystemItem item = helper.getContainingDirectory(file);
+        if (item != null) {
+          result = item;
+          break;
         }
       }
     }
@@ -273,25 +272,16 @@ public class FileReferenceSet {
   }
 
   @Nullable
-  public static PsiElement getAbsoluteTopLevelDirLocation(final WebModuleProperties properties, final Project project, final PsiFile file) {
-    PsiElement result = null;
-
-    if (properties != null) {
-      result = JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
-    }
-    else {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-        VirtualFile contentRootForFile = index.getSourceRootForFile(virtualFile);
-        if (contentRootForFile == null) contentRootForFile = index.getContentRootForFile(virtualFile);
-
-        if (contentRootForFile != null) {
-          result = PsiManager.getInstance(project).findDirectory(contentRootForFile);
-        }
+  public static PsiElement getAbsoluteTopLevelDirLocation(final PsiFile file) {
+    final List<FileReferenceHelper> helpers = FileReferenceHelperRegistrar.getHelpers();
+    for (final FileReferenceHelper helper : helpers) {
+      final PsiElement element = helper.getAbsoluteTopLevelDirLocation(file);
+      if (element != null) {
+        return element;
       }
     }
-    return result;
+
+    return null;
   }
 
   protected PsiScopeProcessor createProcessor(final List result, ReferenceType type)

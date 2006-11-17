@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlEncodingReferenceProvider;
 import com.intellij.codeInspection.i18n.I18nUtil;
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +14,6 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
-import com.intellij.psi.filters.position.FileTypeFilter;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.el.impl.ELLiteralManipulator;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
@@ -379,11 +377,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new Function<PsiFile, PsiElement>() {
         @Nullable
         public PsiElement fun(final PsiFile file) {
-          return FileReferenceSet.getAbsoluteTopLevelDirLocation(
-            WebUtil.getWebModuleProperties(file),
-            file.getProject(),
-            file
-          );
+          return FileReferenceSet.getAbsoluteTopLevelDirLocation(file);
         }
       }
     );

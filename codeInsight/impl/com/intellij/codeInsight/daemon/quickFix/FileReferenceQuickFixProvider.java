@@ -18,13 +18,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,43 +51,16 @@ public class FileReferenceQuickFixProvider {
       return;
     }
 
-    final PsiDirectory directory;
-
+    final PsiElement context;
     if(index > 0) {
-      PsiElement context = fileReferenceSet.getReference(index - 1).resolve();
-      if (context == null) return;
-      if (context instanceof PsiDirectory) directory = (PsiDirectory)context;
-      else if (context instanceof WebDirectoryElement) {
-        final VirtualFile originalFile = ((WebDirectoryElement)context).getOriginalVirtualFile();
-        if (originalFile != null && originalFile.isDirectory()) {
-          directory = reference.getElement().getManager().findDirectory(originalFile);
-          if (directory == null) return;
-        } else {
-          return;
-        }
-      }
-      else {
-        return;
-      }
+      context = fileReferenceSet.getReference(index - 1).resolve();
     } else { // index == 0
       final Collection<PsiElement> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
-      final PsiElement psiElement = defaultContexts.isEmpty() ? null : defaultContexts.iterator().next();
-
-      if (psiElement instanceof PsiDirectory) {
-        directory = (PsiDirectory)psiElement;
-      } else if (psiElement instanceof WebDirectoryElement) {
-        final VirtualFile originalFile = ((WebDirectoryElement)psiElement).getOriginalVirtualFile();
-
-        if (originalFile != null && originalFile.isDirectory()) {
-          directory = reference.getElement().getManager().findDirectory(originalFile);
-          if (directory == null) return;
-        } else {
-          return;
-        }
-      } else {
-        return;
-      }
+      context = defaultContexts.isEmpty() ? null : defaultContexts.iterator().next();
     }
+    final PsiDirectory directory = reference.getPsiDirectory(context);
+
+    if (directory == null) return;
 
     boolean differentCase = false;
 
