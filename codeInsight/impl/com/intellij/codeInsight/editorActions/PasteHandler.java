@@ -281,7 +281,7 @@ public class PasteHandler extends EditorActionHandler {
         caretOffset > elementAtCaret.getTextOffset()) {
       if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
 
-      StringBuffer buffer = new StringBuffer(text.length());
+      StringBuilder buffer = new StringBuilder(text.length());
       CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
       @NonNls String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
       final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
@@ -323,8 +323,11 @@ public class PasteHandler extends EditorActionHandler {
           } else {
             if (reference instanceof PsiReferenceExpression) {
               PsiElement referent = reference.resolve();
-              if (!(referent instanceof PsiNamedElement) || !data.staticMemberName.equals(((PsiNamedElement)referent).getName())
-                  || !(referent instanceof PsiMember) || !data.qClassName.equals(((PsiMember)referent).getContainingClass().getQualifiedName())) {
+              if (!(referent instanceof PsiNamedElement)
+                  || !data.staticMemberName.equals(((PsiNamedElement)referent).getName())
+                  || !(referent instanceof PsiMember)
+                  || ((PsiMember)referent).getContainingClass() == null
+                  || !data.qClassName.equals(((PsiMember)referent).getContainingClass().getQualifiedName())) {
                 refs[i] = reference;
               }
             }
@@ -434,11 +437,10 @@ public class PasteHandler extends EditorActionHandler {
     indentJavaBlock(project, document, startOffset, endOffset, file, fileType);
   }
 
-  private static void indentPlainTextBlock(Document document, int startOffset, int endOffset, int originalCaretColumn) {
+  private static void indentPlainTextBlock(Document document, int startOffset, int endOffset, int indentLevel) {
     CharSequence chars = document.getCharsSequence();
     int spaceEnd = CharArrayUtil.shiftForward(chars, startOffset, " \t");
     if (spaceEnd > endOffset) return;
-    int indentLevel = originalCaretColumn;
     if (indentLevel == 0) return;
 
     char[] fill = new char[indentLevel];
@@ -559,7 +561,7 @@ public class PasteHandler extends EditorActionHandler {
         }
       }
     }
-    if (array.size() == 0) return;
+    if (array.isEmpty()) return;
 
     Object[] selectedObjects = array.toArray(new Object[array.size()]);
     Arrays.sort(
