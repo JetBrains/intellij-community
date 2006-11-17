@@ -1,15 +1,15 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
+import java.util.HashSet;
 
 class FileLoader extends Loader {
-  private THashSet<String> myPackages = null;
+  private HashSet<String> myPackages = null;
   private File myRootDir;
   private String myRootDirAbsolutePath;
   private final boolean myUseCache;
@@ -74,7 +74,7 @@ class FileLoader extends Loader {
 
   private void initPackageCache() {
     if (myPackages != null || !myUseCache) return;
-    myPackages = new THashSet<String>();
+    myPackages = new HashSet<String>();
     buildPackageCache(myRootDir);
   }
 
