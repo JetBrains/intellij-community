@@ -354,7 +354,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     for (VirtualFile file : files) {
       try {
-        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, true, true, false);
+        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, false, true, false);
       }
       catch (SVNException e) {
         exceptions.add(new VcsException(e));

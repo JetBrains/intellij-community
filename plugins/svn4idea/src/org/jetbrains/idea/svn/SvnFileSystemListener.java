@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ModuleLevelVcsManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -80,7 +81,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return false;
   }
 
-  private boolean move(SvnVcs vcs, File src, File dst) {
+  private static boolean move(SvnVcs vcs, final File src, final File dst) {
     ISVNOptions options = vcs != null ? vcs.getSvnOptions() : null;
     SVNMoveClient mover = new SVNMoveClient(null, options);
     long srcTime = src.lastModified();
@@ -182,7 +183,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
    * deleted: 'undo' mode: try to revert non-recursively, if kind is the same, otherwise do nothing, return false.
    * anything else: return false.
    */
-  private boolean createItem(VirtualFile dir, String name, boolean directory) throws IOException {
+  private static boolean createItem(VirtualFile dir, String name, boolean directory) throws IOException {
     SvnVcs vcs = getVCS(dir);
     if (vcs == null) {
       return false;
@@ -196,7 +197,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     File targetFile = new File(ioDir, name);
     SVNStatus status = getFileStatus(targetFile);
 
-    if (status == null) {
+    if (status == null || status.getContentsStatus() == SVNStatusType.STATUS_NONE) {
       if (confirmAdd(getVCS(dir))) {
         createNewFile(targetFile, directory);
         try {
@@ -239,7 +240,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return false;
   }
 
-  private void createNewFile(File file, boolean dir) throws IOException {
+  private static void createNewFile(File file, boolean dir) throws IOException {
     if (dir) {
       file.mkdirs();
     }
@@ -264,12 +265,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   public void undoTransparentActionFinished() {
   }
 
+  @Nullable
   private static SvnVcs getVCS(VirtualFile file) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (int i = 0; projects != null && i < projects.length; i++) {
       Project project = projects[i];
       ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-      if (rootManager != null && rootManager.getFileIndex() != null) {
+      if (rootManager != null) {
         Module module = rootManager.getFileIndex().getModuleForFile(file);
         if (module != null) {
           AbstractVcs vcs = ModuleLevelVcsManager.getInstance(module).getActiveVcs();

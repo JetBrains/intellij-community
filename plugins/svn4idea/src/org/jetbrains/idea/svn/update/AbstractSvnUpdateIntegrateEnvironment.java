@@ -144,6 +144,10 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
           myUpdatedFiles.getGroupById(FileGroup.CREATED_ID).add(path);
         }
       }
+      else if (event.getAction() == SVNEventAction.UPDATE_NONE) {
+        // skip it
+        return;
+      }
       else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
         text2 = SvnBundle.message("progress.text2.deleted", displayPath);
         myUpdatedFiles.getGroupById(FileGroup.REMOVED_FROM_REPOSITORY_ID).add(path);

@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
@@ -69,6 +71,12 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
     catch (SVNException e1) {
       Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", e1.getMessage()), SvnBundle.message("message.title.check.out"));
+    } finally {
+      String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
+      VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);
+      if (vf != null) {
+        vf.refresh(true, true);
+      }
     }
   }
 

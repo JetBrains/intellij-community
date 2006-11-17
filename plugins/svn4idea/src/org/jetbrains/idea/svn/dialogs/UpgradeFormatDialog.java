@@ -23,7 +23,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     super(project, canBeParent);
     myPath = path;
     setResizable(false);
-    setTitle("Subversion WC Upgrade Strategy");
+    setTitle("Subversion Working Copy Upgrade");
     init();
   }
 
@@ -62,6 +62,11 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     topLabel.setUI(new MultiLineLabelUI());
     panel.add(topLabel, gb);
     gb.gridy += 1;
+    JLabel warningLabel = new JLabel(!adminPath.isDirectory() ? SvnBundle.message("label.configure.create.warning") : SvnBundle.message("label.configure.upgrade.warning"));
+    warningLabel.setFont(warningLabel.getFont().deriveFont(Font.BOLD));
+    warningLabel.setUI(new MultiLineLabelUI());
+    panel.add(warningLabel, gb);
+    gb.gridy += 1;
 
     myUpgradeNoneButton = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".none").toString()));
     myUpgradeAutoButton = new JRadioButton(SvnBundle.message(new StringBuilder().append("radio.configure.").append(label).append(".auto").toString()));
@@ -76,6 +81,8 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     JLabel settingsLabel = new JLabel("To change above setting later, visit 'File | Settings | Version Control'");
     settingsLabel.setEnabled(false);
     panel.add(settingsLabel, gb);
+    gb.gridy += 1;
+    panel.add(new JSeparator(), gb);
 
     myUpgradeNoneButton.setSelected(true);
     return panel;

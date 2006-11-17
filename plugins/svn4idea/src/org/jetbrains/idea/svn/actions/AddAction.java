@@ -45,6 +45,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -76,6 +77,17 @@ public class AddAction extends BasicAction {
     }
     catch (SVNException e) {
       //
+      if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+        // check for root.
+        File parent = new File(file.getPath());
+        parent = parent.getParentFile();
+        while(parent != null) {
+          if (SVNWCUtil.isVersionedDirectory(parent)) {
+            return true;
+          }
+          parent = parent.getParentFile();
+        }
+      }
     }
     return false;
   }
