@@ -1,6 +1,5 @@
 package com.intellij.testFramework;
 
-import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.make.ModuleBuildProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -115,7 +114,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return module;
   }
 
-  protected static void readJdomExternalizables(ModuleImpl module) {
+  protected void readJdomExternalizables(ModuleImpl module) {
     final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
     module.doInitJdomExternalizable(ModuleRootManager.class, moduleRootManager);
 
@@ -124,10 +123,6 @@ public abstract class ModuleTestCase extends IdeaTestCase {
       module.doInitJdomExternalizable(ModuleBuildProperties.class, moduleBuildProperties);
     }
 
-    JavaeeModuleProperties moduleProperties = JavaeeModuleProperties.getInstance(module);
-    if (moduleProperties != null){
-      module.doInitJdomExternalizable(JavaeeModuleProperties.class, moduleProperties);
-    }
   }
 
   protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType)
