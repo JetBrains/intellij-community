@@ -4,32 +4,31 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
-import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class FormNode extends ProjectViewNode<Form>{
   private final Collection<BasePsiNode<? extends PsiElement>> myChildren;
 
   public FormNode(Project project, Object value, ViewSettings viewSettings) {
-    super(project, (Form) value,  viewSettings);
-    myChildren = getChildren(project, (Form) value, viewSettings);
+    this(project, (Form)value, viewSettings, getChildren(project, (Form) value, viewSettings));
   }
 
-  public FormNode(Project project, Form value, ViewSettings viewSettings,
-                  Collection<BasePsiNode<? extends PsiElement>> children) {
+  public FormNode(Project project, Form value, ViewSettings viewSettings, Collection<BasePsiNode<? extends PsiElement>> children) {
     super(project, value, viewSettings);
     myChildren = children;
   }
@@ -95,11 +94,11 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   private static Collection<BasePsiNode<? extends PsiElement>> getChildren(final Project project, final Form form, final ViewSettings settings) {
-    final HashSet<BasePsiNode<? extends PsiElement>> children = new HashSet<BasePsiNode<? extends PsiElement>>();
+    final Set<BasePsiNode<? extends PsiElement>> children = new LinkedHashSet<BasePsiNode<? extends PsiElement>>();
+    children.add(new ClassTreeNode(project, form.getClassToBind(), settings));
     for (PsiFile formBoundToClass : form.getFormFiles()) {
       children.add(new PsiFileNode(project, formBoundToClass, settings));
     }
-    children.add(new ClassTreeNode(project, form.getClassToBind(), settings));
     return children;
   }
 }

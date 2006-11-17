@@ -1023,8 +1023,13 @@
           <option name="ERROR_STRIPE_COLOR" />
         </value>
       </option>
-
+      <option name="CTRL_CLICKABLE">
+        <value>
+          <option name="FOREGROUND" value="0000ff" />
+          <option name="EFFECT_COLOR" value="0000ff"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
+      </option>
     </attributes>
-
   </scheme>
 </component>

@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lexer.JavaDocLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
@@ -17,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComment, JavaTokenType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl");
 
-  private static final TokenSet TAG_BIT_SET = TokenSet.create(new IElementType[]{DOC_TAG});
+  private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
   private static final PsiElementArrayConstructor<PsiDocTag> PSI_TAG_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiDocTag>() {
     public PsiDocTag[] newPsiElementArray(int length) {
       return length != 0 ? new PsiDocTag[length] : PsiDocTag.EMPTY_ARRAY;
@@ -32,7 +32,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   };
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final Pattern WS_PATTERN = Pattern.compile("\\s*");
+  private static final Pattern WS_PATTERN = Pattern.compile("\\s*");
 
 
   public PsiDocCommentImpl() {
@@ -207,7 +207,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == DOC_TAG) {
       if (child.getTreeNext() == null || child.getTreeNext().getElementType() != DOC_TAG) {
         ASTNode prev = child.getTreePrev();
@@ -283,9 +283,5 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
 
   public String toString() {
     return "PsiDocComment";
-  }
-
-  public Class getLexerClass() {
-    return JavaDocLexer.class;
   }
 }

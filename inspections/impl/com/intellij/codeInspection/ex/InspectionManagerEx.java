@@ -38,7 +38,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   private final UIOptions myUIOptions;
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
   private final Project myProject;
-  @NonNls public String myCurrentProfileName;
+  @NonNls private String myCurrentProfileName;
   private ContentManager myContentManager = null;
 
   private Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
@@ -158,7 +158,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     }
     if (element instanceof PsiModifierListOwner) {
       Collection<String> suppressedIds = GlobalInspectionContextImpl.getInspectionIdsSuppressedInAnnotation((PsiModifierListOwner)element);
-      return StringUtil.join(suppressedIds, ",");
+      return suppressedIds.isEmpty() ? null : StringUtil.join(suppressedIds, ",");
     }
     return null;
   }

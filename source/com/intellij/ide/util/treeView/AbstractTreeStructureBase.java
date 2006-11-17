@@ -26,14 +26,13 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
     List<TreeStructureProvider> providers = getProviders();
-    ArrayList<AbstractTreeNode> modified = new ArrayList<AbstractTreeNode>(elements);
+    Collection<AbstractTreeNode> modified = new ArrayList<AbstractTreeNode>(elements);
     if (providers != null) {
       for (TreeStructureProvider provider : providers) {
-        modified = new ArrayList<AbstractTreeNode>(provider.modify(treeNode, modified, ViewSettings.DEFAULT));
+        modified = provider.modify(treeNode, modified, ViewSettings.DEFAULT);
       }
     }
-    elements = modified;
-    for (AbstractTreeNode node : elements) {
+    for (AbstractTreeNode node : modified) {
       node.setParent(treeNode);
     }
     return modified.toArray(new Object[modified.size()]);

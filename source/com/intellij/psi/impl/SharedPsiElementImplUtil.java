@@ -4,8 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +19,7 @@ public class SharedPsiElementImplUtil {
 
   @Nullable
   public static PsiReference findReferenceAt(PsiElement thisElement, int offset) {
-    if(thisElement == null)
-      return null;
+    if(thisElement == null) return null;
     PsiElement element = thisElement.findElementAt(offset);
     if (element == null) return null;
     offset = thisElement.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
@@ -31,6 +28,7 @@ public class SharedPsiElementImplUtil {
     while(element != null) {
       addReferences(offset, element, referencesList);
       offset = element.getStartOffsetInParent() + offset;
+      if (element instanceof PsiFile) break;
       element = element.getParent();
     }
 
@@ -101,19 +99,5 @@ public class SharedPsiElementImplUtil {
     PsiElementFactory factory = manager.getElementFactory();
     PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
     return element.replace(newNameIdentifier);
-  }
-
-
-  //Hack, but no better idea comes to my mind
-  public static TreeElement findFirstChildAfterAddition(TreeElement firstAdded, final TreeElement toFind) {
-    final IElementType elementType = toFind.getElementType();
-    TreeElement run = firstAdded;
-    while(run != null) {
-      if (run.getElementType() == elementType) return run;
-      run = run.getTreeNext();
-    }
-
-    LOG.assertTrue(false, "Could not find element of added class");
-    return null;
   }
 }

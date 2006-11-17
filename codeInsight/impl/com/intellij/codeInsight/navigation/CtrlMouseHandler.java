@@ -1,19 +1,19 @@
 package com.intellij.codeInsight.navigation;
 
-import com.intellij.ant.impl.dom.impl.PsiAntTarget;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
 import com.intellij.lang.Language;
-import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -29,9 +29,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
@@ -44,7 +42,7 @@ import java.awt.event.*;
 
 public class CtrlMouseHandler implements ProjectComponent {
   private final Project myProject;
-  private static TextAttributes ourReferenceAttributes;
+  private final TextAttributes ourReferenceAttributes;
   private RangeHighlighter myHighlighter;
   private Editor myHighlighterView;
   private Cursor myStoredCursor;
@@ -137,14 +135,10 @@ public class CtrlMouseHandler implements ProjectComponent {
     }
   };
 
-  static {
-    ourReferenceAttributes = new TextAttributes();
-    ourReferenceAttributes.setForegroundColor(Color.blue);
-    ourReferenceAttributes.setEffectColor(Color.blue);
-    ourReferenceAttributes.setEffectType(EffectType.LINE_UNDERSCORE);
-  }
+  public static final TextAttributesKey CTRL_CLICKABLE_ATTRIBUTES_KEY =
+    TextAttributesKey.createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(Color.blue, null, Color.blue, EffectType.LINE_UNDERSCORE, 0));
 
-  public CtrlMouseHandler(Project project, StartupManager startupManager) {
+  public CtrlMouseHandler(Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
     myProject = project;
     startupManager.registerPostStartupActivity(new Runnable(){
       public void run() {
@@ -153,6 +147,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener);
       }
     });
+    ourReferenceAttributes = colorsManager.getGlobalScheme().getAttributes(CTRL_CLICKABLE_ATTRIBUTES_KEY);
   }
 
   @NotNull

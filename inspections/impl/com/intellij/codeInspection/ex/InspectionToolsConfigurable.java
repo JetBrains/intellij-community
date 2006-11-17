@@ -11,6 +11,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -20,13 +21,13 @@ import com.intellij.profile.ProfileManager;
 import javax.swing.*;
 
 public class InspectionToolsConfigurable implements Configurable {
-  private InspectionProfileImpl myInspectionProfile;
+  private InspectionProfile myInspectionProfile;
   private String mySelectedTool;
   private SingleInspectionProfilePanel myPanel;
 
   public InspectionToolsConfigurable(final Project project,
                                      final ProfileManager profileManager,
-                                     final InspectionProfileImpl inspectionProfile,
+                                     final InspectionProfile inspectionProfile,
                                      final String selectedTool) {
     myInspectionProfile = inspectionProfile;
     mySelectedTool = selectedTool;
@@ -69,9 +70,5 @@ public class InspectionToolsConfigurable implements Configurable {
       myPanel.disposeUI();
       myPanel = null;
     }
-  }
-
-  public SingleInspectionProfilePanel getPanel(){
-    return myPanel;
   }
 }

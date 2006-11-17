@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,9 +25,8 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
 
   public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (final AbstractTreeNode aChildren : children) {
-      ProjectViewNode treeNode = (ProjectViewNode)aChildren;
-      Object o = treeNode.getValue();
+    for (final AbstractTreeNode child : children) {
+      Object o = child.getValue();
       if (o instanceof PsiJavaFile) {
         PsiJavaFile psiJavaFile = (PsiJavaFile)o;
         final VirtualFile virtualFile = psiJavaFile.getVirtualFile();
@@ -42,7 +42,7 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
           }
         }
       }
-      result.add(treeNode);
+      result.add(child);
     }
     return result;
   }
@@ -58,6 +58,7 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "ClassesTreeStructureProvider";
   }

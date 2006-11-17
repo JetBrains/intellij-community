@@ -37,7 +37,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
   private JCheckBox myCbBold = new JCheckBox(ApplicationBundle.message("checkbox.font.bold"));
   private JCheckBox myCbItalic = new JCheckBox(ApplicationBundle.message("checkbox.font.italic"));
-  public boolean updatingEffects;
+  private boolean updatingEffects;
   private ActionListener myActionListener;
 
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
  * */
 
 public abstract class ProjectTreeStructure extends AbstractProjectTreeStructure {
-  protected String myId;
+  private final String myId;
 
   public ProjectTreeStructure(Project project, final String ID) {
     super(project);

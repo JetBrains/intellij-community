@@ -123,10 +123,6 @@ public class AbstractTreeUpdater implements Disposable {
     }
   }
 
-  public boolean hasRequestsForUpdate() {
-    return myUpdateQueue.containsUpdateOf(Update.LOW_PRIORITY);
-  }
-
   public void cancelAllRequests(){
     myNodesToUpdate.clear();
     myUpdateQueue.cancelAllUpdates();

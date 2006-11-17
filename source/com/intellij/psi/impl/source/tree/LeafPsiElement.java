@@ -39,7 +39,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     return null;
   }
 
-  public void acceptChildren(PsiElementVisitor visitor) {
+  public void acceptChildren(@NotNull PsiElementVisitor visitor) {
   }
 
   public PsiElement getParent() {
@@ -90,19 +90,19 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
-  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public void checkAdd(PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -110,7 +110,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     throw new IncorrectOperationException();
   }
 
-  public PsiElement addRangeBefore(PsiElement first, PsiElement last, PsiElement anchor)
+  public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
@@ -135,7 +135,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     throw new IncorrectOperationException();
   }
 
-  public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     LOG.assertTrue(getTreeParent() != null);
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
@@ -151,7 +151,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
     return "PsiElement" + "(" + getElementType().toString() + ")";
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitElement(this);
   }
 
@@ -176,8 +176,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
 
   public boolean isPhysical() {
     PsiFile file = getContainingFile();
-    if (file == null) return false;
-    return file.isPhysical();
+    return file != null && file.isPhysical();
   }
 
   @NotNull

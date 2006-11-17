@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
     return getElementType();
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitComment(this);
   }
 

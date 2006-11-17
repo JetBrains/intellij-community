@@ -45,27 +45,27 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
 
     if (!formsFound) return children;
 
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> result = new LinkedHashSet<AbstractTreeNode>(children);
     ProjectViewNode[] copy = children.toArray(new ProjectViewNode[children.size()]);
     for (ProjectViewNode element : copy) {
       if (element.getValue() instanceof PsiClass) {
-        PsiClass aClass = ((PsiClass)element.getValue());
+        PsiClass aClass = (PsiClass)element.getValue();
         final String qName = aClass.getQualifiedName();
         if (qName == null) continue;
         PsiFile[] forms = aClass.getManager().getSearchHelper().findFormsBoundToClass(qName);
         Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
-        if (formNodes.size() > 0) {
+        if (!formNodes.isEmpty()) {
           Collection<PsiFile> formFiles = convertToFiles(formNodes);
-          Collection<BasePsiNode<? extends PsiElement>> subNodes = new ArrayList<BasePsiNode<? extends PsiElement>>(formNodes);
+          Collection<BasePsiNode<? extends PsiElement>> subNodes = new ArrayList<BasePsiNode<? extends PsiElement>>();
           //noinspection unchecked
           subNodes.add((BasePsiNode<? extends PsiElement>) element);
+          subNodes.addAll(formNodes);
           result.add(new FormNode(myProject, new Form(aClass, formFiles), settings, subNodes));
-          children.remove(element);
-          children.removeAll(formNodes);
+          result.remove(element);
+          result.removeAll(formNodes);
         }
       }
     }
-    result.addAll(children);
     return result;
   }
 
@@ -78,7 +78,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
             result.add((Form) node.getValue());
           }
         }
-        if (result.size() > 0) {
+        if (!result.isEmpty()) {
           return result.toArray(new Form[result.size()]);
         }
       }
@@ -109,6 +109,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
   }
 
   private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<AbstractTreeNode> children, PsiFile[] forms) {
+    if (children.isEmpty() || forms.length == 0) return Collections.emptyList();
     ArrayList<BasePsiNode<? extends PsiElement>> result = new ArrayList<BasePsiNode<? extends PsiElement>>();
     HashSet<PsiFile> psiFiles = new HashSet<PsiFile>(Arrays.asList(forms));
     for (final AbstractTreeNode child : children) {

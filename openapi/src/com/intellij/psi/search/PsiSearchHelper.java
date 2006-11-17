@@ -36,7 +36,7 @@ public interface PsiSearchHelper {
    * @param ignoreAccessScope if true, references inaccessible because of visibility rules are included in the list.
    * @return the array of found references.
    */
-  PsiReference[] findReferences(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope);
+  @NotNull PsiReference[] findReferences(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope);
 
   /**
    * @deprecated Use <code>ReferencesSearch.search(...).forEach(...)</code> instead
@@ -49,7 +49,7 @@ public interface PsiSearchHelper {
    * @param ignoreAccessScope if true, references inaccessible because of visibility rules are included in the list.
    * @return true if the search was completed normally, if the reference processing was cancelled by the processor.
    */
-  boolean processReferences(PsiReferenceProcessor processor, PsiElement element, SearchScope searchScope, boolean ignoreAccessScope);
+  boolean processReferences(@NotNull PsiReferenceProcessor processor, @NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope);
 
   /**
    * Searches the specified scope for classes or interfaces inheriting from the specified class
@@ -62,7 +62,7 @@ public interface PsiSearchHelper {
    * @return the array of inheritor classes.
    */
   @NotNull
-  PsiClass[] findInheritors(PsiClass aClass, SearchScope searchScope, boolean checkDeep);
+  PsiClass[] findInheritors(@NotNull PsiClass aClass, @NotNull SearchScope searchScope, boolean checkDeep);
 
   /**
    * Passes all classes/interfaces inheriting from the specified class/interface in the specified
@@ -75,7 +75,7 @@ public interface PsiSearchHelper {
    *                    inheritors and so on are included in the results).
    * @return true if the search was completed normally, if the element processing was cancelled by the processor.
    */
-  boolean processInheritors(PsiElementProcessor<PsiClass> processor, PsiClass aClass, SearchScope searchScope, boolean checkDeep);
+  boolean processInheritors(@NotNull PsiElementProcessor<PsiClass> processor, @NotNull PsiClass aClass, @NotNull SearchScope searchScope, boolean checkDeep);
 
   /**
    * Passes all classes/interfaces inheriting from the specified class/interface in the specified
@@ -91,9 +91,9 @@ public interface PsiSearchHelper {
    *                         full-qualified name
    * @return true if the search was completed normally, if the reference processing was cancelled by the processor.
    */
-  boolean processInheritors(PsiElementProcessor<PsiClass> processor,
-                            PsiClass aClass,
-                            SearchScope searchScope,
+  boolean processInheritors(@NotNull PsiElementProcessor<PsiClass> processor,
+                            @NotNull PsiClass aClass,
+                            @NotNull SearchScope searchScope,
                             boolean checkDeep,
                             boolean checkInheritance);
 
@@ -106,7 +106,7 @@ public interface PsiSearchHelper {
    *                    overrides and so on are included in the results).
    * @return the array of overriding methods.
    */
-  PsiMethod[] findOverridingMethods(PsiMethod method, SearchScope searchScope, boolean checkDeep);
+  @NotNull PsiMethod[] findOverridingMethods(@NotNull PsiMethod method, @NotNull SearchScope searchScope, boolean checkDeep);
 
   /**
    * Passes all methods overriding the specified method in the specified scope to the specified processor.
@@ -118,7 +118,7 @@ public interface PsiSearchHelper {
    *                    overrides and so on are included in the results).
    * @return true if the search was completed normally, if the element processing was cancelled by the processor.
    */
-  boolean processOverridingMethods(PsiElementProcessor<PsiMethod> processor, PsiMethod method, SearchScope searchScope, boolean checkDeep);
+  boolean processOverridingMethods(@NotNull PsiElementProcessor<PsiMethod> processor, @NotNull PsiMethod method, @NotNull SearchScope searchScope, boolean checkDeep);
 
 
   /**
@@ -130,7 +130,7 @@ public interface PsiSearchHelper {
    *                                will also be included in the results.
    * @return the array of found references.
    */
-  PsiReference[] findReferencesIncludingOverriding(PsiMethod method, SearchScope searchScope, boolean isStrictSignatureSearch);
+  @NotNull PsiReference[] findReferencesIncludingOverriding(@NotNull PsiMethod method, @NotNull SearchScope searchScope, boolean isStrictSignatureSearch);
 
   /**
    * Passes all references to the specified method and its overriding methods in
@@ -141,7 +141,7 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which references are searched.
    * @return true if the search was completed normally, if the reference processing was cancelled by the processor.
    */
-  boolean processReferencesIncludingOverriding(PsiReferenceProcessor processor, PsiMethod method, SearchScope searchScope);
+  boolean processReferencesIncludingOverriding(@NotNull PsiReferenceProcessor processor, @NotNull PsiMethod method, @NotNull SearchScope searchScope);
 
   /**
    * Passes all references to the specified method and its overriding methods in
@@ -154,9 +154,9 @@ public interface PsiSearchHelper {
    *                                will also be included in the results.
    * @return true if the search was completed normally, if the reference processing was cancelled by the processor.
    */
-  boolean processReferencesIncludingOverriding(PsiReferenceProcessor processor,
-                                               PsiMethod method,
-                                               SearchScope searchScope,
+  boolean processReferencesIncludingOverriding(@NotNull PsiReferenceProcessor processor,
+                                               @NotNull PsiMethod method,
+                                               @NotNull SearchScope searchScope,
                                                boolean isStrictSignatureSearch);
 
   /**
@@ -168,7 +168,7 @@ public interface PsiSearchHelper {
    *                      defined in the {@link UsageSearchContext} class).
    * @return the array of found identifiers.
    */
-  PsiIdentifier[] findIdentifiers(String identifier, SearchScope searchScope, short searchContext);
+  @NotNull PsiIdentifier[] findIdentifiers(@NotNull String identifier, @NotNull SearchScope searchScope, short searchContext);
 
   /**
    * Passes the occurrences of the specified identifier in the specified scope to the specified
@@ -181,7 +181,7 @@ public interface PsiSearchHelper {
    *                      defined in the {@link UsageSearchContext} class).
    * @return true if the search was completed normally, if the occurrence processing was cancelled by the processor.
    */
-  boolean processIdentifiers(PsiElementProcessor<PsiIdentifier> processor, String identifier, SearchScope searchScope, short searchContext);
+  boolean processIdentifiers(@NotNull PsiElementProcessor<PsiIdentifier> processor, @NotNull String identifier, @NotNull SearchScope searchScope, short searchContext);
 
   /**
    * Searches the specified scope for comments containing the specified identifier.
@@ -190,7 +190,7 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which occurrences are searched.
    * @return the array of found comments.
    */
-  PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope);
+  PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
 
   /**
    * Searches the specified scope for string literals containing the specified identifier.
@@ -199,7 +199,7 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which occurrences are searched.
    * @return the array of found string literals.
    */
-  PsiLiteralExpression[] findStringLiteralsContainingIdentifier(String identifier, SearchScope searchScope);
+  PsiLiteralExpression[] findStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
 
   /**
    * Passes all classes in the specified scope to the specified processor.
@@ -208,7 +208,7 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which classes are searched.
    * @return the array of found classes.
    */
-  boolean processAllClasses(PsiElementProcessor<PsiClass> processor, SearchScope searchScope);
+  boolean processAllClasses(@NotNull PsiElementProcessor<PsiClass> processor, @NotNull SearchScope searchScope);
 
   /**
    * Finds all classes in the specified scope.
@@ -216,14 +216,14 @@ public interface PsiSearchHelper {
    * @param searchScope the scope to search for classes.
    * @return the array of found classes.
    */
-  PsiClass[] findAllClasses(SearchScope searchScope);
+  @NotNull PsiClass[] findAllClasses(@NotNull SearchScope searchScope);
 
   /**
    * Returns the list of all files in the project which have to do items.
    *
    * @return the list of files with to do items.
    */
-  PsiFile[] findFilesWithTodoItems();
+  @NotNull PsiFile[] findFilesWithTodoItems();
 
   /**
    * Searches the specified file for to do items.
@@ -231,7 +231,7 @@ public interface PsiSearchHelper {
    * @param file the file to search for to do items.
    * @return the array of found items.
    */
-  TodoItem[] findTodoItems(PsiFile file);
+  @NotNull TodoItem[] findTodoItems(@NotNull PsiFile file);
 
   /**
    * Searches the specified range of text in the specified file for to do items.
@@ -241,7 +241,7 @@ public interface PsiSearchHelper {
    * @param endOffset   the end offset of the text range to search to do items in.
    * @return the array of found items.
    */
-  TodoItem[] findTodoItems(PsiFile file, int startOffset, int endOffset);
+  @NotNull TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
 
   /**
    * Returns the number of to do items in the specified file.
@@ -249,7 +249,7 @@ public interface PsiSearchHelper {
    * @param file the file to return the to do count for.
    * @return the count of to do items in the file.
    */
-  int getTodoItemsCount(PsiFile file);
+  int getTodoItemsCount(@NotNull PsiFile file);
 
   /**
    * Returns the number of to do items matching the specified pattern in the specified file.
@@ -258,7 +258,7 @@ public interface PsiSearchHelper {
    * @param pattern the pattern of to do items to find.
    * @return the count of to do items in the file.
    */
-  int getTodoItemsCount(PsiFile file, TodoPattern pattern);
+  int getTodoItemsCount(@NotNull PsiFile file, @NotNull TodoPattern pattern);
 
   /**
    * Returns the list of files which contain the specified word in "plain text"
@@ -267,7 +267,7 @@ public interface PsiSearchHelper {
    * @param word the word to search.
    * @return the list of files containing the word.
    */
-  PsiFile[] findFilesWithPlainTextWords(String word);
+  @NotNull PsiFile[] findFilesWithPlainTextWords(@NotNull String word);
 
   /**
    * Passes all occurrences of the specified full-qualified class name in plain text context
@@ -277,7 +277,7 @@ public interface PsiSearchHelper {
    * @param processor   the processor which accepts the references.
    * @param searchScope the scope in which occurrences are searched.
    */
-  void processUsagesInNonJavaFiles(String qName, PsiNonJavaFileReferenceProcessor processor, GlobalSearchScope searchScope);
+  void processUsagesInNonJavaFiles(@NotNull String qName, @NotNull PsiNonJavaFileReferenceProcessor processor, @NotNull GlobalSearchScope searchScope);
 
   /**
    * Passes all occurrences of the specified full-qualified class name in plain text context in the
@@ -290,9 +290,9 @@ public interface PsiSearchHelper {
    * @param searchScope     the scope in which occurrences are searched.
    */
   void processUsagesInNonJavaFiles(@Nullable PsiElement originalElement,
-                                   String qName,
-                                   PsiNonJavaFileReferenceProcessor processor,
-                                   GlobalSearchScope searchScope);
+                                   @NotNull String qName,
+                                   @NotNull PsiNonJavaFileReferenceProcessor processor,
+                                   @NotNull GlobalSearchScope searchScope);
 
   /**
    * Returns the scope in which references to the specified element are searched.
@@ -301,7 +301,7 @@ public interface PsiSearchHelper {
    * @return the search scope instance.
    */
   @NotNull
-  SearchScope getUseScope(PsiElement element);
+  SearchScope getUseScope(@NotNull PsiElement element);
 
   /**
    * Finds GUI Designer forms bound to the specified class.
@@ -309,7 +309,7 @@ public interface PsiSearchHelper {
    * @param className the fully-qualified name of the class to find bound forms for.
    * @return the array of found bound forms.
    */
-  PsiFile[] findFormsBoundToClass(String className);
+  @NotNull PsiFile[] findFormsBoundToClass(String className);
 
   /**
    * Checks if the specified field is bound to a GUI Designer form component.
@@ -317,7 +317,7 @@ public interface PsiSearchHelper {
    * @param field the field to check the binding for.
    * @return true if the field is bound, false otherwise.
    */
-  boolean isFieldBoundToForm(PsiField field);
+  boolean isFieldBoundToForm(@NotNull PsiField field);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_CODE code}
@@ -328,7 +328,7 @@ public interface PsiSearchHelper {
    * @param processor the processor which accepts the references.
    * @param caseSensitively if words differing in the case only should not be considered equal
    */
-  void processAllFilesWithWord(String word, GlobalSearchScope scope, Processor<PsiFile> processor, final boolean caseSensitively);
+  void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_COMMENTS comments}
@@ -338,7 +338,7 @@ public interface PsiSearchHelper {
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    */
-  void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, Processor<PsiFile> processor);
+  void processAllFilesWithWordInComments(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
 
   /**
    * Passes all files containing the specified word in {@link UsageSearchContext#IN_STRINGS string literal}
@@ -348,11 +348,11 @@ public interface PsiSearchHelper {
    * @param scope     the scope in which occurrences are searched.
    * @param processor the processor which accepts the references.
    */
-  void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, Processor<PsiFile> processor);
+  void processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
 
-  boolean processElementsWithWord(TextOccurenceProcessor processor,
-                                  SearchScope searchScope,
-                                  String text,
+  boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
+                                  @NotNull SearchScope searchScope,
+                                  @NotNull String text,
                                   short searchContext,
                                   boolean caseSensitive);
 }

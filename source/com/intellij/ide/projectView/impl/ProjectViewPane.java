@@ -24,7 +24,7 @@ import javax.swing.tree.DefaultTreeModel;
 
 public final class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
-  public static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
+  private static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
 
   public ProjectViewPane(Project project) {
     super(project);
@@ -111,6 +111,5 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane {
 
       return super.addSubtreeToUpdateByElement(element);
     }
-
   }
 }

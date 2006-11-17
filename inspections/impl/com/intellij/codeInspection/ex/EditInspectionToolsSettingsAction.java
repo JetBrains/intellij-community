@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -51,9 +52,9 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     final boolean canChooseDifferentProfiles = !projectProfileManager.useProjectLevelProfileSettings();
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
-    InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)(canChooseDifferentProfiles
+    InspectionProfile inspectionProfile = (InspectionProfile)(canChooseDifferentProfiles
                                                                       ? profileManager.getRootProfile()
-                                                                      : projectProfileManager.getInspectionProfile(file));
+                                                                          : projectProfileManager.getInspectionProfile(file));
     editToolSettings(project,
                      inspectionProfile,
                      canChooseDifferentProfiles,
@@ -72,33 +73,28 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
   }
 
   public static boolean editToolSettings(final Project project,
-                                         final InspectionProfileImpl inspectionProfile,
+                                         final InspectionProfile inspectionProfile,
                                          final boolean canChooseDifferentProfile,
                                          final String selectedToolShortName,
                                          final ProfileManager manager) {
-    @NonNls final String dimensionServiceKey = "#Errors";
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
-    if (!canChooseDifferentProfile){
-      return settingsUtil.editConfigurable(project,
-                                           dimensionServiceKey,
-                                           new InspectionToolsConfigurable(project,
-                                                                           manager,
-                                                                           inspectionProfile,
-                                                                           selectedToolShortName));
-    } else {
+    if (!canChooseDifferentProfile) {
+      final @NonNls String dimensionServiceKey = "#Errors";
+      return settingsUtil.editConfigurable(project, dimensionServiceKey,
+                                           new InspectionToolsConfigurable(project, manager, inspectionProfile, selectedToolShortName));
+    }
+    else {
       final ErrorOptionsConfigurable errorsConfigurable = ErrorOptionsConfigurable.getInstance(project);
-      return settingsUtil.editConfigurable(project,
-                                           errorsConfigurable,
-                                           new Runnable(){
-                                             public void run() {
-                                               errorsConfigurable.selectNodeInTree(inspectionProfile.getName());
-                                               SwingUtilities.invokeLater(new Runnable() {
-                                                 public void run() {
-                                                   errorsConfigurable.selectInspectionTool(selectedToolShortName);
-                                                 }
-                                               });
-                                             }
-                                           });
+      return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
+        public void run() {
+          errorsConfigurable.selectNodeInTree(inspectionProfile.getName());
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              errorsConfigurable.selectInspectionTool(selectedToolShortName);
+            }
+          });
+        }
+      });
     }
 
   }

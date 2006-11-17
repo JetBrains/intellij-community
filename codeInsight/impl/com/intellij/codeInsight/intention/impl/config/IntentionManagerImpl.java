@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsInSuppressedPlaceIntention;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,6 +57,7 @@ public class IntentionManagerImpl extends IntentionManager {
 
     
     addAction(new EditFoldingOptionsAction());
+    addAction(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String... category) {

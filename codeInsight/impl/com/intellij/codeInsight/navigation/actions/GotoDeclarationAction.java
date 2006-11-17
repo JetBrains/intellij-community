@@ -39,7 +39,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public void invoke(final Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    int offset = getOffset(editor);
+    int offset = editor.getCaretModel().getOffset();
     PsiElement element = findTargetElement(project, editor, offset);
     if (element == null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
@@ -150,10 +150,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   public boolean startInWriteAction() {
     return false;
-  }
-
-  protected static int getOffset(Editor editor) {
-    return editor.getCaretModel().getOffset();
   }
 
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {

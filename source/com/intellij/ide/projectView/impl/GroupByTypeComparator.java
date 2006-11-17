@@ -17,54 +17,54 @@ import java.util.Collection;
  * @author cdr
  */
 public abstract class GroupByTypeComparator implements Comparator<NodeDescriptor> {
-  public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-    if (!isSortByType() && o1 instanceof ResourceBundleNode) {
-      final Collection<AbstractTreeNode> children = ((ResourceBundleNode)o1).getChildren();
+  public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
+    if (!isSortByType() && descriptor1 instanceof ResourceBundleNode) {
+      final Collection<AbstractTreeNode> children = ((ResourceBundleNode)descriptor1).getChildren();
       if (!children.isEmpty()) {
-        o1 = children.iterator().next();
-        o1.update();
+        descriptor1 = children.iterator().next();
+        descriptor1.update();
       }
     }
-    if (!isSortByType() && o2 instanceof ResourceBundleNode) {
-      final Collection<AbstractTreeNode> children = ((ResourceBundleNode)o2).getChildren();
+    if (!isSortByType() && descriptor2 instanceof ResourceBundleNode) {
+      final Collection<AbstractTreeNode> children = ((ResourceBundleNode)descriptor2).getChildren();
       if (!children.isEmpty()) {
-        o2 = children.iterator().next();
-        o2.update();
+        descriptor2 = children.iterator().next();
+        descriptor2.update();
       }
     }
-    if (o1 instanceof PsiDirectoryNode != o2 instanceof PsiDirectoryNode) {
-      return o1 instanceof PsiDirectoryNode ? -1 : 1;
+    if (descriptor1 instanceof PsiDirectoryNode != descriptor2 instanceof PsiDirectoryNode) {
+      return descriptor1 instanceof PsiDirectoryNode ? -1 : 1;
     }
-    if (o1 instanceof PackageElementNode != o2 instanceof PackageElementNode) {
-      return o1 instanceof PackageElementNode ? -1 : 1;
+    if (descriptor1 instanceof PackageElementNode != descriptor2 instanceof PackageElementNode) {
+      return descriptor1 instanceof PackageElementNode ? -1 : 1;
     }
-    if (isSortByType() && o1 instanceof ClassTreeNode != o2 instanceof ClassTreeNode) {
-      return o1 instanceof ClassTreeNode ? -1 : 1;
+    if (isSortByType() && descriptor1 instanceof ClassTreeNode != descriptor2 instanceof ClassTreeNode) {
+      return descriptor1 instanceof ClassTreeNode ? -1 : 1;
     }
-    if (isSortByType() && o1 instanceof ClassTreeNode && o2 instanceof ClassTreeNode) {
-      final PsiClass aClass1 = ((ClassTreeNode)o1).getValue();
-      final PsiClass aClass2 = ((ClassTreeNode)o2).getValue();
+    if (isSortByType() && descriptor1 instanceof ClassTreeNode && descriptor2 instanceof ClassTreeNode) {
+      final PsiClass aClass1 = ((ClassTreeNode)descriptor1).getValue();
+      final PsiClass aClass2 = ((ClassTreeNode)descriptor2).getValue();
       int pos1 = getClassPosition(aClass1);
       int pos2 = getClassPosition(aClass2);
       final int result = pos1 - pos2;
       if (result != 0) return result;
     }
     else if (isSortByType()
-             && o1 instanceof AbstractTreeNode
-             && o2 instanceof AbstractTreeNode
-             && (o1 instanceof PsiFileNode || ((AbstractTreeNode)o1).getValue() instanceof ResourceBundle)
-             && (o2 instanceof PsiFileNode || ((AbstractTreeNode)o2).getValue() instanceof ResourceBundle)) {
-      String type1 = o1 instanceof PsiFileNode ? extension(((PsiFileNode)o1).getValue()) : StdFileTypes.PROPERTIES.getDefaultExtension();
-      String type2 = o2 instanceof PsiFileNode ? extension(((PsiFileNode)o2).getValue()) : StdFileTypes.PROPERTIES.getDefaultExtension();
+             && descriptor1 instanceof AbstractTreeNode
+             && descriptor2 instanceof AbstractTreeNode
+             && (descriptor1 instanceof PsiFileNode || ((AbstractTreeNode)descriptor1).getValue() instanceof ResourceBundle)
+             && (descriptor2 instanceof PsiFileNode || ((AbstractTreeNode)descriptor2).getValue() instanceof ResourceBundle)) {
+      String type1 = descriptor1 instanceof PsiFileNode ? extension(((PsiFileNode)descriptor1).getValue()) : StdFileTypes.PROPERTIES.getDefaultExtension();
+      String type2 = descriptor2 instanceof PsiFileNode ? extension(((PsiFileNode)descriptor2).getValue()) : StdFileTypes.PROPERTIES.getDefaultExtension();
       if (type1 != null && type2 != null) {
         int result = type1.compareTo(type2);
         if (result != 0) return result;
       }
     }
     if (isAbbreviatePackageNames()){
-      if (o1 instanceof PsiDirectoryNode) {
-        final PsiDirectory aDirectory1 = ((PsiDirectoryNode)o1).getValue();
-        final PsiDirectory aDirectory2 = ((PsiDirectoryNode)o2).getValue();
+      if (descriptor1 instanceof PsiDirectoryNode) {
+        final PsiDirectory aDirectory1 = ((PsiDirectoryNode)descriptor1).getValue();
+        final PsiDirectory aDirectory2 = ((PsiDirectoryNode)descriptor2).getValue();
         if (aDirectory1 != null &&
             aDirectory2 != null) {
           final PsiPackage aPackage1 = aDirectory1.getPackage();
@@ -73,9 +73,9 @@ public abstract class GroupByTypeComparator implements Comparator<NodeDescriptor
             return aPackage1.getQualifiedName().compareToIgnoreCase(aPackage2.getQualifiedName());
           }
         }
-      } else if (o1 instanceof PackageElementNode) {
-        final PackageElement packageElement1 = ((PackageElementNode)o1).getValue();
-        final PackageElement packageElement2 = ((PackageElementNode)o2).getValue();
+      } else if (descriptor1 instanceof PackageElementNode) {
+        final PackageElement packageElement1 = ((PackageElementNode)descriptor1).getValue();
+        final PackageElement packageElement2 = ((PackageElementNode)descriptor2).getValue();
         if (packageElement1 != null &&
             packageElement2 != null){
           final PsiPackage aPackage1 = packageElement1.getPackage();
@@ -86,7 +86,7 @@ public abstract class GroupByTypeComparator implements Comparator<NodeDescriptor
         }
       }
     }
-    return AlphaComparator.INSTANCE.compare(o1, o2);
+    return AlphaComparator.INSTANCE.compare(descriptor1, descriptor2);
   }
 
   protected abstract boolean isSortByType();
