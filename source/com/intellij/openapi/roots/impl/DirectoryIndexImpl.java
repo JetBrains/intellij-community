@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
@@ -329,50 +330,72 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
       OrderEntry[] orderEntries = rootManager.getOrderEntries();
+      final Map<VirtualFile, List<OrderEntry>> depEntries = new HashMap<VirtualFile, List<OrderEntry>>();
+      final Map<VirtualFile, List<OrderEntry>> libClassRootEntries = new HashMap<VirtualFile, List<OrderEntry>>();
+      final Map<VirtualFile, List<OrderEntry>> libSourceRootEntries = new HashMap<VirtualFile, List<OrderEntry>>();
       for (OrderEntry orderEntry : orderEntries) {
-        List<OrderEntry> oneEntryList = Arrays.asList(new OrderEntry[]{orderEntry});
-
-
         if (orderEntry instanceof ModuleOrderEntry) {
-          // [dsl] this is probably incorrect. However I do not see any other way (yet)
-          // to make exporting work.
-          Module entryModule = null;
-
           VirtualFile[] importedClassRoots = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
           for (VirtualFile importedClassRoot : importedClassRoots) {
-            fillMapWithOrderEntries(importedClassRoot, oneEntryList, entryModule, null, null, forDir, null, null, fileTypeManager);
+            addEntryToMap(importedClassRoot, orderEntry, depEntries);
           }
-
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null, null, fileTypeManager);
+            addEntryToMap(sourceRoot, orderEntry, depEntries);
           }
-        }
-        else if (orderEntry instanceof ModuleSourceOrderEntry) {
+        } else if (orderEntry instanceof ModuleSourceOrderEntry) {
+          List<OrderEntry> oneEntryList = Arrays.asList(new OrderEntry[]{orderEntry});
           Module entryModule = orderEntry.getOwnerModule();
 
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
             fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, forDir, null, null, fileTypeManager);
           }
-        }
-        else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
+        } else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
           VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
           for (VirtualFile classRoot : classRoots) {
-            fillMapWithOrderEntries(classRoot, oneEntryList, null, classRoot, null, forDir, null, null, fileTypeManager);
+            addEntryToMap(classRoot, orderEntry, libClassRootEntries);
           }
-
           VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
-            fillMapWithOrderEntries(sourceRoot, oneEntryList, null, null, sourceRoot, forDir, null, null, fileTypeManager);
+            addEntryToMap(sourceRoot, orderEntry, libSourceRootEntries);
           }
         }
+      }
+
+      for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : depEntries.entrySet()) {
+        final VirtualFile vRoot = mapEntry.getKey();
+        final List<OrderEntry> entries = mapEntry.getValue();
+        fillMapWithOrderEntries(vRoot, entries, null, null, null, forDir, null, null, fileTypeManager);
+      }
+
+      for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : libClassRootEntries.entrySet()) {
+        final VirtualFile vRoot = mapEntry.getKey();
+        final List<OrderEntry> entries = mapEntry.getValue();
+        fillMapWithOrderEntries(vRoot, entries, null, vRoot, null, forDir, null, null, fileTypeManager);
+      }
+
+      for (Map.Entry<VirtualFile, List<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
+        final VirtualFile vRoot = mapEntry.getKey();
+        final List<OrderEntry> entries = mapEntry.getValue();
+        fillMapWithOrderEntries(vRoot, entries, null, null, vRoot, forDir, null, null, fileTypeManager);
       }
     }
 
     if (progress != null) {
       progress.popState();
     }
+  }
+
+  private void addEntryToMap(final VirtualFile vRoot,
+                             final OrderEntry entry,
+                             final Map<VirtualFile, List<OrderEntry>> map) {
+    List<OrderEntry> list = map.get(vRoot);
+    if (list == null) {
+      list = new ArrayList<OrderEntry>();
+      map.put(vRoot, list);
+    }
+    list.add(entry);
   }
 
   private static void putForFileAndAllAncestors(Map<VirtualFile, Set<VirtualFile>> map, VirtualFile file, VirtualFile value) {
