@@ -13,8 +13,6 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import gnu.trove.THashSet;
-
 class JarLoader extends Loader {
   private URL myURL;
   private final boolean myCanLockJar;
@@ -59,7 +57,7 @@ class JarLoader extends Loader {
 
   private void initPackageCache() throws IOException {
     if (myPackages != null || !myUseCache) return;
-    myPackages = new THashSet<String>();
+    myPackages = new HashSet<String>();
     myPackages.add("");
 
     final ZipFile zipFile = getZipFile();
