@@ -38,10 +38,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T>> {
-
-  private final Class<T> myClass;
-  private final ModelMerger myModelMerger;
+public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T>, C extends PsiElement> extends SimpleDomModelFactory<T> {
 
   private final DomModelCache<M, XmlFile> myModelCache;
   private final DomModelCache<M, Module> myCombinedModelCache;
@@ -52,9 +49,7 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
                           @NotNull ModelMerger modelMerger,
                           final Project project,
                           @NonNls String name) {
-
-    myClass = aClass;
-    myModelMerger = modelMerger;
+    super(aClass, modelMerger);
 
     myModelCache = new DomModelCache<M, XmlFile>(project, name + " model") {
        @NotNull
@@ -116,7 +111,7 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
   }
 
   @Nullable
-  public abstract M getModel(@NotNull PsiElement psiElement);
+  public abstract M getModel(@NotNull C context);
 
   @NotNull
   public List<M> getAllModels(@NotNull Module module) {
@@ -187,14 +182,23 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
     return createCombinedModel(configFiles, mergedModel, firstModel);
   }
 
+  /**
+   * Factory method to create combined model for given module.
+   * Used by {@link #computeCombinedModel(com.intellij.openapi.module.Module)}.
+   *
+   * @param configFiles file set including all files for all models returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
+   * @param mergedModel merged model for all models returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
+   * @param firstModel the first model returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
+   * @return combined model.
+   */
   protected abstract M createCombinedModel(Set<XmlFile> configFiles, T mergedModel, M firstModel);
 
   @NotNull
-  public Set<XmlFile> getConfigFiles(@Nullable PsiElement psiElement) {
-    if (psiElement == null) {
+  public Set<XmlFile> getConfigFiles(@Nullable C context) {
+    if (context == null) {
       return Collections.emptySet();
     }
-    final M model = getModel(psiElement);
+    final M model = getModel(context);
     if (model == null) {
       return Collections.emptySet();
     }
@@ -212,12 +216,6 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
     return xmlFiles;
   }
 
-  @Nullable
-  public T getDom(@NotNull XmlFile configFile) {
-    final DomFileElement<T> element = DomManager.getDomManager(configFile.getProject()).getFileElement(configFile, myClass);
-    return element == null ? null : element.getRootElement();
-  }
-
   public List<DomFileElement<T>> getFileElements(M model) {
     final ArrayList<DomFileElement<T>> list = new ArrayList<DomFileElement<T>>(model.getConfigFiles().size());
     for (XmlFile configFile: model.getConfigFiles()) {
@@ -227,19 +225,6 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
       }
     }
     return list;
-  }
-
-  @NotNull
-  protected T createMergedModel(Set<XmlFile> configFiles) {
-    List<T> configs = new ArrayList<T>(configFiles.size());
-    for (XmlFile configFile : configFiles) {
-      final T dom = getDom(configFile);
-      if (dom != null) {
-        configs.add(dom);
-      }
-    }
-
-    return myModelMerger.mergeModels(myClass, configs);
   }
 
   public ModelMerger getModelMerger() {
