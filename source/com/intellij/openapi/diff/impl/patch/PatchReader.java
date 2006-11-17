@@ -23,11 +23,14 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class PatchReader {
+
   private enum DiffFormat { CONTEXT, UNIFIED }
 
   private String[] myLines;
   private int myLineIndex = 0;
   private DiffFormat myDiffFormat = null;
+  @NonNls private static final String CONTEXT_HUNK_PREFIX = "***************";
+  @NonNls private static final String CONTEXT_FILE_PREFIX = "*** ";
   @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+),(\\d+) \\+(\\d+),(\\d+) @@");
   @NonNls private static final Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
@@ -46,7 +49,7 @@ public class PatchReader {
         myDiffFormat = DiffFormat.UNIFIED;
         return readPatch(curLine);
       }
-      else if (curLine.startsWith("***") && (myDiffFormat == null || myDiffFormat == DiffFormat.CONTEXT)) {
+      else if (curLine.startsWith(CONTEXT_FILE_PREFIX) && (myDiffFormat == null || myDiffFormat == DiffFormat.CONTEXT)) {
         myDiffFormat = DiffFormat.CONTEXT;
         return readPatch(curLine);
       }
@@ -83,14 +86,21 @@ public class PatchReader {
 
   @Nullable
   private PatchHunk readNextHunkUnified() throws PatchSyntaxException {
-    String curLine = myLines [myLineIndex];
-    if (curLine.startsWith("--- ")) {
+    while(myLineIndex < myLines.length) {
+      String curLine = myLines [myLineIndex];
+      if (curLine.startsWith("--- ")) {
+        return null;
+      }
+      if (curLine.startsWith("@@ ")) {
+        break;
+      }
+      myLineIndex++;
+    }
+    if (myLineIndex == myLines.length) {
       return null;
     }
-    if (!curLine.startsWith("@@ ")) {
-      throw new PatchSyntaxException(myLineIndex, "Hunk start expected");
-    }
-    Matcher m = ourUnifiedHunkStartPattern.matcher(curLine);
+
+    Matcher m = ourUnifiedHunkStartPattern.matcher(myLines [myLineIndex]);
     if (!m.matches()) {
       throw new PatchSyntaxException(myLineIndex, "Unknown hunk start syntax");
     }
@@ -101,17 +111,19 @@ public class PatchReader {
     PatchHunk hunk = new PatchHunk(startLineBefore, endLineBefore, startLineAfter, endLineAfter);
     myLineIndex++;
     while(myLineIndex < myLines.length) {
-      curLine = myLines [myLineIndex];
-      if (curLine.startsWith("--- ") || curLine.startsWith("@@ ")) {
+      String curLine = myLines [myLineIndex];
+      final PatchLine line = parsePatchLine(curLine, 1);
+      if (line == null) {
         break;
       }
-      hunk.addLine(parsePatchLine(curLine, 1));
+      hunk.addLine(line);
       myLineIndex++;
     }
     return hunk;
   }
 
-  private PatchLine parsePatchLine(final String line, final int prefixLength) throws PatchSyntaxException {
+  @Nullable
+  private static PatchLine parsePatchLine(final String line, final int prefixLength) throws PatchSyntaxException {
     PatchLine.Type type;
     if (line.startsWith("+")) {
       type = PatchLine.Type.ADD;
@@ -123,15 +135,25 @@ public class PatchReader {
       type = PatchLine.Type.CONTEXT;
     }
     else {
-      throw new PatchSyntaxException(myLineIndex, "Unknown line prefix");
+      return null;
     }
     return new PatchLine(type, line.substring(prefixLength));
   }
 
+  @Nullable
   private PatchHunk readNextHunkContext() throws PatchSyntaxException {
-    String curLine = myLines [myLineIndex];
-    if (!curLine.startsWith("***************")) {
-      throw new PatchSyntaxException(myLineIndex, "Hunk start expected");
+    while(myLineIndex < myLines.length) {
+      String curLine = myLines [myLineIndex];
+      if (curLine.startsWith(CONTEXT_FILE_PREFIX)) {
+        return null;
+      }
+      if (curLine.startsWith(CONTEXT_HUNK_PREFIX)) {
+        break;
+      }
+      myLineIndex++;
+    }
+    if (myLineIndex == myLines.length) {
+      return null;
     }
     myLineIndex++;
     Matcher beforeMatcher = ourContextBeforeHunkStartPattern.matcher(myLines [myLineIndex]);
@@ -139,7 +161,7 @@ public class PatchReader {
       throw new PatchSyntaxException(myLineIndex, "Unknown before hunk start syntax");
     }
     myLineIndex++;
-    List<String> beforeLines = readContextDiffLines("---");
+    List<String> beforeLines = readContextDiffLines();
     if (myLineIndex == myLines.length) {
       throw new PatchSyntaxException(myLineIndex, "Missing after hunk");
     }
@@ -148,7 +170,7 @@ public class PatchReader {
       throw new PatchSyntaxException(myLineIndex, "Unknown before hunk start syntax");
     }
     myLineIndex++;
-    List<String> afterLines = readContextDiffLines("***");
+    List<String> afterLines = readContextDiffLines();
     int startLineBefore = Integer.parseInt(beforeMatcher.group(1));
     int endLineBefore = Integer.parseInt(beforeMatcher.group(2));
     int startLineAfter = Integer.parseInt(afterMatcher.group(1));
@@ -203,13 +225,14 @@ public class PatchReader {
     return hunk;
   }
 
-  private List<String> readContextDiffLines(final String terminator) {
+  private List<String> readContextDiffLines() {
     ArrayList<String> result = new ArrayList<String>();
     while(myLineIndex < myLines.length) {
-      if (myLines [myLineIndex].startsWith(terminator)) {
+      final String line = myLines[myLineIndex];
+      if (!line.startsWith("  ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ")) {
         break;
       }
-      result.add(myLines [myLineIndex]);
+      result.add(line);
       myLineIndex++;
     }
     return result;
