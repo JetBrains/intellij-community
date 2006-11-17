@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -196,13 +197,18 @@ class StatementMover extends LineMover {
     Pair<PsiElement, PsiElement> elementRange = getElementRange(parent, psiRange.getFirst(), psiRange.getSecond());
     if (elementRange == null) return null;
     int endOffset = elementRange.getSecond().getTextRange().getEndOffset();
+    Document document = editor.getDocument();
+    if (endOffset > document.getTextLength()) {
+      LOG.assertTrue(!PsiDocumentManager.getInstance(file.getProject()).isUncommited(document));
+      LOG.assertTrue(PsiDocumentManagerImpl.checkConsistency(file, document));
+    }
     int endLine;
-    if (endOffset == editor.getDocument().getTextLength()) {
-      endLine = editor.getDocument().getLineCount();
+    if (endOffset == document.getTextLength()) {
+      endLine = document.getLineCount();
     }
     else {
       endLine = editor.offsetToLogicalPosition(endOffset).line+1;
-      endLine = Math.min(endLine, editor.getDocument().getLineCount());
+      endLine = Math.min(endLine, document.getLineCount());
     }
     int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line);
     endLine = Math.max(endLine, range.endLine);
