@@ -49,12 +49,12 @@ public class ChangeFileContentChange extends Change {
     myOldContent = affectedEntry.getContent();
     myAffectedEntryIdPath = affectedEntry.getIdPath();
 
-    root.doChangeFileContent(affectedEntry.getId(), myNewContent);
+    root.doChangeFileContent(myPath, myNewContent);
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doChangeFileContent(myAffectedEntryIdPath.getName(), myOldContent);
+    root.doChangeFileContent(myPath, myOldContent);
   }
 
   @Override

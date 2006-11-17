@@ -45,7 +45,7 @@ public class CreateFileChange extends Change {
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doDelete(myId);
+    root.doDelete(myPath);
   }
 
   @Override

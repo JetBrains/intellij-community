@@ -33,7 +33,7 @@ public class DeleteChange extends Change {
     myAffectedEntry = root.getEntry(myPath);
     myAffectedEntryIdPath = myAffectedEntry.getIdPath();
 
-    root.doDelete(myAffectedEntryIdPath.getName());
+    root.doDelete(myPath);
   }
 
   @Override

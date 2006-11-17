@@ -84,39 +84,36 @@ public class RootEntry extends DirectoryEntry {
     addEntry(path.getParent(), new DirectoryEntry(id, path.getName()));
   }
 
-  public void doChangeFileContent(Integer id, String content) {
-    Entry oldEntry = getEntry(id);
+  public void doChangeFileContent(Path path, String content) {
+    Entry oldEntry = getEntry(path);
 
     Entry newEntry = new FileEntry(oldEntry.getId(),
                                    oldEntry.getName(),
                                    content);
 
-    Path path = oldEntry.getPath();
-    removeEntry(id);
+    removeEntry(oldEntry);
     addEntry(path.getParent(), newEntry);
   }
 
-  public void doRename(Integer id, String newName) {
-    Entry oldEntry = getEntry(id);
-    if (newName.equals(oldEntry.getName())) return;
+  public void doRename(Path path, String newName) {
+    // todo maybe remove this check?
+    if (newName.equals(path.getName())) return;
 
+    Entry oldEntry = getEntry(path);
     Entry newEntry = oldEntry.renamed(newName);
 
-    Path path = oldEntry.getPath();
-
-    removeEntry(id);
+    removeEntry(oldEntry);
     addEntry(path.getParent(), newEntry);
   }
 
-  public void doMove(Integer id, Path parent) {
-    Entry e = getEntry(id);
-
-    removeEntry(id);
+  public void doMove(Path path, Path parent) {
+    Entry e = getEntry(path);
+    removeEntry(e);
     addEntry(parent, e);
   }
 
-  public void doDelete(Integer id) {
-    removeEntry(id);
+  public void doDelete(Path path) {
+    removeEntry(getEntry(path));
   }
 
   private void addEntry(Path parent, Entry entry) {
@@ -129,8 +126,7 @@ public class RootEntry extends DirectoryEntry {
     else getEntry(parent).addChild(entry);
   }
 
-  private void removeEntry(Integer id) {
-    Entry e = getEntry(id);
+  private void removeEntry(Entry e) {
     Entry parent = e.getParent() == null ? this : e.getParent();
     parent.removeChild(e);
   }

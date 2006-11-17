@@ -21,11 +21,11 @@ public class Label {
     RootEntry copy = myRoot.copy();
     myChangeList.revertUpToChangeSetOn(copy, myChangeSet);
 
-    return copy.findEntry(myEntry.getId());
+    return copy.getEntry(myEntry.getId());
   }
 
   public Difference getDifferenceWith(Label right) {
-    // todo it seems that entries can not be nulls, but i'm not sure...
+    // todo it seems that entries should always exist, but i'm not sure...
     // i cant figure aout any test for it
     Entry leftEntry = getEntry();
     Entry rightEntry = right.getEntry();

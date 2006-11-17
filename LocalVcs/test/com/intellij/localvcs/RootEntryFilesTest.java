@@ -42,7 +42,7 @@ public class RootEntryFilesTest extends TestCase {
   @Test
   public void testChangingFileContent() {
     root.doCreateFile(1, p("file"), "content");
-    root.doChangeFileContent(1, "new content");
+    root.doChangeFileContent(p("file"), "new content");
 
     assertEquals("new content", root.getEntry(p("file")).getContent());
   }
@@ -52,7 +52,7 @@ public class RootEntryFilesTest extends TestCase {
     root.doCreateFile(1, p("file1"), "content1");
     root.doCreateFile(2, p("file2"), "content2");
 
-    root.doChangeFileContent(1, "new content");
+    root.doChangeFileContent(p("file1"), "new content");
 
     assertEquals("new content", root.getEntry(p("file1")).getContent());
     assertEquals("content2", root.getEntry(p("file2")).getContent());
@@ -61,7 +61,7 @@ public class RootEntryFilesTest extends TestCase {
   @Test
   public void testChangingContentOfAnNonExistingFileThrowsException() {
     try {
-      root.doChangeFileContent(666, "content");
+      root.doChangeFileContent(p("unknown file"), "content");
       fail();
     } catch (LocalVcsException e) {}
   }
@@ -70,7 +70,7 @@ public class RootEntryFilesTest extends TestCase {
   public void testRenamingFiles() {
     root.doCreateFile(1, p("file"), "content");
 
-    root.doRename(1, "new file");
+    root.doRename(p("file"), "new file");
 
     assertFalse(root.hasEntry(p("file")));
     assertTrue(root.hasEntry(p("new file")));
@@ -81,7 +81,7 @@ public class RootEntryFilesTest extends TestCase {
   @Test
   public void testRenamingOfAnNonExistingFileThrowsException() {
     try {
-      root.doRename(666, "new file");
+      root.doRename(p("unknown file"), "new file");
       fail();
     } catch (LocalVcsException e) {}
   }
@@ -92,7 +92,7 @@ public class RootEntryFilesTest extends TestCase {
     root.doCreateFile(2, p("file2"), null);
 
     try {
-      root.doRename(1, "file2");
+      root.doRename(p("file1"), "file2");
       fail();
     } catch (LocalVcsException e) {}
   }
@@ -101,7 +101,7 @@ public class RootEntryFilesTest extends TestCase {
   public void testRenamingFileToSameNameDoesNothing() {
     root.doCreateFile(1, p("file"), "content");
 
-    root.doRename(1, "file");
+    root.doRename(p("file"), "file");
 
     assertTrue(root.hasEntry(p("file")));
     assertEquals("content", root.getEntry(p("file")).getContent());
@@ -111,7 +111,7 @@ public class RootEntryFilesTest extends TestCase {
   public void testDeletingFiles() {
     root.doCreateFile(1, p("file"), null);
 
-    root.doDelete(1);
+    root.doDelete(p("file"));
 
     assertFalse(root.hasEntry(p("file")));
   }
@@ -121,16 +121,16 @@ public class RootEntryFilesTest extends TestCase {
     root.doCreateFile(1, p("file1"), null);
     root.doCreateFile(2, p("file2"), null);
 
-    root.doDelete(2);
+    root.doDelete(p("file2"));
 
     assertTrue(root.hasEntry(p("file1")));
     assertFalse(root.hasEntry(p("file2")));
   }
 
   @Test
-  public void testDeletingOfAnNonExistingFileThrowsException() {
+  public void testDeletingOfAnUnknownEntryThrowsException() {
     try {
-      root.doDelete(999);
+      root.doDelete(p("unknown file"));
       fail();
     } catch (LocalVcsException e) {}
   }

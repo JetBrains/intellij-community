@@ -37,12 +37,12 @@ public class RenameChange extends Change {
   @Override
   public void applyTo(RootEntry root) {
     myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
-    root.doRename(myAffectedEntryIdPath.getName(), myNewName);
+    root.doRename(myPath, myNewName);
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doRename(myAffectedEntryIdPath.getName(), myPath.getName());
+    root.doRename(myPath.renamedWith(myNewName), myPath.getName());
   }
 
   @Override

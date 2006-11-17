@@ -37,13 +37,14 @@ public class MoveChange extends Change {
   @Override
   public void applyTo(RootEntry root) {
     myFromIdPath = root.getEntry(myPath).getIdPath();
-    root.doMove(myFromIdPath.getName(), myNewParent);
+    root.doMove(myPath, myNewParent);
     myToIdPath = root.getEntry(getNewPath()).getIdPath();
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.doMove(myFromIdPath.getName(), myPath.getParent());
+    root.doMove(myNewParent.appendedWith(myPath.getName()),
+                myPath.getParent());
   }
 
   private Path getNewPath() {
