@@ -50,7 +50,7 @@ public class LayeredLexer extends LexerBase {
     myStopTokens.put(Lexer, stopTokens);
   }
 
-  public void registerLayer(Lexer Lexer, IElementType[] startTokens) {
+  public void registerLayer(Lexer Lexer, IElementType... startTokens) {
     for (IElementType startToken : startTokens) {
       LOG.assertTrue(!myStartTokenToLayerLexer.containsKey(startToken));
       myStartTokenToLayerLexer.put(startToken, Lexer);
@@ -158,5 +158,9 @@ public class LayeredLexer extends LexerBase {
 
   private boolean isLayerActive() {
     return myCurrentLayerLexer != null;
+  }
+
+  public Lexer getBaseLexer() {
+    return myBaseLexer;
   }
 }

@@ -32,22 +32,21 @@
 package com.intellij.codeFormatting.general;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IChameleonElementType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -426,7 +425,8 @@ public class FormatterUtil {
       return true;
       //EnterActionTest && JavaDocParamTest
     }
-    if (node.getElementType() == ElementType.JSP_XML_TEXT && node.getText().trim().length() == 0) {
+
+    if ((node.getElementType() == ElementType.JSP_XML_TEXT || node.getElementType() == JspTokenType.XML_DATA_CHARACTERS) && node.getText().trim().length() == 0) {
       return true;
     }
 

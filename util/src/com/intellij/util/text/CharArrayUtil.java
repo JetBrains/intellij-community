@@ -179,6 +179,16 @@ public class CharArrayUtil {
     return offset;
   }
 
+  public static boolean regionMatches(char[] buffer, int offset, int bufferEnd, CharSequence s) {
+    final int len = s.length();
+    if (offset + len > bufferEnd) return false;
+    if (offset < 0) return false;
+    for (int i = 0; i < len; i++) {
+      if (buffer[offset + i] != s.charAt(i)) return false;
+    }
+    return true;
+  }
+
   public static boolean regionMatches(CharSequence buffer, int offset, CharSequence s) {
     if (offset + s.length() > buffer.length()) return false;
     if (offset < 0) return false;
