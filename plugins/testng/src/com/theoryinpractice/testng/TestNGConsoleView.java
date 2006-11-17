@@ -178,7 +178,7 @@ public class TestNGConsoleView implements ConsoleView
             });
         } else {
             console.clear();
-            for (Chunk chunk : output) {
+            for (Chunk chunk : new ArrayList<Chunk>(output)) {
                 console.print(chunk.text, chunk.contentType);
             }
         }
