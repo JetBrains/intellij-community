@@ -20,10 +20,6 @@ public class Stream {
     myOs = new DataOutputStream(os);
   }
 
-  public void flush() throws IOException {
-    myOs.flush();
-  }
-
   public Path readPath() throws IOException {
     return new Path(this);
   }

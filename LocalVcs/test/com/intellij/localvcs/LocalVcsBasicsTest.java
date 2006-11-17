@@ -17,19 +17,6 @@ public class LocalVcsBasicsTest extends TestCase {
     } catch (LocalVcsException e) { }
   }
 
-  //@Test
-  public void testDoesNotApplyAnyChangeIfOneFailed() {
-    // todo what should we do with it?
-    vcs.createFile(p("file1"), "");
-    vcs.createFile(p("file2"), "");
-    vcs.createFile(p("file2"), "");
-
-    try { vcs.apply(); } catch (LocalVcsException e) { }
-
-    assertFalse(vcs.hasEntry(p("file1")));
-    assertFalse(vcs.hasEntry(p("file2")));
-  }
-
   @Test
   public void testClearingChangesOnApply() {
     vcs.createFile(p("file"), "content");

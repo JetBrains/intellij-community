@@ -48,11 +48,6 @@ public class Path {
     return new Path(myPath + DELIM + tail);
   }
 
-  public Path renamedWith(String newName) {
-    if (isRoot()) return new Path(newName);
-    return getParent().appendedWith(newName);
-  }
-
   protected List<String> getParts() {
     List<String> result = new ArrayList<String>();
 

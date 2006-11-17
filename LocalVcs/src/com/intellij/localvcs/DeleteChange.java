@@ -24,10 +24,6 @@ public class DeleteChange extends Change {
     s.writeEntry(myAffectedEntry);
   }
 
-  public Path getPath() {
-    return myPath;
-  }
-
   public Entry getAffectedEntry() {
     return myAffectedEntry;
   }

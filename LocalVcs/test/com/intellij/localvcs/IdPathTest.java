@@ -22,12 +22,6 @@ public class IdPathTest extends TestCase {
   }
 
   @Test
-  public void testParent() {
-    assertEquals(new IdPath(1, 2), new IdPath(1, 2, 3).getParent());
-    assertNull(new IdPath(1).getParent());
-  }
-
-  @Test
   public void testContains() {
     IdPath p = new IdPath(1, 2);
 

@@ -29,20 +29,6 @@ public class PathTest extends TestCase {
   }
 
   @Test
-  public void testRenaming() {
-    Path p = new Path("file1");
-
-    assertEquals(new Path("file2"), p.renamedWith("file2"));
-  }
-
-  @Test
-  public void testRenamingWithParent() {
-    Path p = new Path("dir/file1");
-
-    assertEquals(new Path("dir/file2"), p.renamedWith("file2"));
-  }
-
-  @Test
   public void testParts() {
     Path p = new Path("dir1/dir2/file");
     assertElements(new Object[]{"dir1", "dir2", "file"}, p.getParts());

@@ -76,7 +76,7 @@ public class Storage {
     }
   }
 
-  public void store(String fileName, Storer storer) {
+  private void store(String fileName, Storer storer) {
     File f = new File(myDir, fileName);
     try {
       f.createNewFile();

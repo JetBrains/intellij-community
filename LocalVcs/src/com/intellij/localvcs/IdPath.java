@@ -12,7 +12,7 @@ public class IdPath {
     this(Arrays.asList(parts));
   }
 
-  public IdPath(List<Integer> parts) {
+  private IdPath(List<Integer> parts) {
     myParts = parts;
   }
 
@@ -34,16 +34,6 @@ public class IdPath {
 
   public Integer getName() {
     return myParts.get(myParts.size() - 1);
-  }
-
-  public IdPath getParent() {
-    List<Integer> result = new ArrayList<Integer>(myParts);
-    result.remove(result.size() - 1);
-    return result.isEmpty() ? null : new IdPath(result);
-  }
-
-  public List<Integer> getParts() {
-    return myParts;
   }
 
   public IdPath appendedWith(Integer id) {
