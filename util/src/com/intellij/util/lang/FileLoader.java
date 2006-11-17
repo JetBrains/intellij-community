@@ -1,19 +1,15 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
 
 class FileLoader extends Loader {
-  private Set<String> myPackages = null;
+  private THashSet<String> myPackages = null;
   private File myRootDir;
   private String myRootDirAbsolutePath;
   private final boolean myUseCache;
@@ -33,9 +29,9 @@ class FileLoader extends Loader {
   }
 
   private void buildPackageCache(final File dir) {
-    if (!dir.isDirectory()) {
-      return;
-    }
+    if (dir.getName().endsWith(".class")) return; // optimization to prevent disc access for class files
+    final File[] files = dir.listFiles();
+    if (files == null) return;
 
     String relativePath = dir.getAbsolutePath().substring(myRootDirAbsolutePath.length());
     relativePath = relativePath.replace(File.separatorChar, '/');
@@ -43,7 +39,6 @@ class FileLoader extends Loader {
 
     myPackages.add(relativePath);
 
-    final File[] files = dir.listFiles();
     for (File file : files) {
       buildPackageCache(file);
     }
@@ -79,7 +74,7 @@ class FileLoader extends Loader {
 
   private void initPackageCache() {
     if (myPackages != null || !myUseCache) return;
-    myPackages = new HashSet<String>();
+    myPackages = new THashSet<String>();
     buildPackageCache(myRootDir);
   }
 
@@ -107,11 +102,11 @@ class FileLoader extends Loader {
     }
 
     public InputStream getInputStream() throws IOException {
-      return new FileInputStream(myFile);
+      return new BufferedInputStream(new FileInputStream(myFile));
     }
 
     public int getContentLength() throws IOException {
-      return (int)myFile.length();
+      return -1;
     }
 
     public String toString() {
