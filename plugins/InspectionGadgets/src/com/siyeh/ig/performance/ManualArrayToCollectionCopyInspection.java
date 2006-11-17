@@ -16,7 +16,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ManualArrayToCollectionCopyInspection extends ExpressionInspection {
+public class ManualArrayToCollectionCopyInspection
+        extends ExpressionInspection {
 
     @NotNull
     public String getDisplayName() {
@@ -47,7 +48,8 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
         return new ManualArrayToCollectionCopyFix();
     }
 
-    private static class ManualArrayToCollectionCopyFix extends InspectionGadgetsFix {
+    private static class ManualArrayToCollectionCopyFix
+            extends InspectionGadgetsFix {
 
         @NotNull
         public String getName() {
@@ -64,7 +66,7 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
             if (newExpression == null) {
                 return;
             }
-            replaceStatement(forStatement, newExpression);
+            replaceStatementAndShortenClassNames(forStatement, newExpression);
         }
 
         @Nullable
@@ -76,16 +78,6 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
                     (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(
                             expression);
             if (condition == null) {
-                return null;
-            }
-            PsiExpression limit;
-            if (condition.getOperationTokenType() == JavaTokenType.LT)  {
-                limit = condition.getROperand();
-            } else {
-                limit = condition.getLOperand();
-            }
-            limit = PsiUtil.deparenthesizeExpression(limit);
-            if (limit == null) {
                 return null;
             }
             final PsiStatement initialization =
@@ -132,11 +124,21 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
             final PsiExpression indexExpression =
                     arrayAccessExpression.getIndexExpression();
             final String fromOffsetText =
-                    getOffsetText(indexExpression, variable);
+                    getStartOffsetText(indexExpression, variable);
             if (fromOffsetText == null) {
                 return null;
             }
-            @NonNls final String toOffsetText = getLengthText(limit, variable);
+            PsiExpression limit;
+            if (condition.getOperationTokenType() == JavaTokenType.LT)  {
+                limit = condition.getROperand();
+            } else {
+                limit = condition.getLOperand();
+            }
+            limit = PsiUtil.deparenthesizeExpression(limit);
+            if (limit == null) {
+                return null;
+            }
+            @NonNls final String toOffsetText = limit.getText();
             if (toOffsetText == null) {
                 return null;
             }
@@ -158,27 +160,8 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
         }
 
         @Nullable
-        private static String getLengthText(PsiExpression expression,
-                                            PsiLocalVariable variable) {
-            expression =
-                    PsiUtil.deparenthesizeExpression(expression);
-            if (expression == null) {
-                return null;
-            }
-            final PsiExpression initializer = variable.getInitializer();
-            final String expressionText = expression.getText();
-            if (initializer == null) {
-                return expressionText;
-            }
-            if (ExpressionUtils.isZero(initializer)) {
-                return expressionText;
-            }
-            return expressionText + '-' + initializer.getText();
-        }
-
-        @Nullable
-        private static String getOffsetText(PsiExpression expression,
-                                            PsiLocalVariable variable)
+        private static String getStartOffsetText(PsiExpression expression,
+                                                 PsiLocalVariable variable)
                 throws IncorrectOperationException {
             expression =
                     PsiUtil.deparenthesizeExpression(expression);
@@ -199,7 +182,7 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
                         (PsiBinaryExpression)expression;
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 final PsiExpression rhs = binaryExpression.getROperand();
-                final String rhsText = getOffsetText(rhs, variable);
+                final String rhsText = getStartOffsetText(rhs, variable);
                 final PsiJavaToken sign = binaryExpression.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
                 if (ExpressionUtils.isZero(lhs)) {
@@ -208,7 +191,7 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
                     }
                     return rhsText;
                 }
-                final String lhsText = getOffsetText(lhs, variable);
+                final String lhsText = getStartOffsetText(lhs, variable);
                 if (ExpressionUtils.isZero(rhs)) {
                     return lhsText;
                 }
@@ -252,7 +235,8 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
         }
     }
 
-    private static class ManualArrayToCollectionCopyVisitor extends BaseInspectionVisitor {
+    private static class ManualArrayToCollectionCopyVisitor
+            extends BaseInspectionVisitor {
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
@@ -299,10 +283,8 @@ public class ManualArrayToCollectionCopyInspection extends ExpressionInspection 
                         (PsiBlockStatement)body;
                 final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
                 final PsiStatement[] statements = codeBlock.getStatements();
-                if (statements.length != 1) {
-                    return false;
-                }
-                return bodyIsArrayToCollectionCopy(statements[0], variable);
+                return statements.length == 1 &&
+                        bodyIsArrayToCollectionCopy(statements[0], variable);
             }
             return false;
         }
