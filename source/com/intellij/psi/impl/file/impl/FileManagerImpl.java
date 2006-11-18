@@ -847,23 +847,19 @@ public class FileManagerImpl implements FileManager {
 
       final PsiDirectory parentDir = myVFileToPsiDirMap.get(event.getParent());
 
-      if (!event.isDirectory()) {
-        final PsiFile psiFile = getCachedPsiFileInner(vFile);
-        if (psiFile != null) {
-          myVFileToViewProviderMap.remove(vFile);
+      final PsiFile psiFile = getCachedPsiFileInner(vFile);
+      if (psiFile != null) {
+        myVFileToViewProviderMap.remove(vFile);
 
-          if (parentDir != null) {
-            ApplicationManager.getApplication().runWriteAction(
-              new PsiExternalChangeAction() {
-                public void run() {
-                  PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-                  treeEvent.setParent(parentDir);
-                  treeEvent.setChild(psiFile);
-                  myManager.childRemoved(treeEvent);
-                }
-              }
-            );
-          }
+        if (parentDir != null) {
+          ApplicationManager.getApplication().runWriteAction(new PsiExternalChangeAction() {
+            public void run() {
+              PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
+              treeEvent.setParent(parentDir);
+              treeEvent.setChild(psiFile);
+              myManager.childRemoved(treeEvent);
+            }
+          });
         }
       }
       else {
@@ -872,16 +868,14 @@ public class FileManagerImpl implements FileManager {
           removeInvalidFilesAndDirs(false);
 
           if (parentDir != null) {
-            ApplicationManager.getApplication().runWriteAction(
-              new PsiExternalChangeAction() {
-                public void run() {
-                  PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-                  treeEvent.setParent(parentDir);
-                  treeEvent.setChild(psiDir);
-                  myManager.childRemoved(treeEvent);
-                }
+            ApplicationManager.getApplication().runWriteAction(new PsiExternalChangeAction() {
+              public void run() {
+                PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
+                treeEvent.setParent(parentDir);
+                treeEvent.setChild(psiDir);
+                myManager.childRemoved(treeEvent);
               }
-            );
+            });
           }
         }
       }

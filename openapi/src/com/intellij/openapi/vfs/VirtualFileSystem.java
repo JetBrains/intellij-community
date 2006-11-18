@@ -150,18 +150,18 @@ public abstract class VirtualFileSystem {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
-      VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.isDirectory(), file.getParent());
+      VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
       for (VirtualFileListener listener : myFileListeners) {
         listener.fileCreated(event);
       }
     }
   }
 
-  protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, boolean isDirectory, VirtualFile parent) {
+  protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, VirtualFile parent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
-      VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, isDirectory, parent);
+      VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, parent);
       for (VirtualFileListener listener : myFileListeners) {
         listener.fileDeleted(event);
       }
@@ -194,7 +194,7 @@ public abstract class VirtualFileSystem {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
-      VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), false, file.getParent());
+      VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
       for (VirtualFileListener listener : myFileListeners) {
         listener.beforeContentsChange(event);
       }
@@ -205,7 +205,7 @@ public abstract class VirtualFileSystem {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
-      VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.isDirectory(), file.getParent());
+      VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
       for (VirtualFileListener listener : myFileListeners) {
         listener.beforeFileDeletion(event);
       }

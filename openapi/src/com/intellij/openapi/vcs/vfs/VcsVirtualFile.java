@@ -94,8 +94,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          vcsFileSystem.fireFileDeleted(this, VcsVirtualFile.this, getName(), false,
-                                        getParent());
+          vcsFileSystem.fireFileDeleted(this, VcsVirtualFile.this, getName(), getParent());
         }
       });
 

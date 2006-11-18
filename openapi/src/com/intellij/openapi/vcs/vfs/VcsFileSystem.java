@@ -61,12 +61,8 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
     super.fireBeforeFileDeletion(requestor, file);
   }
 
-  protected void fireFileDeleted(Object requestor,
-                                 VirtualFile file,
-                                 String fileName,
-                                 boolean isDirectory,
-                                 VirtualFile parent) {
-    super.fireFileDeleted(requestor, file, fileName, isDirectory, parent);
+  protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, VirtualFile parent) {
+    super.fireFileDeleted(requestor, file, fileName, parent);
   }
 
   public String getComponentName() {

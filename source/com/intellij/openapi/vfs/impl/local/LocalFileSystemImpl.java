@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.FileOutputStream;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -426,20 +427,19 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           final VirtualFileImpl rootFile = (VirtualFileImpl)findFileByPath(runPath, true, false);
           if (rootFile != null) {
 
-            final PhysicalFile file = rootFile.getPhysicalFile();
+            final File file = rootFile.getPhysicalFile();
             final boolean recursively = request.isToWatchRecursively();
 
             if (!file.exists()) {
               final Runnable action = new Runnable() {
                 public void run() {
                   if (!rootFile.isValid()) return;
-                  boolean isDirectory = rootFile.isDirectory();
                   fireBeforeFileDeletion(null, rootFile);
                   synchronized (LOCK) {
                     final VirtualFileImpl parent = rootFile.getParent();
                     if (parent != null) parent.removeChild(rootFile);
                   }
-                  fireFileDeleted(null, rootFile, rootFile.getName(), isDirectory, null);
+                  fireFileDeleted(null, rootFile, rootFile.getName(), null);
                 }
               };
               getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
@@ -461,13 +461,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               final Runnable action = new Runnable() {
                 public void run() {
                   if (!file.isValid()) return;
-                  boolean isDirectory = file.isDirectory();
                   fireBeforeFileDeletion(null, file);
                   synchronized (LOCK) {
                     myUnaccountedFiles.put(entry.getKey(), null);
                     file.setParent(null);
                   }
-                  fireFileDeleted(null, file, file.getName(), isDirectory, null);
+                  fireFileDeleted(null, file, file.getName(), null);
                 }
               };
               getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
@@ -723,12 +722,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     super.fireFileCreated(requestor, file);
   }
 
-  protected void fireFileDeleted(Object requestor,
-                                 VirtualFile file,
-                                 String fileName,
-                                 boolean isDirectory,
-                                 VirtualFile parent) {
-    super.fireFileDeleted(requestor, file, fileName, isDirectory, parent);
+  protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, VirtualFile parent) {
+    super.fireFileDeleted(requestor, file, fileName, parent);
   }
 
   protected void fireBeforePropertyChange(Object requestor,
@@ -1041,12 +1036,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     newParent.getChildren(); // Init children.
 
-    PhysicalFile physicalFile = file.getPhysicalFile();
+    File physicalFile = file.getPhysicalFile();
     boolean isDirectory = file.isDirectory();
 
     if (!handled) {
-      PhysicalFile newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
-      PhysicalFile newPhysicalFile = newPhysicalParent.createChild(name);
+      File newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
+      File newPhysicalFile = new File (newPhysicalParent, name);
       if (!physicalFile.renameTo(newPhysicalFile)) {
         throw new IOException(VfsBundle.message("file.move.to.error", physicalFile.getPath(), newPhysicalParent.getPath()));
       }
@@ -1078,9 +1073,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     fireBeforePropertyChange(requestor, file, VirtualFile.PROP_NAME, oldName, newName);
 
     if (!handled) {
-      PhysicalFile physicalFile = file.getPhysicalFile();
+      File physicalFile = file.getPhysicalFile();
       file.setName(newName);
-      PhysicalFile newFile = file.getPhysicalFile();
+      File newFile = file.getPhysicalFile();
       if (!physicalFile.renameTo(newFile)) {
         file.setName(physicalFile.getName());
         throw new IOException(VfsBundle.message("file.rename.error", physicalFile.getPath(), newFile.getPath()));
@@ -1095,7 +1090,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
     final VirtualFileImpl file = (VirtualFileImpl)vFile;
-    PhysicalFile physicalFile = file.getPhysicalFile();
+    File physicalFile = file.getPhysicalFile();
     VirtualFileImpl parent = file.getParent();
     if (parent == null) {
       throw new IOException(VfsBundle.message("file.delete.root.error", physicalFile.getPath()));
@@ -1114,7 +1109,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     parent.removeChild(file);
 
-    fireFileDeleted(requestor, file, name, isDirectory, parent);
+    fireFileDeleted(requestor, file, name, parent);
 
     if (handled && isDirectory && physicalFile.exists()) {
       // Some auxHandlers refuse to delete directories actually as per version controls like CVS or SVN.
@@ -1125,10 +1120,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
-  private static void delete(PhysicalFile physicalFile) throws IOException {
-    PhysicalFile[] list = physicalFile.listFiles();
+  private static void delete(File physicalFile) throws IOException {
+    File[] list = physicalFile.listFiles();
     if (list != null) {
-      for (PhysicalFile aList : list) {
+      for (File aList : list) {
         delete(aList);
       }
     }
@@ -1144,7 +1139,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     final boolean auxCommand = auxCreateDirectory(vDir, dirName);
 
-    PhysicalFile physicalFile = dir.getPhysicalFile().createChild(dirName);
+    File physicalFile = new File (dir.getPhysicalFile(), dirName);
 
     if (!auxCommand) {
       if (existingFile != null || physicalFile.exists()) {
@@ -1169,13 +1164,13 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     final VirtualFileImpl dir = (VirtualFileImpl)vDir;
     final boolean handled = auxCreateFile(vDir, fileName);
 
-    PhysicalFile physicalFile = dir.getPhysicalFile().createChild(fileName);
+    File physicalFile = new File(dir.getPhysicalFile(), fileName);
     if (!handled) {
       VirtualFile file = dir.findChild(fileName);
       if (file != null || physicalFile.exists()) {
         throw new IOException(VfsBundle.message("file.already.exists.error", physicalFile.getPath()));
       }
-      physicalFile.createOutputStream().close();
+      new FileOutputStream(physicalFile).close();
     }
 
     VirtualFileImpl child = new VirtualFileImpl(dir, physicalFile, false);

@@ -1,6 +1,5 @@
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -33,8 +32,13 @@ public class VirtualFileImpl extends VirtualFile {
   private VirtualFileImpl myParent;
   private String myName;
   private VirtualFileImpl[] myChildren = null;  // null, if not defined yet
-  private boolean myDirectoryFlag;
-  private Boolean myWritableFlag = null; // null, if not defined yet
+
+  private static final byte IS_DIRECTORY_FLAG = 0x01;
+  private static final byte IS_WRITABLE_INITIALIZED_FLAG = 0x02;
+  private static final byte IS_WRITABLE_FLAG = 0x04;
+
+  private byte myFlags = 0;
+
   private long myModificationStamp = LocalTimeCounter.currentTime();
   private long myTimeStamp = -1; // -1, if file content has not been requested yet
 
@@ -47,7 +51,7 @@ public class VirtualFileImpl extends VirtualFile {
 
   VirtualFileImpl(
     VirtualFileImpl parent,
-    PhysicalFile file,
+    File file,
     boolean isDirectory
   ) {
     myParent = parent;
@@ -55,8 +59,8 @@ public class VirtualFileImpl extends VirtualFile {
     if (myName.length() == 0) {
       LOG.error("file:" + file.getPath());
     }
-    myDirectoryFlag = isDirectory;
-    if (!myDirectoryFlag) {
+    cacheIsDirectory(isDirectory);
+    if (!isDirectory) {
       myTimeStamp = file.lastModified();
     }
   }
@@ -67,12 +71,12 @@ public class VirtualFileImpl extends VirtualFile {
     LOG.assertTrue(lastSlash >= 0);
     if (lastSlash == path.length() - 1) { // 'c:/' or '/'
       setName(path.substring(0, lastSlash));
-      myDirectoryFlag = true;
+      cacheIsDirectory(true);
     }
     else {
       setName(path.substring(lastSlash + 1));
       String systemPath = path.replace('/', File.separatorChar);
-      myDirectoryFlag = new IoFile(systemPath).isDirectory();
+      cacheIsDirectory(new File(systemPath).isDirectory());
     }
   }
 
@@ -88,12 +92,12 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
-  PhysicalFile getPhysicalFile() {
+  File getPhysicalFile() {
     String path = getPath(File.separatorChar);
     if (ourFileSystem.isRoot(this)) {
       path += "/";
     }
-    return new IoFile(path);
+    return new File(path);
   }
 
   @NotNull
@@ -148,28 +152,51 @@ public class VirtualFileImpl extends VirtualFile {
 
   public boolean isWritable() {
     synchronized (ourFileSystem.LOCK) {
-      if (myWritableFlag == null) {
-        myWritableFlag = isWritable(getPhysicalFile(), isDirectory()) ? Boolean.TRUE : Boolean.FALSE;
+      if (!isWritableInitialized()) {
+        myFlags |= IS_WRITABLE_INITIALIZED_FLAG;
+        final boolean canWrite = getPhysicalFile().canWrite();
+        cacheIsWritable(canWrite);
+        return canWrite;
       }
+      return isWritableCached();
     }
-    return myWritableFlag.booleanValue();
   }
 
-  private static boolean isWritable(PhysicalFile physicalFile, boolean isDirectory) {
-    return Patches.ALL_FOLDERS_ARE_WRITABLE && isDirectory || physicalFile.canWrite();
+  private void cacheIsWritable(final boolean canWrite) {
+    if (canWrite) {
+      myFlags |= IS_WRITABLE_FLAG;
+    } else {
+      myFlags &= ~IS_WRITABLE_FLAG;
+    }
+  }
+
+  private void cacheIsDirectory(final boolean isDirectory) {
+    if (isDirectory) {
+      myFlags |= IS_DIRECTORY_FLAG;
+    } else {
+      myFlags &= ~IS_DIRECTORY_FLAG;
+    }
+  }
+
+  private boolean isWritableCached() {
+    return (myFlags & IS_WRITABLE_FLAG) != 0;
+  }
+
+  private boolean isWritableInitialized() {
+    return (myFlags & IS_WRITABLE_INITIALIZED_FLAG) != 0;
   }
 
   public boolean isDirectory() {
-    return myDirectoryFlag;
+    return (myFlags & IS_DIRECTORY_FLAG) != 0;
   }
 
   public boolean isValid() {
     synchronized (ourFileSystem.LOCK) {
-      if (myParent == null) {
-        return ourFileSystem.isRoot(this);
+      VirtualFileImpl run = this;
+      while(run.myParent != null) {
+        run = run.myParent;
       }
-
-      return myParent.isValid();
+      return ourFileSystem.isRoot(run);
     }
   }
 
@@ -185,8 +212,8 @@ public class VirtualFileImpl extends VirtualFile {
     if (myChildren == null) {
       synchronized (ourFileSystem.LOCK) {
         if (myChildren == null) {
-          PhysicalFile file = getPhysicalFile();
-          PhysicalFile[] files = file.listFiles();
+          File file = getPhysicalFile();
+          File[] files = file.listFiles();
           final int length = files == null ? 0 : files.length;
           if (length == 0) {
             myChildren = EMPTY_VIRTUAL_FILE_ARRAY;
@@ -195,7 +222,7 @@ public class VirtualFileImpl extends VirtualFile {
             myChildren = new VirtualFileImpl[ length ];
             String path = getPath() + "/";
             for (int i = 0; i < length; ++i) {
-              PhysicalFile f = files[i];
+              File f = files[i];
               String childPath = path + f.getName();
               VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.remove(childPath);
               if (child == null || !child.isValid()) {
@@ -225,7 +252,7 @@ public class VirtualFileImpl extends VirtualFile {
         }
       }
 
-      PhysicalFile physicalFile = new IoFile(path);
+      File physicalFile = new File(path);
       if (physicalFile.exists()) {
         child = new VirtualFileImpl(this, physicalFile, physicalFile.isDirectory());
         ourFileSystem.myUnaccountedFiles.put(path, child);
@@ -283,7 +310,7 @@ public class VirtualFileImpl extends VirtualFile {
 
   protected InputStream getPhysicalFileInputStream() throws IOException {
     getTimeStamp();
-    return getPhysicalFile().createInputStream();
+    return new FileInputStream(getPhysicalFile());
   }
 
   public OutputStream getOutputStream(final Object requestor,
@@ -291,12 +318,12 @@ public class VirtualFileImpl extends VirtualFile {
                                       final long newTimeStamp) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    PhysicalFile physicalFile = getPhysicalFile();
+    File physicalFile = getPhysicalFile();
     if (isDirectory()) {
       throw new IOException(VfsBundle.message("file.write.error", physicalFile.getPath()));
     }
     ourFileSystem.fireBeforeContentsChange(requestor, this);
-    final OutputStream out = new BufferedOutputStream(physicalFile.createOutputStream());
+    final OutputStream out = new BufferedOutputStream(new FileOutputStream(physicalFile));
     if (getBOM() != null) {
       out.write(getBOM());
     }
@@ -371,7 +398,7 @@ public class VirtualFileImpl extends VirtualFile {
       public void run() {
         ourFileSystem.getManager().beforeRefreshStart(asynchronous, modalityState, postRunnable);
 
-        PhysicalFile physicalFile = getPhysicalFile();
+        File physicalFile = getPhysicalFile();
         if (!physicalFile.exists()) {
           Runnable runnable = new Runnable() {
             public void run() {
@@ -380,7 +407,7 @@ public class VirtualFileImpl extends VirtualFile {
               if (parent != null) {
                 ourFileSystem.fireBeforeFileDeletion(null, VirtualFileImpl.this);
                 parent.removeChild(VirtualFileImpl.this);
-                ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, myName, myDirectoryFlag, parent);
+                ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, myName, parent);
               }
             }
           };
@@ -446,8 +473,8 @@ public class VirtualFileImpl extends VirtualFile {
       LOG.debug("refreshInternal recursive = " + recursive + " asynchronous = " + asynchronous + " file = " + myName);
     }
 
-    final PhysicalFile physicalFile = getPhysicalFile();
-    PhysicalFile[] childFiles = null;
+    final File physicalFile = getPhysicalFile();
+    File[] childFiles = null;
 
     final boolean isDirectory;
     if (myChildren == null) {
@@ -457,7 +484,8 @@ public class VirtualFileImpl extends VirtualFile {
       childFiles = physicalFile.listFiles();
       isDirectory = childFiles != null;
     }
-    if (isDirectory != myDirectoryFlag) {
+    final boolean oldIsDirectory = isDirectory();
+    if (isDirectory != oldIsDirectory) {
       ourFileSystem.getManager().addEventToFireByRefresh(
         new Runnable() {
           public void run() {
@@ -467,7 +495,7 @@ public class VirtualFileImpl extends VirtualFile {
 
             ourFileSystem.fireBeforeFileDeletion(null, VirtualFileImpl.this);
             parent.removeChild(VirtualFileImpl.this);
-            ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, myName, myDirectoryFlag, parent);
+            ourFileSystem.fireFileDeleted(null, VirtualFileImpl.this, myName, parent);
             VirtualFileImpl newChild = new VirtualFileImpl(parent, physicalFile, isDirectory);
             parent.addChild(newChild);
             ourFileSystem.fireFileCreated(null, newChild);
@@ -487,7 +515,7 @@ public class VirtualFileImpl extends VirtualFile {
 
       VirtualFileImpl[] children = myChildren;
       for (int i = 0; i < childFiles.length; i++) {
-        final PhysicalFile file = childFiles[i];
+        final File file = childFiles[i];
         final String name = file.getName();
         int index = -1;
         if (i < children.length && children[i].nameEquals(name)) {
@@ -556,7 +584,7 @@ public class VirtualFileImpl extends VirtualFile {
                 if (child.isValid()) {
                   ourFileSystem.fireBeforeFileDeletion(null, child);
                   removeChild(child);
-                  ourFileSystem.fireFileDeleted(null, child, child.myName, child.myDirectoryFlag, VirtualFileImpl.this);
+                  ourFileSystem.fireFileDeleted(null, child, child.myName, VirtualFileImpl.this);
                 }
               }
             },
@@ -589,9 +617,10 @@ public class VirtualFileImpl extends VirtualFile {
       }
     }
 
-    if (myWritableFlag != null) {
-      final boolean isWritable = isWritable(physicalFile, isDirectory());
-      if (isWritable != myWritableFlag.booleanValue()) {
+    if (isWritableInitialized()) {
+      final boolean isWritable = physicalFile.canWrite();
+      final boolean oldWritable = isWritableCached();
+      if (isWritable != oldWritable) {
         ourFileSystem.getManager().addEventToFireByRefresh(
           new Runnable() {
             public void run() {
@@ -599,12 +628,12 @@ public class VirtualFileImpl extends VirtualFile {
 
               ourFileSystem.fireBeforePropertyChange(
                 null, VirtualFileImpl.this, PROP_WRITABLE,
-                myWritableFlag, isWritable ? Boolean.TRUE : Boolean.FALSE
+                oldWritable, isWritable
               );
-              myWritableFlag = isWritable ? Boolean.TRUE : Boolean.FALSE;
+              cacheIsWritable(isWritable);
               ourFileSystem.firePropertyChanged(
                 null, VirtualFileImpl.this, PROP_WRITABLE,
-                isWritable ? Boolean.FALSE : Boolean.TRUE, myWritableFlag
+                isWritable, oldWritable
               );
             }
           },

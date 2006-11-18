@@ -248,7 +248,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
               myPathToFileInfoMap.remove(info.getFile().getPath());
             }
             info.close();
-            fireFileDeleted(null, rootFile, rootFile.getName(), true, null);
+            fireFileDeleted(null, rootFile, rootFile.getName(), null);
           }
         },
         asynchronous,
@@ -270,7 +270,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
               myContentChangingJars.add(path);
             }
             info.close();
-            fireFileDeleted(null, rootFile, rootFile.getName(), true, null);
+            fireFileDeleted(null, rootFile, rootFile.getName(), null);
             synchronized (LOCK) {
               myContentChangingJars.remove(path);
             }
