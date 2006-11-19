@@ -163,7 +163,7 @@ public class TestNGRunnableState extends JavaCommandLineState
             JavaParametersUtil.configureClassPath(
                     javaParameters,
                     project,
-                    config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
+                    config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : jdk.getHomePath());
         } else {
             JavaParametersUtil.configureModule(
                     config.getConfigurationModule(),

@@ -36,6 +36,9 @@
     </project-components>
     <change-notes>
         <![CDATA[Fixed 100% CPU usage if a class accidentally extends itself<br>
-        Fixed occassional ConcurrentModificationException error<br>]]>
+        Fixed occassional ConcurrentModificationException error<br>
+        Correctly highlight invalid configuration icon if invalid class/package specified<br>
+        Use module JDK if module classpath is specified instead of project JDK<br>
+        ]]>
     </change-notes>
 </idea-plugin>
