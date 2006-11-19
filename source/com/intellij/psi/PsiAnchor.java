@@ -108,16 +108,22 @@ public class PsiAnchor {
   }
 
   public int hashCode() {
-    int result;
-
     if (myElement != null){
-      return myElement.hashCode();
+      int result = myElement.getClass().getName().hashCode();
+      final String name = myElement.getContainingFile().getName();
+      if (name != null) {
+        result = 31 * result + name.hashCode();
+      }
+      return result;
     }
-
-    result = (myClass != null ? myClass.hashCode() : 0);
-    result = 29 * result + myStartOffset;
-    result = 29 * result + myEndOffset;
-    result = 29 * result + (myFile != null ? myFile.hashCode() : 0);
+    int result = myClass != null ? myClass.getName().hashCode() : 0;
+    result = 31 * result + myStartOffset; //todo
+    result = 31 * result + myEndOffset;
+    if (myFile != null) {
+      final String name = myFile.getName();
+      LOG.assertTrue(name != null);
+      result = 31 * result + name.hashCode();
+    }
 
     return result;
   }
