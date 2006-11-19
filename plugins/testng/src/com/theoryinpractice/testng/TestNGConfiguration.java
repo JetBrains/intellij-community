@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.module.Module;
+import com.intellij.psi.*;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
@@ -80,7 +80,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     }
 
     @Override
-    public Collection getValidModules() {
+    public Collection<Module> getValidModules() {
         //TODO add handling for package
         return RunConfigurationModule.getModulesForClass(getProject(), data.getMainClassName());
     }
@@ -145,6 +145,14 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
     @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
+        if(data.TEST_OBJECT == TestType.CLASS.getType() || data.TEST_OBJECT == TestType.METHOD.getType()) {
+            PsiClass psiClass = PsiManager.getInstance(project).findClass(data.getMainClassName(), data.getScope().getSourceScope(this).getGlobalSearchScope());
+            if(psiClass == null) throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
+        }
+        else if(data.TEST_OBJECT == TestType.PACKAGE.getType()) {
+            PsiPackage psiPackage = PsiManager.getInstance(project).findPackage(data.getPackageName());
+            if(psiPackage == null) throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
+        }
         //TODO add various checks here
     }
 
