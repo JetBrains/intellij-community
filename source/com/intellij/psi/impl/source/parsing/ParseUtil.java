@@ -32,7 +32,6 @@ public class ParseUtil implements Constants {
     return type == XmlElementType.XML_TEXT;
   }
 
-  @Nullable
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
