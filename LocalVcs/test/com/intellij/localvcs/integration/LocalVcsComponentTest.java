@@ -1,10 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.mock.MockFileSystem;
+
 import org.junit.Test;
 
 public class LocalVcsComponentTest /*extends LightIdeaTestCase*/ {
