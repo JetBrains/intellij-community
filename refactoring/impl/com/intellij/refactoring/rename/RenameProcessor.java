@@ -1,25 +1,23 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.javaee.ejb.EjbHelper;
-import com.intellij.javaee.ejb.role.EjbDeclMethodRole;
-import com.intellij.javaee.ejb.role.EjbMethodRole;
-import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
@@ -35,6 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -120,8 +119,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       prepareClassRenaming((PsiClass) myPrimaryElement, myNewName);
     } else if (myPrimaryElement instanceof PsiField) {
       prepareFieldRenaming((PsiField) myPrimaryElement, myNewName);
-    } else if (myPrimaryElement instanceof PsiMethod) {
-      prepareMethodRenaming((PsiMethod) myPrimaryElement, myNewName);
     } else if (myPrimaryElement instanceof PsiPackage) {
       preparePackageRenaming((PsiPackage) myPrimaryElement, myNewName);
     } else if (myPrimaryElement instanceof PsiDirectory) {
@@ -176,7 +173,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         PsiMethod refactoredMethod = (PsiMethod)myPrimaryElement;
         if (myNewName.equals(refactoredMethod.getName())) return;
         PsiMethod prototype = (PsiMethod)refactoredMethod.copy();
-        prototype.getNameIdentifier().replace(factory.createIdentifier(myNewName));
+        final PsiIdentifier nameIdentifier = prototype.getNameIdentifier();
+        assert nameIdentifier != null;
+        nameIdentifier.replace(factory.createIdentifier(myNewName));
         ConflictsUtil.checkMethodConflicts(
           refactoredMethod.getContainingClass(),
           refactoredMethod,
@@ -412,6 +411,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       if (element instanceof PsiClass && myShouldRenameForms) {
         myRenamers.add(new FormsRenamer((PsiClass)element, newName));
       }
+
+      if (element instanceof PsiMethod) {
+        addOverriders((PsiMethod)element, newName);
+      }
     }
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     usageInfos = UsageViewUtil.removeDuplicatedUsages(usageInfos);
@@ -506,20 +509,33 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
   }
 
-  private void prepareMethodRenaming(PsiMethod method, String newName) {
-    for (EjbMethodRole role : EjbHelper.getEjbHelper().getEjbRoles(method)) {
-      if (role instanceof EjbDeclMethodRole) {
-        final PsiMethod[] implementations = ((EjbDeclMethodRole)role).findAllImplementations();
-        if (implementations.length == 0) return;
-
-        final String[] names = EjbPsiMethodUtil.suggestImplNames(newName, role.getType(), role.getEnterpriseBean());
-        for (int i = 0; i < implementations.length; i++) {
-          if (i < names.length && names[i] != null) {
-            myAllRenames.put(implementations[i], names[i]);
-          }
+  private void addOverriders(final PsiMethod method, final String newName) {
+    OverridingMethodsSearch.search(method, true).forEach(new Processor<PsiMethod>() {
+      public boolean process(PsiMethod overrider) {
+        final String overriderName = overrider.getName();
+        final String baseName = method.getName();
+        int i;
+        if (overriderName.startsWith(baseName)) {
+          i = 0;
+        } else {
+          i = StringUtil.indexOfIgnoreCase(overriderName, baseName, 0);
         }
+        if (i >= 0) {
+          String newOverriderName = overriderName.substring(0, i);
+          if (Character.isUpperCase(overriderName.charAt(i))) {
+            newOverriderName += StringUtil.capitalize(newName);
+          } else {
+            newOverriderName += newName;
+          }
+          final int j = i + baseName.length();
+          if (j < overriderName.length()) {
+            newOverriderName += overriderName.substring(j);
+          }
+          myAllRenames.put(overrider, newOverriderName);
+        }
+        return true;
       }
-    }
+    });
   }
 
   protected void prepareTestRun() {

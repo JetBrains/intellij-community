@@ -57,11 +57,6 @@ public class RenameUtil {
       for (PsiReference ref : refs) {
         result.add(new MoveRenameUsageInfo(ref.getElement(), ref, element));
       }
-
-      PsiElement[] overridings = helper.findOverridingMethods(method, method.getUseScope(), true);
-      for (PsiElement overriding : overridings) {
-        result.add(new MoveRenameUsageInfo(overriding, null, element));
-      }
     }
     else {
       Collection<PsiReference> refs = ReferencesSearch.search(element).findAll();
