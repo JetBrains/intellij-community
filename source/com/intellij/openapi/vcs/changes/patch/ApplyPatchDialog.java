@@ -29,6 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -54,19 +55,19 @@ public class ApplyPatchDialog extends DialogWrapper {
   public ApplyPatchDialog(Project project) {
     super(project, true);
     myProject = project;
-    setTitle(VcsBundle.message("apply.patch.dialog.title"));
+    setTitle(VcsBundle.message("patch.apply.dialog.title"));
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         return file.getFileType() == StdFileTypes.PATCH;
       }
     };
-    myFileNameField.addBrowseFolderListener("Select Patch File", "", project, descriptor);
+    myFileNameField.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
     myFileNameField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         updateOKAction();
         myStatusLabel.setForeground(UIUtil.getLabelForeground());
-        myStatusLabel.setText("Loading...");
+        myStatusLabel.setText(VcsBundle.message("patch.load.progress"));
         myPatches = null;
         myLoadPatchAlarm.cancelAllRequests();
         myLoadPatchAlarm.addRequest(new Runnable() {
@@ -78,9 +79,11 @@ public class ApplyPatchDialog extends DialogWrapper {
     });
 
     myBaseDirectoryField.setText(project.getProjectFile().getParent().getPresentableUrl());
-    myBaseDirectoryField.addBrowseFolderListener("Select Base Directory", "", project, new FileChooserDescriptor(false, true, false, false, false, false));
+    myBaseDirectoryField.addBrowseFolderListener(VcsBundle.message("patch.apply.select.base.directory.title"), "", project,
+                                                 new FileChooserDescriptor(false, true, false, false, false, false));
 
     init();
+    updateOKAction();
   }
 
   private void checkLoadPatches() {
@@ -98,7 +101,7 @@ public class ApplyPatchDialog extends DialogWrapper {
           reader = new PatchReader(patchFile);
         }
         catch (IOException e) {
-          queueUpdateStatus("Error opening patch file: " + e.getMessage());
+          queueUpdateStatus(VcsBundle.message("patch.apply.open.error", e.getMessage()));
           return;
         }
         while(true) {
@@ -107,13 +110,17 @@ public class ApplyPatchDialog extends DialogWrapper {
             patch = reader.readNextPatch();
           }
           catch (PatchSyntaxException e) {
-            queueUpdateStatus("Error loading patch file: " + e.getMessage());
+            queueUpdateStatus(VcsBundle.message("patch.apply.load.error", e.getMessage()));
             return;
           }
           if (patch == null) {
             break;
           }
           myPatches.add(patch);
+        }
+        if (myPatches.isEmpty()) {
+          queueUpdateStatus(VcsBundle.message("patch.apply.no.patches.found"));
+          return;
         }
         
         autoDetectBaseDirectory();
@@ -180,7 +187,8 @@ public class ApplyPatchDialog extends DialogWrapper {
     }
     myLoadPatchError = s;
     if (s == null) {
-      myStatusLabel.setText(" ");
+      myStatusLabel.setForeground(UIUtil.getLabelForeground());
+      myStatusLabel.setText(buildPatchSummary());
     }
     else {
       myStatusLabel.setText(s);
@@ -189,6 +197,38 @@ public class ApplyPatchDialog extends DialogWrapper {
     updateOKAction();
   }
 
+  private String buildPatchSummary() {
+    int newFiles = 0;
+    int changedFiles = 0;
+    int deletedFiles = 0;
+    for(FilePatch patch: myPatches) {
+      if (patch.isNewFile()) {
+        newFiles++;
+      }
+      else if (patch.isDeletedFile()) {
+        deletedFiles++;
+      }
+      else {
+        changedFiles++;
+      }
+    }
+    StringBuilder summaryBuilder = new StringBuilder("<html><body><b>Summary:</b> ");
+    appendSummary(changedFiles, 0, summaryBuilder, "patch.summary.changed.files");
+    appendSummary(newFiles, changedFiles, summaryBuilder, "patch.summary.new.files");
+    appendSummary(deletedFiles, changedFiles + newFiles, summaryBuilder, "patch.summary.deleted.files");
+    summaryBuilder.append("</body></html>");
+    return summaryBuilder.toString();
+  }
+
+  private static void appendSummary(final int count, final int prevCount, final StringBuilder summaryBuilder,
+                                    @PropertyKey(resourceBundle = "messages.VcsBundle") final String key) {
+    if (count > 0) {
+      if (prevCount > 0) {
+        summaryBuilder.append(", ");
+      }
+      summaryBuilder.append(VcsBundle.message(key, count));
+    }
+  }
 
   @Override
   protected void dispose() {

@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="2ad1e"/>
-          <text value="&amp;Patch file name:"/>
+          <text resource-bundle="messages/VcsBundle" key="create.patch.file.name.field"/>
         </properties>
       </component>
       <vspacer id="eecf0">
@@ -40,10 +40,10 @@
       </component>
       <component id="c9d4a" class="javax.swing.JLabel" binding="myStatusLabel">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value=" "/>
+          <text value="  "/>
         </properties>
       </component>
       <component id="bb8e1" class="javax.swing.JLabel">
@@ -52,7 +52,7 @@
         </constraints>
         <properties>
           <labelFor value="2b193"/>
-          <text value="&amp;Base directory:"/>
+          <text resource-bundle="messages/VcsBundle" key="patch.apply.base.directory.field"/>
         </properties>
       </component>
       <component id="8a145" class="javax.swing.JLabel">
@@ -61,7 +61,7 @@
         </constraints>
         <properties>
           <labelFor value="bd375"/>
-          <text value="Strip leading directories"/>
+          <text resource-bundle="messages/VcsBundle" key="patch.apply.strip.leading.directories.field"/>
         </properties>
       </component>
       <component id="bd375" class="javax.swing.JSpinner" binding="myStripLeadingDirectoriesSpinner" default-binding="true">

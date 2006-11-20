@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +99,8 @@ public class ApplyPatchAction extends AnAction {
         }
       }
       if (!appliedAnyway) {
-        Messages.showErrorDialog(project, "Failed to apply patch because of conflicts: " + patch.getBeforeName(), "Apply Patch");
+        Messages.showErrorDialog(project, "Failed to apply patch because of conflicts: " + patch.getBeforeName(),
+                                 VcsBundle.message("patch.apply.dialog.title"));
       }
     }
     catch (Exception ex) {
@@ -112,8 +114,12 @@ public class ApplyPatchAction extends AnAction {
     CharSequence fileContent = LoadTextUtil.loadText(file);
     final MergeRequest request = diffRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
                                                                        project, ActionButtonPresentation.createApplyButton());
-    request.setVersionTitles(new String[] { "Local Version", "Merge Result", "Patched Version"});
-    request.setWindowTitle("Patch Conflict for " + file.getPresentableUrl());
+    request.setVersionTitles(new String[] {
+      VcsBundle.message("patch.apply.conflict.local.version"),
+      VcsBundle.message("patch.apply.conflict.merged.version"),
+      VcsBundle.message("patch.apply.conflict.patched.version")
+    });
+    request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", file.getPresentableUrl()));
     DiffManager.getInstance().getDiffTool().show(request);
   }
 
