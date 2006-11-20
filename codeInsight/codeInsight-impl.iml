@@ -28,8 +28,6 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="ui-openapi" />
     <orderEntry type="module" module-name="web-openapi" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
-    <orderEntry type="module" module-name="ejb-openapi" />
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="library" name="commons-collections" level="project" />
