@@ -6,8 +6,8 @@ import java.io.IOException;
 public class RootEntry extends DirectoryEntry {
   private Integer myChangeListIndex = -1;
 
-  public RootEntry() {
-    super(null, null);
+  public RootEntry(String name) {
+    super(null, name);
   }
 
   public RootEntry(Stream s) throws IOException {
@@ -43,7 +43,9 @@ public class RootEntry extends DirectoryEntry {
   }
 
   protected Path getPathAppendedWith(String name) {
-    return new Path(name);
+    return new Path(myName).appendedWith(name);
+
+    //return new Path(name);
   }
 
   public boolean hasEntry(Path path) {
@@ -84,12 +86,9 @@ public class RootEntry extends DirectoryEntry {
     addEntry(path.getParent(), new DirectoryEntry(id, path.getName()));
   }
 
-  public void doChangeFileContent(Path path, String content) {
+  public void doChangeFileContent(Path path, String newContent) {
     Entry oldEntry = getEntry(path);
-
-    Entry newEntry = new FileEntry(oldEntry.getId(),
-                                   oldEntry.getName(),
-                                   content);
+    Entry newEntry = oldEntry.withContent(newContent);
 
     removeEntry(oldEntry);
     addEntry(path.getParent(), newEntry);
@@ -138,7 +137,7 @@ public class RootEntry extends DirectoryEntry {
   public RootEntry revert_old(ChangeSet cs) {
     // todo maybe revert should not return copy too 
     RootEntry result = copy();
-    cs.revertOn(result);
+    cs._revertOn(result);
     return result;
   }
 
@@ -150,7 +149,7 @@ public class RootEntry extends DirectoryEntry {
 
   @Override
   protected DirectoryEntry copyEntry() {
-    RootEntry result = new RootEntry();
+    RootEntry result = new RootEntry("");
     // todo test it
     result.myChangeListIndex = myChangeListIndex;
     return result;

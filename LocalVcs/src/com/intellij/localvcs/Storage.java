@@ -29,7 +29,7 @@ public class Storage {
   }
 
   public RootEntry loadRootEntry() {
-    return load("root", new RootEntry(), new Loader<RootEntry>() {
+    return load("root", new RootEntry(""), new Loader<RootEntry>() {
       public RootEntry load(Stream s) throws IOException {
         return (RootEntry)s.readEntry(); // todo cast!!!
       }

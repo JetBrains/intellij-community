@@ -5,8 +5,8 @@ import org.junit.Test;
 public class PathTest extends TestCase {
   @Test
   public void testParent() {
-    Path p = new Path("dir1/dir2/file");
-    assertEquals(new Path("dir1/dir2"), p.getParent());
+    Path p = new Path("/dir1/dir2/file");
+    assertEquals(new Path("/dir1/dir2"), p.getParent());
   }
 
   @Test
@@ -23,8 +23,14 @@ public class PathTest extends TestCase {
 
   @Test
   public void testAppending() {
-    Path p1 = new Path("file1");
-    assertEquals(new Path("file1/file2"), p1.appendedWith("file2"));
+    Path p = new Path("file1");
+    assertEquals(new Path("file1/file2"), p.appendedWith("file2"));
+  }
+
+  @Test
+  public void testAppendingPathWithDriveLetter() {
+    Path p = new Path("c:/root");
+    assertEquals(new Path("c:/root/file"), p.appendedWith("file"));
   }
 
   @Test

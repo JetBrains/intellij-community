@@ -14,7 +14,7 @@ public class PerformanceTest extends TempDirTestCase {
   @BeforeClass
   public static void prepareVcs() {
     LocalVcs vcs = new LocalVcs(new Storage(classTempDir));
-    createChildren(vcs, p(""), 3);
+    createChildren(vcs, p("/"), 3);
     vcs.apply();
     vcs.store();
   }

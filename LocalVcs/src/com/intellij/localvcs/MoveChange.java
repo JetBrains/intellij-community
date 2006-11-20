@@ -42,7 +42,7 @@ public class MoveChange extends Change {
   }
 
   @Override
-  public void revertOn(RootEntry root) {
+  public void _revertOn(RootEntry root) {
     root.doMove(myNewParent.appendedWith(myPath.getName()),
                 myPath.getParent());
   }

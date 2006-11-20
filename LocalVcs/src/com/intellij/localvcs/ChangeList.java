@@ -44,12 +44,21 @@ public class ChangeList {
     myChangeSets.add(cs);
   }
 
-  public void revertUpToChangeSetOn(RootEntry root, ChangeSet cs) {
+  public void _revertUpToChangeSetOn(RootEntry root, ChangeSet cs) {
     for (int i = myChangeSets.size() - 1; i >= 0; i--) {
       ChangeSet changeSet = myChangeSets.get(i);
       if (changeSet == cs) return;
-      changeSet.revertOn(root);
+      changeSet._revertOn(root);
     }
+  }
+
+  public Entry revertEntryUpToChangeSet(Entry e, ChangeSet cs) {
+    for (int i = myChangeSets.size() - 1; i >= 0; i--) {
+      ChangeSet changeSet = myChangeSets.get(i);
+      if (changeSet == cs) return e;
+      e = changeSet.revertOn(e);
+    }
+    return e;
   }
 
   public void labelLastChangeSet(String label) {
@@ -61,7 +70,7 @@ public class ChangeList {
   }
 
   //
-  // candidates fo removal
+  // candidates to remove
   //
 
   public void applyChangeSetOn_old(RootEntry root, ChangeSet cs) {

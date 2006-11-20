@@ -8,7 +8,7 @@ public abstract class Change {
 
   public abstract void applyTo(RootEntry root);
 
-  public abstract void revertOn(RootEntry root);
+  public abstract void _revertOn(RootEntry root);
 
   public boolean affects(Entry e) {
     // todo test it
@@ -19,4 +19,12 @@ public abstract class Change {
   }
 
   protected abstract List<IdPath> getAffectedEntryIdPaths();
+
+  public Entry revertFile(Entry e) { return e; }
+
+  public Entry revertOn(Entry e) {
+    // todo replace with polymorphims
+    if (e instanceof FileEntry) return revertFile(e);
+    throw new LocalVcsException();
+  }
 }

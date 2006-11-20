@@ -38,6 +38,13 @@ public class FileEntry extends Entry {
   }
 
   @Override
+  public Entry withContent(String newContent) {
+    FileEntry result = (FileEntry)copy();
+    result.myContent = newContent;
+    return result;
+  }
+
+  @Override
   public Difference getDifferenceWith(Entry right) {
     FileEntry e = (FileEntry)right;
 

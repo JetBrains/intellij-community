@@ -30,55 +30,55 @@ public class LocalVcsStoringTest extends TempDirTestCase {
 
   @Test
   public void testStoringEntries() {
-    vcs.createFile(p("file"), "content");
+    vcs.createFile(p("/file"), "content");
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    assertTrue(result.hasEntry(p("file")));
+    assertTrue(result.hasEntry(p("/file")));
   }
 
   @Test
   public void testStoringChangeList() {
-    vcs.createFile(p("file"), "content");
+    vcs.createFile(p("/file"), "content");
     vcs.apply();
-    vcs.changeFileContent(p("file"), "new content");
+    vcs.changeFileContent(p("/file"), "new content");
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    assertEquals("new content", result.getEntry(p("file")).getContent());
+    assertEquals("new content", result.getEntry(p("/file")).getContent());
 
     result._revert();
-    assertEquals("content", result.getEntry(p("file")).getContent());
+    assertEquals("content", result.getEntry(p("/file")).getContent());
 
     result._revert();
-    assertFalse(result.hasEntry(p("file")));
+    assertFalse(result.hasEntry(p("/file")));
   }
 
   @Test
   public void testStoringObjectsCounter() {
-    vcs.createFile(p("file1"), "content1");
-    vcs.createFile(p("file2"), "content2");
+    vcs.createFile(p("/file1"), "content1");
+    vcs.createFile(p("/file2"), "content2");
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    result.createFile(p("file3"), "content3");
+    result.createFile(p("/file3"), "content3");
     result.apply();
 
-    Integer id2 = result.getEntry(p("file2")).getId();
-    Integer id3 = result.getEntry(p("file3")).getId();
+    Integer id2 = result.getEntry(p("/file2")).getId();
+    Integer id3 = result.getEntry(p("/file3")).getId();
 
     assertTrue(id2 < id3);
   }
 
   @Test
   public void testDoesNotStoreUnappliedChanges() {
-    vcs.createFile(p("file"), "content");
+    vcs.createFile(p("/file"), "content");
     vcs.store();
 
     vcs.store();

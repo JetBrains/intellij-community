@@ -52,6 +52,10 @@ public class Path {
   protected List<String> getParts() {
     List<String> result = new ArrayList<String>();
 
+    if (myPath.startsWith("/")) {
+      result.add("");
+    }
+
     StringTokenizer t = new StringTokenizer(myPath, DELIM);
     while (t.hasMoreTokens()) {
       result.add(t.nextToken());

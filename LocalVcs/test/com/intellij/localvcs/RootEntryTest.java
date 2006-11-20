@@ -9,7 +9,7 @@ public class RootEntryTest extends TestCase {
 
   @Before
   public void setUp() {
-    root = new RootEntry();
+    root = new RootEntry("");
     child = new DirectoryEntry(1, "child");
     root.addChild(child);
   }
@@ -21,18 +21,27 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testPathToChildren() {
-    assertEquals(p("child"), child.getPath());
+    assertEquals(p("/child"), child.getPath());
+  }
+
+  @Test
+  public void testPathToChildrenWithDriveLetter() {
+    root = new RootEntry("c:/root");
+    child = new DirectoryEntry(1, "child");
+    root.addChild(child);
+
+    assertEquals(p("c:/root/child"), child.getPath());
   }
 
   @Test
   public void testFindingChildren() {
-    assertTrue(root.hasEntry(p("child")));
-    assertSame(child, root.getEntry(p("child")));
+    assertTrue(root.hasEntry(p("/child")));
+    assertSame(child, root.getEntry(p("/child")));
   }
 
   @Test
   public void testFindingEntriesInTree() {
-    root = new RootEntry();
+    root = new RootEntry("");
     Entry dir = new DirectoryEntry(null, "dir");
     Entry file1 = new FileEntry(null, "file1", null);
     Entry file2 = new FileEntry(null, "file2", null);
@@ -41,14 +50,14 @@ public class RootEntryTest extends TestCase {
     root.addChild(file1);
     dir.addChild(file2);
 
-    assertSame(dir, root.findEntry(p("dir")));
-    assertSame(file1, root.findEntry(p("file1")));
-    assertSame(file2, root.findEntry(p("dir/file2")));
+    assertSame(dir, root.findEntry(p("/dir")));
+    assertSame(file1, root.findEntry(p("/file1")));
+    assertSame(file2, root.findEntry(p("/dir/file2")));
   }
 
   @Test
   public void testGettingEntry() {
-    Entry e1 = root.getEntry(p("child"));
+    Entry e1 = root.getEntry(p("/child"));
     Entry e2 = root.getEntry(e1.getId());
 
     assertSame(child, e1);
@@ -57,13 +66,13 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testGettingEntryUnderDirectory() {
-    root = new RootEntry();
-    root.doCreateDirectory(1, p("dir1"));
-    root.doCreateDirectory(2, p("dir1/dir2"));
-    root.doCreateFile(3, p("dir1/file"), "content");
+    root = new RootEntry("");
+    root.doCreateDirectory(1, p("/dir1"));
+    root.doCreateDirectory(2, p("/dir1/dir2"));
+    root.doCreateFile(3, p("/dir1/file"), "content");
 
-    Entry e1 = root.getEntry(p("dir1/dir2"));
-    Entry e2 = root.getEntry(p("dir1/file"));
+    Entry e1 = root.getEntry(p("/dir1/dir2"));
+    Entry e2 = root.getEntry(p("/dir1/file"));
 
     assertEquals("dir2", e1.getName());
     assertEquals("file", e2.getName());
@@ -75,14 +84,14 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testDoesNotFindUnknownEntry() {
-    assertNull(root.findEntry(p("unknown entry")));
-    assertNull(root.findEntry(p("root/unknown entry")));
+    assertNull(root.findEntry(p("/unknown entry")));
+    assertNull(root.findEntry(p("/root/unknown entry")));
   }
 
   @Test
   public void testGettingUnknownEntryThrowsException() {
     try {
-      root.getEntry(p("unknown entry"));
+      root.getEntry(p("/unknown entry"));
       fail();
     } catch (LocalVcsException e) {}
 
@@ -105,29 +114,29 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testRevertingReturnsCopy() {
-    ChangeSet cs = cs(new CreateFileChange(1, p("file"), null));
+    ChangeSet cs = cs(new CreateFileChange(1, p("/file"), null));
 
-    RootEntry original = new RootEntry();
+    RootEntry original = new RootEntry("");
     original.apply_old(cs);
 
     RootEntry result = original.revert_old(cs);
 
-    assertTrue(original.hasEntry(p("file")));
-    assertFalse(result.hasEntry(p("file")));
+    assertTrue(original.hasEntry(p("/file")));
+    assertFalse(result.hasEntry(p("/file")));
   }
 
   @Test
   public void testRevertingSeveralTimesOnSameSnapshot() {
-    root.apply_old(cs(new CreateFileChange(2, p("file"), "content")));
+    root.apply_old(cs(new CreateFileChange(2, p("/file"), "content")));
 
-    ChangeSet cs = cs(new ChangeFileContentChange(p("file"), "new content"));
+    ChangeSet cs = cs(new ChangeFileContentChange(p("/file"), "new content"));
     root.apply_old(cs);
 
     RootEntry result1 = root.revert_old(cs);
     RootEntry result2 = root.revert_old(cs);
 
-    assertEquals("new content", root.getEntry(p("file")).getContent());
-    assertEquals("content", result1.getEntry(p("file")).getContent());
-    assertEquals("content", result2.getEntry(p("file")).getContent());
+    assertEquals("new content", root.getEntry(p("/file")).getContent());
+    assertEquals("content", result1.getEntry(p("/file")).getContent());
+    assertEquals("content", result2.getEntry(p("/file")).getContent());
   }
 }

@@ -41,12 +41,18 @@ public class RenameChange extends Change {
   }
 
   @Override
-  public void revertOn(RootEntry root) {
+  public void _revertOn(RootEntry root) {
     root.doRename(myPath.renamedWith(myNewName), myPath.getName());
   }
 
   @Override
   protected List<IdPath> getAffectedEntryIdPaths() {
     return Arrays.asList(myAffectedEntryIdPath);
+  }
+
+  @Override
+  public Entry revertFile(Entry e) {
+    if (!myAffectedEntryIdPath.getName().equals(e.getId())) return e;
+    return e.renamed(myPath.getName());
   }
 }

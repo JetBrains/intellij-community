@@ -91,6 +91,10 @@ public abstract class Entry {
     return result;
   }
 
+  public Entry withContent(String newContent) {
+    throw new LocalVcsException();
+  }
+
   public abstract Difference getDifferenceWith(Entry e);
 
   protected abstract Difference asCreatedDifference();

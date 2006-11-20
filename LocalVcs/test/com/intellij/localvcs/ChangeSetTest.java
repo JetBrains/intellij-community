@@ -25,7 +25,7 @@ public class ChangeSetTest extends TestCase {
 
   @Test
   public void testRevertingIsLIFO() {
-    changeSet.revertOn(null);
+    changeSet._revertOn(null);
     assertElements(new Object[]{3, 2, 1}, log);
   }
 
@@ -41,7 +41,7 @@ public class ChangeSetTest extends TestCase {
       log.add(myId);
     }
 
-    public void revertOn(RootEntry root) {
+    public void _revertOn(RootEntry root) {
       log.add(myId);
     }
   }

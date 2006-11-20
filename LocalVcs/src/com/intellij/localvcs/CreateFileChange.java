@@ -44,7 +44,7 @@ public class CreateFileChange extends Change {
   }
 
   @Override
-  public void revertOn(RootEntry root) {
+  public void _revertOn(RootEntry root) {
     root.doDelete(myPath);
   }
 
