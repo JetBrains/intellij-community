@@ -106,7 +106,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
     };
 
-    if (!isUnitTestMode) {
+    if (!isUnitTestMode && !isHeadless) {
       Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
       if (Patches.SUN_BUG_ID_6209673) {
         RepaintManager.setCurrentManager(new HackyRepaintManager());
@@ -439,7 +439,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
     assertIsDispatchThread();
 
-    if (myExceptionalThreadWithReadAccess != null || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myExceptionalThreadWithReadAccess != null || ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       process.run();
       return true;
     }
