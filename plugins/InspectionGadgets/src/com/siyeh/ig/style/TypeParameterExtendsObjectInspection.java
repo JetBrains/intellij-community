@@ -24,9 +24,15 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterExtendsObjectInspection extends ClassInspection {
+
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "type.parameter.extends.object.display.name");
+    }
 
     @NotNull
     public String getID() {
@@ -40,8 +46,14 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
 
     @NotNull
     protected String buildErrorString(Object... infos) {
+        final Integer type = (Integer) infos[0];
+        if (type.intValue() == 1) {
         return InspectionGadgetsBundle.message(
-                "type.parameter.extends.object.problem.descriptor");
+                "type.parameter.extends.object.problem.descriptor1");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "type.parameter.extends.object.problem.descriptor2");
+        }
     }
 
     public boolean isEnabledByDefault() {
@@ -63,18 +75,31 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
         public void doFix(@NotNull Project project,
                           ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
-            final PsiElement extendClassIdentifier = descriptor.getPsiElement();
-            final PsiTypeParameter element =
-                    (PsiTypeParameter) extendClassIdentifier.getParent();
-            if (element == null) {
-                return;
-            }
-            final PsiReferenceList extendsList = element.getExtendsList();
-            final PsiJavaCodeReferenceElement[] referenceElements =
-                    extendsList.getReferenceElements();
-            for(PsiJavaCodeReferenceElement referenceElement :
-                    referenceElements){
-                deleteElement(referenceElement);
+            final PsiElement identifier = descriptor.getPsiElement();
+            final PsiElement parent = identifier.getParent();
+            if (parent instanceof PsiTypeParameter) {
+                final PsiTypeParameter typeParameter =
+                        (PsiTypeParameter) parent;
+                final PsiReferenceList extendsList =
+                        typeParameter.getExtendsList();
+                final PsiJavaCodeReferenceElement[] referenceElements =
+                        extendsList.getReferenceElements();
+                for(PsiJavaCodeReferenceElement referenceElement :
+                        referenceElements){
+                    deleteElement(referenceElement);
+                }
+            } else {
+                final PsiTypeElement typeElement = (PsiTypeElement) parent;
+                PsiElement child = typeElement.getFirstChild();
+                if (child == null) {
+                    return;
+                }
+                child = child.getNextSibling();
+                while (child != null) {
+                    final PsiElement nextChild = child.getNextSibling();
+                    child.delete();
+                    child = nextChild;
+                }
             }
         }
     }
@@ -97,9 +122,33 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
                 return;
             }
             final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
-            if (nameIdentifier != null) {
-                registerError(nameIdentifier);
+            if (nameIdentifier == null) {
+                return;
             }
+            registerError(nameIdentifier, Integer.valueOf(1));
+        }
+
+
+        public void visitTypeElement(PsiTypeElement typeElement) {
+            super.visitTypeElement(typeElement);
+            final PsiElement lastChild = typeElement.getLastChild();
+            if (!(lastChild instanceof PsiTypeElement)) {
+                return;
+            }
+            final PsiType type = typeElement.getType();
+            if (!(type instanceof PsiWildcardType)) {
+                return;
+            }
+            final PsiWildcardType wildcardType = (PsiWildcardType) type;
+            final PsiType extendsBound = wildcardType.getExtendsBound();
+            if (!TypeUtils.isJavaLangObject(extendsBound)) {
+                return;
+            }
+            final PsiElement firstChild = typeElement.getFirstChild();
+            if (firstChild == null) {
+                return;
+            }
+            registerError(firstChild, Integer.valueOf(2));
         }
     }
 }
