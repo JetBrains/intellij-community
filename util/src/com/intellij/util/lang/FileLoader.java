@@ -6,10 +6,10 @@ import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
-import java.util.HashSet;
+import java.util.HashMap;
 
 class FileLoader extends Loader {
-  private HashSet<String> myPackages = null;
+  private HashMap<String,Boolean> myDirectories = null; // True has class files inside, false otherwise
   private File myRootDir;
   private String myRootDirAbsolutePath;
   private final boolean myUseCache;
@@ -28,20 +28,23 @@ class FileLoader extends Loader {
     }
   }
 
-  private void buildPackageCache(final File dir) {
-    if (dir.getName().endsWith(".class")) return; // optimization to prevent disc access for class files
+  // True -> class file
+  private boolean buildPackageCache(final File dir) {
+    if (dir.getName().endsWith(UrlClassLoader.CLASS_EXTENSION)) return true; // optimization to prevent disc access for class files
     final File[] files = dir.listFiles();
-    if (files == null) return;
+    if (files == null) return true;
+
+    boolean containFiles = false;
+    for (File file : files) {
+      containFiles |= buildPackageCache(file);
+    }
 
     String relativePath = dir.getAbsolutePath().substring(myRootDirAbsolutePath.length());
     relativePath = relativePath.replace(File.separatorChar, '/');
     if (relativePath.startsWith("/")) relativePath = relativePath.substring(1);
 
-    myPackages.add(relativePath);
-
-    for (File file : files) {
-      buildPackageCache(file);
-    }
+    myDirectories.put(relativePath,Boolean.valueOf(containFiles));
+    return false;
   }
 
   @Nullable
@@ -51,7 +54,18 @@ class FileLoader extends Loader {
     try {
       if (myUseCache) {
         String packageName = getPackageName(name);
-        if (!myPackages.contains(packageName)) return null;
+        final Boolean hasFiles = myDirectories.get(packageName);
+
+        if (hasFiles == null) {
+          return null;
+        }
+
+        if ( name.endsWith(UrlClassLoader.CLASS_EXTENSION) &&
+              !hasFiles.booleanValue()
+            ) {
+          // package does not contain class files
+          return null;
+        }
       }
 
       final URL url = new URL(getBaseURL(), name);
@@ -73,8 +87,8 @@ class FileLoader extends Loader {
   }
 
   private void initPackageCache() {
-    if (myPackages != null || !myUseCache) return;
-    myPackages = new HashSet<String>();
+    if (myDirectories != null || !myUseCache) return;
+    myDirectories = new HashMap<String,Boolean>();
     buildPackageCache(myRootDir);
   }
 

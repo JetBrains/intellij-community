@@ -12,8 +12,7 @@ import java.util.*;
 public class UrlClassLoader extends ClassLoader {
   private final ClassPath myClassPath;
   private final List<URL> myURLs;
-  @NonNls private static final String CLASS_EXTENSION = ".class";
-
+  @NonNls static final String CLASS_EXTENSION = ".class";
 
   public UrlClassLoader(ClassLoader parent) {
     this(Arrays.asList(((URLClassLoader)parent).getURLs()), null, true, true);

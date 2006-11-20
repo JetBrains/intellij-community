@@ -7,9 +7,7 @@ import sun.misc.Resource;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -18,7 +16,7 @@ class JarLoader extends Loader {
   private final boolean myCanLockJar;
   private final boolean myUseCache;
   private ZipFile myZipFile;
-  private Set<String> myPackages = null;
+  private Map<String,Boolean> myDirectories = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
 
@@ -56,19 +54,27 @@ class JarLoader extends Loader {
   }
 
   private void initPackageCache() throws IOException {
-    if (myPackages != null || !myUseCache) return;
-    myPackages = new HashSet<String>();
-    myPackages.add("");
+    if (myDirectories != null || !myUseCache) return;
+    myDirectories = new HashMap<String,Boolean>();
+    myDirectories.put("",Boolean.FALSE);
 
     final ZipFile zipFile = getZipFile();
     if (zipFile == null) return;
     final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
     while (entries.hasMoreElements()) {
       ZipEntry zipEntry = entries.nextElement();
       final String name = zipEntry.getName();
+
       final int i = name.lastIndexOf("/");
       String packageName = i > 0 ? name.substring(0, i) : "";
-      myPackages.add(packageName);
+
+      if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {
+        myDirectories.put(packageName,Boolean.TRUE);
+      } else {
+        final Boolean status = myDirectories.get(packageName);
+        myDirectories.put(packageName,status != Boolean.TRUE ? Boolean.FALSE:Boolean.TRUE);
+      }
     }
 
     releaseZipFile(zipFile);
@@ -87,7 +93,15 @@ class JarLoader extends Loader {
 
       if (myUseCache) {
         String packageName = getPackageName(name);
-        if (!myPackages.contains(packageName)) return null;
+
+        final Boolean hasClassFiles = myDirectories.get(packageName);
+        if (hasClassFiles == null) return null;
+
+        if ( name.endsWith(UrlClassLoader.CLASS_EXTENSION) &&
+              !hasClassFiles.booleanValue()
+            ) {
+          return null;
+        }
       }
 
       final ZipFile file = getZipFile();
