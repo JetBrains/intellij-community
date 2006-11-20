@@ -241,6 +241,9 @@ public class PatchReader {
   private static String extractFileName(final String curLine) {
     String fileName = curLine.substring(4);
     int pos = fileName.indexOf('\t');
+    if (pos < 0) {
+      pos = fileName.indexOf(' ');
+    }
     if (pos >= 0) {
       fileName = fileName.substring(0, pos);
     }
