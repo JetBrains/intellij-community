@@ -48,6 +48,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -66,14 +67,14 @@ public class LibraryLinkImpl extends LibraryLink {
   @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
 
   static {
-    methodToDescriptionForDirs.put(J2EEPackagingMethod.DO_NOT_PACKAGE, J2EEBundle.message("packaging.method.description.do.not.package"));
-    methodToDescriptionForDirs.put(J2EEPackagingMethod.COPY_FILES, J2EEBundle.message("packaging.method.description.copy.directories"));
-    methodToDescriptionForDirs.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, J2EEBundle.message("packaging.method.description.jar.and.copy.file"));
-    methodToDescriptionForDirs.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, J2EEBundle.message("packaging.method.description.jar.and.copy.file.and.link.via.manifest"));
+    methodToDescriptionForDirs.put(J2EEPackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
+    methodToDescriptionForDirs.put(J2EEPackagingMethod.COPY_FILES, CompilerBundle.message("packaging.method.description.copy.directories"));
+    methodToDescriptionForDirs.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, CompilerBundle.message("packaging.method.description.jar.and.copy.file"));
+    methodToDescriptionForDirs.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, CompilerBundle.message("packaging.method.description.jar.and.copy.file.and.link.via.manifest"));
 
-    methodToDescriptionForFiles.put(J2EEPackagingMethod.DO_NOT_PACKAGE, J2EEBundle.message("packaging.method.description.do.not.package"));
-    methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES, J2EEBundle.message("packaging.method.description.copy.files"));
-    methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST, J2EEBundle.message("packaging.method.description.copy.files.and.link.via.manifest"));
+    methodToDescriptionForFiles.put(J2EEPackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
+    methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES, CompilerBundle.message("packaging.method.description.copy.files"));
+    methodToDescriptionForFiles.put(J2EEPackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST, CompilerBundle.message("packaging.method.description.copy.files.and.link.via.manifest"));
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.LibraryLink");
@@ -110,13 +111,13 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   public String toString() {
-    return J2EEBundle.message("library.link.string.presentation.presentablename.to.uri", getPresentableName(), getURI());
+    return CompilerBundle.message("library.link.string.presentation.presentablename.to.uri", getPresentableName(), getURI());
   }
 
   public String getPresentableName() {
     if (getName() != null) return getName();
     List<String> urls = myLibraryInfo.getUrls();
-    if (urls.size() == 0) return J2EEBundle.message("linrary.link.empty.library.presentable.name");
+    if (urls.size() == 0) return CompilerBundle.message("linrary.link.empty.library.presentable.name");
     final String url = urls.get(0);
     final String path = PathUtil.toPresentableUrl(url);
 
@@ -126,16 +127,16 @@ public class LibraryLinkImpl extends LibraryLink {
   public String getDescription() {
     String levelName = myLibraryInfo.getLevel();
     if (levelName.equals(MODULE_LEVEL)) {
-      return J2EEBundle.message("library.link.description.module.library");
+      return CompilerBundle.message("library.link.description.module.library");
     }
     else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(levelName)) {
-      return J2EEBundle.message("library.link.description.global.library");
+      return CompilerBundle.message("library.link.description.global.library");
     }
     else if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(levelName)) {
-      return J2EEBundle.message("library.link.description.project.library");
+      return CompilerBundle.message("library.link.description.project.library");
     }
     else if (ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(levelName)) {
-      return J2EEBundle.message("library.link.description.application.server.library");
+      return CompilerBundle.message("library.link.description.application.server.library");
     }
     else {
       return "???";

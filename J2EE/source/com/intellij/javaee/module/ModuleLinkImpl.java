@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.javaee.J2EEBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -57,11 +58,11 @@ public class ModuleLinkImpl extends ModuleLink {
   private static Map<J2EEPackagingMethod, String> methodToDescription = new HashMap<J2EEPackagingMethod, String>();
 
   static {
-    methodToDescription.put(J2EEPackagingMethod.DO_NOT_PACKAGE, J2EEBundle.message("packaging.method.description.do.not.package"));
-    methodToDescription.put(J2EEPackagingMethod.COPY_FILES, J2EEBundle.message("packaging.method.description.copy.module.output"));
-    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, J2EEBundle.message("packaging.method.description.jar.module.and.copy"));
-    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, J2EEBundle.message("packaging.method.description.jar.module.link.via.manifest.and.copy"));
-    methodToDescription.put(J2EEPackagingMethod.INCLUDE_MODULE_IN_BUILD, J2EEBundle.message("packaging.method.description.include.module.in.build"));
+    methodToDescription.put(J2EEPackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
+    methodToDescription.put(J2EEPackagingMethod.COPY_FILES, CompilerBundle.message("packaging.method.description.copy.module.output"));
+    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, CompilerBundle.message("packaging.method.description.jar.module.and.copy"));
+    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, CompilerBundle.message("packaging.method.description.jar.module.link.via.manifest.and.copy"));
+    methodToDescription.put(J2EEPackagingMethod.INCLUDE_MODULE_IN_BUILD, CompilerBundle.message("packaging.method.description.include.module.in.build"));
   }
 
   public ModuleLinkImpl(Module module, Module parentModule) {
@@ -100,7 +101,7 @@ public class ModuleLinkImpl extends ModuleLink {
   }
 
   public String toString() {
-    return J2EEBundle.message("module.link.string.representation", getName(), getURI());
+    return CompilerBundle.message("module.link.string.representation", getName(), getURI());
   }
 
   public boolean equalsIgnoreAttributes(ContainerElement otherElement) {
