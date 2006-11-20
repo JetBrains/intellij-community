@@ -14,13 +14,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.io.IOException;
 
 public class FilePatch {
   private String myBeforeName;
@@ -71,7 +70,11 @@ public class FilePatch {
         hunk.apply(lines);
       }
       final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
-      document.setText(StringUtil.join(lines, "\n") + "\n");
+      StringBuilder docText = new StringBuilder();
+      for(String line: lines) {
+        docText.append(line).append("\n");
+      }
+      document.setText(docText.toString());
       FileDocumentManager.getInstance().saveDocument(document);
     }
   }
