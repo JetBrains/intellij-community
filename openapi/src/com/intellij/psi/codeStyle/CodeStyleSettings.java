@@ -19,19 +19,24 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
+  private ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
 
   public CodeStyleSettings() {
     initTypeToName();
     initImports();
+    for (final CodeStyleSettingsProvider provider : ApplicationManager.getApplication().getComponents(CodeStyleSettingsProvider.class)) {
+      addCustomSettings(provider.createCustomSettings(this));
+    }
   }
 
   private void initImports() {
@@ -71,9 +76,21 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     return myParentSettings;
   }
 
+  private void addCustomSettings(CustomCodeStyleSettings settings) {
+    myCustomSettings.put(settings.getClass(), settings);
+  }
+
+  public <T extends CustomCodeStyleSettings> T getCustomSettings(Class<T> aClass) {
+    return (T)myCustomSettings.get(aClass);
+  }
+
   public Object clone() {
     try {
       CodeStyleSettings clon = (CodeStyleSettings)super.clone();
+
+      for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
+        clon.addCustomSettings(settings);
+      }
 
       clon.FIELD_TYPE_TO_NAME = (TypeToNameMap)this.FIELD_TYPE_TO_NAME.clone();
       clon.STATIC_FIELD_TYPE_TO_NAME = (TypeToNameMap)this.STATIC_FIELD_TYPE_TO_NAME.clone();
@@ -705,53 +722,182 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int FOR_BRACE_FORCE = DO_NOT_FORCE;
 
 //----------------- EJB NAMING CONVENTIONS -------------
+/**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_EB_PREFIX = "";         //EntityBean EJB Class name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_EB_SUFFIX = "Bean";     //EntityBean EJB Class name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_HI_PREFIX = "";         //EntityBean Home interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_HI_SUFFIX = "Home";     //EntityBean Home interface name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_RI_PREFIX = "";         //EntityBean Remote interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_RI_SUFFIX = "";         //EntityBean Remote interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_LHI_PREFIX = "Local";   //EntityBean local Home interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_LHI_SUFFIX = "Home";    //EntityBean local Home interface name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_LI_PREFIX = "Local";    //EntityBean local interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_LI_SUFFIX = "";         //EntityBean local interface name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_DD_PREFIX = "";         //EntityBean deployment descriptor name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_DD_SUFFIX = "EJB";      //EntityBean deployment descriptor name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_VO_PREFIX = "";
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_VO_SUFFIX = "VO";
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String ENTITY_PK_CLASS = "java.lang.String";
 
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_EB_PREFIX = "";        //SessionBean EJB Class name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_EB_SUFFIX = "Bean";    //SessionBean EJB Class name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_HI_PREFIX = "";        //SessionBean Home interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_HI_SUFFIX = "Home";    //SessionBean Home interface name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_RI_PREFIX = "";        //SessionBean Remote interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_RI_SUFFIX = "";        //SessionBean Remote interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_LHI_PREFIX = "Local";  //SessionBean local Home interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_LHI_SUFFIX = "Home";   //SessionBean local Home interface name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_LI_PREFIX = "Local";   //SessionBean local interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_LI_SUFFIX = "";        //SessionBean local interface name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_SI_PREFIX = "";   //SessionBean service endpoint interface name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_SI_SUFFIX = "Service";        //SessionBean service endpoint interface name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_DD_PREFIX = "";        //SessionBean deployment descriptor name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SESSION_DD_SUFFIX = "EJB";     //SessionBean deployment descriptor name suffix
 
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String MESSAGE_EB_PREFIX = "";        //MessageBean EJB Class name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String MESSAGE_EB_SUFFIX = "Bean";    //MessageBean EJB Class name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String MESSAGE_DD_PREFIX = "";        //MessageBean deployment descriptor name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String MESSAGE_DD_SUFFIX = "EJB";     //MessageBean deployment descriptor name suffix
 //----------------- Servlet NAMING CONVENTIONS -------------
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SERVLET_CLASS_PREFIX = "";           //SERVLET Class name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SERVLET_CLASS_SUFFIX = "";           //SERVLET Class name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SERVLET_DD_PREFIX = "";              //SERVLET deployment descriptor name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String SERVLET_DD_SUFFIX = "";              //SERVLET deployment descriptor name suffix
 //----------------- Web Filter NAMING CONVENTIONS -------------
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String FILTER_CLASS_PREFIX = "";          //Filter Class name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String FILTER_CLASS_SUFFIX = "";          //Filter Class name suffix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String FILTER_DD_PREFIX = "";             //Filter deployment descriptor name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String FILTER_DD_SUFFIX = "";             //Filter deployment descriptor name suffix
 
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String LISTENER_CLASS_PREFIX = "";          //Listener Class name prefix
+  /**
+ * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
+ */
   @NonNls public String LISTENER_CLASS_SUFFIX = "";          //Listener Class name suffix
 
 //------------------------------------------------------------------------
@@ -870,6 +1016,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     importOldIndentOptions(element);
+    for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
+      settings.readExternal(element);
+    }
   }
 
   private void importOldIndentOptions(@NonNls Element element) {
@@ -917,18 +1066,12 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = myParentSettings == null ? new CodeStyleSettings() : myParentSettings;
-    DefaultJDOMExternalizer.writeExternal(this, element, new DefaultJDOMExternalizer.JDOMFilter() {
-      public boolean isAccept(Field field) {
-        try {
-          Object thisValue = field.get(CodeStyleSettings.this);
-          Object parentValue = field.get(parentSettings);
-          return !Comparing.equal(thisValue, parentValue);
-        }
-        catch (IllegalAccessException e) {
-          return true;
-        }
-      }
-    });
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
+    for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
+      final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
+      assert parentCustomSettings != null;
+      settings.writeExternal(element, parentCustomSettings);
+    }
   }
 
   public IndentOptions getIndentOptions(FileType fileType) {
@@ -1392,4 +1535,5 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 
   }
+
 }

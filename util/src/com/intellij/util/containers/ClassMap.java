@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.util.ReflectionCache;
 import gnu.trove.THashMap;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -51,6 +52,10 @@ public class ClassMap<T> {
       }
     }
     return null;
+  }
+  
+  public final Collection<T> values() {
+    return myMap.values();
   }
 
 }

@@ -18,6 +18,7 @@ import org.picocontainer.PicoContainer;
 
 import java.awt.*;
 import java.io.IOException;
+import java.lang.reflect.Array;
 
 public class MockApplication extends UserDataHolderBase implements ApplicationEx {
   private final MessageBus myMessageBus = Messages.newMessageBus();
@@ -192,7 +193,7 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
 
   @NotNull
   public <T> T[] getComponents(Class<T> baseInterfaceClass) {
-    return (T[]) ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return (T[])Array.newInstance(baseInterfaceClass, 0);
   }
 
   public PicoContainer getPicoContainer() {
