@@ -204,7 +204,14 @@ public class PluginManager {
   public static boolean shouldLoadPlugin(IdeaPluginDescriptor descriptor) {
     //noinspection HardCodedStringLiteral
     final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
-    return loadPluginCategory == null || loadPluginCategory.equals(descriptor.getCategory());
+    if (loadPluginCategory != null) {
+      return loadPluginCategory.equals(descriptor.getCategory());
+    }
+    //noinspection HardCodedStringLiteral
+    final String pluginId = System.getProperty("idea.load.plugins.id");
+    return pluginId == null || (descriptor.getPluginId() != null &&
+                                descriptor.getPluginId().getIdString() != null &&
+                                pluginId.equals(descriptor.getPluginId().getIdString()));
   }
 
 
