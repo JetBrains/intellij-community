@@ -25,6 +25,8 @@ import java.util.List;
 public class FilePatch {
   private String myBeforeName;
   private String myAfterName;
+  private String myBeforeVersionId;
+  private String myAfterVersionId;
   private List<PatchHunk> myHunks = new ArrayList<PatchHunk>();
 
   public String getBeforeName() {
@@ -48,6 +50,22 @@ public class FilePatch {
     myAfterName = fileName;
   }
 
+  public String getBeforeVersionId() {
+    return myBeforeVersionId;
+  }
+
+  public void setBeforeVersionId(final String beforeVersionId) {
+    myBeforeVersionId = beforeVersionId;
+  }
+
+  public String getAfterVersionId() {
+    return myAfterVersionId;
+  }
+
+  public void setAfterVersionId(final String afterVersionId) {
+    myAfterVersionId = afterVersionId;
+  }
+
   public void addHunk(final PatchHunk hunk) {
     myHunks.add(hunk);
   }
@@ -59,6 +77,10 @@ public class FilePatch {
       throw new ApplyPatchException("Cannot find file to patch: " + myBeforeName);
     }
 
+    apply(fileToPatch);
+  }
+
+  public void apply(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
     if (isNewFile()) {
       VirtualFile newFile = fileToPatch.createChildData(this, getBeforeFileName());
       final Document document = FileDocumentManager.getInstance().getDocument(newFile);
@@ -71,19 +93,24 @@ public class FilePatch {
     else {
       byte[] fileContents = fileToPatch.contentsToByteArray();
       CharSequence text = LoadTextUtil.getTextByBinaryPresentation(fileContents, fileToPatch);
-      List<String> lines = new ArrayList<String>();
-      Collections.addAll(lines, LineTokenizer.tokenize(text, false));
-      for(PatchHunk hunk: myHunks) {
-        hunk.apply(lines);
-      }
+      String resultText = applyModifications(text);
       final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
-      StringBuilder docText = new StringBuilder();
-      for(String line: lines) {
-        docText.append(line).append("\n");
-      }
-      document.setText(docText.toString());
+      document.setText(resultText);
       FileDocumentManager.getInstance().saveDocument(document);
     }
+  }
+
+  public String applyModifications(final CharSequence text) throws ApplyPatchException {
+    List<String> lines = new ArrayList<String>();
+    Collections.addAll(lines, LineTokenizer.tokenize(text, false));
+    for(PatchHunk hunk: myHunks) {
+      hunk.apply(lines);
+    }
+    StringBuilder docText = new StringBuilder();
+    for(String line: lines) {
+      docText.append(line).append("\n");
+    }
+    return docText.toString();
   }
 
   @Nullable
@@ -109,11 +136,11 @@ public class FilePatch {
     return fileToPatch;
   }
 
-  private boolean isNewFile() {
+  public boolean isNewFile() {
     return myHunks.size() == 1 && myHunks.get(0).isNewContent();
   }
 
-  private boolean isDeletedFile() {
+  public boolean isDeletedFile() {
     return myHunks.size() == 1 && myHunks.get(0).isDeletedContent();
   }
 }

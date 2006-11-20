@@ -61,14 +61,14 @@ public class PatchReader {
   private FilePatch readPatch(String curLine) throws PatchSyntaxException {
     final FilePatch curPatch;
     curPatch = new FilePatch();
-    curPatch.setBeforeName(extractFileName(curLine));
+    extractFileName(curLine, curPatch, true);
     myLineIndex++;
     curLine = myLines [myLineIndex];
     String secondNamePrefix = myDiffFormat == DiffFormat.UNIFIED ? "+++ " : "--- ";
     if (!curLine.startsWith(secondNamePrefix)) {
       throw new PatchSyntaxException(myLineIndex, "Second file name expected");
     }
-    curPatch.setAfterName(extractFileName(curLine));
+    extractFileName(curLine, curPatch, false);
     myLineIndex++;
     while(myLineIndex < myLines.length) {
       PatchHunk hunk;
@@ -123,7 +123,7 @@ public class PatchReader {
   }
 
   @Nullable
-  private static PatchLine parsePatchLine(final String line, final int prefixLength) throws PatchSyntaxException {
+  private static PatchLine parsePatchLine(final String line, final int prefixLength) {
     PatchLine.Type type;
     if (line.startsWith("+")) {
       type = PatchLine.Type.ADD;
@@ -238,15 +238,29 @@ public class PatchReader {
     return result;
   }
 
-  private static String extractFileName(final String curLine) {
+  private static void extractFileName(final String curLine, final FilePatch patch, final boolean before) {
     String fileName = curLine.substring(4);
     int pos = fileName.indexOf('\t');
     if (pos < 0) {
       pos = fileName.indexOf(' ');
     }
     if (pos >= 0) {
+      String versionId = fileName.substring(pos).trim();
       fileName = fileName.substring(0, pos);
+      if (versionId.length() > 0) {
+        if (before) {
+          patch.setBeforeVersionId(versionId);
+        }
+        else {
+          patch.setAfterVersionId(versionId);
+        }
+      }
     }
-    return fileName;
+    if (before) {
+      patch.setBeforeName(fileName);
+    }
+    else {
+      patch.setAfterName(fileName);
+    }
   }
 }
