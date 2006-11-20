@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.jsp.el.ELLanguage;
 import com.intellij.util.PatternUtil;
@@ -552,6 +553,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     registerFileTypeWithoutNotification(StdFileTypes.IDEA_MODULE = new ModuleFileType(), parse("iml"));
     registerFileTypeWithoutNotification(StdFileTypes.UNKNOWN = new UnknownFileType(), Collections.<FileNameMatcher>emptyList());
     registerFileTypeWithoutNotification(StdFileTypes.PROPERTIES = PropertiesFileType.FILE_TYPE, parse("properties"));
+    registerFileTypeWithoutNotification(StdFileTypes.PATCH = new PatchFileType(), parse("patch;diff"));
   }
 
   private static List<FileNameMatcher> parse(@NonNls String semicolonDelimited) {

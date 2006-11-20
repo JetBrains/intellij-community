@@ -21,11 +21,9 @@ public class StdFileTypes {
   public static LanguageFileType JSP;
   public static LanguageFileType JSPX;
   public static LanguageFileType XML;
-  public static LanguageFileType ANT;
   public static LanguageFileType DTD;
   public static LanguageFileType HTML;
   public static LanguageFileType XHTML;
-  public static LanguageFileType ASPECT;
   public static LanguageFileType PROPERTIES;
   public static FileType PLAIN_TEXT;
   public static FileType ARCHIVE;
@@ -34,4 +32,5 @@ public class StdFileTypes {
   public static FileType IDEA_WORKSPACE;
   public static FileType IDEA_PROJECT;
   public static FileType IDEA_MODULE;
+  public static FileType PATCH;
 }
