@@ -102,7 +102,6 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
 
         private UnnecessaryTemporaryObjectFix(
                 String name) {
-            super();
             m_name = name;
         }
 
@@ -116,6 +115,9 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
                     (PsiMethodCallExpression) descriptor.getPsiElement();
             final String newExpression =
                     calculateReplacementExpression(expression);
+            if (newExpression == null) {
+                return;
+            }
             replaceExpression(expression, newExpression);
         }
     }
