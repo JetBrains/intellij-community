@@ -39,7 +39,6 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -49,6 +48,7 @@ import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
@@ -309,7 +309,7 @@ public class PackageUtil {
     data.setPresentableText(name);
     data.setLocationString(packagePrefix);
 
-    for (final IconProvider provider : psiDirectory.getProject().getComponents(IconProvider.class)) {
+    for (final IconProvider provider : ApplicationManager.getApplication().getComponents(IconProvider.class)) {
       final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
       if (openIcon != null) {
         final Icon closedIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED);
@@ -351,10 +351,6 @@ public class PackageUtil {
       }
     }
     return false;
-  }
-
-  private static boolean isWebRoot(final PsiDirectory psiDirectory) {
-    return WebUtil.isWebRoot(psiDirectory.getVirtualFile(), psiDirectory.getProject());
   }
 
   public static boolean isLibraryRoot(VirtualFile directoryFile, Project project) {
