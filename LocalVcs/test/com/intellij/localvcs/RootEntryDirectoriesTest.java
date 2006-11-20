@@ -198,11 +198,11 @@ public class RootEntryDirectoriesTest extends TestCase {
     root.doCreateDirectory(null, p("/dir"));
     root.doCreateFile(null, p("/dir/file"), null);
 
-    // todo move to where??? shold we support this case?
-    //s.doMove(p("/file"), p("/"));
-    //
-    //assertTrue(s.hasEntry(p("/file")));
-    //assertFalse(s.hasEntry(p("/dir/file")));
+    //todo move to where??? shold we support this case?
+    root.doMove(p("/dir/file"), p(""));
+
+    assertTrue(root.hasEntry(p("/file")));
+    assertFalse(root.hasEntry(p("/dir/file")));
   }
 
   @Test

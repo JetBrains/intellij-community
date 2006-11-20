@@ -5,22 +5,18 @@ import java.util.List;
 
 public abstract class Entry {
   protected Integer myId;
-  protected String myName;
   protected DirectoryEntry myParent;
 
-  public Entry(Integer id, String name) {
+  public Entry(Integer id) {
     myId = id;
-    myName = name;
   }
 
   public Entry(Stream s) throws IOException {
     myId = s.readInteger();
-    myName = s.readString();
   }
 
   public void write(Stream s) throws IOException {
     s.writeInteger(myId);
-    s.writeString(myName);
   }
 
   // todo generalize Path and IdPath
@@ -33,14 +29,12 @@ public abstract class Entry {
     return myParent.getIdPathAppendedWith(myId);
   }
 
-  public String getName() {
-    return myName;
-  }
+  public abstract String getName();
 
   public Path getPath() {
     //todo try to remove this check
-    if (!hasParent()) return new Path(myName);
-    return myParent.getPathAppendedWith(myName);
+    if (!hasParent()) return new Path(getName());
+    return myParent.getPathAppendedWith(getName());
   }
 
   public String getContent() {
@@ -85,11 +79,7 @@ public abstract class Entry {
 
   public abstract Entry copy();
 
-  public Entry renamed(String newName) {
-    Entry result = copy();
-    result.myName = newName;
-    return result;
-  }
+  public abstract Entry renamed(String newName);
 
   public Entry withContent(String newContent) {
     throw new LocalVcsException();

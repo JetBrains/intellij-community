@@ -10,14 +10,17 @@ import static com.intellij.localvcs.Difference.Kind.MODIFIED;
 import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 
 public class DirectoryEntry extends Entry {
+  private String myName;
   private List<Entry> myChildren = new ArrayList<Entry>();
 
   public DirectoryEntry(Integer id, String name) {
-    super(id, name);
+    super(id);
+    myName = name;
   }
 
   public DirectoryEntry(Stream s) throws IOException {
     super(s);
+    myName = s.readString();
 
     int count = s.readInteger();
     while (count-- > 0) {
@@ -28,11 +31,16 @@ public class DirectoryEntry extends Entry {
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
+    s.writeString(myName);
 
     s.writeInteger(myChildren.size());
     for (Entry child : myChildren) {
       s.writeEntry(child);
     }
+  }
+
+  public String getName() {
+    return myName;
   }
 
   protected IdPath getIdPathAppendedWith(Integer id) {
@@ -100,11 +108,17 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public Entry copy() {
+  public DirectoryEntry copy() {
     DirectoryEntry result = copyEntry();
     for (Entry child : myChildren) {
       result.addChild(child.copy());
     }
+    return result;
+  }
+
+  public Entry renamed(String newName) {
+    DirectoryEntry result = copy();
+    result.myName = newName;
     return result;
   }
 

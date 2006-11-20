@@ -77,6 +77,7 @@ public class Stream {
   }
 
   public void writeString(String s) throws IOException {
+    // todo make it not-nullable
     // todo writeUTF is very time consuming
     myOs.writeBoolean(s != null);
     if (s != null) myOs.writeUTF(s);

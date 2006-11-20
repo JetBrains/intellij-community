@@ -43,9 +43,7 @@ public class RootEntry extends DirectoryEntry {
   }
 
   protected Path getPathAppendedWith(String name) {
-    return new Path(myName).appendedWith(name);
-
-    //return new Path(name);
+    return new Path(getName()).appendedWith(name);
   }
 
   public boolean hasEntry(Path path) {

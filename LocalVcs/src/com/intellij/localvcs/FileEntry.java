@@ -9,48 +9,55 @@ import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 
 public class FileEntry extends Entry {
   // todo change String to ByteArray or something else
-  private String myContent;
+  private FileEntryState myState;
 
   public FileEntry(Integer id, String name, String content) {
-    super(id, name);
-    myContent = content;
+    super(id);
+    myState = new FileEntryState(name, content);
   }
 
   public FileEntry(Stream s) throws IOException {
     super(s);
-    myContent = s.readString();
+    myState = new FileEntryState(s.readString(),
+                                 s.readString());
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeString(myContent);
+    s.writeString(myState.getName());
+    s.writeString(myState.getContent());
+  }
+
+  @Override
+  public String getName() {
+    return myState.getName();
   }
 
   @Override
   public String getContent() {
-    return myContent;
+    return myState.getContent();
   }
 
   @Override
-  public Entry copy() {
-    return new FileEntry(myId, myName, myContent);
+  public FileEntry copy() {
+    // todo create constructor with FileEntryState parameter
+    return new FileEntry(myId, getName(), getContent());
+  }
+
+  public Entry renamed(String newName) {
+    return new FileEntry(myId, newName, getContent());
   }
 
   @Override
   public Entry withContent(String newContent) {
-    FileEntry result = (FileEntry)copy();
-    result.myContent = newContent;
-    return result;
+    return new FileEntry(myId, getName(), newContent);
   }
 
   @Override
-  public Difference getDifferenceWith(Entry right) {
-    FileEntry e = (FileEntry)right;
-
-    boolean modified = !myName.equals(e.myName) ||
-                       !myContent.equals(e.myContent);
-
+  public Difference getDifferenceWith(Entry e) {
+    boolean modified = !getName().equals(e.getName()) ||
+                       !getContent().equals(e.getContent());
     return new Difference(true, modified ? MODIFIED : NOT_MODIFIED, this, e);
   }
 
