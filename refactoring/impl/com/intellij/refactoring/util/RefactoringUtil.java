@@ -207,6 +207,33 @@ public class RefactoringUtil {
       });
   }
 
+  @Nullable
+  public static String suggestNewOverriderName (String oldOverriderName, String oldBaseName, String newBaseName) {
+    int i;
+    if (oldOverriderName.startsWith(oldBaseName)) {
+      i = 0;
+    }
+    else {
+      i = StringUtil.indexOfIgnoreCase(oldOverriderName, oldBaseName, 0);
+    }
+    if (i >= 0) {
+      String newOverriderName = oldOverriderName.substring(0, i);
+      if (Character.isUpperCase(oldOverriderName.charAt(i))) {
+        newOverriderName += StringUtil.capitalize(newBaseName);
+      }
+      else {
+        newOverriderName += newBaseName;
+      }
+      final int j = i + oldBaseName.length();
+      if (j < oldOverriderName.length()) {
+        newOverriderName += oldOverriderName.substring(j);
+      }
+
+      return newOverriderName;
+    }
+    return null;
+  }
+
   public static interface UsageInfoFactory {
     UsageInfo createUsageInfo(PsiElement usage, int startOffset, int endOffset);
   }

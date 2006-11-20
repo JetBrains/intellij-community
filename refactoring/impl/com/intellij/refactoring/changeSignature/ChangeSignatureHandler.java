@@ -12,7 +12,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 
 public class ChangeSignatureHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
@@ -21,9 +20,6 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof PsiMethod) {
-      PsiElement resolutionContext = file.findElementAt(editor.getCaretModel().getOffset());
-      if(resolutionContext == null) resolutionContext = element;
-      ChangeSignatureProcessor.normalizeResolutionContext(resolutionContext);
       invoke((PsiMethod) element, project);
     }
     else if (element instanceof PsiClass) {
@@ -52,9 +48,6 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
 
     final String actionString = RefactoringBundle.message("to.refactor");
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, actionString);
-    if (newMethod == null) return;
-
-    newMethod = (PsiMethod) EjbPsiMethodUtil.checkDeclMethod(newMethod, actionString);
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {

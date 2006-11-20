@@ -2,7 +2,6 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -144,9 +143,6 @@ public class PsiElementRenameHandler implements RenameHandler {
     PsiElement elementToRename = element;
     if (elementToRename instanceof PsiMethod) {
       elementToRename = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)elementToRename, RefactoringBundle.message("to.rename"));
-      if (elementToRename == null) return;
-
-      elementToRename = EjbPsiMethodUtil.checkDeclMethod((PsiMethod)elementToRename, RefactoringBundle.message("to.rename"));
       if (elementToRename == null) return;
 
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;

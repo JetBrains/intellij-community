@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -514,23 +513,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       public boolean process(PsiMethod overrider) {
         final String overriderName = overrider.getName();
         final String baseName = method.getName();
-        int i;
-        if (overriderName.startsWith(baseName)) {
-          i = 0;
-        } else {
-          i = StringUtil.indexOfIgnoreCase(overriderName, baseName, 0);
-        }
-        if (i >= 0) {
-          String newOverriderName = overriderName.substring(0, i);
-          if (Character.isUpperCase(overriderName.charAt(i))) {
-            newOverriderName += StringUtil.capitalize(newName);
-          } else {
-            newOverriderName += newName;
-          }
-          final int j = i + baseName.length();
-          if (j < overriderName.length()) {
-            newOverriderName += overriderName.substring(j);
-          }
+        final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
+        if (newOverriderName != null) {
           myAllRenames.put(overrider, newOverriderName);
         }
         return true;

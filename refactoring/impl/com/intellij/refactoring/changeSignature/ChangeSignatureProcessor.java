@@ -35,9 +35,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
-import com.intellij.javaee.ejb.role.*;
-import com.intellij.javaee.ejb.EjbHelper;
-import com.intellij.javaee.model.common.ejb.EjbPsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -384,7 +381,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void askToRemoveCovariantOverriders(Set<UsageInfo> usages) {
-    if (myManager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (PsiUtil.getLanguageLevel(myChangeInfo.getMethod()).compareTo(LanguageLevel.JDK_1_5) >= 0) {
       List<UsageInfo> covariantOverriderInfos = new ArrayList<UsageInfo>();
       for (UsageInfo usageInfo : usages) {
         if (usageInfo instanceof OverriderUsageInfo) {
@@ -948,22 +945,13 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
 
     if (myChangeInfo.isNameChanged) {
-      final EjbMethodRole role = EjbHelper.getEjbHelper().getEjbRole(method);
-      if (role instanceof EjbImplMethodRole && myChangeInfo.ejbRole instanceof EjbDeclMethodRole) {
-        EjbDeclMethodRole declRole = (EjbDeclMethodRole) myChangeInfo.ejbRole;
+      String newName = baseMethod == null ? myChangeInfo.newName :
+                       RefactoringUtil.suggestNewOverriderName(method.getName(), baseMethod.getName(), myChangeInfo.newName);
 
-        String newName = myChangeInfo.newName;
-        for (PsiMethod oldMethod : declRole.suggestImplementations()) {
-          if (oldMethod.getName().equals(method.getName())) {
-            PsiMethod newDeclMethod = (PsiMethod)method.copy();
-            newDeclMethod.getNameIdentifier().replace(myChangeInfo.newNameIdentifier);
-            newName = EjbPsiMethodUtil.suggestImplNames(newDeclMethod.getName(), declRole.getType(), declRole.getEnterpriseBean())[0];
-            break;
-          }
-        }
-        method.getNameIdentifier().replace(factory.createIdentifier(newName));
-      } else {
-        method.getNameIdentifier().replace(myChangeInfo.newNameIdentifier);
+      if (newName != null && !newName.equals(method.getName())) {
+        final PsiIdentifier nameId = method.getNameIdentifier();
+        assert nameId != null;
+        nameId.replace(myManager.getElementFactory().createIdentifier(newName));
       }
     }
 
@@ -1068,13 +1056,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       this.oldParameterName = oldParameterName;
       this.newParameterName = newParameterName;
     }
-  }
-
-  public static PsiElement normalizeResolutionContext(PsiElement resolutionContext) {
-    PsiElement result = PsiTreeUtil.getNonStrictParentOfType(resolutionContext, PsiStatement.class, PsiClass.class, PsiFile.class);
-    if (result != null) return result;
-
-    return resolutionContext;
   }
 
   private static class RenamedParameterCollidesWithLocalUsageInfo extends UnresolvableCollisionUsageInfo {
