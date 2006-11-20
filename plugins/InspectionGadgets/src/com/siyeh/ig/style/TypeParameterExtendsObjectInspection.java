@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -90,15 +91,17 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
                 }
             } else {
                 final PsiTypeElement typeElement = (PsiTypeElement) parent;
-                PsiElement child = typeElement.getFirstChild();
-                if (child == null) {
-                    return;
-                }
-                child = child.getNextSibling();
+                PsiElement child = typeElement.getLastChild();
                 while (child != null) {
-                    final PsiElement nextChild = child.getNextSibling();
+                    if (child instanceof PsiJavaToken) {
+                        final PsiJavaToken javaToken = (PsiJavaToken)child;
+                        final IElementType tokenType = javaToken.getTokenType();
+                        if (tokenType == JavaTokenType.QUEST) {
+                            return;
+                        }
+                    }
                     child.delete();
-                    child = nextChild;
+                    child = typeElement.getLastChild();
                 }
             }
         }
