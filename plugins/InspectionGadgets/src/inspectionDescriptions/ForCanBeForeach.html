@@ -4,6 +4,10 @@
 This inspection reports any instances of <b><font color="#000080">for</font></b> loops which iterate
 over collections or arrays, and can be replaced with the JDK 5.0 "for each" iteration syntax.
 <p>
-For safety, this inspection is disabled unless the project uses JDK 5.0.
+The setting <b>Report java.util.List indexed loops</b> is responsible for finding loops involving <b><font color="#000080">list.get(index)</font></b> calls.
+These loops generally can be replaced with the <b><font color="#000080">foreach</font></b> loops, unless they modify underlying list in the process, e.g. by calling <b><font color="#000080">list.remove(index)</font></b>.
+If latter is the case, <b><font color="#000080">foreach</font></b> form of loop may throw <b><font color="#000080">ConcurrentModificationException</font></b>.
+<p>
+For safety, this inspection is disabled unless the project uses <b>JDK 5.0</b>.
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>

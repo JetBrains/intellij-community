@@ -23,8 +23,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -40,17 +40,27 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ForCanBeForeachInspection extends StatementInspection{
+import javax.swing.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
+public class ForCanBeForeachInspection extends StatementInspection{
+  private JCheckBox myReportIndexedLoop;
+  private JPanel myPanel;
+  public boolean REPORT_INDEXED_LOOP = true;
+
+  @NotNull
     public String getID(){
         return "ForLoopReplaceableByForEach";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "for.can.be.foreach.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName(){
         return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
@@ -767,7 +777,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
     }
 
-    private static class ForCanBeForeachVisitor
+    private class ForCanBeForeachVisitor
             extends StatementInspectionVisitor{
 
         public void visitForStatement(@NotNull PsiForStatement forStatement){
@@ -778,13 +788,24 @@ public class ForCanBeForeachInspection extends StatementInspection{
             }
             if(isArrayLoopStatement(forStatement)
                     || isCollectionLoopStatement(forStatement)
-                    || isIndexedListLoopStatement(forStatement)){
+                    || (REPORT_INDEXED_LOOP && isIndexedListLoopStatement(forStatement))){
                 registerStatementError(forStatement);
             }
         }
     }
 
-    static boolean isIndexedListLoopStatement(
+  @Nullable
+  public JComponent createOptionsPanel() {
+    myReportIndexedLoop.setSelected(REPORT_INDEXED_LOOP);
+    myReportIndexedLoop.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        REPORT_INDEXED_LOOP = myReportIndexedLoop.isSelected();
+      }
+    });
+    return myPanel;
+  }
+
+  private static boolean isIndexedListLoopStatement(
             PsiForStatement forStatement){
         final PsiStatement initialization = forStatement.getInitialization();
         if(!(initialization instanceof PsiDeclarationStatement)){
