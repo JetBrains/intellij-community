@@ -16,8 +16,5 @@
       <interface-class>com.intellij.openapi.localVcs.LocalVcsServices</interface-class>
       <implementation-class>com.intellij.openapi.localVcs.impl.LocalVcsServicesImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.localvcs.integration.LocalVcsComponent</implementation-class>
-    </component>
   </project-components>
 </components>
