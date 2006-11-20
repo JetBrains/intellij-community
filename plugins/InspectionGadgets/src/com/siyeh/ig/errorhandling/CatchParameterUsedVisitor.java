@@ -22,6 +22,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor{
+
     private final PsiParameter parameter;
     private boolean used = false;
 
@@ -36,7 +37,8 @@ class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression reference){
+    public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression reference){
         if(used){
             return;
         }

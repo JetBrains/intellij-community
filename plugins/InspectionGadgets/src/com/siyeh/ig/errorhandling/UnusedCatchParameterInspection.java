@@ -34,6 +34,8 @@ public class UnusedCatchParameterInspection extends StatementInspection {
     public boolean m_ignoreCatchBlocksWithComments = false;
     /** @noinspection PublicField */
     public boolean m_ignoreTestCases = false;
+    /** @noinspecion PublicField */
+    public boolean m_ignoreIgnoreParameter = true;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -53,6 +55,9 @@ public class UnusedCatchParameterInspection extends StatementInspection {
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "unused.catch.parameter.ignore.empty.option"),
                 "m_ignoreTestCases");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "unused.catch.parameter.ignore.name.option"),
+                "m_ignoreIgnoreParameter");
         return optionsPanel;
     }
 
@@ -82,13 +87,18 @@ public class UnusedCatchParameterInspection extends StatementInspection {
         }
 
         private void checkCatchSection(PsiCatchSection section) {
-            final PsiParameter param = section.getParameter();
-            final PsiCodeBlock block = section.getCatchBlock();
-            if (param == null || block == null) {
+            final PsiParameter parameter = section.getParameter();
+            if (parameter == null) {
                 return;
             }
-            @NonNls final String paramName = param.getName();
-            if ("ignore".equals(paramName) || "ignored".equals(paramName)) {
+            @NonNls final String parametername = parameter.getName();
+            if (m_ignoreIgnoreParameter &&
+                    ("ignore".equals(parametername) ||
+                            "ignored".equals(parametername))) {
+                return;
+            }
+            final PsiCodeBlock block = section.getCatchBlock();
+            if (block == null) {
                 return;
             }
             if (m_ignoreCatchBlocksWithComments) {
@@ -100,11 +110,12 @@ public class UnusedCatchParameterInspection extends StatementInspection {
                 }
             }
             final CatchParameterUsedVisitor visitor =
-                    new CatchParameterUsedVisitor(param);
+                    new CatchParameterUsedVisitor(parameter);
             block.accept(visitor);
-            if (!visitor.isUsed()) {
-                registerVariableError(param);
+            if (visitor.isUsed()) {
+                return;
             }
+            registerVariableError(parameter);
         }
     }
 }

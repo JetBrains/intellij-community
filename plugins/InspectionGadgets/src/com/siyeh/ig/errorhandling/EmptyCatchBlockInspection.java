@@ -25,6 +25,7 @@ import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.JComponent;
 
@@ -34,6 +35,8 @@ public class EmptyCatchBlockInspection extends StatementInspection {
     public boolean m_includeComments = true;
     /** @noinspection PublicField */
     public boolean m_ignoreTestCases = true;
+    /** @noinspecion PublicField */
+    public boolean m_ignoreIgnoreParameter = true;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -61,6 +64,9 @@ public class EmptyCatchBlockInspection extends StatementInspection {
                 "empty.catch.block.comments.option"), "m_includeComments");
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "empty.catch.block.ignore.option"), "m_ignoreTestCases");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "empty.catch.block.ignore.ignore.option"),
+                "m_ignoreIgnoreParameter");
         return optionsPanel;
     }
 
@@ -72,9 +78,9 @@ public class EmptyCatchBlockInspection extends StatementInspection {
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
-          if (PsiUtil.isInJspFile(statement.getContainingFile())) {
-            return;
-          }
+            if (PsiUtil.isInJspFile(statement.getContainingFile())) {
+                return;
+            }
             if (m_ignoreTestCases &&
                     TestUtils.isPartOfJUnitTestMethod(statement)) {
                 return;
@@ -82,14 +88,30 @@ public class EmptyCatchBlockInspection extends StatementInspection {
             final PsiCatchSection[] catchSections =
                     statement.getCatchSections();
             for (final PsiCatchSection section : catchSections) {
-                final PsiCodeBlock block = section.getCatchBlock();
-                if (block != null && catchBlockIsEmpty(block)) {
-                    final PsiElement catchToken = section.getFirstChild();
-                    if (catchToken != null) {
-                        registerError(catchToken);
-                    }
+                checkCatchSection(section);
+            }
+        }
+
+        private void checkCatchSection(PsiCatchSection section) {
+            final PsiCodeBlock block = section.getCatchBlock();
+            if (block == null || !catchBlockIsEmpty(block)) {
+                return;
+            }
+            final PsiParameter parameter = section.getParameter();
+            if (parameter != null) {
+                @NonNls final String parametername =
+                        parameter.getName();
+                if (m_ignoreIgnoreParameter &&
+                        ("ignore".equals(parametername) ||
+                                "ignored".equals(parametername))) {
+                    return;
                 }
             }
+            final PsiElement catchToken = section.getFirstChild();
+            if (catchToken == null) {
+                return;
+            }
+            registerError(catchToken);
         }
 
         private boolean catchBlockIsEmpty(PsiCodeBlock block) {
