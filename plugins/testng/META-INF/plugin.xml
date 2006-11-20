@@ -39,6 +39,7 @@
         Fixed occassional ConcurrentModificationException error<br>
         Correctly highlight invalid configuration icon if invalid class/package specified<br>
         Use module JDK if module classpath is specified instead of project JDK<br>
+        Group browser now only shows groups from the current module, rather than the whole project, which should speed it up significantly<br>
         ]]>
     </change-notes>
 </idea-plugin>
