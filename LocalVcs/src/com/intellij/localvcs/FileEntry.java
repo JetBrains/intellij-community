@@ -1,11 +1,8 @@
 package com.intellij.localvcs;
 
-import java.io.IOException;
+import static com.intellij.localvcs.Difference.Kind.*;
 
-import static com.intellij.localvcs.Difference.Kind.CREATED;
-import static com.intellij.localvcs.Difference.Kind.DELETED;
-import static com.intellij.localvcs.Difference.Kind.MODIFIED;
-import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
+import java.io.IOException;
 
 public class FileEntry extends Entry {
   // todo change String to ByteArray or something else
@@ -18,8 +15,7 @@ public class FileEntry extends Entry {
 
   public FileEntry(Stream s) throws IOException {
     super(s);
-    myState = new FileEntryState(s.readString(),
-                                 s.readString());
+    myState = new FileEntryState(s.readString(), s.readString());
   }
 
   @Override
@@ -56,8 +52,7 @@ public class FileEntry extends Entry {
 
   @Override
   public Difference getDifferenceWith(Entry e) {
-    boolean modified = !getName().equals(e.getName()) ||
-                       !getContent().equals(e.getContent());
+    boolean modified = !getName().equals(e.getName()) || !getContent().equals(e.getContent());
     return new Difference(true, modified ? MODIFIED : NOT_MODIFIED, this, e);
   }
 
