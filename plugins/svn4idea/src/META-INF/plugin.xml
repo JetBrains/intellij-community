@@ -34,6 +34,9 @@
       <implementation-class>org.jetbrains.idea.svn.history.SvnChangesBrowserSettings</implementation-class>
       <option name="workspace" value="true"/>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.svn.SvnPatchBaseVersionProvider</implementation-class>
+    </component>
   </project-components>
 
   <actions>
