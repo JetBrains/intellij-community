@@ -3,6 +3,7 @@ package com.intellij.localvcs;
 import java.util.ArrayList;
 import java.util.List;
 
+// todo get rid of Path parameters
 public class LocalVcs {
   private Storage myStorage;
 
@@ -27,6 +28,10 @@ public class LocalVcs {
     myStorage.storeChangeList(myChangeList);
     myStorage.storeRootEntry(myRoot);
     myStorage.storeCounter(myEntryCounter);
+  }
+
+  public RootEntry getRoot() {
+    return myRoot;
   }
 
   public boolean hasEntry(Path path) {

@@ -1,6 +1,6 @@
 package com.intellij.localvcs;
 
-class TestStorage extends Storage {
+public class TestStorage extends Storage {
   public TestStorage() { super(null); }
 
   @Override

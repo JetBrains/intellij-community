@@ -10,7 +10,7 @@ import static com.intellij.localvcs.Difference.Kind.MODIFIED;
 import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 
 public class DirectoryEntry extends Entry {
-  private String myName;
+  protected String myName;
   private List<Entry> myChildren = new ArrayList<Entry>();
 
   public DirectoryEntry(Integer id, String name) {

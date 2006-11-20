@@ -15,6 +15,13 @@ public class RootEntryTest extends TestCase {
   }
 
   @Test
+  public void testRenaming() {
+    root.setPath("c:/root");
+    assertEquals("c:/root", root.getName());
+    assertEquals(p("c:/root"), root.getPath());
+  }
+
+  @Test
   public void testIdPathToChildren() {
     assertEquals(idp(1), child.getIdPath());
   }

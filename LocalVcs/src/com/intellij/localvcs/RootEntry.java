@@ -21,6 +21,11 @@ public class RootEntry extends DirectoryEntry {
     s.writeInteger(myChangeListIndex);
   }
 
+  public void setPath(String path) {
+    // todo refactor path stuffs
+    myName = path;
+  }
+
   public Integer getChangeListIndex() {
     return myChangeListIndex;
   }
