@@ -52,6 +52,10 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testfieldsReading() throws Exception {
+    doTest();
+  }
+
   public void testSCR6073() throws Exception {
     doTest();
   }

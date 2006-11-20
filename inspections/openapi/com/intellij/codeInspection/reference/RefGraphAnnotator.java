@@ -53,4 +53,22 @@ public abstract class RefGraphAnnotator {
                                boolean referencedFromClassInitializer) {
   }
 
+  /**
+   * Called when a reference to the specified element has been found.
+   *
+   * @param refWhat                        the referenced element.
+   * @param refFrom                        the referencing element.
+   * @param referencedFromClassInitializer if true, <code>refFrom</code> is a class and the reference
+   *                                       has been found in its initializer block.
+   * @param forReading                     used for reading
+   * @param forWriting                     used for writing
+   */
+  public void onMarkReferenced(RefElement refWhat,
+                               RefElement refFrom,
+                               boolean referencedFromClassInitializer,
+                               boolean forReading,
+                               boolean forWriting) {
+    onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer);
+  }
+
 }

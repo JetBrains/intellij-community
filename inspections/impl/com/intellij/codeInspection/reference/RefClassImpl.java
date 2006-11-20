@@ -292,7 +292,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       }
       myInTypeReferences.add(from);
       ((RefElementImpl)from).addOutTypeRefernce(this);
-      ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, from, false);
+      ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, from, false, false, false);
     }
   }
 

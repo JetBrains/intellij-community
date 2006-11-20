@@ -178,7 +178,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     addInReference(refFrom);
-    ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, refFrom, false);
+    ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting);
   }
 
   public boolean isReachable() {

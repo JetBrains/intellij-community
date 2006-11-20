@@ -62,7 +62,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
     if (forReading) {
       setUsedForReading(true);
     }
-    ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer);
+    ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting);
   }
 
   public boolean isUsedForReading() {

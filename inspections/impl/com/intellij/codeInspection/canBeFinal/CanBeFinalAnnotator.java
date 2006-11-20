@@ -2,8 +2,11 @@ package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.javaee.ejb.role.*;
 import com.intellij.javaee.ejb.EjbHelper;
+import com.intellij.javaee.ejb.role.EjbClassRole;
+import com.intellij.javaee.ejb.role.EjbDeclMethodRole;
+import com.intellij.javaee.ejb.role.EjbImplMethodRole;
+import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 
@@ -75,10 +78,15 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     }
   }
 
-  public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
+
+  public void onMarkReferenced(RefElement refWhat,
+                               RefElement refFrom,
+                               boolean referencedFromClassInitializer,
+                               boolean forReading,
+                               boolean forWriting) {
     if (!(refWhat instanceof RefField)) return;
     if (!(refFrom instanceof RefMethod) || !((RefMethod)refFrom).isConstructor() || ((PsiField)refWhat.getElement()).hasInitializer()) {
-      if (!referencedFromClassInitializer) {
+      if (!referencedFromClassInitializer  && forWriting) {
         ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
       }
     }
