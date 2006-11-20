@@ -31,149 +31,49 @@
  */
 package com.intellij.javaee.module;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.javaee.J2EEBundle;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.HashMap;
-
 public class ModuleLinkImpl extends ModuleLink {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.javaee.module.ModuleLink");
-  @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
-  @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
-  private Module myModule;
-  private String myModuleName;
-  private static Map<J2EEPackagingMethod, String> methodToDescription = new HashMap<J2EEPackagingMethod, String>();
 
-  static {
-    methodToDescription.put(J2EEPackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
-    methodToDescription.put(J2EEPackagingMethod.COPY_FILES, CompilerBundle.message("packaging.method.description.copy.module.output"));
-    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE, CompilerBundle.message("packaging.method.description.jar.module.and.copy"));
-    methodToDescription.put(J2EEPackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST, CompilerBundle.message("packaging.method.description.jar.module.link.via.manifest.and.copy"));
-    methodToDescription.put(J2EEPackagingMethod.INCLUDE_MODULE_IN_BUILD, CompilerBundle.message("packaging.method.description.include.module.in.build"));
+  protected com.intellij.openapi.module.impl.ModuleLinkImpl getDelegate() {
+    return (com.intellij.openapi.module.impl.ModuleLinkImpl)super.getDelegate();
+  }
+
+  private ModuleLinkImpl(final com.intellij.openapi.module.impl.ModuleLinkImpl delegate) {
+    super(delegate);
   }
 
   public ModuleLinkImpl(Module module, Module parentModule) {
-    super(parentModule);
-    LOG.assertTrue(module != null);
-    myModule = module;
+    this(new com.intellij.openapi.module.impl.ModuleLinkImpl(module, parentModule));
   }
 
   public ModuleLinkImpl(String moduleName, Module parentModule) {
-    super(parentModule);
-    myModuleName = moduleName;
-  }
-
-  private Module getModule(ModulesProvider provider) {
-    if (myModule != null && myModule.isDisposed()) {
-      myModule = null;
-    }
-    if (myModule == null) {
-      myModule = provider.getModule(myModuleName);
-    }
-    return myModule;
+    this(new com.intellij.openapi.module.impl.ModuleLinkImpl(moduleName, parentModule));
   }
 
   public @Nullable Module getModule() {
-    if (myModule != null && myModule.isDisposed()) {
-      myModule = null;
-    }
-    if (myModule == null) {
-      myModule = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-        public Module compute() {
-          return ModuleManager.getInstance(getParentModule().getProject()).findModuleByName(myModuleName);
-        }
-      });
-    }
-    return myModule;
-  }
-
-  public String toString() {
-    return CompilerBundle.message("module.link.string.representation", getName(), getURI());
-  }
-
-  public boolean equalsIgnoreAttributes(ContainerElement otherElement) {
-    if (!(otherElement instanceof ModuleLink)) return false;
-    return Comparing.strEqual(((ModuleLink)otherElement).getName(), getName());
+    return getDelegate().getModule();
   }
 
   public String getId() {
-    return getId(getModule());
+    return getDelegate().getId();
   }
 
   public boolean hasId(String id) {
-    return hasId(getModule(), id);
-  }
-
-  public String getPresentableName() {
-    return getName();
-  }
-
-  public String getDescription() {
-    final Module module = getModule();
-    return module == null ? "" : module.getModuleType().getName();
-  }
-
-  public String getDescriptionForPackagingMethod(J2EEPackagingMethod method) {
-    return methodToDescription.get(method);
+    return getDelegate().hasId(id);
   }
 
   public boolean resolveElement(ModulesProvider provider) {
-    return getModule(provider) != null;
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    super.readExternal(element);
-    myModuleName = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
-    migratePackagingMethods();
-  }
-
-  private void migratePackagingMethods() {
-    if (getPackagingMethod() == J2EEPackagingMethod.COPY_CLASSES) {
-      setPackagingMethod(J2EEPackagingMethod.COPY_FILES);
-    }
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    super.writeExternal(element);
-    element.setAttribute(NAME_ATTRIBUTE_NAME, getName());
+    return getDelegate().resolveElement(provider);
   }
 
   public String getName() {
-    if (myModule == null) {
-      return myModuleName;
-    }
-    else {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        public String compute() {
-          return myModule.getName();
-        }
-      });
-    }
+    return getDelegate().getName();
   }
 
-  public ModuleLink clone() {
-    ModuleLink moduleLink = new ModuleLinkImpl(getName(), getParentModule());
-    Element temp = new Element(TEMP_ELEMENT_NAME);
-    try {
-      writeExternal(temp);
-      moduleLink.readExternal(temp);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return moduleLink;
+  public ModuleLinkImpl clone() {
+    return new ModuleLinkImpl((com.intellij.openapi.module.impl.ModuleLinkImpl)getDelegate().clone());
   }
 }

@@ -1,4 +1,11 @@
 <components>
+  <application-components>
+    <component>
+      <interface-class>com.intellij.openapi.compiler.make.MakeUtil</interface-class>
+      <implementation-class>com.intellij.compiler.impl.make.MakeUtilImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </application-components>
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.compiler.CompilerManager</interface-class>

@@ -24,11 +24,18 @@ import java.io.File;
 
 /**
  * @author Alexey Kudravtsev
+ *
+ * @deprecated use {@link com.intellij.openapi.module.ModuleLink}
  */
 public abstract class ModuleLink extends ContainerElement {
 
+  @Deprecated
   public ModuleLink(Module parentModule) {
     super(parentModule);
+  }
+
+  protected ModuleLink(final com.intellij.openapi.module.ModuleLink delegate) {
+    super(delegate);
   }
 
   public abstract @Nullable Module getModule();

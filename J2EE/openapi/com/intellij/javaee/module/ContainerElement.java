@@ -23,98 +23,101 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
+/**
+ * @deprecated use {@link com.intellij.openapi.module.ContainerElement}
+ */
 public abstract class ContainerElement implements JDOMExternalizable, Cloneable, ResolvableElement {
-  private final Map<String,String> myAttributes = new LinkedHashMap<String, String>();
-  private Module myParentModule;
-  @NonNls private static final String URI_ATTR = "URI";
-  @NonNls private static final String PACKAGING_METHOD_ATTR = "method";
-  @NonNls private static final String ELEMENT_ATTRIBUTE = "attribute";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
+  private final com.intellij.openapi.module.ContainerElement myDelegate;
 
-  protected ContainerElement(Module parentModule) {
-    myParentModule = parentModule;
+  protected ContainerElement(final com.intellij.openapi.module.ContainerElement delegate) {
+    myDelegate = delegate;
   }
 
-  public abstract String getPresentableName();
+  protected com.intellij.openapi.module.ContainerElement getDelegate() {
+    return myDelegate;
+  }
+
+  @SuppressWarnings({"UnusedDeclaration"})
+  @Deprecated
+  protected ContainerElement(Module parentModule) {
+    throw new UnsupportedOperationException();
+  }
+
+  public String getPresentableName() {
+    return getDelegate().getPresentableName();
+  }
 
   public String getURI() {
-    return getAttribute(URI_ATTR);
+    return myDelegate.getURI();
   }
 
   public void setURI(String uri) {
-    setAttribute(URI_ATTR, uri);
+    myDelegate.setURI(uri);
   }
+
   public J2EEPackagingMethod getPackagingMethod() {
-    final String attribute = getAttribute(PACKAGING_METHOD_ATTR);
-    return attribute == null ? J2EEPackagingMethod.DO_NOT_PACKAGE : J2EEPackagingMethod.getDeploymentMethodById(attribute);
+    return J2EEPackagingMethod.getPackagingMethod(myDelegate.getPackagingMethod());
   }
+
   public void setPackagingMethod(J2EEPackagingMethod method) {
-    setAttribute(PACKAGING_METHOD_ATTR, method.getId());
+    myDelegate.setPackagingMethod(method.getDelegate());
   }
 
   public void setAttribute(String name, String value) {
-    myAttributes.put(name, value);
+    myDelegate.setAttribute(name, value);
   }
+
   public String getAttribute(String name) {
-    return myAttributes.get(name);
+    return myDelegate.getAttribute(name);
   }
 
   public Module getParentModule() {
-    return myParentModule;
+    return myDelegate.getParentModule();
   }
+
   public void setParentModule(Module module) {
-    myParentModule = module;
+    myDelegate.setParentModule(module);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    final List attrs = element.getChildren(ELEMENT_ATTRIBUTE);
-    for (int i = 0; i < attrs.size(); i++) {
-      Element attribute = (Element)attrs.get(i);
-      final String name = attribute.getAttributeValue(ATTRIBUTE_NAME);
-      final String value = attribute.getAttributeValue(ATTRIBUTE_VALUE);
-      setAttribute(name, value);
-    }
+    myDelegate.readExternal(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator iterator = myAttributes.keySet().iterator(); iterator.hasNext();) {
-      String name = (String)iterator.next();
-      String value = getAttribute(name);
-      final Element attr = new Element(ELEMENT_ATTRIBUTE);
-      attr.setAttribute(ATTRIBUTE_NAME, name);
-      attr.setAttribute(ATTRIBUTE_VALUE, value==null?"":value);
-      element.addContent(attr);
-    }
+    myDelegate.writeExternal(element);
   }
 
-  public abstract boolean equalsIgnoreAttributes(ContainerElement otherElement);
+  public boolean equalsIgnoreAttributes(ContainerElement otherElement) {
+    if (this == otherElement) return true;
+    return myDelegate.equalsIgnoreAttributes(otherElement.myDelegate);
+  }
+
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ContainerElement)) return false;
 
     final ContainerElement otherElement = (ContainerElement)o;
-    if (!equalsIgnoreAttributes(otherElement)) return false;
-    return myAttributes.equals(otherElement.myAttributes);
+    return myDelegate.equals(otherElement.myDelegate);
   }
 
   public int hashCode() {
-    return 0;
+    return myDelegate.hashCode();
   }
 
-  public abstract String getDescription();
+  public String getDescription() {
+    return myDelegate.getDescription();
+  }
 
-  public abstract String getDescriptionForPackagingMethod(J2EEPackagingMethod method);
+  public String getDescriptionForPackagingMethod(J2EEPackagingMethod method) {
+    return myDelegate.getDescriptionForPackagingMethod(method.getDelegate());
+  }
 
   public ContainerElement clone() {
     throw new UnsupportedOperationException();
   }
 
+  public String toString() {
+    return getDelegate().toString();
+  }
 }
