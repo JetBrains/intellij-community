@@ -95,7 +95,7 @@ public class TestNGUtil
         }
         return false;
     }
-
+    
     public static boolean hasTest(PsiModifierListOwner element) {
         //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
         //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
@@ -132,22 +132,93 @@ public class TestNGUtil
         return null;
     }
 
-    public static String[] getAllGroups(PsiClass[] classes) {
-        Collection<String> results = new HashSet<String>();
+    /**
+     * Filter the specified collection of classes to return only ones that contain any of the
+     * specified values in the specified annotation parameter. For example, this method can be used
+     * to return all classes that contain all tesng annotations that are in the groups 'foo' or 'bar'.
+     */
+    public static PsiClass[] filterAnnotations(String parameter, Set<String> values, PsiClass[] classes) {
+        Collection<PsiClass> results = new HashSet<PsiClass>();
         Set<String> test = new HashSet<String>(1);
         test.add(TEST_ANNOTATION_FQN);
+        test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
+        for (PsiClass psiClass : classes) {
+            PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, test);
+            if (annotation != null) {
+                PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
+                OUTER:
+                for (PsiNameValuePair aPair : pair) {
+                    if (parameter.equals(aPair.getName())) {
+                        Collection<String> matches = extractValuesFromParameter(aPair);
+                        //check if any matches are in our values
+                        for(String s : matches) {
+                            if(values.contains(s)) {
+                                results.add(psiClass);
+                                break OUTER;
+                            }
+                        }
+                    }
+                }
+            } else {
+                Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
+                for(String s : matches) {
+                    if(values.contains(s)) {
+                        results.add(psiClass);
+                        break;
+                    }
+                }
+            }
+
+            //we already have the class, no need to look through its methods
+            if(results.contains(psiClass)) continue;
+            PsiMethod[] methods = psiClass.getMethods();
+            OUTER:
+            for (PsiMethod method : methods) {
+                annotation = AnnotationUtil.findAnnotation(method, test);
+                if (annotation != null) {
+                    PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
+                    for (PsiNameValuePair aPair : pair) {
+                        if (parameter.equals(aPair.getName())) {
+                            Collection<String> matches = extractValuesFromParameter(aPair);
+                            for(String s : matches) {
+                                if(values.contains(s)) {
+                                    results.add(psiClass);
+                                    break OUTER;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
+                    for(String s : matches) {
+                        if(values.contains(s)) {
+                            results.add(psiClass);
+                            break OUTER;
+                        }
+                    }
+                }
+            }
+        }
+        return results.toArray(new PsiClass[(results.size())]);
+    }
+    
+    public static Set<String> getAnnotationValues(String parameter, PsiClass... classes) {
+        Set<String> results = new HashSet<String>();
+        Set<String> test = new HashSet<String>(1);
+        test.add(TEST_ANNOTATION_FQN);
+        test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
         for (PsiClass psiClass : classes) {
             if (hasTest(psiClass)) {
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, test);
                 if (annotation != null) {
                     PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
                     for (PsiNameValuePair aPair : pair) {
-                        if ("groups".equals(aPair.getName())) {
-                            extractGroupsFromParameter(aPair, results);
+                        if (parameter.equals(aPair.getName())) {
+                            results.addAll(extractValuesFromParameter(aPair));
                         }
                     }
                 } else {
-                    extractGroupsFromJavaDoc(getTextJavaDoc(psiClass), results);
+                    results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter));
                 }
 
                 PsiMethod[] methods = psiClass.getMethods();
@@ -156,25 +227,23 @@ public class TestNGUtil
                     if (annotation != null) {
                         PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
                         for (PsiNameValuePair aPair : pair) {
-                            if ("groups".equals(aPair.getName())) {
-                                extractGroupsFromParameter(aPair, results);
+                            if (parameter.equals(aPair.getName())) {
+                                results.addAll(extractValuesFromParameter(aPair));
                             }
                         }
                     } else {
-                        extractGroupsFromJavaDoc(getTextJavaDoc(method), results);
+                        results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(method), parameter));
                     }
                 }
             }
         }
-        String[] array = results.toArray(new String[results.size()]);
-        Arrays.sort(array);
-        return array;
+        return results;
     }
 
-    private static void extractGroupsFromJavaDoc(PsiDocTag tag, Collection<String> results) {
-        if (tag == null) return;
-
-        Matcher matcher = Pattern.compile("\\@testng.test(?:.*)groups\\s*=\\s*\"(.*)\".*").matcher(tag.getText());
+    private static Collection<String> extractAnnotationValuesFromJavaDoc(PsiDocTag tag, String parameter) {
+        if (tag == null) return Collections.emptyList();
+        Collection<String> results = new ArrayList<String>();
+        Matcher matcher = Pattern.compile("\\@testng.test(?:.*)" + parameter + "\\s*=\\s*\"(.*)\".*").matcher(tag.getText());
         if (matcher.matches()) {
             String groupTag = matcher.group(1);
             String[] groups = groupTag.split("[,\\s]");
@@ -182,9 +251,11 @@ public class TestNGUtil
                 results.add(group.trim());
             }
         }
+        return results;
     }
 
-    private static void extractGroupsFromParameter(PsiNameValuePair aPair, Collection<String> results) {
+    private static Collection<String> extractValuesFromParameter(PsiNameValuePair aPair) {
+        Collection<String> results = new ArrayList<String>();
         PsiAnnotationMemberValue value = aPair.getValue();
         if (value instanceof PsiArrayInitializerMemberValue) {
             for (PsiElement child : value.getChildren()) {
@@ -197,6 +268,7 @@ public class TestNGUtil
                 results.add((String) ((PsiLiteralExpression) value).getValue());
             }
         }
+        return results;
     }
 
     public static PsiClass[] getAllTestClasses(final TestClassFilter filter) {

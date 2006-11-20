@@ -7,6 +7,8 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 
 import java.awt.BorderLayout;
 import java.util.Comparator;
+import java.util.Set;
+import java.util.Arrays;
 import javax.swing.*;
 
 public class GroupList extends JPanel
@@ -23,7 +25,10 @@ public class GroupList extends JPanel
             }
         });
         list = new JList(model);
-        model.addAll(TestNGUtil.getAllGroups(classes));
+        Set<String> groups = TestNGUtil.getAnnotationValues("groups", classes);
+        String[] array = groups.toArray(new String[groups.size()]);
+        Arrays.sort(array);
+        model.addAll(array);
         add(ScrollPaneFactory.createScrollPane(list));
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         ListScrollingUtil.ensureSelectionExists(list);
