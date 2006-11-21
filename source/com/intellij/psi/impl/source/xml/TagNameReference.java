@@ -191,7 +191,10 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
 
       if(descriptorsMap.containsKey(namespace)){
         final XmlElementDescriptor descriptor = descriptorsMap.get(namespace);
-        variants.addAll(Arrays.asList(descriptor.getElementsDescriptors(element)));
+
+        for(XmlElementDescriptor containedDescriptor:descriptor.getElementsDescriptors(element)) {
+          if (containedDescriptor != null) variants.add(containedDescriptor);
+        }
 
         if (element instanceof HtmlTag) {
           HtmlUtil.addHtmlSpecificCompletions(descriptor, element, variants);
@@ -210,7 +213,12 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
 
         if(nsDescriptor != null && !visited.contains(nsDescriptor)){
           visited.add(nsDescriptor);
-          variants.addAll(Arrays.asList(nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class))));
+          final XmlElementDescriptor[] rootElementsDescriptors =
+            nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class));
+          
+          for(XmlElementDescriptor containedDescriptor:rootElementsDescriptors) {
+            if (containedDescriptor != null) variants.add(containedDescriptor);
+          }
         }
       }
     }
