@@ -185,7 +185,7 @@ public class TestNGRunnableState extends JavaCommandLineState
         TestNGDefaultConfigurationComponent testng = project.getComponent(TestNGDefaultConfigurationComponent.class);
         String outputDirectory = testng.getDefaultSettings().getOutputDirectory();
         if (outputDirectory != null && !"".equals(outputDirectory)) {
-            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, "\"" + outputDirectory + "\"");
+            javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, '\"' + outputDirectory + '\"');
         }
 
         // Always include the source paths - just makes things easier :)
@@ -197,17 +197,16 @@ public class TestNGRunnableState extends JavaCommandLineState
 
         if (sources.length > 0) {
             StringBuffer sb = new StringBuffer();
-            sb.append("\"");
+            sb.append('\"');
             for (VirtualFile file : sources) {
                 sb.append(file.getPath());
                 sb.append(';');
             }
-            sb.append("\"");
+            sb.append('\"');
             javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
         }
 
-        PsiClass[] testClasses = null;
-        PsiMethod[] testMethods = null;
+        Map<PsiClass, Collection<PsiMethod>> classes = new HashMap<PsiClass, Collection<PsiMethod>>();
 
         if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
             final String packageName = data.getPackageName();
@@ -216,8 +215,8 @@ public class TestNGRunnableState extends JavaCommandLineState
                 throw CantRunException.packageNotFound(packageName);
             } else {
                 TestClassFilter filter = getFilter(psiPackage);
-                testClasses = getAllTestClasses(filter);
-                if (testClasses.length == 0) {
+                classes = calculateDependencies(data, true, getAllTestClasses(filter));
+                if (classes.size() == 0) {
                     ExecutionUtil.showExecutionErrorMessage(new CantRunException("No tests found in the package \"" + packageName + '\"'), "Can't Run " + config.getName(), project);
                     return null;
                 }
@@ -229,7 +228,7 @@ public class TestNGRunnableState extends JavaCommandLineState
                 ExecutionUtil.showExecutionErrorMessage(new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"'), "Can't Run " + config.getName(), project);
                 return null;
             }
-            testClasses = new PsiClass[] {psiClass};
+            classes = calculateDependencies(data, true, psiClass);
 
         } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
             //it's a method
@@ -238,11 +237,14 @@ public class TestNGRunnableState extends JavaCommandLineState
                 ExecutionUtil.showExecutionErrorMessage(new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"'), "Can't Run " + config.getName(), project);
                 return null;
             }
-            testClasses = new PsiClass[] {psiClass};
-            testMethods = psiClass.findMethodsByName(data.getMethodName(), false);
+            classes = calculateDependencies(data, false, psiClass);
+            classes.put(psiClass, Arrays.asList(psiClass.findMethodsByName(data.getMethodName(), false)));
         } else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
             //for a group, we include all classes
-            testClasses = getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(config).getGlobalSearchScope(), project, true));
+            PsiClass[] testClasses = getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(config).getGlobalSearchScope(), project, true));
+            for(PsiClass c : testClasses) {
+                classes.put(c, new HashSet<PsiMethod>());
+            }
         }
         //if we have testclasses, then we're not running a suite and we have to create one
         //LaunchSuite suite = null;
@@ -252,17 +254,14 @@ public class TestNGRunnableState extends JavaCommandLineState
         //    packages.add(testPackage.getQualifiedName());
         //    suite = SuiteGenerator.createCustomizedSuite(config.project.getName(), packages, null, null, null, data.TEST_PROPERTIES, is15 ? null : "javadoc", 0);
         //} else
-        if (testClasses != null) {
-            List<String> classNames = new ArrayList<String>(testClasses.length);
-            for (PsiClass testClass : testClasses) {
-                classNames.add(testClass.getQualifiedName());
-            }
-            Collection<String> methodNames = null;
-            if (testMethods != null) {
-                methodNames = new HashSet<String>(testMethods.length);
-                for (PsiMethod testMethod : testMethods) {
-                    methodNames.add(testMethod.getName());
+        if (classes.size() > 0) {
+            Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
+            for(Map.Entry<PsiClass, Collection<PsiMethod>> entry : classes.entrySet()) {
+                Collection<String> methods = new HashSet<String>(entry.getValue().size());
+                for(PsiMethod method : entry.getValue()) {
+                    methods.add(method.getName());
                 }
+                map.put(entry.getKey().getQualifiedName(), methods);
             }
             // We have groups we wish to limit to.
             Collection<String> groupNames = null;
@@ -279,7 +278,7 @@ public class TestNGRunnableState extends JavaCommandLineState
             String annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
             LOGGER.info("Using annotationType of " + annotationType);
 
-            LaunchSuite suite = SuiteGenerator.createCustomizedSuite(project.getName(), null, classNames, methodNames, groupNames, testParams, annotationType, 1);
+            LaunchSuite suite = SuiteGenerator.createSuite(project.getName(), null, map, groupNames, testParams, annotationType, 1);
 
             File xmlFile = suite.save(new File(PathManager.getSystemPath()));
             javaParameters.getProgramParametersList().add(xmlFile.getAbsolutePath());
@@ -395,6 +394,24 @@ public class TestNGRunnableState extends JavaCommandLineState
         }
     }
 
+    private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(TestData data, boolean includeClasses, PsiClass... classes) {
+        //we build up a list of dependencies
+        Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
+        if(includeClasses) {
+            for(PsiClass c : classes) {
+                results.put(c, new HashSet<PsiMethod>());
+            }
+        }
+        Set<String> dependencies = TestNGUtil.getAnnotationValues("dependsOnGroups", classes);
+        PsiManager psiManager = PsiManager.getInstance(classes[0].getProject());
+        //we get all classes in the module to figure out which are in the groups we depend on
+        PsiClass[] allClasses = psiManager.getSearchHelper().findAllClasses(data.getScope().getSourceScope(config).getGlobalSearchScope());
+        Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
+        //we now have a list of dependencies, and a list of classes that match those dependencies
+        results.putAll(filteredClasses);
+        return results;
+    }
+    
     private TestClassFilter getFilter(PsiPackage psiPackage) {
         TestSearchScope scope = config.getPersistantData().getScope();
         //TODO we should narrow this down by module really, if that's what's specified

@@ -137,8 +137,8 @@ public class TestNGUtil
      * specified values in the specified annotation parameter. For example, this method can be used
      * to return all classes that contain all tesng annotations that are in the groups 'foo' or 'bar'.
      */
-    public static PsiClass[] filterAnnotations(String parameter, Set<String> values, PsiClass[] classes) {
-        Collection<PsiClass> results = new HashSet<PsiClass>();
+    public static Map<PsiClass, Collection<PsiMethod>> filterAnnotations(String parameter, Set<String> values, PsiClass[] classes) {
+        Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
         Set<String> test = new HashSet<String>(1);
         test.add(TEST_ANNOTATION_FQN);
         test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
@@ -153,7 +153,8 @@ public class TestNGUtil
                         //check if any matches are in our values
                         for(String s : matches) {
                             if(values.contains(s)) {
-                                results.add(psiClass);
+                                
+                                results.put(psiClass, new HashSet<PsiMethod>());
                                 break OUTER;
                             }
                         }
@@ -163,26 +164,26 @@ public class TestNGUtil
                 Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
                 for(String s : matches) {
                     if(values.contains(s)) {
-                        results.add(psiClass);
+                        results.put(psiClass, new HashSet<PsiMethod>());
                         break;
                     }
                 }
             }
 
             //we already have the class, no need to look through its methods
-            if(results.contains(psiClass)) continue;
             PsiMethod[] methods = psiClass.getMethods();
-            OUTER:
             for (PsiMethod method : methods) {
                 annotation = AnnotationUtil.findAnnotation(method, test);
                 if (annotation != null) {
                     PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
+                    OUTER:
                     for (PsiNameValuePair aPair : pair) {
                         if (parameter.equals(aPair.getName())) {
                             Collection<String> matches = extractValuesFromParameter(aPair);
                             for(String s : matches) {
                                 if(values.contains(s)) {
-                                    results.add(psiClass);
+                                    if(results.get(psiClass) == null) results.put(psiClass, new HashSet<PsiMethod>());
+                                    results.get(psiClass).add(method);
                                     break OUTER;
                                 }
                             }
@@ -192,14 +193,13 @@ public class TestNGUtil
                     Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
                     for(String s : matches) {
                         if(values.contains(s)) {
-                            results.add(psiClass);
-                            break OUTER;
+                            results.get(psiClass).add(method);
                         }
                     }
                 }
             }
         }
-        return results.toArray(new PsiClass[(results.size())]);
+        return results;
     }
     
     public static Set<String> getAnnotationValues(String parameter, PsiClass... classes) {

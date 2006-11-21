@@ -2,7 +2,7 @@
 <idea-plugin>
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
-    <version>0.3.16</version>
+    <version>0.5.0</version>
     <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
     <idea-version since-build="5594"/>
     <application-components>
@@ -39,6 +39,7 @@
         Fixed occassional ConcurrentModificationException error<br>
         Correctly highlight invalid configuration icon if invalid class/package specified<br>
         Use module JDK if module classpath is specified instead of project JDK<br>
+        Added experimental support for automatically detecting and including group dependency when running a single class or method<br>
         Group browser now only shows groups from the current module, rather than the whole project, which should speed it up significantly<br>
         ]]>
     </change-notes>

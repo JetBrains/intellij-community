@@ -16,7 +16,10 @@
           <root url="jar://$MODULE_DIR$/lib/testng-jdk15.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/../testng/src/main" />
+          <root url="file://$MODULE_DIR$/../testng/src/jdk15" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
