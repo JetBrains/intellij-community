@@ -60,17 +60,6 @@ public class FileStatusMap {
     }
   }
 
-  public void markFileDirty(@NotNull Document document) {
-    synchronized(myDocumentToStatusMap){
-      myDocumentToStatusMap.remove(document);
-    }
-
-    synchronized(myRefCountHolderLock){
-      document.putUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY, null);
-      myDocumentsWithRefCountHolders.remove(document);
-    }
-  }
-
   public void markFileUpToDate(@NotNull Document document, int part) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);

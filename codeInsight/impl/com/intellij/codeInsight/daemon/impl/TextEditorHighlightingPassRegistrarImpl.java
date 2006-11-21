@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,7 @@ import java.util.Map;
  * User: anna
  * Date: 19-Apr-2006
  */
-public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitingPassRegistrarEx {
+public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   private boolean myNeedAdditionalIntentionsPass = false;
   private Map<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>> myRegisteredPasses = null;
   private int[] myPostHighlightingPassGroups = UpdateHighlightersUtil.POST_HIGHLIGHT_GROUPS;
@@ -58,44 +57,46 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlitin
     return myPostHighlightingPassGroups[myPostHighlightingPassGroups.length - 1];
   }
 
-  public TextEditorHighlightingPass[] modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
+  public void modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
                                                                final PsiFile psiFile,
                                                                final Editor editor) {
     if (myRegisteredPasses == null || psiFile == null){ //do nothing with non-project files
-      return passes.toArray(new TextEditorHighlightingPass[passes.size()]);
+      return;
     }
-    List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(passes);
     for (TextEditorHighlightingPassFactory factory : myRegisteredPasses.keySet()) {
       final TextEditorHighlightingPass editorHighlightingPass = factory.createHighlightingPass(psiFile, editor);
       if (editorHighlightingPass == null) continue;
       final Pair<Anchor, Integer> location = myRegisteredPasses.get(factory);
       final Anchor anchor = location.first;
-      if (anchor == Anchor.FIRST){
-        result.add(0, editorHighlightingPass);
-      } else if (anchor == Anchor.LAST){
-        result.add(editorHighlightingPass);
-      } else {
+      if (anchor == Anchor.FIRST) {
+        passes.add(0, editorHighlightingPass);
+      }
+      else if (anchor == Anchor.LAST) {
+        passes.add(editorHighlightingPass);
+      }
+      else {
         final int passId = location.second.intValue();
         int anchorPassIdx = -1;
-        for (int idx = 0; idx < result.size(); idx++) {
-          final TextEditorHighlightingPass highlightingPass = result.get(idx);
-          if (highlightingPass.getPassId() == passId){
+        for (int idx = 0; idx < passes.size(); idx++) {
+          final TextEditorHighlightingPass highlightingPass = passes.get(idx);
+          if (highlightingPass.getPassId() == passId) {
             anchorPassIdx = idx;
             break;
           }
         }
-        if (anchorPassIdx != -1){
-          if (anchor == Anchor.BEFORE){
-            result.add(Math.max(0, anchorPassIdx - 1), editorHighlightingPass);
-          } else {
-            result.add(anchorPassIdx +1, editorHighlightingPass);
+        if (anchorPassIdx == -1) {
+          passes.add(editorHighlightingPass);
+        }
+        else {
+          if (anchor == Anchor.BEFORE) {
+            passes.add(Math.max(0, anchorPassIdx - 1), editorHighlightingPass);
           }
-        } else {
-          result.add(editorHighlightingPass);
+          else {
+            passes.add(anchorPassIdx + 1, editorHighlightingPass);
+          }
         }
       }
     }
-    return result.toArray(new TextEditorHighlightingPass[result.size()]);
   }
 
   public boolean needAdditionalIntentionsPass() {

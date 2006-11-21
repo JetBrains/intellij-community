@@ -17,12 +17,12 @@ import java.util.List;
  * User: anna
  * Date: 21-Jun-2006
  */
-public abstract class TextEditorHighlitingPassRegistrarEx extends TextEditorHighlightingPassRegistrar {
-  public static TextEditorHighlitingPassRegistrarEx getInstanceEx(Project project) {
-    return (TextEditorHighlitingPassRegistrarEx)getInstance(project);
+public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHighlightingPassRegistrar {
+  public static TextEditorHighlightingPassRegistrarEx getInstanceEx(Project project) {
+    return (TextEditorHighlightingPassRegistrarEx)getInstance(project);
   }
 
-  public abstract TextEditorHighlightingPass[] modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
+  public abstract void modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
                                                                         final PsiFile psiFile,
                                                                         final Editor editor);
 

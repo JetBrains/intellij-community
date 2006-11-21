@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
+  public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
   protected final Document myDocument;
   private final Project myProject;
   private final long myInitialStamp;

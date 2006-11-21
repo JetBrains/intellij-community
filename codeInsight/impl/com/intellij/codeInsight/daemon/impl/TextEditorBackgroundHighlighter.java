@@ -43,11 +43,11 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter");
@@ -98,32 +98,33 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   }
 
   private TextEditorHighlightingPass[] getPasses(int[] passesToPerform) {
-    ArrayList<TextEditorHighlightingPass> passes = new ArrayList<TextEditorHighlightingPass>();
-
     renewFile();
-    if (myFile == null) return new TextEditorHighlightingPass[0];
+    if (myFile == null) return TextEditorHighlightingPass.EMPTY_ARRAY;
+
+    List<TextEditorHighlightingPass> passes = new ArrayList<TextEditorHighlightingPass>();
     if (myCompiled && myFile instanceof PsiJavaFile) {
       appendPass(passes, Pass.UPDATE_OVERRIDEN_MARKERS); // show overridden markers in compiled classes
     }
     else if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      for (int aPassesToPerform : passesToPerform) {
-        appendPass(passes, aPassesToPerform);
+      for (int passToPerform : passesToPerform) {
+        appendPass(passes, passToPerform);
       }
     }
-    final TextEditorHighlitingPassRegistrarEx passRegistrar = TextEditorHighlitingPassRegistrarEx.getInstanceEx(myProject);
-    TextEditorHighlightingPass[] highlightingPasses =
-      passRegistrar.modifyHighlightingPasses(passes, myFile, myEditor);
+    final TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
+
+    passRegistrar.modifyHighlightingPasses(passes, myFile, myEditor);
     if (passRegistrar.needAdditionalIntentionsPass()){
       TextRange range = calculateRangeToProcess(myEditor, Pass.POPUP_HINTS2);
       int startOffset = range.getStartOffset();
       int endOffset = range.getEndOffset();
-      highlightingPasses = ArrayUtil.append(highlightingPasses, createDaemonPass(startOffset, endOffset, Pass.POPUP_HINTS2));
+      TextEditorHighlightingPass daemonPass = createDaemonPass(startOffset, endOffset, Pass.POPUP_HINTS2);
+      passes.add(daemonPass);
     }
-    return highlightingPasses;
+    return passes.toArray(new TextEditorHighlightingPass[passes.size()]);
   }
 
-  private void appendPass(ArrayList<TextEditorHighlightingPass> passes, int currentPass) {
+  private void appendPass(List<TextEditorHighlightingPass> passes, int currentPass) {
     TextRange range = calculateRangeToProcess(myEditor, currentPass);
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
@@ -177,7 +178,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         return null;
     }
   }
-
 
   public TextEditorHighlightingPass[] createPassesForVisibleArea() {
     return getPasses(VISIBLE_PASSES);
