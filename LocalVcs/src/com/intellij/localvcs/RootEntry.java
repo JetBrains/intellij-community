@@ -7,7 +7,7 @@ public class RootEntry extends DirectoryEntry {
   private Integer myChangeListIndex = -1;
 
   public RootEntry(String name) {
-    super(null, name);
+    super(null, name, null);
   }
 
   public RootEntry(Stream s) throws IOException {
@@ -81,37 +81,41 @@ public class RootEntry extends DirectoryEntry {
     return result;
   }
 
-  public void doCreateFile(Integer id, Path path, String content) {
-    addEntry(path.getParent(), new FileEntry(id, path.getName(), content));
+  public void doCreateFile(Integer id, Path path, String content, Long timestamp) {
+    FileEntry e = new FileEntry(id, path.getName(), content, timestamp);
+    addEntry(path.getParent(), e);
   }
 
-  public void doCreateDirectory(Integer id, Path path) {
-    addEntry(path.getParent(), new DirectoryEntry(id, path.getName()));
+  public void doCreateDirectory(Integer id, Path path, Long timestamp) {
+    DirectoryEntry e = new DirectoryEntry(id, path.getName(), timestamp);
+    addEntry(path.getParent(), e);
   }
 
-  public void doChangeFileContent(Path path, String newContent) {
+  public void doChangeFileContent(Path path, String newContent, Long timestamp) {
     Entry oldEntry = getEntry(path);
-    Entry newEntry = oldEntry.withContent(newContent);
+    Entry newEntry = oldEntry.withContent(newContent, timestamp);
 
     removeEntry(oldEntry);
     addEntry(path.getParent(), newEntry);
   }
 
-  public void doRename(Path path, String newName) {
+  public void doRename(Path path, String newName, Long timestamp) {
     // todo maybe remove this check?
     if (newName.equals(path.getName())) return;
 
     Entry oldEntry = getEntry(path);
-    Entry newEntry = oldEntry.renamed(newName);
+    Entry newEntry = oldEntry.renamed(newName, timestamp);
 
     removeEntry(oldEntry);
     addEntry(path.getParent(), newEntry);
   }
 
-  public void doMove(Path path, Path parent) {
+  public void doMove(Path path, Path newParentPath, Long timestamp) {
     Entry e = getEntry(path);
+    e.setTimestamp(timestamp); // todo it smells bed
+
     removeEntry(e);
-    addEntry(parent, e);
+    addEntry(newParentPath, e);
   }
 
   public void doDelete(Path path) {

@@ -7,12 +7,15 @@ import java.util.List;
 public class ChangeFileContentChange extends Change {
   private Path myPath;
   private String myNewContent;
+  private Long myTimestamp;
   private String myOldContent;
+  private Long myOldTimestamp;
   private IdPath myAffectedEntryIdPath;
 
-  public ChangeFileContentChange(Path path, String newContent) {
-    myPath = path;
+  public ChangeFileContentChange(String path, String newContent, Long timestamp) {
+    myPath = new Path(path);
     myNewContent = newContent;
+    myTimestamp = timestamp;
   }
 
   public ChangeFileContentChange(Stream s) throws IOException {
@@ -47,14 +50,15 @@ public class ChangeFileContentChange extends Change {
     Entry affectedEntry = root.getEntry(myPath);
 
     myOldContent = affectedEntry.getContent();
+    myOldTimestamp = affectedEntry.getTimestamp();
     myAffectedEntryIdPath = affectedEntry.getIdPath();
 
-    root.doChangeFileContent(myPath, myNewContent);
+    root.doChangeFileContent(myPath, myNewContent, myTimestamp);
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.doChangeFileContent(myPath, myOldContent);
+    root.doChangeFileContent(myPath, myOldContent, myOldTimestamp);
   }
 
   @Override
@@ -65,6 +69,6 @@ public class ChangeFileContentChange extends Change {
   @Override
   public Entry revertFile(Entry e) {
     if (!myAffectedEntryIdPath.getName().equals(e.getId())) return e;
-    return e.withContent(myOldContent);
+    return e.withContent(myOldContent, myOldTimestamp); 
   }
 }

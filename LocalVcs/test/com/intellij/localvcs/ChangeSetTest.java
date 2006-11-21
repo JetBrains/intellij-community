@@ -33,7 +33,7 @@ public class ChangeSetTest extends TestCase {
     private Integer myId;
 
     public LoggingChange(Integer id) {
-      super(null, null, null);
+      super(null, null, null, null);
       myId = id;
     }
 

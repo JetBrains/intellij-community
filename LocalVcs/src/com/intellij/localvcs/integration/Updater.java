@@ -2,7 +2,6 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Path;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -23,13 +22,13 @@ public class Updater {
 
   private static void createNewFiles(LocalVcs vcs, VirtualFile dir) throws IOException {
     for (VirtualFile f : dir.getChildren()) {
-      if (!vcs.hasEntry(new Path(f.getPath()))) {
+      if (!vcs.hasEntry(f.getPath())) {
         if (f.isDirectory()) {
-          vcs.createDirectory(new Path(f.getPath()));
+          vcs.createDirectory(f.getPath(), null);
           createNewFiles(vcs, f);
         }
         else {
-          vcs.createFile(new Path(f.getPath()), new String(f.contentsToByteArray()));
+          vcs.createFile(f.getPath(), new String(f.contentsToByteArray()), null);
         }
       }
     }
@@ -42,7 +41,7 @@ public class Updater {
       VirtualFile f = dir.findChild(e.getPath().getName());
 
       if (f == null) {
-        vcs.delete(e.getPath());
+        vcs.delete(e.getPath().getPath());
       }
       else {
         if (e.isDirectory()) {

@@ -8,8 +8,8 @@ public class FileEntry extends Entry {
   // todo change String to ByteArray or something else
   private FileEntryState myState;
 
-  public FileEntry(Integer id, String name, String content) {
-    super(id);
+  public FileEntry(Integer id, String name, String content, Long timestamp) {
+    super(id, timestamp);
     myState = new FileEntryState(name, content);
   }
 
@@ -38,16 +38,16 @@ public class FileEntry extends Entry {
   @Override
   public FileEntry copy() {
     // todo create constructor with FileEntryState parameter
-    return new FileEntry(myId, getName(), getContent());
+    return new FileEntry(myId, getName(), getContent(), null);
   }
 
-  public Entry renamed(String newName) {
-    return new FileEntry(myId, newName, getContent());
+  public Entry renamed(String newName, final Long timestamp) {
+    return new FileEntry(myId, newName, getContent(), timestamp);
   }
 
   @Override
-  public Entry withContent(String newContent) {
-    return new FileEntry(myId, getName(), newContent);
+  public Entry withContent(String newContent, Long timestamp) {
+    return new FileEntry(myId, getName(), newContent, timestamp);
   }
 
   @Override

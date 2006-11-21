@@ -5,15 +5,20 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CreateFileChange extends Change {
+  // todo test storing of all the changes and test it once and for all times 8))
+
+  private Integer myId;
   private Path myPath;
   private String myContent;
-  private Integer myId;
+  private Long myTimestamp;
+
   private IdPath myAffectedEntryIdPath;
 
-  public CreateFileChange(Integer id, Path path, String content) {
-    myPath = path;
-    myContent = content;
+  public CreateFileChange(Integer id, String path, String content, Long timestamp) {
     myId = id;
+    myPath = new Path(path);
+    myContent = content;
+    myTimestamp = timestamp;
   }
 
   public CreateFileChange(Stream s) throws IOException {
@@ -39,7 +44,7 @@ public class CreateFileChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateFile(myId, myPath, myContent);
+    root.doCreateFile(myId, myPath, myContent, myTimestamp);
     myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
   }
 

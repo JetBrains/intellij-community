@@ -8,11 +8,14 @@ public class RenameChange extends Change {
   // todo remove unnecessary fields from all changes (such as path)
   private Path myPath;
   private String myNewName;
+  private Long myTimestamp;
+  private Long myOldTimestamp;
   private IdPath myAffectedEntryIdPath;
 
-  public RenameChange(Path path, String newName) {
-    myPath = path;
+  public RenameChange(String path, String newName, Long timestamp) {
+    myPath = new Path(path);
     myNewName = newName;
+    myTimestamp = timestamp;
   }
 
   public RenameChange(Stream s) throws IOException {
@@ -36,13 +39,20 @@ public class RenameChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
-    root.doRename(myPath, myNewName);
+    Entry affectedEntry = root.getEntry(myPath);
+
+    myOldTimestamp = affectedEntry.getTimestamp();
+    myAffectedEntryIdPath = affectedEntry.getIdPath();
+
+    root.doRename(myPath, myNewName, myTimestamp);
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.doRename(myPath.renamedWith(myNewName), myPath.getName());
+    Path newPath = myPath.renamedWith(myNewName);
+    String oldName = myPath.getName();
+
+    root.doRename(newPath, oldName, myOldTimestamp);
   }
 
   @Override
@@ -53,6 +63,6 @@ public class RenameChange extends Change {
   @Override
   public Entry revertFile(Entry e) {
     if (!myAffectedEntryIdPath.getName().equals(e.getId())) return e;
-    return e.renamed(myPath.getName());
+    return e.renamed(myPath.getName(), myOldTimestamp);
   }
 }

@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class Entry {
-  protected Integer myId;
-  protected DirectoryEntry myParent;
+  protected Integer myId;  // todo maybe make it private and make it basic type
+  protected Long myTimestamp;
+  private DirectoryEntry myParent;
 
-  public Entry(Integer id) {
+  public Entry(Integer id, Long timestamp) {
     myId = id;
+    myTimestamp = timestamp;
   }
 
   public Entry(Stream s) throws IOException {
@@ -35,6 +37,14 @@ public abstract class Entry {
     //todo try to remove this check
     if (!hasParent()) return new Path(getName());
     return myParent.getPathAppendedWith(getName());
+  }
+
+  public Long getTimestamp() {
+    return myTimestamp;
+  }
+
+  public void setTimestamp(Long timestamp) {
+    myTimestamp = timestamp;
   }
 
   public String getContent() {
@@ -79,9 +89,9 @@ public abstract class Entry {
 
   public abstract Entry copy();
 
-  public abstract Entry renamed(String newName);
+  public abstract Entry renamed(String newName, Long timestamp);
 
-  public Entry withContent(String newContent) {
+  public Entry withContent(String newContent, Long timestamp) {
     throw new LocalVcsException();
   }
 

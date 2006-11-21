@@ -26,6 +26,10 @@ public class Path {
     return getParts().get(getParts().size() - 1);
   }
 
+  public String getPath() {
+    return myPath;
+  }
+
   public Path getParent() {
     List<String> parts = getParts();
     parts.remove(parts.size() - 1);

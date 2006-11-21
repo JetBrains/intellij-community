@@ -5,13 +5,16 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CreateDirectoryChange extends Change {
-  private Path myPath;
   private Integer myId;
+  private Path myPath;
+  private Long myTimestamp;
+  
   private IdPath myAffectedEntryIdPath;
 
-  public CreateDirectoryChange(Integer id, Path path) {
-    myPath = path;
+  public CreateDirectoryChange(Integer id, String path, Long timestamp) {
     myId = id;
+    myPath = new Path(path);
+    myTimestamp = timestamp;
   }
 
   public CreateDirectoryChange(Stream s) throws IOException {
@@ -29,7 +32,7 @@ public class CreateDirectoryChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateDirectory(myId, myPath);
+    root.doCreateDirectory(myId, myPath, myTimestamp);
     myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
   }
 

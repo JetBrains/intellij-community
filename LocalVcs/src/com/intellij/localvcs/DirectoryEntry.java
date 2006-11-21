@@ -1,20 +1,17 @@
 package com.intellij.localvcs;
 
+import static com.intellij.localvcs.Difference.Kind.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.localvcs.Difference.Kind.CREATED;
-import static com.intellij.localvcs.Difference.Kind.DELETED;
-import static com.intellij.localvcs.Difference.Kind.MODIFIED;
-import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 
 public class DirectoryEntry extends Entry {
   protected String myName;
   private List<Entry> myChildren = new ArrayList<Entry>();
 
-  public DirectoryEntry(Integer id, String name) {
-    super(id);
+  public DirectoryEntry(Integer id, String name, Long timestamp) {
+    super(id, timestamp);
     myName = name;
   }
 
@@ -116,14 +113,15 @@ public class DirectoryEntry extends Entry {
     return result;
   }
 
-  public Entry renamed(String newName) {
+  public Entry renamed(String newName, Long timestamp) {
     DirectoryEntry result = copy();
     result.myName = newName;
+    result.myTimestamp = timestamp;
     return result;
   }
 
   protected DirectoryEntry copyEntry() {
-    return new DirectoryEntry(myId, myName);
+    return new DirectoryEntry(myId, myName, myTimestamp); // todo test it!
   }
 
   @Override

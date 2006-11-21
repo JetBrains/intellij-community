@@ -23,21 +23,21 @@ public class LocalVcsDifferencesTest extends TestCase {
   @Test
   public void testGettingLabelsForAnUnknownFileThrowsException() {
     try {
-      vcs.getLabelsFor(p("/unknown file"));
+      vcs.getLabelsFor("/unknown file");
       fail();
     } catch (LocalVcsException e) {}
   }
 
   @Test
   public void testNamedAndUnnamedLables() {
-    vcs.createFile(p("/file"), null);
+    vcs.createFile("/file", null, null);
     vcs.apply();
     vcs.putLabel("label");
 
-    vcs.changeFileContent(p("/file"), null);
+    vcs.changeFileContent("/file", null, null);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/file"));
+    List<Label> labels = vcs.getLabelsFor("/file");
     assertEquals(2, labels.size());
 
     assertEquals("label", labels.get(0).getName());
@@ -46,29 +46,29 @@ public class LocalVcsDifferencesTest extends TestCase {
 
   @Test
   public void testDoesNotIncludeLabelsForAnotherEntries() {
-    vcs.createFile(p("/file1"), null);
+    vcs.createFile("/file1", null, null);
     vcs.apply();
     vcs.putLabel("1");
 
-    vcs.createFile(p("/file2"), null);
+    vcs.createFile("/file2", null, null);
     vcs.apply();
     vcs.putLabel("2");
 
-    List<Label> labels = vcs.getLabelsFor(p("/file2"));
+    List<Label> labels = vcs.getLabelsFor("/file2");
     assertEquals(1, labels.size());
     assertEquals("2", labels.get(0).getName());
   }
 
   @Test
   public void testTreatingDeletedAndCreatedFilesWithSameNameDifferently() {
-    vcs.createFile(p("/file"), "old");
+    vcs.createFile("/file", "old", null);
     vcs.apply();
 
-    vcs.delete(p("/file"));
-    vcs.createFile(p("/file"), "new");
+    vcs.delete("/file");
+    vcs.createFile("/file", "new", null);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/file"));
+    List<Label> labels = vcs.getLabelsFor("/file");
     assertEquals(1, labels.size());
 
     Entry e = labels.get(0).getEntry();
@@ -78,21 +78,21 @@ public class LocalVcsDifferencesTest extends TestCase {
 
   @Test
   public void testTreatingRenamedAndCreatedFilesWithSameNameDifferently() {
-    vcs.createFile(p("/file1"), "content1");
+    vcs.createFile("/file1", "content1", null);
     vcs.apply();
 
-    vcs.rename(p("/file1"), "file2");
-    vcs.createFile(p("/file1"), "content2");
+    vcs.rename("/file1", "file2", null);
+    vcs.createFile("/file1", "content2", null);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/file1"));
+    List<Label> labels = vcs.getLabelsFor("/file1");
     assertEquals(1, labels.size());
 
     Entry e = labels.get(0).getEntry();
     assertEquals("file1", e.getName());
     assertEquals("content2", e.getContent());
 
-    labels = vcs.getLabelsFor(p("/file2"));
+    labels = vcs.getLabelsFor("/file2");
     assertEquals(2, labels.size());
 
     e = labels.get(0).getEntry();
@@ -106,49 +106,52 @@ public class LocalVcsDifferencesTest extends TestCase {
 
   @Test
   public void testGettingEntryFromLabel() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", 123L);
     vcs.apply();
 
-    vcs.changeFileContent(p("/file"), "new content");
+    vcs.changeFileContent("/file", "new content", 456L);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/file"));
+    List<Label> labels = vcs.getLabelsFor("/file");
 
     Entry e = labels.get(0).getEntry();
     assertEquals("file", e.getName());
     assertEquals("content", e.getContent());
+    assertEquals(123L, e.getTimestamp());
 
     e = labels.get(1).getEntry();
     assertEquals("file", e.getName());
     assertEquals("new content", e.getContent());
+    assertEquals(456L, e.getTimestamp());
   }
 
   @Test
   public void testGettingEntryFromLabelDoesNotChangeRootEntry() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
-    vcs.changeFileContent(p("/file"), "new content");
+    vcs.changeFileContent("/file", "new content", null);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/file"));
+    List<Label> labels = vcs.getLabelsFor("/file");
 
     assertEquals("content", labels.get(0).getEntry().getContent());
-    assertEquals("new content", vcs.getEntry(p("/file")).getContent());
+    assertEquals("new content", vcs.getEntry("/file").getContent());
   }
 
   @Test
   public void testGettingDifferenceBetweenLablels() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
 
-    vcs.changeFileContent(p("/file"), "new content");
+    vcs.changeFileContent("/file", "new content", null);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/file"));
+    List<Label> labels = vcs.getLabelsFor("/file");
 
     Label one = labels.get(0);
     Label two = labels.get(1);
 
+    // todo can we calculate diffs by timestamp?
     Difference d = one.getDifferenceWith(two);
     assertEquals(MODIFIED, d.getKind());
     assertEquals("content", d.getLeft().getContent());
@@ -157,10 +160,10 @@ public class LocalVcsDifferencesTest extends TestCase {
 
   @Test
   public void testNoDifferenceBetweenLabels() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/file"));
+    List<Label> labels = vcs.getLabelsFor("/file");
 
     Label one = labels.get(0);
     Label two = labels.get(0);
@@ -171,13 +174,13 @@ public class LocalVcsDifferencesTest extends TestCase {
 
   @Test
   public void testDifferenceForDirectory() {
-    vcs.createDirectory(p("/dir"));
+    vcs.createDirectory("/dir", null);
     vcs.apply();
 
-    vcs.createFile(p("/dir/file"), null);
+    vcs.createFile("/dir/file", null, null);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/dir"));
+    List<Label> labels = vcs.getLabelsFor("/dir");
     assertEquals(2, labels.size());
 
     Label one = labels.get(0);
@@ -195,16 +198,16 @@ public class LocalVcsDifferencesTest extends TestCase {
 
   @Test
   public void testNoDifferenceForDirectoryWithRestoredContent() {
-    vcs.createDirectory(p("/dir"));
+    vcs.createDirectory("/dir", null);
     vcs.apply();
 
-    vcs.createFile(p("/dir/file"), null);
+    vcs.createFile("/dir/file", null, null);
     vcs.apply();
 
-    vcs.delete(p("/dir/file"));
+    vcs.delete("/dir/file");
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor(p("/dir"));
+    List<Label> labels = vcs.getLabelsFor("/dir");
 
     Difference d = labels.get(0).getDifferenceWith(labels.get(2));
     assertFalse(d.hasDifference());

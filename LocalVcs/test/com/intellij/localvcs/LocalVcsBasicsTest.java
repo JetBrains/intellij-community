@@ -8,8 +8,8 @@ public class LocalVcsBasicsTest extends TestCase {
 
   @Test
   public void testOnlyApplyThrowsException() {
-    vcs.createFile(p("/file"), "");
-    vcs.createFile(p("/file"), "");
+    vcs.createFile("/file", "", null);
+    vcs.createFile("/file", "", null);
 
     try {
       vcs.apply();
@@ -19,10 +19,10 @@ public class LocalVcsBasicsTest extends TestCase {
 
   @Test
   public void testClearingChangesOnApply() {
-    vcs.createFile(p("/file"), "content");
-    vcs.changeFileContent(p("/file"), "new content");
-    vcs.rename(p("/file"), "new file");
-    vcs.delete(p("/new file"));
+    vcs.createFile("/file", "content", null);
+    vcs.changeFileContent("/file", "new content", null);
+    vcs.rename("/file", "new file", null);
+    vcs.delete("/new file");
 
     assertFalse(vcs.isClean());
 
@@ -32,148 +32,148 @@ public class LocalVcsBasicsTest extends TestCase {
 
   @Test
   public void testDoesNotMakeAnyChangesBeforeApply() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
 
-    vcs.changeFileContent(p("/file"), "new content");
+    vcs.changeFileContent("/file", "new content", null);
 
-    assertEquals("content", vcs.getEntry(p("/file")).getContent());
+    assertEquals("content", vcs.getEntry("/file").getContent());
   }
 
   @Test
   public void testIncrementingIdOnEntryCreation() {
-    vcs.createDirectory(p("/dir"));
-    vcs.createFile(p("/file"), null);
+    vcs.createDirectory("/dir", null);
+    vcs.createFile("/file", null, null);
     vcs.apply();
 
-    Integer id1 = vcs.getEntry(p("/dir")).getId();
-    Integer id2 = vcs.getEntry(p("/file")).getId();
+    Integer id1 = vcs.getEntry("/dir").getId();
+    Integer id2 = vcs.getEntry("/file").getId();
 
     assertFalse(id1.equals(id2));
   }
 
   @Test
   public void testKeepingIdOnChangingFileContent() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
-    Integer id1 = vcs.getEntry(p("/file")).getId();
+    Integer id1 = vcs.getEntry("/file").getId();
 
-    vcs.changeFileContent(p("/file"), "new content");
+    vcs.changeFileContent("/file", "new content", null);
     vcs.apply();
-    Integer id2 = vcs.getEntry(p("/file")).getId();
+    Integer id2 = vcs.getEntry("/file").getId();
 
     assertEquals(id1, id2);
   }
 
   @Test
   public void testKeepingIdOnRenamingFile() {
-    vcs.createFile(p("/file"), null);
+    vcs.createFile("/file", null, null);
     vcs.apply();
-    Integer id1 = vcs.getEntry(p("/file")).getId();
+    Integer id1 = vcs.getEntry("/file").getId();
 
-    vcs.rename(p("/file"), "new file");
+    vcs.rename("/file", "new file", null);
     vcs.apply();
-    Integer id2 = vcs.getEntry(p("/new file")).getId();
+    Integer id2 = vcs.getEntry("/new file").getId();
 
     assertEquals(id1, id2);
   }
 
   @Test
   public void testKeepingIdOnMovingFile() {
-    vcs.createDirectory(p("/dir1"));
-    vcs.createDirectory(p("/dir2"));
-    vcs.createFile(p("/dir1/file"), null);
+    vcs.createDirectory("/dir1", null);
+    vcs.createDirectory("/dir2", null);
+    vcs.createFile("/dir1/file", null, null);
     vcs.apply();
-    Integer id1 = vcs.getEntry(p("/dir1/file")).getId();
+    Integer id1 = vcs.getEntry("/dir1/file").getId();
 
-    vcs.move(p("/dir1/file"), p("/dir2"));
+    vcs.move("/dir1/file", "/dir2", null);
     vcs.apply();
-    Integer id2 = vcs.getEntry(p("/dir2/file")).getId();
+    Integer id2 = vcs.getEntry("/dir2/file").getId();
 
     assertEquals(id1, id2);
   }
 
   @Test
   public void testKeepingIdOnRestoringDeletedFile() {
-    vcs.createFile(p("/file"), null);
+    vcs.createFile("/file", null, null);
     vcs.apply();
-    Integer id1 = vcs.getEntry(p("/file")).getId();
+    Integer id1 = vcs.getEntry("/file").getId();
 
-    vcs.delete(p("/file"));
+    vcs.delete("/file");
     vcs.apply();
 
     vcs._revert();
-    Integer id2 = vcs.getEntry(p("/file")).getId();
+    Integer id2 = vcs.getEntry("/file").getId();
 
     assertEquals(id1, id2);
   }
 
   @Test
   public void testCreatingAndDeletingSameFileBeforeApply() {
-    vcs.createFile(p("/file"), "");
-    vcs.delete(p("/file"));
+    vcs.createFile("/file", "", null);
+    vcs.delete("/file");
     vcs.apply();
 
-    assertFalse(vcs.hasEntry(p("/file")));
+    assertFalse(vcs.hasEntry("/file"));
   }
 
   @Test
   public void testDeletingAndAddingSameFileBeforeApply() {
-    vcs.createFile(p("/file"), "");
+    vcs.createFile("/file", "", null);
     vcs.apply();
 
-    vcs.delete(p("/file"));
-    vcs.createFile(p("/file"), "");
+    vcs.delete("/file");
+    vcs.createFile("/file", "", null);
     vcs.apply();
 
-    assertTrue(vcs.hasEntry(p("/file")));
+    assertTrue(vcs.hasEntry("/file"));
   }
 
   @Test
   public void testAddingAndChangingSameFileBeforeApply() {
-    vcs.createFile(p("/file"), "content");
-    vcs.changeFileContent(p("/file"), "new content");
+    vcs.createFile("/file", "content", null);
+    vcs.changeFileContent("/file", "new content", null);
     vcs.apply();
 
-    assertEquals("new content", vcs.getEntry(p("/file")).getContent());
+    assertEquals("new content", vcs.getEntry("/file").getContent());
   }
 
   @Test
   public void testReverting() {
-    vcs.createFile(p("/file"), null);
+    vcs.createFile("/file", null, null);
     vcs.apply();
-    assertTrue(vcs.hasEntry(p("/file")));
+    assertTrue(vcs.hasEntry("/file"));
 
     vcs._revert();
-    assertFalse(vcs.hasEntry(p("/file")));
+    assertFalse(vcs.hasEntry("/file"));
   }
 
   @Test
   public void testRevertingSeveralTimesRunning() {
-    vcs.createFile(p("/file1"), null);
+    vcs.createFile("/file1", null, null);
     vcs.apply();
 
-    vcs.createFile(p("/file2"), null);
+    vcs.createFile("/file2", null, null);
     vcs.apply();
 
-    assertTrue(vcs.hasEntry(p("/file1")));
-    assertTrue(vcs.hasEntry(p("/file2")));
+    assertTrue(vcs.hasEntry("/file1"));
+    assertTrue(vcs.hasEntry("/file2"));
 
     vcs._revert();
-    assertTrue(vcs.hasEntry(p("/file1")));
-    assertFalse(vcs.hasEntry(p("/file2")));
+    assertTrue(vcs.hasEntry("/file1"));
+    assertFalse(vcs.hasEntry("/file2"));
 
     vcs._revert();
-    assertFalse(vcs.hasEntry(p("/file1")));
-    assertFalse(vcs.hasEntry(p("/file2")));
+    assertFalse(vcs.hasEntry("/file1"));
+    assertFalse(vcs.hasEntry("/file2"));
   }
 
   @Test
   public void testRevertingClearsAllPendingChanges() {
-    vcs.createFile(p("/file1"), null);
+    vcs.createFile("/file1", null, null);
     vcs.apply();
 
-    vcs.createFile(p("/file2"), null);
+    vcs.createFile("/file2", null, null);
     assertFalse(vcs.isClean());
 
     vcs._revert();
@@ -190,203 +190,209 @@ public class LocalVcsBasicsTest extends TestCase {
 
   @Test
   public void testCreatingFile() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", 123L);
     vcs.apply();
 
-    assertTrue(vcs.hasEntry(p("/file")));
-    assertEquals("content", vcs.getEntry(p("/file")).getContent());
+    assertTrue(vcs.hasEntry("/file"));
+    Entry e = vcs.getEntry("/file");
+
+    assertEquals("content", e.getContent());
+    assertEquals(123L, e.getTimestamp());
 
     vcs._revert();
-    assertFalse(vcs.hasEntry(p("/file")));
+    assertFalse(vcs.hasEntry("/file"));
   }
 
   @Test
   public void testCreatingDirectory() {
-    vcs.createDirectory(p("/dir"));
+    vcs.createDirectory("/dir", 456L);
     vcs.apply();
-    assertTrue(vcs.hasEntry(p("/dir")));
+
+    assertTrue(vcs.hasEntry("/dir"));
+    assertEquals(456L, vcs.getEntry("/dir").getTimestamp());
 
     vcs._revert();
-    assertFalse(vcs.hasEntry(p("/dir")));
+    assertFalse(vcs.hasEntry("/dir"));
   }
 
   @Test
   public void testCreatingFileUnderDirectory() {
-    vcs.createDirectory(p("/dir"));
+    vcs.createDirectory("/dir", null);
     vcs.apply();
 
-    vcs.createFile(p("/dir/file"), null);
+    vcs.createFile("/dir/file", null, null);
     vcs.apply();
-    assertTrue(vcs.hasEntry(p("/dir/file")));
+    assertTrue(vcs.hasEntry("/dir/file"));
 
     vcs._revert();
-    assertFalse(vcs.hasEntry(p("/dir/file")));
-    assertTrue(vcs.hasEntry(p("/dir")));
+    assertFalse(vcs.hasEntry("/dir/file"));
+    assertTrue(vcs.hasEntry("/dir"));
   }
 
   @Test
   public void testChangingFileContent() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
-    assertEquals("content", vcs.getEntry(p("/file")).getContent());
+    assertEquals("content", vcs.getEntry("/file").getContent());
 
-    vcs.changeFileContent(p("/file"), "new content");
+    vcs.changeFileContent("/file", "new content", null);
     vcs.apply();
-    assertEquals("new content", vcs.getEntry(p("/file")).getContent());
+
+    assertEquals("new content", vcs.getEntry("/file").getContent());
 
     vcs._revert();
-    assertEquals("content", vcs.getEntry(p("/file")).getContent());
+    assertEquals("content", vcs.getEntry("/file").getContent());
   }
 
   @Test
   public void testRenamingFile() {
-    vcs.createFile(p("/file"), null);
+    vcs.createFile("/file", null, null);
     vcs.apply();
-    assertTrue(vcs.hasEntry(p("/file")));
+    assertTrue(vcs.hasEntry("/file"));
 
-    vcs.rename(p("/file"), "new file");
+    vcs.rename("/file", "new file", null);
     vcs.apply();
-    assertFalse(vcs.hasEntry(p("/file")));
-    assertTrue(vcs.hasEntry(p("/new file")));
+    assertFalse(vcs.hasEntry("/file"));
+    assertTrue(vcs.hasEntry("/new file"));
 
     vcs._revert();
-    assertTrue(vcs.hasEntry(p("/file")));
-    assertFalse(vcs.hasEntry(p("/new file")));
+    assertTrue(vcs.hasEntry("/file"));
+    assertFalse(vcs.hasEntry("/new file"));
   }
 
   @Test
   public void testRenamingDirectoryWithContent() {
-    vcs.createDirectory(p("/dir1"));
-    vcs.createDirectory(p("/dir1/dir2"));
-    vcs.createFile(p("/dir1/dir2/file"), null);
+    vcs.createDirectory("/dir1", null);
+    vcs.createDirectory("/dir1/dir2", null);
+    vcs.createFile("/dir1/dir2/file", null, null);
     vcs.apply();
 
-    vcs.rename(p("/dir1/dir2"), "new dir");
+    vcs.rename("/dir1/dir2", "new dir", null);
     vcs.apply();
 
-    assertTrue(vcs.hasEntry(p("/dir1/new dir")));
-    assertTrue(vcs.hasEntry(p("/dir1/new dir/file")));
+    assertTrue(vcs.hasEntry("/dir1/new dir"));
+    assertTrue(vcs.hasEntry("/dir1/new dir/file"));
 
-    assertFalse(vcs.hasEntry(p("/dir1/dir2")));
+    assertFalse(vcs.hasEntry("/dir1/dir2"));
 
     vcs._revert();
 
-    assertTrue(vcs.hasEntry(p("/dir1/dir2")));
-    assertTrue(vcs.hasEntry(p("/dir1/dir2/file")));
+    assertTrue(vcs.hasEntry("/dir1/dir2"));
+    assertTrue(vcs.hasEntry("/dir1/dir2/file"));
 
-    assertFalse(vcs.hasEntry(p("/dir1/new dir")));
+    assertFalse(vcs.hasEntry("/dir1/new dir"));
   }
 
   @Test
   public void testMovingFileFromOneDirectoryToAnother() {
-    vcs.createDirectory(p("/dir1"));
-    vcs.createDirectory(p("/dir2"));
-    vcs.createFile(p("/dir1/file"), null);
+    vcs.createDirectory("/dir1", null);
+    vcs.createDirectory("/dir2", null);
+    vcs.createFile("/dir1/file", null, null);
     vcs.apply();
 
-    vcs.move(p("/dir1/file"), p("/dir2"));
+    vcs.move("/dir1/file", "/dir2", null);
     vcs.apply();
 
-    assertTrue(vcs.hasEntry(p("/dir2/file")));
-    assertFalse(vcs.hasEntry(p("/dir1/file")));
+    assertTrue(vcs.hasEntry("/dir2/file"));
+    assertFalse(vcs.hasEntry("/dir1/file"));
 
     vcs._revert();
 
-    assertFalse(vcs.hasEntry(p("/dir2/file")));
-    assertTrue(vcs.hasEntry(p("/dir1/file")));
+    assertFalse(vcs.hasEntry("/dir2/file"));
+    assertTrue(vcs.hasEntry("/dir1/file"));
   }
 
   @Test
   public void testMovingDirectory() {
-    vcs.createDirectory(p("/root1"));
-    vcs.createDirectory(p("/root2"));
-    vcs.createDirectory(p("/root1/dir"));
-    vcs.createFile(p("/root1/dir/file"), null);
+    vcs.createDirectory("/root1", null);
+    vcs.createDirectory("/root2", null);
+    vcs.createDirectory("/root1/dir", null);
+    vcs.createFile("/root1/dir/file", null, null);
     vcs.apply();
 
-    vcs.move(p("/root1/dir"), p("/root2"));
+    vcs.move("/root1/dir", "/root2", null);
     vcs.apply();
 
-    assertTrue(vcs.hasEntry(p("/root2/dir")));
-    assertTrue(vcs.hasEntry(p("/root2/dir/file")));
-    assertFalse(vcs.hasEntry(p("/root1/dir")));
+    assertTrue(vcs.hasEntry("/root2/dir"));
+    assertTrue(vcs.hasEntry("/root2/dir/file"));
+    assertFalse(vcs.hasEntry("/root1/dir"));
 
     vcs._revert();
 
-    assertTrue(vcs.hasEntry(p("/root1/dir")));
-    assertTrue(vcs.hasEntry(p("/root1/dir/file")));
-    assertFalse(vcs.hasEntry(p("/root2/dir")));
+    assertTrue(vcs.hasEntry("/root1/dir"));
+    assertTrue(vcs.hasEntry("/root1/dir/file"));
+    assertFalse(vcs.hasEntry("/root2/dir"));
   }
 
   @Test
   public void testDeletingFile() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
 
-    vcs.delete(p("/file"));
+    vcs.delete("/file");
     vcs.apply();
-    assertFalse(vcs.hasEntry(p("/file")));
+    assertFalse(vcs.hasEntry("/file"));
 
     vcs._revert();
-    assertTrue(vcs.hasEntry(p("/file")));
-    assertEquals("content", vcs.getEntry(p("/file")).getContent());
+    assertTrue(vcs.hasEntry("/file"));
+    assertEquals("content", vcs.getEntry("/file").getContent());
   }
 
   @Test
   public void testDeletingDirectoryWithContent() {
     // todo i dont trust to deletion reverting yet... i need some more tests
 
-    vcs.createDirectory(p("/dir1"));
-    vcs.createDirectory(p("/dir1/dir2"));
-    vcs.createFile(p("/dir1/file1"), "content1");
-    vcs.createFile(p("/dir1/dir2/file2"), "content2");
+    vcs.createDirectory("/dir1", null);
+    vcs.createDirectory("/dir1/dir2", null);
+    vcs.createFile("/dir1/file1", "content1", null);
+    vcs.createFile("/dir1/dir2/file2", "content2", null);
     vcs.apply();
 
-    vcs.delete(p("/dir1"));
+    vcs.delete("/dir1");
     vcs.apply();
-    assertFalse(vcs.hasEntry(p("/dir1")));
+    assertFalse(vcs.hasEntry("/dir1"));
 
     vcs._revert();
-    assertTrue(vcs.hasEntry(p("/dir1")));
-    assertTrue(vcs.hasEntry(p("/dir1/dir2")));
-    assertTrue(vcs.hasEntry(p("/dir1/file1")));
-    assertTrue(vcs.hasEntry(p("/dir1/dir2/file2")));
+    assertTrue(vcs.hasEntry("/dir1"));
+    assertTrue(vcs.hasEntry("/dir1/dir2"));
+    assertTrue(vcs.hasEntry("/dir1/file1"));
+    assertTrue(vcs.hasEntry("/dir1/dir2/file2"));
 
-    assertEquals("content1", vcs.getEntry(p("/dir1/file1")).getContent());
-    assertEquals("content2", vcs.getEntry(p("/dir1/dir2/file2")).getContent());
+    assertEquals("content1", vcs.getEntry("/dir1/file1").getContent());
+    assertEquals("content2", vcs.getEntry("/dir1/dir2/file2").getContent());
   }
 
   @Test
   public void testRevertingDeletionWithSameId() {
     // todo add move tests for this case (history etc).
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
-    Integer originalId = vcs.getEntry(p("/file")).getId();
+    Integer originalId = vcs.getEntry("/file").getId();
 
-    vcs.delete(p("/file"));
+    vcs.delete("/file");
     vcs.apply();
 
     vcs._revert();
-    Integer restoredId = vcs.getEntry(p("/file")).getId();
+    Integer restoredId = vcs.getEntry("/file").getId();
 
     assertEquals(originalId, restoredId);
   }
 
   @Test
   public void testRevertingDeletionOfDirectoryWithSameId() {
-    vcs.createDirectory(p("/dir"));
-    vcs.createFile(p("/dir/file"), null);
+    vcs.createDirectory("/dir", null);
+    vcs.createFile("/dir/file", null, null);
     vcs.apply();
 
-    Integer originalDirId = vcs.getEntry(p("/dir")).getId();
-    Integer originalFileId = vcs.getEntry(p("/dir/file")).getId();
+    Integer originalDirId = vcs.getEntry("/dir").getId();
+    Integer originalFileId = vcs.getEntry("/dir/file").getId();
 
-    vcs.delete(p("/dir"));
+    vcs.delete("/dir");
     vcs.apply();
 
     vcs._revert();
-    Integer restoredDirId = vcs.getEntry(p("/dir")).getId();
-    Integer restoredFileId = vcs.getEntry(p("/dir/file")).getId();
+    Integer restoredDirId = vcs.getEntry("/dir").getId();
+    Integer restoredFileId = vcs.getEntry("/dir/file").getId();
 
     assertEquals(originalDirId, restoredDirId);
     assertEquals(originalFileId, restoredFileId);

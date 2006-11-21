@@ -30,55 +30,55 @@ public class LocalVcsStoringTest extends TempDirTestCase {
 
   @Test
   public void testStoringEntries() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    assertTrue(result.hasEntry(p("/file")));
+    assertTrue(result.hasEntry("/file"));
   }
 
   @Test
   public void testStoringChangeList() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.apply();
-    vcs.changeFileContent(p("/file"), "new content");
+    vcs.changeFileContent("/file", "new content", null);
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    assertEquals("new content", result.getEntry(p("/file")).getContent());
+    assertEquals("new content", result.getEntry("/file").getContent());
 
     result._revert();
-    assertEquals("content", result.getEntry(p("/file")).getContent());
+    assertEquals("content", result.getEntry("/file").getContent());
 
     result._revert();
-    assertFalse(result.hasEntry(p("/file")));
+    assertFalse(result.hasEntry("/file"));
   }
 
   @Test
   public void testStoringObjectsCounter() {
-    vcs.createFile(p("/file1"), "content1");
-    vcs.createFile(p("/file2"), "content2");
+    vcs.createFile("/file1", "content1", null);
+    vcs.createFile("/file2", "content2", null);
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    result.createFile(p("/file3"), "content3");
+    result.createFile("/file3", "content3", null);
     result.apply();
 
-    Integer id2 = result.getEntry(p("/file2")).getId();
-    Integer id3 = result.getEntry(p("/file3")).getId();
+    Integer id2 = result.getEntry("/file2").getId();
+    Integer id3 = result.getEntry("/file3").getId();
 
     assertTrue(id2 < id3);
   }
 
   @Test
   public void testDoesNotStoreUnappliedChanges() {
-    vcs.createFile(p("/file"), "content");
+    vcs.createFile("/file", "content", null);
     vcs.store();
 
     vcs.store();

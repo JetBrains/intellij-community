@@ -10,7 +10,7 @@ public class RootEntryTest extends TestCase {
   @Before
   public void setUp() {
     root = new RootEntry("");
-    child = new DirectoryEntry(1, "child");
+    child = new DirectoryEntry(1, "child", null);
     root.addChild(child);
   }
 
@@ -34,7 +34,7 @@ public class RootEntryTest extends TestCase {
   @Test
   public void testPathToChildrenWithDriveLetter() {
     root = new RootEntry("c:/root");
-    child = new DirectoryEntry(1, "child");
+    child = new DirectoryEntry(1, "child", null);
     root.addChild(child);
 
     assertEquals(p("c:/root/child"), child.getPath());
@@ -49,9 +49,9 @@ public class RootEntryTest extends TestCase {
   @Test
   public void testFindingEntriesInTree() {
     root = new RootEntry("");
-    Entry dir = new DirectoryEntry(null, "dir");
-    Entry file1 = new FileEntry(null, "file1", null);
-    Entry file2 = new FileEntry(null, "file2", null);
+    Entry dir = new DirectoryEntry(null, "dir", null);
+    Entry file1 = new FileEntry(null, "file1", null, null);
+    Entry file2 = new FileEntry(null, "file2", null, null);
 
     root.addChild(dir);
     root.addChild(file1);
@@ -74,9 +74,9 @@ public class RootEntryTest extends TestCase {
   @Test
   public void testGettingEntryUnderDirectory() {
     root = new RootEntry("");
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir1/dir2"));
-    root.doCreateFile(3, p("/dir1/file"), "content");
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir1/dir2"), null);
+    root.doCreateFile(3, p("/dir1/file"), "content", null);
 
     Entry e1 = root.getEntry(p("/dir1/dir2"));
     Entry e2 = root.getEntry(p("/dir1/file"));
@@ -121,7 +121,7 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testRevertingReturnsCopy() {
-    ChangeSet cs = cs(new CreateFileChange(1, p("/file"), null));
+    ChangeSet cs = cs(new CreateFileChange(1, "/file", null, null));
 
     RootEntry original = new RootEntry("");
     original.apply_old(cs);
@@ -134,9 +134,9 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testRevertingSeveralTimesOnSameSnapshot() {
-    root.apply_old(cs(new CreateFileChange(2, p("/file"), "content")));
+    root.apply_old(cs(new CreateFileChange(2, "/file", "content", null)));
 
-    ChangeSet cs = cs(new ChangeFileContentChange(p("/file"), "new content"));
+    ChangeSet cs = cs(new ChangeFileContentChange("/file", "new content", null));
     root.apply_old(cs);
 
     RootEntry result1 = root.revert_old(cs);

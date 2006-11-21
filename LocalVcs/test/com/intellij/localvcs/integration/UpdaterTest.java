@@ -18,28 +18,29 @@ import java.util.List;
 
 public class UpdaterTest extends TestCase {
   private LocalVcs vcs;
+  private MyVirtualFile root;
 
   @Before
   public void setUp() {
     vcs = new LocalVcs(new TestStorage());
     vcs.getRoot().setPath("root");
+    root = new MyVirtualFile("root");
   }
 
   @Test
   public void testUpdatingRoot() throws IOException {
     // todo make this test a bit clearly
     vcs = new LocalVcs(new TestStorage());
-    assertFalse(vcs.hasEntry(p("c:/root")));
+    assertFalse(vcs.hasEntry("c:/root"));
 
     VirtualFile root = new MyVirtualFile("c:/root");
     Updater.update(vcs, root);
 
-    assertTrue(vcs.hasEntry(p("c:/root")));
+    assertTrue(vcs.hasEntry("c:/root"));
   }
 
   @Test
   public void testAddingNewFiles() throws IOException {
-    MyVirtualFile root = new MyVirtualFile("root");
     MyVirtualFile dir = new MyVirtualFile("dir");
     MyVirtualFile file = new MyVirtualFile("file", "content");
 
@@ -48,36 +49,34 @@ public class UpdaterTest extends TestCase {
 
     Updater.update(vcs, root);
 
-    assertTrue(vcs.hasEntry(p("root/dir")));
-    assertTrue(vcs.hasEntry(p("root/dir/file")));
-    assertEquals("content", vcs.getEntry(p("root/dir/file")).getContent());
+    assertTrue(vcs.hasEntry("root/dir"));
+    assertTrue(vcs.hasEntry("root/dir/file"));
+    assertEquals("content", vcs.getEntry("root/dir/file").getContent());
   }
 
   @Test
   public void testDeletingAbsentFiles() throws IOException {
-    vcs.createFile(p("root/file"), null);
-    vcs.createDirectory(p("root/dir"));
-    vcs.createFile(p("root/dir/file"), null);
+    vcs.createFile("root/file", null, null);
+    vcs.createDirectory("root/dir", null);
+    vcs.createFile("root/dir/file", null, null);
     vcs.apply();
 
-    assertTrue(vcs.hasEntry(p("root/file")));
-    assertTrue(vcs.hasEntry(p("root/dir/file")));
+    assertTrue(vcs.hasEntry("root/file"));
+    assertTrue(vcs.hasEntry("root/dir/file"));
 
-    MyVirtualFile root = new MyVirtualFile("root");
     Updater.update(vcs, root);
 
-    assertFalse(vcs.hasEntry(p("root/file")));
-    assertFalse(vcs.hasEntry(p("root/dir")));
-    assertFalse(vcs.hasEntry(p("root/dir/file")));
+    assertFalse(vcs.hasEntry("root/file"));
+    assertFalse(vcs.hasEntry("root/dir"));
+    assertFalse(vcs.hasEntry("root/dir/file"));
   }
 
   @Test
   public void testDoesNothingWithUnchangedEntries() throws IOException {
-    vcs.createDirectory(p("root/dir"));
-    vcs.createFile(p("root/dir/file"), "content");
+    vcs.createDirectory("root/dir", null);
+    vcs.createFile("root/dir/file", "content", null);
     vcs.apply();
 
-    MyVirtualFile root = new MyVirtualFile("root");
     MyVirtualFile dir = new MyVirtualFile("dir");
     MyVirtualFile file = new MyVirtualFile("file", "content");
 
@@ -86,9 +85,16 @@ public class UpdaterTest extends TestCase {
 
     Updater.update(vcs, root);
 
-    assertTrue(vcs.hasEntry(p("root/dir")));
-    assertTrue(vcs.hasEntry(p("root/dir/file")));
-    assertEquals("content", vcs.getEntry(p("root/dir/file")).getContent());
+    assertTrue(vcs.hasEntry("root/dir"));
+    assertTrue(vcs.hasEntry("root/dir/file"));
+    assertEquals("content", vcs.getEntry("root/dir/file").getContent());
+  }
+
+  @Test
+  public void testUpdatingOutdatedFiles() {
+    vcs.createFile("file", "content", null);
+    root.addChild(new MyVirtualFile("file", "new content"));
+
   }
 
   private class MyVirtualFile extends VirtualFile {
@@ -98,7 +104,6 @@ public class UpdaterTest extends TestCase {
 
     private VirtualFile myParent;
     private List<MyVirtualFile> myChildren = new ArrayList<MyVirtualFile>();
-
 
     public MyVirtualFile(String name, String content) {
       myName = name;

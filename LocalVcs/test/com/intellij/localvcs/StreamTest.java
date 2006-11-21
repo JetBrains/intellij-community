@@ -1,12 +1,12 @@
 package com.intellij.localvcs;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.List;
-
-import org.junit.Before;
-import org.junit.Test;
 
 public class StreamTest extends TestCase {
   private Stream is;
@@ -37,7 +37,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testFileEntry() throws IOException {
-    Entry e = new FileEntry(42, "file", "content");
+    Entry e = new FileEntry(42, "file", "content", null);
 
     os.writeEntry(e);
     Entry result = is.readEntry();
@@ -50,8 +50,8 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testDoesNotWriteEntryParent() throws IOException {
-    Entry parent = new DirectoryEntry(null, null);
-    Entry e = new FileEntry(42, "file", "content");
+    Entry parent = new DirectoryEntry(null, null, null);
+    Entry e = new FileEntry(42, "file", "content", null);
 
     parent.addChild(e);
     os.writeEntry(e);
@@ -61,7 +61,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testEmptyDirectoryEntry() throws IOException {
-    Entry e = new DirectoryEntry(13, "name");
+    Entry e = new DirectoryEntry(13, "name", null);
 
     os.writeEntry(e);
     Entry result = is.readEntry();
@@ -73,12 +73,12 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testDirectoryEntryWithChildren() throws IOException {
-    Entry dir = new DirectoryEntry(13, "dir");
-    Entry subDir = new DirectoryEntry(66, "subDir");
+    Entry dir = new DirectoryEntry(13, "dir", null);
+    Entry subDir = new DirectoryEntry(66, "subDir", null);
 
-    dir.addChild(new FileEntry(1, "subFile", "1"));
+    dir.addChild(new FileEntry(1, "subFile", "1", null));
     dir.addChild(subDir);
-    subDir.addChild(new FileEntry(2, "subSubFile", "2"));
+    subDir.addChild(new FileEntry(2, "subSubFile", "2", null));
 
     os.writeEntry(dir);
     Entry result = is.readEntry();
@@ -101,8 +101,8 @@ public class StreamTest extends TestCase {
   @Test
   public void testRootEntryWithChildren() throws IOException {
     RootEntry e = new RootEntry("c:/root");
-    e.addChild(new FileEntry(1, "file", ""));
-    e.addChild(new DirectoryEntry(2, "dir"));
+    e.addChild(new FileEntry(1, "file", "", null));
+    e.addChild(new DirectoryEntry(2, "dir", null));
 
     os.writeEntry(e);
     Entry result = is.readEntry();
@@ -127,7 +127,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testCreateFileChange() throws IOException {
-    Change c = new CreateFileChange(null, p("/file"), "content");
+    Change c = new CreateFileChange(null, "/file", "content", null);
 
     os.writeChange(c);
     Change result = is.readChange();
@@ -140,7 +140,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testCreateDirectoryChange() throws IOException {
-    Change c = new CreateDirectoryChange(null, p("/dir"));
+    Change c = new CreateDirectoryChange(null, "/dir", null);
 
     os.writeChange(c);
     Change result = is.readChange();
@@ -153,11 +153,11 @@ public class StreamTest extends TestCase {
   public void testAppliedDeleteChange() throws IOException {
     RootEntry root = new RootEntry("");
 
-    root.doCreateDirectory(1, p("/entry"));
-    root.doCreateFile(2, p("/entry/file"), "");
-    root.doCreateDirectory(3, p("/entry/dir"));
+    root.doCreateDirectory(1, p("/entry"), null);
+    root.doCreateFile(2, p("/entry/file"), "", null);
+    root.doCreateDirectory(3, p("/entry/dir"), null);
 
-    Change c = new DeleteChange(p("/entry"));
+    Change c = new DeleteChange("/entry");
     c.applyTo(root);
 
     os.writeChange(c);
@@ -167,16 +167,16 @@ public class StreamTest extends TestCase {
     assertEquals("entry", result.getName());
 
     assertEquals(2, result.getChildren().size());
-    assertEquals("file", result.getChildren().get(0).getName());
-    assertEquals("dir", result.getChildren().get(1).getName());
+    assertEquals(p("entry/file"), result.getChildren().get(0).getPath());
+    assertEquals(p("entry/dir"), result.getChildren().get(1).getPath());
   }
 
   @Test
   public void testAppliedChangeFileContentChange() throws IOException {
     RootEntry root = new RootEntry("");
-    root.doCreateFile(1, p("/file"), "content");
+    root.doCreateFile(1, p("/file"), "content", null);
 
-    Change c = new ChangeFileContentChange(p("/file"), "new content");
+    Change c = new ChangeFileContentChange("/file", "new content", null);
     c.applyTo(root);
 
     os.writeChange(c);
@@ -197,7 +197,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testRenameChange() throws IOException {
-    Change c = new RenameChange(p("/entry"), "new name");
+    Change c = new RenameChange("/entry", "new name", null);
 
     os.writeChange(c);
     Change read = is.readChange();
@@ -212,7 +212,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testMoveChange() throws IOException {
-    Change c = new MoveChange(p("/entry"), p("/dir"));
+    Change c = new MoveChange("/entry", "/dir");
 
     os.writeChange(c);
     Change read = is.readChange();
@@ -222,12 +222,12 @@ public class StreamTest extends TestCase {
     MoveChange result = ((MoveChange)read);
 
     assertEquals(p("/entry"), result.getPath());
-    assertEquals(p("/dir"), result.getNewParent());
+    assertEquals(p("/dir"), result.getNewParentPath());
   }
 
   @Test
   public void testChangeSet() throws IOException {
-    ChangeSet c = cs(new CreateFileChange(null, p("/"), ""));
+    ChangeSet c = cs(new CreateFileChange(null, "/", "", null));
     c.setLabel("label");
 
     os.writeChangeSet(c);
@@ -252,8 +252,7 @@ public class StreamTest extends TestCase {
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
     c.applyChangeSetOn_old(new RootEntry(""),
-                           cs(new CreateFileChange(null, p("/file"),
-                                                   "content")));
+                           cs(new CreateFileChange(null, "/file", "content", null)));
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();

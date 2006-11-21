@@ -13,8 +13,8 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryIdForCreateFileChange() {
-    root.doCreateDirectory(99, p("/dir"));
-    Change c = new CreateFileChange(1, p("/dir/name"), null);
+    root.doCreateDirectory(99, p("/dir"), null);
+    Change c = new CreateFileChange(1, "/dir/name", null, null);
     c.applyTo(root);
 
     assertElements(new IdPath[]{idp(99, 1)}, c.getAffectedEntryIdPaths());
@@ -25,7 +25,7 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForCreateDirectoryChange() {
-    Change c = new CreateDirectoryChange(2, p("/name"));
+    Change c = new CreateDirectoryChange(2, "/name", null);
     c.applyTo(root);
 
     assertElements(new IdPath[]{idp(2)}, c.getAffectedEntryIdPaths());
@@ -33,9 +33,9 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForChangeFileContentChange() {
-    root.doCreateFile(16, p("/file"), "content");
+    root.doCreateFile(16, p("/file"), "content", null);
 
-    Change c = new ChangeFileContentChange(p("/file"), "new content");
+    Change c = new ChangeFileContentChange("/file", "new content", null);
     c.applyTo(root);
 
     assertElements(new IdPath[]{idp(16)}, c.getAffectedEntryIdPaths());
@@ -43,9 +43,9 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForRenameChange() {
-    root.doCreateFile(42, p("/name"), null);
+    root.doCreateFile(42, p("/name"), null, null);
 
-    Change c = new RenameChange(p("/name"), "new name");
+    Change c = new RenameChange("/name", "new name", null);
     c.applyTo(root);
 
     assertElements(new IdPath[]{idp(42)}, c.getAffectedEntryIdPaths());
@@ -53,11 +53,11 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForMoveChange() {
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir2"));
-    root.doCreateFile(13, p("/dir1/file"), null);
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir2"), null);
+    root.doCreateFile(13, p("/dir1/file"), null, null);
 
-    Change c = new MoveChange(p("/dir1/file"), p("/dir2"));
+    Change c = new MoveChange("/dir1/file", "/dir2");
     c.applyTo(root);
 
     assertElements(new IdPath[]{idp(1, 13), idp(2, 13)},
@@ -66,10 +66,10 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForDeleteChange() {
-    root.doCreateDirectory(99, p("/dir"));
-    root.doCreateFile(7, p("/dir/file"), null);
+    root.doCreateDirectory(99, p("/dir"), null);
+    root.doCreateFile(7, p("/dir/file"), null, null);
 
-    Change c = new DeleteChange(p("/dir/file"));
+    Change c = new DeleteChange("/dir/file");
     c.applyTo(root);
 
     assertElements(new IdPath[]{idp(99, 7)}, c.getAffectedEntryIdPaths());

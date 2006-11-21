@@ -9,8 +9,8 @@ public class DeleteChange extends Change {
   private Entry myAffectedEntry;
   private IdPath myAffectedEntryIdPath;
 
-  public DeleteChange(Path path) {
-    myPath = path;
+  public DeleteChange(String path) {
+    myPath = new Path(path);
   }
 
   public DeleteChange(Stream s) throws IOException {
@@ -45,12 +45,12 @@ public class DeleteChange extends Change {
 
   private void restoreEntryRecursively(RootEntry root, Entry e, Path p) {
     if (e.isDirectory()) {
-      root.doCreateDirectory(e.getId(), p);
+      root.doCreateDirectory(e.getId(), p, null);
       for (Entry child : e.getChildren()) {
         restoreEntryRecursively(root, child, p.appendedWith(child.getName()));
       }
     } else {
-      root.doCreateFile(e.getId(), p, e.getContent());
+      root.doCreateFile(e.getId(), p, e.getContent(), null);
     }
   }
 

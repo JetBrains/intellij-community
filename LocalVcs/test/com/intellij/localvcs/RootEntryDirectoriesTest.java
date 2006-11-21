@@ -9,16 +9,20 @@ public class RootEntryDirectoriesTest extends TestCase {
   public void testCeatingDirectory() {
     assertFalse(root.hasEntry(p("/dir")));
 
-    root.doCreateDirectory(null, p("/dir"));
+    root.doCreateDirectory(null, p("/dir"), 89L);
     assertTrue(root.hasEntry(p("/dir")));
-    assertEquals(DirectoryEntry.class, root.getEntry(p("/dir")).getClass());
-    assertTrue(root.getEntry(p("/dir")).getChildren().isEmpty());
+
+    Entry e = root.getEntry(p("/dir"));
+
+    assertEquals(DirectoryEntry.class, e.getClass());
+    assertEquals(89L, e.getTimestamp());
+    assertTrue(e.getChildren().isEmpty());
   }
 
   @Test
   public void testCreatingFilesUnderDirectory() {
-    root.doCreateDirectory(null, p("/dir"));
-    root.doCreateFile(null, p("/dir/file"), "");
+    root.doCreateDirectory(null, p("/dir"), null);
+    root.doCreateFile(null, p("/dir/file"), null, null);
 
     assertTrue(root.hasEntry(p("/dir")));
     assertTrue(root.hasEntry(p("/dir/file")));
@@ -34,67 +38,79 @@ public class RootEntryDirectoriesTest extends TestCase {
   @Test
   public void testCreatingChildredForNonExistingDirectoryThrowsException() {
     try {
-      root.doCreateFile(null, p("/dir/file"), "");
+      root.doCreateFile(null, p("/dir/file"), null, null);
       fail();
-    } catch (LocalVcsException e) { }
+    }
+    catch (LocalVcsException e) {
+    }
 
     try {
-      root.doCreateDirectory(null, p("/dir1/dir2"));
+      root.doCreateFile(null, p("/dir1/dir2"), null, null);
       fail();
-    } catch (LocalVcsException e) { }
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
   public void testCreatingChildredForFileThrowsException() {
-    root.doCreateFile(null, p("/file"), null);
+    root.doCreateFile(null, p("/file"), null, null);
     try {
-      root.doCreateFile(null, p("/file/child"), null);
+      root.doCreateFile(null, p("/file/child"), null, null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
-  public void testCreateingDirectoryWithExistedNameThrowsException() {
-    root.doCreateFile(null, p("/name1"), null);
-    root.doCreateDirectory(null, p("/name2"));
+  public void testCreatingDirectoryWithExistedNameThrowsException() {
+    root.doCreateFile(null, p("/name1"), null, null);
+    root.doCreateFile(null, p("/name2"), null, null);
 
     try {
-      root.doCreateDirectory(null, p("/name1"));
+      root.doCreateFile(null, p("/name1"), null, null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
 
     try {
-      root.doCreateDirectory(null, p("/name2"));
+      root.doCreateFile(null, p("/name2"), null, null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
   public void testChangingFileContentUnderDirectory() {
-    root.doCreateDirectory(1, p("/dir"));
-    root.doCreateFile(2, p("/dir/file"), "content");
+    root.doCreateDirectory(1, p("/dir"), null);
+    root.doCreateFile(2, p("/dir/file"), "content", null);
 
-    root.doChangeFileContent(p("/dir/file"), "new content");
+    root.doChangeFileContent(p("/dir/file"), "new content", null);
 
     assertEquals("new content", root.getEntry(p("/dir/file")).getContent());
   }
 
   @Test
   public void testRenamingDirectories() {
-    root.doCreateDirectory(1, p("/dir"));
+    root.doCreateFile(1, p("/dir"), null, null);
 
-    root.doRename(p("/dir"), "new dir");
+    root.doRename(p("/dir"), "new dir", 18L);
 
     assertTrue(root.hasEntry(p("/new dir")));
     assertFalse(root.hasEntry(p("/dir")));
+
+    assertEquals(18L, root.getEntry(p("/new dir")).getTimestamp());
   }
 
   @Test
   public void testRenamingFilesUnderDirectory() {
-    root.doCreateDirectory(1, p("/dir"));
-    root.doCreateFile(2, p("/dir/file"), "content");
+    root.doCreateDirectory(1, p("/dir"), null);
+    root.doCreateFile(2, p("/dir/file"), "content", null);
 
-    root.doRename(p("/dir/file"), "new file");
+    root.doRename(p("/dir/file"), "new file", null);
 
     assertFalse(root.hasEntry(p("/dir/file")));
     assertTrue(root.hasEntry(p("/dir/new file")));
@@ -106,22 +122,24 @@ public class RootEntryDirectoriesTest extends TestCase {
 
   @Test
   public void testRenamingFilesUnderDirectoryToExistingNameThrowsException() {
-    root.doCreateDirectory(1, p("/dir"));
-    root.doCreateFile(2, p("/dir/file1"), null);
-    root.doCreateFile(3, p("/dir/file2"), null);
+    root.doCreateDirectory(1, p("/dir"), null);
+    root.doCreateFile(2, p("/dir/file1"), null, null);
+    root.doCreateFile(3, p("/dir/file2"), null, null);
 
     try {
-      root.doRename(p("/dir/file1"), "file2");
+      root.doRename(p("/dir/file1"), "file2", null);
       fail();
-    } catch (LocalVcsException e) { }
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
   public void testRenamingSubdirectories() {
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir1/dir2"));
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateFile(2, p("/dir1/dir2"), null, null);
 
-    root.doRename(p("/dir1/dir2"), "new dir");
+    root.doRename(p("/dir1/dir2"), "new dir", null);
 
     assertTrue(root.hasEntry(p("/dir1/new dir")));
     assertFalse(root.hasEntry(p("/dir1/dir2")));
@@ -129,10 +147,10 @@ public class RootEntryDirectoriesTest extends TestCase {
 
   @Test
   public void testRenamingDirectoryWithContent() {
-    root.doCreateDirectory(1, p("/dir"));
-    root.doCreateFile(2, p("/dir/file"), null);
+    root.doCreateDirectory(1, p("/dir"), null);
+    root.doCreateFile(2, p("/dir/file"), null, null);
 
-    root.doRename(p("/dir"), "new dir");
+    root.doRename(p("/dir"), "new dir", null);
 
     assertTrue(root.hasEntry(p("/new dir")));
     assertTrue(root.hasEntry(p("/new dir/file")));
@@ -143,51 +161,68 @@ public class RootEntryDirectoriesTest extends TestCase {
 
   @Test
   public void testRenamingDirectoryToExistingFileNameThrowsException() {
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir1/dir2"));
-    root.doCreateFile(3, p("/dir1/file"), null);
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir1/dir2"), null);
+    root.doCreateFile(3, p("/dir1/file"), null, null);
 
     try {
-      root.doRename(p("/dir1/dir2"), "file");
+      root.doRename(p("/dir1/dir2"), "file", null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
   public void testMovingFilesBetweenDirectories() {
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir2"));
-    root.doCreateFile(3, p("/dir1/file"), "content");
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir2"), null);
+    root.doCreateFile(3, p("/dir1/file"), "content", null);
 
-    root.doMove(p("/dir1/file"), p("/dir2"));
+    root.doMove(p("/dir1/file"), p("/dir2"), 13L);
 
     assertTrue(root.hasEntry(p("/dir2/file")));
     assertFalse(root.hasEntry(p("/dir1/file")));
 
-    assertEquals("content", root.getEntry(p("/dir2/file")).getContent());
+    Entry e = root.getEntry(p("/dir2/file"));
+    assertEquals("content", e.getContent());
+    assertEquals(13L, e.getTimestamp());
   }
 
   @Test
   public void testMovingDirectories() {
-    root.doCreateDirectory(1, p("/root1"));
-    root.doCreateDirectory(2, p("/root2"));
-    root.doCreateDirectory(3, p("/root1/dir"));
-    root.doCreateFile(4, p("/root1/dir/file"), null);
+    root.doCreateDirectory(1, p("/root1"), null);
+    root.doCreateDirectory(2, p("/root2"), null);
+    root.doCreateDirectory(3, p("/root1/dir"), null);
+    root.doCreateFile(4, p("/root1/dir/file"), null, null);
 
-    root.doMove(p("/root1/dir"), p("/root2"));
+    root.doMove(p("/root1/dir"), p("/root2"), 15L);
 
     assertTrue(root.hasEntry(p("/root2/dir")));
     assertTrue(root.hasEntry(p("/root2/dir/file")));
 
     assertFalse(root.hasEntry(p("/root1/dir")));
+
+    assertEquals(15L, root.getEntry(p("/root2/dir")).getTimestamp());
+  }
+
+  @Test
+  public void testDoesNotChangeTimestampOfContentWhenMoving() {
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir2"), null);
+    root.doCreateFile(3, p("/dir1/file"), null, 99L);
+
+    root.doMove(p("/dir1"), p("/dir2"), null);
+
+    assertEquals(99L, root.getEntry(p("/dir2/dir1/file")).getTimestamp());
   }
 
   @Test
   public void testMovingEntryFromRootToDirectory() {
-    root.doCreateDirectory(1, p("/dir"));
-    root.doCreateFile(2, p("/file"), null);
+    root.doCreateDirectory(1, p("/dir"), null);
+    root.doCreateFile(2, p("/file"), null, null);
 
-    root.doMove(p("/file"), p("/dir"));
+    root.doMove(p("/file"), p("/dir"), null);
 
     assertTrue(root.hasEntry(p("/dir/file")));
     assertFalse(root.hasEntry(p("/file")));
@@ -195,26 +230,27 @@ public class RootEntryDirectoriesTest extends TestCase {
 
   @Test
   public void testMovingEntryFromDirectoryToRoot() {
-    root.doCreateDirectory(null, p("/dir"));
-    root.doCreateFile(null, p("/dir/file"), null);
+    root.setPath("root");
 
-    //todo move to where??? shold we support this case?
-    root.doMove(p("/dir/file"), p(""));
+    root.doCreateDirectory(null, p("root/dir"), null);
+    root.doCreateFile(null, p("root/dir/file"), null, null);
 
-    assertTrue(root.hasEntry(p("/file")));
-    assertFalse(root.hasEntry(p("/dir/file")));
+    root.doMove(p("root/dir/file"), p("root"), null);
+
+    assertTrue(root.hasEntry(p("root/file")));
+    assertFalse(root.hasEntry(p("toor/dir/file")));
   }
 
   @Test
   public void testMovingEntriesToAnotherLevelInTree() {
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir1/dir2"));
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir1/dir2"), null);
 
-    root.doCreateFile(3, p("/dir1/file1"), null);
-    root.doCreateFile(4, p("/dir1/dir2/file2"), null);
+    root.doCreateFile(3, p("/dir1/file1"), null, null);
+    root.doCreateFile(4, p("/dir1/dir2/file2"), null, null);
 
-    root.doMove(p("/dir1/file1"), p("/dir1/dir2"));
-    root.doMove(p("/dir1/dir2/file2"), p("/dir1"));
+    root.doMove(p("/dir1/file1"), p("/dir1/dir2"), null);
+    root.doMove(p("/dir1/dir2/file2"), p("/dir1"), null);
 
     assertTrue(root.hasEntry(p("/dir1/file2")));
     assertTrue(root.hasEntry(p("/dir1/dir2/file1")));
@@ -222,39 +258,43 @@ public class RootEntryDirectoriesTest extends TestCase {
 
   @Test
   public void testMovingDirectoryToItsChildThrowsException() {
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir1/dir2"));
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir1/dir2"), null);
 
     try {
-      root.doMove(p("/dir1"), p("/dir1/dir2"));
+      root.doMove(p("/dir1"), p("/dir1/dir2"), null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
   public void testMovingEntryToNotADirectoryThrowsException() {
-    root.doCreateFile(1, p("/file1"), null);
-    root.doCreateFile(2, p("/file2"), null);
+    root.doCreateFile(1, p("/file1"), null, null);
+    root.doCreateFile(2, p("/file2"), null, null);
 
     try {
-      root.doMove(p("/file1"), p("/file1/file2"));
+      root.doMove(p("/file1"), p("/file1/file2"), null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
   public void testMovingEntryToSameDirectory() {
-    root.doCreateDirectory(1, p("/dir"));
-    root.doCreateFile(2, p("/dir/file"), null);
+    root.doCreateDirectory(1, p("/dir"), null);
+    root.doCreateFile(2, p("/dir/file"), null, null);
 
-    root.doMove(p("/dir/file"), p("/dir"));
+    root.doMove(p("/dir/file"), p("/dir"), null);
 
     assertTrue(root.hasEntry(p("/dir/file")));
   }
 
   @Test
   public void testDeletingDirectory() {
-    root.doCreateDirectory(1, p("/dir"));
+    root.doCreateDirectory(1, p("/dir"), null);
     assertTrue(root.hasEntry(p("/dir")));
 
     root.doDelete(p("/dir"));
@@ -263,8 +303,8 @@ public class RootEntryDirectoriesTest extends TestCase {
 
   @Test
   public void testDeletingSubdirectory() {
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir1/dir2"));
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir1/dir2"), null);
 
     assertTrue(root.hasEntry(p("/dir1")));
     assertTrue(root.hasEntry(p("/dir1/dir2")));
@@ -277,8 +317,8 @@ public class RootEntryDirectoriesTest extends TestCase {
 
   @Test
   public void testDeletingDirectoryWithContent() {
-    root.doCreateDirectory(1, p("/dir1"));
-    root.doCreateDirectory(2, p("/dir1/dir2"));
+    root.doCreateDirectory(1, p("/dir1"), null);
+    root.doCreateDirectory(2, p("/dir1/dir2"), null);
 
     root.doDelete(p("/dir1"));
 
@@ -288,8 +328,8 @@ public class RootEntryDirectoriesTest extends TestCase {
 
   @Test
   public void testDeletingFilesUnderDirectory() {
-    root.doCreateDirectory(1, p("/dir"));
-    root.doCreateFile(2, p("/dir/file"), "");
+    root.doCreateDirectory(1, p("/dir"), null);
+    root.doCreateFile(2, p("/dir/file"), "", null);
     assertTrue(root.hasEntry(p("/dir/file")));
 
     root.doDelete(p("/dir/file"));

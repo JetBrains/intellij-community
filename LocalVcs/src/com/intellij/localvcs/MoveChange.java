@@ -6,49 +6,49 @@ import java.util.List;
 
 public class MoveChange extends Change {
   private Path myPath;
-  private Path myNewParent;
+  private Path myNewParentPath;
   private IdPath myFromIdPath;
   private IdPath myToIdPath;
 
-  public MoveChange(Path path, Path newParent) {
-    myPath = path;
-    myNewParent = newParent;
+  public MoveChange(String path, String newParentPath) {
+    myPath = new Path(path);
+    myNewParentPath = new Path(newParentPath);
   }
 
   public MoveChange(Stream s) throws IOException {
     myPath = s.readPath();
-    myNewParent = s.readPath();
+    myNewParentPath = s.readPath();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     s.writePath(myPath);
-    s.writePath(myNewParent);
+    s.writePath(myNewParentPath);
   }
 
   public Path getPath() {
     return myPath;
   }
 
-  public Path getNewParent() {
-    return myNewParent;
+  public Path getNewParentPath() {
+    return myNewParentPath;
   }
 
   @Override
   public void applyTo(RootEntry root) {
     myFromIdPath = root.getEntry(myPath).getIdPath();
-    root.doMove(myPath, myNewParent);
+    root.doMove(myPath, myNewParentPath, null);
     myToIdPath = root.getEntry(getNewPath()).getIdPath();
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.doMove(myNewParent.appendedWith(myPath.getName()),
-                myPath.getParent());
+    root.doMove(myNewParentPath.appendedWith(myPath.getName()),
+                myPath.getParent(), null);
   }
 
   private Path getNewPath() {
-    return myNewParent.appendedWith(myPath.getName());
+    return myNewParentPath.appendedWith(myPath.getName());
   }
 
   @Override

@@ -9,7 +9,7 @@ import org.junit.Test;
 public class FileEntryTest extends TestCase {
   @Test
   public void testCopying() {
-    FileEntry file = new FileEntry(33, "name", "content");
+    FileEntry file = new FileEntry(33, "name", "content", null);
 
     Entry copy = file.copy();
 
@@ -20,8 +20,8 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testDoesNotCopyParent() {
-    DirectoryEntry parent = new DirectoryEntry(null, null);
-    FileEntry file = new FileEntry(null, null, null);
+    DirectoryEntry parent = new DirectoryEntry(null, null, null);
+    FileEntry file = new FileEntry(null, null, null, null);
 
     parent.addChild(file);
 
@@ -31,12 +31,12 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testRenaming() {
-    DirectoryEntry dir = new DirectoryEntry(null, "dir");
-    FileEntry file = new FileEntry(33, "name", "content");
+    DirectoryEntry dir = new DirectoryEntry(null, "dir", null);
+    FileEntry file = new FileEntry(33, "name", "content", null);
 
     dir.addChild(file);
 
-    Entry renamed = file.renamed("new name");
+    Entry renamed = file.renamed("new name", null);
 
     assertEquals(33, renamed.getId());
     assertEquals("new name", renamed.getName());
@@ -47,15 +47,15 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testCanNotWorkWithChildren() {
-    FileEntry file = new FileEntry(null, null, null);
+    FileEntry file = new FileEntry(null, null, null, null);
 
     try {
-      file.addChild(new FileEntry(null, null, null));
+      file.addChild(new FileEntry(null, null, null, null));
       fail();
     } catch (LocalVcsException e) {}
 
     try {
-      file.removeChild(new FileEntry(null, null, null));
+      file.removeChild(new FileEntry(null, null, null, null));
       fail();
     } catch (LocalVcsException e) {}
 
@@ -67,8 +67,8 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testNoDifference() {
-    FileEntry e1 = new FileEntry(null, "name", "content");
-    FileEntry e2 = new FileEntry(null, "name", "content");
+    FileEntry e1 = new FileEntry(null, "name", "content", null);
+    FileEntry e2 = new FileEntry(null, "name", "content", null);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(NOT_MODIFIED, d.getKind());
@@ -78,8 +78,8 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testDifferenceInName() {
-    FileEntry e1 = new FileEntry(null, "name", "content");
-    FileEntry e2 = new FileEntry(null, "another name", "content");
+    FileEntry e1 = new FileEntry(null, "name", "content", null);
+    FileEntry e2 = new FileEntry(null, "another name", "content", null);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(MODIFIED, d.getKind());
@@ -89,8 +89,8 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testDifferenceInContent() {
-    FileEntry e1 = new FileEntry(null, "name", "content");
-    FileEntry e2 = new FileEntry(null, "name", "another content");
+    FileEntry e1 = new FileEntry(null, "name", "content", null);
+    FileEntry e2 = new FileEntry(null, "name", "another content", null);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(MODIFIED, d.getKind());
@@ -100,7 +100,7 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testAsCreatedDifference() {
-    FileEntry e = new FileEntry(null, null, null);
+    FileEntry e = new FileEntry(null, null, null, null);
 
     Difference d = e.asCreatedDifference();
 
@@ -112,7 +112,7 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testAsDeletedDifference() {
-    FileEntry e = new FileEntry(null, null, null);
+    FileEntry e = new FileEntry(null, null, null, null);
 
     Difference d = e.asDeletedDifference();
 
