@@ -42,16 +42,16 @@ public class TestNGUtil
 
     private static final String[] CONFIG_JAVADOC_TAGS = {
             "testng.configuration",
-            "testng.beforeClass",
-            "testng.beforeGroups",
-            "testng.beforeMethod",
-            "testng.beforeSuite",
-            "testng.beforeTest",
-            "testng.afterClass",
-            "testng.afterGroups",
-            "testng.afterMethod",
-            "testng.afterSuite",
-            "testng.afterTest"
+            "testng.before-class",
+            "testng.before-groups",
+            "testng.before-method",
+            "testng.before-suite",
+            "testng.before-test",
+            "testng.after-class",
+            "testng.after-groups",
+            "testng.after-method",
+            "testng.after-suite",
+            "testng.after-test"
     };
 
     public static PsiClass findPsiClass(String className, Module module, Project project, boolean global) {
@@ -95,7 +95,7 @@ public class TestNGUtil
         }
         return false;
     }
-    
+
     public static boolean hasTest(PsiModifierListOwner element) {
         //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
         //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
@@ -133,9 +133,9 @@ public class TestNGUtil
     }
 
     /**
-     * Filter the specified collection of classes to return only ones that contain any of the
-     * specified values in the specified annotation parameter. For example, this method can be used
-     * to return all classes that contain all tesng annotations that are in the groups 'foo' or 'bar'.
+     * Filter the specified collection of classes to return only ones that contain any of the specified values in the
+     * specified annotation parameter. For example, this method can be used to return all classes that contain all tesng
+     * annotations that are in the groups 'foo' or 'bar'.
      */
     public static Map<PsiClass, Collection<PsiMethod>> filterAnnotations(String parameter, Set<String> values, PsiClass[] classes) {
         Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
@@ -144,7 +144,7 @@ public class TestNGUtil
         test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
         for (PsiClass psiClass : classes) {
             //Ignore these, they cause an NPE inside of AnnotationUtil, at least up until IDEA 6.0.2
-            if(psiClass instanceof PsiAnonymousClass) continue;
+            if (psiClass instanceof PsiAnonymousClass) continue;
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, test);
             if (annotation != null) {
                 PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
@@ -153,9 +153,9 @@ public class TestNGUtil
                     if (parameter.equals(aPair.getName())) {
                         Collection<String> matches = extractValuesFromParameter(aPair);
                         //check if any matches are in our values
-                        for(String s : matches) {
-                            if(values.contains(s)) {
-                                
+                        for (String s : matches) {
+                            if (values.contains(s)) {
+
                                 results.put(psiClass, new HashSet<PsiMethod>());
                                 break OUTER;
                             }
@@ -164,8 +164,8 @@ public class TestNGUtil
                 }
             } else {
                 Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
-                for(String s : matches) {
-                    if(values.contains(s)) {
+                for (String s : matches) {
+                    if (values.contains(s)) {
                         results.put(psiClass, new HashSet<PsiMethod>());
                         break;
                     }
@@ -182,9 +182,9 @@ public class TestNGUtil
                     for (PsiNameValuePair aPair : pair) {
                         if (parameter.equals(aPair.getName())) {
                             Collection<String> matches = extractValuesFromParameter(aPair);
-                            for(String s : matches) {
-                                if(values.contains(s)) {
-                                    if(results.get(psiClass) == null) results.put(psiClass, new HashSet<PsiMethod>());
+                            for (String s : matches) {
+                                if (values.contains(s)) {
+                                    if (results.get(psiClass) == null) results.put(psiClass, new HashSet<PsiMethod>());
                                     results.get(psiClass).add(method);
                                     break OUTER;
                                 }
@@ -193,8 +193,8 @@ public class TestNGUtil
                     }
                 } else {
                     Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
-                    for(String s : matches) {
-                        if(values.contains(s)) {
+                    for (String s : matches) {
+                        if (values.contains(s)) {
                             results.get(psiClass).add(method);
                         }
                     }
@@ -203,7 +203,7 @@ public class TestNGUtil
         }
         return results;
     }
-    
+
     public static Set<String> getAnnotationValues(String parameter, PsiClass... classes) {
         Set<String> results = new HashSet<String>();
         Set<String> test = new HashSet<String>(1);
