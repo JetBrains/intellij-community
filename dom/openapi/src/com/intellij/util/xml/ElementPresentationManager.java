@@ -51,7 +51,7 @@ public abstract class ElementPresentationManager {
   private final static Function<? extends DomElement, String> DEFAULT_NAMER = new Function<DomElement, String>() {
     @Nullable
     public String fun(final DomElement element) {
-      return element.getGenericInfo().getElementName(element);
+      return getElementName(element);
     }
   };
 

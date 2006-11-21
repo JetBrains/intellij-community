@@ -5,14 +5,14 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -21,6 +21,7 @@ import javax.swing.*;
  */
 public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, PsiPresentableMetaData, PsiMetaData {
   private T myElement;
+  @Nullable
   private GenericDomValue myNameElement;
 
   public final PsiElement getDeclaration() {
@@ -43,14 +44,13 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
 
   @NonNls
   public final String getName() {
-    return StringUtil.notNullize(myNameElement.getStringValue());
+    return ElementPresentationManager.getElementName(myElement);
   }
 
   public void init(PsiElement element) {
     myElement = (T) DomManager.getDomManager(element.getProject()).getDomElement((XmlTag)element);
     assert myElement != null : element;
     myNameElement = getNameElement(myElement);
-    assert myNameElement != null : element;
   }
 
   protected GenericDomValue getNameElement(final T t) {
@@ -66,7 +66,9 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
   }
 
   public void setName(String name) throws IncorrectOperationException {
-    myNameElement.setStringValue(name);
+    if (myNameElement != null) {
+      myNameElement.setStringValue(name);
+    }
   }
 
   public String getTypeName() {

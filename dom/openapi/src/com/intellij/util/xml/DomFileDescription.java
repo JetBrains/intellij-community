@@ -51,6 +51,14 @@ public class DomFileDescription<T> {
     myRootTagName = rootTagName;
   }
 
+  /**
+   * Register an implementation class to provide addidtion functionality for DOM elements.
+   *
+   * @param domElementClass interface class.
+   * @param implementationClass abstract implementation class.
+   *
+   * @see #initializeFileDescription()
+   */
   protected final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     myImplementations.put(domElementClass, implementationClass);
   }
@@ -98,6 +106,11 @@ public class DomFileDescription<T> {
     return true;
   }
 
+  /**
+   * The right place to call {@link #registerImplementation(Class, Class)},
+   * {@link #registerNamespacePolicy(String, com.intellij.util.NotNullFunction)},
+   * and {@link #registerTypeChooser(java.lang.reflect.Type, TypeChooser)}.
+   */
   protected void initializeFileDescription() {}
 
   /**
