@@ -559,6 +559,7 @@
         <separator/>
         <action id="StepOver" class="com.intellij.debugger.actions.StepOverAction" icon="/actions/traceOver.png"/>
         <action id="StepInto" class="com.intellij.debugger.actions.StepIntoAction" icon="/actions/traceInto.png"/>
+        <action id="SmartStepInto" class="com.intellij.debugger.actions.SmartStepIntoAction" icon="/actions/traceInto.png"/>
         <action id="StepOut" class="com.intellij.debugger.actions.StepOutAction" icon="/actions/stepOut.png"/>
         <action id="ForceStepOver" class="com.intellij.debugger.actions.ForceStepOverAction" icon="/actions/traceOver.png"/>
         <action id="ForceStepInto" class="com.intellij.debugger.actions.ForceStepIntoAction" icon="/actions/forceStepInto.png"/>

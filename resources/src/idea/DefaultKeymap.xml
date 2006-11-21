@@ -53,8 +53,11 @@
     <action id="StepInto">
       <keyboard-shortcut first-keystroke="F7"/>
     </action>
-    <action id="ForceStepInto">
+    <action id="SmartStepInto">
       <keyboard-shortcut first-keystroke="shift F7"/>
+    </action>
+    <action id="ForceStepInto">
+      <keyboard-shortcut first-keystroke="control alt F7"/>
     </action>
     <action id="ForceStepOver">
       <keyboard-shortcut first-keystroke="control alt F8"/>

@@ -58,8 +58,7 @@ public class JVMNameUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void appendJVMSignature(JVMNameBuffer buffer , PsiType type)
-    throws EvaluateException {
+  private static void appendJVMSignature(JVMNameBuffer buffer , PsiType type){
     final PsiType psiType = TypeConversionUtil.erasure(type);
     if (psiType instanceof PsiArrayType) {
       buffer.append(new JVMRawText("["));
@@ -243,7 +242,7 @@ public class JVMNameUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static JVMName getJVMSignature(PsiMethod method) throws EvaluateException {
+  public static JVMName getJVMSignature(PsiMethod method) {
     JVMNameBuffer signature = new JVMNameBuffer();
     signature.append("(");
     PsiParameterList paramList = method.getParameterList();

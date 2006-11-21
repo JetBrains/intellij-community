@@ -674,12 +674,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())));
       }
 
-      try {
-        myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators);
-      }
-      catch (EvaluateException e) {
-        throw new EvaluateRuntimeException(e);
-      }
+      myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators);
     }
 
     public void visitLiteralExpression(PsiLiteralExpression expression) {
@@ -821,18 +816,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
               .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", argExpression.getText())));
           }
         }
-        try {
-          //noinspection HardCodedStringLiteral
-          JVMName signature = (constructor != null)? JVMNameUtil.getJVMSignature(constructor) : JVMNameUtil.getJVMRawText("()V");
-          myResult = new NewClassInstanceEvaluator(
-            new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(expressionPsiType)),
-            signature,
-            argumentEvaluators
-          );
-        }
-        catch (EvaluateException e) {
-          throw new EvaluateRuntimeException(e);
-        }
+        //noinspection HardCodedStringLiteral
+        JVMName signature = (constructor != null)? JVMNameUtil.getJVMSignature(constructor) : JVMNameUtil.getJVMRawText("()V");
+        myResult = new NewClassInstanceEvaluator(
+          new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(expressionPsiType)),
+          signature,
+          argumentEvaluators
+        );
       }
     }
 

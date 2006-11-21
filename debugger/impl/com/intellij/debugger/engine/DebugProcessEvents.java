@@ -327,17 +327,15 @@ public class DebugProcessEvents extends DebugProcessImpl {
     boolean shouldResume = false;
 
     if (hint != null) {
-      if (hint.shouldSkipFrame(suspendContext)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("STEPOUT doStep");
-        }
+      final int nextStepDepth = hint.getNextStepDepth(suspendContext);
+      if (nextStepDepth != RequestHint.STOP) {
         final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
-        doStep(threadProxy, hint.getDepth(), hint);
+        doStep(threadProxy, nextStepDepth, hint);
         shouldResume = true;
       }
 
       if(!shouldResume && hint.isRestoreBreakpoints()) {
-        DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().enableBreakpoints(DebugProcessEvents.this);
+        DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().enableBreakpoints(this);
       }
     }
 

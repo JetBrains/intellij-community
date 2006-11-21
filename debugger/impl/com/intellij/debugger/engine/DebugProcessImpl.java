@@ -1333,17 +1333,21 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private class StepIntoCommand extends ResumeCommand {
     private final boolean myIgnoreFilters;
+    private final String myTargetMethodSignature;
 
-    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters) {
+    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final @Nullable String targetMethodSignature) {
       super(suspendContext);
       myIgnoreFilters = ignoreFilters;
+      myTargetMethodSignature = targetMethodSignature;
     }
 
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.step.into"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl stepThread = suspendContext.getThread();
-      RequestHint hint = new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
+      final RequestHint hint = myTargetMethodSignature != null?
+                               new RequestHint(stepThread, suspendContext, myTargetMethodSignature) :
+                               new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
       hint.setIgnoreFilters(myIgnoreFilters);
       doStep(stepThread, StepRequest.STEP_INTO, hint);
       super.contextAction();
@@ -1728,8 +1732,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return new StepOutCommand(suspendContext);
   }
 
-  public SuspendContextCommandImpl createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters) {
-    return new StepIntoCommand(suspendContext, ignoreFilters);
+  public SuspendContextCommandImpl createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters,
+                                                         final String targetMethodSignature) {
+    return new StepIntoCommand(suspendContext, ignoreFilters, targetMethodSignature);
   }
 
   public SuspendContextCommandImpl createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex,

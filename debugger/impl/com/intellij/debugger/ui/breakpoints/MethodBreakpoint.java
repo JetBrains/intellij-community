@@ -252,27 +252,22 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     //final int endOffset = document.getLineEndOffset(sourcePosition);
     final MethodDescriptor descriptor = docManager.commitAndRunReadAction(new Computable<MethodDescriptor>() {
       public MethodDescriptor compute() {
-        try {
-          //PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
-          PsiMethod method = PositionUtil.getPsiElementAt(project, PsiMethod.class, sourcePosition);
-          if (method == null || document.getLineNumber(method.getTextOffset()) < sourcePosition.getLine()) {
-            return null;
-          }
+        //PsiMethod method = DebuggerUtilsEx.findPsiMethod(psiJavaFile, endOffset);
+        PsiMethod method = PositionUtil.getPsiElementAt(project, PsiMethod.class, sourcePosition);
+        if (method == null || document.getLineNumber(method.getTextOffset()) < sourcePosition.getLine()) {
+          return null;
+        }
 
-          final PsiIdentifier identifier = method.getNameIdentifier();
-          int methodNameOffset = identifier != null? identifier.getTextOffset() : method.getTextOffset();
-          final MethodDescriptor descriptor =
-            new MethodDescriptor();
-          //noinspection HardCodedStringLiteral
-          descriptor.methodName = method.isConstructor() ? "<init>" : method.getName();
-          descriptor.methodSignature = JVMNameUtil.getJVMSignature(method);
-          descriptor.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-          descriptor.methodLine = document.getLineNumber(methodNameOffset);
-          return descriptor;
-        }
-        catch (EvaluateException ignored) {
-        }
-        return null;
+        final PsiIdentifier identifier = method.getNameIdentifier();
+        int methodNameOffset = identifier != null? identifier.getTextOffset() : method.getTextOffset();
+        final MethodDescriptor descriptor =
+          new MethodDescriptor();
+        //noinspection HardCodedStringLiteral
+        descriptor.methodName = method.isConstructor() ? "<init>" : method.getName();
+        descriptor.methodSignature = JVMNameUtil.getJVMSignature(method);
+        descriptor.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+        descriptor.methodLine = document.getLineNumber(methodNameOffset);
+        return descriptor;
       }
     });
     if (descriptor == null || descriptor.methodName == null || descriptor.methodSignature == null) {

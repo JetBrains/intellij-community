@@ -1,11 +1,9 @@
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -18,7 +16,7 @@ public class StepIntoAction extends AnAction {
     if (project == null) {
       return;
     }
-    (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession().stepInto(false);
+    (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession().stepInto(false, null);
   }
 
   public void update(AnActionEvent event){
