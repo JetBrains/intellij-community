@@ -19,7 +19,7 @@ import com.intellij.openapi.compiler.CompileContext;
 
 import java.io.File;
 
-public interface J2EEBuildParticipant {
+public interface BuildParticipant {
   void registerBuildInstructions(BuildRecipe buildRecipe, CompileContext context);
 
   void afterJarCreated(File jarFile, CompileContext context) throws Exception;

@@ -49,4 +49,10 @@
       <skipForDummyProject/>
     </component>
   </project-components>
+  <module-components>
+    <component>
+      <implementation-class>com.intellij.compiler.impl.make.ModuleBuilder</implementation-class>
+      <skipForDummyProject/>
+    </component>
+  </module-components>
 </components>

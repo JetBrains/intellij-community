@@ -34,7 +34,7 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable,
     myDelegate = delegate;
   }
 
-  protected com.intellij.openapi.module.ContainerElement getDelegate() {
+  public com.intellij.openapi.module.ContainerElement getDelegate() {
     return myDelegate;
   }
 

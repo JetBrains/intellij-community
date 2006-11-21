@@ -37,11 +37,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class ModuleLinkImpl extends ModuleLink {
 
-  protected com.intellij.openapi.module.impl.ModuleLinkImpl getDelegate() {
+  public com.intellij.openapi.module.impl.ModuleLinkImpl getDelegate() {
     return (com.intellij.openapi.module.impl.ModuleLinkImpl)super.getDelegate();
   }
 
-  private ModuleLinkImpl(final com.intellij.openapi.module.impl.ModuleLinkImpl delegate) {
+  public ModuleLinkImpl(final com.intellij.openapi.module.impl.ModuleLinkImpl delegate) {
     super(delegate);
   }
 

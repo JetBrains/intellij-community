@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ModuleBuildProperties implements ModuleComponent {
+  @Nullable
   public static ModuleBuildProperties getInstance(Module module) {
     return module.getComponent(ModuleBuildProperties.class);
   }
@@ -47,7 +48,7 @@ public abstract class ModuleBuildProperties implements ModuleComponent {
   public abstract boolean isBuildExternalDependencies();
 
   @Nullable
-  public abstract J2EEBuildParticipant getBuildParticipant();
+  public abstract BuildParticipant getBuildParticipant();
 
   @Nullable
   public abstract UnnamedConfigurable getBuildConfigurable(ModuleContainer moduleProperties, ModifiableRootModel rootModel);

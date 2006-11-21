@@ -40,11 +40,11 @@ import java.util.List;
 
 public class LibraryLinkImpl extends LibraryLink {
 
-  protected com.intellij.openapi.module.impl.LibraryLinkImpl getDelegate() {
+  public com.intellij.openapi.module.impl.LibraryLinkImpl getDelegate() {
     return (com.intellij.openapi.module.impl.LibraryLinkImpl)super.getDelegate();
   }
 
-  private LibraryLinkImpl(final com.intellij.openapi.module.impl.LibraryLinkImpl delegate) {
+  public LibraryLinkImpl(final com.intellij.openapi.module.impl.LibraryLinkImpl delegate) {
     super(delegate);
   }
 

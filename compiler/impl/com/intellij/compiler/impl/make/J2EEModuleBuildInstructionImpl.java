@@ -24,6 +24,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
 
   private final ModuleBuildProperties myBuildProperties;
