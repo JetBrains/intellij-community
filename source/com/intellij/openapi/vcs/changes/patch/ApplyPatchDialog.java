@@ -124,9 +124,9 @@ public class ApplyPatchDialog extends DialogWrapper {
         }
         
         autoDetectBaseDirectory();
+        queueUpdateStatus(null);
       }
     });
-    queueUpdateStatus(null);
   }
 
   private void autoDetectBaseDirectory() {
