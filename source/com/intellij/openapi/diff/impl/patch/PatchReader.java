@@ -137,7 +137,14 @@ public class PatchReader {
     else {
       return null;
     }
-    return new PatchLine(type, line.substring(prefixLength));
+    String lineText;
+    if (line.length() < prefixLength) {
+      lineText = "";
+    }
+    else {
+      lineText = line.substring(prefixLength); 
+    }
+    return new PatchLine(type, lineText);
   }
 
   @Nullable
@@ -167,7 +174,7 @@ public class PatchReader {
     }
     Matcher afterMatcher = ourContextAfterHunkStartPattern.matcher(myLines [myLineIndex]);
     if (!afterMatcher.matches()) {
-      throw new PatchSyntaxException(myLineIndex, "Unknown before hunk start syntax");
+      throw new PatchSyntaxException(myLineIndex, "Unknown after hunk start syntax");
     }
     myLineIndex++;
     List<String> afterLines = readContextDiffLines();
@@ -194,26 +201,26 @@ public class PatchReader {
         String beforeLine = beforeLines.get(beforeLineIndex);
         String afterLine = afterLines.get(afterLineIndex);
         if (beforeLine.startsWith(" ") && afterLine.startsWith(" ")) {
-          hunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, beforeLine.substring(2)));
+          addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT);
           beforeLineIndex++;
           afterLineIndex++;
         }
         else if (beforeLine.startsWith("-")) {
-          hunk.addLine(new PatchLine(PatchLine.Type.REMOVE, beforeLine.substring(2)));
+          addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE);
           beforeLineIndex++;
         }
         else if (afterLine.startsWith("+")) {
-          hunk.addLine(new PatchLine(PatchLine.Type.ADD, afterLine.substring(2)));
+          addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD);
           afterLineIndex++;
         }
         else if (beforeLine.startsWith("!") && afterLine.startsWith("!")) {
           while(beforeLineIndex < beforeLines.size() && beforeLines.get(beforeLineIndex).startsWith("! ")) {
-            hunk.addLine(new PatchLine(PatchLine.Type.REMOVE, beforeLines.get(beforeLineIndex).substring(2)));
+            addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE);
             beforeLineIndex++;
           }
 
           while(afterLineIndex < afterLines.size() && afterLines.get(afterLineIndex).startsWith("! ")) {
-            hunk.addLine(new PatchLine(PatchLine.Type.ADD, afterLines.get(afterLineIndex).substring(2)));
+            addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD);
             afterLineIndex++;
           }
         }
@@ -225,11 +232,15 @@ public class PatchReader {
     return hunk;
   }
 
+  private static void addContextDiffLine(final PatchHunk hunk, final String line, final PatchLine.Type type) {
+    hunk.addLine(new PatchLine(type, line.length() < 2 ? "" : line.substring(2)));
+  }
+
   private List<String> readContextDiffLines() {
     ArrayList<String> result = new ArrayList<String>();
     while(myLineIndex < myLines.length) {
       final String line = myLines[myLineIndex];
-      if (!line.startsWith("  ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ")) {
+      if (!line.startsWith(" ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ")) {
         break;
       }
       result.add(line);
