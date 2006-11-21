@@ -52,7 +52,7 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * Register an implementation class to provide addidtion functionality for DOM elements.
+   * Register an implementation class to provide additional functionality for DOM elements.
    *
    * @param domElementClass interface class.
    * @param implementationClass abstract implementation class.
