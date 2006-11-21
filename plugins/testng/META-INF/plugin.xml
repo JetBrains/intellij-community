@@ -2,7 +2,7 @@
 <idea-plugin>
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
-    <version>0.5.0</version>
+    <version>0.5.1</version>
     <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
     <idea-version since-build="5594"/>
     <application-components>
@@ -35,14 +35,14 @@
 
     </project-components>
     <change-notes>
-        <![CDATA[Fixed 100% CPU usage if a class accidentally extends itself<br>
-        Fixed occassional ConcurrentModificationException error<br>
-        Correctly highlight invalid configuration icon if invalid class/package specified<br>
-        Use module JDK if module classpath is specified instead of project JDK<br>
-        Added experimental support for automatically detecting and including group dependency when running a single class or method<br>
-        Group browser now only shows groups from the current module, rather than the whole project, which should speed it up significantly<br>
-        Added project level configuration for default parameters and test output directory,<br>
-        Added test output directory setting to run configuration.
+        <![CDATA[<li>Fixed 100% CPU usage if a class accidentally extends itself.
+        <li>Fixed occassional ConcurrentModificationException error.
+        <li>Correctly highlight invalid configuration icon if invalid class/package specified.
+        <li>Use module JDK if module classpath is specified instead of project JDK.
+        <li>Added experimental support for automatically detecting and including group dependency when running a single class or method.
+        <li>Group browser now only shows groups from the current module, rather than the whole project, which should speed it up significantly.
+        <li>Added project level configuration for default parameters and test output directory.
+        <li>Added test output directory setting to run configuration.
         ]]>
     </change-notes>
 </idea-plugin>

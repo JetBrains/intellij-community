@@ -189,12 +189,17 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         model.apply(getModuleSelector().getModule(), config);
         getModuleSelector().applyTo(config);
         TestData data = config.getPersistantData();
-        if (packagesInProject.isSelected())
-            data.setScope(TestSearchScope.WHOLE_PROJECT);
-        else if (packagesInModule.isSelected())
+        if(packageTest.isSelected()) {
+            if (packagesInProject.isSelected())
+                data.setScope(TestSearchScope.WHOLE_PROJECT);
+            else if (packagesInModule.isSelected())
+                data.setScope(TestSearchScope.SINGLE_MODULE);
+            else if (packagesAcrossModules.isSelected())
+                data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
+        }
+        else {
             data.setScope(TestSearchScope.SINGLE_MODULE);
-        else if (packagesAcrossModules.isSelected())
-            data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
+        }
         commonParameters.applyTo(config);
         config.ALTERNATIVE_JRE_PATH = alternateJDK.getPath();
         config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isPathEnabled();

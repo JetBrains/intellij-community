@@ -143,6 +143,8 @@ public class TestNGUtil
         test.add(TEST_ANNOTATION_FQN);
         test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
         for (PsiClass psiClass : classes) {
+            //Ignore these, they cause an NPE inside of AnnotationUtil, at least up until IDEA 6.0.2
+            if(psiClass instanceof PsiAnonymousClass) continue;
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, test);
             if (annotation != null) {
                 PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
