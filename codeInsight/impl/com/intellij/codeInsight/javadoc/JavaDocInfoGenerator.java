@@ -1141,19 +1141,16 @@ class JavaDocInfoGenerator {
     LinkedList<PsiClassType> holder = new LinkedList<PsiClassType>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
 
     for (int i = localTags.length - 1; i > -1; i--) {
-      try {
-        PsiDocTagValue valueElement = localTags[i].getValueElement();
+      PsiDocTagValue valueElement = localTags[i].getValueElement();
 
-        if (valueElement != null) {
+      if (valueElement != null) {
+        try {
           PsiClassType t = (PsiClassType)method.getManager().getElementFactory().createTypeFromText(valueElement.getText(), method);
 
           if (!holder.contains(t)) {
             holder.addFirst(t);
           }
-        }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error("Incorrect operation exception.");
+        } catch(IncorrectOperationException e) {} // nonvalid type
       }
     }
 
