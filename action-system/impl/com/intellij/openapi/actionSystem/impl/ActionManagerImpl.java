@@ -145,10 +145,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         processActionsElement(children, classLoader, null);
       }
     }
-    registerActions();
+    registerPluginActions();
   }
 
-  private void registerActions() {
+  private void registerPluginActions() {
     final Application app = ApplicationManager.getApplication();
     final IdeaPluginDescriptor[] plugins = app.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
@@ -732,17 +732,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
   }
 
-  public void registerAction(@NotNull String actionId, @NotNull AnAction action, PluginId pluginId) {
+  public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: registerAction(" + action + ")");
     }
     synchronized (myLock) {
       if (myId2Action.containsKey(actionId)) {
-        LOG.error("action with the ID \"" + actionId + "\" was already registered. Registered action is " + myId2Action.get(actionId));
+        LOG.error("action with the ID \"" + actionId + "\" was already registered. Registered action is " + myId2Action.get(actionId) + getPluginInfo(pluginId));
         return;
       }
       if (myAction2Id.containsKey(action)) {
-        LOG.error("action was already registered for another ID. ID is " + myAction2Id.get(action));
+        LOG.error("action was already registered for another ID. ID is " + myAction2Id.get(action) + getPluginInfo(pluginId));
         return;
       }
       myId2Action.put(actionId, action);
@@ -758,6 +758,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       }
       action.registerCustomShortcutSet(new ProxyShortcutSet(actionId, myKeymapManager), null);
     }
+  }
+
+  @NonNls
+  private static String getPluginInfo(@Nullable PluginId id) {
+    if (id != null) {
+      final IdeaPluginDescriptor plugin = ApplicationManager.getApplication().getPlugin(id);
+      if (plugin != null) {
+        String name = plugin.getName();
+        if (name == null) {
+          name = id.getIdString();
+        }
+        return " Plugin: " + name;
+      }
+    }
+    return "";
   }
 
   public void registerAction(@NotNull String actionId, @NotNull AnAction action) {
