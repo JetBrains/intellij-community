@@ -5,9 +5,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
@@ -28,11 +29,8 @@ public class EditorTracker {
 
   private final Project myProject;
 
-  /**
-   * @fabrique *
-   */
-  protected Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
-  protected Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
+  private Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
+  private Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
   private Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
   private static final Editor[] EMPTY_EDITOR_ARRAY = new Editor[0];
   private Editor[] myActiveEditors = EMPTY_EDITOR_ARRAY;
@@ -76,17 +74,14 @@ public class EditorTracker {
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
   }
 
-  /**
-   * @fabrique *
-   */
-  protected void editorFocused(Editor editor) {
+  private void editorFocused(Editor editor) {
     Window window = myEditorToWindowMap.get(editor);
     if (window == null) return;
 
     List<Editor> list = myWindowToEditorsMap.get(window);
     int index = list.indexOf(editor);
     LOG.assertTrue(index >= 0);
-    if (list.size() == 0) return;
+    if (list.isEmpty()) return;
 
     for (int i = index - 1; i >= 0; i--) {
       list.set(i + 1, list.get(i));
@@ -96,42 +91,7 @@ public class EditorTracker {
     setActiveWindow(window);
   }
 
-  protected boolean isEditorInIdeFrameActive(Editor editor) {
-    if (isEditorInTabbedPane(editor)){
-      return isActiveEditorInTabbedPane(editor);
-    }
-    else{
-      return true;
-    }
-  }
-
-  private boolean isEditorInTabbedPane(Editor editor){
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    FileEditor[] allEditors = editorManager.getAllEditors();
-    for (FileEditor fileEditor : allEditors) {
-      if (fileEditor instanceof TextEditor) {
-        if (editor == ((TextEditor)fileEditor).getEditor()) return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean isActiveEditorInTabbedPane(Editor editor){
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    VirtualFile[] files = editorManager.getSelectedFiles();
-    for (VirtualFile file : files) {
-      FileEditor selectedEditor = editorManager.getSelectedEditor(file);
-      if (selectedEditor instanceof TextEditor) {
-        if (editor == ((TextEditor)selectedEditor).getEditor()) return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * @fabrique *
-   */
-  protected void registerEditor(Editor editor) {
+  private void registerEditor(Editor editor) {
     unregisterEditor(editor);
 
     final Window window = windowByEditor(editor);
@@ -172,10 +132,7 @@ public class EditorTracker {
     }
   }
 
-  /**
-   * @fabrique *
-   */
-  protected void unregisterEditor(Editor editor) {
+  private void unregisterEditor(Editor editor) {
     Window oldWindow = myEditorToWindowMap.get(editor);
     if (oldWindow != null) {
       myEditorToWindowMap.remove(editor);
@@ -191,10 +148,7 @@ public class EditorTracker {
     }
   }
 
-  /**
-   * @fabrique *
-   */
-  protected Window windowByEditor(Editor editor) {
+  private Window windowByEditor(Editor editor) {
     Window window = SwingUtilities.windowForComponent(editor.getComponent());
     if (window instanceof IdeFrame) {
       if (window != myIdeFrame) return null;
@@ -220,7 +174,7 @@ public class EditorTracker {
     setActiveEditors(editors);
   }
 
-  protected Editor[] editorsByWindow(Window window) {
+  private Editor[] editorsByWindow(Window window) {
     List<Editor> list = myWindowToEditorsMap.get(window);
     if (list == null) return EMPTY_EDITOR_ARRAY;
     List<Editor> filtered = new ArrayList<Editor>();
@@ -232,10 +186,7 @@ public class EditorTracker {
     return filtered.toArray(new Editor[filtered.size()]);
   }
 
-  /**
-   * @fabrique *
-   */
-  protected void setActiveEditors(Editor[] editors) {
+  private void setActiveEditors(Editor[] editors) {
     myActiveEditors = editors;
 
     if (LOG.isDebugEnabled()) {

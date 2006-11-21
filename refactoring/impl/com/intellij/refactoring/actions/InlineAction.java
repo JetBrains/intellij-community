@@ -17,10 +17,7 @@ import com.intellij.refactoring.inline.InlineHandler;
 import org.jetbrains.annotations.NonNls;
 
 public class InlineAction extends BaseRefactoringAction {
-  /**
-   * @fabrique
-   */
-  @NonNls public static final String INLINE_ACTION_HANDLER = "InlineActionHandler";
+  @NonNls private static final String INLINE_ACTION_HANDLER = "InlineActionHandler";
 
   public boolean isAvailableInEditorOnly() {
     return false;

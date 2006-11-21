@@ -1,7 +1,6 @@
 
 package com.intellij.codeHighlighting;
 
-/** @fabrique */
 public interface Pass {
   int ALL = 0xFF;
 

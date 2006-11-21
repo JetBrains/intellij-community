@@ -937,9 +937,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return common.toArray(new FileEditor[common.size()]);
   }
 
-  /**
-   * @fabrique used in fabrique *
-   */
   private EditorTracker createEditorTracker() {
     return new EditorTracker(myProject);
   }

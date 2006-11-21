@@ -10,9 +10,6 @@ import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 
 public class MoveAction extends BaseRefactoringAction {
-  /**
-   * @fabrique
-   */
   @NonNls public static final String MOVE_PROVIDER = "MoveProvider";
 
   private MoveHandler.TargetContainerFinder myFinder = new MoveHandler.TargetContainerFinder() {
