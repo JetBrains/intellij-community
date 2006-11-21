@@ -4,8 +4,8 @@ import com.incors.plaf.alloy.*;
 import com.intellij.ExtensionPoints;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -37,12 +37,16 @@ public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   @NonNls public static final String IPR_SUFFIX = ".ipr";
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   protected IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
     ourInstance = this;
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
     if (Main.isHeadless()) {
+      if (SystemInfo.isLinux) { //hack: do not initialize X11Toolit in headless environment
+        System.setProperty("awt.toolkit", "sun.awt.HeadlessToolkit");
+      }
       new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
     } else {
       ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, "idea");
