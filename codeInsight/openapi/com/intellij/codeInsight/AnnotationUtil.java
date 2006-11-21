@@ -72,6 +72,7 @@ public class AnnotationUtil {
   @Nullable
   public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, String annotationName) {
     final PsiModifierList list = listOwner.getModifierList();
+    if (list == null) return null;
     final PsiAnnotation[] allAnnotations = list.getAnnotations();
     for (PsiAnnotation annotation : allAnnotations) {
       String qualifiedName = annotation.getQualifiedName();
@@ -90,6 +91,7 @@ public class AnnotationUtil {
   @Nullable
   public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, Set<String> annotationNames) {
     final PsiModifierList list = listOwner.getModifierList();
+    if (list == null) return null;
     final PsiAnnotation[] allAnnotations = list.getAnnotations();
     for (PsiAnnotation annotation : allAnnotations) {
       String qualifiedName = annotation.getQualifiedName();
