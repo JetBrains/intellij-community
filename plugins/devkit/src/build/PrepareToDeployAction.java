@@ -248,8 +248,8 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   private File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
-    final PluginModuleBuildProperties pluginModuleBuildProperties =
-      ((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module));
+    final JavaeePluginModuleBuildProperties pluginModuleBuildProperties =
+      ((JavaeePluginModuleBuildProperties)ModuleBuildProperties.getInstance(module));
     File jarFile = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
     jarFile.deleteOnExit();
     final Manifest manifest = createOrFindManifest(pluginModuleBuildProperties);
@@ -292,7 +292,7 @@ public class PrepareToDeployAction extends AnAction {
     return jarFile;
   }
 
-  private static Manifest createOrFindManifest(final PluginModuleBuildProperties pluginModuleBuildProperties) throws IOException {
+  private static Manifest createOrFindManifest(final JavaeePluginModuleBuildProperties pluginModuleBuildProperties) throws IOException {
     final Manifest manifest = new Manifest();
     final VirtualFile vManifest = pluginModuleBuildProperties.getManifest();
     if (pluginModuleBuildProperties.isUseUserManifest() && vManifest != null) {

@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
 import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+import org.jetbrains.idea.devkit.build.JavaeePluginModuleBuildProperties;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 import javax.swing.*;
@@ -115,8 +116,8 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     if (module.getModuleType() != ourInstance) return null;
 
     final ModuleBuildProperties buildProperties = module.getComponent(ModuleBuildProperties.class);
-    if (!(buildProperties instanceof PluginModuleBuildProperties)) return null;
-    final VirtualFilePointer pluginXMLPointer = ((PluginModuleBuildProperties)buildProperties).getPluginXMLPointer();
+    if (!(buildProperties instanceof JavaeePluginModuleBuildProperties)) return null;
+    final VirtualFilePointer pluginXMLPointer = ((JavaeePluginModuleBuildProperties)buildProperties).getPluginXMLPointer();
     final VirtualFile vFile = pluginXMLPointer.getFile();
     if (vFile == null) return null;
     final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(vFile);

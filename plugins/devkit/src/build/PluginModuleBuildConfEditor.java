@@ -49,7 +49,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
   private JCheckBox myUseUserManifest = new JCheckBox(DevKitBundle.message("manifest.use.user.defined"));
 
-  private PluginModuleBuildProperties myBuildProperties;
+  private JavaeePluginModuleBuildProperties myBuildProperties;
 
   private Module myModule;
   @NonNls private static final String META_INF = "META-INF";
@@ -58,7 +58,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   public PluginModuleBuildConfEditor(ModuleConfigurationState state) {
     myModule = state.getRootModel().getModule();
-    myBuildProperties = (PluginModuleBuildProperties)ModuleBuildProperties.getInstance(myModule);
+    myBuildProperties = (JavaeePluginModuleBuildProperties)ModuleBuildProperties.getInstance(myModule);
   }
 
   public JComponent createComponent() {

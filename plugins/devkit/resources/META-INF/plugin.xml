@@ -36,7 +36,7 @@
     </component>
     <component>
       <interface-class>com.intellij.javaee.make.ModuleBuildProperties</interface-class>
-      <implementation-class>org.jetbrains.idea.devkit.build.PluginModuleBuildProperties</implementation-class>
+      <implementation-class>org.jetbrains.idea.devkit.build.JavaeePluginModuleBuildProperties</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>
     </component>    
     <component>
@@ -44,6 +44,10 @@
       <implementation-class>org.jetbrains.idea.devkit.build.PluginModuleBuildDescriptor</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>
     </component>  
+    <component>
+      <implementation-class>org.jetbrains.idea.devkit.build.PluginBuildProvider</implementation-class>
+      <option name="type" value="PLUGIN_MODULE"/>
+    </component>
   </module-components>
   <actions>
     <group>

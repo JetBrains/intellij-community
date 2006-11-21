@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+import org.jetbrains.idea.devkit.build.JavaeePluginModuleBuildProperties;
 
 public class PluginModuleBuilder extends JavaModuleBuilder{
   @NonNls private static final String META_INF = "META-INF";
@@ -38,7 +39,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
     final String defaultPluginXMLLocation = getModuleFileDirectory() + '/' + META_INF + '/' + PLUGIN_XML;
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(defaultPluginXMLLocation);
     if (file == null) {
-      final PluginModuleBuildProperties moduleProperties = (PluginModuleBuildProperties)PluginModuleBuildProperties.getInstance(rootModel.getModule());
+      final JavaeePluginModuleBuildProperties moduleProperties = (JavaeePluginModuleBuildProperties)JavaeePluginModuleBuildProperties.getInstance(rootModel.getModule());
       moduleProperties.getPluginXML(); //call to create if not exist
     }
   }
