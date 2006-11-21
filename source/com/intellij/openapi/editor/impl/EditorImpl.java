@@ -68,6 +68,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
+  public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
   private final DocumentImpl myDocument;
 
   private JPanel myPanel;
@@ -1857,7 +1858,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public Dimension getPreferredSize() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return new Dimension(1,1);
+    if (ApplicationManager.getApplication().isUnitTestMode() && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
+      return new Dimension(1,1);
+    }
     Dimension draft = getSizeWithoutCaret();
     int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
     draft.width = Math.max(caretX, draft.width) + mySettings.getAdditionalColumnsCount() * getSpaceWidth(Font.PLAIN);
