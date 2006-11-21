@@ -18,6 +18,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.MergeRequest;
@@ -63,8 +64,16 @@ public class ApplyPatchAction extends AnAction {
       public void run() {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
+            ApplyPatchStatus status = null;
             for(FilePatch patch: patches) {
-              applySinglePatch(project, patch, dialog.getBaseDirectory(), dialog.getStripLeadingDirectories());
+              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, dialog.getBaseDirectory(), dialog.getStripLeadingDirectories());
+              status = ApplyPatchStatus.and(status, patchStatus);
+            }
+            if (status == ApplyPatchStatus.ALREADY_APPLIED) {
+              Messages.showInfoMessage(project, "All of the changes in the specified patch are already contained in the code", "Apply Patch");
+            }
+            else if (status == ApplyPatchStatus.PARTIAL) {
+              Messages.showInfoMessage(project, "Some of the changes in the specified patch were skipped because are already contained in the code", "Apply Patch");
             }
           }
         }, "apply patch", null);
@@ -72,44 +81,46 @@ public class ApplyPatchAction extends AnAction {
     });
   }
 
-  private static void applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,
-                                       final int stripLeadingDirectories) {
+  private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,
+                                                   final int stripLeadingDirectories) {
     VirtualFile file = patch.findFileToPatch(baseDirectory, stripLeadingDirectories);
     if (file == null) {
       Messages.showErrorDialog(project, "Cannot find file to patch: " + patch.getBeforeName(), "Apply Patch");
-      return;
+      return ApplyPatchStatus.FAILURE;
     }
 
     try {
-      patch.apply(file);
+      return patch.apply(file);
     }
     catch(ApplyPatchException ex) {
-      boolean appliedAnyway = false;
       if (!patch.isNewFile() && !patch.isDeletedFile()) {
         CharSequence content = findMatchingContent(project, patch, file);
         if (content != null) {
           try {
-            String patchedContent = patch.applyModifications(content);
-            showMergeDialog(project, patch, file, content, patchedContent);
-            appliedAnyway = true;
+            StringBuilder newText = new StringBuilder();
+            ApplyPatchStatus status = patch.applyModifications(content, newText);
+            if (status != ApplyPatchStatus.ALREADY_APPLIED) {
+              return showMergeDialog(project, file, content, newText.toString());
+            }
+            else {
+              return status;
+            }
           }
           catch (ApplyPatchException e) {
-            appliedAnyway = false;
+            // ignore
           }
         }
       }
-      if (!appliedAnyway) {
-        Messages.showErrorDialog(project, "Failed to apply patch because of conflicts: " + patch.getBeforeName(),
-                                 VcsBundle.message("patch.apply.dialog.title"));
-      }
+      Messages.showErrorDialog(project, "Failed to apply patch because of conflicts: " + patch.getBeforeName(),
+                               VcsBundle.message("patch.apply.dialog.title"));
     }
     catch (Exception ex) {
       LOG.error(ex);
     }
+    return ApplyPatchStatus.FAILURE;
   }
 
-  private static void showMergeDialog(final Project project, final FilePatch patch, final VirtualFile file, final CharSequence content,
-                                      final String patchedContent) {
+  private static ApplyPatchStatus showMergeDialog(Project project, VirtualFile file, CharSequence content, final String patchedContent) {
     final DiffRequestFactory diffRequestFactory = PeerFactory.getInstance().getDiffRequestFactory();
     CharSequence fileContent = LoadTextUtil.loadText(file);
     final MergeRequest request = diffRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
@@ -121,6 +132,10 @@ public class ApplyPatchAction extends AnAction {
     });
     request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", file.getPresentableUrl()));
     DiffManager.getInstance().getDiffTool().show(request);
+    if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
+      return ApplyPatchStatus.SUCCESS;
+    }
+    return ApplyPatchStatus.FAILURE;
   }
 
   @Nullable

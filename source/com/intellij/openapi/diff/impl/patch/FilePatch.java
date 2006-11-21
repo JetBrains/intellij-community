@@ -70,17 +70,17 @@ public class FilePatch {
     myHunks.add(hunk);
   }
 
-  public void apply(final VirtualFile patchedDir, final int skipTopDirs) throws ApplyPatchException, IOException {
+  public ApplyPatchStatus apply(final VirtualFile patchedDir, final int skipTopDirs) throws ApplyPatchException, IOException {
     VirtualFile fileToPatch = findFileToPatch(patchedDir, skipTopDirs);
 
     if (fileToPatch == null) {
       throw new ApplyPatchException("Cannot find file to patch: " + myBeforeName);
     }
 
-    apply(fileToPatch);
+    return apply(fileToPatch);
   }
 
-  public void apply(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
+  public ApplyPatchStatus apply(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
     if (isNewFile()) {
       VirtualFile newFile = fileToPatch.createChildData(this, getBeforeFileName());
       final Document document = FileDocumentManager.getInstance().getDocument(newFile);
@@ -93,24 +93,29 @@ public class FilePatch {
     else {
       byte[] fileContents = fileToPatch.contentsToByteArray();
       CharSequence text = LoadTextUtil.getTextByBinaryPresentation(fileContents, fileToPatch);
-      String resultText = applyModifications(text);
-      final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
-      document.setText(resultText);
-      FileDocumentManager.getInstance().saveDocument(document);
+      StringBuilder newText = new StringBuilder();
+      ApplyPatchStatus status = applyModifications(text, newText);
+      if (status != ApplyPatchStatus.ALREADY_APPLIED) {
+        final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
+        document.setText(newText.toString());
+        FileDocumentManager.getInstance().saveDocument(document);
+      }
+      return status;
     }
+    return ApplyPatchStatus.SUCCESS;
   }
 
-  public String applyModifications(final CharSequence text) throws ApplyPatchException {
+  public ApplyPatchStatus applyModifications(final CharSequence text, final StringBuilder newText) throws ApplyPatchException {
     List<String> lines = new ArrayList<String>();
     Collections.addAll(lines, LineTokenizer.tokenize(text, false));
+    ApplyPatchStatus result = null;
     for(PatchHunk hunk: myHunks) {
-      hunk.apply(lines);
+      result = ApplyPatchStatus.and(result, hunk.apply(lines));
     }
-    StringBuilder docText = new StringBuilder();
     for(String line: lines) {
-      docText.append(line).append("\n");
+      newText.append(line).append("\n");
     }
-    return docText.toString();
+    return result;
   }
 
   @Nullable

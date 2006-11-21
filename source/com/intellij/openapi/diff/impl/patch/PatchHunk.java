@@ -31,7 +31,8 @@ public class PatchHunk {
     myLines.add(line);
   }
 
-  public void apply(final List<String> lines) throws ApplyPatchException {
+  public ApplyPatchStatus apply(final List<String> lines) throws ApplyPatchException {
+    ApplyPatchStatus result = null;
     int curLine = findStartLine(lines);
     for(PatchLine line: myLines) {
       switch (line.getType()) {
@@ -43,18 +44,32 @@ public class PatchHunk {
           break;
 
         case ADD:
-          lines.add(curLine, line.getText());
+          if (curLine < lines.size() && lines.get(curLine).equals(line.getText())) {
+            result = ApplyPatchStatus.and(result, ApplyPatchStatus.ALREADY_APPLIED);
+          }
+          else {
+            lines.add(curLine, line.getText());
+            result = ApplyPatchStatus.and(result, ApplyPatchStatus.SUCCESS);
+          }
           curLine++;
           break;
 
         case REMOVE:
           if (!line.getText().equals(lines.get(curLine))) {
-            throw new ApplyPatchException("Context mismatch");
+            // we'll get a context mismatch exception later if it's actually a conflict and not an already applied line
+            result = ApplyPatchStatus.and(result, ApplyPatchStatus.ALREADY_APPLIED);
           }
-          lines.remove(curLine);
+          else {
+            lines.remove(curLine);
+            result = ApplyPatchStatus.and(result, ApplyPatchStatus.SUCCESS);
+          }
           break;
       }
     }
+    if (result != null) {
+      return result;
+    }
+    return ApplyPatchStatus.SUCCESS;
   }
 
   private int findStartLine(final List<String> lines) throws ApplyPatchException {
