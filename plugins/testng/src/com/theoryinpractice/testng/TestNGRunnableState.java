@@ -184,6 +184,11 @@ public class TestNGRunnableState extends JavaCommandLineState
 
         TestNGDefaultConfigurationComponent testng = project.getComponent(TestNGDefaultConfigurationComponent.class);
         String outputDirectory = testng.getDefaultSettings().getOutputDirectory();
+
+        if (data.getOutputDirectory() != null && !"".equals(data.getOutputDirectory())) {
+            outputDirectory = data.getOutputDirectory();
+        }
+
         if (outputDirectory != null && !"".equals(outputDirectory)) {
             javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, '\"' + outputDirectory + '\"');
         }
@@ -242,7 +247,7 @@ public class TestNGRunnableState extends JavaCommandLineState
         } else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
             //for a group, we include all classes
             PsiClass[] testClasses = getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(config).getGlobalSearchScope(), project, true));
-            for(PsiClass c : testClasses) {
+            for (PsiClass c : testClasses) {
                 classes.put(c, new HashSet<PsiMethod>());
             }
         }
@@ -256,9 +261,9 @@ public class TestNGRunnableState extends JavaCommandLineState
         //} else
         if (classes.size() > 0) {
             Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-            for(Map.Entry<PsiClass, Collection<PsiMethod>> entry : classes.entrySet()) {
+            for (Map.Entry<PsiClass, Collection<PsiMethod>> entry : classes.entrySet()) {
                 Collection<String> methods = new HashSet<String>(entry.getValue().size());
-                for(PsiMethod method : entry.getValue()) {
+                for (PsiMethod method : entry.getValue()) {
                     methods.add(method.getName());
                 }
                 map.put(entry.getKey().getQualifiedName(), methods);
@@ -397,21 +402,23 @@ public class TestNGRunnableState extends JavaCommandLineState
     private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(TestData data, boolean includeClasses, PsiClass... classes) {
         //we build up a list of dependencies
         Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
-        if(includeClasses) {
-            for(PsiClass c : classes) {
-                results.put(c, new HashSet<PsiMethod>());
+        if (classes.length > 0) {
+            if (includeClasses) {
+                for (PsiClass c : classes) {
+                    results.put(c, new HashSet<PsiMethod>());
+                }
             }
+            Set<String> dependencies = TestNGUtil.getAnnotationValues("dependsOnGroups", classes);
+            PsiManager psiManager = PsiManager.getInstance(classes[0].getProject());
+            //we get all classes in the module to figure out which are in the groups we depend on
+            PsiClass[] allClasses = psiManager.getSearchHelper().findAllClasses(data.getScope().getSourceScope(config).getGlobalSearchScope());
+            Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
+            //we now have a list of dependencies, and a list of classes that match those dependencies
+            results.putAll(filteredClasses);
         }
-        Set<String> dependencies = TestNGUtil.getAnnotationValues("dependsOnGroups", classes);
-        PsiManager psiManager = PsiManager.getInstance(classes[0].getProject());
-        //we get all classes in the module to figure out which are in the groups we depend on
-        PsiClass[] allClasses = psiManager.getSearchHelper().findAllClasses(data.getScope().getSourceScope(config).getGlobalSearchScope());
-        Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
-        //we now have a list of dependencies, and a list of classes that match those dependencies
-        results.putAll(filteredClasses);
         return results;
     }
-    
+
     private TestClassFilter getFilter(PsiPackage psiPackage) {
         TestSearchScope scope = config.getPersistantData().getScope();
         //TODO we should narrow this down by module really, if that's what's specified

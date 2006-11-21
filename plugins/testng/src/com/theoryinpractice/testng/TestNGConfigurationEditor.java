@@ -60,6 +60,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     private JPanel packagePanel;
     private TestNGParametersTableModel propertiesTableModel;
     private LabeledComponent<TextFieldWithBrowseButton> propertiesFile;
+    private LabeledComponent<TextFieldWithBrowseButton> outputDirectory;
     private TableView propertiesTableView;
     private ArrayList<Map.Entry> propertiesList;
 
@@ -180,6 +181,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         propertiesTableModel.setParameterList(propertiesList);
 
         propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
+        outputDirectory.getComponent().getTextField().setDocument(model.getOutputDirectoryDocument());
     }
 
     @Override
@@ -196,6 +198,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         commonParameters.applyTo(config);
         config.ALTERNATIVE_JRE_PATH = alternateJDK.getPath();
         config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isPathEnabled();
+
         data.TEST_PROPERTIES.clear();
         for (Map.Entry<String, String> entry : propertiesList) {
             data.TEST_PROPERTIES.put(entry.getKey(), entry.getValue());
@@ -226,7 +229,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     private void createView() {
         panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        panel.setLayout(new GridLayoutManager(6, 1, new Insets(0, 0, 0, 0), -1, 5, false, false));
+        panel.setLayout(new GridLayoutManager(7, 1, new Insets(0, 0, 0, 0), -1, 5, false, false));
         JPanel header = new JPanel();
         header.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), -1, -1, false, false));
         panel.add(header, new GridConstraints(0, 0, 1, 1, ANCHOR_WEST, FILL_NONE, SIZEPOLICY_CAN_SHRINK | SIZEPOLICY_CAN_GROW, 3, null, null, null));
@@ -364,6 +367,17 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         testNGPropertiesPanel.setLayout(new BorderLayout(1, 1));
         testNGPropertiesPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
+        outputDirectory = new LabeledComponent<TextFieldWithBrowseButton>();
+        outputDirectory.setText("&Output Directory:");
+        TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();
+        outputDirectory.setComponent(outputDirectoryButton);
+        outputDirectoryButton.addBrowseFolderListener(
+                "TestNG",
+                "Select test output directory", project,
+                new FileChooserDescriptor(false, true, false, false, false, false));
+
+        bottom.add(outputDirectory, new GridConstraints(3, 0, 1, 1, ANCHOR_WEST, FILL_HORIZONTAL, SIZEPOLICY_CAN_SHRINK | SIZEPOLICY_CAN_GROW, 3, null, null, null));
+
         propertiesFile = new LabeledComponent<TextFieldWithBrowseButton>();
         propertiesFile.setText("&Properties file:");
         TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
@@ -424,7 +438,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
         propertyTabs.addTab("JDK Settings", customJDKPanel);
         propertyTabs.addTab("Test Parameters", testNGPropertiesPanel);
 
-        panel.add(propertyTabs.getComponent(), new GridConstraints(5, 0, 1, 1, ANCHOR_CENTER, FILL_BOTH, SIZEPOLICY_CAN_SHRINK | SIZEPOLICY_CAN_GROW, SIZEPOLICY_CAN_SHRINK, null, null, null));
+        panel.add(propertyTabs.getComponent(), new GridConstraints(6, 0, 1, 1, ANCHOR_CENTER, FILL_BOTH, SIZEPOLICY_CAN_SHRINK | SIZEPOLICY_CAN_GROW, SIZEPOLICY_CAN_SHRINK, null, null, null));
 
     }
 

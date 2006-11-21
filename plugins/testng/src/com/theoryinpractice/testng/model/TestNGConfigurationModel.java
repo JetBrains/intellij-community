@@ -23,6 +23,7 @@ public class TestNGConfigurationModel
     private TestType type;
     private final Document typeDocuments[] = new Document[5];
     private final Document propertiesFileDocument = new PlainDocument();
+    private final Document outputDirectoryDocument = new PlainDocument();
     private final Project project;
 
     public TestNGConfigurationModel(Project project) {
@@ -55,6 +56,10 @@ public class TestNGConfigurationModel
 
     public Document getPropertiesFileDocument() {
         return propertiesFileDocument;
+    }
+
+    public Document getOutputDirectoryDocument() {
+        return outputDirectoryDocument;
     }
 
     public Project getProject() {
@@ -108,6 +113,12 @@ public class TestNGConfigurationModel
         } catch (BadLocationException e) {
             throw new RuntimeException(e);
         }
+
+        try {
+            data.OUTPUT_DIRECTORY = outputDirectoryDocument.getText(0, outputDirectoryDocument.getLength());
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String getText(TestType type) {
@@ -134,6 +145,7 @@ public class TestNGConfigurationModel
         setTypeValue(TestType.SUITE, data.getSuiteName());
 
         setDocumentText(propertiesFileDocument, data.getPropertiesFile());
+        setDocumentText(outputDirectoryDocument, data.getOutputDirectory());
     }
 
     private void setTypeValue(TestType type, String value) {

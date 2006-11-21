@@ -28,6 +28,7 @@ public class TestData implements Cloneable
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
+    public String OUTPUT_DIRECTORY;
     public AdditionalClasspath ADDITIONAL_CLASS_PATH;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE;
     public Map<String, String> TEST_PROPERTIES;
@@ -67,6 +68,10 @@ public class TestData implements Cloneable
         return PROPERTIES_FILE == null ? "" : PROPERTIES_FILE;
     }
 
+    public String getOutputDirectory() {
+        return OUTPUT_DIRECTORY == null ? "" : OUTPUT_DIRECTORY;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof TestData)) {
@@ -80,6 +85,7 @@ public class TestData implements Cloneable
                     && Comparing.equal(getSuiteName(), data.getSuiteName())
                     && Comparing.equal(getMethodName(), data.getMethodName())
                     && Comparing.equal(WORKING_DIRECTORY, data.WORKING_DIRECTORY)
+                    && Comparing.equal(OUTPUT_DIRECTORY, data.OUTPUT_DIRECTORY)
                     && Comparing.equal(VM_PARAMETERS, data.VM_PARAMETERS)
                     && Comparing.equal(PARAMETERS, data.PARAMETERS);
         }
@@ -93,6 +99,7 @@ public class TestData implements Cloneable
                 Comparing.hashcode(getSuiteName()) ^
                 Comparing.hashcode(TEST_OBJECT) ^
                 Comparing.hashcode(WORKING_DIRECTORY) ^
+                Comparing.hashcode(OUTPUT_DIRECTORY) ^
                 Comparing.hashcode(VM_PARAMETERS) ^
                 Comparing.hashcode(PARAMETERS);
     }

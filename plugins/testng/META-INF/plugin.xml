@@ -41,6 +41,8 @@
         Use module JDK if module classpath is specified instead of project JDK<br>
         Added experimental support for automatically detecting and including group dependency when running a single class or method<br>
         Group browser now only shows groups from the current module, rather than the whole project, which should speed it up significantly<br>
+        Added project level configuration for default parameters and test output directory,<br>
+        Added test output directory setting to run configuration.
         ]]>
     </change-notes>
 </idea-plugin>
