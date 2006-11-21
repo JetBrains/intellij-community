@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -131,11 +132,26 @@ public class ApplyPatchDialog extends DialogWrapper {
 
   private void autoDetectBaseDirectory() {
     for(FilePatch patch: myPatches) {
-      VirtualFile fileToPatch = patch.findFileToPatch(getBaseDirectory(), 0);
+      VirtualFile baseDir = myDetectedBaseDirectory == null
+                            ? getBaseDirectory()
+                            : LocalFileSystem.getInstance().findFileByPath(myDetectedBaseDirectory.replace(File.separatorChar, '/'));
+      int skipTopDirs = myDetectedStripLeadingDirs >= 0 ? myDetectedStripLeadingDirs : 0;
+      VirtualFile fileToPatch = patch.findFileToPatch(baseDir, skipTopDirs);
       if (fileToPatch == null) {
-        // TODO: smarter logic
-        if (detectDirectoryByName(patch.getBeforeName())) break;
-        if (detectDirectoryByName(patch.getAfterName())) break;
+        String oldDetectedBaseDirectory = myDetectedBaseDirectory;
+        int oldDetectedStripLeadingDirs = myDetectedStripLeadingDirs;
+        boolean success = detectDirectoryByName(patch.getBeforeName());
+        if (!success) {
+          success = detectDirectoryByName(patch.getAfterName());
+        }
+        if (success) {
+          if ((oldDetectedBaseDirectory != null && !Comparing.equal(oldDetectedBaseDirectory, myDetectedBaseDirectory)) ||
+              (oldDetectedStripLeadingDirs >= 0 && oldDetectedStripLeadingDirs != myDetectedStripLeadingDirs)) {
+            myDetectedBaseDirectory = null;
+            myDetectedStripLeadingDirs = -1;
+            break;
+          }
+        }
       }
     }
   }
@@ -146,23 +162,13 @@ public class ApplyPatchDialog extends DialogWrapper {
     final PsiFile[] psiFiles = PsiManager.getInstance(myProject).getShortNamesCache().getFilesByName(patchName);
     if (psiFiles.length == 1) {
       PsiDirectory parent = psiFiles [0].getContainingDirectory();
-      boolean matches = true;
       for(int i=nameComponents.length-2; i >= 0; i--) {
-        if (parent.getVirtualFile() == myProject.getProjectFile().getParent()) {
+        if (!parent.getName().equals(nameComponents [i]) || parent.getVirtualFile() == myProject.getProjectFile().getParent()) {
           myDetectedStripLeadingDirs = i+1;
           myDetectedBaseDirectory = parent.getVirtualFile().getPresentableUrl();
           return true;
         }
-        if (!parent.getName().equals(nameComponents [i])) {
-          matches = false;
-          break;
-        }
         parent = parent.getParentDirectory();
-      }
-      if (matches) {
-        myDetectedBaseDirectory = parent.getVirtualFile().getPresentableUrl();
-        myDetectedStripLeadingDirs = 0;
-        return true;
       }
     }
     return false;

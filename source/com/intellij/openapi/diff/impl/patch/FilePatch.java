@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -119,7 +120,7 @@ public class FilePatch {
   }
 
   @Nullable
-  public VirtualFile findFileToPatch(final VirtualFile patchedDir, final int skipTopDirs) {
+  public VirtualFile findFileToPatch(@NotNull final VirtualFile patchedDir, final int skipTopDirs) {
     VirtualFile file = findFileToPatchByName(patchedDir, skipTopDirs, myBeforeName);
     if (file == null) {
       file = findFileToPatchByName(patchedDir, skipTopDirs, myAfterName);
@@ -128,7 +129,7 @@ public class FilePatch {
   }
 
   @Nullable
-  private VirtualFile findFileToPatchByName(final VirtualFile patchedDir, final int skipTopDirs, final String fileName) {
+  private VirtualFile findFileToPatchByName(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final String fileName) {
     String[] pathNameComponents = fileName.split("/");
     VirtualFile fileToPatch = patchedDir;
     int lastComponentToFind = isNewFile() ? pathNameComponents.length-1 : pathNameComponents.length;
