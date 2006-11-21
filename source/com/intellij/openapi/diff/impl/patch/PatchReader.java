@@ -31,7 +31,7 @@ public class PatchReader {
   private DiffFormat myDiffFormat = null;
   @NonNls private static final String CONTEXT_HUNK_PREFIX = "***************";
   @NonNls private static final String CONTEXT_FILE_PREFIX = "*** ";
-  @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+),(\\d+) \\+(\\d+),(\\d+) @@");
+  @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+),(\\d+) \\+(\\d+),(\\d+) @@.*");
   @NonNls private static final Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
 
