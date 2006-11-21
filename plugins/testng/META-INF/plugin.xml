@@ -43,6 +43,7 @@
         <li>Group browser now only shows groups from the current module, rather than the whole project, which should speed it up significantly.
         <li>Added project level configuration for default parameters and test output directory.
         <li>Added test output directory setting to run configuration.
+        <li>Fixed javadoc annotation names used in checks
         ]]>
     </change-notes>
 </idea-plugin>
