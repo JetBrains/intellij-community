@@ -84,7 +84,7 @@ public class AppletConfigurationType implements LocatableConfigurationType {
   }
 
   private static boolean isAppletClass(final PsiClass aClass, final PsiManager manager) {
-    if (!ExecutionUtil.isRunnableClass(aClass, true)) return false;
+    if (!ExecutionUtil.isRunnableClass(aClass)) return false;
 
     final Module module = ExecutionUtil.findModule(aClass);
     final GlobalSearchScope scope = module != null

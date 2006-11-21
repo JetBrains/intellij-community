@@ -157,4 +157,7 @@ public class ExecutionUtil {
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
   }
+  public static boolean isRunnableClass(final PsiClass aClass) {
+    return isRunnableClass(aClass, true);
+  }
 }
