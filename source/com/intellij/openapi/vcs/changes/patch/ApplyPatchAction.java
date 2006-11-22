@@ -32,7 +32,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.util.Ref;
 import com.intellij.peer.PeerFactory;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -94,20 +96,32 @@ public class ApplyPatchAction extends AnAction {
     }
     catch(ApplyPatchException ex) {
       if (!patch.isNewFile() && !patch.isDeletedFile()) {
-        CharSequence content = findMatchingContent(project, patch, file);
-        if (content != null) {
-          try {
-            StringBuilder newText = new StringBuilder();
-            ApplyPatchStatus status = patch.applyModifications(content, newText);
+        PatchBaseVersionProvider provider = findBaseVersionProvider(project, patch, file);
+        if (provider != null) {
+          final StringBuilder newText = new StringBuilder();
+          final Ref<CharSequence> contentRef = new Ref<CharSequence>();
+          final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
+          provider.getBaseVersionContent(file, patch.getBeforeVersionId(), new Processor<CharSequence>() {
+            public boolean process(final CharSequence text) {
+              newText.setLength(0);
+              try {
+                statusRef.set(patch.applyModifications(text, newText));
+              }
+              catch(ApplyPatchException ex) {
+                return true;  // continue to older versions
+              }
+              contentRef.set(text);
+              return false;
+            }
+          });
+          ApplyPatchStatus status = statusRef.get();
+          if (status != null) {
             if (status != ApplyPatchStatus.ALREADY_APPLIED) {
-              return showMergeDialog(project, file, content, newText.toString());
+              return showMergeDialog(project, file, contentRef.get(), newText.toString());
             }
             else {
               return status;
             }
-          }
-          catch (ApplyPatchException e) {
-            // ignore
           }
         }
       }
@@ -139,13 +153,16 @@ public class ApplyPatchAction extends AnAction {
   }
 
   @Nullable
-  private static CharSequence findMatchingContent(final Project project, final FilePatch patch, final VirtualFile file) {
+  private static PatchBaseVersionProvider findBaseVersionProvider(final Project project, final FilePatch patch, final VirtualFile file) {
     final PatchBaseVersionProvider[] baseVersionProviders = project.getComponents(PatchBaseVersionProvider.class);
     for(PatchBaseVersionProvider provider: baseVersionProviders) {
-      final CharSequence content = provider.getBaseVersionContent(file, patch.getBeforeVersionId());
-      if (content != null) {
-        return content;
+      if (provider.canProvideContent(file, patch.getBeforeVersionId())) {
+        return provider;
       }
+    }
+    final DefaultPatchBaseVersionProvider defaultProvider = new DefaultPatchBaseVersionProvider(project);
+    if (defaultProvider.canProvideContent(file, patch.getBeforeVersionId())) {
+      return defaultProvider;
     }
     return null;
   }
