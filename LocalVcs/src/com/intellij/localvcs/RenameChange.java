@@ -39,12 +39,12 @@ public class RenameChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    Entry affectedEntry = root.getEntry(myPath);
+    Entry affectedEntry = root.getEntry(myPath.getPath());
 
     myOldTimestamp = affectedEntry.getTimestamp();
     myAffectedEntryIdPath = affectedEntry.getIdPath();
 
-    root.doRename(myPath, myNewName, myTimestamp);
+    root.rename(myPath.getPath(), myNewName, myTimestamp);
   }
 
   @Override
@@ -52,7 +52,7 @@ public class RenameChange extends Change {
     Path newPath = myPath.renamedWith(myNewName);
     String oldName = myPath.getName();
 
-    root.doRename(newPath, oldName, myOldTimestamp);
+    root.rename(newPath.getPath(), oldName, myOldTimestamp);
   }
 
   @Override

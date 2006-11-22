@@ -44,13 +44,13 @@ public class CreateFileChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateFile(myId, myPath, myContent, myTimestamp);
-    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
+    root.createFile(myId, myPath.getPath(), myContent, myTimestamp);
+    myAffectedEntryIdPath = root.getEntry(myPath.getPath()).getIdPath();
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.doDelete(myPath);
+    root.delete(myPath.getPath());
   }
 
   @Override

@@ -13,7 +13,7 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryIdForCreateFileChange() {
-    root.doCreateDirectory(99, p("/dir"), null);
+    root.createDirectory(99, "/dir", null);
     Change c = new CreateFileChange(1, "/dir/name", null, null);
     c.applyTo(root);
 
@@ -33,7 +33,7 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForChangeFileContentChange() {
-    root.doCreateFile(16, p("/file"), "content", null);
+    root.createFile(16, "/file", "content", null);
 
     Change c = new ChangeFileContentChange("/file", "new content", null);
     c.applyTo(root);
@@ -43,7 +43,7 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForRenameChange() {
-    root.doCreateFile(42, p("/name"), null, null);
+    root.createFile(42, "/name", null, null);
 
     Change c = new RenameChange("/name", "new name", null);
     c.applyTo(root);
@@ -53,9 +53,9 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForMoveChange() {
-    root.doCreateDirectory(1, p("/dir1"), null);
-    root.doCreateDirectory(2, p("/dir2"), null);
-    root.doCreateFile(13, p("/dir1/file"), null, null);
+    root.createDirectory(1, "/dir1", null);
+    root.createDirectory(2, "/dir2", null);
+    root.createFile(13, "/dir1/file", null, null);
 
     Change c = new MoveChange("/dir1/file", "/dir2");
     c.applyTo(root);
@@ -66,8 +66,8 @@ public class ChangesTest extends TestCase {
 
   @Test
   public void testAffectedEntryForDeleteChange() {
-    root.doCreateDirectory(99, p("/dir"), null);
-    root.doCreateFile(7, p("/dir/file"), null, null);
+    root.createDirectory(99, "/dir", null);
+    root.createFile(7, "/dir/file", null, null);
 
     Change c = new DeleteChange("/dir/file");
     c.applyTo(root);

@@ -32,13 +32,13 @@ public class CreateDirectoryChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    root.doCreateDirectory(myId, myPath, myTimestamp);
-    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
+    root.createDirectory(myId, myPath.getPath(), myTimestamp);
+    myAffectedEntryIdPath = root.getEntry(myPath.getPath()).getIdPath();
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.doDelete(myPath);
+    root.delete(myPath.getPath());
   }
 
   @Override

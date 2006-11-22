@@ -47,18 +47,18 @@ public class ChangeFileContentChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    Entry affectedEntry = root.getEntry(myPath);
+    Entry affectedEntry = root.getEntry(myPath.getPath());
 
     myOldContent = affectedEntry.getContent();
     myOldTimestamp = affectedEntry.getTimestamp();
     myAffectedEntryIdPath = affectedEntry.getIdPath();
 
-    root.doChangeFileContent(myPath, myNewContent, myTimestamp);
+    root.changeFileContent(myPath.getPath(), myNewContent, myTimestamp);
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.doChangeFileContent(myPath, myOldContent, myOldTimestamp);
+    root.changeFileContent(myPath.getPath(), myOldContent, myOldTimestamp);
   }
 
   @Override

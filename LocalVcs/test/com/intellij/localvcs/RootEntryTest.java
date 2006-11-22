@@ -42,8 +42,8 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testFindingChildren() {
-    assertTrue(root.hasEntry(p("/child")));
-    assertSame(child, root.getEntry(p("/child")));
+    assertTrue(root.hasEntry("/child"));
+    assertSame(child, root.getEntry("/child"));
   }
 
   @Test
@@ -64,7 +64,7 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testGettingEntry() {
-    Entry e1 = root.getEntry(p("/child"));
+    Entry e1 = root.getEntry("/child");
     Entry e2 = root.getEntry(e1.getId());
 
     assertSame(child, e1);
@@ -74,12 +74,12 @@ public class RootEntryTest extends TestCase {
   @Test
   public void testGettingEntryUnderDirectory() {
     root = new RootEntry("");
-    root.doCreateDirectory(1, p("/dir1"), null);
-    root.doCreateDirectory(2, p("/dir1/dir2"), null);
-    root.doCreateFile(3, p("/dir1/file"), "content", null);
+    root.createDirectory(1, "/dir1", null);
+    root.createDirectory(2, "/dir1/dir2", null);
+    root.createFile(3, "/dir1/file", "content", null);
 
-    Entry e1 = root.getEntry(p("/dir1/dir2"));
-    Entry e2 = root.getEntry(p("/dir1/file"));
+    Entry e1 = root.getEntry("/dir1/dir2");
+    Entry e2 = root.getEntry("/dir1/file");
 
     assertEquals("dir2", e1.getName());
     assertEquals("file", e2.getName());
@@ -98,7 +98,7 @@ public class RootEntryTest extends TestCase {
   @Test
   public void testGettingUnknownEntryThrowsException() {
     try {
-      root.getEntry(p("/unknown entry"));
+      root.getEntry("/unknown entry");
       fail();
     } catch (LocalVcsException e) {}
 
@@ -117,33 +117,5 @@ public class RootEntryTest extends TestCase {
 
     assertNotSame(child, copy.getChildren().get(0));
     assertEquals("child", copy.getChildren().get(0).getName());
-  }
-
-  @Test
-  public void testRevertingReturnsCopy() {
-    ChangeSet cs = cs(new CreateFileChange(1, "/file", null, null));
-
-    RootEntry original = new RootEntry("");
-    original.apply_old(cs);
-
-    RootEntry result = original.revert_old(cs);
-
-    assertTrue(original.hasEntry(p("/file")));
-    assertFalse(result.hasEntry(p("/file")));
-  }
-
-  @Test
-  public void testRevertingSeveralTimesOnSameSnapshot() {
-    root.apply_old(cs(new CreateFileChange(2, "/file", "content", null)));
-
-    ChangeSet cs = cs(new ChangeFileContentChange("/file", "new content", null));
-    root.apply_old(cs);
-
-    RootEntry result1 = root.revert_old(cs);
-    RootEntry result2 = root.revert_old(cs);
-
-    assertEquals("new content", root.getEntry(p("/file")).getContent());
-    assertEquals("content", result1.getEntry(p("/file")).getContent());
-    assertEquals("content", result2.getEntry(p("/file")).getContent());
   }
 }

@@ -1,11 +1,11 @@
 package com.intellij.localvcs;
 
+import org.junit.Assert;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import org.junit.Assert;
 
 public abstract class TestCase extends Assert {
   protected static IdPath idp(Integer... parts) {
@@ -23,16 +23,13 @@ public abstract class TestCase extends Assert {
   @SuppressWarnings("unchecked")
   protected static void assertElements(Object[] expected, Collection actual) {
     List<Object> expectedList = Arrays.asList(expected);
-    String message = "elements are not equal:\n"
-                     + "\texpected: " + expectedList + "\n"
-                     + "\tactual: " + actual;
+    String message = "elements are not equal:\n" + "\texpected: " + expectedList + "\n" + "\tactual: " + actual;
 
     assertTrue(message, expectedList.size() == actual.size());
     assertTrue(message, actual.containsAll(expectedList));
   }
 
-  protected static void assertEntiesContents(String[] expectedContents,
-                                             Collection<Entry> actualEntries) {
+  protected static void assertEntiesContents(String[] expectedContents, Collection<Entry> actualEntries) {
     List<String> actualContents = new ArrayList<String>();
     for (Entry rev : actualEntries) {
       actualContents.add(rev.getContent());

@@ -47,6 +47,10 @@ public abstract class Entry {
     myTimestamp = timestamp;
   }
 
+  public boolean isOutdated(Long timestamp) {
+    return !myTimestamp.equals(timestamp);
+  }
+
   public String getContent() {
     throw new UnsupportedOperationException();
   }
@@ -63,7 +67,7 @@ public abstract class Entry {
     myParent = parent;
   }
 
-  public Boolean isDirectory() {
+  public boolean isDirectory() {
     return false;
   }
 

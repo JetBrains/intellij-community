@@ -1,8 +1,9 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestCase;
 import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.TestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
@@ -24,25 +25,25 @@ public class UpdaterTest extends TestCase {
   public void setUp() {
     vcs = new LocalVcs(new TestStorage());
     vcs.getRoot().setPath("root");
-    root = new MyVirtualFile("root");
+    root = new MyVirtualFile("root", 0);
   }
 
   @Test
   public void testUpdatingRoot() throws IOException {
-    // todo make this test a bit clearly
     vcs = new LocalVcs(new TestStorage());
     assertFalse(vcs.hasEntry("c:/root"));
 
-    VirtualFile root = new MyVirtualFile("c:/root");
+    VirtualFile root = new MyVirtualFile("c:/root", 0);
     Updater.update(vcs, root);
 
+    // todo make this assertion a bit more explicit
     assertTrue(vcs.hasEntry("c:/root"));
   }
 
   @Test
   public void testAddingNewFiles() throws IOException {
-    MyVirtualFile dir = new MyVirtualFile("dir");
-    MyVirtualFile file = new MyVirtualFile("file", "content");
+    MyVirtualFile dir = new MyVirtualFile("dir", 1L);
+    MyVirtualFile file = new MyVirtualFile("file", "content", 2L);
 
     root.addChild(dir);
     dir.addChild(file);
@@ -51,7 +52,12 @@ public class UpdaterTest extends TestCase {
 
     assertTrue(vcs.hasEntry("root/dir"));
     assertTrue(vcs.hasEntry("root/dir/file"));
-    assertEquals("content", vcs.getEntry("root/dir/file").getContent());
+
+    assertEquals(1L, vcs.getEntry("root/dir").getTimestamp());
+
+    Entry e = vcs.getEntry("root/dir/file");
+    assertEquals("content", e.getContent());
+    assertEquals(2L, e.getTimestamp());
   }
 
   @Test
@@ -73,12 +79,12 @@ public class UpdaterTest extends TestCase {
 
   @Test
   public void testDoesNothingWithUnchangedEntries() throws IOException {
-    vcs.createDirectory("root/dir", null);
-    vcs.createFile("root/dir/file", "content", null);
+    vcs.createDirectory("root/dir", 1L);
+    vcs.createFile("root/dir/file", "content", 1L);
     vcs.apply();
 
-    MyVirtualFile dir = new MyVirtualFile("dir");
-    MyVirtualFile file = new MyVirtualFile("file", "content");
+    MyVirtualFile dir = new MyVirtualFile("dir", 1L);
+    MyVirtualFile file = new MyVirtualFile("file", "content", 1L);
 
     root.addChild(dir);
     dir.addChild(file);
@@ -91,28 +97,39 @@ public class UpdaterTest extends TestCase {
   }
 
   @Test
-  public void testUpdatingOutdatedFiles() {
-    vcs.createFile("file", "content", null);
-    root.addChild(new MyVirtualFile("file", "new content"));
+  public void testUpdatingOutdatedFiles() throws IOException {
+    vcs.createFile("root/file", "content", 111L);
+    vcs.apply();
 
+    root.addChild(new MyVirtualFile("file", "new content", 222L));
+
+    Updater.update(vcs, root);
+
+    Entry e = vcs.getEntry("root/file");
+
+    assertEquals("new content", e.getContent());
+    assertEquals(222L, e.getTimestamp());
   }
 
   private class MyVirtualFile extends VirtualFile {
-    private String myContent;
     private String myName;
-    private boolean myIsDirectory;
+    private String myContent;
+    private long myTimestamp;
 
+    private boolean myIsDirectory;
     private VirtualFile myParent;
     private List<MyVirtualFile> myChildren = new ArrayList<MyVirtualFile>();
 
-    public MyVirtualFile(String name, String content) {
+    public MyVirtualFile(String name, String content, long timestamp) {
       myName = name;
       myContent = content;
+      myTimestamp = timestamp;
       myIsDirectory = false;
     }
 
-    public MyVirtualFile(String name) {
+    public MyVirtualFile(String name, long timestamp) {
       myName = name;
+      myTimestamp = timestamp;
       myIsDirectory = true;
     }
 
@@ -127,6 +144,10 @@ public class UpdaterTest extends TestCase {
     public String getPath() {
       if (myParent == null) return myName;
       return myParent.getPath() + "/" + myName;
+    }
+
+    public long getTimeStamp() {
+      return myTimestamp;
     }
 
     public VirtualFile[] getChildren() {
@@ -161,10 +182,6 @@ public class UpdaterTest extends TestCase {
     }
 
     public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-      throw new UnsupportedOperationException();
-    }
-
-    public long getTimeStamp() {
       throw new UnsupportedOperationException();
     }
 

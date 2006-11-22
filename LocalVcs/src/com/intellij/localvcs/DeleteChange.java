@@ -30,10 +30,10 @@ public class DeleteChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myAffectedEntry = root.getEntry(myPath);
+    myAffectedEntry = root.getEntry(myPath.getPath());
     myAffectedEntryIdPath = myAffectedEntry.getIdPath();
 
-    root.doDelete(myPath);
+    root.delete(myPath.getPath());
   }
 
   @Override
@@ -45,12 +45,12 @@ public class DeleteChange extends Change {
 
   private void restoreEntryRecursively(RootEntry root, Entry e, Path p) {
     if (e.isDirectory()) {
-      root.doCreateDirectory(e.getId(), p, null);
+      root.createDirectory(e.getId(), p.getPath(), e.getTimestamp());
       for (Entry child : e.getChildren()) {
         restoreEntryRecursively(root, child, p.appendedWith(child.getName()));
       }
     } else {
-      root.doCreateFile(e.getId(), p, e.getContent(), null);
+      root.createFile(e.getId(), p.getPath(), e.getContent(), e.getTimestamp());
     }
   }
 

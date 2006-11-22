@@ -2,6 +2,7 @@ package com.intellij.localvcs;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 public class LocalVcsStoringTest extends TempDirTestCase {
   private LocalVcs vcs;
@@ -39,6 +40,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     assertTrue(result.hasEntry("/file"));
   }
 
+  @Ignore
   @Test
   public void testStoringChangeList() {
     vcs.createFile("/file", "content", null);
@@ -49,13 +51,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     vcs.store();
     LocalVcs result = createVcs();
 
-    assertEquals("new content", result.getEntry("/file").getContent());
-
-    result._revert();
-    assertEquals("content", result.getEntry("/file").getContent());
-
-    result._revert();
-    assertFalse(result.hasEntry("/file"));
+    assertEquals(2, result.getLabelsFor("/file").size());
   }
 
   @Test

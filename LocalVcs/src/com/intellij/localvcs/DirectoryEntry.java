@@ -49,7 +49,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public Boolean isDirectory() {
+  public boolean isDirectory() {
     return true;
   }
 

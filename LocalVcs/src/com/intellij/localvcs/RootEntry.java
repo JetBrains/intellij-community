@@ -4,21 +4,12 @@ import java.io.IOException;
 
 // todo try to crean up Entry hierarchy
 public class RootEntry extends DirectoryEntry {
-  private Integer myChangeListIndex = -1;
-
-  public RootEntry(String name) {
-    super(null, name, null);
+  public RootEntry(String path) {
+    super(null, path, null);
   }
 
   public RootEntry(Stream s) throws IOException {
     super(s);
-    myChangeListIndex = s.readInteger();
-  }
-
-  @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeInteger(myChangeListIndex);
   }
 
   public void setPath(String path) {
@@ -26,33 +17,17 @@ public class RootEntry extends DirectoryEntry {
     myName = path;
   }
 
-  public Integer getChangeListIndex() {
-    return myChangeListIndex;
-  }
-
-  public boolean canBeReverted() {
-    // todo bad methdo
-    return myChangeListIndex >= 0;
-  }
-
-  public void incrementChangeListIndex() {
-    myChangeListIndex++;
-  }
-
-  public void decrementChangeListIndex() {
-    myChangeListIndex--;
+  // todo it seems that we can get rid of these two methods 
+  protected Path getPathAppendedWith(String name) {
+    return new Path(getName()).appendedWith(name);
   }
 
   protected IdPath getIdPathAppendedWith(Integer id) {
     return new IdPath(id);
   }
 
-  protected Path getPathAppendedWith(String name) {
-    return new Path(getName()).appendedWith(name);
-  }
-
-  public boolean hasEntry(Path path) {
-    return findEntry(path) != null;
+  public boolean hasEntry(String path) {
+    return findEntry(new Path(path)) != null;
   }
 
   protected Entry findEntry(Path path) {
@@ -67,8 +42,8 @@ public class RootEntry extends DirectoryEntry {
     return findEntry(id) != null;
   }
 
-  public Entry getEntry(Path path) {
-    return getEntry(new PathMatcher(path));
+  public Entry getEntry(String path) {
+    return getEntry(new PathMatcher(new Path(path)));
   }
 
   public Entry getEntry(Integer id) {
@@ -81,36 +56,38 @@ public class RootEntry extends DirectoryEntry {
     return result;
   }
 
-  public void doCreateFile(Integer id, Path path, String content, Long timestamp) {
-    FileEntry e = new FileEntry(id, path.getName(), content, timestamp);
-    addEntry(path.getParent(), e);
+  public void createFile(Integer id, String path, String content, Long timestamp) {
+    FileEntry e = new FileEntry(id, new Path(path).getName(), content, timestamp);
+    addEntry(new Path(path).getParent().getPath(), e);
   }
 
-  public void doCreateDirectory(Integer id, Path path, Long timestamp) {
-    DirectoryEntry e = new DirectoryEntry(id, path.getName(), timestamp);
-    addEntry(path.getParent(), e);
+  public void createDirectory(Integer id, String path, Long timestamp) {
+    DirectoryEntry e = new DirectoryEntry(id, new Path(path).getName(), timestamp);
+    addEntry(new Path(path).getParent().getPath(), e);
   }
 
-  public void doChangeFileContent(Path path, String newContent, Long timestamp) {
+  // todo make entries to be modifiable objects
+
+  public void changeFileContent(String path, String newContent, Long timestamp) {
     Entry oldEntry = getEntry(path);
     Entry newEntry = oldEntry.withContent(newContent, timestamp);
 
     removeEntry(oldEntry);
-    addEntry(path.getParent(), newEntry);
+    addEntry(new Path(path).getParent().getPath(), newEntry);
   }
 
-  public void doRename(Path path, String newName, Long timestamp) {
+  public void rename(String path, String newName, Long timestamp) {
     // todo maybe remove this check?
-    if (newName.equals(path.getName())) return;
+    if (newName.equals(new Path(path).getName())) return;
 
     Entry oldEntry = getEntry(path);
     Entry newEntry = oldEntry.renamed(newName, timestamp);
 
     removeEntry(oldEntry);
-    addEntry(path.getParent(), newEntry);
+    addEntry(new Path(path).getParent().getPath(), newEntry);
   }
 
-  public void doMove(Path path, Path newParentPath, Long timestamp) {
+  public void move(String path, String newParentPath, Long timestamp) {
     Entry e = getEntry(path);
     e.setTimestamp(timestamp); // todo it smells bed
 
@@ -118,34 +95,28 @@ public class RootEntry extends DirectoryEntry {
     addEntry(newParentPath, e);
   }
 
-  public void doDelete(Path path) {
+  public void delete(String path) {
     removeEntry(getEntry(path));
   }
 
-  private void addEntry(Path parent, Entry entry) {
+  private void addEntry(String parent, Entry entry) {
     // todo chenge parameter from path to id
     // todo just for testing...
     assert entry.getId() == null || !hasEntry(entry.getId());
 
     // todo it's quite ugly
-    if (parent == null) addChild(entry);
-    else getEntry(parent).addChild(entry);
+    // todo it seems that we can remove all such check now since we have named root entry 
+    if (parent == null) {
+      addChild(entry);
+    }
+    else {
+      getEntry(parent).addChild(entry);
+    }
   }
 
   private void removeEntry(Entry e) {
     Entry parent = e.getParent() == null ? this : e.getParent();
     parent.removeChild(e);
-  }
-
-  public void apply_old(ChangeSet cs) {
-    cs.applyTo(this);
-  }
-
-  public RootEntry revert_old(ChangeSet cs) {
-    // todo maybe revert should not return copy too 
-    RootEntry result = copy();
-    cs._revertOn(result);
-    return result;
   }
 
   @Override
@@ -156,26 +127,31 @@ public class RootEntry extends DirectoryEntry {
 
   @Override
   protected DirectoryEntry copyEntry() {
-    RootEntry result = new RootEntry("");
-    // todo test it
-    result.myChangeListIndex = myChangeListIndex;
-    return result;
+    return new RootEntry(""); //  todo test copying!!!
   }
 
   private static class PathMatcher implements Matcher {
     // todo optimize it
     private Path myPath;
 
-    public PathMatcher(Path p) { myPath = p; }
+    public PathMatcher(Path p) {
+      myPath = p;
+    }
 
-    public boolean matches(Entry e) { return myPath.equals(e.getPath()); }
+    public boolean matches(Entry e) {
+      return myPath.equals(e.getPath());
+    }
   }
 
   private static class IdMatcher implements Matcher {
     private Integer myId;
 
-    public IdMatcher(Integer id) { myId = id; }
+    public IdMatcher(Integer id) {
+      myId = id;
+    }
 
-    public boolean matches(Entry e) { return myId.equals(e.myId); }
+    public boolean matches(Entry e) {
+      return myId.equals(e.myId);
+    }
   }
 }

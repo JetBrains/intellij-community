@@ -153,9 +153,9 @@ public class StreamTest extends TestCase {
   public void testAppliedDeleteChange() throws IOException {
     RootEntry root = new RootEntry("");
 
-    root.doCreateDirectory(1, p("/entry"), null);
-    root.doCreateFile(2, p("/entry/file"), "", null);
-    root.doCreateDirectory(3, p("/entry/dir"), null);
+    root.createDirectory(1, "/entry", null);
+    root.createFile(2, "/entry/file", "", null);
+    root.createDirectory(3, "/entry/dir", null);
 
     Change c = new DeleteChange("/entry");
     c.applyTo(root);
@@ -174,7 +174,7 @@ public class StreamTest extends TestCase {
   @Test
   public void testAppliedChangeFileContentChange() throws IOException {
     RootEntry root = new RootEntry("");
-    root.doCreateFile(1, p("/file"), "content", null);
+    root.createFile(1, "/file", "content", null);
 
     Change c = new ChangeFileContentChange("/file", "new content", null);
     c.applyTo(root);
@@ -251,8 +251,7 @@ public class StreamTest extends TestCase {
   @Test
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
-    c.applyChangeSetOn_old(new RootEntry(""),
-                           cs(new CreateFileChange(null, "/file", "content", null)));
+    c.applyChangeSetTo(new RootEntry(""), cs(new CreateFileChange(null, "/file", "content", null)));
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();

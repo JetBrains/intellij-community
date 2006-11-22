@@ -36,15 +36,15 @@ public class MoveChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myFromIdPath = root.getEntry(myPath).getIdPath();
-    root.doMove(myPath, myNewParentPath, null);
-    myToIdPath = root.getEntry(getNewPath()).getIdPath();
+    myFromIdPath = root.getEntry(myPath.getPath()).getIdPath();
+    root.move(myPath.getPath(), myNewParentPath.getPath(), null); // todo set timestamp here!!!
+    myToIdPath = root.getEntry(getNewPath().getPath()).getIdPath();
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.doMove(myNewParentPath.appendedWith(myPath.getName()),
-                myPath.getParent(), null);
+    root.move(myNewParentPath.appendedWith(myPath.getName()).getPath(),
+                myPath.getParent().getPath(), null); 
   }
 
   private Path getNewPath() {

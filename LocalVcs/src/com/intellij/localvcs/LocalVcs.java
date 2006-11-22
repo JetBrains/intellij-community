@@ -35,11 +35,11 @@ public class LocalVcs {
   }
 
   public boolean hasEntry(String path) {
-    return myRoot.hasEntry(new Path(path));
+    return myRoot.hasEntry(path);
   }
 
   public Entry getEntry(String path) {
-    return myRoot.getEntry(new Path(path));
+    return myRoot.getEntry(new Path(path).getPath());
   }
 
   // todo timestamp parameter is a bit ugly
@@ -83,13 +83,8 @@ public class LocalVcs {
   public void apply() {
     ChangeSet cs = new ChangeSet(myPendingChanges);
 
-    myChangeList.applyChangeSetOn_old(myRoot, cs);
+    myChangeList.applyChangeSetTo(myRoot, cs);
     clearPendingChanges();
-  }
-
-  public void _revert() {
-    clearPendingChanges();
-    myRoot = myChangeList.revertOn_old(myRoot);
   }
 
   public void putLabel(String label) {

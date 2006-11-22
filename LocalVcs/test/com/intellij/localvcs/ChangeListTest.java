@@ -167,6 +167,6 @@ public class ChangeListTest extends TestCase {
   }
 
   private List<ChangeSet> getChangeSetsFor(String path) {
-    return cl.getChangeListFor(r.getEntry(new Path(path))).getChangeSets();
+    return cl.getChangeListFor(r.getEntry(path)).getChangeSets();
   }
 }
