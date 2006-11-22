@@ -44,9 +44,6 @@ public class IdeaApplication {
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
     if (Main.isHeadless()) {
-      if (SystemInfo.isLinux) { //hack: do not initialize X11Toolit in headless environment
-        System.setProperty("awt.toolkit", "sun.awt.HeadlessToolkit");
-      }
       new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
     } else {
       ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, "idea");
