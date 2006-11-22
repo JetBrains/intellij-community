@@ -12,7 +12,7 @@ public class PerformanceTest extends TempDirTestCase {
   //@BeforeClass
   //public static void prepareVcs() {
   //  LocalVcs vcs = new LocalVcs(new Storage(classTempDir));
-  //  createChildren(vcs, p("/"), 3);
+  //  createChildren(vcs, p(""), 3);
   //  vcs.apply();
   //  vcs.store();
   //}
@@ -52,15 +52,15 @@ public class PerformanceTest extends TempDirTestCase {
   @Test
   public void testSearchingEntries() {
     final LocalVcs vcs = new LocalVcs(new TestStorage());
-    vcs.createDirectory("/dir", null);
-    vcs.createDirectory("/dir/dir", null);
-    vcs.createDirectory("/dir/dir/dir", null);
+    vcs.createDirectory("dir", null);
+    vcs.createDirectory("dir/dir", null);
+    vcs.createDirectory("dir/dir/dir", null);
     vcs.apply();
 
     assertExecutionTime(10, new Task() {
       public void execute() {
         for (int i = 0; i < 1000000; i++) {
-          vcs.getEntry("/dir/dir/dir");
+          vcs.getEntry("dir/dir/dir");
         }
       }
     });

@@ -1,30 +1,26 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import java.util.List;
 
 // todo try to crean up Entry hierarchy
 public class RootEntry extends DirectoryEntry {
   // todo try to remove difference null-checks
-  public RootEntry(String path) {
-    super(null, path, null);
+  public RootEntry() {
+    super(null, null, null);
   }
 
   public RootEntry(Stream s) throws IOException {
     super(s);
   }
 
-  public void setPath(String path) {
-    // todo refactor path stuffs
-    myName = path;
-  }
-
   // todo it seems that we can get rid of these two methods 
   protected Path getPathAppendedWith(String name) {
-    return new Path(getName()).appendedWith(name);
+    return new Path(name);
   }
 
   protected IdPath getIdPathAppendedWith(Integer id) {
-    return new IdPath(id);
+    return new IdPath(id);// todo verify this method.
   }
 
   public boolean hasEntry(String path) {
@@ -57,14 +53,28 @@ public class RootEntry extends DirectoryEntry {
     return result;
   }
 
+  public List<Entry> getRoots() {
+    return getChildren();
+  }
+
   public void createFile(Integer id, String path, String content, Long timestamp) {
     FileEntry e = new FileEntry(id, new Path(path).getName(), content, timestamp);
     addEntry(new Path(path).getParent(), e);
   }
 
   public void createDirectory(Integer id, String path, Long timestamp) {
-    DirectoryEntry e = new DirectoryEntry(id, new Path(path).getName(), timestamp);
-    addEntry(new Path(path).getParent(), e);
+    // todo messsssss!!!!
+    Path p = new Path(path);
+    Path parentPath = p.getParent();
+    String name = p.getName();
+
+    if (parentPath == null || !hasEntry(parentPath.getPath()))  {
+      parentPath = null;
+      name = path;
+    }
+
+    DirectoryEntry e = new DirectoryEntry(id, name, timestamp);
+    addEntry(parentPath, e);
   }
 
   // todo make entries to be modifiable objects
@@ -105,7 +115,9 @@ public class RootEntry extends DirectoryEntry {
     // todo just for testing...
     assert entry.getId() == null || !hasEntry(entry.getId());
 
-    getEntry(parentPath.getPath()).addChild(entry);
+    // todo try to remove this logic
+    Entry parent = parentPath == null ? this : getEntry(parentPath.getPath());
+    parent.addChild(entry);
   }
 
   private void removeEntry(Entry e) {
@@ -121,7 +133,7 @@ public class RootEntry extends DirectoryEntry {
 
   @Override
   protected DirectoryEntry copyEntry() {
-    return new RootEntry(""); //  todo test copying!!!
+    return new RootEntry(); //  todo test copying!!!
   }
 
   private static class PathMatcher implements Matcher {

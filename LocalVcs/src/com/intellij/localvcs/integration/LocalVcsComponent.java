@@ -2,9 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.ChangeList;
@@ -13,7 +11,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Timer;
 
 public class LocalVcsComponent implements ProjectComponent {
   private Project myProject;
@@ -25,7 +22,7 @@ public class LocalVcsComponent implements ProjectComponent {
 
     @Override
     public RootEntry loadRootEntry() {
-      return new RootEntry("");
+      return new RootEntry();
     }
 
     @Override

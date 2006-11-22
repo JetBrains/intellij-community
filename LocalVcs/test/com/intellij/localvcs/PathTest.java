@@ -5,8 +5,8 @@ import org.junit.Test;
 public class PathTest extends TestCase {
   @Test
   public void testParent() {
-    Path p = new Path("/dir1/dir2/file");
-    assertEquals(new Path("/dir1/dir2"), p.getParent());
+    Path p = new Path("dir1/dir2/file");
+    assertEquals(new Path("dir1/dir2"), p.getParent());
   }
 
   @Test

@@ -7,7 +7,6 @@ import com.intellij.localvcs.TestStorage;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Ignore;
 
 import java.io.IOException;
 
@@ -18,26 +17,16 @@ public class UpdaterTest extends TestCase {
   @Before
   public void setUp() {
     vcs = new LocalVcs(new TestStorage());
-    vcs.createRoot("root");
+    vcs.createDirectory("root", null);
+    vcs.apply();
 
     root = new TestVirtualFile("root", null);
   }
 
   @Test
-  public void testUpdatingRoot() throws IOException {
-    assertFalse(vcs.hasEntry("c:/root"));
-
-    Updater.updateRoots(vcs, new TestVirtualFile("c:/root", null));
-
-    // todo make this assertion a bit more explicit
-    assertTrue(vcs.hasEntry("c:/root"));
-  }
-
-  @Test
-  public void testUpdatingSeveralRoots() throws IOException {
-    Updater.updateRoots(vcs,
-                        new TestVirtualFile("c:/root1", null),
-                        new TestVirtualFile("c:/root2", null));
+  public void testAddingRoots() throws IOException {
+    vcs = new LocalVcs(new TestStorage());
+    Updater.updateRoots(vcs, new TestVirtualFile("c:/root1", null), new TestVirtualFile("c:/root2", null));
 
     assertTrue(vcs.hasEntry("c:/root1"));
     assertTrue(vcs.hasEntry("c:/root2"));
@@ -45,9 +34,8 @@ public class UpdaterTest extends TestCase {
 
   @Test
   public void testDoesNotAddNestedRoots() throws IOException {
-    Updater.updateRoots(vcs,
-                        new TestVirtualFile("c:/root", null),
-                        new TestVirtualFile("c:/root/nested", null));
+    vcs = new LocalVcs(new TestStorage());
+    Updater.updateRoots(vcs, new TestVirtualFile("c:/root", null), new TestVirtualFile("c:/root/nested", null));
 
     assertTrue(vcs.hasEntry("c:/root"));
     assertFalse(vcs.hasEntry("c:/root/nested"));
@@ -55,17 +43,25 @@ public class UpdaterTest extends TestCase {
 
   @Test
   public void testSelectingOnlyNotNestedRoots() {
-    VirtualFile[] result = Updater.selectRoots(
-      new TestVirtualFile("c:/dir1", null),
-      new TestVirtualFile("c:/dir1/dir2", null),
-      new TestVirtualFile("c:/dir2", null),
-      new TestVirtualFile("c:/dir2/dir3/dir4", null),
-      new TestVirtualFile("c:/dir3/dir4", null));
+    VirtualFile[] result = Updater.selectRoots(new TestVirtualFile("c:/dir1", null), new TestVirtualFile("c:/dir1/dir2", null), new TestVirtualFile("c:/dir2", null),
+                                               new TestVirtualFile("c:/dir2/dir3/dir4", null), new TestVirtualFile("c:/dir3/dir4", null));
 
     assertEquals(3, result.length);
     assertEquals("c:/dir1", result[0].getPath());
     assertEquals("c:/dir2", result[1].getPath());
     assertEquals("c:/dir3/dir4", result[2].getPath());
+  }
+
+  @Test
+  public void testDeletingRoots() throws IOException {
+    vcs = new LocalVcs(new TestStorage());
+    vcs.createDirectory("c:/root", null);
+    vcs.apply();
+
+    Updater.updateRoots(vcs, new TestVirtualFile("c:/another root", null));
+
+    assertFalse(vcs.hasEntry("c:/root"));
+    assertTrue(vcs.hasEntry("c:/another root"));
   }
 
   @Test
@@ -106,22 +102,25 @@ public class UpdaterTest extends TestCase {
   }
 
   @Test
-  public void testDoesNothingWithUnchangedEntries() throws IOException {
+  public void testDoesNothingWithNonOutdatedEntries() throws IOException {
     vcs.createDirectory("root/dir", 1L);
     vcs.createFile("root/dir/file", "content", 1L);
     vcs.apply();
 
+    Entry e1 = vcs.getEntry("root/dir");
+    Entry e2 = vcs.getEntry("root/dir/file");
+
     TestVirtualFile dir = new TestVirtualFile("dir", 1L);
-    TestVirtualFile file = new TestVirtualFile("file", "content", 1L);
+    TestVirtualFile file = new TestVirtualFile("file", "new content", 1L);
 
     root.addChild(dir);
     dir.addChild(file);
 
     Updater.updateRoots(vcs, root);
 
-    assertTrue(vcs.hasEntry("root/dir"));
-    assertTrue(vcs.hasEntry("root/dir/file"));
-    assertEquals("content", vcs.getEntry("root/dir/file").getContent());
+    assertSame(e1, vcs.getEntry("root/dir"));
+    assertSame(e2, vcs.getEntry("root/dir/file"));
+    assertEquals("content", e2.getContent());
   }
 
   @Test

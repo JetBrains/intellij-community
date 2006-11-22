@@ -30,53 +30,51 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
-  @Ignore
   public void testStoringEntries() {
-    vcs.createFile("/file", "content", null);
+    vcs.createFile("file", "content", null);
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    assertTrue(result.hasEntry("/file"));
+    assertTrue(result.hasEntry("file"));
   }
 
   @Ignore
   @Test
   public void testStoringChangeList() {
-    vcs.createFile("/file", "content", null);
+    vcs.createFile("file", "content", null);
     vcs.apply();
-    vcs.changeFileContent("/file", "new content", null);
+    vcs.changeFileContent("file", "new content", null);
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    assertEquals(2, result.getLabelsFor("/file").size());
+    assertEquals(2, result.getLabelsFor("file").size());
   }
 
   @Test
-  @Ignore
   public void testStoringObjectsCounter() {
-    vcs.createFile("/file1", "content1", null);
-    vcs.createFile("/file2", "content2", null);
+    vcs.createFile("file1", "content1", null);
+    vcs.createFile("file2", "content2", null);
     vcs.apply();
 
     vcs.store();
     LocalVcs result = createVcs();
 
-    result.createFile("/file3", "content3", null);
+    result.createFile("file3", "content3", null);
     result.apply();
 
-    Integer id2 = result.getEntry("/file2").getId();
-    Integer id3 = result.getEntry("/file3").getId();
+    Integer id2 = result.getEntry("file2").getId();
+    Integer id3 = result.getEntry("file3").getId();
 
     assertTrue(id2 < id3);
   }
 
   @Test
   public void testDoesNotStoreUnappliedChanges() {
-    vcs.createFile("/file", "content", null);
+    vcs.createFile("file", "content", null);
     vcs.store();
 
     vcs.store();

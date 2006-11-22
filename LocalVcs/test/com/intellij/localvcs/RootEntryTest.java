@@ -9,16 +9,9 @@ public class RootEntryTest extends TestCase {
 
   @Before
   public void setUp() {
-    root = new RootEntry("");
+    root = new RootEntry();
     child = new DirectoryEntry(1, "child", null);
     root.addChild(child);
-  }
-
-  @Test
-  public void testRenaming() {
-    root.setPath("c:/root");
-    assertEquals("c:/root", root.getName());
-    assertEquals(p("c:/root"), root.getPath());
   }
 
   @Test
@@ -28,27 +21,18 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testPathToChildren() {
-    assertEquals(p("/child"), child.getPath());
-  }
-
-  @Test
-  public void testPathToChildrenWithDriveLetter() {
-    root = new RootEntry("c:/root");
-    child = new DirectoryEntry(1, "child", null);
-    root.addChild(child);
-
-    assertEquals(p("c:/root/child"), child.getPath());
+    assertEquals(p("child"), child.getPath());
   }
 
   @Test
   public void testFindingChildren() {
-    assertTrue(root.hasEntry("/child"));
-    assertSame(child, root.getEntry("/child"));
+    assertTrue(root.hasEntry("child"));
+    assertSame(child, root.getEntry("child"));
   }
 
   @Test
   public void testFindingEntriesInTree() {
-    root = new RootEntry("");
+    root = new RootEntry();
     Entry dir = new DirectoryEntry(null, "dir", null);
     Entry file1 = new FileEntry(null, "file1", null, null);
     Entry file2 = new FileEntry(null, "file2", null, null);
@@ -57,14 +41,14 @@ public class RootEntryTest extends TestCase {
     root.addChild(file1);
     dir.addChild(file2);
 
-    assertSame(dir, root.findEntry(p("/dir")));
-    assertSame(file1, root.findEntry(p("/file1")));
-    assertSame(file2, root.findEntry(p("/dir/file2")));
+    assertSame(dir, root.findEntry(p("dir")));
+    assertSame(file1, root.findEntry(p("file1")));
+    assertSame(file2, root.findEntry(p("dir/file2")));
   }
 
   @Test
   public void testGettingEntry() {
-    Entry e1 = root.getEntry("/child");
+    Entry e1 = root.getEntry("child");
     Entry e2 = root.getEntry(e1.getId());
 
     assertSame(child, e1);
@@ -73,13 +57,13 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testGettingEntryUnderDirectory() {
-    root = new RootEntry("");
-    root.createDirectory(1, "/dir1", null);
-    root.createDirectory(2, "/dir1/dir2", null);
-    root.createFile(3, "/dir1/file", "content", null);
+    root = new RootEntry();
+    root.createDirectory(1, "dir1", null);
+    root.createDirectory(2, "dir1/dir2", null);
+    root.createFile(3, "dir1/file", "content", null);
 
-    Entry e1 = root.getEntry("/dir1/dir2");
-    Entry e2 = root.getEntry("/dir1/file");
+    Entry e1 = root.getEntry("dir1/dir2");
+    Entry e2 = root.getEntry("dir1/file");
 
     assertEquals("dir2", e1.getName());
     assertEquals("file", e2.getName());
@@ -91,14 +75,14 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testDoesNotFindUnknownEntry() {
-    assertNull(root.findEntry(p("/unknown entry")));
-    assertNull(root.findEntry(p("/root/unknown entry")));
+    assertNull(root.findEntry(p("unknown entry")));
+    assertNull(root.findEntry(p("root/unknown entry")));
   }
 
   @Test
   public void testGettingUnknownEntryThrowsException() {
     try {
-      root.getEntry("/unknown entry");
+      root.getEntry("unknown entry");
       fail();
     } catch (LocalVcsException e) {}
 

@@ -12,11 +12,24 @@ public class Updater {
   public static void updateRoots(LocalVcs vcs, VirtualFile... roots) throws IOException {
     // todo should root changes become vesible only after apply?
 
-    for (VirtualFile r : selectRoots(roots)) {
+    VirtualFile[] selectedRoots = selectRoots(roots);
+
+    for (VirtualFile r : selectedRoots) {
       if (!vcs.hasEntry(r.getPath())) {
-        vcs.createRoot(r.getPath());
+        vcs.createDirectory(r.getPath(), null);// todo do we need timestampe here?
       }
       updateRoot(vcs, r);
+    }
+
+    for (Entry root : vcs.getRoots()) {
+      boolean isDeleted = true;
+      for (VirtualFile selectedRoot : selectedRoots) {
+        if (selectedRoot.getPath().equals(root.getPath().getPath())) {
+          isDeleted = false;
+          break;
+        }
+      }
+      if (isDeleted) vcs.delete(root.getPath().getPath());
     }
 
     vcs.apply();
@@ -28,7 +41,10 @@ public class Updater {
       boolean isSuitable = true;
       for (VirtualFile right : roots) {
         if (left == right) continue;
-        if (left.getPath().startsWith(right.getPath())) isSuitable = false;
+        if (left.getPath().startsWith(right.getPath())) {
+          isSuitable = false;
+          break;
+        }
       }
       if (isSuitable) result.add(left);
     }
@@ -44,7 +60,11 @@ public class Updater {
 
     createNewFiles(vcs, root);
     updateOutdatedFiles(vcs, root);
-    deleteAbsentFiles(vcs, vcs.getEntry(root.getPath()), root);
+
+    // todo is it tested?
+    if (vcs.hasEntry(root.getPath())) {
+      deleteAbsentFiles(vcs, vcs.getEntry(root.getPath()), root);
+    }
   }
 
   private static void updateOutdatedFiles(LocalVcs vcs, VirtualFile dir) throws IOException {
@@ -55,6 +75,7 @@ public class Updater {
         // todo problem with nested roots
         if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
           vcs.changeFileContent(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
+          //vcs.changeFileContent(f.getPath(), null, f.getTimeStamp());
         }
       }
     }
@@ -69,6 +90,7 @@ public class Updater {
         }
         else {
           vcs.createFile(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
+          //vcs.createFile(f.getPath(), null, f.getTimeStamp());
         }
       }
     }

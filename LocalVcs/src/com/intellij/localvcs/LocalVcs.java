@@ -8,7 +8,7 @@ public class LocalVcs {
   private Storage myStorage;
 
   private ChangeList myChangeList;
-  private Roots myRoot;
+  private RootEntry myRoot;
   private Integer myEntryCounter;
 
   private List<Change> myPendingChanges = new ArrayList<Change>();
@@ -20,9 +20,7 @@ public class LocalVcs {
 
   private void load() {
     myChangeList = myStorage.loadChangeList();
-    //myRoot = myStorage.loadRootEntry();
-    myRoot = new Roots();
-    myRoot.createRoot("");
+    myRoot = myStorage.loadRootEntry();
     myEntryCounter = myStorage.loadCounter();
   }
 
@@ -30,10 +28,6 @@ public class LocalVcs {
     myStorage.storeChangeList(myChangeList);
     myStorage.storeRootEntry(myRoot);
     myStorage.storeCounter(myEntryCounter);
-  }
-
-  public Roots getRoot() {
-    return myRoot;
   }
 
   public boolean hasEntry(String path) {
@@ -44,13 +38,11 @@ public class LocalVcs {
     return myRoot.getEntry(new Path(path).getPath());
   }
 
-  public void createRoot(String path) {
-    //myPendingChanges.add(new CreateFileChange(getNextId(), path, content, timestamp));
-    myRoot.createRoot(path);
+  public List<Entry> getRoots() {
+    return myRoot.getRoots();
   }
 
   // todo timestamp parameter is a bit ugly
-
   public void createFile(String path, String content, Long timestamp) {
     myPendingChanges.add(new CreateFileChange(getNextId(), path, content, timestamp));
   }
