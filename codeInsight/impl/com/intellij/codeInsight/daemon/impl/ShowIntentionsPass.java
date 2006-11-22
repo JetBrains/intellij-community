@@ -148,7 +148,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   private void showIntentionActions() {
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-    if (myIsSecondPass) codeAnalyzer.setShowPostIntentions(true);
+    boolean showPostIntentions = myIsSecondPass;
     if (LookupManager.getInstance(myProject).getActiveLookup() != null) return;
 
     // do not show intentions if caret is outside visible area
@@ -160,11 +160,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final PsiFile injectedFile = injectedEditor instanceof EditorDelegate ? ((EditorDelegate)injectedEditor).getInjectedFile() : myFile;
     final PsiElement injectedElement = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
 
-    ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    ArrayList<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    List<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     for (IntentionAction action : myIntentionActions) {
       if (action instanceof IntentionActionComposite) {
-        if (action instanceof QuickFixAction || action instanceof PostIntentionsQuickFixAction && codeAnalyzer.showPostIntentions()) {
+        if (action instanceof QuickFixAction || action instanceof PostIntentionsQuickFixAction && showPostIntentions) {
           List<HighlightInfo.IntentionActionDescriptor> availableActions =
             ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
 
@@ -229,7 +229,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(myEditor.getDocument(), myProject);
     if (highlights == null) return null;
 
-    ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
+    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
       if (!canBeHint(info.type)) continue;
       if (startOffset <= info.startOffset && info.endOffset <= endOffset) {

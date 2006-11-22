@@ -33,7 +33,7 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   public int myInsideTabChange;
-  protected final EditorsSplitters myOwner;
+  private final EditorsSplitters myOwner;
   private static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
   private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
 
@@ -194,19 +194,19 @@ public class EditorWindow {
     }
   }
 
-  public void setIconAt(final int index, final Icon icon) {
+  private void setIconAt(final int index, final Icon icon) {
     if (myTabbedPane != null) {
       myTabbedPane.setIconAt(index, icon);
     }
   }
 
-  public void setTitleAt(final int index, final String text) {
+  private void setTitleAt(final int index, final String text) {
     if (myTabbedPane != null) {
       myTabbedPane.setTitleAt(index, text);
     }
   }
 
-  public void setToolTipTextAt(final int index, final String text) {
+  private void setToolTipTextAt(final int index, final String text) {
     if (myTabbedPane != null) {
       myTabbedPane.setToolTipTextAt(index, text);
     }
@@ -393,7 +393,7 @@ public class EditorWindow {
     myPanel.revalidate();
   }
 
-  public boolean splitAvailable() {
+  private boolean splitAvailable() {
     return getTabCount() >= 1;
   }
 
@@ -464,11 +464,6 @@ public class EditorWindow {
     return res.toArray(new EditorWindow[res.size()]);
   }
 
-  public Container getParent() {
-    checkConsistency();
-    return myPanel.getParent();
-  }
-
   public void changeOrientation() {
     checkConsistency();
     final Container parent = myPanel.getParent();
@@ -485,7 +480,7 @@ public class EditorWindow {
   }
 
   private String getFileTooltipText(final VirtualFile file) {
-    final StringBuffer tooltipText = new StringBuffer();
+    final StringBuilder tooltipText = new StringBuilder();
     final Module module = VfsUtil.getModuleForFile(getManager().myProject, file);
     if (module != null) {
       tooltipText.append("[");
@@ -657,7 +652,7 @@ public class EditorWindow {
     return -1;
   }
 
-  public int findFileIndex(final VirtualFile fileToFind) {
+  private int findFileIndex(final VirtualFile fileToFind) {
     for (int i = 0; i != getTabCount(); ++i) {
       final VirtualFile file = getFileAt(i);
       if (file.equals (fileToFind)) {

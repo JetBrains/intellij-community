@@ -35,7 +35,7 @@ public abstract class FileEditorManager {
    *
    * @return array of opened editors
    */
-  public abstract FileEditor[] openFile(VirtualFile file, boolean focusEditor);
+  @NotNull public abstract FileEditor[] openFile(VirtualFile file, boolean focusEditor);
 
   /**
    * Closes all editors opened for the file.
@@ -63,23 +63,23 @@ public abstract class FileEditorManager {
   /**
    * @return <code>true</code> if <code>file</code> is opened, <code>false</code> otherwise
    */
-  public abstract boolean isFileOpen(VirtualFile file);
+  public abstract boolean isFileOpen(@NotNull VirtualFile file);
 
   /**
    * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
    */
-  public abstract VirtualFile[] getOpenFiles();
+  @NotNull public abstract VirtualFile[] getOpenFiles();
 
   /**
    * @return files currently selected. The method returns empty array if there are no selected files. 
    * If more than one file is selected (split), the file with most recent focused editor is returned first.  
    */
-  public abstract VirtualFile[] getSelectedFiles();
+  @NotNull public abstract VirtualFile[] getSelectedFiles();
 
   /**
    * @return editors currently selected. The method returns empty array if no editors are open.
    */
-  public abstract FileEditor[] getSelectedEditors();
+  @NotNull public abstract FileEditor[] getSelectedEditors();
 
   /**
    * @param file cannot be null
@@ -87,19 +87,19 @@ public abstract class FileEditorManager {
    * @return editor which is currently selected in the currently selected file.
    * The method returns <code>null</code> if <code>file</code> is not opened.
    */
-  public abstract FileEditor getSelectedEditor(VirtualFile file);
+  public abstract FileEditor getSelectedEditor(@NotNull VirtualFile file);
 
   /**
    * @param file cannot be null
    *
    * @return all editors for the specified <code>file</code>
    */
-  public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
+  @NotNull public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
 
   /**
    * @return all open editors
    */
-  public abstract FileEditor[] getAllEditors();
+  @NotNull public abstract FileEditor[] getAllEditors();
 
   public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
   public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);

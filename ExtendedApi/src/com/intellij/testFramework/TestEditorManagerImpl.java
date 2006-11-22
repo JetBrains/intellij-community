@@ -50,10 +50,6 @@ import java.util.Map;
     return false;
   }
 
-  public void moveFocusToNextEditor() {
-    throw new UnsupportedOperationException();
-  }
-
   public void createSplitter(int orientation) {
     //To change body of implemented methods use File | Settings | File Templates.
   }
@@ -156,10 +152,6 @@ import java.util.Map;
 
   public VirtualFile getFile(FileEditor editor) {
     return LIGHT_VIRTUAL_FILE;
-  }
-
-  public boolean hasSplitters() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public boolean hasTabGroups() {

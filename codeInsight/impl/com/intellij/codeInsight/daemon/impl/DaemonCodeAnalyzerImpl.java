@@ -141,7 +141,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private boolean myEscPressed;
   private EditorFactoryListener myEditorFactoryListener;
 
-  private boolean myShowPostIntentions = true;
   private IntentionHintComponent myLastIntentionHint;
 
   private boolean myDisposed;
@@ -219,8 +218,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         Document document = editor.getDocument();
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         if (file != null) {
-          ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(
-            new RefreshStatusRenderer(myProject, DaemonCodeAnalyzerImpl.this, document, file));
+          repaintErrorStripeRenderer(editor);
         }
       }
     };
@@ -234,22 +232,17 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
       public void rootsChanged(ModuleRootEvent event) {
         final FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-        if (editors != null) {
-          for (FileEditor fileEditor : editors) {
-            if (fileEditor instanceof TextEditor) {
-              final Editor editor = ((TextEditor)fileEditor).getEditor();
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  if (myProject.isDisposed()) return;
-
-                  final Document document = editor.getDocument();
-                  final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-                  ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(new RefreshStatusRenderer(myProject, DaemonCodeAnalyzerImpl.this, document, psiFile));
-                }
-              }, ModalityState.stateForComponent(editor.getComponent()));
+        if (editors.length == 0) return;
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (myProject.isDisposed()) return;
+            for (FileEditor fileEditor : editors) {
+              if (fileEditor instanceof TextEditor) {
+                repaintErrorStripeRenderer(((TextEditor)fileEditor).getEditor());
+              }
             }
           }
-        }
+        }, ModalityState.stateForComponent(editors[0].getComponent()));
       }
     });
 
@@ -312,6 +305,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     reloadScopes();
 
     myInitialized = true;
+  }
+
+  private void repaintErrorStripeRenderer(Editor editor) {
+    if (myProject.isDisposed()) return;
+    final Document document = editor.getDocument();
+    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(new RefreshStatusRenderer(myProject, this, document, psiFile));
   }
 
   private List<Pair<NamedScope, NamedScopesHolder>> myScopes = Collections.emptyList();
@@ -389,7 +389,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void updateVisibleHighlighters(Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    setShowPostIntentions(false);
 
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     BackgroundEditorHighlighter highlighter = textEditor.getBackgroundHighlighter();
@@ -400,14 +399,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private void updateAll(FileEditor editor, Runnable postRunnable) {
     if (myProject.isDisposed()) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (LOG.isDebugEnabled()) {
-      /* TODO:
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-      LOG.debug("updateAll for " + file);
-      */
-    }
-    //myUpdateStartTime = System.currentTimeMillis();
-    //Statistics.clear();
 
     boolean editorHiddenByModelDialog = ModalityState.current().dominates(ModalityState.stateForComponent(editor.getComponent()));
     if (editorHiddenByModelDialog) {
@@ -526,7 +517,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     HighlightInfo[] highlights = getHighlights(document, project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
-    ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
+    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
       if (info.getSeverity().compareTo(minSeverity) >= 0 &&
           info.startOffset >= startOffset &&
@@ -638,14 +629,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 
-  public void setShowPostIntentions(boolean status) {
-    myShowPostIntentions = status;
-  }
-
-  public boolean showPostIntentions() {
-    return myShowPostIntentions;
-  }
-
   public void setLastIntentionHint(IntentionHintComponent hintComponent) {
     myLastIntentionHint = hintComponent;
   }
@@ -680,6 +663,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
               if (!wasCanceled || wasRunning) {
                 if (daemonPass != null && editor.getComponent().isDisplayable()) {
                   daemonPass.applyInformationToEditor();
+                  if (editor instanceof TextEditor) {
+                    repaintErrorStripeRenderer(((TextEditor)editor).getEditor());
+                  }
                 }
                 passesToPerform.remove(daemonPass);
                 updateHighlighters(editor, passesToPerform, postRunnable);
@@ -704,7 +690,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Element disableHintsElement = new Element(DISABLE_HINTS_TAG);
     parentNode.addContent(disableHintsElement);
 
-    ArrayList<String> array = new ArrayList<String>();
+    List<String> array = new ArrayList<String>();
     for (VirtualFile file : myDisabledHintsFiles) {
       if (file.isValid()) {
         array.add(file.getUrl());
@@ -814,14 +800,14 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private class MyAnActionListener implements AnActionListener {
+    private final AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
-      AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
-      if (action != escapeAction) {
-        stopProcess(true);
-        myEscPressed = false;
+      if (action == escapeAction) {
+        myEscPressed = true;
       }
       else {
-        myEscPressed = true;
+        stopProcess(true);
+        myEscPressed = false;
       }
     }
 

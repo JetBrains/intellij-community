@@ -97,7 +97,7 @@ public final class EditorsSplitters extends JPanel {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public Element writePanel(final JPanel panel) {
+  private Element writePanel(final JPanel panel) {
     final Component comp = panel.getComponent(0);
     if (comp instanceof Splitter) {
       final Splitter splitter = (Splitter)comp;
@@ -170,7 +170,7 @@ public final class EditorsSplitters extends JPanel {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public JPanel readExternalPanel(final Element element) {
+  private JPanel readExternalPanel(final Element element) {
     final Element splitterElement = element.getChild("splitter");
     if (splitterElement != null) {
       LOG.info("splitter");
@@ -226,7 +226,7 @@ public final class EditorsSplitters extends JPanel {
     return null;
   }
 
-  public VirtualFile[] getOpenFiles() {
+  @NotNull public VirtualFile[] getOpenFiles() {
     final ArrayListSet<VirtualFile> files = new ArrayListSet<VirtualFile>();
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
@@ -237,7 +237,7 @@ public final class EditorsSplitters extends JPanel {
     return files.toArray(new VirtualFile[files.size()]);
   }
 
-  public VirtualFile[] getSelectedFiles() {
+  @NotNull public VirtualFile[] getSelectedFiles() {
     final ArrayListSet<VirtualFile> files = new ArrayListSet<VirtualFile>();
     for (final EditorWindow window : myWindows) {
       final VirtualFile file = window.getSelectedFile();
@@ -259,7 +259,7 @@ public final class EditorsSplitters extends JPanel {
     return virtualFiles;
   }
 
-  public FileEditor[] getSelectedEditors() {
+  @NotNull public FileEditor[] getSelectedEditors() {
     final List<FileEditor> editors = new ArrayList<FileEditor>();
     final EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null) {
@@ -315,9 +315,9 @@ public final class EditorsSplitters extends JPanel {
     }
   }
 
-  public void trimToSize(final int editor_tab_limit, final VirtualFile fileToIgnore) {
+  public void trimToSize(final int editor_tab_limit) {
     for (final EditorWindow window : myWindows) {
-      window.trimToSize(editor_tab_limit, fileToIgnore);
+      window.trimToSize(editor_tab_limit, null);
     }
   }
 
@@ -379,7 +379,7 @@ public final class EditorsSplitters extends JPanel {
     return getCurrentWindow();
   }
 
-  public EditorWindow createCurrentWindow() {
+  private EditorWindow createCurrentWindow() {
     LOG.assertTrue(myCurrentWindow == null);
     myCurrentWindow = new EditorWindow(this);
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);
@@ -418,26 +418,6 @@ public final class EditorsSplitters extends JPanel {
   }
 
   //---------------------------------------------------------
-
-  public EditorWindow findWindow(final EditorComposite editor) {
-    for (final EditorWindow window : myWindows) {
-      if (window.findEditorIndex(editor) != -1) {
-        return window;
-      }
-    }
-    return null;
-  }
-
-  public EditorWindow findWindow(final Component editorComponent) {
-    for (final EditorWindow window : myWindows) {
-      for (Component component = editorComponent; component != null; component = component.getParent()) {
-        if (window.findComponentIndex(component) != -1) {
-          return window;
-        }
-      }
-    }
-    return null;
-  }
 
   public EditorWithProviderComposite[] getEditorsComposites() {
     final ArrayList<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
@@ -478,11 +458,11 @@ public final class EditorsSplitters extends JPanel {
     return res;
   }
 
-  public EditorWindow [] getWindows() {
+  @NotNull public EditorWindow [] getWindows() {
     return myWindows.toArray(new EditorWindow [myWindows.size()]);
   }
 
-  public EditorWindow[] getOrderedWindows() {
+  @NotNull public EditorWindow[] getOrderedWindows() {
     final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
 
     // Collector for windows in tree ordering:
@@ -517,7 +497,7 @@ public final class EditorsSplitters extends JPanel {
     return res.toArray(new EditorWindow [res.size()]);
   }
 
-  public EditorWindow findWindowWith(final Component component) {
+  private EditorWindow findWindowWith(final Component component) {
     if (component != null) {
       for (final EditorWindow window : myWindows) {
         if (SwingUtilities.isDescendingFrom(component, window.myPanel)) {

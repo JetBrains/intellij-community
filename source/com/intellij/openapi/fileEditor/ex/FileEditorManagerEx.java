@@ -54,12 +54,6 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    */
   public abstract void closeFile(@NotNull VirtualFile file, EditorWindow window);
 
-  /**
-   * @return <code>true</code> if there are two tab groups, othrwise the
-   * method returns <code>false</code>
-   */
-  public abstract boolean hasSplitters();
-
   public abstract void unsplitWindow();
 
   public abstract void unsplitAllWindow();
@@ -72,12 +66,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    * is not open. The returned files have the same order as they have in the
    * tabbed container.
    */
-  public abstract VirtualFile[] getSiblings(VirtualFile file);
-
-  /**
-   * Moves focus cyclically to the next myEditor
-   */
-  public abstract void moveFocusToNextEditor();
+  @NotNull public abstract VirtualFile[] getSiblings(VirtualFile file);
 
   public abstract void createSplitter(int orientation);
 
@@ -96,19 +85,20 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   public abstract void closeAllFiles();
 
+  @NotNull
   public FileEditor[] openFile(final VirtualFile file, final boolean focusEditor) {
     return openFileWithProviders(file, focusEditor).getFirst ();
   }
 
-  public abstract Editor openTextEditorEnsureNoFocus(OpenFileDescriptor descriptor);
+  public abstract Editor openTextEditorEnsureNoFocus(@NotNull OpenFileDescriptor descriptor);
 
-  public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor);
+  @NotNull public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor);
 
-  public abstract boolean isChanged(EditorComposite editor);
+  public abstract boolean isChanged(@NotNull EditorComposite editor);
 
-  public abstract EditorWindow getNextWindow(final EditorWindow window);
+  public abstract EditorWindow getNextWindow(@NotNull final EditorWindow window);
 
-  public abstract EditorWindow getPrevWindow(final EditorWindow window);
+  public abstract EditorWindow getPrevWindow(@NotNull final EditorWindow window);
 
   public abstract boolean isInsideChange();
 }

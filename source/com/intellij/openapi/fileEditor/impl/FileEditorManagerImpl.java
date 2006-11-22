@@ -163,7 +163,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * Updates tab icon for the specified <code>file</code>. The <code>file</code>
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
-  public void updateFileIcon(final VirtualFile file) {
+  private void updateFileIcon(final VirtualFile file) {
     mySplitters.updateFileIcon(file);
   }
 
@@ -200,10 +200,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return null;
   }
 
-  public boolean hasSplitters() {
-    return true; //false;  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
   public void unsplitWindow() {
     final EditorWindow currentWindow = mySplitters.getCurrentWindow();
     if (currentWindow != null) {
@@ -222,7 +218,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return mySplitters.getWindows();
   }
 
-  public EditorWindow getNextWindow(final EditorWindow window) {
+  public EditorWindow getNextWindow(@NotNull final EditorWindow window) {
     final EditorWindow[] windows = mySplitters.getOrderedWindows();
     for (int i = 0; i != windows.length; ++i) {
       if (windows[i].equals(window)) {
@@ -233,7 +229,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return null;
   }
 
-  public EditorWindow getPrevWindow(final EditorWindow window) {
+  public EditorWindow getPrevWindow(@NotNull final EditorWindow window) {
     final EditorWindow[] windows = mySplitters.getOrderedWindows();
     for (int i = 0; i != windows.length; ++i) {
       if (windows[i].equals(window)) {
@@ -242,10 +238,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
     LOG.error("Not window found");
     return null;
-  }
-
-  public void moveFocusToNextEditor() {
-    //TODO
   }
 
   public void createSplitter(final int orientation) {
@@ -262,10 +254,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
-
-  public void revalidate() {
-    myPanels.repaint();
-  }
 
   public void flipTabs() {
     /*
@@ -288,7 +276,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return false;
   }
 
-  public void setTabsMode(final boolean mode) {
+  private void setTabsMode(final boolean mode) {
     if (tabsMode() != mode) {
       flipTabs();
     }
@@ -577,7 +565,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return Pair.create(editors, providers);
   }
 
-  public void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
+  private void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
     EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite == null) {
       final List<EditorWithProviderComposite> composites = getEditorComposites(file);
@@ -770,23 +758,26 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   }
 
 
-  public boolean isFileOpen(final VirtualFile file) {
+  public boolean isFileOpen(@NotNull final VirtualFile file) {
     return getEditors(file).length != 0;
   }
 
+  @NotNull
   public VirtualFile[] getOpenFiles() {
     return mySplitters.getOpenFiles();
   }
 
+  @NotNull
   public VirtualFile[] getSelectedFiles() {
     return mySplitters.getSelectedFiles();
   }
 
+  @NotNull
   public FileEditor[] getSelectedEditors() {
     return mySplitters.getSelectedEditors();
   }
 
-  public FileEditor getSelectedEditor(final VirtualFile file) {
+  public FileEditor getSelectedEditor(@NotNull final VirtualFile file) {
     final Pair<FileEditor, FileEditorProvider> selectedEditorWithProvider = getSelectedEditorWithProvider(file);
     return selectedEditorWithProvider == null ? null : selectedEditorWithProvider.getFirst();
   }
@@ -824,6 +815,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
+  @NotNull
   public FileEditor[] getEditors(@NotNull final VirtualFile file) {
     assertThread();
 
@@ -855,6 +847,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return mySplitters.findEditorComposites(file);
   }
 
+  @NotNull
   public FileEditor[] getAllEditors() {
     assertThread();
     final ArrayList<FileEditor> result = new ArrayList<FileEditor>();
@@ -1026,7 +1019,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
   }
 
-  public boolean isChanged(final EditorComposite editor) {
+  public boolean isChanged(@NotNull final EditorComposite editor) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
       if (!fileStatusManager.getStatus(editor.getFile()).equals(FileStatus.NOT_CHANGED)) {
@@ -1241,7 +1234,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
       assertThread();
       setTabsMode(source.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
       mySplitters.setTabsPlacement(source.EDITOR_TAB_PLACEMENT);
-      mySplitters.trimToSize(source.EDITOR_TAB_LIMIT, null);
+      mySplitters.trimToSize(source.EDITOR_TAB_LIMIT);
 
       // Tab layout policy
       if (source.SCROLL_TAB_LAYOUT_IN_EDITOR) {
@@ -1313,7 +1306,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
   }
 
-  public Editor openTextEditorEnsureNoFocus(OpenFileDescriptor descriptor) {
+  public Editor openTextEditorEnsureNoFocus(@NotNull OpenFileDescriptor descriptor) {
     myDoNotTransferFocus = true;
     try {
       return openTextEditor(descriptor, false);
@@ -1323,6 +1316,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
   }
 
+  @NotNull
   public VirtualFile[] getSiblings(VirtualFile file) {
     return getOpenFiles();
   }

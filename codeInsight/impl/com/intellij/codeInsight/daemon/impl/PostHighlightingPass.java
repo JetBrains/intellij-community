@@ -166,12 +166,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (timeToOptimizeImports() && myEditor != null) {
       optimizeImportsOnTheFly();
     }
-    //Q: here?
-    ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument, myFile);
-    Editor[] editors = EditorFactory.getInstance().getEditors(myDocument, myProject);
-    for (Editor editor : editors) {
-      ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
-    }
   }
 
   private void optimizeImportsOnTheFly() {

@@ -17,11 +17,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
-import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -255,12 +251,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.LOCAL_INSPECTIONS);
-
-    ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument, myFile);
-    Editor[] editors = EditorFactory.getInstance().getEditors(myDocument, myProject);
-    for (Editor editor : editors) {
-      ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
-    }
 
     HighlightUtil.addErrorsToWolf(infos, myFile);
   }

@@ -252,8 +252,8 @@ public class IntentionHintComponent extends JPanel {
 
   public static IntentionHintComponent showIntentionHint(Project project,
                                                          Editor view,
-                                                         ArrayList<HighlightInfo.IntentionActionDescriptor> intentions,
-                                                         ArrayList<HighlightInfo.IntentionActionDescriptor> quickFixes,
+                                                         List<HighlightInfo.IntentionActionDescriptor> intentions,
+                                                         List<HighlightInfo.IntentionActionDescriptor> quickFixes,
                                                          boolean showExpanded) {
     final IntentionHintComponent component = new IntentionHintComponent(project, view, intentions, quickFixes);
 
@@ -318,8 +318,8 @@ public class IntentionHintComponent extends JPanel {
 
   public IntentionHintComponent(Project project,
                                 Editor editor,
-                                ArrayList<HighlightInfo.IntentionActionDescriptor> intentions,
-                                ArrayList<HighlightInfo.IntentionActionDescriptor> quickFixes) {
+                                List<HighlightInfo.IntentionActionDescriptor> intentions,
+                                List<HighlightInfo.IntentionActionDescriptor> quickFixes) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = project;
     myEditor = editor;
