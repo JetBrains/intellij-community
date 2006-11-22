@@ -15,10 +15,24 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 
 public class MultiValuesMap<Key, Value>{
   private final Map<Key, Collection<Value>> myBaseMap = new HashMap<Key, Collection<Value>>();
+
+  public void putAll(Key key, List<Value> values) {
+    for (Value value : values) {
+      put(key, value);
+    }
+  }
+
+  public void putAll(Key key, Value... values) {
+    for (Value value : values) {
+      put(key, value);
+    }
+  }
 
   public void put(Key key, Value value) {
     if (!myBaseMap.containsKey(key)) {
@@ -28,6 +42,7 @@ public class MultiValuesMap<Key, Value>{
     myBaseMap.get(key).add(value);
   }
 
+  @Nullable
   public Collection<Value> get(Key key){
     return myBaseMap.get(key);
   }
@@ -60,5 +75,9 @@ public class MultiValuesMap<Key, Value>{
 
   public void removeAll(final Key key) {
     myBaseMap.remove(key);
+  }
+
+  public Set<Map.Entry<Key, Collection<Value>>> entrySet() {
+    return myBaseMap.entrySet();
   }
 }
