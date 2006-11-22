@@ -1333,20 +1333,20 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private class StepIntoCommand extends ResumeCommand {
     private final boolean myIgnoreFilters;
-    private final String myTargetMethodSignature;
+    private final RequestHint.SmartStepFilter mySmartStepFilter;
 
-    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final @Nullable String targetMethodSignature) {
+    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final @Nullable RequestHint.SmartStepFilter smartStepFilter) {
       super(suspendContext);
       myIgnoreFilters = ignoreFilters;
-      myTargetMethodSignature = targetMethodSignature;
+      mySmartStepFilter = smartStepFilter;
     }
 
     public void contextAction() {
       showStatusText(DebuggerBundle.message("status.step.into"));
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl stepThread = suspendContext.getThread();
-      final RequestHint hint = myTargetMethodSignature != null?
-                               new RequestHint(stepThread, suspendContext, myTargetMethodSignature) :
+      final RequestHint hint = mySmartStepFilter != null?
+                               new RequestHint(stepThread, suspendContext, mySmartStepFilter) :
                                new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
       hint.setIgnoreFilters(myIgnoreFilters);
       doStep(stepThread, StepRequest.STEP_INTO, hint);
@@ -1732,9 +1732,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return new StepOutCommand(suspendContext);
   }
 
-  public SuspendContextCommandImpl createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters,
-                                                         final String targetMethodSignature) {
-    return new StepIntoCommand(suspendContext, ignoreFilters, targetMethodSignature);
+  public SuspendContextCommandImpl createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final RequestHint.SmartStepFilter smartStepFilter) {
+    return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter);
   }
 
   public SuspendContextCommandImpl createRunToCursorCommand(SuspendContextImpl suspendContext, Document document, int lineIndex,

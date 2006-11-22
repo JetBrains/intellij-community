@@ -2,7 +2,6 @@ package com.intellij.debugger.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -10,7 +9,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
 public class ViewsGeneralSettings implements NamedJDOMExternalizable, ApplicationComponent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.ViewsSettings");
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;

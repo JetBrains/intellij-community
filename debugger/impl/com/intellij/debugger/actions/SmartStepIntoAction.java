@@ -6,9 +6,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JVMName;
-import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.RequestHint;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -26,15 +24,16 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,19 +51,34 @@ public class SmartStepIntoAction extends AnAction {
     final FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(position.getFile().getVirtualFile());
     if (fileEditor instanceof TextEditor) {
       final List<PsiMethod> methods = findReferencedMethods(position);
-      if (methods.size() > 1) {
-        final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(methods, new PsiMethodListPopupStep.OnChooseRunnable() {
-          public void execute(PsiMethod chosenMethod) {
-            final String hintMethodSignature = createSteppingHintMethodSignature(chosenMethod, session.getProcess());
-            session.stepInto(false, hintMethodSignature);
-          }
-        });
-        final Editor editor = ((TextEditor)fileEditor).getEditor();
-        JBPopupFactory.getInstance().createListPopup(popupStep).show(calcPopupLocation(editor, position));
+      if (methods.size() > 0) {
+        if (methods.size() == 1) {
+          session.stepInto(false, createSmartStepFilter(methods.get(0), session));
+        }
+        else {
+          final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(methods, new PsiMethodListPopupStep.OnChooseRunnable() {
+            public void execute(PsiMethod chosenMethod) {
+              session.stepInto(false, createSmartStepFilter(chosenMethod, session));
+            }
+          });
+          final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
+          final RelativePoint point = calcPopupLocation(((TextEditor)fileEditor).getEditor(), position);
+          popup.show(point);
+        }
         return;
       }
     }
     session.stepInto(false, null);
+  }
+
+  @Nullable
+  private static RequestHint.SmartStepFilter createSmartStepFilter(final PsiMethod method, final DebuggerSession session) {
+    try {
+      return new RequestHint.SmartStepFilter(method, session.getProcess());
+    }
+    catch (EvaluateException e) {
+      return null;
+    }
   }
 
 
@@ -97,8 +111,12 @@ public class SmartStepIntoAction extends AnAction {
       }
       while(true);
 
-      final List<PsiMethod> methods = new ArrayList<PsiMethod>();
+      //noinspection unchecked
+      final List<PsiMethod> methods = new OrderedSet<PsiMethod>(TObjectHashingStrategy.CANONICAL);
       final PsiRecursiveElementVisitor methodCollector = new PsiRecursiveElementVisitor() {
+        
+        public void visitAnonymousClass(PsiAnonymousClass aClass) { /*skip annonymous classes*/ }
+
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
@@ -117,27 +135,6 @@ public class SmartStepIntoAction extends AnAction {
       return methods;
     }
     return Collections.emptyList();
-  }
-
-  @Nullable
-  private static String createSteppingHintMethodSignature(final PsiMethod psiMethod, final DebugProcessImpl debugProcess) {
-    final JVMName clsSignature = JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass());
-    final JVMName methodSignature = JVMNameUtil.getJVMSignature(psiMethod);
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      //noinspection HardCodedStringLiteral
-      builder.append("L").append(clsSignature.getName(debugProcess).replace('.', '/')).append(";");
-      builder.append(".");
-      builder.append(psiMethod.getName());
-      builder.append(methodSignature.getName(debugProcess));
-      return builder.toString();
-    }
-    catch (EvaluateException e) {
-      return null;
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
   }
 
   public void update(AnActionEvent event){

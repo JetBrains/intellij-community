@@ -422,10 +422,10 @@ public class DebuggerSession {
     resumeAction(myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints), EVENT_STEP);
   }
 
-  public void stepInto(final boolean ignoreFilters, final @Nullable String targetMethodSignature) {
+  public void stepInto(final boolean ignoreFilters, final @Nullable RequestHint.SmartStepFilter smartStepFilter) {
     final SuspendContextImpl suspendContext = getSuspendContext();
     mySteppingThroughThreads.add(suspendContext.getThread());
-    resumeAction(myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, targetMethodSignature), EVENT_STEP);
+    resumeAction(myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter), EVENT_STEP);
   }
 
   public void runToCursor(Document document, int line, final boolean ignoreBreakpoints) {
