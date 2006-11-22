@@ -38,6 +38,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String PERSISTENCE_NS = "http://java.sun.com/xml/ns/persistence";
   @NonNls private static final String PERSISTENCE_ORM_NS = "http://java.sun.com/xml/ns/persistence/orm";
 
+  @NonNls private static final String SOURCE_FORGE_NS = "http://hibernate.sourceforge.net/";
+
   private Map<String, String> myResources = new com.intellij.util.containers.HashMap<String, String>();
   private Set<String> myIgnoredResources = new HashSet<String>();
   private Map<String, String> myStdResources = new com.intellij.util.containers.HashMap<String, String>();
@@ -113,6 +115,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(XmlUtil.JSTL_FN_FACELET_URI,"jstl.fn.facelets.tld");
     addInternalResource(XmlUtil.JSTL_CORE_FACELET_URI,"jstl.core.facelets.tld");
 
+    addInternalResource(SOURCE_FORGE_NS+"hibernate-mapping-3.0.dtd","hibernate-mapping-3.0.dtd");
+    addInternalResource(SOURCE_FORGE_NS+"hibernate-configuration-3.0.dtd","hibernate-configuration-3.0.dtd");
 
     // Plugins DTDs // stathik
     addInternalResource("http://plugins.intellij.net/plugin.dtd",
