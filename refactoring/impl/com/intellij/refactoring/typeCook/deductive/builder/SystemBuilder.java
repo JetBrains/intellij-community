@@ -36,7 +36,6 @@ public class SystemBuilder {
   private HashMap<PsiElement, Boolean> myMethodCache;
   private HashMap<PsiParameter, PsiParameter> myParameters;
   private HashMap<PsiMethod, PsiMethod> myMethods;
-  private HashMap<PsiMethod, PsiMethod> mySuper;
   private HashMap<PsiElement, PsiType> myTypes;
   private HashSet<PsiAnchor> myVisitedConstructions;
   private Settings mySettings;
@@ -50,7 +49,6 @@ public class SystemBuilder {
     myMethodCache = new HashMap<PsiElement, Boolean>();
     myParameters = new HashMap<PsiParameter, PsiParameter>();
     myMethods = new HashMap<PsiMethod, PsiMethod>();
-    mySuper = new HashMap<PsiMethod, PsiMethod>();
     myTypes = new HashMap<PsiElement, PsiType>();
     myVisitedConstructions = new HashSet<PsiAnchor>();
     myTypeVariableFactory = new PsiTypeVariableFactory();
@@ -138,7 +136,6 @@ public class SystemBuilder {
     for (final PsiMethod overrider : overriders) {
       final PsiElement e = parameter != null ? overrider.getParameterList().getParameters()[index] : overrider;
 
-      mySuper.put(overrider, keyMethod);
       myMethods.put(overrider, keyMethod);
 
       if (parameter != null) {
@@ -641,7 +638,8 @@ public class SystemBuilder {
       }
 
       if (element instanceof PsiParameter) {
-        final PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();
+        PsiParameter parameter = (PsiParameter)element;
+        final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = ((PsiMethod)declarationScope);
           final PsiSearchHelper helper = myManager.getSearchHelper();
@@ -656,10 +654,14 @@ public class SystemBuilder {
               final PsiCallExpression call = PsiTreeUtil.getParentOfType(elt, PsiCallExpression.class);
 
               if (call != null) {
-                final PsiExpression arg = call.getArgumentList().getExpressions()[method.getParameterList().getParameterIndex(
-                  (PsiParameter)element)];
-
-                system.addSubtypeConstraint(evaluateType(arg, system), myTypes.get(element));
+                PsiExpressionList argList = call.getArgumentList();
+                if (argList != null) {
+                  PsiExpression[] args = argList.getExpressions();
+                  int index = method.getParameterList().getParameterIndex(parameter);
+                  if (index < args.length) {
+                    system.addSubtypeConstraint(evaluateType(args[index], system), myTypes.get(element));
+                  }
+                }
               }
             }
           }
