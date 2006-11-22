@@ -33,11 +33,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -50,8 +47,8 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -61,10 +58,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private final Project myProject;
   private final RefCountHolder myRefCountHolder;
@@ -73,7 +72,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private final Document myDocument;
   private final int myStartOffset;
   private final int myEndOffset;
-  private final boolean myCompiled;
 
   private Collection<HighlightInfo> myHighlights;
   private boolean myHasRedundantImports;
@@ -87,8 +85,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                               @Nullable Editor editor,
                               @NotNull Document document,
                               int startOffset,
-                              int endOffset,
-                              boolean isCompiled) {
+                              int endOffset) {
     super(project, document);
     myProject = project;
     myFile = file;
@@ -96,7 +93,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myDocument = document;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
-    myCompiled = isCompiled;
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     myRefCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(document, myFile);
@@ -106,30 +102,15 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myImplicitUsageProviders = ApplicationManager.getApplication().getComponents(ImplicitUsageProvider.class);
   }
 
-  public PostHighlightingPass(Project project,
-                              PsiFile file,
-                              @NotNull Editor editor,
-                              int startOffset,
-                              int endOffset,
-                              boolean isCompiled) {
-    this(project, file, editor, editor.getDocument(), startOffset, endOffset, isCompiled);
+  public PostHighlightingPass(Project project, PsiFile file, @NotNull Editor editor, int startOffset, int endOffset) {
+    this(project, file, editor, editor.getDocument(), startOffset, endOffset);
   }
 
-  public PostHighlightingPass(Project project,
-                              PsiFile file,
-                              Document document,
-                              int startOffset,
-                              int endOffset,
-                              boolean isCompiled) {
-    this(project, file, null, document, startOffset, endOffset, isCompiled);
+  public PostHighlightingPass(Project project, PsiFile file, Document document, int startOffset, int endOffset) {
+    this(project, file, null, document, startOffset, endOffset);
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    if (myCompiled) {
-      myHighlights = Collections.emptyList();
-      return;
-    }
-
     List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();

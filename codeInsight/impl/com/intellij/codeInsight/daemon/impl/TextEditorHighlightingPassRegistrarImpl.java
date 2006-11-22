@@ -6,17 +6,17 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * User: anna
@@ -24,8 +24,27 @@ import java.util.Map;
  */
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   private boolean myNeedAdditionalIntentionsPass = false;
-  private Map<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>> myRegisteredPasses = null;
+  private final List<PassInfo> myRegisteredPasses = new ArrayList<PassInfo>();
   private int[] myPostHighlightingPassGroups = UpdateHighlightersUtil.POST_HIGHLIGHT_GROUPS;
+  private final TIntObjectHashMap<int[]> predecessors = new TIntObjectHashMap<int[]>();
+
+
+  public TextEditorHighlightingPassRegistrarImpl() {
+    predecessors.put(Pass.POST_UPDATE_ALL, new int[]{Pass.UPDATE_ALL, Pass.UPDATE_VISIBLE});
+    predecessors.put(Pass.POPUP_HINTS2, new int[]{Pass.POPUP_HINTS, Pass.UPDATE_ALL, Pass.UPDATE_VISIBLE, Pass.LOCAL_INSPECTIONS});
+  }
+
+  private static class PassInfo {
+    TextEditorHighlightingPassFactory passFactory;
+    Anchor anchor;
+    int anchorPassId;
+
+    public PassInfo(final TextEditorHighlightingPassFactory passFactory, final Anchor anchor, final int anchorPassId) {
+      this.passFactory = passFactory;
+      this.anchor = anchor;
+      this.anchorPassId = anchorPassId;
+    }
+  }
 
   public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass) {
     Anchor anc = Anchor.FIRST;
@@ -42,15 +61,12 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     registerTextEditorHighlightingPass(factory, anc, anchorPass, true, true);
   }
 
-  public int registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPass, boolean needAdditionalPass, boolean inPostHighlightingPass) {
-    if (myRegisteredPasses == null){
-      myRegisteredPasses = new HashMap<TextEditorHighlightingPassFactory, Pair<Anchor, Integer>>();
-    }
+  public int registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, Anchor anchor, int anchorPassId, boolean needAdditionalPass, boolean inPostHighlightingPass) {
     if (inPostHighlightingPass) {
       myPostHighlightingPassGroups = ArrayUtil.mergeArrays(myPostHighlightingPassGroups,
                                                            new int[] {myPostHighlightingPassGroups[myPostHighlightingPassGroups.length - 1] + 1});
     }
-    myRegisteredPasses.put(factory, Pair.create(anchor, anchorPass));
+    myRegisteredPasses.add(new PassInfo(factory, anchor, anchorPassId));
     if (needAdditionalPass) {
       myNeedAdditionalIntentionsPass = true;
     }
@@ -63,11 +79,11 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     if (myRegisteredPasses == null || psiFile == null){ //do nothing with non-project files
       return;
     }
-    for (TextEditorHighlightingPassFactory factory : myRegisteredPasses.keySet()) {
+    for (PassInfo passInfo : myRegisteredPasses) {
+      TextEditorHighlightingPassFactory factory = passInfo.passFactory;
       final TextEditorHighlightingPass editorHighlightingPass = factory.createHighlightingPass(psiFile, editor);
       if (editorHighlightingPass == null) continue;
-      final Pair<Anchor, Integer> location = myRegisteredPasses.get(factory);
-      final Anchor anchor = location.first;
+      final Anchor anchor = passInfo.anchor;
       if (anchor == Anchor.FIRST) {
         passes.add(0, editorHighlightingPass);
       }
@@ -75,7 +91,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         passes.add(editorHighlightingPass);
       }
       else {
-        final int passId = location.second.intValue();
+        final int passId = passInfo.anchorPassId;
         int anchorPassIdx = -1;
         for (int idx = 0; idx < passes.size(); idx++) {
           final TextEditorHighlightingPass highlightingPass = passes.get(idx);
@@ -106,6 +122,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   @Nullable
   public int[] getPostHighlightingPasses() {
     return myPostHighlightingPassGroups;
+  }
+
+  public int[] getPredecessors(int passId) {
+    return predecessors.get(passId);
   }
 
   @NotNull

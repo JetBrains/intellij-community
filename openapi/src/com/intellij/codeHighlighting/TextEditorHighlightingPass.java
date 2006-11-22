@@ -78,5 +78,12 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public abstract void doCollectInformation(ProgressIndicator progress);
   public abstract void doApplyInformationToEditor();
 
-  public abstract int getPassId();
+  /**
+   * You do not have to override this method
+   * @return
+   */
+  @Deprecated
+  public int getPassId() {
+    return 0;
+  }
 }

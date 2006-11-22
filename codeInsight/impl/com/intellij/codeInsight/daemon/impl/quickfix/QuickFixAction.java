@@ -16,7 +16,7 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 public final class QuickFixAction extends IntentionActionComposite {
-  protected void addAvailableActions(HighlightInfo info, Editor editor, PsiFile file, ArrayList<HighlightInfo.IntentionActionDescriptor> list) {
+  protected void addAvailableActions(HighlightInfo info, Editor editor, PsiFile file, List<HighlightInfo.IntentionActionDescriptor> list) {
     addAvailableActionsForGroups(info, editor, file, list, UpdateHighlightersUtil.NORMAL_HIGHLIGHT_GROUPS );
   }
 

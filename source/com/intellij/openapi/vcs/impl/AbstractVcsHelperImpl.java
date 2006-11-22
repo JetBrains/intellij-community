@@ -614,12 +614,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
 
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false, true);
+    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
     action1.doCollectInformation(progress);
 
     collectErrorsAndWarnings(action1.getHighlights(), result, document);
 
-    PostHighlightingPass action2 = new PostHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false);
+    PostHighlightingPass action2 = new PostHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength());
     action2.doCollectInformation(progress);
 
     collectErrorsAndWarnings(action2.getHighlights(), result, document);

@@ -245,7 +245,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         statusBar.setInfo("Checking '" + file.getPresentableUrl() + "'");
       }
 
-      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false, true) {
+      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), true) {
         protected HighlightInfoHolder createInfoHolder() {
           final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
           return new HighlightInfoHolder(psiFile, filters) {

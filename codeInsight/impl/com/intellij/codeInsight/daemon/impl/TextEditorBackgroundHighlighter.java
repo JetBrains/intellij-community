@@ -102,8 +102,10 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     if (myFile == null) return TextEditorHighlightingPass.EMPTY_ARRAY;
 
     List<TextEditorHighlightingPass> passes = new ArrayList<TextEditorHighlightingPass>();
-    if (myCompiled && myFile instanceof PsiJavaFile) {
-      appendPass(passes, Pass.UPDATE_OVERRIDEN_MARKERS); // show overridden markers in compiled classes
+    if (myCompiled) {
+      if (myFile instanceof PsiJavaFile) {
+        appendPass(passes, Pass.UPDATE_OVERRIDEN_MARKERS); // show overridden markers in compiled classes
+      }
     }
     else if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -147,28 +149,20 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
 
       case Pass.UPDATE_ALL:
       case Pass.UPDATE_VISIBLE:
-        return new GeneralHighlightingPass(myProject, myFile, myDocument, startOffset, endOffset, myCompiled, pass == Pass.UPDATE_ALL);
+        return new GeneralHighlightingPass(myProject, myFile, myDocument, startOffset, endOffset, pass == Pass.UPDATE_ALL);
 
       case Pass.POST_UPDATE_ALL:
-        return new PostHighlightingPass(myProject, myFile, myEditor, startOffset, endOffset, myCompiled);
+        return new PostHighlightingPass(myProject, myFile, myEditor, startOffset, endOffset);
 
       case Pass.UPDATE_OVERRIDEN_MARKERS:
         return new OverriddenMarkersPass(myProject, myFile, myDocument, startOffset, endOffset);
 
       case Pass.LOCAL_INSPECTIONS:
-        return myCompiled || !myFile.isPhysical()
-               ? null
-               : new LocalInspectionsPass(myProject, myFile, myDocument, startOffset, endOffset);
+        return new LocalInspectionsPass(myProject, myFile, myDocument, startOffset, endOffset);
 
       case Pass.POPUP_HINTS:
       case Pass.POPUP_HINTS2:
-        if (!myCompiled) {
-          return new ShowIntentionsPass(myProject, myEditor, IntentionManager.getInstance(myProject).getIntentionActions(),
-                                        pass == Pass.POPUP_HINTS2);
-        }
-        else {
-          return null;
-        }
+        return new ShowIntentionsPass(myProject, myEditor, IntentionManager.getInstance(myProject).getIntentionActions(), pass == Pass.POPUP_HINTS2);
 
       case Pass.EXTERNAL_TOOLS:
         return new ExternalToolPass(myFile, myEditor, startOffset, endOffset);

@@ -374,11 +374,11 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     Document document = myEditor.getDocument();
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(project, myFile, document, 0, myFile.getTextLength(), false, true);
+    GeneralHighlightingPass action1 = new GeneralHighlightingPass(project, myFile, document, 0, myFile.getTextLength(), true);
     action1.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights1 = action1.getHighlights();
 
-    PostHighlightingPass action2 = new PostHighlightingPass(project, myFile, myEditor, 0, myFile.getTextLength(), false);
+    PostHighlightingPass action2 = new PostHighlightingPass(project, myFile, myEditor, 0, myFile.getTextLength());
     action2.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
 

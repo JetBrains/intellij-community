@@ -49,7 +49,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private final int myStartOffset;
   private final int myEndOffset;
   private final boolean myUpdateAll;
-  private final boolean myCompiled;
 
   @NotNull private final HighlightVisitor[] myHighlightVisitors;
 
@@ -63,9 +62,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
                                  @NotNull PsiFile file,
                                  @NotNull Document document,
                                  int startOffset,
-                                 int endOffset,
-                                 boolean isCompiled,
-                                 boolean updateAll) {
+                                 int endOffset, boolean updateAll) {
     super(project, document);
     myProject = project;
     myFile = file;
@@ -73,7 +70,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;
-    myCompiled = isCompiled;
 
     myHighlightVisitors = createHighlightVisitors();
     LOG.assertTrue(myFile.isValid());
@@ -148,10 +144,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         myMarkers = collectLineMarkers(elements);
         //LOG.debug("Line markers collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
 
-        Collection<HighlightInfo> highlights1 = collectHighlights(elements);
-        Collection<HighlightInfo> highlights2 = collectTextHighlights();
-        addHighlights(result, highlights1);
-        addHighlights(result, highlights2);
+        result.addAll(collectHighlights(elements));
+        result.addAll(collectTextHighlights());
       }
     }
     finally {
@@ -162,19 +156,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
     myHighlights = result;
     reportErrorsToWolf(result, myFile, myHasErrorElement);
-  }
-
-  private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {
-    if (myCompiled) {
-      for (final HighlightInfo info : highlights) {
-        if (info.getSeverity() == HighlightSeverity.INFORMATION) {
-          result.add(info);
-        }
-      }
-    }
-    else {
-      result.addAll(highlights);
-    }
   }
 
   private void setRefCountHolders(RefCountHolder refCountHolder) {

@@ -53,11 +53,11 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Document document = getEditor().getDocument();
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(getProject(), getFile(), document, 0, getFile().getTextLength(), false, true);
+    GeneralHighlightingPass action1 = new GeneralHighlightingPass(getProject(), getFile(), document, 0, getFile().getTextLength(), true);
     action1.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights1 = action1.getHighlights();
 
-    PostHighlightingPass action2 = new PostHighlightingPass(getProject(), getFile(), getEditor(), 0, getFile().getTextLength(), false);
+    PostHighlightingPass action2 = new PostHighlightingPass(getProject(), getFile(), getEditor(), 0, getFile().getTextLength());
     action2.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
 

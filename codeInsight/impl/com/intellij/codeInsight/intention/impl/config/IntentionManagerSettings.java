@@ -29,17 +29,15 @@ import java.util.regex.Pattern;
 public class IntentionManagerSettings implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
 
-  private Set<String> myIgnoredActions = new LinkedHashSet<String>();
+  private final Set<String> myIgnoredActions = new LinkedHashSet<String>();
 
-  private Map<String,IntentionActionMetaData> myMetaData = new LinkedHashMap<String, IntentionActionMetaData>();
+  private final Map<String,IntentionActionMetaData> myMetaData = new LinkedHashMap<String, IntentionActionMetaData>();
   private static final @NonNls String IGNORE_ACTION_TAG = "ignoreAction";
   private static final @NonNls String NAME_ATT = "name";
+  private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
-  private HashMap<String, ArrayList<String>> myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
-
-  static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
-
-  private SearchableOptionsRegistrar mySearchableOptionsRegistrar;
+  private final HashMap<String, ArrayList<String>> myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
+  private final SearchableOptionsRegistrar mySearchableOptionsRegistrar;
 
   public IntentionManagerSettings(@NotNull final SearchableOptionsRegistrar searchableOptionsRegistrar) {
     mySearchableOptionsRegistrar = searchableOptionsRegistrar;
@@ -60,9 +58,6 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   public void initComponent() { }
 
-  public void registerIntentionMetaData(@NotNull IntentionAction intentionAction, @NotNull String[] category) {
-    registerIntentionMetaData(intentionAction, category, intentionAction.getFamilyName());
-  }
   public void registerIntentionMetaData(@NotNull IntentionAction intentionAction, @NotNull String[] category, @NotNull String descriptionDirectoryName) {
     registerMetaData(new IntentionActionMetaData(intentionAction.getFamilyName(), intentionAction.getClass().getClassLoader(), category, descriptionDirectoryName));
   }
@@ -72,15 +67,6 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
 
   public boolean isShowLightBulb(@NotNull IntentionAction action) {
     return !myIgnoredActions.contains(action.getFamilyName());
-  }
-
-  public void setShowLightBulb(@NotNull IntentionAction action, boolean show) {
-    if (show) {
-      myIgnoredActions.remove(action.getFamilyName());
-    }
-    else {
-      myIgnoredActions.add(action.getFamilyName());
-    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -114,7 +100,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     }
   }
 
-  public void registerMetaData(IntentionActionMetaData metaData) {
+  private void registerMetaData(IntentionActionMetaData metaData) {
     //LOG.assertTrue(!myMetaData.containsKey(metaData.myFamily), "Action '"+metaData.myFamily+"' already registered");
     if (!myMetaData.containsKey(metaData.myFamily)){
       try {

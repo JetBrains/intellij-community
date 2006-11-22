@@ -64,7 +64,7 @@ class HTMLTextPainter {
 
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
     if (document != null) {
-      GeneralHighlightingPass action = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), false, true);
+      GeneralHighlightingPass action = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
       Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
       for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
         if (lineMarkerInfo.separatorColor != null) {

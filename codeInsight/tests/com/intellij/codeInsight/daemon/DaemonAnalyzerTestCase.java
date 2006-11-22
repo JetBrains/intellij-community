@@ -155,11 +155,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
 
     Document document = myEditor.getDocument();
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, myFile, document, 0, myFile.getTextLength(), false, true);
+    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, myFile, document, 0, myFile.getTextLength(), true);
     action1.doCollectInformation(new MockProgressIndicator());
     result.addAll(action1.getHighlights());
 
-    PostHighlightingPass action2 = new PostHighlightingPass(myProject, myFile, myEditor, 0, myFile.getTextLength(), false);
+    PostHighlightingPass action2 = new PostHighlightingPass(myProject, myFile, myEditor, 0, myFile.getTextLength());
     action2.doCollectInformation(new MockProgressIndicator());
     result.addAll(action2.getHighlights());
 

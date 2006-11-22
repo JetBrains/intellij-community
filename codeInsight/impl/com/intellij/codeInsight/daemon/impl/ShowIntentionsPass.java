@@ -86,8 +86,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     LogicalPosition startPosition = myEditor.xyToLogicalPosition(new Point(visibleRect.x, visibleRect.y));
     myStartOffset = myEditor.logicalPositionToOffset(startPosition);
 
-    LogicalPosition endPosition =
-      myEditor.xyToLogicalPosition(new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height));
+    LogicalPosition endPosition = myEditor.xyToLogicalPosition(new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height));
     myEndOffset = myEditor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
 
     myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
@@ -111,27 +110,18 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
       HighlightInfo highlight = visibleHighlights[i];
       final PsiElement elementAt = myFile.findElementAt(highlight.startOffset);
-      if (elementAt != null && !elementAt.isValid()) {
-        LOG.assertTrue(false, "Invalid element: " + elementAt);
-      }
       elements[i] = elementAt;
     }
 
     int caretOffset = myEditor.getCaretModel().getOffset();
     for (int i = visibleHighlights.length - 1; i >= 0; i--) {
       HighlightInfo info = visibleHighlights[i];
-      if (elements[i] == null) continue;
-      if (info.startOffset <= caretOffset) {
-        if (showAddImportHint(info, elements[i])) return;
-      }
+      if (elements[i] != null && info.startOffset <= caretOffset && showAddImportHint(info, elements[i])) return;
     }
 
     for (int i = 0; i < visibleHighlights.length; i++) {
       HighlightInfo info = visibleHighlights[i];
-      if (elements[i] == null) continue;
-      if (info.startOffset > caretOffset) {
-        if (showAddImportHint(info, elements[i])) return;
-      }
+      if (elements[i] != null && info.startOffset > caretOffset && showAddImportHint(info, elements[i])) return;
     }
 
     if (!(myFile instanceof PsiCodeFragment)) {
@@ -197,8 +187,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (!showBulb) {
         for (HighlightInfo.IntentionActionDescriptor descriptor : intentionsToShow) {
           final IntentionAction action = descriptor.getAction();
-          if (action.isAvailable(myProject, injectedEditor, injectedFile) &&
-              IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
+          if (IntentionManagerSettings.getInstance().isShowLightBulb(action) && action.isAvailable(myProject, injectedEditor, injectedFile)) {
             showBulb = true;
             break;
           }
@@ -214,8 +203,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
 
         if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          IntentionHintComponent hintComponent =
-            IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow, fixesToShow, false);
+          IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow, fixesToShow, false);
           if (!myIsSecondPass) {
             codeAnalyzer.setLastIntentionHint(hintComponent);
           }
@@ -231,9 +219,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
-      if (!canBeHint(info.type)) continue;
-      if (startOffset <= info.startOffset && info.endOffset <= endOffset) {
-        if (myEditor.getFoldingModel().isOffsetCollapsed(info.startOffset)) continue;
+      if (canBeHint(info.type)
+          && startOffset <= info.startOffset && info.endOffset <= endOffset
+          && !myEditor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
         array.add(info);
       }
     }
@@ -241,9 +229,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   private boolean showAddImportHint(HighlightInfo info, PsiElement element) {
-    if (!element.isValid() || !element.isWritable()) return false;
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return false;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return false;
+    if (!element.isValid() || !element.isWritable()) return false;
 
     element = element.getParent();
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;

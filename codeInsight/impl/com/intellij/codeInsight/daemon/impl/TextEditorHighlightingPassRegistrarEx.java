@@ -30,4 +30,11 @@ public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHi
 
   @Nullable
   public abstract int[] getPostHighlightingPasses();
+
+  /**
+   * Returns ids of passes that must be performed before the specified passId.
+   * That usually means data dependencies,
+   * e.g. PostHighlightingPass relies on GeneralHighlightingPass for the information on the unused stuff.
+   */
+  public abstract int[] getPredecessors(int passId);
 }

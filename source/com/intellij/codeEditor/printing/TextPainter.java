@@ -91,7 +91,7 @@ public class TextPainter implements Printable {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         GeneralHighlightingPass action = new GeneralHighlightingPass(project, psiFile, myDocument, 0,
-                                                                     psiFile.getTextLength(), false, true);
+                                                                     psiFile.getTextLength(), true);
         Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
         for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
           if (lineMarkerInfo.separatorColor != null) {
