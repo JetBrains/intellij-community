@@ -248,7 +248,7 @@
         <action id="Vcs.IntegrateProject" class="com.intellij.openapi.vcs.update.CommonIntegrateProjectAction"/>
         <action id="Vcs.RefreshStatuses" class="com.intellij.openapi.vcs.actions.RefreshStatuses"/>
         <separator/>
-        <!-- <action id="ChangesView.CreatePatch" class="com.intellij.openapi.vcs.changes.actions.CreatePatchAction"/> -->
+        <action id="ChangesView.CreatePatch" class="com.intellij.openapi.vcs.changes.actions.CreatePatchAction"/>
         <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction"/>
       </group>
 

@@ -59,10 +59,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private boolean myAllOfDefaultChangeListChangesIncluded;
   @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
   private final Action[] myExecutorActions;
+  private boolean myShowVcsCommit;
 
   private static void commit(Project project, final List<Change> changes, final ChangeList initialSelection,
-                             final List<CommitExecutor> executors) {
-    new CommitChangeListDialog(project, changes, initialSelection, executors).show();
+                             final List<CommitExecutor> executors, boolean showVcsCommit) {
+    new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit).show();
   }
 
   public static void commitPaths(final Project project, Collection<FilePath> paths, final ChangeList initialSelection) {
@@ -72,7 +73,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       changes.addAll(manager.getChangesIn(path));
     }
 
-    commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors());
+    commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true);
+  }
+
+  public static void commitPaths(final Project project, Collection<FilePath> paths, final ChangeList initialSelection,
+                                 @Nullable final CommitExecutor executor) {
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    final Collection<Change> changes = new HashSet<Change>();
+    for (FilePath path : paths) {
+      changes.addAll(manager.getChangesIn(path));
+    }
+
+    if (executor == null) {
+      commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true);
+    }
+    else {
+      commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false);
+    }
   }
 
   /*
@@ -95,23 +112,28 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   */
 
   public static void commitChanges(final Project project, final Collection<Change> changes, final ChangeList initialSelection,
-                                   final List<CommitExecutor> executors) {
+                                   final List<CommitExecutor> executors, final boolean showVcsCommit) {
     if (changes.isEmpty()) {
       Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
                                  VcsBundle.message("commit.dialog.no.changes.detected.title"));
       return;
     }
 
-    commit(project, new ArrayList<Change>(changes), initialSelection, executors);
+    commit(project, new ArrayList<Change>(changes), initialSelection, executors, showVcsCommit);
   }
 
   private CommitChangeListDialog(final Project project,
                                  final List<Change> changes,
                                  final ChangeList initialSelection,
-                                 final List<CommitExecutor> executors) {
+                                 final List<CommitExecutor> executors,
+                                 final boolean showVcsCommit) {
     super(project, true);
     myProject = project;
     myExecutors = executors;
+    myShowVcsCommit = showVcsCommit;
+    if (!myShowVcsCommit && myExecutors.size() == 0) {
+      throw new IllegalArgumentException("nothing found to execute commit with");
+    }
 
     final ChangeListManager manager = ChangeListManager.getInstance(project);
     LocalChangeList defaultList = manager.getDefaultChangeList();
@@ -210,7 +232,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     setOKButtonText(getCommitActionName());
 
-    setTitle(myActionName);
+    if (myShowVcsCommit) {
+      setTitle(myActionName);
+    }
+    else {
+      setTitle(myExecutors.get(0).getActionText());
+    }
 
     restoreState();
     myExecutorActions = new Action[myExecutors.size()];
@@ -231,9 +258,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
 
   protected Action[] createActions() {
-    final Action[] result = new Action[2 + myExecutors.size()];
-    result[0] = getOKAction();
-    System.arraycopy(myExecutorActions, 0, result, 1, myExecutorActions.length);
+    Action[] result;
+    if (myShowVcsCommit) {
+      result = new Action[2 + myExecutors.size()];
+      result[0] = getOKAction();
+      System.arraycopy(myExecutorActions, 0, result, 1, myExecutorActions.length);
+    }
+    else {
+      result = new Action[1 + myExecutors.size()];
+      System.arraycopy(myExecutorActions, 0, result, 0, myExecutorActions.length);
+    }
     result[result.length - 1] = getCancelAction();
     return result;
   }
@@ -477,6 +511,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public List<AbstractVcs> getAffectedVcses() {
+    if (!myShowVcsCommit) {
+      return Collections.emptyList();
+    }
     Set<AbstractVcs> result = new HashSet<AbstractVcs>();
     for (Change change : myBrowser.getAllChanges()) {
       final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);

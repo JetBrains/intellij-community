@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,8 +72,13 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     if (ChangeListManager.getInstance(project).ensureUpToDate(true)) {
       ChangeList initialSelection = getInitiallySelectedChangeList(context, project);
 
-      CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection);
+      CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project));
     }
+  }
+
+  @Nullable
+  protected CommitExecutor getExecutor(Project project) {
+    return null;
   }
 
   protected ChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
