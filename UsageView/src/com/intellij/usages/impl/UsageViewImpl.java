@@ -670,7 +670,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       disposable.dispose();
     }
     myDisposables.clear();
-    myUsageNodes.clear();
     myModelTracker.removeListener(this);
     myModelTracker.dispose();
     myUpdateAlarm.cancelAllRequests();

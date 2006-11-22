@@ -48,7 +48,7 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
-  protected JScrollPane myComponent;
+  private JScrollPane myComponent;
 
   protected AbstractProjectViewPSIPane(Project project) {
     super(project);
@@ -59,7 +59,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
     myTree = createTree(treeModel);
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+      DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_MOVE, new MyDragGestureListener());
+      new DropTarget(myTree, new MoveDropTargetListener(this));
     }
     myComponent = new JScrollPane(myTree);
     myTreeStructure = createStructure();
@@ -279,7 +280,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       DataContext dataContext = DataManager.getInstance().getDataContext();
       ProjectView projectView = (ProjectView)dataContext.getData(ProjectViewImpl.PROJECT_VIEW_DATA_CONSTANT);
       if (projectView == null) return;
-      Object draggableObject = projectView.getCurrentProjectViewPane().getSelectedElement();
+      Object[] draggableObject = projectView.getCurrentProjectViewPane().getSelectedElements();
 
       if (draggableObject != null) {
         try {
@@ -311,4 +312,5 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
     public void dragExit(DragSourceEvent dse) { }
   }
+
 }

@@ -1,7 +1,6 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.*;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -44,10 +43,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.dnd.*;
+import java.awt.dnd.DropTarget;
 import java.awt.event.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -162,21 +159,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         return getSelectedPsiElements();
       }
     };
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myTree.setTransferHandler(new TransferHandler() {
-        public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
-          for (DataFlavor transferFlavor : transferFlavors) {
-            if (transferFlavor.getHumanPresentableName().equals(ABSTRACT_TREE_NODE_TRANSFERABLE)) {
-              return true;
-            }
-          }
-          return false;
-        }
-      });
-      new DropTarget(myTree, new MyDropTargetListener());
-    }
-
-    //DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
   }
 
   public void updateTreePopupHandler(){
@@ -516,57 +498,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
     public PsiDirectory getOrChooseDirectory() {
       return PackageUtil.getOrChooseDirectory(this);
-    }
-  }
-
-  // below BIG FAT TODO - have to figure out way to drag somwthing into favorites
-  //---------- DnD -------------
-
-
-  private class MyDropTargetListener implements DropTargetListener {
-    public void dragEnter(DropTargetDragEvent dtde) {
-      DataFlavor[] flavors = dtde.getCurrentDataFlavors();
-      JComponent c = (JComponent)dtde.getDropTargetContext().getComponent();
-      TransferHandler importer = c.getTransferHandler();
-      int dropAction = dtde.getDropAction();
-      if (importer != null && importer.canImport(c, flavors)) {
-        dtde.acceptDrag(dropAction);
-      }
-      else {
-        dtde.rejectDrag();
-      }
-    }
-
-    public void dragOver(DropTargetDragEvent dtde) {
-    }
-
-    public void dropActionChanged(DropTargetDragEvent dtde) {
-    }
-
-    public void drop(DropTargetDropEvent dtde) {
-      Object draggableObject;
-      try {
-        draggableObject = dtde.getTransferable().getTransferData(AbstractProjectViewPSIPane.FLAVORS[0]);
-      }
-      catch (UnsupportedFlavorException e) {
-        draggableObject = null;
-      }
-      catch (IOException e) {
-        draggableObject = null;
-      }
-      if (draggableObject != null) {
-        int dropAction = dtde.getDropAction();
-        if ((dropAction & DnDConstants.ACTION_MOVE) != 0) {
-          if (myBuilder.findSmartFirstLevelNodeByElement(draggableObject) != null) return;
-          FavoritesManager.getInstance(myProject).addRoots(myListName, null, draggableObject);
-          dtde.dropComplete(true);
-          return;
-        }
-      }
-      dtde.rejectDrop();
-    }
-
-    public void dragExit(DropTargetEvent dte) {
     }
   }
 }

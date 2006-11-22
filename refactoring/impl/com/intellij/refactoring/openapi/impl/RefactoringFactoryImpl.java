@@ -13,6 +13,7 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -59,9 +60,9 @@ public class RefactoringFactoryImpl extends RefactoringFactory implements Projec
     return new PackageWrapper(PsiManager.getInstance(myProject), targetPackage);
   }
 
-  public MoveDestination createSourceRootMoveDestination(String targetPackageQualifiedName, VirtualFile sourceRoot) {
+  public MoveDestination createSourceRootMoveDestination(@NotNull String targetPackageQualifiedName, @NotNull VirtualFile sourceRoot) {
     final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(sourceRoot);
-    LOG.assertTrue(directory != null && !directory.isSourceRoot(), "Should pass source root");
+    LOG.assertTrue(directory != null && directory.isSourceRoot(), "Should pass source root");
     return new AutocreatingSingleSourceRootMoveDestination(createPackageWrapper(targetPackageQualifiedName),
                                                            sourceRoot);
   }

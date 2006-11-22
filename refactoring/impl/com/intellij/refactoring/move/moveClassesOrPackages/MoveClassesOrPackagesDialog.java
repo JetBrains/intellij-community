@@ -196,8 +196,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       myCbMoveToAnotherSourceFolder.setEnabled(false);
     }
     else {
-      myCbMoveToAnotherSourceFolder.setSelected(isTargetDirectoryFixed);
-      //myCbMoveToAnotherSourceFolder.setEnabled(myTargetDirectoryFixed);
+      myCbMoveToAnotherSourceFolder.setSelected(!isTargetDirectoryFixed);
     }
 
     validateOKButton();

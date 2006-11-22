@@ -13,13 +13,15 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *  @author dsl
  */
 public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMoveDestination {
   private final VirtualFile mySourceRoot;
 
-  public AutocreatingSingleSourceRootMoveDestination(PackageWrapper targetPackage, VirtualFile sourceRoot) {
+  public AutocreatingSingleSourceRootMoveDestination(PackageWrapper targetPackage, @NotNull VirtualFile sourceRoot) {
     super(targetPackage);
     mySourceRoot = sourceRoot;
   }
