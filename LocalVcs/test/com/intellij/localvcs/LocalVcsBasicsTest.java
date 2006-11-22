@@ -1,6 +1,7 @@
 package com.intellij.localvcs;
 
 import org.junit.Test;
+import org.junit.Ignore;
 
 public class LocalVcsBasicsTest extends TestCase {
   // todo clean up LocalVcs tests
@@ -209,5 +210,15 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.delete("/dir1");
     vcs.apply();
     assertFalse(vcs.hasEntry("/dir1"));
+  }
+
+  @Ignore
+  @Test
+  public void testCreatingRoots() {
+    vcs.createRoot("c:/root");
+    assertFalse(vcs.hasEntry("c:/root"));
+
+    vcs.apply();
+    assertTrue(vcs.hasEntry("c:/root"));
   }
 }

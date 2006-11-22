@@ -30,6 +30,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
+  @Ignore
   public void testStoringEntries() {
     vcs.createFile("/file", "content", null);
     vcs.apply();
@@ -55,6 +56,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
+  @Ignore
   public void testStoringObjectsCounter() {
     vcs.createFile("/file1", "content1", null);
     vcs.createFile("/file2", "content2", null);

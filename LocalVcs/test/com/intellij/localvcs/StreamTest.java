@@ -99,8 +99,9 @@ public class StreamTest extends TestCase {
   }
 
   @Test
-  public void testRootEntryWithChildren() throws IOException {
+  public void testRootEntryRootWithWithChildren() throws IOException {
     RootEntry e = new RootEntry("c:/root");
+
     e.addChild(new FileEntry(1, "file", "", null));
     e.addChild(new DirectoryEntry(2, "dir", null));
 

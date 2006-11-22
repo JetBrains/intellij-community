@@ -1,11 +1,9 @@
 package com.intellij.localvcsperf;
 
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Path;
-import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import com.intellij.localvcs.TestStorage;
+import org.junit.Test;
 
 public class PerformanceTest extends TempDirTestCase {
   //private static String contentCache;
@@ -50,19 +48,35 @@ public class PerformanceTest extends TempDirTestCase {
   //  }
   //  return contentCache;
   //}
-  //
-  //protected void assertExecutionTime(long expectedTime, final Task task) {
-  //  long start = System.currentTimeMillis();
-  //  task.execute();
-  //
-  //  long actualTime = System.currentTimeMillis() - start;
-  //
-  //  assertTrue("task took more time: expected "
-  //             + expectedTime + " actual " + actualTime,
-  //             actualTime < expectedTime);
-  //}
-  //
-  //protected interface Task {
-  //  void execute();
-  //}
+
+  @Test
+  public void testSearchingEntries() {
+    final LocalVcs vcs = new LocalVcs(new TestStorage());
+    vcs.createDirectory("/dir", null);
+    vcs.createDirectory("/dir/dir", null);
+    vcs.createDirectory("/dir/dir/dir", null);
+    vcs.apply();
+
+    assertExecutionTime(10, new Task() {
+      public void execute() {
+        for (int i = 0; i < 1000000; i++) {
+          vcs.getEntry("/dir/dir/dir");
+        }
+      }
+    });
+  }
+
+  protected void assertExecutionTime(long expectedTime, final Task task) {
+    long start = System.currentTimeMillis();
+    task.execute();
+
+    long actualTime = System.currentTimeMillis() - start;
+
+    String message = "task took more time: expected " + expectedTime + " actual " + actualTime;
+    assertTrue(message, actualTime < expectedTime);
+  }
+
+  protected interface Task {
+    void execute();
+  }
 }

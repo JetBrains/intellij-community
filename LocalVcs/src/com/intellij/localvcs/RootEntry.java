@@ -4,6 +4,7 @@ import java.io.IOException;
 
 // todo try to crean up Entry hierarchy
 public class RootEntry extends DirectoryEntry {
+  // todo try to remove difference null-checks
   public RootEntry(String path) {
     super(null, path, null);
   }
@@ -58,12 +59,12 @@ public class RootEntry extends DirectoryEntry {
 
   public void createFile(Integer id, String path, String content, Long timestamp) {
     FileEntry e = new FileEntry(id, new Path(path).getName(), content, timestamp);
-    addEntry(new Path(path).getParent().getPath(), e);
+    addEntry(new Path(path).getParent(), e);
   }
 
   public void createDirectory(Integer id, String path, Long timestamp) {
     DirectoryEntry e = new DirectoryEntry(id, new Path(path).getName(), timestamp);
-    addEntry(new Path(path).getParent().getPath(), e);
+    addEntry(new Path(path).getParent(), e);
   }
 
   // todo make entries to be modifiable objects
@@ -73,7 +74,7 @@ public class RootEntry extends DirectoryEntry {
     Entry newEntry = oldEntry.withContent(newContent, timestamp);
 
     removeEntry(oldEntry);
-    addEntry(new Path(path).getParent().getPath(), newEntry);
+    addEntry(new Path(path).getParent(), newEntry);
   }
 
   public void rename(String path, String newName, Long timestamp) {
@@ -84,7 +85,7 @@ public class RootEntry extends DirectoryEntry {
     Entry newEntry = oldEntry.renamed(newName, timestamp);
 
     removeEntry(oldEntry);
-    addEntry(new Path(path).getParent().getPath(), newEntry);
+    addEntry(new Path(path).getParent(), newEntry);
   }
 
   public void move(String path, String newParentPath, Long timestamp) {
@@ -92,26 +93,19 @@ public class RootEntry extends DirectoryEntry {
     e.setTimestamp(timestamp); // todo it smells bed
 
     removeEntry(e);
-    addEntry(newParentPath, e);
+    addEntry(new Path(newParentPath), e);
   }
 
   public void delete(String path) {
     removeEntry(getEntry(path));
   }
 
-  private void addEntry(String parent, Entry entry) {
-    // todo chenge parameter from path to id
+  private void addEntry(Path parentPath, Entry entry) {
+    // todo chenge parameter from path to id or better to string
     // todo just for testing...
     assert entry.getId() == null || !hasEntry(entry.getId());
 
-    // todo it's quite ugly
-    // todo it seems that we can remove all such check now since we have named root entry 
-    if (parent == null) {
-      addChild(entry);
-    }
-    else {
-      getEntry(parent).addChild(entry);
-    }
+    getEntry(parentPath.getPath()).addChild(entry);
   }
 
   private void removeEntry(Entry e) {

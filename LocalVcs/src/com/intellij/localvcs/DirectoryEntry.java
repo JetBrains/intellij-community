@@ -70,13 +70,8 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public void removeChild(Entry child) {
-    // todo we shoult remove child by name!!!
-    for (int i = 0; i < myChildren.size(); i++) {
-      if (myChildren.get(i) == child) {
-        myChildren.remove(i);
-        break;
-      }
-    }
+    // todo we should remove child by name!!!
+    myChildren.remove(child);
     child.setParent(null);
   }
 

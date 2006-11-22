@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration;
 
 
 import org.junit.Test;
+import org.junit.Ignore;
 import com.intellij.testFramework.LightIdeaTestCase;
 
 public class LocalVcsComponentTest /*extends LightIdeaTestCase*/ {
