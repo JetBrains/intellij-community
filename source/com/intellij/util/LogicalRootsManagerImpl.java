@@ -61,18 +61,6 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
         bus.asyncPublisher(ProjectTopics.LOGICAL_ROOTS).logicalRootsChanged();
       }
     });
-
-    registerLogicalRootProvider(LogicalRootType.SOURCE_ROOT, new NotNullFunction<Module, List<VirtualFileLogicalRoot>>() {
-      @NotNull
-      public List<VirtualFileLogicalRoot> fun(final Module module) {
-        return ContainerUtil.map2List(ModuleRootManager.getInstance(module).getSourceRoots(), new Function<VirtualFile, VirtualFileLogicalRoot>() {
-          public VirtualFileLogicalRoot fun(final VirtualFile s) {
-            return new VirtualFileLogicalRoot(s);
-          }
-        });
-      }
-    });
-
   }
 
   private void updateCache(final ModuleManager moduleManager) {
@@ -91,6 +79,16 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   }
 
   public void projectOpened() {
+    registerLogicalRootProvider(LogicalRootType.SOURCE_ROOT, new NotNullFunction<Module, List<VirtualFileLogicalRoot>>() {
+      @NotNull
+      public List<VirtualFileLogicalRoot> fun(final Module module) {
+        return ContainerUtil.map2List(ModuleRootManager.getInstance(module).getSourceRoots(), new Function<VirtualFile, VirtualFileLogicalRoot>() {
+          public VirtualFileLogicalRoot fun(final VirtualFile s) {
+            return new VirtualFileLogicalRoot(s);
+          }
+        });
+      }
+    });
   }
 
   public void projectClosed() {
