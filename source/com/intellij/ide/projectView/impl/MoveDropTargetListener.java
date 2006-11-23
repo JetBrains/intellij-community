@@ -3,16 +3,10 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.MoveClassesOrPackagesRefactoring;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.move.MoveCallback;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -94,12 +88,11 @@ class MoveDropTargetListener implements DropTargetListener {
     if (userObject instanceof PsiDirectoryNode) {
       final PsiDirectoryNode directoryNode = (PsiDirectoryNode)userObject;
       final PsiDirectory directory = directoryNode.getValue();
+      if (isTheSameDirectory(directory, elements)) return true;
       final PsiPackage aPackage = directory.getPackage();
       if (aPackage != null) {
         final VirtualFile srcRoot = ProjectRootManager.getInstance(myPane.myProject).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
         assert srcRoot != null;
-        final RefactoringFactory factory = RefactoringFactory.getInstance(myPane.myProject);
-        MoveDestination destination = factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), srcRoot);
         int dropAction = dtde.getDropAction();
         if ((dropAction & DnDConstants.ACTION_MOVE) != 0) {
           MoveHandler.doMove(myPane.myProject, elements, directory, null);
@@ -109,5 +102,14 @@ class MoveDropTargetListener implements DropTargetListener {
       }
     }
     return false;
+  }
+
+  private boolean isTheSameDirectory(final PsiDirectory directory, final PsiElement[] elements) {
+    for (final PsiElement element : elements) {
+      final PsiFile aFile = element.getContainingFile();
+      assert aFile instanceof PsiJavaFile;
+      if (!directory.equals(aFile.getContainingDirectory())) return false;
+    }
+    return true;
   }
 }
