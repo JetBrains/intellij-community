@@ -42,9 +42,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
                 | TargetElementUtil.THIS_ACCEPTED
                 | TargetElementUtil.SUPER_ACCEPTED;
     final PsiElement element = TargetElementUtil.findTargetElement(editor, flags);
-    boolean isInvokedOnReferenceElement = TargetElementUtil.findTargetElement(editor, flags & ~TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED) == null;
-
-    PsiElement[] result = searchImplementations(editor, file, element, isInvokedOnReferenceElement);
+    PsiElement[] result = searchImplementations(editor, file, element, false);
     if (result.length > 0) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.implementation");
       show(editor, element, result);
