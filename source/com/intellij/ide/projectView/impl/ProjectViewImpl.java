@@ -226,6 +226,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       Pair<String, String> ids = (Pair<String, String>)myCombo.getItemAt(i);
       String id = ids.first;
       if (id.equals(idToRemove)) {
+        if (i == myCombo.getSelectedIndex()) {
+          myCombo.setSelectedIndex(0);
+        }
         myCombo.removeItemAt(i);
       }
     }
