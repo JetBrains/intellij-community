@@ -56,7 +56,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     final EditorTextField editorTextField = new EditorTextField(factory.fun(""), project, StdFileTypes.PLAIN_TEXT) {
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
-        return boundedComponent1 instanceof MultiLineTextPanel ? makeBigEditor(editor) : editor;
+        return boundedComponent1 instanceof MultiLineTextPanel ? makeBigEditor(editor, ((MultiLineTextPanel)boundedComponent1).getRowCount()) : editor;
       }
     };
 
@@ -69,7 +69,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
             protected EditorEx createEditor() {
               final EditorEx editor = super.createEditor();
               editor.setEmbeddedIntoDialogWrapper(true);
-              return makeBigEditor(editor);
+              return makeBigEditor(editor, 5);
             }
           };
           DialogBuilder builder = new DialogBuilder(project);
@@ -88,10 +88,12 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     return boundedComponent;
   }
 
-  private static EditorEx makeBigEditor(final EditorEx editor) {
+  private static EditorEx makeBigEditor(final EditorEx editor, int rowCount) {
     editor.setVerticalScrollbarVisible(true);
     editor.setOneLineMode(false);
-    editor.getComponent().setPreferredSize(new JTextArea(10, 50).getPreferredSize());
+    final JTextArea area = new JTextArea(10, 50);
+    area.setRows(rowCount);
+    editor.getComponent().setPreferredSize(area.getPreferredSize());
     return editor;
   }
 
