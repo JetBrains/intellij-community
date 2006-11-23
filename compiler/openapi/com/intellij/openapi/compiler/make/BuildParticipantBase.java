@@ -15,15 +15,17 @@
  */
 package com.intellij.openapi.compiler.make;
 
+import com.intellij.javaee.VerificationException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.module.DeploymentItem;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.VerificationException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.javaee.JavaeeDeploymentItem;
+import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.javaee.make.MakeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -40,10 +42,10 @@ public abstract class BuildParticipantBase implements BuildParticipant {
   }
 
   public void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
-    final DeploymentItem[] deploymentDescriptors = getDeploymentDescriptors();
+    final JavaeeDeploymentItem[] deploymentDescriptors = getDeploymentDescriptors();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        for (DeploymentItem deploymentDescriptor : deploymentDescriptors) {
+        for (JavaeeDeploymentItem deploymentDescriptor : deploymentDescriptors) {
           if (deploymentDescriptor.isDescriptorOptional()) {
             continue;
           }
@@ -81,5 +83,7 @@ public abstract class BuildParticipantBase implements BuildParticipant {
     });
   }
 
-  protected abstract DeploymentItem[] getDeploymentDescriptors();
+  protected JavaeeDeploymentItem[] getDeploymentDescriptors() {
+    return JavaeeModuleProperties.getInstance(myModule).getDeploymentItems();
+  }
 }

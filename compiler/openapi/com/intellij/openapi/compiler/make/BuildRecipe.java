@@ -34,5 +34,4 @@ public interface BuildRecipe {
                               @NotNull Module module,
                               String outputRelativePath,
                               @Nullable FileFilter fileFilter);
-
 }

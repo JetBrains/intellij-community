@@ -1,11 +1,11 @@
 package com.intellij.jar;
 
 import com.intellij.compiler.CompilerIOUtil;
-import com.intellij.javaee.make.BuildInstructionVisitor;
-import com.intellij.javaee.make.BuildRecipe;
-import com.intellij.javaee.make.FileCopyInstruction;
+import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
+import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.FileCopyInstruction;
 import com.intellij.javaee.module.ModuleContainer;
-import com.intellij.javaee.module.ModuleLink;
+import com.intellij.openapi.compiler.module.ModuleLink;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;

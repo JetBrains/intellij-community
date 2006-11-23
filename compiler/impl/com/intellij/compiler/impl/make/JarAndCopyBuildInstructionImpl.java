@@ -2,11 +2,15 @@ package com.intellij.compiler.impl.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.make.*;
+import com.intellij.openapi.compiler.make.ManifestBuilder;
+import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
+import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
+import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.javaee.make.MakeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

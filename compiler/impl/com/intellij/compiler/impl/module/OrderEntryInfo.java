@@ -1,4 +1,4 @@
-package com.intellij.javaee.module;
+package com.intellij.compiler.impl.module;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;

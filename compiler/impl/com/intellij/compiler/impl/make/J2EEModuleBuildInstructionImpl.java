@@ -1,9 +1,16 @@
 package com.intellij.compiler.impl.make;
 
+import com.intellij.javaee.make.MakeUtil;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.make.*;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
+import com.intellij.openapi.compiler.make.J2EEModuleBuildInstruction;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.BuildInstruction;
+import com.intellij.openapi.compiler.make.FileCopyInstruction;
+import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Ref;
@@ -16,15 +23,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
-import java.util.jar.JarFile;
+import java.util.ArrayList;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.jar.JarFile;
 
 public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
 
   private final ModuleBuildProperties myBuildProperties;
@@ -45,7 +51,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
     final BuildRecipe buildRecipe = getChildInstructions(context);
     try {
-      File fromFile = new File(MakeUtilImpl.getOrCreateExplodedDir(myBuildProperties.getModule()));
+      File fromFile = new File(ModuleBuilder.getOrCreateExplodedDir(myBuildProperties.getModule()));
       boolean builtAlready = ModuleBuilder.willBuildExploded(myBuildProperties);
       if (!builtAlready) {
         ModuleBuilder.getInstance(getModule()).buildExploded(fromFile, context, new ArrayList<File>());

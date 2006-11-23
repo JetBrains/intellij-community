@@ -29,51 +29,10 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.javaee.module;
+package com.intellij.openapi.compiler.module;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import org.jetbrains.annotations.Nullable;
 
-public class ModuleLinkImpl extends ModuleLink {
-
-  public com.intellij.openapi.module.impl.ModuleLinkImpl getDelegate() {
-    return (com.intellij.openapi.module.impl.ModuleLinkImpl)super.getDelegate();
-  }
-
-  public ModuleLinkImpl(final com.intellij.openapi.module.impl.ModuleLinkImpl delegate) {
-    super(delegate);
-  }
-
-  public ModuleLinkImpl(Module module, Module parentModule) {
-    this(new com.intellij.openapi.module.impl.ModuleLinkImpl(module, parentModule));
-  }
-
-  public ModuleLinkImpl(String moduleName, Module parentModule) {
-    this(new com.intellij.openapi.module.impl.ModuleLinkImpl(moduleName, parentModule));
-  }
-
-  public @Nullable Module getModule() {
-    return getDelegate().getModule();
-  }
-
-  public String getId() {
-    return getDelegate().getId();
-  }
-
-  public boolean hasId(String id) {
-    return getDelegate().hasId(id);
-  }
-
-  public boolean resolveElement(ModulesProvider provider) {
-    return getDelegate().resolveElement(provider);
-  }
-
-  public String getName() {
-    return getDelegate().getName();
-  }
-
-  public ModuleLinkImpl clone() {
-    return new ModuleLinkImpl((com.intellij.openapi.module.impl.ModuleLinkImpl)getDelegate().clone());
-  }
+public interface ResolvableElement {
+  boolean resolveElement(ModulesProvider provider);
 }

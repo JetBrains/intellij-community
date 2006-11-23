@@ -1,11 +1,6 @@
 package com.intellij.compiler;
 
-import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.openapi.ex.J2EEManagerEx;
-import com.intellij.javaee.model.JavaeeApplicationModel;
-import com.intellij.javaee.model.xml.application.JavaeeApplication;
-import com.intellij.javaee.model.xml.application.JavaeeModule;
-import com.intellij.javaee.module.ModuleLink;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +9,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;

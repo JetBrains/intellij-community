@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.javaee.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 
 import java.io.File;
 

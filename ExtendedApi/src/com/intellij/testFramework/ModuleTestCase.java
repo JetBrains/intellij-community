@@ -1,6 +1,6 @@
 package com.intellij.testFramework;
 
-import com.intellij.javaee.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;

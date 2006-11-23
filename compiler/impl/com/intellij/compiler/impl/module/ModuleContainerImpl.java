@@ -1,4 +1,4 @@
-package com.intellij.javaee.module;
+package com.intellij.compiler.impl.module;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -11,8 +11,13 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcher;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcherFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.compiler.module.ModuleLink;
+import com.intellij.openapi.compiler.module.ContainerElement;
+import com.intellij.openapi.compiler.module.PackagingMethod;
+import com.intellij.openapi.compiler.module.LibraryLink;
 import com.intellij.util.ExternalizableString;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.javaee.module.ModuleContainer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -79,16 +84,16 @@ public class ModuleContainerImpl implements ModuleContainer {
         if (module == null) continue;
         containerElement = new ModuleLinkImpl(module, getModule());
         containerElement.setPackagingMethod(getModule().getModuleType().equals(ModuleType.EJB)
-                                            ? J2EEPackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
-                                            : J2EEPackagingMethod.COPY_FILES);
+                                            ? PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
+                                            : PackagingMethod.COPY_FILES);
       }
       else if (orderEntry instanceof LibraryOrderEntry) {
         final Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
         if (library == null) continue;
         containerElement = new LibraryLinkImpl(library, getModule());
         containerElement.setPackagingMethod(getModule().getModuleType().equals(ModuleType.EJB)
-                                            ? J2EEPackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
-                                            : J2EEPackagingMethod.COPY_FILES);
+                                            ? PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST
+                                            : PackagingMethod.COPY_FILES);
       }
       else {
         LOG.error("invalid type " + orderEntry);
@@ -245,7 +250,7 @@ public class ModuleContainerImpl implements ModuleContainer {
     for (final ContainerElement containerElement : myContents) {
       final boolean resolved = containerElement.resolveElement(provider);
       if ((resolved && includeResolved || !resolved && includeUnresolved)
-        && (includeNonPackaged || containerElement.getPackagingMethod() != J2EEPackagingMethod.DO_NOT_PACKAGE)) {
+        && (includeNonPackaged || containerElement.getPackagingMethod() != PackagingMethod.DO_NOT_PACKAGE)) {
         result.add(containerElement);
       }
     }

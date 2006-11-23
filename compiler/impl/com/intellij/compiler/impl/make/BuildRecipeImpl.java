@@ -3,12 +3,12 @@
  */
 package com.intellij.compiler.impl.make;
 
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.make.BuildInstruction;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.MakeUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
+import com.intellij.openapi.compiler.make.BuildInstruction;
+import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.javaee.make.MakeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
