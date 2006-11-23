@@ -404,16 +404,19 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       }
 
       if (covariantOverriderInfos.size() > 0) {
-        if (ApplicationManager.getApplication().isUnitTestMode() ||
-            Messages.showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),
-                                     ChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon())
-            != DialogWrapper.OK_EXIT_CODE) {
+        if (ApplicationManager.getApplication().isUnitTestMode() || !isProcessCovariantOverriders()) {
           for (UsageInfo usageInfo : covariantOverriderInfos) {
             usages.remove(usageInfo);
           }
         }
       }
     }
+  }
+
+  protected boolean isProcessCovariantOverriders() {
+    return Messages.showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),
+                             ChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon())
+    == DialogWrapper.OK_EXIT_CODE;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
