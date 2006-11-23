@@ -12,7 +12,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.AbstractConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.NamedEnumUtil;
+import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
@@ -21,21 +27,28 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
  */
 public class ComboControl extends BaseControl<JComboBox, String> {
-  private static final Pair<String, Icon> EMPTY = Pair.create(" ", null);
+  private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
   private final Factory<List<Pair<String, Icon>>> myDataFactory;
   private boolean myNullable;
-  private Map<String, Icon> myIcons = new HashMap<String, Icon>();
-  private final ActionListener myCommitListener = new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
+  private final Map<String, Icon> myIcons = new HashMap<String, Icon>();
+  private final ItemListener myCommitListener = new ItemListener() {
+    public void itemStateChanged(ItemEvent e) {
       commit();
     }
   };
@@ -157,9 +170,9 @@ public class ComboControl extends BaseControl<JComboBox, String> {
   private static JComboBox tuneUpComboBox(final JComboBox comboBox, Factory<List<Pair<String, Icon>>> dataFactory) {
     final List<Pair<String, Icon>> list = dataFactory.create();
     final Set<String> standardValues = new HashSet<String>();
-    for (final Pair<String, Icon> s : list) {
-      comboBox.addItem(s);
-      standardValues.add(s.first);
+    for (final Pair<String, Icon> pair : list) {
+      comboBox.addItem(new ComboBoxItem(pair));
+      standardValues.add(pair.first);
     }
     return initComboBox(comboBox, new Condition<String>() {
       public boolean value(final String object) {
@@ -168,9 +181,24 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     });
   }
 
+  private static class ComboBoxItem extends Pair<String,Icon> {
+
+    public ComboBoxItem(String first, Icon second) {
+      super(first, second);
+    }
+
+    public ComboBoxItem(Pair<String,Icon> pair) {
+      super(pair.first, pair.second);
+    }
+
+    public String toString() {
+      return first;
+    }
+  }
+
   static JComboBox initComboBox(final JComboBox comboBox, final Condition<String> validity) {
     comboBox.setEditable(false);
-    comboBox.setPrototypeDisplayValue(Pair.create("A", null));
+    comboBox.setPrototypeDisplayValue(new ComboBoxItem("A", null));
     comboBox.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -219,10 +247,14 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     return !newData.equals(oldData);
   }
 
+  protected boolean isCommitted() {
+    return getComponent().isPopupVisible() || super.isCommitted();
+  }
+
   protected void doReset() {
     final List<Pair<String, Icon>> data = myDataFactory.create();
     final JComboBox comboBox = getComponent();
-    comboBox.removeActionListener(myCommitListener);
+    comboBox.removeItemListener(myCommitListener);
     try {
       if (!dataChanged(data)) {
         super.doReset();
@@ -236,14 +268,14 @@ public class ComboControl extends BaseControl<JComboBox, String> {
         comboBox.addItem(EMPTY);
       }
       for (final Pair<String, Icon> s : data) {
-        comboBox.addItem(s);
+        comboBox.addItem(new ComboBoxItem(s));
         myIcons.put(s.first, s.second);
       }
       setValue(oldValue);
       super.doReset();
     }
     finally {
-      comboBox.addActionListener(myCommitListener);
+      comboBox.addItemListener(myCommitListener);
     }
   }
 
@@ -258,7 +290,7 @@ public class ComboControl extends BaseControl<JComboBox, String> {
     if (!isValidValue(value)) {
       component.setEditable(true);
     }
-    component.setSelectedItem(Pair.create(value, myIcons.get(value)));
+    component.setSelectedItem(new ComboBoxItem(value, myIcons.get(value)));
     component.setEditable(false);
   }
 
