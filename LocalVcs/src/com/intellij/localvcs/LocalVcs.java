@@ -14,6 +14,7 @@ public class LocalVcs {
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs(Storage s) {
+    // todo try to get rid of need to give parameter 
     myStorage = s;
     load();
   }
@@ -68,7 +69,7 @@ public class LocalVcs {
   }
 
   public void move(String path, String newParentPath, Long timestamp) {
-    myPendingChanges.add(new MoveChange(path, newParentPath));
+    myPendingChanges.add(new MoveChange(path, newParentPath, timestamp));
   }
 
   public void delete(String path) {

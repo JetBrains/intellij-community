@@ -110,18 +110,22 @@ public class ChangesApplyAndRevertTest extends TestCase {
   public void testMovingFileFromOneDirectoryToAnother() {
     root.createDirectory(1, "dir1", null);
     root.createDirectory(2, "dir2", null);
-    root.createFile(3, "dir1/file", null, null);
+    root.createFile(3, "dir1/file", null, 111L);
 
-    Change c = new MoveChange("dir1/file", "dir2");
+    Change c = new MoveChange("dir1/file", "dir2", 222L);
     c.applyTo(root);
 
     assertTrue(root.hasEntry("dir2/file"));
     assertFalse(root.hasEntry("dir1/file"));
 
+    assertEquals(222L, root.getEntry("dir2/file").getTimestamp());
+
     c._revertOn(root);
 
     assertFalse(root.hasEntry("dir2/file"));
     assertTrue(root.hasEntry("dir1/file"));
+
+    assertEquals(111L, root.getEntry("dir1/file").getTimestamp());
   }
 
   @Test
@@ -131,7 +135,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     root.createDirectory(3, "root1/dir", null);
     root.createFile(4, "root1/dir/file", null, null);
 
-    Change c = new MoveChange("root1/dir", "root2");
+    Change c = new MoveChange("root1/dir", "root2", null);
     c.applyTo(root);
 
     assertTrue(root.hasEntry("root2/dir"));
@@ -211,7 +215,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     root.createDirectory(2, "dir2", null);
     root.createFile(3, "dir1/file", null, null);
 
-    Change c = new MoveChange("dir1/file", "dir2");
+    Change c = new MoveChange("dir1/file", "dir2", null);
     c.applyTo(root);
     c._revertOn(root);
 

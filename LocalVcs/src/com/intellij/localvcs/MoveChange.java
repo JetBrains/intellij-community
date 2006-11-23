@@ -7,12 +7,15 @@ import java.util.List;
 public class MoveChange extends Change {
   private String myPath;
   private String myNewParentPath;
+  private Long myTimestamp;
+  private Long myOldTimestamp;
   private IdPath myFromIdPath;
   private IdPath myToIdPath;
 
-  public MoveChange(String path, String newParentPath) {
+  public MoveChange(String path, String newParentPath, Long timestamp) {
     myPath = path;
     myNewParentPath = newParentPath;
+    myTimestamp = timestamp;
   }
 
   public MoveChange(Stream s) throws IOException {
@@ -36,14 +39,17 @@ public class MoveChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myFromIdPath = root.getEntry(myPath).getIdPath();
-    root.move(myPath, myNewParentPath, null); // todo set timestamp here!!!
+    Entry e = root.getEntry(myPath);
+
+    myOldTimestamp = e.getTimestamp();
+    myFromIdPath = e.getIdPath();
+    root.move(myPath, myNewParentPath, myTimestamp);
     myToIdPath = root.getEntry(getNewPath()).getIdPath();
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.move(getNewPath(), new Path(myPath).getParent().getPath(), null); 
+    root.move(getNewPath(), new Path(myPath).getParent().getPath(), myOldTimestamp);
   }
 
   private String getNewPath() {
@@ -54,24 +60,4 @@ public class MoveChange extends Change {
   protected List<IdPath> getAffectedEntryIdPaths() {
     return Arrays.asList(myFromIdPath, myToIdPath);
   }
-
-  //@Override
-  //public List<Difference> getDifferences(RootEntry r, Entry e) {
-  //  if (!affects(e)) return Collections.emptyList();
-  //
-  //  if (myFromIdPath.getName().equals(e.getId())) {
-  //    Difference d = new Difference(Difference.Kind.MODIFIED);
-  //    return Collections.singletonList(d);
-  //  }
-  //
-  //  List<Difference> result = new ArrayList<Difference>();
-  //
-  //  if (myFromIdPath.contains(e.getId()))
-  //    result.add(new Difference(Difference.Kind.DELETED));
-  //
-  //  if (myToIdPath.contains(e.getId()))
-  //    result.add(new Difference(Difference.Kind.CREATED));
-  //
-  //  return result;
-  //}
 }

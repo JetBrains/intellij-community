@@ -215,7 +215,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testMoveChange() throws IOException {
-    Change c = new MoveChange("entry", "dir");
+    Change c = new MoveChange("entry", "dir", null);
 
     os.writeChange(c);
     Change read = is.readChange();

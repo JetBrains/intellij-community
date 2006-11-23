@@ -21,7 +21,7 @@ public class TestVirtualFile extends VirtualFile {
   private VirtualFile myParent;
   private List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
 
-  public TestVirtualFile(String name, String content, long timestamp) {
+  public TestVirtualFile(String name, String content, Long timestamp) {
     myName = name;
     myContent = content;
     myTimestamp = timestamp;
@@ -79,7 +79,7 @@ public class TestVirtualFile extends VirtualFile {
 
   @Nullable
   public VirtualFile getParent() {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {

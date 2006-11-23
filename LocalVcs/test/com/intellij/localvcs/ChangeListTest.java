@@ -101,7 +101,7 @@ public class ChangeListTest extends TestCase {
     cl.applyChangeSetTo(r, cs(new CreateFileChange(3, "dir1/file", null, null)));
     cl.labelLastChangeSet("2");
 
-    cl.applyChangeSetTo(r, cs(new MoveChange("dir1/file", "dir2")));
+    cl.applyChangeSetTo(r, cs(new MoveChange("dir1/file", "dir2", null)));
     cl.labelLastChangeSet("3");
 
     List<ChangeSet> cs1 = getChangeSetsFor("dir1");
@@ -123,7 +123,7 @@ public class ChangeListTest extends TestCase {
                               new CreateDirectoryChange(2, "dir2", null)));
 
     cl.applyChangeSetTo(r, cs(new CreateFileChange(3, "dir1/file", null, null)));
-    cl.applyChangeSetTo(r, cs(new MoveChange("dir1/file", "dir2")));
+    cl.applyChangeSetTo(r, cs(new MoveChange("dir1/file", "dir2", null)));
 
     assertEquals(2, getChangeSetsFor("dir2/file").size());
   }
@@ -136,7 +136,7 @@ public class ChangeListTest extends TestCase {
 
     assertEquals(1, getChangeSetsFor("d1/file").size());
 
-    cl.applyChangeSetTo(r, cs(new MoveChange("d1", "d2")));
+    cl.applyChangeSetTo(r, cs(new MoveChange("d1", "d2", null)));
 
     assertEquals(1, getChangeSetsFor("d2/d1/file").size());
   }
@@ -149,8 +149,8 @@ public class ChangeListTest extends TestCase {
                               new CreateDirectoryChange(4, "d1/d12", null),
                               new CreateDirectoryChange(5, "d2", null)));
 
-    cl.applyChangeSetTo(r, cs(new MoveChange("d1/file", "d1/d11")));
-    cl.applyChangeSetTo(r, cs(new MoveChange("d1/d11/file", "d1/d12")));
+    cl.applyChangeSetTo(r, cs(new MoveChange("d1/file", "d1/d11", null)));
+    cl.applyChangeSetTo(r, cs(new MoveChange("d1/d11/file", "d1/d12", null)));
 
     assertEquals(3, getChangeSetsFor("d1").size());
     assertEquals(3, getChangeSetsFor("d1/d12/file").size());
@@ -158,7 +158,7 @@ public class ChangeListTest extends TestCase {
     assertEquals(2, getChangeSetsFor("d1/d12").size());
     assertEquals(1, getChangeSetsFor("d2").size());
 
-    cl.applyChangeSetTo(r, cs(new MoveChange("d1/d12", "d2")));
+    cl.applyChangeSetTo(r, cs(new MoveChange("d1/d12", "d2", null)));
 
     assertEquals(4, getChangeSetsFor("d1").size());
     assertEquals(3, getChangeSetsFor("d2/d12/file").size());

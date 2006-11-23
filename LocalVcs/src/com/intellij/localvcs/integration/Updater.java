@@ -111,7 +111,7 @@ public class Updater {
     for (VirtualFile f : dir.getChildren()) {
       Entry e = myVcs.findEntry(f.getPath());
       if (areOfSameKind(e, f)) {
-        // todo we should update directory timestamps too
+        // todo we should update directory and root timestamps too
         if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
           myVcs.changeFileContent(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
         }

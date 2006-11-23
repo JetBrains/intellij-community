@@ -7,6 +7,7 @@ import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.ChangeList;
 import com.intellij.localvcs.RootEntry;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,35 +32,22 @@ public class LocalVcsComponent implements ProjectComponent {
     }
   });
 
-  public long counter = 0;
-
   public LocalVcsComponent(Project p) {
     myProject = p;
   }
 
   public void projectOpened() {
     ProjectRootManager m = ProjectRootManager.getInstance(myProject);
-    //
-    //VirtualFile[] roots = m.getContentRoots();
-    //for (int i = 0; i < roots.length - 1; i++) {
-    //  VirtualFile rooti = roots[i];
-    //  for (int j = 1; j < roots.length; j++) {
-    //    VirtualFile rootj = roots[j];
-    //    if (rooti.getPath().startsWith(rootj.getPath())
-    //      || rootj.getPath().startsWith(rooti.getPath())) {
-    //      System.out.println("collision: " + rooti.getPath() + " with " + rootj);
-    //    }
-    //  }
-    //}
 
     try {
       System.out.println("started");
+
       long before = System.currentTimeMillis();
       Updater.update(vcs, m.getContentRoots());
       long after = System.currentTimeMillis();
 
-      counter = after - before;
-      System.out.println("counter = " + counter);
+      long time = after - before;
+      System.out.println("time = " + time);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
