@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Bas Leijdekkers
+ * Copyright 2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.siyeh.ig.jdk15;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IndexOfReplaceableByContainsInspection
+public class ListIndexOfReplaceableByContainsInspection
         extends ExpressionInspection {
 
     public String getDisplayName() {
@@ -43,7 +41,7 @@ public class IndexOfReplaceableByContainsInspection
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
     @NotNull
@@ -143,11 +141,6 @@ public class IndexOfReplaceableByContainsInspection
             extends BaseInspectionVisitor {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
-            final LanguageLevel languageLevel =
-                    PsiUtil.getLanguageLevel(expression);
-            if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
-                return;
-            }
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {
@@ -228,19 +221,25 @@ public class IndexOfReplaceableByContainsInspection
             if (arguments.length != 1) {
                 return false;
             }
-            final PsiType argumentType = arguments[0].getType();
-            if (argumentType == null ||
-                    !argumentType.equalsToText("java.lang.String")) {
-                return false;
-            }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (qualifier == null) {
                 return false;
             }
             final PsiType qualifierType = qualifier.getType();
-            return qualifierType != null &&
-                   qualifierType.equalsToText("java.lang.String");
+            if (qualifierType == null) {
+                return false;
+            }
+            final Project project = expression.getProject();
+            final PsiManager manager = expression.getManager();
+            final GlobalSearchScope projectScope =
+                    GlobalSearchScope.allScope(project);
+            final PsiClass javaUtilListClass =
+                    manager.findClass("java.util.List", projectScope);
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiClassType javaUtilListType =
+                    factory.createType(javaUtilListClass);
+            return javaUtilListType.isAssignableFrom(qualifierType);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
-* Copyright 2003-2005 Dave Griffith
+* Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 */
 package com.siyeh.ig;
 
+import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,12 +34,14 @@ import com.siyeh.ig.controlflow.*;
 import com.siyeh.ig.dataflow.ReuseOfLocalVariableInspection;
 import com.siyeh.ig.dataflow.TooBroadScopeInspection;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
+import com.siyeh.ig.dependency.*;
 import com.siyeh.ig.encapsulation.*;
 import com.siyeh.ig.errorhandling.*;
 import com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection;
 import com.siyeh.ig.finalization.FinalizeInspection;
 import com.siyeh.ig.finalization.FinalizeNotProtectedInspection;
 import com.siyeh.ig.finalization.NoExplicitFinalizeCallsInspection;
+import com.siyeh.ig.global.MethodReturnAlwaysConstantInspection;
 import com.siyeh.ig.imports.*;
 import com.siyeh.ig.initialization.*;
 import com.siyeh.ig.internationalization.*;
@@ -56,8 +58,11 @@ import com.siyeh.ig.memory.StringBufferFieldInspection;
 import com.siyeh.ig.memory.SystemGCInspection;
 import com.siyeh.ig.memory.ZeroLengthArrayInitializationInspection;
 import com.siyeh.ig.methodmetrics.*;
+import com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection;
+import com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection;
 import com.siyeh.ig.naming.*;
 import com.siyeh.ig.numeric.*;
+import com.siyeh.ig.packaging.*;
 import com.siyeh.ig.performance.*;
 import com.siyeh.ig.portability.*;
 import com.siyeh.ig.resources.*;
@@ -67,10 +72,6 @@ import com.siyeh.ig.style.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.visibility.*;
-import com.siyeh.ig.packaging.*;
-import com.siyeh.ig.dependency.*;
-import com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection;
-import com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -303,11 +304,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             registerStyleInspections();
             registerThreadingInspections();
             registerVisibilityInspections();
-            //m_inspectionClasses.add(MethodReturnAlwaysConstantInspection.class);
+            m_inspectionClasses.add(MethodReturnAlwaysConstantInspection.class);
             m_inspectionClasses.add(BooleanMethodIsAlwaysInvertedInspection.class);
-            //registerPackagingInspections();
-            //registerModularizationInspections();
-            //registerDependencyInspections();
+            registerPackagingInspections();
+            registerModularizationInspections();
+            registerDependencyInspections();
         }
         final int numInspections = m_inspectionClasses.size();
         final Class<? extends InspectionProfileEntry>[] classArray =
@@ -698,6 +699,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ControlFlowStatementWithoutBracesInspection.class);
         m_inspectionClasses.add(ExtendsObjectInspection.class);
         m_inspectionClasses.add(ImplicitCallToSuperInspection.class);
+        m_inspectionClasses.add(ListIndexOfReplaceableByContainsInspection.class);
         m_inspectionClasses.add(LiteralAsArgToStringEqualsInspection.class);
         m_inspectionClasses.add(MissortedModifiersInspection.class);
         m_inspectionClasses.add(MultipleDeclarationInspection.class);
