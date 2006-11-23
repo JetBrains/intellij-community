@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -198,12 +199,8 @@ public class FileReferenceSet {
     return myReferences;
   }
 
-  @NotNull
-  ReferenceType getType(int index) {
-    if (index != myReferences.length - 1) {
-      return new ReferenceType(new int[]{myType.getPrimitives()[0], ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.DIRECTORY});
-    }
-    return myType;
+  @NotNull final String getTypeName() {
+    return ReferenceType.getUnresolvedMessage(myType.getPrimitives()[0]);
   }
 
   protected boolean isSoft() {
@@ -284,9 +281,9 @@ public class FileReferenceSet {
     return null;
   }
 
-  protected PsiScopeProcessor createProcessor(final List result, ReferenceType type)
+  protected PsiScopeProcessor createProcessor(final List result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)
     throws ProcessorRegistry.IncompatibleReferenceTypeException {
-    return ProcessorRegistry.getProcessorByType(type, result, null);
+    return ProcessorRegistry.getProcessorByType(myType, result, null, allowedClasses, resolvers);
   }
 
   public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {

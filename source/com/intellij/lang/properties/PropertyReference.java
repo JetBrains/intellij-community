@@ -1,5 +1,6 @@
 package com.intellij.lang.properties;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -7,42 +8,47 @@ import com.intellij.codeInspection.i18n.CreatePropertyFix;
 import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author cdr
  */
-public class PropertyReference extends GenericReference implements PsiPolyVariantReference, QuickFixProvider {
+public class PropertyReference implements PsiPolyVariantReference, QuickFixProvider, PsiReference,
+                                                                   EmptyResolveMessageProvider {
   private final String myKey;
   private final PsiElement myElement;
   @Nullable private final String myBundleName;
   private boolean mySoft;
 
   public PropertyReference(String key, final PsiElement element, @Nullable final String bundleName, final boolean soft) {
-    super(getPropertiesProvider(element.getProject()));
     myKey = key;
     myElement = element;
     myBundleName = bundleName;
     mySoft = soft;
-  }
-
-  private static PsiReferenceProvider getPropertiesProvider(final Project project) {
-    return ReferenceProvidersRegistry.getInstance(project).getProviderByType(ReferenceProvidersRegistry.PROPERTIES_FILE_KEY_PROVIDER);
   }
 
   public PsiElement getElement() {
@@ -169,25 +175,4 @@ public class PropertyReference extends GenericReference implements PsiPolyVarian
     QuickFixAction.registerQuickFixAction(info, fix);
   }
 
-  /////////////////////////
-
-  public PsiElement getContext() {
-    return null;
-  }
-
-  public PsiReference getContextReference() {
-    return null;
-  }
-
-  public ReferenceType getType() {
-    return null;
-  }
-
-  public ReferenceType getSoftenType() {
-    return null;
-  }
-
-  public boolean needToCheckAccessibility() {
-    return false;
-  }
 }

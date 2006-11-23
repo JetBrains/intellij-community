@@ -318,7 +318,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     filter.addFilter(new NotFilter(new ConstructorFilter()));
     filter.addFilter(new ClassFilter(PsiVariable.class));
 
-    FilterScopeProcessor proc = new FilterScopeProcessor(filter, this, processor);
+    FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 

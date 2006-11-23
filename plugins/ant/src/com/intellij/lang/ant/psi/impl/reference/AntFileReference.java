@@ -9,8 +9,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -45,10 +50,6 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
     return (AntFileReferenceSet)super.getFileReferenceSet();
   }
 
-  public ReferenceType getSoftenType() {
-    return new ReferenceType(new int[]{ReferenceType.FILE, ReferenceType.DIRECTORY});
-  }
-
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("file.doesnt.exist", getCanonicalRepresentationText());
   }
@@ -76,7 +77,7 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final AntStructuredElement antElement = getElement();
     final PsiElement element = getManipulatorElement();
-    getManipulator(element).handleContentChange(element, getRangeInElement().shiftRight(
+    CachingReference.getManipulator(element).handleContentChange(element, getRangeInElement().shiftRight(
       antElement.getTextRange().getStartOffset() - element.getTextRange().getStartOffset()), newElementName);
     return antElement;
   }
@@ -103,7 +104,7 @@ public class AntFileReference extends FileReferenceBase implements AntReference 
     final PsiElement me = getManipulatorElement();
     TextRange range = new TextRange(getFileReferenceSet().getStartInElement(), getRangeInElement().getEndOffset());
     range = range.shiftRight(se.getTextRange().getStartOffset() - me.getTextRange().getStartOffset());
-    return getManipulator(me).handleContentChange(me, range, newName);
+    return CachingReference.getManipulator(me).handleContentChange(me, range, newName);
   }
 
   protected ResolveResult[] innerResolve() {

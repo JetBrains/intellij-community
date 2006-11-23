@@ -104,7 +104,7 @@ public class PsiImplUtil {
 
   @NotNull public static Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference,
                                                       ElementFilter filter) {
-    FilterScopeProcessor processor = new FilterScopeProcessor(filter, reference);
+    FilterScopeProcessor processor = new FilterScopeProcessor(filter);
     PsiScopesUtil.resolveAndWalk(processor, reference, null, true);
     return processor.getResults().toArray();
   }

@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.lang.LangBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,16 @@ import java.util.Collections;
  * @author peter
  */
 public class PsiFileReferenceHelper implements FileReferenceHelper{
+
+  @NotNull
+  public Class<? extends PsiFileSystemItem> getDirectoryClass() {
+    return PsiDirectory.class;
+  }
+
+  @NotNull
+  public String getDirectoryTypeName() {
+    return LangBundle.message("terms.directory");
+  }
 
   @Nullable
   public FileReferenceContext getFileReferenceContext(PsiElement element) {

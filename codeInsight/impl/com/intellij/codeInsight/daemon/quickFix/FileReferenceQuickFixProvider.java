@@ -18,9 +18,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.IncorrectOperationException;
@@ -92,9 +96,8 @@ public class FileReferenceQuickFixProvider {
     if (differentCase && SystemInfo.isWindows) return;
 
     final boolean isdirectory;
-    final ReferenceType type = reference.getType();
 
-    if (type.isAssignableTo(ReferenceType.DIRECTORY)) {
+    if (!reference.isLast()) {
       // directory
       try {
         directory.checkCreateSubdirectory(newFileName);

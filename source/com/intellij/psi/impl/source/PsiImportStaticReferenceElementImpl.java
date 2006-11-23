@@ -349,7 +349,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   public void processVariants(PsiScopeProcessor processor) {
     ElementFilter filter = new OrFilter(new ClassFilter[]{new ClassFilter(PsiModifierListOwner.class),
                                                           new ClassFilter(PsiPackage.class)});
-    FilterScopeProcessor proc = new FilterScopeProcessor(filter, this, processor);
+    FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 

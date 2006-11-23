@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.PsiConflictResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -41,9 +42,9 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
         return getRoots(position);
       }
 
-      protected PsiScopeProcessor createProcessor(final List result, ReferenceType type)
+      protected PsiScopeProcessor createProcessor(final List result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)
         throws ProcessorRegistry.IncompatibleReferenceTypeException {
-        final PsiScopeProcessor baseProcessor = super.createProcessor(result, type);
+        final PsiScopeProcessor baseProcessor = super.createProcessor(result, allowedClasses, resolvers);
         return new PsiScopeProcessor() {
           public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
             return element instanceof PsiJavaFile && element instanceof PsiCompiledElement

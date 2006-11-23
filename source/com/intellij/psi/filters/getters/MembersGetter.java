@@ -6,11 +6,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.codeInsight.completion.CompletionContext;
 
-import java.util.Set;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -28,7 +25,7 @@ public class MembersGetter implements ContextGetter{
   }
 
   public Object[] get(PsiElement context, CompletionContext completionContext){
-    final FilterScopeProcessor processor = new FilterScopeProcessor(TrueFilter.INSTANCE, context);
+    final FilterScopeProcessor processor = new FilterScopeProcessor(TrueFilter.INSTANCE);
     final Object[] elements = myBaseGetter.get(context, completionContext);
 
     for (final Object element : elements) {

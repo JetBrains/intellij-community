@@ -786,7 +786,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
                PsiScopesUtil.processScope(
                  aClass,
                  new FilterScopeProcessor(new AndFilter(new ClassFilter(PsiClass.class), new ModifierFilter(PsiModifier.STATIC, false)),
-                                          this,
                                           processor),
                  PsiSubstitutor.EMPTY,
                  null,
@@ -805,7 +804,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     default:
            throw new RuntimeException("Unknown reference type");
     }
-    final FilterScopeProcessor proc = new FilterScopeProcessor(filter, this, processor);
+    final FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 

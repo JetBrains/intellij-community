@@ -4,7 +4,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 
 import java.util.ArrayList;
@@ -18,35 +17,28 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class FilterScopeProcessor extends BaseScopeProcessor{
-  private final PsiElement myElement;
   protected final List myResults;
   private PsiElement myCurrentDeclarationHolder;
   private final ElementFilter myFilter;
   private final PsiScopeProcessor myProcessor;
 
-  public FilterScopeProcessor(ElementFilter filter, PsiElement element, PsiScopeProcessor processor, List container){
+  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor, List container){
     myFilter = filter;
-    myElement = element;
     myProcessor = processor;
     myResults = container;
   }
 
 
-  public FilterScopeProcessor(ElementFilter filter, PsiElement element, List container){
-    this(filter, element, null, container);
+  public FilterScopeProcessor(ElementFilter filter, List container){
+    this(filter, null, container);
   }
 
-  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor){
-    this(filter, null, processor, null);
+  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor proc){
+    this(filter, proc, new ArrayList());
   }
 
-  public FilterScopeProcessor(ElementFilter filter, PsiElement element, PsiScopeProcessor proc){
-    this(filter, element, proc, new ArrayList());
-  }
-
-
-  public FilterScopeProcessor(ElementFilter filter, PsiElement element){
-    this(filter, element, null, new ArrayList());
+  public FilterScopeProcessor(ElementFilter filter){
+    this(filter, null, new ArrayList());
   }
 
   public void handleEvent(Event event, Object associated){
@@ -66,10 +58,6 @@ public class FilterScopeProcessor extends BaseScopeProcessor{
       add(element, substitutor);
     }
     return true;
-  }
-
-  public PsiElement getPlace(){
-    return myElement;
   }
 
   protected void add(PsiElement element, PsiSubstitutor substitutor){

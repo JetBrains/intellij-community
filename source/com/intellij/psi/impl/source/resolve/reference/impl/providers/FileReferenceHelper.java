@@ -7,10 +7,14 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -18,6 +22,11 @@ import java.util.Collection;
  * @author peter
  */
 public interface FileReferenceHelper extends QuickFixProvider<FileReference> {
+  @NotNull
+  Class<? extends PsiFileSystemItem> getDirectoryClass();
+
+  @NotNull String getDirectoryTypeName();
+
   @Nullable
   FileReferenceContext getFileReferenceContext(PsiElement element);
 
@@ -27,7 +36,6 @@ public interface FileReferenceHelper extends QuickFixProvider<FileReference> {
 
   boolean doNothingOnBind(PsiFile currentFile, final FileReference reference);
 
-  //todo remove currentText parameter
   @Nullable
   @NonNls
   String getRelativePath(Project project, VirtualFile currentFile, VirtualFile dstVFile);

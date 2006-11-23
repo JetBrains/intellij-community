@@ -1,19 +1,30 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -21,13 +32,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 /**
  * @author cdr
  */
-public class FileReference extends GenericReference implements PsiPolyVariantReference, QuickFixProvider<FileReference> {
+public class FileReference implements PsiPolyVariantReference, QuickFixProvider<FileReference>,
+                                                               EmptyResolveMessageProvider {
   public static final FileReference[] EMPTY = new FileReference[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
 
@@ -42,7 +55,6 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   };
 
   public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text){
-    super(fileReferenceSet.getProvider());
     myFileReferenceSet = fileReferenceSet;
     myIndex = index;
     myRange = range;
@@ -93,26 +105,14 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   @NotNull
-  private FileReferenceContext getFileReferenceContext(PsiElement context) {
+  private static FileReferenceContext getFileReferenceContext(PsiElement context) {
     for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       final FileReferenceContext referenceContext = helper.getFileReferenceContext(context);
       if (referenceContext != null) {
         return referenceContext;
       }
     }
-    return new FileReferenceContext() {
-      @Nullable
-      public PsiElement innerResolve(String text, final Condition<String> equalsTo) {
-        return null;
-      }
-
-      public boolean processVariants(PsiScopeProcessor processor) {
-        if(getContextReference() == null){
-        myFileReferenceSet.getProvider().handleEmptyContext(processor, getElement());
-      }
-        return true;
-      }
-    };
+    throw new AssertionError(context);
   }
 
   protected ResolveResult[] innerResolve() {
@@ -137,7 +137,12 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     }
     try{
       final List ret = new ArrayList();
-      final PsiScopeProcessor proc = myFileReferenceSet.createProcessor(ret, getSoftenType());
+      final List<Class> allowedClasses = new ArrayList<Class>();
+      allowedClasses.add(PsiFile.class);
+      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+        allowedClasses.add(helper.getDirectoryClass());
+      }
+      final PsiScopeProcessor proc = myFileReferenceSet.createProcessor(ret, allowedClasses, Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver()));
       processVariants(proc);
       return ret.toArray();
     }
@@ -156,15 +161,6 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   @Nullable
   public FileReference getContextReference(){
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
-  }
-
-  @NotNull
-  public ReferenceType getType(){
-    return myFileReferenceSet.getType(myIndex);
-  }
-
-  public ReferenceType getSoftenType(){
-    return new ReferenceType(new int[] {ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.FILE, ReferenceType.DIRECTORY});
   }
 
   public PsiElement getElement(){
@@ -219,7 +215,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
+    final ElementManipulator<PsiElement> manipulator = GenericReference.getManipulator(getElement());
     if (manipulator != null) {
       myFileReferenceSet.setElement(manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName));
       //Correct ranges
@@ -266,7 +262,7 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     }
 
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
-    final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
+    final ElementManipulator<PsiElement> manipulator = GenericReference.getManipulator(getElement());
     if (manipulator == null) {
       throw new IncorrectOperationException("Manipulator not defined for: " + getElement());
     }
@@ -283,13 +279,25 @@ public class FileReference extends GenericReference implements PsiPolyVariantRef
     return myIndex;
   }
 
+  public String getUnresolvedMessagePattern(){
+    final StringBuffer builder = new StringBuffer(JavaErrorMessages.message("error.cannot.resolve"));
+    builder.append(" ").append(myFileReferenceSet.getTypeName());
+    if (!isLast()) {
+      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+        builder.append(" ").append(JavaErrorMessages.message("error.cannot.resolve.infix")).append(" ").append(helper.getDirectoryTypeName());
+      }
+    }
+    builder.append(" ''{0}''.");
+    return builder.toString();
+  }
+
+  public final boolean isLast() {
+    return myIndex == myFileReferenceSet.getAllReferences().length - 1;
+  }
+
   @NotNull
   public FileReferenceSet getFileReferenceSet() {
     return myFileReferenceSet;
-  }
-
-  public boolean needToCheckAccessibility() {
-    return false;
   }
 
   public void clearResolveCaches() {

@@ -26,7 +26,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor
   protected String myName;
 
   public ConflictFilterProcessor(String name, PsiElement element, ElementFilter filter, PsiConflictResolver[] resolvers, List container){
-    super(filter, element, container);
+    super(filter, container);
     myResolvers = resolvers;
     myName = name;
   }
