@@ -18,11 +18,8 @@ package org.jetbrains.idea.devkit.build;
 import com.intellij.javaee.DeploymentDescriptorFactory;
 import com.intellij.javaee.JavaeeDeploymentItem;
 import com.intellij.javaee.JavaeeModuleProperties;
-import com.intellij.javaee.make.J2EEBuildParticipant;
-import com.intellij.javaee.make.ModuleBuildProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.DeploymentItem;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.ui.Messages;
@@ -36,7 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.compiler.make.BuildParticipant;
-import com.intellij.openapi.compiler.make.ModuleContainer;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -45,9 +42,9 @@ import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 
 import java.io.File;
 
-public class PluginModuleBuildProperties extends com.intellij.openapi.compiler.make.ModuleBuildProperties implements JDOMExternalizable {
+public class PluginModuleBuildProperties extends ModuleBuildProperties implements JDOMExternalizable {
   private Module myModule;
-  private DeploymentItem myPluginXML;
+  private JavaeeDeploymentItem myPluginXML;
   private VirtualFilePointer myPluginXMLPointer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
@@ -102,7 +99,7 @@ public class PluginModuleBuildProperties extends com.intellij.openapi.compiler.m
   }
 
   @Nullable
-  public UnnamedConfigurable getBuildConfigurable(ModuleContainer moduleProperties, ModifiableRootModel rootModel) {
+  public UnnamedConfigurable getBuildConfigurable(JavaeeModuleProperties moduleProperties, ModifiableRootModel rootModel) {
     return null;
   }
 
@@ -146,7 +143,7 @@ public class PluginModuleBuildProperties extends com.intellij.openapi.compiler.m
     }
   }
 
-  public DeploymentItem getPluginXML() {
+  public JavaeeDeploymentItem getPluginXML() {
     if (myPluginXML == null) {
       myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
       myPluginXML.setUrl(getPluginXMLPointer().getUrl());

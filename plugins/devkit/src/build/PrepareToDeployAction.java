@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.javaee.make.ManifestBuilder;
-import com.intellij.javaee.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.ManifestBuilder;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -248,8 +248,8 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   private File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
-    final JavaeePluginModuleBuildProperties pluginModuleBuildProperties =
-      ((JavaeePluginModuleBuildProperties)ModuleBuildProperties.getInstance(module));
+    final PluginModuleBuildProperties pluginModuleBuildProperties =
+      ((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module));
     File jarFile = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
     jarFile.deleteOnExit();
     final Manifest manifest = createOrFindManifest(pluginModuleBuildProperties);
@@ -292,7 +292,7 @@ public class PrepareToDeployAction extends AnAction {
     return jarFile;
   }
 
-  private static Manifest createOrFindManifest(final JavaeePluginModuleBuildProperties pluginModuleBuildProperties) throws IOException {
+  private static Manifest createOrFindManifest(final PluginModuleBuildProperties pluginModuleBuildProperties) throws IOException {
     final Manifest manifest = new Manifest();
     final VirtualFile vManifest = pluginModuleBuildProperties.getManifest();
     if (pluginModuleBuildProperties.isUseUserManifest() && vManifest != null) {

@@ -16,7 +16,7 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.javaee.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
@@ -49,7 +49,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
   private JCheckBox myUseUserManifest = new JCheckBox(DevKitBundle.message("manifest.use.user.defined"));
 
-  private JavaeePluginModuleBuildProperties myBuildProperties;
+  private PluginModuleBuildProperties myBuildProperties;
 
   private Module myModule;
   @NonNls private static final String META_INF = "META-INF";
@@ -58,7 +58,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   public PluginModuleBuildConfEditor(ModuleConfigurationState state) {
     myModule = state.getRootModel().getModule();
-    myBuildProperties = (JavaeePluginModuleBuildProperties)ModuleBuildProperties.getInstance(myModule);
+    myBuildProperties = (PluginModuleBuildProperties)ModuleBuildProperties.getInstance(myModule);
   }
 
   public JComponent createComponent() {
