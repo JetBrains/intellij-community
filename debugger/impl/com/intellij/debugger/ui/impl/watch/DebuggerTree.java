@@ -4,11 +4,11 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -98,7 +98,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
     mySettingsListener = new NodeRendererSettingsListener() {
       private void rendererSettingsChanged(DebuggerTreeNodeImpl node) {
-        if (node.getDescriptor() instanceof ValueDescriptorImpl) {
+        final NodeDescriptorImpl nodeDescriptor = node.getDescriptor();
+        if (nodeDescriptor instanceof ValueDescriptorImpl || nodeDescriptor instanceof StackFrameDescriptorImpl) {
           node.calcRepresentation();
         }
 
@@ -427,6 +428,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
               myDescriptorManager.getLocalVariableDescriptor(stackDescriptor, local);
             final DebuggerTreeNodeImpl variableNode = myDescriptorManager.createNode(localVariableDescriptor, evaluationContext);
             myChildren.add(variableNode);
+          }
+          if (NodeRendererSettings.getInstance().getClassRenderer().SORT_ASCENDING) {
+            Collections.sort(myChildren, NodeManagerImpl.getNodeComparator());
           }
         }
         catch (EvaluateException e) {
