@@ -35,10 +35,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -46,6 +43,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +133,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   protected abstract String getActionName(VcsContext dataContext);
 
-  protected abstract FilePath[] getRoots(VcsContext project);
+  protected abstract FilePath[] getRoots(VcsContext dataContext);
 
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
@@ -210,4 +208,13 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   protected abstract boolean filterRootsBeforeAction();
 
+  protected static FilePath[] getAllContentRoots(final VcsContext context) {
+    Project project = context.getProject();
+    ArrayList<FilePath> virtualFiles = new ArrayList<FilePath>();
+    VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
+    for (VirtualFile root : roots) {
+      virtualFiles.add(new FilePathImpl(root));
+    }
+    return virtualFiles.toArray(new FilePath[virtualFiles.size()]);
+  }
 }

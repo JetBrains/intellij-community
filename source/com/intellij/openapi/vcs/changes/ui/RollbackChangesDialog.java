@@ -92,7 +92,8 @@ public class RollbackChangesDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    doRollback();
+    doRollback(myProject, myBrowser.getCurrentIncludedChanges(),
+               myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(), myRefreshSynchronously);
   }
 
   @Nullable
@@ -114,13 +115,14 @@ public class RollbackChangesDialog extends DialogWrapper {
     return paths;
   }
 
-  private void doRollback() {
+  public static void doRollback(final Project project, final Collection<Change> changes, final boolean deleteLocallyAddedFiles, 
+                                final boolean refreshSynchronously) {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     final List<FilePath> pathsToRefresh = new ArrayList<FilePath>();
 
     Runnable rollbackAction = new Runnable() {
       public void run() {
-        ChangesUtil.processChangesByVcs(myProject, myBrowser.getCurrentIncludedChanges(), new ChangesUtil.PerVcsProcessor<Change>() {
+        ChangesUtil.processChangesByVcs(project, changes, new ChangesUtil.PerVcsProcessor<Change>() {
           public void process(AbstractVcs vcs, List<Change> changes) {
             final CheckinEnvironment environment = vcs.getCheckinEnvironment();
             if (environment != null) {
@@ -130,7 +132,7 @@ public class RollbackChangesDialog extends DialogWrapper {
               if (exceptions.size() > 0) {
                 vcsExceptions.addAll(exceptions);
               }
-              else if (myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected()) {
+              else if (deleteLocallyAddedFiles) {
                 for(Change c: changes) {
                   if (c.getType() == Change.Type.NEW) {
                     ContentRevision rev = c.getAfterRevision();
@@ -143,31 +145,37 @@ public class RollbackChangesDialog extends DialogWrapper {
           }
         });
 
-        if (!myRefreshSynchronously) {
-          doRefresh(pathsToRefresh, true);
+        if (!refreshSynchronously) {
+          doRefresh(project, pathsToRefresh, true);
         }
-        AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
+        AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, VcsBundle.message("changes.action.rollback.text"));
       }
     };
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(rollbackAction, VcsBundle.message("changes.action.rollback.text"), true, myProject);
-    if (myRefreshSynchronously) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(rollbackAction, VcsBundle.message("changes.action.rollback.text"), true,
+                                                                        project);
+    }
+    else {
+      rollbackAction.run();
+    }
+    if (refreshSynchronously) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          doRefresh(pathsToRefresh, false);
+          doRefresh(project, pathsToRefresh, false);
         }
       });
     }
   }
 
-  private void doRefresh(final List<FilePath> pathsToRefresh, final boolean asynchronous) {
-    final LvcsAction lvcsAction = LocalVcs.getInstance(myProject).startAction(VcsBundle.message("changes.action.rollback.text"), "", true);
+  private static void doRefresh(final Project project, final List<FilePath> pathsToRefresh, final boolean asynchronous) {
+    final LvcsAction lvcsAction = LocalVcs.getInstance(project).startAction(VcsBundle.message("changes.action.rollback.text"), "", true);
     VirtualFileManager.getInstance().refresh(asynchronous, new Runnable() {
       public void run() {
         lvcsAction.finish();
-        FileStatusManager.getInstance(myProject).fileStatusesChanged();
+        FileStatusManager.getInstance(project).fileStatusesChanged();
         for (FilePath path : pathsToRefresh) {
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
+          VcsDirtyScopeManager.getInstance(project).fileDirty(path);
         }
       }
     });

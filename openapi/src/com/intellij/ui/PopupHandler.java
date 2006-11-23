@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,7 +56,7 @@ public abstract class PopupHandler extends MouseAdapter {
     }
   }
 
-  public static void installPopupHandler(JComponent component, String groupId, String place) {
+  public static void installPopupHandler(JComponent component, @NonNls String groupId, String place) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(groupId);
     installPopupHandler(component, group, place, ActionManager.getInstance());
   }

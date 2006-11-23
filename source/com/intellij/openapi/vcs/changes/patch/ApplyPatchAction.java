@@ -49,9 +49,13 @@ public class ApplyPatchAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    final List<FilePatch> patches = dialog.getPatches();
+    applyPatch(project, dialog.getPatches(), dialog.getBaseDirectory(), dialog.getStripLeadingDirectories());
+  }
+
+  public static void applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
+                                final int stripLeadingDirectories) {
     for(FilePatch patch: patches) {
-      VirtualFile fileToPatch = patch.findFileToPatch(dialog.getBaseDirectory(), dialog.getStripLeadingDirectories());
+      VirtualFile fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories);
       if (fileToPatch != null) {
         FileType fileType = fileToPatch.getFileType();
         if (fileType == StdFileTypes.UNKNOWN) {
@@ -68,7 +72,7 @@ public class ApplyPatchAction extends AnAction {
           public void run() {
             ApplyPatchStatus status = null;
             for(FilePatch patch: patches) {
-              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, dialog.getBaseDirectory(), dialog.getStripLeadingDirectories());
+              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, baseDirectory, stripLeadingDirectories);
               status = ApplyPatchStatus.and(status, patchStatus);
             }
             if (status == ApplyPatchStatus.ALREADY_APPLIED) {

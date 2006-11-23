@@ -1704,10 +1704,15 @@
       <reference ref="ChangesView.SetDefault"/>
       <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
       <!-- <reference ref="ChangesView.CreatePatch"/> -->
+      <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction"/>
       <separator/>
       <reference ref="ChangesView.Refresh"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
+    </group>
+
+    <group id="ShelvedChangesPopupMenu">
+      <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
     </group>
 
   </actions>

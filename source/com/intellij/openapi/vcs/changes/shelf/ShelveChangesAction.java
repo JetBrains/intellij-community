@@ -5,24 +5,22 @@
 /*
  * Created by IntelliJ IDEA.
  * User: yole
- * Date: 03.11.2006
- * Time: 19:28:19
+ * Date: 23.11.2006
+ * Time: 13:31:30
  */
-package com.intellij.openapi.vcs.changes.actions;
+package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.AbstractCommonCheckinAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public class CreatePatchAction extends AbstractCommonCheckinAction {
+public class ShelveChangesAction extends AbstractCommonCheckinAction {
   protected String getActionName(VcsContext dataContext) {
-    return VcsBundle.message("create.patch.commit.action.text");
+    return VcsBundle.message("shelve.changes.action");
   }
 
   protected FilePath[] getRoots(VcsContext context) {
@@ -35,6 +33,6 @@ public class CreatePatchAction extends AbstractCommonCheckinAction {
 
   @Override @Nullable
   protected CommitExecutor getExecutor(Project project) {
-    return new CreatePatchCommitExecutor(project, ChangeListManager.getInstance(project));
+    return new ShelveChangesCommitExecutor(project);
   }
 }

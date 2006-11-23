@@ -11,6 +11,9 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.Content;
+import com.intellij.peer.PeerFactory;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.TreeExpander;
@@ -69,6 +72,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   private ToolWindow myToolWindow;
   private final MessageBusConnection myConnection;
+  private ContentManager myContentManager;
 
   public static ChangesViewManager getInstance(Project project) {
     return project.getComponent(ChangesViewManager.class);
@@ -84,6 +88,10 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     myConnection = project.getMessageBus().connect();
   }
 
+  public ContentManager getContentManager() {
+    return myContentManager;
+  }
+
   public void projectOpened() {
     ChangeListManager.getInstance(myProject).addChangeListListener(myListener);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
@@ -91,7 +99,10 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
       public void run() {
         final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) {
-          myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, createChangeViewComponent(), ToolWindowAnchor.BOTTOM);
+          myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(false, myProject);
+          final Content content = PeerFactory.getInstance().getContentFactory().createContent(createChangeViewComponent(), "Local", false);
+          myContentManager.addContent(content);
+          myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
           myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowChanges.png"));
           updateToolWindowAvailability();
 

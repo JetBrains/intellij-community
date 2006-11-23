@@ -41,6 +41,20 @@ public class PatchReader {
     myLines = LineTokenizer.tokenize(patchText, false);
   }
 
+  public PatchReader(CharSequence patchContent) {
+    myLines = LineTokenizer.tokenize(patchContent, false);
+  }
+
+  public List<FilePatch> readAllPatches() throws PatchSyntaxException {
+    List<FilePatch> result = new ArrayList<FilePatch>();
+    while(true) {
+      FilePatch patch = readNextPatch();
+      if (patch == null) break;
+      result.add(patch);
+    }
+    return result;
+  }
+
   @Nullable
   public FilePatch readNextPatch() throws PatchSyntaxException {
     while (myLineIndex < myLines.length) {

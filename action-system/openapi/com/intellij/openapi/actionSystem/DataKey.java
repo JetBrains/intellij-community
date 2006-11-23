@@ -22,6 +22,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -34,7 +36,7 @@ public class DataKey<T> {
     myName = name;
   }
 
-  public static <T> DataKey<T> create(String name) {
+  public static <T> DataKey<T> create(@NonNls String name) {
     if (ourDataKeyIndex.containsKey(name)) {
       //noinspection unchecked
       return ourDataKeyIndex.get(name);
