@@ -4,19 +4,30 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author peter
-*/
+ */
 public class EvaluatedXmlName {
+  private static final Key<FactoryMap<String,CachedValue<List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
+
   private final XmlName myXmlName;
   private final String myNamespaceKey;
 
@@ -64,10 +75,28 @@ public class EvaluatedXmlName {
     return isNamespaceAllowed(namespace, getAllowedNamespaces(file));
   }
 
+  @NotNull
   private List<String> getAllowedNamespaces(final XmlFile file) {
-    final DomFileDescription<?> description = DomManagerImpl.getDomManager(file.getProject()).getDomFileDescription(file);
-    assert description != null;
-    return description.getAllowedNamespaces(myNamespaceKey, file);
+    FactoryMap<String, CachedValue<List<String>>> map = file.getUserData(NAMESPACE_PROVIDER_KEY);
+    if (map == null) {
+      final DomManagerImpl domManager = DomManagerImpl.getDomManager(file.getProject());
+      file.putUserData(NAMESPACE_PROVIDER_KEY, map = new FactoryMap<String, CachedValue<List<String>>>() {
+        protected CachedValue<List<String>> create(final String key) {
+          return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<List<String>>() {
+            public Result<List<String>> compute() {
+              final DomFileDescription<?> description = domManager.getDomFileDescription(file);
+              if (description == null) {
+                return new Result<List<String>>(Collections.<String>emptyList(), file);
+              }
+              return new Result<List<String>>(description.getAllowedNamespaces(key, file), file);
+            }
+          }, false);
+        }
+      });
+    }
+    final List<String> list = map.get(myNamespaceKey).getValue();
+    assert list != null;
+    return list;
   }
 
   private static boolean isNamespaceAllowed(final String namespace, final List<String> list) {

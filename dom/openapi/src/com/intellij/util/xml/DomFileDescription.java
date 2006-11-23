@@ -17,6 +17,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -39,6 +40,7 @@ import java.util.*;
  * @see com.intellij.util.xml.MergingFileDescription
  */
 public class DomFileDescription<T> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomFileDescription");
   private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;
   protected final String myRootTagName;
@@ -71,6 +73,20 @@ public class DomFileDescription<T> {
    */
   protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
     myNamespacePolicies.put(namespaceKey, policy);
+  }
+
+  /**
+   * @param namespaceKey namespace identifier
+   * @see @com.intellij.util.xml.Namespace()
+   * @param namespace XML namespace value for the given namespaceKey
+   */
+  protected final void registerNamespacePolicy(String namespaceKey, final String namespace) {
+    registerNamespacePolicy(namespaceKey, new NotNullFunction<XmlTag, List<String>>() {
+      @NotNull
+      public List<String> fun(final XmlTag tag) {
+        return Arrays.asList(namespace);
+      }
+    });
   }
 
   @SuppressWarnings({"MethodMayBeStatic"})
@@ -137,7 +153,22 @@ public class DomFileDescription<T> {
     return myRootTagName;
   }
 
-  public boolean isMyFile(XmlFile file, @Nullable final Module module) {
+  public boolean isMyFile(@NotNull XmlFile file, @Nullable final Module module) {
+    final Namespace namespace = DomReflectionUtil.findAnnotationDFS(myRootElementClass, Namespace.class);
+    if (namespace != null) {
+      final String key = namespace.value();
+      final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(key);
+      LOG.assertTrue(function != null, "No namespace policy for namespace " + key + " in " + this);
+      final XmlDocument document = file.getDocument();
+      if (document != null) {
+        final XmlTag tag = document.getRootTag();
+        if (tag != null) {
+          return function.fun(tag).contains(tag.getNamespace());
+        }
+      }
+      return false;
+    }
+
     return true;
   }
 
