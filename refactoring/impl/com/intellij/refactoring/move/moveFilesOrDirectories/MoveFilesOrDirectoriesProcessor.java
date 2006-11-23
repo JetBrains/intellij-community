@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -18,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,12 +51,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    PsiElement[] elements = new PsiElement[myElementsToMove.length];
-    for (int idx = 0; idx < myElementsToMove.length; idx++) {
-      elements[idx] = myElementsToMove[idx];
-    }
-    return new MoveFilesOrDirectoriesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles, myNewParent
-    );
+    return new MoveFilesOrDirectoriesViewDescriptor(myElementsToMove, mySearchInComments, mySearchInNonJavaFiles, myNewParent);
   }
 
   @NotNull
@@ -63,8 +60,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (int i = 0; i < myElementsToMove.length; i++) {
       PsiElement element = myElementsToMove[i];
-      final PsiReference[] refs = searchHelper.findReferences(element, GlobalSearchScope.allScope(myProject), false);
-      for (PsiReference reference : refs) {
+      for (PsiReference reference : ReferencesSearch.search(element).findAll()) {
         result.add(new MyUsageInfo(reference.getElement(), i, reference));
       }
     }
@@ -79,9 +75,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
-    for (int idx = 0; idx < elements.length; idx++) {
-      myElementsToMove[idx] = elements[idx];
-    }
+    System.arraycopy(elements, 0, myElementsToMove, 0, elements.length);
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

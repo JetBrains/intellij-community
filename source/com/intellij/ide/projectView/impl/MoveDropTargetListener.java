@@ -4,9 +4,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.MoveDestination;
-import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesToNewDirectoryDialog;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -29,7 +27,7 @@ class MoveDropTargetListener implements DropTargetListener {
     try {
       Object[] objects = (Object[])dtde.getTransferable().getTransferData(AbstractProjectViewPSIPane.FLAVORS[0]);
       for (Object object : objects) {
-        if (!(object instanceof PsiClass)) {
+        if (!isValidDropTarget(object)) {
           dtde.rejectDrag();
           break;
         }
@@ -41,6 +39,10 @@ class MoveDropTargetListener implements DropTargetListener {
     catch (IOException e) {
       dtde.rejectDrag();
     }
+  }
+
+  private boolean isValidDropTarget(final Object object) {
+    return object instanceof PsiClass;
   }
 
   public void dragOver(DropTargetDragEvent dtde) {}
@@ -56,7 +58,7 @@ class MoveDropTargetListener implements DropTargetListener {
       elements = new PsiElement[objects.length];
       for (int i = 0; i < objects.length; i++) {
         Object object = objects[i];
-        if (!(object instanceof PsiClass)) {
+        if (!isValidDropTarget(object)) {
           elements = null;
           break;
         }
@@ -89,16 +91,14 @@ class MoveDropTargetListener implements DropTargetListener {
       final PsiDirectoryNode directoryNode = (PsiDirectoryNode)userObject;
       final PsiDirectory directory = directoryNode.getValue();
       if (isTheSameDirectory(directory, elements)) return true;
-      final PsiPackage aPackage = directory.getPackage();
-      if (aPackage != null) {
-        final VirtualFile srcRoot = ProjectRootManager.getInstance(myPane.myProject).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
-        assert srcRoot != null;
-        int dropAction = dtde.getDropAction();
-        if ((dropAction & DnDConstants.ACTION_MOVE) != 0) {
-          MoveHandler.doMove(myPane.myProject, elements, directory, null);
-          dtde.dropComplete(true);
-          return true;
-        }
+      final VirtualFile srcRoot = ProjectRootManager.getInstance(myPane.myProject).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
+      assert srcRoot != null;
+      int dropAction = dtde.getDropAction();
+      if ((dropAction & DnDConstants.ACTION_MOVE) != 0) {
+        dtde.dropComplete(true);
+        MoveClassesToNewDirectoryDialog dialog = new MoveClassesToNewDirectoryDialog(directory, elements);
+        dialog.show();
+        return true;
       }
     }
     return false;

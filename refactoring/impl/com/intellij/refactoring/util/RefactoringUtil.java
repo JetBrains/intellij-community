@@ -1407,20 +1407,19 @@ public class RefactoringUtil {
   }
 
   public static void processIncorrectOperation(final Project project, IncorrectOperationException e) {
-    @NonNls final String message = e.getMessage();
+    @NonNls String message = e.getMessage();
     final int index = message != null ? message.indexOf("java.io.IOException") : -1;
-    if (index >= 0) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showMessageDialog(project, message.substring(index + "java.io.IOException".length()),
-                                       RefactoringBundle.message("error.title"),
-                                       Messages.getErrorIcon());
-          }
-        });
+    if (index > 0) {
+      message = message.substring(index + "java.io.IOException".length());
     }
-    else {
-      LOG.error(e);
-    }
+
+    final String s = message;
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Messages.showMessageDialog(project, s,
+                                   RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+      }
+    });
   }
 
   public static void analyzeModuleConflicts(Project project,

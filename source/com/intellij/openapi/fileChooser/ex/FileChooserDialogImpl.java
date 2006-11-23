@@ -75,7 +75,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     final VirtualFile file = selectFile;
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (file == null || !file.isValid()) {
           return;
@@ -88,7 +88,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
           select(parent);
         }
       }
-    }, ModalityState.stateForComponent(getContentPane()));
+    });
     show();
 
     return myChosenFiles;
