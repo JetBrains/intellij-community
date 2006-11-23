@@ -37,7 +37,9 @@ public class RootEntryFilesTest extends TestCase {
     try {
       root.createFile(null, "file", null, null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
@@ -67,7 +69,9 @@ public class RootEntryFilesTest extends TestCase {
     try {
       root.changeFileContent("unknown file", "content", null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
@@ -90,7 +94,9 @@ public class RootEntryFilesTest extends TestCase {
     try {
       root.rename("unknown file", "new file", null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
@@ -101,7 +107,9 @@ public class RootEntryFilesTest extends TestCase {
     try {
       root.rename("file1", "file2", null);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test
@@ -139,6 +147,8 @@ public class RootEntryFilesTest extends TestCase {
     try {
       root.delete("unknown file");
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 }

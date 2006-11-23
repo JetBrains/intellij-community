@@ -55,7 +55,7 @@ public class LocalVcsComponent implements ProjectComponent {
     try {
       System.out.println("started");
       long before = System.currentTimeMillis();
-      Updater.updateRoots(vcs, m.getContentRoots());
+      Updater.update(vcs, m.getContentRoots());
       long after = System.currentTimeMillis();
 
       counter = after - before;

@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ChangeFileContentChange extends Change {
-  private Path myPath;
+  private String myPath;
   private String myNewContent;
   private Long myTimestamp;
   private String myOldContent;
@@ -13,13 +13,13 @@ public class ChangeFileContentChange extends Change {
   private IdPath myAffectedEntryIdPath;
 
   public ChangeFileContentChange(String path, String newContent, Long timestamp) {
-    myPath = new Path(path);
+    myPath = path;
     myNewContent = newContent;
     myTimestamp = timestamp;
   }
 
   public ChangeFileContentChange(Stream s) throws IOException {
-    myPath = s.readPath();
+    myPath = s.readString();
     myAffectedEntryIdPath = s.readIdPath();
     myNewContent = s.readString();
     myOldContent = s.readString();
@@ -27,13 +27,13 @@ public class ChangeFileContentChange extends Change {
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writePath(myPath);
+    s.writeString(myPath);
     s.writeIdPath(myAffectedEntryIdPath);
     s.writeString(myNewContent);
     s.writeString(myOldContent);
   }
 
-  public Path getPath() {
+  public String getPath() {
     return myPath;
   }
 
@@ -47,18 +47,18 @@ public class ChangeFileContentChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    Entry affectedEntry = root.getEntry(myPath.getPath());
+    Entry affectedEntry = root.getEntry(myPath);
 
     myOldContent = affectedEntry.getContent();
     myOldTimestamp = affectedEntry.getTimestamp();
     myAffectedEntryIdPath = affectedEntry.getIdPath();
 
-    root.changeFileContent(myPath.getPath(), myNewContent, myTimestamp);
+    root.changeFileContent(myPath, myNewContent, myTimestamp);
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.changeFileContent(myPath.getPath(), myOldContent, myOldTimestamp);
+    root.changeFileContent(myPath, myOldContent, myOldTimestamp);
   }
 
   @Override

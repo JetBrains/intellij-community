@@ -12,8 +12,8 @@ public abstract class TestCase extends Assert {
     return new IdPath(parts);
   }
 
-  protected static Path p(String name) {
-    return new Path(name);
+  protected static String p(String name) {
+    return name;
   }
 
   protected static ChangeSet cs(Change... changes) {

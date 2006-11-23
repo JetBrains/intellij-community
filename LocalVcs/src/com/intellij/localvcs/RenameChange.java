@@ -6,30 +6,30 @@ import java.util.List;
 
 public class RenameChange extends Change {
   // todo remove unnecessary fields from all changes (such as path)
-  private Path myPath;
+  private String myPath;
   private String myNewName;
   private Long myTimestamp;
   private Long myOldTimestamp;
   private IdPath myAffectedEntryIdPath;
 
   public RenameChange(String path, String newName, Long timestamp) {
-    myPath = new Path(path);
+    myPath = path;
     myNewName = newName;
     myTimestamp = timestamp;
   }
 
   public RenameChange(Stream s) throws IOException {
-    myPath = s.readPath();
+    myPath = s.readString();
     myNewName = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writePath(myPath);
+    s.writeString(myPath);
     s.writeString(myNewName);
   }
 
-  public Path getPath() {
+  public String getPath() {
     return myPath;
   }
 
@@ -39,20 +39,20 @@ public class RenameChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    Entry affectedEntry = root.getEntry(myPath.getPath());
+    Entry affectedEntry = root.getEntry(myPath);
 
     myOldTimestamp = affectedEntry.getTimestamp();
     myAffectedEntryIdPath = affectedEntry.getIdPath();
 
-    root.rename(myPath.getPath(), myNewName, myTimestamp);
+    root.rename(myPath, myNewName, myTimestamp);
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    Path newPath = myPath.renamedWith(myNewName);
-    String oldName = myPath.getName();
+    String newPath = new Path(myPath).renamedWith(myNewName).getPath();
+    String oldName = new Path(myPath).getName();
 
-    root.rename(newPath.getPath(), oldName, myOldTimestamp);
+    root.rename(newPath, oldName, myOldTimestamp);
   }
 
   @Override
@@ -63,6 +63,6 @@ public class RenameChange extends Change {
   @Override
   public Entry revertFile(Entry e) {
     if (!myAffectedEntryIdPath.getName().equals(e.getId())) return e;
-    return e.renamed(myPath.getName(), myOldTimestamp);
+    return e.renamed(myPath, myOldTimestamp);
   }
 }

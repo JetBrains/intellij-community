@@ -24,14 +24,15 @@ public class RootEntry extends DirectoryEntry {
   }
 
   public boolean hasEntry(String path) {
-    return findEntry(new Path(path)) != null;
+    return findEntry(path) != null;
   }
 
-  protected Entry findEntry(Path path) {
+  protected Entry findEntry(String path) {
     return findEntry(new PathMatcher(path));
   }
 
-  public Entry findEntry(Integer id) {
+  private Entry findEntry(Integer id) {
+    // todo get rid of this method
     return findEntry(new IdMatcher(id));
   }
 
@@ -40,7 +41,7 @@ public class RootEntry extends DirectoryEntry {
   }
 
   public Entry getEntry(String path) {
-    return getEntry(new PathMatcher(new Path(path)));
+    return getEntry(new PathMatcher(path));
   }
 
   public Entry getEntry(Integer id) {
@@ -68,7 +69,7 @@ public class RootEntry extends DirectoryEntry {
     Path parentPath = p.getParent();
     String name = p.getName();
 
-    if (parentPath == null || !hasEntry(parentPath.getPath()))  {
+    if (parentPath == null || !hasEntry(parentPath.getPath())) {
       parentPath = null;
       name = path;
     }
@@ -138,10 +139,10 @@ public class RootEntry extends DirectoryEntry {
 
   private static class PathMatcher implements Matcher {
     // todo optimize it
-    private Path myPath;
+    private String myPath;
 
-    public PathMatcher(Path p) {
-      myPath = p;
+    public PathMatcher(String path) {
+      myPath = path;
     }
 
     public boolean matches(Entry e) {

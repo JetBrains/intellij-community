@@ -45,7 +45,8 @@ public class DirectoryEntry extends Entry {
   }
 
   protected Path getPathAppendedWith(String name) {
-    return getPath().appendedWith(name);
+    // todo make it return String 
+    return new Path(getPath()).appendedWith(name);
   }
 
   @Override

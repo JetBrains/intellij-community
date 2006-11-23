@@ -6,39 +6,39 @@ import java.util.List;
 
 public class CreateDirectoryChange extends Change {
   private Integer myId;
-  private Path myPath;
+  private String myPath;
   private Long myTimestamp;
   
   private IdPath myAffectedEntryIdPath;
 
   public CreateDirectoryChange(Integer id, String path, Long timestamp) {
     myId = id;
-    myPath = new Path(path);
+    myPath = path;
     myTimestamp = timestamp;
   }
 
   public CreateDirectoryChange(Stream s) throws IOException {
-    myPath = s.readPath();
+    myPath = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writePath(myPath);
+    s.writeString(myPath);
   }
 
-  public Path getPath() {
+  public String getPath() {
     return myPath;
   }
 
   @Override
   public void applyTo(RootEntry root) {
-    root.createDirectory(myId, myPath.getPath(), myTimestamp);
-    myAffectedEntryIdPath = root.getEntry(myPath.getPath()).getIdPath();
+    root.createDirectory(myId, myPath, myTimestamp);
+    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.delete(myPath.getPath());
+    root.delete(myPath);
   }
 
   @Override

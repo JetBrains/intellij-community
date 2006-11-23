@@ -9,107 +9,118 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Updater {
-  public static void updateRoots(LocalVcs vcs, VirtualFile... roots) throws IOException {
-    // todo should root changes become vesible only after apply?
+  // todo algorithm could be simplified and improved
 
-    VirtualFile[] selectedRoots = selectRoots(roots);
+  private LocalVcs myVcs;
+  private VirtualFile[] myRoots;
 
-    for (VirtualFile r : selectedRoots) {
-      if (!vcs.hasEntry(r.getPath())) {
-        vcs.createDirectory(r.getPath(), null);// todo do we need timestampe here?
-      }
-      updateRoot(vcs, r);
-    }
-
-    for (Entry root : vcs.getRoots()) {
-      boolean isDeleted = true;
-      for (VirtualFile selectedRoot : selectedRoots) {
-        if (selectedRoot.getPath().equals(root.getPath().getPath())) {
-          isDeleted = false;
-          break;
-        }
-      }
-      if (isDeleted) vcs.delete(root.getPath().getPath());
-    }
-
-    vcs.apply();
+  public static void update(LocalVcs vcs, VirtualFile... roots) throws IOException {
+    new Updater(vcs, roots).update();
   }
 
-  public static VirtualFile[] selectRoots(VirtualFile... roots) {
+  public Updater(LocalVcs vcs, VirtualFile... roots) {
+    myVcs = vcs;
+    myRoots = selectNonNestedRoots(roots);
+  }
+
+  public static VirtualFile[] selectNonNestedRoots(VirtualFile... roots) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile left : roots) {
-      boolean isSuitable = true;
-      for (VirtualFile right : roots) {
-        if (left == right) continue;
-        if (left.getPath().startsWith(right.getPath())) {
-          isSuitable = false;
-          break;
-        }
-      }
-      if (isSuitable) result.add(left);
+      if (!isNested(left, roots)) result.add(left);
     }
     return result.toArray(new VirtualFile[0]);
   }
 
-  private static void updateRoot(LocalVcs vcs, VirtualFile root) throws IOException {
-    // todo test that deleting called first to ensure that sush cases as deleting file 'a'
-    // todo and creating dir 'a' are handled correctly
-
-    // todo test that updating is called first
-    // todo optimize updating
-
-    createNewFiles(vcs, root);
-    updateOutdatedFiles(vcs, root);
-
-    // todo is it tested?
-    if (vcs.hasEntry(root.getPath())) {
-      deleteAbsentFiles(vcs, vcs.getEntry(root.getPath()), root);
+  private static boolean isNested(VirtualFile f, VirtualFile... roots) {
+    for (VirtualFile another : roots) {
+      if (f == another) continue;
+      if (f.getPath().startsWith(another.getPath())) return true;
     }
+    return false;
   }
 
-  private static void updateOutdatedFiles(LocalVcs vcs, VirtualFile dir) throws IOException {
-    for (VirtualFile f : dir.getChildren()) {
-      if (vcs.hasEntry(f.getPath())) {
-        Entry e = vcs.getEntry(f.getPath());
+  public void update() throws IOException {
+    // todo maybe we should delete before updating for optimization 
+    updateExistingRoots();
+    deleteRemovedRoots();
 
-        // todo problem with nested roots
-        if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
-          vcs.changeFileContent(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
-          //vcs.changeFileContent(f.getPath(), null, f.getTimeStamp());
-        }
+    myVcs.apply();
+  }
+
+  private void updateExistingRoots() throws IOException {
+    for (VirtualFile f : myRoots) {
+      if (!myVcs.hasEntry(f.getPath())) {
+        myVcs.createDirectory(f.getPath(), f.getTimeStamp());
       }
+      updateDirectory(f);
     }
   }
 
-  private static void createNewFiles(LocalVcs vcs, VirtualFile dir) throws IOException {
-    for (VirtualFile f : dir.getChildren()) {
-      if (!vcs.hasEntry(f.getPath())) {
-        if (f.isDirectory()) {
-          vcs.createDirectory(f.getPath(), f.getTimeStamp());
-          createNewFiles(vcs, f);
-        }
-        else {
-          vcs.createFile(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
-          //vcs.createFile(f.getPath(), null, f.getTimeStamp());
-        }
-      }
+  private void deleteRemovedRoots() {
+    for (Entry r : myVcs.getRoots()) {
+      if (!hasRoot(r)) myVcs.delete(r.getPath());
     }
   }
 
-  private static void deleteAbsentFiles(LocalVcs vcs, Entry entry, VirtualFile dir) {
+  private boolean hasRoot(Entry r) {
+    for (VirtualFile f : myRoots) {
+      if (f.getPath().equals(r.getPath())) return true;
+    }
+    return false;
+  }
+
+  private void updateDirectory(VirtualFile dir) throws IOException {
+    if (myVcs.hasEntry(dir.getPath())) {
+      deleteAbsentFiles(myVcs.getEntry(dir.getPath()), dir);
+    }
+
+    createNewFiles(dir);
+    updateOutdatedFiles(dir);
+  }
+
+  private void deleteAbsentFiles(Entry entry, VirtualFile dir) {
     for (Entry e : entry.getChildren()) {
-      // todo somethig is going wrong with Path abstraction
-      // todo move this check to VirtualFile
-      VirtualFile f = dir.findChild(e.getPath().getName());
-
-      if (f == null) {
-        vcs.delete(e.getPath().getPath());
+      VirtualFile f = dir.findChild(e.getName());
+      if (!areOfSameKind(e, f)) {
+        myVcs.delete(e.getPath());
       }
       else {
         if (e.isDirectory()) {
-          deleteAbsentFiles(vcs, e, f);
+          deleteAbsentFiles(e, f);
         }
       }
     }
+  }
+
+  private void createNewFiles(VirtualFile dir) throws IOException {
+    for (VirtualFile f : dir.getChildren()) {
+      Entry e = myVcs.findEntry(f.getPath());
+      if (!areOfSameKind(e, f)) {
+        if (f.isDirectory()) {
+          myVcs.createDirectory(f.getPath(), f.getTimeStamp());
+          createNewFiles(f);
+        }
+        else {
+          myVcs.createFile(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
+        }
+      }
+    }
+  }
+
+  private void updateOutdatedFiles(VirtualFile dir) throws IOException {
+    for (VirtualFile f : dir.getChildren()) {
+      Entry e = myVcs.findEntry(f.getPath());
+      if (areOfSameKind(e, f)) {
+        // todo we should update directory timestamps too
+        if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
+          myVcs.changeFileContent(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
+        }
+      }
+    }
+  }
+
+  private boolean areOfSameKind(Entry e, VirtualFile f) {
+    if (e == null || f == null) return false;
+    return e.isDirectory() == f.isDirectory();
   }
 }

@@ -25,9 +25,26 @@ public class RootEntryTest extends TestCase {
   }
 
   @Test
-  public void testFindingChildren() {
-    assertTrue(root.hasEntry("child"));
-    assertSame(child, root.getEntry("child"));
+  public void testFindingFile() {
+    root.createFile(null, "file", null, null);
+
+    Entry e = root.findEntry("file");
+    assertNotNull(e);
+    assertEquals("file", e.getPath());
+
+    assertNull(root.findEntry("unknown file"));
+  }
+
+  @Test
+  public void testFindingFileUnderDirectory() {
+    root.createDirectory(null, "dir", null);
+    root.createFile(null, "dir/file", null, null);
+
+    Entry e = root.findEntry("dir/file");
+    assertNotNull(e);
+    assertEquals("dir/file", e.getPath());
+
+    assertNull(root.findEntry("dir/unknown file"));
   }
 
   @Test
@@ -41,9 +58,9 @@ public class RootEntryTest extends TestCase {
     root.addChild(file1);
     dir.addChild(file2);
 
-    assertSame(dir, root.findEntry(p("dir")));
-    assertSame(file1, root.findEntry(p("file1")));
-    assertSame(file2, root.findEntry(p("dir/file2")));
+    assertSame(dir, root.findEntry("dir"));
+    assertSame(file1, root.findEntry("file1"));
+    assertSame(file2, root.findEntry("dir/file2"));
   }
 
   @Test
@@ -75,8 +92,8 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testDoesNotFindUnknownEntry() {
-    assertNull(root.findEntry(p("unknown entry")));
-    assertNull(root.findEntry(p("root/unknown entry")));
+    assertNull(root.findEntry("unknown entry"));
+    assertNull(root.findEntry("root/unknown entry"));
   }
 
   @Test
@@ -84,12 +101,16 @@ public class RootEntryTest extends TestCase {
     try {
       root.getEntry("unknown entry");
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
 
     try {
       root.getEntry(42);
       fail();
-    } catch (LocalVcsException e) {}
+    }
+    catch (LocalVcsException e) {
+    }
   }
 
   @Test

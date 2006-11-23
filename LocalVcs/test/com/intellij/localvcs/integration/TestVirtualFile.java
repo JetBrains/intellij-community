@@ -48,7 +48,7 @@ public class TestVirtualFile extends VirtualFile {
   }
 
   public long getTimeStamp() {
-    return myTimestamp;
+    return myTimestamp == null ? 0 : myTimestamp;
   }
 
   public VirtualFile[] getChildren() {

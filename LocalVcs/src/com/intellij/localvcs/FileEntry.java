@@ -36,6 +36,11 @@ public class FileEntry extends Entry {
   }
 
   @Override
+  protected Entry findEntry(Matcher m) {
+    return m.matches(this) ? this : null;
+  }
+
+  @Override
   public FileEntry copy() {
     // todo create constructor with FileEntryState parameter
     return new FileEntry(myId, getName(), getContent(), null);

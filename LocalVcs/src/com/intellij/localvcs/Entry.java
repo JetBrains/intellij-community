@@ -33,10 +33,10 @@ public abstract class Entry {
 
   public abstract String getName();
 
-  public Path getPath() {
+  public String getPath() {
     //todo try to remove this check
-    if (!hasParent()) return new Path(getName());
-    return myParent.getPathAppendedWith(getName());
+    if (!hasParent()) return getName();
+    return myParent.getPathAppendedWith(getName()).getPath();
   }
 
   public Long getTimestamp() {
@@ -87,9 +87,7 @@ public abstract class Entry {
     throw new LocalVcsException();
   }
 
-  protected Entry findEntry(Matcher m) {
-    return m.matches(this) ? this : null;
-  }
+  protected abstract Entry findEntry(Matcher m);
 
   public abstract Entry copy();
 
@@ -107,5 +105,13 @@ public abstract class Entry {
 
   protected interface Matcher {
     boolean matches(Entry entry);
+  }
+
+  protected interface NewMatcher {
+    boolean matches(Entry entry);
+
+    boolean isComplete();
+
+    Entry getResult();
   }
 }

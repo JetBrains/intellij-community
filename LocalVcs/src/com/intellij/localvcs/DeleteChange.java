@@ -5,22 +5,22 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DeleteChange extends Change {
-  private Path myPath;
+  private String myPath;
   private Entry myAffectedEntry;
   private IdPath myAffectedEntryIdPath;
 
   public DeleteChange(String path) {
-    myPath = new Path(path);
+    myPath = path;
   }
 
   public DeleteChange(Stream s) throws IOException {
-    myPath = s.readPath();
+    myPath = s.readString();
     myAffectedEntry = s.readEntry();
   }
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writePath(myPath);
+    s.writeString(myPath);
     s.writeEntry(myAffectedEntry);
   }
 
@@ -30,10 +30,10 @@ public class DeleteChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myAffectedEntry = root.getEntry(myPath.getPath());
+    myAffectedEntry = root.getEntry(myPath);
     myAffectedEntryIdPath = myAffectedEntry.getIdPath();
 
-    root.delete(myPath.getPath());
+    root.delete(myPath);
   }
 
   @Override
@@ -43,14 +43,14 @@ public class DeleteChange extends Change {
     restoreEntryRecursively(root, myAffectedEntry, myPath);
   }
 
-  private void restoreEntryRecursively(RootEntry root, Entry e, Path p) {
+  private void restoreEntryRecursively(RootEntry root, Entry e, String path) {
     if (e.isDirectory()) {
-      root.createDirectory(e.getId(), p.getPath(), e.getTimestamp());
+      root.createDirectory(e.getId(), path, e.getTimestamp());
       for (Entry child : e.getChildren()) {
-        restoreEntryRecursively(root, child, p.appendedWith(child.getName()));
+        restoreEntryRecursively(root, child, new Path(path).appendedWith(child.getName()).getPath());
       }
     } else {
-      root.createFile(e.getId(), p.getPath(), e.getContent(), e.getTimestamp());
+      root.createFile(e.getId(), path, e.getContent(), e.getTimestamp());
     }
   }
 

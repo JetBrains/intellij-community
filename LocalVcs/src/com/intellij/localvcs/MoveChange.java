@@ -5,50 +5,49 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MoveChange extends Change {
-  private Path myPath;
-  private Path myNewParentPath;
+  private String myPath;
+  private String myNewParentPath;
   private IdPath myFromIdPath;
   private IdPath myToIdPath;
 
   public MoveChange(String path, String newParentPath) {
-    myPath = new Path(path);
-    myNewParentPath = new Path(newParentPath);
+    myPath = path;
+    myNewParentPath = newParentPath;
   }
 
   public MoveChange(Stream s) throws IOException {
-    myPath = s.readPath();
-    myNewParentPath = s.readPath();
+    myPath = s.readString();
+    myNewParentPath = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writePath(myPath);
-    s.writePath(myNewParentPath);
+    s.writeString(myPath);
+    s.writeString(myNewParentPath);
   }
 
-  public Path getPath() {
+  public String getPath() {
     return myPath;
   }
 
-  public Path getNewParentPath() {
+  public String getNewParentPath() {
     return myNewParentPath;
   }
 
   @Override
   public void applyTo(RootEntry root) {
-    myFromIdPath = root.getEntry(myPath.getPath()).getIdPath();
-    root.move(myPath.getPath(), myNewParentPath.getPath(), null); // todo set timestamp here!!!
-    myToIdPath = root.getEntry(getNewPath().getPath()).getIdPath();
+    myFromIdPath = root.getEntry(myPath).getIdPath();
+    root.move(myPath, myNewParentPath, null); // todo set timestamp here!!!
+    myToIdPath = root.getEntry(getNewPath()).getIdPath();
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.move(myNewParentPath.appendedWith(myPath.getName()).getPath(),
-                myPath.getParent().getPath(), null); 
+    root.move(getNewPath(), new Path(myPath).getParent().getPath(), null); 
   }
 
-  private Path getNewPath() {
-    return myNewParentPath.appendedWith(myPath.getName());
+  private String getNewPath() {
+    return new Path(myNewParentPath).appendedWith(new Path(myPath).getName()).getPath();
   }
 
   @Override

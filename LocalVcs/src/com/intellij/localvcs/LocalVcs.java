@@ -35,7 +35,11 @@ public class LocalVcs {
   }
 
   public Entry getEntry(String path) {
-    return myRoot.getEntry(new Path(path).getPath());
+    return myRoot.getEntry(path);
+  }
+
+  public Entry findEntry(String path) {
+    return myRoot.findEntry(path);
   }
 
   public List<Entry> getRoots() {
