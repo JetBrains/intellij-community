@@ -2,10 +2,9 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.psi.impl.source.resolve.reference;
+package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 
 /**

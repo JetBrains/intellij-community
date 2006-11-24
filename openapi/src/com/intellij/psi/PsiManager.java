@@ -383,4 +383,6 @@ public abstract class PsiManager implements UserDataHolder {
 
   public abstract void unregisterLanguageInjector(@NotNull LanguageInjector injector);
 
+  public abstract ElementManipulatorsRegistry getElementManipulatorsRegistry();
+
 }

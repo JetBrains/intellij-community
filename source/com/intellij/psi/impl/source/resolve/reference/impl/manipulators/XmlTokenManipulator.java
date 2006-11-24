@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
+import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;

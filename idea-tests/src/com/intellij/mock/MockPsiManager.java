@@ -226,6 +226,10 @@ public class MockPsiManager extends PsiManager {
 
   }
 
+  public ElementManipulatorsRegistry getElementManipulatorsRegistry() {
+    return null;
+  }
+
   public void postponeAutoFormattingInside(Runnable runnable) {
     PostprocessReformattingAspect.getInstance(getProject()).postponeFormattingInside(runnable);
   }

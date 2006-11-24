@@ -1,6 +1,5 @@
-package com.intellij.psi.impl.source.resolve.reference;
+package com.intellij.psi;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 
@@ -9,7 +8,8 @@ import com.intellij.util.IncorrectOperationException;
  * User: ik
  * Date: 03.04.2003
  * Time: 11:22:05
- * To change this template use Options | File Templates.
+ *
+ * @see com.intellij.psi.ElementManipulatorsRegistry
  */
 public interface ElementManipulator<T extends PsiElement> {
 

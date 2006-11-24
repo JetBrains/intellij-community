@@ -19,8 +19,6 @@ package com.intellij.psi;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +66,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   public TextRange getRangeInElement() {
     if (myRange == null) {
-      final ElementManipulator<T> manipulator = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement);
+      final ElementManipulator<T> manipulator = getManipulator();
       assert manipulator != null: "Cannot find manipulator for " + myElement;
       myRange = manipulator.getRangeInElement(myElement);
     }
@@ -80,7 +78,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final ElementManipulator<T> manipulator = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement);
+    final ElementManipulator<T> manipulator = getManipulator();
     assert manipulator != null: "Cannot find manipulator for " + myElement;
     return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
   }                                                              
@@ -111,6 +109,11 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   @Nullable
   public Module getModule() {
     return ModuleUtil.findModuleForPsiElement(myElement);
+  }
+
+  @Nullable
+  ElementManipulator<T> getManipulator() {
+    return PsiManager.getInstance(myElement.getProject()).getElementManipulatorsRegistry().getManipulator(myElement);
   }
 
   public boolean isSoft() {

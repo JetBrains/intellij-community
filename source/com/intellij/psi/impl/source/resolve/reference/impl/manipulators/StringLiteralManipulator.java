@@ -4,7 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
+import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 
 /**

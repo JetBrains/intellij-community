@@ -42,7 +42,7 @@ import java.util.Map;
  * Time: 17:13:45
  * To change this template use Options | File Templates.
  */
-public class ReferenceProvidersRegistry implements ProjectComponent {
+public class ReferenceProvidersRegistry implements ProjectComponent, ElementManipulatorsRegistry {
   private final List<Class> myTempScopes = new ArrayList<Class>();
   private final Map<Class,ProviderBinding> myBindingsMap = new HashMap<Class,ProviderBinding>();
   private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new ArrayList<Pair<Class<?>, ElementManipulator<?>>>();

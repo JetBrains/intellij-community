@@ -21,7 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
+import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;

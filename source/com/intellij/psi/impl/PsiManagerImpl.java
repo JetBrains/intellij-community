@@ -48,6 +48,7 @@ import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -360,6 +361,10 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
     myLanguageInjectors.remove(injector);
+  }
+
+  public ElementManipulatorsRegistry getElementManipulatorsRegistry() {
+    return ReferenceProvidersRegistry.getInstance(myProject);
   }
 
   public void postponeAutoFormattingInside(Runnable runnable) {

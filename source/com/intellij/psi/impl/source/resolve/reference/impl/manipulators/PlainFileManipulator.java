@@ -5,7 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.impl.source.resolve.reference.AbstractElementManipulator;
+import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 
 /**
