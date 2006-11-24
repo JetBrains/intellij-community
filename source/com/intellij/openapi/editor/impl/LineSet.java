@@ -1,5 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.util.SegmentArrayWithData;
@@ -36,7 +37,7 @@ public class LineSet{
   }
 
   final int getSeparatorLength(int index) {
-    return (int) (mySegments.getSegmentData(index) & SEPARATOR_MASK);
+    return mySegments.getSegmentData(index) & SEPARATOR_MASK;
   }
 
   final int getLineCount() {
@@ -58,11 +59,122 @@ public class LineSet{
         return;
       }
 
-      processMultilineChange(e);
+      int optimizedLineShift = e.getOptimizedLineShift();
+
+      if (optimizedLineShift != -1) {
+        processOptimizedMultilineChange(e, optimizedLineShift);
+      } else {
+        processMultilineChange(e);
+      }
     }
 
     if (e.isWholeTextReplaced()) {
       clearModificationFlags();
+    }
+  }
+
+  public static void setTestingMode(boolean testMode) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    doTest = testMode;
+  }
+
+  private static boolean doTest = false;
+
+  private void processOptimizedMultilineChange(final DocumentEventImpl e, final int optimizedLineShift) {
+    final int insertionPoint = e.getOffset();
+    final int changedLineIndex = e.getStartOldIndex();
+    final int lengthDiff = e.getNewLength();
+    final LineTokenizer tokenizer = new LineTokenizer(e.getNewFragment());
+
+    SegmentArrayWithData workingCopySegmentsForTesting = null;
+    SegmentArrayWithData segments; //
+
+    if (doTest) {
+      segments = new SegmentArrayWithData();
+      workingCopySegmentsForTesting = new SegmentArrayWithData();
+      for(int i = mySegments.getSegmentCount() - 1; i >=0; --i) {
+        segments.setElementAt(
+          i,
+          mySegments.getSegmentStart(i),
+          mySegments.getSegmentEnd(i),
+          mySegments.getSegmentData(i)
+        );
+        workingCopySegmentsForTesting.setElementAt(
+          i,
+          mySegments.getSegmentStart(i),
+          mySegments.getSegmentEnd(i),
+          mySegments.getSegmentData(i)
+        );
+      }
+    } else {
+      segments = mySegments;
+    }
+
+    int i;
+
+// update data after lineIndex, shifting with optimizedLineShift
+    for(i = segments.getSegmentCount() - 1; i > changedLineIndex; --i) {
+      segments.setElementAt(i + optimizedLineShift, segments.getSegmentStart(i) + lengthDiff,
+        segments.getSegmentEnd(i) + lengthDiff,
+        segments.getSegmentData(i)
+      );
+    }
+
+    final int oldSegmentEnd = segments.getSegmentEnd(changedLineIndex);
+    final int oldSegmentStart = segments.getSegmentStart(changedLineIndex);
+    final short oldSegmentData = segments.getSegmentData(changedLineIndex);
+
+    final int newChangedLineEnd = insertionPoint + tokenizer.getLineSeparatorLength() + tokenizer.getOffset() + tokenizer.getLength();
+    segments.setElementAt(
+      changedLineIndex,
+      oldSegmentStart, newChangedLineEnd,
+      tokenizer.getLineSeparatorLength() | MODIFIED_MASK
+    );
+
+    tokenizer.advance();
+    i = 1;
+    int lastFragmentLength = 0;
+
+    while(!tokenizer.atEnd()) {
+      lastFragmentLength = tokenizer.getLineSeparatorLength() != 0 ? 0:tokenizer.getLength();
+      segments.setElementAt(
+        changedLineIndex + i,
+        insertionPoint + tokenizer.getOffset(),
+        insertionPoint + tokenizer.getOffset() + tokenizer.getLength() + tokenizer.getLineSeparatorLength(),
+        tokenizer.getLineSeparatorLength() | MODIFIED_MASK
+      );
+      i++;
+      tokenizer.advance();
+    }
+
+    segments.setElementAt(
+      changedLineIndex + optimizedLineShift, insertionPoint + lengthDiff - lastFragmentLength,
+      oldSegmentEnd + lengthDiff,
+      oldSegmentData | MODIFIED_MASK
+    );
+
+    if (doTest) {
+      final SegmentArrayWithData data = mySegments;
+      mySegments = segments;
+      addEmptyLineAtEnd();
+
+      mySegments = workingCopySegmentsForTesting;
+      processMultilineChange(e);
+      mySegments = data;
+
+      assert workingCopySegmentsForTesting.getSegmentCount() == segments.getSegmentCount();
+      for(i =0; i < segments.getSegmentCount();++i) {
+
+        if (workingCopySegmentsForTesting.getSegmentStart(i) != segments.getSegmentStart(i) ||
+            workingCopySegmentsForTesting.getSegmentEnd(i) != segments.getSegmentEnd(i) ||
+            workingCopySegmentsForTesting.getSegmentData(i) != segments.getSegmentData(i)) {
+          assert false;
+        }
+      }
+
+      processMultilineChange(e);
+    } else {
+      addEmptyLineAtEnd();
     }
   }
 

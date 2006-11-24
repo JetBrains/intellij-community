@@ -23,6 +23,9 @@ public class DocumentEventImpl extends DocumentEvent {
   private boolean myIsWholeDocReplaced = false;
   private Diff.Change myChange;
 
+  private int myOptimizedLineShift = -1;
+  private boolean myOptimizedLineShiftCalculated;
+
   public DocumentEventImpl(Document document,
                            int offset,
                            CharSequence oldString,
@@ -172,5 +175,27 @@ public class DocumentEventImpl extends DocumentEvent {
     //Diff diff = new Diff(strings1, strings2);
     //myChange = diff.diff_2(false);
     myChange = Diff.buildChanges(strings1, strings2);
+  }
+
+  public int getOptimizedLineShift() {
+    if (!myOptimizedLineShiftCalculated) {
+      myOptimizedLineShiftCalculated = true;
+
+      if (myOldString.length() == 0) {
+        int lineShift = 0;
+        final CharSequence newFragment = getNewFragment();
+
+        for(int i = 0; i < newFragment.length(); ++i) {
+          final char ch = newFragment.charAt(i);
+
+          if (ch == '\n') {
+            ++lineShift;
+          }
+        }
+
+        myOptimizedLineShift = lineShift != 0 ? lineShift:-1;
+      }
+    }
+    return myOptimizedLineShift;
   }
 }

@@ -3,7 +3,18 @@ package com.intellij.formatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.DocumentBasedFormattingModel;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -32,8 +43,18 @@ class FormatProcessor {
   private final LeafBlockWrapper myFirstTokenBlock;
   private final LeafBlockWrapper myLastTokenBlock;
 
-  private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies =
-    new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
+  private SortedMap<TextRange,Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies =
+    new TreeMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>(new Comparator<TextRange>() {
+      public int compare(final TextRange o1, final TextRange o2) {
+        int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
+
+        if (offsetsDelta == 0) {
+          offsetsDelta = o2.getStartOffset() - o1.getStartOffset();     // starting earlier is greater
+        }
+        return offsetsDelta;
+      }
+    });
+
   private Collection<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   private final WhiteSpace myLastWhiteSpace;
 
@@ -177,15 +198,70 @@ class FormatProcessor {
     List<LeafBlockWrapper> blocksToModify = collectBlocksToModify();
 
     int shift = 0;
+    boolean bulkReformat = false;
+    List<Editor> editorsWithBulkReformatNotified = null;
 
     try {
+      final int blocksToModifyCount = blocksToModify.size();
+      bulkReformat = false && blocksToModifyCount > 50;
+
+      if (bulkReformat) {
+        editorsWithBulkReformatNotified = buildOpenEditorsForModel(model, editorsWithBulkReformatNotified);
+
+        notifyBulkReformatStatus(editorsWithBulkReformatNotified, true);
+      }
+
+      int index = 0;
+
       for (LeafBlockWrapper block : blocksToModify) {
         shift = replaceWhiteSpace(model, block, shift, block.getWhiteSpace().generateWhiteSpace(myIndentOption));
+        ++index;
+
+        if (index + 1 == blocksToModifyCount) {
+          notifyBulkReformatStatus(editorsWithBulkReformatNotified, false);
+          editorsWithBulkReformatNotified = null;
+        }
       }
     }
     finally {
+      if (bulkReformat && editorsWithBulkReformatNotified != null) {   // emergency clean up
+        notifyBulkReformatStatus(editorsWithBulkReformatNotified, false);
+      }
       model.commitChanges();
     }
+  }
+
+  private static void notifyBulkReformatStatus(final List<Editor> editorsWithBulkReformatNotified, boolean status) {
+    if (editorsWithBulkReformatNotified != null) {
+      for(Editor editor:editorsWithBulkReformatNotified) {
+        if (editor instanceof EditorImpl) {
+          if (status) editor.putUserData(EditorImpl.DOING_BULK_REFORMAT,Boolean.TRUE);
+          else editor.putUserData(EditorImpl.DOING_BULK_REFORMAT,null);
+        }
+      }
+    }
+  }
+
+  private static List<Editor> buildOpenEditorsForModel(final FormattingModel model, List<Editor> editorsWithBulkReformatNotified) {
+    if (model instanceof DocumentBasedFormattingModel) {
+      final Document document = ((DocumentBasedFormattingModel)model).getDocument();
+      final Project project = ((DocumentBasedFormattingModel)model).getProject();
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+
+      if (psiFile != null && psiFile.getVirtualFile() != null) {
+        final FileEditor[] fileEditors = FileEditorManager.getInstance(project).getEditors(psiFile.getVirtualFile());
+
+        if (fileEditors.length > 0) {
+          for(FileEditor feditor:fileEditors) {
+            if (feditor instanceof TextEditor) {
+              if (editorsWithBulkReformatNotified == null) editorsWithBulkReformatNotified = new ArrayList<Editor>();
+              editorsWithBulkReformatNotified.add(((TextEditor)feditor).getEditor());
+            }
+          }
+        }
+      }
+    }
+    return editorsWithBulkReformatNotified;
   }
 
   protected int replaceWhiteSpace(final FormattingModel model,
@@ -287,11 +363,16 @@ class FormatProcessor {
   }
 
   private boolean shouldReformatBecauseOfBackwardDependance(TextRange changed) {
-    for (TextRange textRange : myPreviousDependancies.keySet()) {
-      final Pair<AbstractBlockWrapper, Boolean> pair = myPreviousDependancies.get(textRange);
-      final boolean containedLineFeeds = pair.getSecond().booleanValue();
-      if (textRange.getStartOffset() <= changed.getStartOffset() && textRange.getEndOffset() >= changed.getEndOffset()) {
-        boolean containsLineFeeds = containsLineFeeds(textRange);
+    final SortedMap<TextRange, Pair<AbstractBlockWrapper, Boolean>> sortedHeadMap = myPreviousDependancies.tailMap(changed);
+
+    for (final Map.Entry<TextRange, Pair<AbstractBlockWrapper, Boolean>> entry : sortedHeadMap.entrySet()) {
+      final TextRange textRange = entry.getKey();
+
+      if (textRange.contains(changed)) {
+        final Pair<AbstractBlockWrapper, Boolean> pair = entry.getValue();
+        final boolean containedLineFeeds = pair.getSecond().booleanValue();
+        final boolean containsLineFeeds = containsLineFeeds(textRange);
+
         if (containedLineFeeds != containsLineFeeds) {
           return true;
         }
@@ -304,8 +385,7 @@ class FormatProcessor {
     final DependantSpacingImpl dependantSpaceProperty = ((DependantSpacingImpl)spaceProperty);
     final TextRange dependancy = dependantSpaceProperty.getDependancy();
     if (dependantSpaceProperty.wasLFUsed()) {
-      myPreviousDependancies.put(dependancy,
-                                 new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
+      myPreviousDependancies.put(dependancy,new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
     }
     else {
       final boolean value = containsLineFeeds(dependancy);

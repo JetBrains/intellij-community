@@ -415,7 +415,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
     try{
-      LOG.debug(event.toString());
+      if (LOG.isDebugEnabled()) LOG.debug(event.toString());
+      
       myLineSet.changedUpdate(event);
       setModificationStamp(newModificationStamp);
 

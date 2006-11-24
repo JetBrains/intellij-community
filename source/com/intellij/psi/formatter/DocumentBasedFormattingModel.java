@@ -1,14 +1,13 @@
 package com.intellij.psi.formatter;
 
-import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -53,17 +52,17 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return myDocumentModel;
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.DocumentBasedFormattingModel");
+  //private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.DocumentBasedFormattingModel");
   public TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace) {
-    if (textRange.getLength() > 0) {
-      final CharSequence current = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
-      final String ws = current.toString();
-      // whitespace element can contain non-white characters, e.g. in injected langs with CDATA
-      //if (ws.trim().length() > 0) {
-      //  LOG.assertTrue(false, "Document text:" + myDocument.getText() + "\nwsText:" + ws);
-      //}
-
-    }
+    //if (textRange.getLength() > 0) {
+    //  final CharSequence current = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
+    //  final String ws = current.toString();
+    //  // whitespace element can contain non-white characters, e.g. in injected langs with CDATA
+    //  //if (ws.trim().length() > 0) {
+    //  //  LOG.assertTrue(false, "Document text:" + myDocument.getText() + "\nwsText:" + ws);
+    //  //}
+    //
+    //}
     myDocument.replaceString(textRange.getStartOffset(),
                              textRange.getEndOffset(),
                              whiteSpace);
@@ -147,4 +146,11 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return mySettings.getIndentOptions(myFileType);
   }
 
+  public Document getDocument() {
+    return myDocument;
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
 }
