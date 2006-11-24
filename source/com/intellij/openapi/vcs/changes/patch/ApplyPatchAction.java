@@ -52,16 +52,16 @@ public class ApplyPatchAction extends AnAction {
     applyPatch(project, dialog.getPatches(), dialog.getBaseDirectory(), dialog.getStripLeadingDirectories());
   }
 
-  public static void applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
-                                final int stripLeadingDirectories) {
+  public static boolean applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
+                                   final int stripLeadingDirectories) {
     for(FilePatch patch: patches) {
       VirtualFile fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories);
-      if (fileToPatch != null) {
+      if (fileToPatch != null && !fileToPatch.isDirectory()) {
         FileType fileType = fileToPatch.getFileType();
         if (fileType == StdFileTypes.UNKNOWN) {
           fileType = FileTypeChooser.associateFileType(fileToPatch.getPresentableName());
           if (fileType == null) {
-            return;
+            return false;
           }
         }
       }
@@ -76,15 +76,18 @@ public class ApplyPatchAction extends AnAction {
               status = ApplyPatchStatus.and(status, patchStatus);
             }
             if (status == ApplyPatchStatus.ALREADY_APPLIED) {
-              Messages.showInfoMessage(project, "All of the changes in the specified patch are already contained in the code", "Apply Patch");
+              Messages.showInfoMessage(project, VcsBundle.message("patch.apply.already.applied"),
+                                       VcsBundle.message("patch.apply.dialog.title"));
             }
             else if (status == ApplyPatchStatus.PARTIAL) {
-              Messages.showInfoMessage(project, "Some of the changes in the specified patch were skipped because are already contained in the code", "Apply Patch");
+              Messages.showInfoMessage(project, VcsBundle.message("patch.apply.partially.applied"),
+                                       VcsBundle.message("patch.apply.dialog.title"));
             }
           }
-        }, "apply patch", null);
+        }, VcsBundle.message("patch.apply.command"), null);
       }
     });
+    return true;
   }
 
   private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,
