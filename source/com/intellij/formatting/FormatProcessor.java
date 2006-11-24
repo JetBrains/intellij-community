@@ -203,7 +203,7 @@ class FormatProcessor {
 
     try {
       final int blocksToModifyCount = blocksToModify.size();
-      bulkReformat = false && blocksToModifyCount > 50;
+      bulkReformat = blocksToModifyCount > 50;
 
       if (bulkReformat) {
         editorsWithBulkReformatNotified = buildOpenEditorsForModel(model, editorsWithBulkReformatNotified);
@@ -235,8 +235,8 @@ class FormatProcessor {
     if (editorsWithBulkReformatNotified != null) {
       for(Editor editor:editorsWithBulkReformatNotified) {
         if (editor instanceof EditorImpl) {
-          if (status) editor.putUserData(EditorImpl.DOING_BULK_REFORMAT,Boolean.TRUE);
-          else editor.putUserData(EditorImpl.DOING_BULK_REFORMAT,null);
+          //if (status) editor.putUserData(EditorImpl.DOING_BULK_REFORMAT,Boolean.TRUE);
+          //else editor.putUserData(EditorImpl.DOING_BULK_REFORMAT,null);
         }
       }
     }
