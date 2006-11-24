@@ -22,10 +22,10 @@ public class UnshelveChangesAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
-    final ShelveChangesManager.ShelvedChangeListData[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
+    final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     LOG.assertTrue(changes != null);
     FileDocumentManager.getInstance().saveAllDocuments();
-    for(ShelveChangesManager.ShelvedChangeListData change: changes) {
+    for(ShelvedChangeList change: changes) {
       ShelveChangesManager.getInstance(project).unshelveChangeList(change);
     }
   }
@@ -33,7 +33,7 @@ public class UnshelveChangesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
-    final ShelveChangesManager.ShelvedChangeListData[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
+    final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     e.getPresentation().setEnabled(project != null && changes != null);
   }
 }

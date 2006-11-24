@@ -52,7 +52,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private Tree myTree = new ShelfTree();
   private Content myContent = null;
 
-  public static DataKey<ShelveChangesManager.ShelvedChangeListData[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
+  public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
 
   public ShelvedChangesViewManager(Project project, ToolWindowManagerEx toolWindowManager, ShelveChangesManager shelveChangesManager,
                                    final ChangesViewManager changesViewManager, final MessageBus bus) {
@@ -101,7 +101,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     if (contentManager == null) {
       return;
     }
-    final List<ShelveChangesManager.ShelvedChangeListData> changes = myShelveChangesManager.getShelvedChangeLists();
+    final List<ShelvedChangeList> changes = myShelveChangesManager.getShelvedChangeLists();
     if (changes.size() == 0) {
       if (myContent != null) {
         contentManager.removeContent(myContent);
@@ -120,8 +120,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private TreeModel buildChangesModel() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
-    final List<ShelveChangesManager.ShelvedChangeListData> changeLists = myShelveChangesManager.getShelvedChangeLists();
-    for(ShelveChangesManager.ShelvedChangeListData changeListData: changeLists) {
+    final List<ShelvedChangeList> changeLists = myShelveChangesManager.getShelvedChangeLists();
+    for(ShelvedChangeList changeListData: changeLists) {
       DefaultMutableTreeNode node = new DefaultMutableTreeNode(changeListData);
       model.insertNodeInto(node, root, root.getChildCount());
 
@@ -148,10 +148,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private class ShelfTree extends Tree implements TypeSafeDataProvider {
     public void calcData(DataKey key, DataSink sink) {
       if (key == SHELVED_CHANGELIST_KEY) {
-        final List<ShelveChangesManager.ShelvedChangeListData> list =
-          TreeUtil.collectSelectedObjectsOfType(this, ShelveChangesManager.ShelvedChangeListData.class);
+        final List<ShelvedChangeList> list = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
         if (list != null) {
-          sink.put(SHELVED_CHANGELIST_KEY, list.toArray(new ShelveChangesManager.ShelvedChangeListData[list.size()]));
+          sink.put(SHELVED_CHANGELIST_KEY, list.toArray(new ShelvedChangeList[list.size()]));
         }
       }
       else if (key == DataKeys.CHANGES) {
@@ -164,11 +163,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           sink.put(DataKeys.CHANGES, changes);
         }
         else {
-          final List<ShelveChangesManager.ShelvedChangeListData> changeLists =
-            TreeUtil.collectSelectedObjectsOfType(this, ShelveChangesManager.ShelvedChangeListData.class);
+          final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
           if (changeLists.size() > 0) {
             List<Change> changes = new ArrayList<Change>();
-            for(ShelveChangesManager.ShelvedChangeListData changeList: changeLists) {
+            for(ShelvedChangeList changeList: changeLists) {
               shelvedChanges = changeList.getChanges();
               for(ShelvedChange shelvedChange: shelvedChanges) {
                 changes.add(shelvedChange.getChange(myProject));
@@ -185,8 +183,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
       Object nodeValue = node.getUserObject();
-      if (nodeValue instanceof ShelveChangesManager.ShelvedChangeListData) {
-        ShelveChangesManager.ShelvedChangeListData changeListData = (ShelveChangesManager.ShelvedChangeListData) nodeValue;
+      if (nodeValue instanceof ShelvedChangeList) {
+        ShelvedChangeList changeListData = (ShelvedChangeList) nodeValue;
         append(changeListData.DESCRIPTION, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         final String date = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT).format(changeListData.DATE);
         append(" (" + date + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);

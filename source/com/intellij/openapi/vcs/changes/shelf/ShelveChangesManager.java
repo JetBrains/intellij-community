@@ -15,12 +15,10 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
@@ -48,9 +46,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
   private Project myProject;
   private MessageBus myBus;
-  private List<ShelvedChangeListData> myShelvedChangeListDatas = new ArrayList<ShelvedChangeListData>();
+  private List<ShelvedChangeList> myShelvedChangeListDatas = new ArrayList<ShelvedChangeList>();
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
-  @NonNls private static final String ATTRIBUTE_DATE = "date";
   @NonNls private String myShelfPath;
 
   public static final Topic<ChangeListener> SHELF_TOPIC = new Topic<ChangeListener>("shelf updates", ChangeListener.class);
@@ -83,21 +80,21 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     //noinspection unchecked
     final List<Element> children = (List<Element>)element.getChildren(ELEMENT_CHANGELIST);
     for(Element child: children) {
-      ShelvedChangeListData data = new ShelvedChangeListData();
+      ShelvedChangeList data = new ShelvedChangeList();
       data.readExternal(child);
       myShelvedChangeListDatas.add(data);
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for(ShelvedChangeListData data: myShelvedChangeListDatas) {
+    for(ShelvedChangeList data: myShelvedChangeListDatas) {
       Element child = new Element(ELEMENT_CHANGELIST);
       data.writeExternal(child);
       element.addContent(child);
     }
   }
 
-  public List<ShelvedChangeListData> getShelvedChangeLists() {
+  public List<ShelvedChangeList> getShelvedChangeLists() {
     return Collections.unmodifiableList(myShelvedChangeListDatas);
   }
 
@@ -114,7 +111,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
     RollbackChangesDialog.doRollback(myProject, changes, true, false);
 
-    myShelvedChangeListDatas.add(new ShelvedChangeListData(patchPath.toString(), commitMessage));
+    myShelvedChangeListDatas.add(new ShelvedChangeList(patchPath.toString(), commitMessage));
     notifyStateChanged();
   }
 
@@ -141,7 +138,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return new File(file, path);
   }
 
-  public void unshelveChangeList(final ShelvedChangeListData change) {
+  public void unshelveChangeList(final ShelvedChangeList change) {
     try {
       List<FilePatch> patches = loadPatches(change.PATH);
       VirtualFile baseDir = myProject.getProjectFile().getParent();
@@ -168,60 +165,4 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return reader.readAllPatches();
   }
 
-  public static class ShelvedChangeListData implements JDOMExternalizable {
-    public String PATH;
-    public String DESCRIPTION;
-    public Date DATE;
-    private List<ShelvedChange> myChanges;
-
-    public ShelvedChangeListData() {
-    }
-
-    public ShelvedChangeListData(final String path, final String description) {
-      PATH = path;
-      DESCRIPTION = description;
-      DATE = new Date();
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-      DefaultJDOMExternalizer.readExternal(this, element);
-      DATE = new Date(Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE)));
-    }
-
-    public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-      element.setAttribute(ATTRIBUTE_DATE, Long.toString(DATE.getTime()));
-    }
-
-    @Override
-    public String toString() {
-      return DESCRIPTION;
-    }
-
-    public List<ShelvedChange> getChanges() {
-      if (myChanges == null) {
-        try {
-          final List<FilePatch> list = loadPatches(PATH);
-          myChanges = new ArrayList<ShelvedChange>();
-          for(FilePatch patch: list) {
-            FileStatus status;
-            if (patch.isNewFile()) {
-              status = FileStatus.ADDED;
-            }
-            else if (patch.isDeletedFile()) {
-              status = FileStatus.DELETED;
-            }
-            else {
-              status = FileStatus.MODIFIED;
-            }
-            myChanges.add(new ShelvedChange(PATH, patch.getBeforeName(), status));                               
-          }
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-      return myChanges;
-    }
-  }
 }
