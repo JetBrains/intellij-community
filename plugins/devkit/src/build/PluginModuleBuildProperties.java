@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.javaee.DeploymentDescriptorFactory;
-import com.intellij.javaee.JavaeeDeploymentItem;
-import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.openapi.deployment.DeploymentDescriptorFactory;
+import com.intellij.openapi.deployment.DeploymentItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -34,17 +34,20 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 
 import java.io.File;
 
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements JDOMExternalizable {
   private Module myModule;
-  private JavaeeDeploymentItem myPluginXML;
+  private DeploymentItem myPluginXML;
   private VirtualFilePointer myPluginXMLPointer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
@@ -69,6 +72,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     return PluginBuildUtil.getPluginExPath(myModule);
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }
@@ -95,11 +99,15 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   @Nullable
   public BuildParticipant getBuildParticipant() {
-    return null;
+    final ProjectJdk jdk = ModuleRootManager.getInstance(myModule).getJdk();
+    if (jdk != null && jdk.getSdkType() instanceof IdeaJdk && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
+      return null;
+    }
+    return new PluginBuildParticipant(myModule);
   }
 
   @Nullable
-  public UnnamedConfigurable getBuildConfigurable(JavaeeModuleProperties moduleProperties, ModifiableRootModel rootModel) {
+  public UnnamedConfigurable getBuildConfigurable(ModifiableRootModel rootModel) {
     return null;
   }
 
@@ -109,6 +117,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public void moduleAdded() {}
 
+  @NotNull
   public String getComponentName() {
     return "DevKit.ModuleBuildProperties";
   }
@@ -143,7 +152,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     }
   }
 
-  public JavaeeDeploymentItem getPluginXML() {
+  public DeploymentItem getPluginXML() {
     if (myPluginXML == null) {
       myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
       myPluginXML.setUrl(getPluginXMLPointer().getUrl());

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.devkit.module;
 
-import com.intellij.javaee.DeploymentDescriptorMetaData;
+import com.intellij.openapi.deployment.DeploymentDescriptorMetaData;
 import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
