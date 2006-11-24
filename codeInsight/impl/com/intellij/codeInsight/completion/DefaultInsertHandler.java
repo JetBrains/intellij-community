@@ -131,7 +131,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     final boolean needLeftParenth = isToInsertParenth(tailType);
     final boolean hasParams = needLeftParenth && hasParams(signatureSelected);
-    tailType = modifyTailTypeBasedOnMethodReturnType(signatureSelected, needLeftParenth, hasParams, tailType);
+    tailType = modifyTailTypeBasedOnMethodReturnType(signatureSelected, tailType);
 
     if (overwrite)
       removeEndOfIdentifier(needLeftParenth && hasParams);
@@ -187,24 +187,24 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (insertingAnnotation()) {
       final Document document = context.editor.getDocument();
       PsiDocumentManager.getInstance(context.project).commitDocument(document);
-      int expectedDogOffset = myStartOffset;
-
-      PsiElement elementAt = myFile.findElementAt(expectedDogOffset - 1);
-      final PsiJavaCodeReferenceElement javaCodeRef = PsiTreeUtil.getParentOfType(elementAt, PsiJavaCodeReferenceElement.class);
-
-      if (javaCodeRef != null) {
-        elementAt = myFile.findElementAt(
-          (expectedDogOffset = javaCodeRef.getTextRange().getStartOffset()) - 1
-        );
-      }
-
-      if(!"@".equals(elementAt.getText()) &&
-         PsiTreeUtil.getParentOfType(elementAt,PsiImportStatement.class,PsiExpressionStatement.class) == null
-        ) {
-        document.insertString(expectedDogOffset, "@");
+      PsiElement elementAt = myFile.findElementAt(myContext.startOffset);
+      if (elementAt instanceof PsiIdentifier && isAtTokenNeeded()) {
+        final PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
+        if (parent instanceof PsiModifierListOwner) {
+          int expectedOffsetForAtToken = elementAt.getTextRange().getStartOffset();
+          document.insertString(expectedOffsetForAtToken, "@");
+        }
       }
     }
     return true;
+  }
+
+  private boolean isAtTokenNeeded() {
+    HighlighterIterator iterator = ((EditorEx)myContext.editor).getHighlighter().createIterator(myContext.startOffset);
+    LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
+    iterator.retreat();
+    if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
+    return iterator.getTokenType() != JavaTokenType.AT && iterator.getTokenType() != JavaTokenType.DOT;
   }
 
   private static boolean isTemplateToBeCompleted(final LookupItem lookupItem) {
@@ -212,7 +212,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
            && lookupItem.getAttribute(EXPANDED_TEMPLATE_ATTR) == null;
   }
 
-  private int modifyTailTypeBasedOnMethodReturnType(boolean signatureSelected, boolean needLeftParenth, boolean hasParams, int tailType) {
+  private int modifyTailTypeBasedOnMethodReturnType(boolean signatureSelected, int tailType) {
     Object completion = myLookupItem.getObject();
     if(completion instanceof PsiMethod){
       final PsiMethod method = ((PsiMethod)completion);
@@ -398,14 +398,16 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if(insertingAnnotation()) {
       final Document document = myContext.editor.getDocument();
       PsiDocumentManager.getInstance(myContext.project).commitDocument(document);
-      final PsiElement elementAt = myFile.findElementAt(myStartOffset - 1);
-
-      if (PsiTreeUtil.getParentOfType(elementAt,PsiImportStatement.class) == null) {
-        final PsiClass psiClass = (PsiClass)myLookupItem.getObject();
-        for(PsiMethod m:psiClass.getMethods()) {
-          if (!(m instanceof PsiAnnotationMethod)) continue;
-          final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
-          if (defaultValue == null) return true;
+      PsiElement elementAt = myFile.findElementAt(myContext.startOffset);
+      if (elementAt instanceof PsiIdentifier) {
+        final PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
+        if (parent instanceof PsiModifierListOwner) {
+          final PsiClass psiClass = (PsiClass)myLookupItem.getObject();
+          for (PsiMethod m : psiClass.getMethods()) {
+            if (!(m instanceof PsiAnnotationMethod)) continue;
+            final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
+            if (defaultValue == null) return true;
+          }
         }
       }
     }
