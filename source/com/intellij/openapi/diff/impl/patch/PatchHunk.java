@@ -12,6 +12,7 @@ package com.intellij.openapi.diff.impl.patch;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 public class PatchHunk {
   private int myStartLineBefore;
@@ -27,8 +28,28 @@ public class PatchHunk {
     myEndLineAfter = endLineAfter;
   }
 
+  public int getStartLineBefore() {
+    return myStartLineBefore;
+  }
+
+  public int getEndLineBefore() {
+    return myEndLineBefore;
+  }
+
+  public int getStartLineAfter() {
+    return myStartLineAfter;
+  }
+
+  public int getEndLineAfter() {
+    return myEndLineAfter;
+  }
+
   public void addLine(final PatchLine line) {
     myLines.add(line);
+  }
+
+  public List<PatchLine> getLines() {
+    return Collections.unmodifiableList(myLines);
   }
 
   public ApplyPatchStatus apply(final List<String> lines) throws ApplyPatchException {

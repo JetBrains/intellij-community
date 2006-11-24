@@ -17,6 +17,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.impl.patch.PatchBuilder;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.Icons;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
@@ -97,7 +100,8 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
       try {
         Writer writer = new OutputStreamWriter(new FileOutputStream(myPanel.getFileName()));
         try {
-          PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl(), writer);
+          List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl());
+          UnifiedDiffWriter.write(patches, writer);
         }
         finally {
           writer.close();

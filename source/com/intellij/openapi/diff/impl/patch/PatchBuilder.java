@@ -23,8 +23,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -33,16 +31,17 @@ import java.util.List;
 public class PatchBuilder {
   private static final int CONTEXT_LINES = 3;
 
-  public static void buildPatch(final Collection<Change> changes, final String basePath, final Writer writer) throws IOException {
+  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath) {
+    List<FilePatch> result = new ArrayList<FilePatch>();
     for(Change c: changes) {
       final ContentRevision beforeRevision = c.getBeforeRevision();
       final ContentRevision afterRevision = c.getAfterRevision();
       if (beforeRevision == null) {
-        writeAddedFile(writer, basePath, afterRevision);
+        result.add(buildAddedFile(basePath, afterRevision));
         continue;
       }
       if (afterRevision == null) {
-        writeDeletedFile(writer, basePath, beforeRevision);
+        result.add(buildDeletedFile(basePath, beforeRevision));
         continue;
       }
       final String beforeContent = beforeRevision.getContent();
@@ -55,7 +54,8 @@ public class PatchBuilder {
       ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
 
       if (fragments.size() > 1) {
-        writeFileHeading(writer, basePath, beforeRevision, afterRevision);
+        FilePatch patch = buildPatchHeading(basePath, beforeRevision, afterRevision);
+        result.add(patch);
 
         int lastLine1 = 0;
         int lastLine2 = 0;
@@ -75,45 +75,51 @@ public class PatchBuilder {
             int contextEnd1 = Math.min(end1 + CONTEXT_LINES, beforeLines.length);
             int contextEnd2 = Math.min(end2 + CONTEXT_LINES, afterLines.length);
 
-            writeDiffFragmentStart(writer, contextStart1, contextEnd1, contextStart2, contextEnd2);
+            PatchHunk hunk = new PatchHunk(contextStart1, contextEnd1, contextStart2, contextEnd2);
+            patch.addHunk(hunk);
 
             for(LineFragment fragment: adjacentFragments) {
               for(int i=contextStart1; i<fragment.getStartingLine1(); i++) {
-                writeLine(writer, beforeLines [i], ' ');
+                hunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, beforeLines [i]));
               }
               for(int i=fragment.getStartingLine1(); i<fragment.getStartingLine1()+fragment.getModifiedLines1(); i++) {
-                writeLine(writer, beforeLines [i], '-');
+                hunk.addLine(new PatchLine(PatchLine.Type.REMOVE,  beforeLines [i]));
               }
               for(int i=fragment.getStartingLine2(); i<fragment.getStartingLine2()+fragment.getModifiedLines2(); i++) {
-                writeLine(writer, afterLines [i], '+');
+                hunk.addLine(new PatchLine(PatchLine.Type.ADD,  afterLines [i]));
               }
               contextStart1 = fragment.getStartingLine1()+fragment.getModifiedLines1();
             }
             for(int i=contextStart1; i<contextEnd1; i++) {
-              writeLine(writer, beforeLines [i], ' ');
+              hunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, beforeLines [i]));
             }
           }
         }
       }
     }
+    return result;
   }
 
-  private static void writeAddedFile(final Writer writer, final String basePath, final ContentRevision afterRevision) throws IOException {
+  private static FilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) {
     String[] lines = DiffUtil.convertToLines(afterRevision.getContent());
-    writeFileHeading(writer, basePath, afterRevision, afterRevision);
-    writeDiffFragmentStart(writer, -1, -1, 0, lines.length);
+    FilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
+    PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
-      writeLine(writer, line, '+');
+      hunk.addLine(new PatchLine(PatchLine.Type.ADD, line));
     }
+    result.addHunk(hunk);
+    return result;
   }
 
-  private static void writeDeletedFile(Writer writer, String basePath, ContentRevision beforeRevision) throws IOException {
+  private static FilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision) {
     String[] lines = DiffUtil.convertToLines(beforeRevision.getContent());
-    writeFileHeading(writer, basePath, beforeRevision, beforeRevision);
-    writeDiffFragmentStart(writer, 0, lines.length, -1, -1);
+    FilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
+    PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {
-      writeLine(writer, line, '-');
+      hunk.addLine(new PatchLine(PatchLine.Type.REMOVE, line));
     }
+    result.addHunk(hunk);
+    return result;
   }
 
   private static List<LineFragment> getAdjacentFragments(final ArrayList<LineFragment> fragments) {
@@ -138,37 +144,28 @@ public class PatchBuilder {
     return result;
   }
 
-  private static void writeLine(final Writer writer, final String line, final char prefix) throws IOException {
-    writer.write(prefix);
-    writer.write(line);
+  private static String getRelativePath(final String basePath, final File ioFile) {
+    return FileUtil.getRelativePath(new File(basePath), ioFile).replace(File.separatorChar, '/');
   }
 
-  private static void writeFileHeading(final Writer writer, final String basePath, final ContentRevision beforeRevision, final ContentRevision afterRevision)
-    throws IOException {
-    writeRevisionHeading(writer, "---", basePath, beforeRevision);
-    writeRevisionHeading(writer, "+++", basePath, afterRevision);
-  }
-
-  private static void writeRevisionHeading(final Writer writer, final String prefix, final String basePath, final ContentRevision revision)
-    throws IOException {
-    writer.write(prefix + " ");
-    File ioFile = revision.getFile().getIOFile();
-    String relativePath = FileUtil.getRelativePath(new File(basePath), ioFile).replace(File.separatorChar, '/');
-    writer.write(relativePath);
-    writer.write("\t");
+  private static String getRevisionName(final ContentRevision revision, final File ioFile) {
     String revisionName = revision.getRevisionNumber().asString();
     if (revisionName.length() == 0) {
       revisionName = new Date(ioFile.lastModified()).toString();
     }
-    writer.write(revisionName);
-    writer.write("\n");
+    return revisionName;
   }
 
-  private static void writeDiffFragmentStart(Writer writer, int startLine1, int endLine1, int startLine2, int endLine2)
-    throws IOException {
-    StringBuilder builder = new StringBuilder("@@ -");
-    builder.append(startLine1+1).append(",").append(endLine1-startLine1);
-    builder.append(" +").append(startLine2+1).append(",").append(endLine2-startLine2).append(" @@\n");
-    writer.append(builder.toString());
+  private static FilePatch buildPatchHeading(final String basePath, final ContentRevision beforeRevision, final ContentRevision afterRevision) {
+    FilePatch result = new FilePatch();
+    File beforeFile = beforeRevision.getFile().getIOFile();
+    result.setBeforeName(getRelativePath(basePath, beforeFile));
+    result.setBeforeVersionId(getRevisionName(beforeRevision, beforeFile));
+
+    File afterFile = afterRevision.getFile().getIOFile();
+    result.setAfterName(getRelativePath(basePath, afterFile));
+    result.setAfterVersionId(getRevisionName(afterRevision, afterFile));
+
+    return result;
   }
 }

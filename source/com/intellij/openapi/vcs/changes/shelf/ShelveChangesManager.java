@@ -13,10 +13,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchBuilder;
-import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -108,7 +105,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     File patchPath = getPatchPath(commitMessage);
     Writer writer = new OutputStreamWriter(new FileOutputStream(patchPath));
     try {
-      PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl(), writer);
+      List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl());
+      UnifiedDiffWriter.write(patches, writer);
     }
     finally {
       writer.close();

@@ -71,6 +71,10 @@ public class FilePatch {
     myHunks.add(hunk);
   }
 
+  public List<PatchHunk> getHunks() {
+    return Collections.unmodifiableList(myHunks);
+  }
+
   public ApplyPatchStatus apply(final VirtualFile patchedDir, final int skipTopDirs) throws ApplyPatchException, IOException {
     VirtualFile fileToPatch = findFileToPatch(patchedDir, skipTopDirs);
 
