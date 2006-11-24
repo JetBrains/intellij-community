@@ -114,8 +114,13 @@ public class SmartStepIntoAction extends AnAction {
       //noinspection unchecked
       final List<PsiMethod> methods = new OrderedSet<PsiMethod>(TObjectHashingStrategy.CANONICAL);
       final PsiRecursiveElementVisitor methodCollector = new PsiRecursiveElementVisitor() {
-        
         public void visitAnonymousClass(PsiAnonymousClass aClass) { /*skip annonymous classes*/ }
+
+        public void visitStatement(PsiStatement statement) {
+          if (lineRange.intersects(statement.getTextRange())) {
+            super.visitStatement(statement);
+          }
+        }
 
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
