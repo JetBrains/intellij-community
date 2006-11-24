@@ -59,8 +59,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
 
   @NonNls public static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
   @NonNls public static final String MISSING_FILES_KEY = "ChangeListView.MissingFiles";
+  @NonNls public static final String HELP_ID_KEY = "helpId";
+  @NonNls public static final String ourHelpId = "ideaInterface.changes";
   @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create(UNVERSIONED_FILES_KEY);
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create(MISSING_FILES_KEY);
+  @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
 
   public ChangesListView(final Project project) {
     myProject = project;
@@ -169,6 +172,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     }
     else if (key == MISSING_FILES_DATA_KEY) {
       sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles());
+    }
+    else if (key == HELP_ID_DATA_KEY) {
+      sink.put(HELP_ID_DATA_KEY, ourHelpId);
     }
   }
 

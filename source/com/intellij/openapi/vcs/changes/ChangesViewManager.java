@@ -17,6 +17,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -176,6 +177,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
                                                                                              : KeyEvent.CTRL_DOWN_MASK)),
                                                 panel);
     visualActionsGroup.add(showFlattenAction);
+    visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
     toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
 
 
