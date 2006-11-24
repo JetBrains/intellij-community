@@ -66,6 +66,7 @@ public class ApplyPatchAction extends AnAction {
         }
       }
     }
+    final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -83,11 +84,12 @@ public class ApplyPatchAction extends AnAction {
               Messages.showInfoMessage(project, VcsBundle.message("patch.apply.partially.applied"),
                                        VcsBundle.message("patch.apply.dialog.title"));
             }
+            statusRef.set(status);
           }
         }, VcsBundle.message("patch.apply.command"), null);
       }
     });
-    return true;
+    return statusRef.get() != ApplyPatchStatus.FAILURE;
   }
 
   private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,

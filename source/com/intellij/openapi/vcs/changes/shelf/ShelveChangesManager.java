@@ -154,9 +154,13 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       LOG.error(e);
       return;
     }
+    deleteChangeList(change);
+  }
+
+  public void deleteChangeList(final ShelvedChangeList change) {
     FileUtil.delete(new File(change.PATH));
     myShelvedChangeListDatas.remove(change);
-    notifyStateChanged();    
+    notifyStateChanged();
   }
 
   public static List<FilePatch> loadPatches(final String patchPath) throws IOException, PatchSyntaxException {

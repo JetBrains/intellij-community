@@ -18,8 +18,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -29,6 +31,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.ide.DeleteProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +54,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private ToolWindowManagerListener myToolWindowManagerListener = new MyToolWindowManagerListener();
   private Tree myTree = new ShelfTree();
   private Content myContent = null;
+  private ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
 
   public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
 
@@ -176,6 +180,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           }
         }
       }
+      else if (key == DataKeys.DELETE_ELEMENT_PROVIDER) {
+        sink.put(DataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+      }
     }
   }
 
@@ -196,6 +203,28 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         append(" ("+ change.getPatchedFilePath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(FileTypeManager.getInstance().getFileTypeByFileName(change.getFileName()).getIcon());
       }
+    }
+  }
+
+  private class ShelvedChangeDeleteProvider implements DeleteProvider {
+    public void deleteElement(DataContext dataContext) {
+      //noinspection unchecked
+      ShelvedChangeList[] shelvedChangeLists = (ShelvedChangeList[]) dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
+      if (shelvedChangeLists == null || shelvedChangeLists.length == 0) return;
+      String message = (shelvedChangeLists.length == 1)
+        ? VcsBundle.message("shelve.changes.delete.confirm", shelvedChangeLists[0].DESCRIPTION)
+        : VcsBundle.message("shelve.changes.delete.multiple.confirm", shelvedChangeLists.length);
+      int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), Messages.getWarningIcon());
+      if (rc != 0) return;
+      for(ShelvedChangeList changeList: shelvedChangeLists) {
+        ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
+      }
+    }
+
+    public boolean canDeleteElement(DataContext dataContext) {
+      //noinspection unchecked
+      ShelvedChangeList[] shelvedChangeLists = (ShelvedChangeList[]) dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
+      return shelvedChangeLists != null && shelvedChangeLists.length > 0;
     }
   }
 }
