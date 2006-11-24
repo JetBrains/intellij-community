@@ -162,7 +162,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     notifyStateChanged();    
   }
 
-  private static List<FilePatch> loadPatches(final String patchPath) throws IOException, PatchSyntaxException {
+  public static List<FilePatch> loadPatches(final String patchPath) throws IOException, PatchSyntaxException {
     char[] text = FileUtil.loadFileText(new File(patchPath));
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text));
     return reader.readAllPatches();

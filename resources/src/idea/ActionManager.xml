@@ -1713,6 +1713,7 @@
 
     <group id="ShelvedChangesPopupMenu">
       <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
+      <reference ref="ChangesView.Diff"/>
     </group>
 
   </actions>

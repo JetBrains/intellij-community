@@ -10,56 +10,57 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.vcs.changes.ChangesViewManager;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.util.ui.Tree;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesViewManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.peer.PeerFactory;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.peer.PeerFactory;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.ChangeListener;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.tree.TreeModel;
+import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.*;
-import java.util.List;
-import java.util.ArrayList;
+import javax.swing.tree.TreeModel;
+import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private ToolWindowManagerEx myToolWindowManager;
   private ShelveChangesManager myShelveChangesManager;
+  private final Project myProject;
   private ChangesViewManager myChangesViewManager;
   private ToolWindowManagerListener myToolWindowManagerListener = new MyToolWindowManagerListener();
   private Tree myTree = new ShelfTree();
   private Content myContent = null;
-  private MessageBus myBus;
 
   public static DataKey<ShelveChangesManager.ShelvedChangeListData[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
 
-  public ShelvedChangesViewManager(final ToolWindowManagerEx toolWindowManager, final ShelveChangesManager shelveChangesManager,
+  public ShelvedChangesViewManager(Project project, ToolWindowManagerEx toolWindowManager, ShelveChangesManager shelveChangesManager,
                                    final ChangesViewManager changesViewManager, final MessageBus bus) {
+    myProject = project;
     myChangesViewManager = changesViewManager;
     myToolWindowManager = toolWindowManager;
     myShelveChangesManager = shelveChangesManager;
-    myBus = bus;
-    myBus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
+    bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         updateChangesContent();
       }
@@ -68,6 +69,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new ShelfTreeCellRenderer());
+
+    final CustomShortcutSet diffShortcut =
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
+    ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(diffShortcut, myTree);
+
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
   }
 
@@ -139,21 +145,37 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
-  private static class ShelfTree extends Tree implements TypeSafeDataProvider {
+  private class ShelfTree extends Tree implements TypeSafeDataProvider {
     public void calcData(DataKey key, DataSink sink) {
       if (key == SHELVED_CHANGELIST_KEY) {
-        List<ShelveChangesManager.ShelvedChangeListData> result = new ArrayList<ShelveChangesManager.ShelvedChangeListData>();
-        final TreePath[] treePaths = getSelectionPaths();
-        for(TreePath treePath: treePaths) {
-          if (treePath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-            if (node.getUserObject() instanceof ShelveChangesManager.ShelvedChangeListData) {
-              result.add((ShelveChangesManager.ShelvedChangeListData) node.getUserObject());
-            }
-          }
+        final List<ShelveChangesManager.ShelvedChangeListData> list =
+          TreeUtil.collectSelectedObjectsOfType(this, ShelveChangesManager.ShelvedChangeListData.class);
+        if (list != null) {
+          sink.put(SHELVED_CHANGELIST_KEY, list.toArray(new ShelveChangesManager.ShelvedChangeListData[list.size()]));
         }
-        if (!result.isEmpty()) {
-          sink.put(SHELVED_CHANGELIST_KEY, result.toArray(new ShelveChangesManager.ShelvedChangeListData[result.size()]));
+      }
+      else if (key == DataKeys.CHANGES) {
+        List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
+        if (shelvedChanges.size() > 0) {
+          Change[] changes = new Change[shelvedChanges.size()];
+          for(int i=0; i<shelvedChanges.size(); i++) {
+            changes [i] = shelvedChanges.get(i).getChange(myProject);
+          }
+          sink.put(DataKeys.CHANGES, changes);
+        }
+        else {
+          final List<ShelveChangesManager.ShelvedChangeListData> changeLists =
+            TreeUtil.collectSelectedObjectsOfType(this, ShelveChangesManager.ShelvedChangeListData.class);
+          if (changeLists.size() > 0) {
+            List<Change> changes = new ArrayList<Change>();
+            for(ShelveChangesManager.ShelvedChangeListData changeList: changeLists) {
+              shelvedChanges = changeList.getChanges();
+              for(ShelvedChange shelvedChange: shelvedChanges) {
+                changes.add(shelvedChange.getChange(myProject));
+              }
+            }
+            sink.put(DataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+          }
         }
       }
     }
@@ -173,7 +195,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
         append(change.getFileName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, change.getFileStatus().getColor()));
-        append(" ("+ change.getFilePath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES); 
+        append(" ("+ change.getPatchedFilePath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         setIcon(FileTypeManager.getInstance().getFileTypeByFileName(change.getFileName()).getIcon());
       }
     }
