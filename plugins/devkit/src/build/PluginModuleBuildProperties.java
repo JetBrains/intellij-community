@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -109,6 +110,9 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   @Nullable
   public UnnamedConfigurable getBuildConfigurable(ModifiableRootModel rootModel) {
     return null;
+  }
+
+  public void runValidators(File output, CompileContext context) throws Exception {
   }
 
   public void projectOpened() {}
