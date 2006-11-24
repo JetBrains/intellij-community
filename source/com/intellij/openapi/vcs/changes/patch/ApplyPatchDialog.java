@@ -83,6 +83,8 @@ public class ApplyPatchDialog extends DialogWrapper {
     myBaseDirectoryField.addBrowseFolderListener(VcsBundle.message("patch.apply.select.base.directory.title"), "", project,
                                                  new FileChooserDescriptor(false, true, false, false, false, false));
 
+    myStripLeadingDirectoriesSpinner.setModel(new SpinnerNumberModel(0, 0, 256, 1));
+
     init();
     updateOKAction();
   }
