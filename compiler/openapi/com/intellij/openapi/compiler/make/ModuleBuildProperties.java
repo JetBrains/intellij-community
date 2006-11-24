@@ -19,11 +19,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.compiler.CompileContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 public abstract class ModuleBuildProperties implements ModuleComponent {
+  @Nullable
   public static ModuleBuildProperties getInstance(Module module) {
     return module.getComponent(ModuleBuildProperties.class);
   }
@@ -53,6 +57,8 @@ public abstract class ModuleBuildProperties implements ModuleComponent {
 
   @Nullable
   public abstract UnnamedConfigurable getBuildConfigurable(ModifiableRootModel rootModel);
+
+  public abstract void runValidators(File output, CompileContext context) throws Exception;
 
   public boolean willBuildExploded() {
     return isExplodedEnabled() && getExplodedPath() != null;

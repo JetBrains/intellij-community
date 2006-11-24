@@ -17,16 +17,14 @@ package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.deployment.DeploymentItem;
+import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.deployment.VerificationException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.deployment.DeploymentItem;
-import com.intellij.openapi.deployment.VerificationException;
-import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.javaee.JavaeeModuleProperties;
-import com.intellij.javaee.make.MakeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -85,7 +83,5 @@ public abstract class BuildParticipantBase implements BuildParticipant {
     });
   }
 
-  protected DeploymentItem[] getDeploymentDescriptors() {
-    return JavaeeModuleProperties.getInstance(myModule).getDeploymentItems();
-  }
+  protected abstract DeploymentItem[] getDeploymentDescriptors();
 }

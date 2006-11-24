@@ -1,8 +1,8 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.ant.j2ee.J2EEBuildTarget;
-import com.intellij.compiler.ant.j2ee.J2EEExplodedBuildTarget;
-import com.intellij.compiler.ant.j2ee.J2EEJarBuildTarget;
+import com.intellij.compiler.ant.j2ee.BuildExplodedTarget;
+import com.intellij.compiler.ant.j2ee.BuildJarTarget;
 import com.intellij.compiler.ant.taskdefs.Path;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -66,13 +66,15 @@ public class ChunkBuild extends CompositeGenerator{
     add(new CleanModule(chunk), 1);
 
     if (chunk.isJ2EE()) {
-      add(new J2EEBuildTarget(chunk, chunkBaseDir, genOptions));
+      final ModuleBuildProperties moduleBuildProperties = ModuleBuildProperties.getInstance(chunk.getModules()[0]);
+      assert moduleBuildProperties != null;
+      add(new J2EEBuildTarget(chunk, chunkBaseDir, genOptions, moduleBuildProperties));
       add(new Comment(CompilerBundle.message("generated.ant.build.exploded.target.comment", chunk.getName(),
                                              BuildProperties.getJ2EEExplodedPathProperty())), 1);
-      add(new J2EEExplodedBuildTarget(chunk, chunkBaseDir, genOptions));
-      add(new Comment(CompilerBundle.message("generated.ant.build.jar.target.comment", ModuleBuildProperties.getInstance(chunk.getModules()[0]).getArchiveExtension(), chunk.getName(),
+      add(new BuildExplodedTarget(chunk, chunkBaseDir, genOptions, moduleBuildProperties));
+      add(new Comment(CompilerBundle.message("generated.ant.build.jar.target.comment", moduleBuildProperties.getArchiveExtension(), chunk.getName(),
                                              BuildProperties.getJ2EEJarPathProperty())), 1);
-      add(new J2EEJarBuildTarget(chunk, chunkBaseDir, genOptions));
+      add(new BuildJarTarget(chunk, chunkBaseDir, genOptions, moduleBuildProperties));
     }
   }
 
