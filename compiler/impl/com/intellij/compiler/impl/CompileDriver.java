@@ -43,6 +43,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.pom.java.LanguageLevel;
@@ -231,7 +232,7 @@ public class CompileDriver {
       final VirtualFile outputDir = myGenerationCompilerModuleToOutputDirMap.get(pair);
       scope = new CompositeScope(scope, new FileSetCompileScope(new VirtualFile[]{outputDir}, new Module[]{pair.getSecond()}));
     }
-    CompileScope additionalJ2eeScope = com.intellij.javaee.make.MakeUtil.getInstance().getOutOfSourceJ2eeCompileScope(scope);
+    CompileScope additionalJ2eeScope = DeploymentUtil.getInstance().getOutOfSourceJ2eeCompileScope(scope);
     if (additionalJ2eeScope != null) {
       scope = new CompositeScope(scope, additionalJ2eeScope);
     }

@@ -1,4 +1,4 @@
-package com.intellij.compiler.impl.module;
+package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;

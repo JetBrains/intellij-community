@@ -1,7 +1,7 @@
 package com.intellij.jar;
 
-import com.intellij.javaee.make.MakeUtil;
-import com.intellij.javaee.module.ModuleContainer;
+import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.deployment.ModuleContainer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.util.InvalidDataException;
@@ -38,7 +38,7 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   }
   public BuildJarSettings(Module module) {
     myModule = module;
-    myModuleContainer = MakeUtil.getInstance().createModuleContainer(myModule);
+    myModuleContainer = DeploymentUtil.getInstance().createModuleContainer(myModule);
   }
 
   public boolean isBuildJar() {

@@ -29,14 +29,14 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.compiler.impl.module;
+package com.intellij.openapi.deployment;
 
-import com.intellij.javaee.make.MakeUtil;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.module.PackagingMethod;
-import com.intellij.openapi.compiler.module.ContainerElement;
-import com.intellij.openapi.compiler.module.LibraryLink;
+import com.intellij.openapi.deployment.PackagingMethod;
+import com.intellij.openapi.deployment.ContainerElement;
+import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -89,7 +89,7 @@ public class LibraryLinkImpl extends LibraryLink {
     methodToDescriptionForFiles.put(PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST, CompilerBundle.message("packaging.method.description.copy.files.and.link.via.manifest"));
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.module.LibraryLink");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.LibraryLink");
   private LibraryInfo myLibraryInfo;
 
   public LibraryLinkImpl(Library library, Module parentModule) {
@@ -245,7 +245,7 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   public LibraryLink clone() {
-    LibraryLink libraryLink = MakeUtil.getInstance().createLibraryLink(getLibrary(), getParentModule());
+    LibraryLink libraryLink = DeploymentUtil.getInstance().createLibraryLink(getLibrary(), getParentModule());
     Element temp = new Element(TEMP_ELEMENT_NAME);
     try {
       writeExternal(temp);

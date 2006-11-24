@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.compiler.make;
 
-import com.intellij.javaee.VerificationException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -23,7 +22,9 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.javaee.JavaeeDeploymentItem;
+import com.intellij.openapi.deployment.DeploymentItem;
+import com.intellij.openapi.deployment.VerificationException;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.javaee.JavaeeModuleProperties;
 import com.intellij.javaee.make.MakeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,15 +38,16 @@ public abstract class BuildParticipantBase implements BuildParticipant {
     myModule = module;
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }
 
   public void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
-    final JavaeeDeploymentItem[] deploymentDescriptors = getDeploymentDescriptors();
+    final DeploymentItem[] deploymentDescriptors = getDeploymentDescriptors();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        for (JavaeeDeploymentItem deploymentDescriptor : deploymentDescriptors) {
+        for (DeploymentItem deploymentDescriptor : deploymentDescriptors) {
           if (deploymentDescriptor.isDescriptorOptional()) {
             continue;
           }
@@ -75,7 +77,7 @@ public abstract class BuildParticipantBase implements BuildParticipant {
                                  CompilerBundle.message("message.text.compiling.module.message", moduleDescription, message), deploymentDescriptor.getUrl(), -1, -1);
             }
             else {
-              MakeUtil.getInstance().reportDeploymentDescriptorDoesNotExists(deploymentDescriptor, context, myModule);
+              DeploymentUtil.getInstance().reportDeploymentDescriptorDoesNotExists(deploymentDescriptor, context, myModule);
             }
           }
         }
@@ -83,7 +85,7 @@ public abstract class BuildParticipantBase implements BuildParticipant {
     });
   }
 
-  protected JavaeeDeploymentItem[] getDeploymentDescriptors() {
+  protected DeploymentItem[] getDeploymentDescriptors() {
     return JavaeeModuleProperties.getInstance(myModule).getDeploymentItems();
   }
 }

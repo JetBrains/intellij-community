@@ -16,13 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.module;
+package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.compiler.module.ModuleLink;
-import com.intellij.openapi.compiler.module.ContainerElement;
-import com.intellij.openapi.compiler.module.LibraryLink;
 import org.jetbrains.annotations.Nullable;
 
 public interface ModuleContainer extends TransactionalEditable, JDOMExternalizable {

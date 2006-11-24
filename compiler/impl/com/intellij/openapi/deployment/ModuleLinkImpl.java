@@ -29,13 +29,13 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.compiler.impl.module;
+package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.module.ModuleLink;
-import com.intellij.openapi.compiler.module.PackagingMethod;
-import com.intellij.openapi.compiler.module.ContainerElement;
+import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.deployment.PackagingMethod;
+import com.intellij.openapi.deployment.ContainerElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -52,7 +52,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ModuleLinkImpl extends ModuleLink {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.module.ModuleLink");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.ModuleLink");
   @NonNls private static final String NAME_ATTRIBUTE_NAME = "name";
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
   private Module myModule;

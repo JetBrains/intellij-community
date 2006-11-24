@@ -1,6 +1,7 @@
 package com.intellij.compiler.impl.make;
 
-import com.intellij.javaee.make.MakeUtil;
+import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.deployment.DeploymentUtilImpl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -47,16 +48,16 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
                                  final Set<String> writtenPaths,
                                  final FileFilter fileFilter) throws IOException {
     //todo optmization: cache created directory and issue single FileCopy on it
-    final File target = MakeUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
+    final File target = DeploymentUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
     final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
     final BuildRecipe buildRecipe = getChildInstructions(context);
     try {
-      File fromFile = new File(ModuleBuilder.getOrCreateExplodedDir(myBuildProperties.getModule()));
-      boolean builtAlready = ModuleBuilder.willBuildExploded(myBuildProperties);
+      File fromFile = new File(DeploymentUtilImpl.getOrCreateExplodedDir(myBuildProperties));
+      boolean builtAlready = myBuildProperties.willBuildExploded();
       if (!builtAlready) {
         ModuleBuilder.getInstance(getModule()).buildExploded(fromFile, context, new ArrayList<File>());
       }
-        MakeUtil.getInstance().copyFile(fromFile, target, context, writtenPaths, fileFilter);
+        DeploymentUtil.getInstance().copyFile(fromFile, target, context, writtenPaths, fileFilter);
         // copy dependencies
         buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
           public boolean visitInstruction(BuildInstruction instruction) throws Exception {
@@ -110,7 +111,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
       makeJar(context, tempFile, childDependencies, fileFilter, true);
       childDependencies.visitInstructions(new BuildInstructionVisitor() {
         public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws Exception {
-          File file = new File(PathUtil.getCanonicalPath(MakeUtil.appendToPath(tempFile.getPath(), instruction.getOutputRelativePath())));
+          File file = new File(PathUtil.getCanonicalPath(DeploymentUtil.appendToPath(tempFile.getPath(), instruction.getOutputRelativePath())));
           addFileToDelete(file);
           return true;
         }
@@ -121,7 +122,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
       childDependencies.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
         public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws Exception {
           File file = instruction.getFile();
-          String dependencyRelativePath = PathUtil.getCanonicalPath(MakeUtil.appendToPath(getOutputRelativePath(), instruction.getOutputRelativePath()));
+          String dependencyRelativePath = PathUtil.getCanonicalPath(DeploymentUtil.appendToPath(getOutputRelativePath(), instruction.getOutputRelativePath()));
 
           ZipUtil.addFileOrDirRecursively(outputStream, jarFile, file, dependencyRelativePath, fileFilter, writtenRelativePaths);
           return true;
@@ -134,7 +135,7 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
             instruction.makeJar(context, tempJar, fileFilter);
           }
           File jarFile = instruction.getJarFile();
-          String dependencyRelativePath = PathUtil.getCanonicalPath(MakeUtil.appendToPath(getOutputRelativePath(), instruction.getOutputRelativePath()));
+          String dependencyRelativePath = PathUtil.getCanonicalPath(DeploymentUtil.appendToPath(getOutputRelativePath(), instruction.getOutputRelativePath()));
 
           ZipUtil.addFileToZip(outputStream, jarFile, dependencyRelativePath, writtenRelativePaths, fileFilter);
           return true;
@@ -158,9 +159,9 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
                       final FileFilter fileFilter,
                       final boolean processExternalDependencies) throws IOException {
     final BuildRecipe buildRecipe = getChildInstructions(context);
-    final Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
+    final Manifest manifest = DeploymentUtil.getInstance().createManifest(buildRecipe);
     if (manifest == null) {
-      File file = MakeUtil.getInstance().findUserSuppliedManifestFile(buildRecipe);
+      File file = DeploymentUtil.getInstance().findUserSuppliedManifestFile(buildRecipe);
       LOG.assertTrue(file != null);
       context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("message.text.using.user.supplied.manifest", file.getAbsolutePath()), null, -1, -1);
     }

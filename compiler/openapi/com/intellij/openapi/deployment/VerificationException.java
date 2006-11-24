@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javaee.module;
+package com.intellij.openapi.deployment;
 
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ModifiableRootModel;
+public class VerificationException extends Exception {
+  public VerificationException() {
+  }
 
-public interface TransactionalEditable {
+  public VerificationException(String message) {
+    super(message);
+  }
 
-  void startEdit(ModifiableRootModel rootModel);
+  public VerificationException(Throwable cause) {
+    super(cause);
+  }
 
-  /**
-   *
-   * @return null if #startEdit has not been called
-   */
-  ModuleContainer getModifiableModel();
-
-  void commit(ModifiableRootModel model) throws ConfigurationException;
-
-  boolean isModified(ModifiableRootModel model);
+  public VerificationException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

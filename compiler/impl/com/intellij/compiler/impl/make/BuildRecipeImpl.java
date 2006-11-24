@@ -8,7 +8,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.javaee.make.MakeUtil;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,7 @@ public class BuildRecipeImpl implements BuildRecipe {
                                      String outputRelativePath,
                                      @Nullable FileFilter fileFilter) {
     if (fileFilter == null || fileFilter.accept(file)) {
-      addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, MakeUtil.trimForwardSlashes(outputRelativePath),fileFilter));
+      addInstruction(new FileCopyInstructionImpl(file, isDirectory, module, DeploymentUtil.trimForwardSlashes(outputRelativePath),fileFilter));
     }
   }
 

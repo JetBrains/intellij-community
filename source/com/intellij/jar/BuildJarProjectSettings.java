@@ -2,10 +2,10 @@ package com.intellij.jar;
 
 import com.intellij.execution.util.RefactoringElementListenerComposite;
 import com.intellij.ide.IdeBundle;
-import com.intellij.javaee.make.*;
-import com.intellij.openapi.compiler.module.LibraryLink;
-import com.intellij.javaee.module.ModuleContainer;
-import com.intellij.openapi.compiler.module.ModuleLink;
+import com.intellij.openapi.deployment.LibraryLink;
+import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.deployment.ModuleContainer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -182,7 +182,7 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
         result.setResult(getBuildRecipe(module, buildJarSettings));
       }
     }.execute().getResultObject();
-    Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
+    Manifest manifest = DeploymentUtil.getInstance().createManifest(buildRecipe);
     String mainClass = buildJarSettings.getMainClass();
     if (manifest != null && !Comparing.strEqual(mainClass, null)) {
       manifest.getMainAttributes().putValue(MAIN_CLASS,mainClass);
@@ -195,7 +195,7 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
                                             new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)), manifest);
 
     final Set<String> tempWrittenRelativePaths = new THashSet<String>();
-    final BuildRecipe dependencies = MakeUtil.getInstance().createBuildRecipe();
+    final BuildRecipe dependencies = DeploymentUtil.getInstance().createBuildRecipe();
     try {
       buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
         public boolean visitInstruction(BuildInstruction instruction) throws IOException {
@@ -240,13 +240,13 @@ public class BuildJarProjectSettings implements JDOMExternalizable, ProjectCompo
   static BuildRecipe getBuildRecipe(final Module module, final BuildJarSettings buildJarSettings) {
     final DummyCompileContext compileContext = DummyCompileContext.getInstance();
     ModuleContainer moduleContainer = buildJarSettings.getModuleContainer();
-    BuildRecipe buildRecipe = MakeUtil.getInstance().createBuildRecipe();
+    BuildRecipe buildRecipe = DeploymentUtil.getInstance().createBuildRecipe();
     LibraryLink[] libraries = moduleContainer.getContainingLibraries();
     for (LibraryLink libraryLink : libraries) {
-      MakeUtil.getInstance().addLibraryLink(compileContext, buildRecipe, libraryLink, module, null);
+      DeploymentUtil.getInstance().addLibraryLink(compileContext, buildRecipe, libraryLink, module, null);
     }
     ModuleLink[] modules = moduleContainer.getContainingModules();
-    MakeUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
+    DeploymentUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
     return buildRecipe;
   }
 

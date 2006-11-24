@@ -1,4 +1,10 @@
 <components>
+  <application-components>
+    <component>
+      <interface-class>com.intellij.openapi.deployment.DeploymentUtil</interface-class>
+      <implementation-class>com.intellij.openapi.deployment.DeploymentUtilImpl</implementation-class>
+    </component>
+  </application-components>
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.compiler.CompilerManager</interface-class>
@@ -42,4 +48,9 @@
       <skipForDummyProject/>
     </component>
   </project-components>
+  <module-components>
+    <component>
+      <implementation-class>com.intellij.compiler.impl.make.ModuleBuilder</implementation-class>
+    </component>
+  </module-components>
 </components>

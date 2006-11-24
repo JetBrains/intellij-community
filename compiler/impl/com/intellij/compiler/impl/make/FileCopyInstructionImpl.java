@@ -11,8 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.javaee.make.MakeUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,10 +45,10 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
                                  @Nullable Set<String> writtenPaths,
                                  @Nullable FileFilter fileFilter) throws IOException {
     if (myChangedSet == null) {
-      final File to = MakeUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
+      final File to = DeploymentUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
       // todo check for recursive copying
-      if (!MakeUtil.checkFileExists(getFile(), context)) return;
-      MakeUtil.getInstance().copyFile(getFile(), to, context, writtenPaths, fileFilter);
+      if (!DeploymentUtil.checkFileExists(getFile(), context)) return;
+      DeploymentUtil.getInstance().copyFile(getFile(), to, context, writtenPaths, fileFilter);
     }
     else {
       final ProgressIndicator progressIndicator = context.getProgressIndicator();
@@ -69,7 +69,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     if (!myIsDirectory) {
       return "".equals(pathFromFile) ? myFile : null;
     }
-    final File file = MakeUtil.canonicalRelativePath(myFile, pathFromFile);
+    final File file = DeploymentUtil.canonicalRelativePath(myFile, pathFromFile);
 
     return file.exists() ? file : null;
   }
@@ -85,14 +85,14 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     File file = getFile();
     if (isExternalDependencyInstruction()) {
       // copy dependent file along with jar file
-      final File toFile = MakeUtil.canonicalRelativePath(jarFile, outputRelativePath);
-      MakeUtil.getInstance().copyFile(file, toFile, context, null, fileFilter);
+      final File toFile = DeploymentUtil.canonicalRelativePath(jarFile, outputRelativePath);
+      DeploymentUtil.getInstance().copyFile(file, toFile, context, null, fileFilter);
       dependencies.addInstruction(this);
     }
     else {
       boolean ok = ZipUtil.addFileOrDirRecursively(outputStream, jarFile, file, outputRelativePath, fileFilter, writtenRelativePaths);
       if (!ok) {
-        MakeUtil.reportRecursiveCopying(context, file.getPath(), jarFile.getPath(), "",
+        DeploymentUtil.reportRecursiveCopying(context, file.getPath(), jarFile.getPath(), "",
                                         CompilerBundle.message("message.text.setup.jar.outside.directory.path", file.getPath()));
       }
     }
@@ -175,7 +175,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     VirtualFile virtualFile = localFileSystem.findFileByPath(FileUtil.toSystemIndependentName(getFile().getPath()));
     if (virtualFile == null) return;
 
-    final String outputRelativePath = MakeUtil.trimForwardSlashes(MakeUtil.appendToPath(relativePathToModuleOutputRoot, getOutputRelativePath()));
+    final String outputRelativePath = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(relativePathToModuleOutputRoot, getOutputRelativePath()));
     addFileItemsRecursively(virtualFile, outputRelativePath, fileInExplodedPath, items, targetModule, isExplodedEnabled, jarEnabled, jarFile);
   }
 
@@ -200,7 +200,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       for (final VirtualFile child : children) {
         VirtualFile childFileInExploded = fileInExplodedPath == null ? null : explodedFilesMap.get(child.getName());
         addFileItemsRecursively(child,
-                                MakeUtil.trimForwardSlashes(MakeUtil.appendToPath(outputRelativePath, child.getName())),
+                                DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(outputRelativePath, child.getName())),
                                 childFileInExploded,
                                 items,
                                 targetModule,

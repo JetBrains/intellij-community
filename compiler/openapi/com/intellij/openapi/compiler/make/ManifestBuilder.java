@@ -16,14 +16,16 @@
 package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.jar.Attributes;
 
-import org.jetbrains.annotations.NonNls;
-
 public class ManifestBuilder {
-  @NonNls protected static final String NAME = "Created-By";
+  @NonNls private static final String NAME = "Created-By";
   private static final Attributes.Name CREATED_BY = new Attributes.Name(NAME);
+
+  private ManifestBuilder() {
+  }
 
   public static void setGlobalAttributes(Attributes mainAttributes) {
     setIfNone(mainAttributes, Attributes.Name.MANIFEST_VERSION, "1.0");

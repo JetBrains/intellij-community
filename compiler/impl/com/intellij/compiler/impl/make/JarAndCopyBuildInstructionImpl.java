@@ -9,8 +9,8 @@ import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.javaee.make.MakeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
                                  Set<String> writtenPaths,
                                  FileFilter fileFilter) throws IOException {
     //todo optmization: cache created jar and issue single FileCopy on it
-    final File jarFile = MakeUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
+    final File jarFile = DeploymentUtil.canonicalRelativePath(outputDir, getOutputRelativePath());
 
     makeJar(context, jarFile, fileFilter);
     writtenPaths.add(myJarFile.getPath());
@@ -71,8 +71,8 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     File file = getJarFile();
     if (isExternalDependencyInstruction()) {
       // copy dependent file along with jar file
-      final File toFile = MakeUtil.canonicalRelativePath(jarFile, outputRelativePath);
-      MakeUtil.getInstance().copyFile(file, toFile, context, null, fileFilter);
+      final File toFile = DeploymentUtil.canonicalRelativePath(jarFile, outputRelativePath);
+      DeploymentUtil.getInstance().copyFile(file, toFile, context, null, fileFilter);
       dependencies.addInstruction(this);
     }
     else {
@@ -84,7 +84,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
     if (jarFile.equals(myJarFile)) return;
     if (myJarFile != null && myJarFile.exists()) {
       // optimization: file already jarred, copy it over
-      MakeUtil.getInstance().copyFile(myJarFile, jarFile, context, null, fileFilter);
+      DeploymentUtil.getInstance().copyFile(myJarFile, jarFile, context, null, fileFilter);
     }
     else {
       FileUtil.createParentDirs(jarFile);
@@ -99,7 +99,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
         boolean ok = ZipUtil.addDirToZipRecursively(jarOutputStream, jarFile, getFile(), "", fileFilter, writtenPaths);
         if (!ok) {
           String dirPath = getFile().getPath();
-          MakeUtil.reportRecursiveCopying(context, dirPath, jarFile.getPath(), "",
+          DeploymentUtil.reportRecursiveCopying(context, dirPath, jarFile.getPath(), "",
                                           CompilerBundle.message("message.text.setup.jar.outside.directory.path", dirPath));
         }
       }

@@ -1,4 +1,4 @@
-package com.intellij.compiler.impl.module;
+package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -11,13 +11,13 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcher;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcherFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.compiler.module.ModuleLink;
-import com.intellij.openapi.compiler.module.ContainerElement;
-import com.intellij.openapi.compiler.module.PackagingMethod;
-import com.intellij.openapi.compiler.module.LibraryLink;
+import com.intellij.openapi.deployment.ModuleLink;
+import com.intellij.openapi.deployment.ContainerElement;
+import com.intellij.openapi.deployment.PackagingMethod;
+import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.util.ExternalizableString;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.javaee.module.ModuleContainer;
+import com.intellij.openapi.deployment.ModuleContainer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;

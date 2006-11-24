@@ -19,9 +19,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.javaee.JavaeeModuleProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ModuleBuildProperties implements ModuleComponent {
   public static ModuleBuildProperties getInstance(Module module) {
@@ -35,6 +35,7 @@ public abstract class ModuleBuildProperties implements ModuleComponent {
 
   public abstract String getExplodedPath();
 
+  @NotNull
   public abstract Module getModule();
 
   public abstract boolean isJarEnabled();
@@ -51,7 +52,11 @@ public abstract class ModuleBuildProperties implements ModuleComponent {
   public abstract BuildParticipant getBuildParticipant();
 
   @Nullable
-  public abstract UnnamedConfigurable getBuildConfigurable(JavaeeModuleProperties moduleProperties, ModifiableRootModel rootModel);
+  public abstract UnnamedConfigurable getBuildConfigurable(ModifiableRootModel rootModel);
+
+  public boolean willBuildExploded() {
+    return isExplodedEnabled() && getExplodedPath() != null;
+  }
 
   public String getPresentableName() {
     return getModule().getName();

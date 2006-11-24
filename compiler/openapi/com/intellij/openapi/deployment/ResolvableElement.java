@@ -29,7 +29,7 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.openapi.compiler.module;
+package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 
