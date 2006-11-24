@@ -12,6 +12,8 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.vcs.FileStatus;
 
+import java.io.File;
+
 public class ShelvedChange {
   private String myPatchPath;
   private String myFilePath;
@@ -31,6 +33,12 @@ public class ShelvedChange {
     int pos = myFilePath.lastIndexOf('/');
     if (pos >= 0) return myFilePath.substring(pos+1);
     return myFilePath;
+  }
+
+  public String getDirectory() {
+    int pos = myFilePath.lastIndexOf('/');
+    if (pos >= 0) return myFilePath.substring(0, pos).replace('/', File.separatorChar);
+    return File.separator;
   }
 
   public FileStatus getFileStatus() {
