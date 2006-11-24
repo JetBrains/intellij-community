@@ -142,7 +142,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     try {
       List<FilePatch> patches = loadPatches(change.PATH);
       VirtualFile baseDir = myProject.getProjectFile().getParent();
-      if (!ApplyPatchAction.applyPatch(myProject, patches, baseDir, 0)) {
+      if (ApplyPatchAction.applyPatch(myProject, patches, baseDir, 0) == ApplyPatchStatus.FAILURE) {
         return;
       }
     }

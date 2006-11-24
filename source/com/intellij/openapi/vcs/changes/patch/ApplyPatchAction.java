@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.util.Ref;
@@ -38,6 +39,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class ApplyPatchAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
@@ -52,19 +54,26 @@ public class ApplyPatchAction extends AnAction {
     applyPatch(project, dialog.getPatches(), dialog.getBaseDirectory(), dialog.getStripLeadingDirectories());
   }
 
-  public static boolean applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
-                                   final int stripLeadingDirectories) {
+  public static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
+                                            final int stripLeadingDirectories) {
+    List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
     for(FilePatch patch: patches) {
       VirtualFile fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories);
       if (fileToPatch != null && !fileToPatch.isDirectory()) {
+        filesToMakeWritable.add(fileToPatch);
         FileType fileType = fileToPatch.getFileType();
         if (fileType == StdFileTypes.UNKNOWN) {
           fileType = FileTypeChooser.associateFileType(fileToPatch.getPresentableName());
           if (fileType == null) {
-            return false;
+            return ApplyPatchStatus.FAILURE;
           }
         }
       }
+    }
+    final VirtualFile[] fileArray = filesToMakeWritable.toArray(new VirtualFile[filesToMakeWritable.size()]);
+    final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(fileArray);
+    if (readonlyStatus.hasReadonlyFiles()) {
+      return ApplyPatchStatus.FAILURE;
     }
     final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -89,7 +98,7 @@ public class ApplyPatchAction extends AnAction {
         }, VcsBundle.message("patch.apply.command"), null);
       }
     });
-    return statusRef.get() != ApplyPatchStatus.FAILURE;
+    return statusRef.get();
   }
 
   private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,
