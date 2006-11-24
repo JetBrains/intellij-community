@@ -83,10 +83,10 @@ public class PatchBuilder {
                 hunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, beforeLines [i]));
               }
               for(int i=fragment.getStartingLine1(); i<fragment.getStartingLine1()+fragment.getModifiedLines1(); i++) {
-                hunk.addLine(new PatchLine(PatchLine.Type.REMOVE,  beforeLines [i]));
+                addLineToHunk(hunk, beforeLines [i], PatchLine.Type.REMOVE);
               }
               for(int i=fragment.getStartingLine2(); i<fragment.getStartingLine2()+fragment.getModifiedLines2(); i++) {
-                hunk.addLine(new PatchLine(PatchLine.Type.ADD,  afterLines [i]));
+                addLineToHunk(hunk, afterLines[i], PatchLine.Type.ADD);
               }
               contextStart1 = fragment.getStartingLine1()+fragment.getModifiedLines1();
             }
@@ -100,12 +100,20 @@ public class PatchBuilder {
     return result;
   }
 
+  private static void addLineToHunk(final PatchHunk hunk, final String line, final PatchLine.Type type) {
+    final PatchLine patchLine = new PatchLine(type, line);
+    if (!line.endsWith("\n")) {
+      patchLine.setSuppressNewLine(true);
+    }
+    hunk.addLine(patchLine);
+  }
+
   private static FilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) {
     String[] lines = DiffUtil.convertToLines(afterRevision.getContent());
     FilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
-      hunk.addLine(new PatchLine(PatchLine.Type.ADD, line));
+      addLineToHunk(hunk, line, PatchLine.Type.ADD);
     }
     result.addHunk(hunk);
     return result;
@@ -116,7 +124,7 @@ public class PatchBuilder {
     FilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {
-      hunk.addLine(new PatchLine(PatchLine.Type.REMOVE, line));
+      addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
     }
     result.addHunk(hunk);
     return result;

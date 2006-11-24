@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class PatchReader {
-  @NonNls private static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
+  @NonNls public static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
 
   private enum DiffFormat { CONTEXT, UNIFIED }
 
@@ -132,6 +132,9 @@ public class PatchReader {
         lastLine.setSuppressNewLine(true);
         myLineIndex++;
         continue;
+      }
+      if (curLine.startsWith("--- ")) {
+        break;
       }
       lastLine = parsePatchLine(curLine, 1);
       if (lastLine == null) {

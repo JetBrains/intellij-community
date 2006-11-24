@@ -28,6 +28,9 @@ public class UnifiedDiffWriter {
             case CONTEXT: prefixChar = ' '; break;
           }
           writeLine(writer, line.getText(), prefixChar);
+          if (line.isSuppressNewLine()) {
+            writer.write("\n" + PatchReader.NO_NEWLINE_SIGNATURE + "\n");
+          }
         }
       }
     }
