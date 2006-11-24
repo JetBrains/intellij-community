@@ -136,4 +136,11 @@ public class PatchHunk {
     }
     return builder.toString();
   }
+
+  public boolean isNoNewLineAtEnd() {
+    if (myLines.size() == 0) {
+      return false;
+    }
+    return myLines.get(myLines.size()-1).isSuppressNewLine();
+  }
 }

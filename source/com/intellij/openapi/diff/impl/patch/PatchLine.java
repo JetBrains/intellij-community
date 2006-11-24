@@ -15,6 +15,7 @@ public class PatchLine {
 
   private Type myType;
   private String myText;
+  private boolean mySuppressNewLine;
 
   public PatchLine(final Type type, final String text) {
     myType = type;
@@ -27,5 +28,13 @@ public class PatchLine {
 
   public String getText() {
     return myText;
+  }
+
+  public boolean isSuppressNewLine() {
+    return mySuppressNewLine;
+  }
+
+  public void setSuppressNewLine(final boolean suppressNewLine) {
+    mySuppressNewLine = suppressNewLine;
   }
 }

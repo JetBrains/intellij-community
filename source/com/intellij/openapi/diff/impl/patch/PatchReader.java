@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class PatchReader {
+  @NonNls private static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
 
   private enum DiffFormat { CONTEXT, UNIFIED }
 
@@ -124,13 +125,19 @@ public class PatchReader {
     int endLineAfter = Integer.parseInt(m.group(4));
     PatchHunk hunk = new PatchHunk(startLineBefore, endLineBefore, startLineAfter, endLineAfter);
     myLineIndex++;
+    PatchLine lastLine = null;
     while(myLineIndex < myLines.length) {
       String curLine = myLines [myLineIndex];
-      final PatchLine line = parsePatchLine(curLine, 1);
-      if (line == null) {
+      if (lastLine != null && curLine.startsWith(NO_NEWLINE_SIGNATURE)) {
+        lastLine.setSuppressNewLine(true);
+        myLineIndex++;
+        continue;
+      }
+      lastLine = parsePatchLine(curLine, 1);
+      if (lastLine == null) {
         break;
       }
-      hunk.addLine(line);
+      hunk.addLine(lastLine);
       myLineIndex++;
     }
     return hunk;
@@ -200,6 +207,8 @@ public class PatchReader {
 
     int beforeLineIndex = 0;
     int afterLineIndex = 0;
+    PatchLine lastBeforePatchLine = null;
+    PatchLine lastAfterPatchLine = null;
     if (beforeLines.size() == 0) {
       for(String line: afterLines) {
         hunk.addLine(parsePatchLine(line, 2));
@@ -211,30 +220,38 @@ public class PatchReader {
       }
     }
     else {
-      while(beforeLineIndex < beforeLines.size() && afterLineIndex < afterLines.size()) {
-        String beforeLine = beforeLines.get(beforeLineIndex);
-        String afterLine = afterLines.get(afterLineIndex);
-        if (beforeLine.startsWith(" ") && afterLine.startsWith(" ")) {
+      while(beforeLineIndex < beforeLines.size() || afterLineIndex < afterLines.size()) {
+        String beforeLine = beforeLineIndex >= beforeLines.size() ? null : beforeLines.get(beforeLineIndex);
+        String afterLine = afterLineIndex >= afterLines.size() ? null : afterLines.get(afterLineIndex);
+        if (startsWith(beforeLine, NO_NEWLINE_SIGNATURE) && lastBeforePatchLine != null) {
+          lastBeforePatchLine.setSuppressNewLine(true);
+          beforeLineIndex++;
+        }
+        else if (startsWith(afterLine, NO_NEWLINE_SIGNATURE) && lastAfterPatchLine != null) {
+          lastAfterPatchLine.setSuppressNewLine(true);
+          afterLineIndex++;
+        }
+        else if (startsWith(beforeLine, " ") && startsWith(afterLine, " ")) {
           addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT);
           beforeLineIndex++;
           afterLineIndex++;
         }
-        else if (beforeLine.startsWith("-")) {
-          addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE);
+        else if (startsWith(beforeLine, "-")) {
+          lastBeforePatchLine = addContextDiffLine(hunk, beforeLine, PatchLine.Type.REMOVE);
           beforeLineIndex++;
         }
-        else if (afterLine.startsWith("+")) {
-          addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD);
+        else if (startsWith(afterLine, "+")) {
+          lastAfterPatchLine = addContextDiffLine(hunk, afterLine, PatchLine.Type.ADD);
           afterLineIndex++;
         }
-        else if (beforeLine.startsWith("!") && afterLine.startsWith("!")) {
+        else if (startsWith(beforeLine, "!") && startsWith(afterLine, "!")) {
           while(beforeLineIndex < beforeLines.size() && beforeLines.get(beforeLineIndex).startsWith("! ")) {
-            addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE);
+            lastBeforePatchLine = addContextDiffLine(hunk, beforeLines.get(beforeLineIndex), PatchLine.Type.REMOVE);
             beforeLineIndex++;
           }
 
           while(afterLineIndex < afterLines.size() && afterLines.get(afterLineIndex).startsWith("! ")) {
-            addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD);
+            lastAfterPatchLine = addContextDiffLine(hunk, afterLines.get(afterLineIndex), PatchLine.Type.ADD);
             afterLineIndex++;
           }
         }
@@ -246,15 +263,22 @@ public class PatchReader {
     return hunk;
   }
 
-  private static void addContextDiffLine(final PatchHunk hunk, final String line, final PatchLine.Type type) {
-    hunk.addLine(new PatchLine(type, line.length() < 2 ? "" : line.substring(2)));
+  private static boolean startsWith(@Nullable final String line, final String prefix) {
+    return line != null && line.startsWith(prefix);
+  }
+
+  private static PatchLine addContextDiffLine(final PatchHunk hunk, final String line, final PatchLine.Type type) {
+    final PatchLine patchLine = new PatchLine(type, line.length() < 2 ? "" : line.substring(2));
+    hunk.addLine(patchLine);
+    return patchLine;
   }
 
   private List<String> readContextDiffLines() {
     ArrayList<String> result = new ArrayList<String>();
     while(myLineIndex < myLines.length) {
       final String line = myLines[myLineIndex];
-      if (!line.startsWith(" ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ")) {
+      if (!line.startsWith(" ") && !line.startsWith("+ ") && !line.startsWith("- ") && !line.startsWith("! ") &&
+          !line.startsWith(NO_NEWLINE_SIGNATURE)) {
         break;
       }
       result.add(line);

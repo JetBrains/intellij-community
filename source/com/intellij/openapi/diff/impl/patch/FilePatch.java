@@ -107,14 +107,20 @@ public class FilePatch {
   }
 
   public ApplyPatchStatus applyModifications(final CharSequence text, final StringBuilder newText) throws ApplyPatchException {
+    if (myHunks.size() == 0) {
+      return ApplyPatchStatus.SUCCESS;
+    }
     List<String> lines = new ArrayList<String>();
     Collections.addAll(lines, LineTokenizer.tokenize(text, false));
     ApplyPatchStatus result = null;
     for(PatchHunk hunk: myHunks) {
       result = ApplyPatchStatus.and(result, hunk.apply(lines));
     }
-    for(String line: lines) {
-      newText.append(line).append("\n");
+    for(int i=0; i<lines.size(); i++) {
+      newText.append(lines.get(i));
+      if (i < lines.size()-1 || !myHunks.get(myHunks.size()-1).isNoNewLineAtEnd()) {
+        newText.append("\n");
+      }
     }
     return result;
   }
