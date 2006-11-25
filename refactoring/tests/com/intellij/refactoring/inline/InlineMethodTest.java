@@ -8,8 +8,22 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.MockInlineMethodOptions;
+import com.intellij.pom.java.LanguageLevel;
 
 public class InlineMethodTest extends CodeInsightTestCase {
+  private LanguageLevel myPreviousLanguageLevel;
+
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    myPreviousLanguageLevel = getPsiManager().getEffectiveLanguageLevel();
+    getPsiManager().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+  }
+
+  protected void tearDown() throws Exception {
+    getPsiManager().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    super.tearDown();
+  }
 
   public void testInlineParms() throws Exception {
     doTest();
@@ -80,6 +94,8 @@ public class InlineMethodTest extends CodeInsightTestCase {
   public void testIDEADEV6807() throws Exception { doTest(); }
 
   public void testVarargs() throws Exception { doTest(); }
+
+  public void testVarargs1() throws Exception { doTest(); }
 
   private void doTest() throws Exception {
     String name = getTestName(false);

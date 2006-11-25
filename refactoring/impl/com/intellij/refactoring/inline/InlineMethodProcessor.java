@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
@@ -314,7 +315,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
 
     PsiSubstitutor callSubstitutor = getCallSubstitutor(methodCall);
-    BlockData blockData = prepareBlock(ref, callSubstitutor);
+    BlockData blockData = prepareBlock(ref, callSubstitutor, methodCall.getArgumentList());
     solveVariableNameConflicts(blockData.block, ref);
     if (callSubstitutor != PsiSubstitutor.EMPTY) {
       substituteMethodTypeParams(blockData.block, callSubstitutor);
@@ -487,13 +488,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private BlockData prepareBlock(PsiReferenceExpression ref, final PsiSubstitutor callSubstitutor) throws IncorrectOperationException {
+  private BlockData prepareBlock(PsiReferenceExpression ref, final PsiSubstitutor callSubstitutor, final PsiExpressionList argumentList) throws IncorrectOperationException {
     final PsiCodeBlock block = myMethodCopy.getBody();
     final PsiStatement[] originalStatements = block.getStatements();
 
     PsiLocalVariable resultVar = null;
     PsiType returnType = callSubstitutor.substitute(myMethod.getReturnType());
     String resultName = null;
+    final int applicabilityLevel = PsiUtil.getApplicabilityLevel(myMethod, callSubstitutor, argumentList);
     if (returnType != null && returnType != PsiType.VOID) {
       resultName = myCodeStyleManager.propertyNameToVariableName("result", VariableKind.LOCAL_VARIABLE);
       resultName = myCodeStyleManager.suggestUniqueVariableName(resultName, block.getFirstChild(), true);
@@ -519,7 +521,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (paramType instanceof PsiEllipsisType) {
         final PsiEllipsisType ellipsisType = (PsiEllipsisType)paramType;
         paramType = ellipsisType.toArrayType();
-        defaultValue = "new " + ellipsisType.getComponentType().getCanonicalText() + "[]{}";
+        if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+          defaultValue = "new " + ellipsisType.getComponentType().getCanonicalText() + "[]{}";
+        }
+        else {
+          defaultValue = PsiTypesUtil.getDefaultValueOfType(paramType);
+        }
       } else {
         defaultValue = PsiTypesUtil.getDefaultValueOfType(paramType);
       }
@@ -1148,10 +1155,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     final PsiLocalVariable[] parmVars;
     final PsiLocalVariable resultVar;
 
-    public BlockData(PsiCodeBlock block,
-                     PsiLocalVariable thisVar,
-                     PsiLocalVariable[] parmVars,
-                     PsiLocalVariable resultVar) {
+    public BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {
       this.block = block;
       this.thisVar = thisVar;
       this.parmVars = parmVars;
