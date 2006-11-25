@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
@@ -101,7 +102,7 @@ public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandle
   }
 
   public RefactoringActionHandler createExtractSuperclassHandler() {
-    return new ChangeSignatureHandler();
+    return new ExtractSuperclassHandler();
   }
 
   public RefactoringActionHandler createTypeCookHandler() {
