@@ -29,6 +29,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -715,7 +716,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
         }
 
-        PsiExpression expr = RefactoringUtil.inlineVariable(variable, initializer,
+        PsiExpression expr = InlineUtil.inlineVariable(variable, initializer,
                                                             javaRef);
 
         //Q: move the following code to some util? (addition to inline?)

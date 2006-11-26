@@ -539,50 +539,6 @@ public class RefactoringUtil {
     return !isReassigned;
   }
 
-  public static PsiExpression inlineVariable(PsiLocalVariable variable, PsiExpression initializer,
-                                             PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
-    PsiManager manager = initializer.getManager();
-
-    PsiClass thisClass = RefactoringUtil.getThisClass(initializer);
-    PsiClass refParent = RefactoringUtil.getThisClass(ref);
-    initializer = convertInitializerToNormalExpression(initializer, variable.getType());
-
-    ChangeContextUtil.encodeContextInfo(initializer, false);
-    PsiExpression expr = (PsiExpression)ref.replace(initializer);
-    PsiType exprType = expr.getType();
-    if (exprType != null && !variable.getType().equals(exprType)) {
-      PsiTypeCastExpression cast = (PsiTypeCastExpression)manager.getElementFactory().createExpressionFromText("(t)a", null);
-      PsiTypeElement castTypeElement = cast.getCastType();
-      LOG.assertTrue(castTypeElement != null);
-      castTypeElement.replace(variable.getTypeElement());
-      cast.getOperand().replace(expr);
-      PsiExpression exprCopy = (PsiExpression)expr.copy();
-      cast = (PsiTypeCastExpression)expr.replace(cast);
-      if (!RedundantCastUtil.isCastRedundant(cast)) {
-        expr = cast;
-      } else {
-        PsiElement toReplace = cast;
-        while (toReplace.getParent() instanceof PsiParenthesizedExpression) {
-          toReplace = toReplace.getParent();
-        }
-        expr = (PsiExpression)toReplace.replace(exprCopy);
-      }
-    }
-
-    ChangeContextUtil.clearContextInfo(initializer);
-
-    PsiThisExpression thisAccessExpr = null;
-    if (Comparing.equal(thisClass, refParent)) {
-      thisAccessExpr = createThisExpression(manager, null);
-    }
-    else {
-      if (!(thisClass instanceof PsiAnonymousClass)) {
-        thisAccessExpr = createThisExpression(manager, thisClass);
-      }
-    }
-    return (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
-  }
-
   public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass)
     throws IncorrectOperationException {
     PsiElementFactory factory = manager.getElementFactory();
@@ -917,16 +873,10 @@ public class RefactoringUtil {
   public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression,
                                                                    PsiType forcedReturnType)
     throws IncorrectOperationException {
-    PsiExpression returnValue;
     if (expression instanceof PsiArrayInitializerExpression) {
-      returnValue =
-      createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)expression,
-                                              forcedReturnType);
+      return createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)expression, forcedReturnType);
     }
-    else {
-      returnValue = expression;
-    }
-    return returnValue;
+    return expression;
   }
 
   public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer,

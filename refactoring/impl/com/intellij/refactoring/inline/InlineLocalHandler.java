@@ -20,8 +20,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -163,7 +163,7 @@ class InlineLocalHandler {
           for(int idx = 0; idx < toInlines.size(); idx++){
             PsiReference ref = toInlines.get(idx);
             PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)ref.getElement();
-            exprs[idx] = RefactoringUtil.inlineVariable(local, initializer, refElement);
+            exprs[idx] = InlineUtil.inlineVariable(local, initializer, refElement);
           }
           if (firstWriteUsage != null) {
 //            PsiReference firstWriteUsage = refs[toInlines.size()];
