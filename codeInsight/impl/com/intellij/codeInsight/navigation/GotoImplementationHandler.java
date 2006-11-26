@@ -42,7 +42,9 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
                 | TargetElementUtil.THIS_ACCEPTED
                 | TargetElementUtil.SUPER_ACCEPTED;
     final PsiElement element = TargetElementUtil.findTargetElement(editor, flags);
-    PsiElement[] result = searchImplementations(editor, file, element, false);
+    boolean isInvokedOnReferenceElement = TargetElementUtil.findTargetElement(editor, flags & ~TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED) == null;
+
+    PsiElement[] result = searchImplementations(editor, file, element, false, isInvokedOnReferenceElement);
     if (result.length > 0) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.implementation");
       show(editor, element, result);
@@ -50,7 +52,11 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  public PsiElement[] searchImplementations(Editor editor, PsiFile file, final PsiElement element, final boolean includeSelf) {
+  public PsiElement[] searchImplementations(final Editor editor,
+                                            final PsiFile file,
+                                            final PsiElement element,
+                                            final boolean includeSelfAlways,
+                                            final boolean includeSelfIfNoOthers) {
     if (element == null) return PsiElement.EMPTY_ARRAY;
     final PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -62,13 +68,15 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }
 
     if (result[0] != null && result[0].length > 0) {
-      if (!includeSelf) return filterElements(editor, file, element, result[0]);
+      if (!includeSelfAlways) return filterElements(editor, file, element, result[0]);
       PsiElement[] all = new PsiElement[result[0].length + 1];
       all[0] = element;
       System.arraycopy(result[0], 0, all, 1, result[0].length);
       return filterElements(editor, file, element, all);
     }
-    return includeSelf ? new PsiElement[] {element} : PsiElement.EMPTY_ARRAY;
+    return includeSelfAlways || includeSelfIfNoOthers ?
+           new PsiElement[] {element} :
+           PsiElement.EMPTY_ARRAY;
   }
 
   public boolean startInWriteAction() {

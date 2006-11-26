@@ -102,7 +102,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
             final ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(expression.getTypeArgumentList(),
                                                                                            InspectionsBundle.message("inspection.redundant.type.problem.descriptor"),
                                                                                            myQuickFixAction,
-                                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                                           ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             problems.add(descriptor);
           }
         }
@@ -123,7 +123,9 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)descriptor.getPsiElement();
       try {
-        typeArgumentList.delete();
+        final PsiMethodCallExpression expr =
+          (PsiMethodCallExpression)PsiManager.getInstance(project).getElementFactory().createExpressionFromText("foo()", null);
+        typeArgumentList.replace(expr.getTypeArgumentList());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
