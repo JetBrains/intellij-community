@@ -1064,7 +1064,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       return;
     }
 
-    element.checkDelete();
+    //element.checkDelete(); //move != delete + add
     newContainer.checkAdd(element);
     checkIfMoveIntoSelf(element, newContainer);
   }

@@ -57,8 +57,6 @@ public class MoveFilesOrDirectoriesUtil {
       }
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
-
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, elements);
 
     final MoveFilesOrDirectoriesDialog.Callback doRun = new MoveFilesOrDirectoriesDialog.Callback() {

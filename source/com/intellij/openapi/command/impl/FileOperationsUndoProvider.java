@@ -113,7 +113,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   public void propertyChanged(VirtualFilePropertyEvent event) {
     if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
       if (shouldProcess(event)) {
-        undoableActionPerformed(event);
+        undoableActionPerformed(event, false);
       } else {
         createNonUndoableAction(event.getFile(),true);
       }
@@ -128,7 +128,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
       createNonUndoableAction(event.getFile(), true);
     }
     else {
-      undoableActionPerformed(event);
+      undoableActionPerformed(event, true); //??
     }
   }
 
@@ -151,7 +151,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
 
   public void fileMoved(VirtualFileMoveEvent event) {
     if (shouldProcess(event)) {
-      undoableActionPerformed(event);
+      undoableActionPerformed(event, false);
     } else {
       createNonUndoableAction(event.getFile(), true);
     }
@@ -173,7 +173,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
       createNonUndoableAction(file, true);
     }
     else {
-      CompositeUndoableAction undoableAction = createUndoableAction(file);
+      CompositeUndoableAction undoableAction = createUndoableAction(file, false);
       if (!undoableAction.isEmpty()) {
         file.putUserData(DELETE_UNDOABLE_ACTION_KEY, undoableAction);
       }
@@ -238,24 +238,17 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   }
 
 
-  private void undoableActionPerformed(final VirtualFile vFile) {
-    CompositeUndoableAction compositeUndoableAction = createUndoableAction(vFile);
-    if (!compositeUndoableAction.isEmpty()) {
-      myUndoManager.undoableActionPerformed(compositeUndoableAction);
-    }
-  }
-
-  private CompositeUndoableAction createUndoableAction(final VirtualFile vFile) {
+  private CompositeUndoableAction createUndoableAction(final VirtualFile vFile, final boolean isContentsAffected) {
 
     CompositeUndoableAction compositeUndoableAction = new CompositeUndoableAction();
 
     if (myCommandStarted && (getLocalVcs() != null) && getLocalVcs().isAvailable()) {
-      addActionForFileTo(compositeUndoableAction, vFile);
+      addActionForFileTo(compositeUndoableAction, vFile, isContentsAffected);
     }
     return compositeUndoableAction;
   }
 
-  private void addActionForFileTo(CompositeUndoableAction compositeUndoableAction, final VirtualFile vFile) {
+  private void addActionForFileTo(CompositeUndoableAction compositeUndoableAction, final VirtualFile vFile, final boolean isContentsAffected) {
     final String filePath = vFile.getPath();
     final boolean isDirectory = vFile.isDirectory();
     final LvcsRevision afterActionPerformedRevision = getCurrentRevision(filePath, isDirectory);
@@ -263,13 +256,13 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     synchronized (myLockedRevisions) {
       myLockedRevisions.add(afterActionPerformedRevision);
     }
-    LvcsBasedUndoableAction action = new LvcsBasedUndoableAction(vFile, filePath, isDirectory, afterActionPerformedRevision);
+    LvcsBasedUndoableAction action = new LvcsBasedUndoableAction(vFile, filePath, isDirectory, afterActionPerformedRevision, isContentsAffected);
     compositeUndoableAction.addAction(action);
 
     VirtualFile[] children = vFile.getChildren();
     if (children == null) return;
     for (VirtualFile aChildren : children) {
-      addActionForFileTo(compositeUndoableAction, aChildren);
+      addActionForFileTo(compositeUndoableAction, aChildren, isContentsAffected);
     }
 
   }
@@ -286,8 +279,11 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     return LocalVcs.getInstance(myProject);
   }
 
-  private void undoableActionPerformed(VirtualFileEvent event) {
-    undoableActionPerformed(event.getFile());
+  private void undoableActionPerformed(VirtualFileEvent event, final boolean isContentsAffected) {
+    CompositeUndoableAction compositeUndoableAction = createUndoableAction(event.getFile(), isContentsAffected);
+    if (!compositeUndoableAction.isEmpty()) {
+      myUndoManager.undoableActionPerformed(compositeUndoableAction);
+    }
   }
 
   private List<LvcsChange> getChanges(LvcsRevision requestedRevision, boolean isDir) {
@@ -352,6 +348,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   private class LvcsBasedUndoableAction implements UndoableAction, Disposable {
     private LvcsRevision myBeforeUndoRevision;
     private LvcsRevision myAfterActionPerformedRevision;
+    private boolean myIsContentsAffected;
 
     private final VirtualFile myFile;
     private final String myFilePath;
@@ -360,11 +357,13 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     public LvcsBasedUndoableAction(VirtualFile file,
                                    String filePath,
                                    boolean directory,
-                                   LvcsRevision afterActionPerformedRevision) {
+                                   LvcsRevision afterActionPerformedRevision,
+                                   boolean contentsAffected) {
       myFile = file;
       myFilePath = filePath;
       myDirectory = directory;
       myAfterActionPerformedRevision = afterActionPerformedRevision;
+      myIsContentsAffected = contentsAffected;
     }
 
     public void dispose() {
@@ -431,7 +430,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     }
 
     public DocumentReference[] getAffectedDocuments() {
-      return new DocumentReference[]{new DocumentReferenceByVirtualFile(myFile)};
+      return myIsContentsAffected ? new DocumentReference[]{new DocumentReferenceByVirtualFile(myFile)} : DocumentReference.EMPTY_ARRAY;
     }
 
     public boolean isComplex() {
