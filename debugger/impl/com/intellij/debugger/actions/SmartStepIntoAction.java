@@ -17,7 +17,7 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -83,7 +83,7 @@ public class SmartStepIntoAction extends AnAction {
 
 
   private static RelativePoint calcPopupLocation(Editor editor, SourcePosition position) {
-    Point p = editor.visualPositionToXY(new VisualPosition(position.getLine() + 1, 0));
+    Point p = editor.logicalPositionToXY(new LogicalPosition(position.getLine() + 1, 0));
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     if (!visibleArea.contains(p)) {
