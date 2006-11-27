@@ -38,11 +38,16 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<ReferenceType, List<ReferenceType>>();
 
   public Throwable mySuspendLogger = new Throwable();
+  private final boolean myVersionHigher_15;
+  private final boolean myVersionHigher_14;
 
   public VirtualMachineProxyImpl(DebugProcessImpl debugProcess, VirtualMachine virtualMachine) {
     LOG.assertTrue(virtualMachine != null);
     myVirtualMachine = virtualMachine;
     myDebugProcess = debugProcess;
+
+    myVersionHigher_15 = versionHigher("1.5");
+    myVersionHigher_14 = myVersionHigher_15 || versionHigher("1.4");
 
     List groups = virtualMachine.topLevelThreadGroups();
     for (Iterator it = groups.iterator(); it.hasNext();) {
@@ -248,96 +253,171 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myVirtualMachine.exit(i);
   }
 
+  private final Capability myWatchFielsModification = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canWatchFieldModification();
+    }
+  };
   public boolean canWatchFieldModification() {
-    return myVirtualMachine.canWatchFieldModification();
+    return myWatchFielsModification.isAvailable();
   }
 
+  private final Capability myWatchFieldAccess = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canWatchFieldAccess();
+    }
+  };
   public boolean canWatchFieldAccess() {
-    return myVirtualMachine.canWatchFieldAccess();
+    return myWatchFieldAccess.isAvailable();
   }
 
+  private final Capability myInvokeMethods = new Capability() {
+    protected boolean calcValue() {
+      return isJ2ME();
+    }
+  };
   public boolean canInvokeMethods() {
-    return isJ2ME();
+    return myInvokeMethods.isAvailable();
   }
 
+  private final Capability myGetBytecodes = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetBytecodes();
+    }
+  };
   public boolean canGetBytecodes() {
-    return myVirtualMachine.canGetBytecodes();
+    return myGetBytecodes.isAvailable();
   }
 
+  private final Capability myGetSyntheticAttribute = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetSyntheticAttribute();
+    }
+  };
   public boolean canGetSyntheticAttribute() {
-    return myVirtualMachine.canGetSyntheticAttribute();
+    return myGetSyntheticAttribute.isAvailable();
   }
 
+  private final Capability myGetOwnedMonitorInfo = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetOwnedMonitorInfo();
+    }
+  };
   public boolean canGetOwnedMonitorInfo() {
-    return myVirtualMachine.canGetOwnedMonitorInfo();
+    return myGetOwnedMonitorInfo.isAvailable();
   }
 
+  private final Capability myGetCurrentContendedMonitor = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetCurrentContendedMonitor();
+    }
+  };
   public boolean canGetCurrentContendedMonitor() {
-    return myVirtualMachine.canGetCurrentContendedMonitor();
+    return myGetCurrentContendedMonitor.isAvailable();
   }
 
+  private final Capability myGetMonitorInfo = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetMonitorInfo();
+    }
+  };
   public boolean canGetMonitorInfo() {
-    return myVirtualMachine.canGetMonitorInfo();
+    return myGetMonitorInfo.isAvailable();
   }
 
+  private final Capability myUseInstanceFilters = new Capability() {
+    protected boolean calcValue() {
+      return myVersionHigher_14 && myVirtualMachine.canUseInstanceFilters();
+    }
+  };
   public boolean canUseInstanceFilters() {
-    if (versionHigher("1.4")) {
-      return myVirtualMachine.canUseInstanceFilters();
-    } else
-      return false;
+    return myUseInstanceFilters.isAvailable();
   }
 
+  private final Capability myRedefineClasses = new Capability() {
+    protected boolean calcValue() {
+      return myVersionHigher_14 && myVirtualMachine.canRedefineClasses();
+    }
+  };
   public boolean canRedefineClasses() {
-    if (versionHigher("1.4")) {
-      return myVirtualMachine.canRedefineClasses();
-    }
-    return false;
+    return myRedefineClasses.isAvailable();
   }
 
+  private final Capability myAddMethod = new Capability() {
+    protected boolean calcValue() {
+      return myVersionHigher_14 && myVirtualMachine.canAddMethod();
+    }
+  };
   public boolean canAddMethod() {
-    if (versionHigher("1.4")) {
-      return myVirtualMachine.canAddMethod();
-    } else
-      return false;
+    return myAddMethod.isAvailable();
   }
 
-  public boolean canUnrestrictedlyRedefineClasses() {
-    if (versionHigher("1.4")) {
-      return myVirtualMachine.canUnrestrictedlyRedefineClasses();
-    } else
-      return false;
-  }
-
-  public boolean canPopFrames() {
-    if (versionHigher("1.4")) {
-      return myVirtualMachine.canPopFrames();
+  private final Capability myUnrestrictedlyRedefineClasses = new Capability() {
+    protected boolean calcValue() {
+      return myVersionHigher_14 && myVirtualMachine.canUnrestrictedlyRedefineClasses();
     }
-    return false;
+  };
+  public boolean canUnrestrictedlyRedefineClasses() {
+    return myUnrestrictedlyRedefineClasses.isAvailable();
   }
 
-  public boolean versionHigher(String version) {
+  private final Capability myPopFrames = new Capability() {
+    protected boolean calcValue() {
+      return myVersionHigher_14 && myVirtualMachine.canPopFrames();
+    }
+  };
+  public boolean canPopFrames() {
+    return myPopFrames.isAvailable();
+  }
+
+  public final boolean versionHigher(String version) {
     return myVirtualMachine.version().compareTo(version) >= 0;
   }
 
+  private final Capability myGetSourceDebugExtension = new Capability() {
+    protected boolean calcValue() {
+      return myVersionHigher_14 && myVirtualMachine.canGetSourceDebugExtension();
+    }
+  };
   public boolean canGetSourceDebugExtension() {
-    if (versionHigher("1.4")) {
-      return myVirtualMachine.canGetSourceDebugExtension();
-    } else
-      return false;
+    return myGetSourceDebugExtension.isAvailable();
   }
 
+  private final Capability myRequestVMDeathEvent = new Capability() {
+    protected boolean calcValue() {
+      return myVersionHigher_14 && myVirtualMachine.canRequestVMDeathEvent();
+    }
+  };
   public boolean canRequestVMDeathEvent() {
-    if(versionHigher("1.4")){
-      return myVirtualMachine.canRequestVMDeathEvent();
-    } else
+    return myRequestVMDeathEvent.isAvailable();
+  }
+
+  private final Capability myGetMethodReturnValues = new Capability() {
+    protected boolean calcValue() {
+      if (myVersionHigher_15) {
+        //return myVirtualMachine.canGetMethodReturnValues();
+        try {
+          //noinspection HardCodedStringLiteral
+          final java.lang.reflect.Method method = VirtualMachine.class.getDeclaredMethod("canGetMethodReturnValues");
+          final Boolean rv = (Boolean)method.invoke(myVirtualMachine);
+          return rv.booleanValue();
+        }
+        catch (NoSuchMethodException ignored) {
+        }
+        catch (IllegalAccessException ignored) {
+        }
+        catch (InvocationTargetException ignored) {
+        }
+      }
       return false;
+    }
+  };
+  public boolean canGetMethodReturnValues() {
+    return myGetMethodReturnValues.isAvailable();
   }
 
   public String getDefaultStratum() {
-    if(versionHigher("1.4")){
-      return myVirtualMachine.getDefaultStratum();
-    } else
-      return null;
+    return myVersionHigher_14 ? myVirtualMachine.getDefaultStratum() : null;
   }
 
   public String description() {
@@ -357,7 +437,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public ThreadReferenceProxyImpl getThreadReferenceProxy(ThreadReference thread) {
-    if(thread == null) return null;
+    if(thread == null) {
+      return null;
+    }
 
     ThreadReferenceProxyImpl proxy = myAllThreads.get(thread);
     if(proxy == null) {
@@ -369,7 +451,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public ThreadGroupReferenceProxyImpl getThreadGroupReferenceProxy(ThreadGroupReference group) {
-    if(group == null) return null;
+    if(group == null) {
+      return null;
+    }
 
     ThreadGroupReferenceProxyImpl proxy = myThreadGroups.get(group);
     if(proxy == null) {
@@ -404,9 +488,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         return proxy;
       }
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   public boolean equals(Object obj) {
@@ -440,12 +522,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public static boolean isCollected(ObjectReference reference) {
-    if(isJ2ME(reference.virtualMachine())){
-      return false;
-    }
-    else {
-      return reference.isCollected();
-    }
+    return isJ2ME(reference.virtualMachine()) ? false : reference.isCollected();
   }
 
   public String getResumeStack() {
@@ -483,6 +560,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
 
+  private static abstract class Capability {
+    Boolean myValue = null;
 
+    public final boolean isAvailable() {
+      if (myValue == null) {
+        myValue = Boolean.valueOf(calcValue());
+      }
+      return myValue.booleanValue();
+    }
+
+    protected abstract boolean calcValue();
+  }
 
 }

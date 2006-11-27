@@ -4,19 +4,20 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.openapi.util.*;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -29,6 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class FilteredRequestor implements LocatableEventRequestor, JDOMExternalizable {
+
+  public String  SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
+
   public boolean COUNT_FILTER_ENABLED     = false;
   public int COUNT_FILTER = 0;
 

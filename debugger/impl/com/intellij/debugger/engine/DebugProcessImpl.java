@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -47,6 +48,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiDocumentManager;
@@ -93,9 +95,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private static final int STATE_DETACHED  = 3;
   private int myState = STATE_INITIAL;
 
-  private boolean myCanRedefineClasses;
-  private boolean myCanWatchFieldModification;
-
   private ExecutionResult  myExecutionResult;
   private RemoteConnection myConnection;
 
@@ -130,6 +129,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private boolean myBreakpointsMuted = false;
   private boolean myIsFailed = false;
   private DebuggerSession mySession;
+  protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
 
 
   protected DebugProcessImpl(Project project) {
@@ -152,6 +152,18 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
       }
     });
+  }
+
+  @Nullable
+  public Pair<Method, Value> getLastExecutedMethod() {
+    if (myReturnValueWatcher == null) {
+      return null;
+    }
+    final Method method = myReturnValueWatcher.getLastExecutedMethod();
+    if (method == null) {
+      return null;
+    }
+    return new Pair<Method, Value>(method, myReturnValueWatcher.getLastMethodReturnValue()); 
   }
 
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
@@ -212,8 +224,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
     checkVirtualMachineVersion(vm);
 
     myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
-    myCanRedefineClasses = myVirtualMachineProxy.canRedefineClasses();
-    myCanWatchFieldModification = myVirtualMachineProxy.canWatchFieldModification();
 
     String trace = System.getProperty("idea.debugger.trace");
     if (trace != null) {
@@ -643,11 +653,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public boolean canRedefineClasses() {
-    return myCanRedefineClasses;
+    return myVirtualMachineProxy != null? myVirtualMachineProxy.canRedefineClasses() : false;
   }
 
   public boolean canWatchFieldModification() {
-    return myCanWatchFieldModification;
+    return myVirtualMachineProxy != null? myVirtualMachineProxy.canWatchFieldModification() : false;
   }
 
   public boolean isInInitialState() {
@@ -1326,6 +1336,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl thread = suspendContext.getThread();
       RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
+      if (myReturnValueWatcher != null) {
+        myReturnValueWatcher.setTrackingEnabled(true);
+      }
       doStep(thread, StepRequest.STEP_OUT, hint);
       super.contextAction();
     }
@@ -1373,6 +1386,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
       hint.setIgnoreFilters(myIsIgnoreBreakpoints);
 
+      if (myReturnValueWatcher != null) {
+        myReturnValueWatcher.setTrackingEnabled(true);
+      }
       doStep(steppingThread, StepRequest.STEP_OVER, hint);
 
       if (myIsIgnoreBreakpoints) {

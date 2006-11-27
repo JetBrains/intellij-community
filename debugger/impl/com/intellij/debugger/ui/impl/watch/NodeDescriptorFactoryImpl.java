@@ -1,10 +1,10 @@
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
-import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.impl.descriptors.data.*;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -148,6 +148,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
   public ValueDescriptorImpl getThisDescriptor(NodeDescriptorImpl parent, Value value) {
     return getDescriptor(parent, new ThisData(value));
+  }
+
+  public ValueDescriptorImpl getMethodReturnValueDescriptor(NodeDescriptorImpl parent, Method method, Value value) {
+    return getDescriptor(parent, new MethodReturnValueData(method, value));
   }
 
   public ThreadDescriptorImpl getThreadDescriptor(NodeDescriptorImpl parent, ThreadReferenceProxyImpl thread) {

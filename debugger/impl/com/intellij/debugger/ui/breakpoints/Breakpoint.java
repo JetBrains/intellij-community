@@ -15,7 +15,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -41,7 +40,6 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.Breakpoint");
 
   public boolean ENABLED = true;
-  public String  SUSPEND_POLICY = DebuggerSettings.SUSPEND_ALL;
   public boolean LOG_ENABLED = false;
   public boolean LOG_EXPRESSION_ENABLED = false;
   private TextWithImports  myLogMessage; // an expression to be evaluated and printed

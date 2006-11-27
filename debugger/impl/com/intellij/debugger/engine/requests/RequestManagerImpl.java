@@ -14,6 +14,7 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -105,7 +106,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  private void addLocatableRequest(Breakpoint requestor, EventRequest request) {
+  private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
     if(DebuggerSettings.SUSPEND_ALL.equals(requestor.SUSPEND_POLICY)) {
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
     }
@@ -189,42 +190,42 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return classPrepareRequest;
   }
 
-  public ExceptionRequest createExceptionRequest(Breakpoint requestor, ReferenceType referenceType, boolean notifyCaught, boolean notifyUnCaught) {
+  public ExceptionRequest createExceptionRequest(FilteredRequestor requestor, ReferenceType referenceType, boolean notifyCaught, boolean notifyUnCaught) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ExceptionRequest req = myEventRequestManager.createExceptionRequest(referenceType, notifyCaught, notifyUnCaught);
     addLocatableRequest(requestor, req);
     return req;
   }
 
-  public MethodEntryRequest createMethodEntryRequest(Breakpoint requestor) {
+  public MethodEntryRequest createMethodEntryRequest(FilteredRequestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     MethodEntryRequest req = myEventRequestManager.createMethodEntryRequest();
     addLocatableRequest(requestor, req);
     return req;
   }
 
-  public MethodExitRequest createMethodExitRequest(Breakpoint requestor) {
+  public MethodExitRequest createMethodExitRequest(FilteredRequestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     MethodExitRequest req = myEventRequestManager.createMethodExitRequest();
     addLocatableRequest(requestor, req);
     return req;
   }
 
-  public BreakpointRequest createBreakpointRequest(Breakpoint requestor, Location location) {
+  public BreakpointRequest createBreakpointRequest(FilteredRequestor requestor, Location location) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     BreakpointRequest req = myEventRequestManager.createBreakpointRequest(location);
     addLocatableRequest(requestor, req);
     return req;
   }
 
-  public AccessWatchpointRequest createAccessWatchpointRequest(Breakpoint requestor, Field field) {
+  public AccessWatchpointRequest createAccessWatchpointRequest(FilteredRequestor requestor, Field field) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     AccessWatchpointRequest req = myEventRequestManager.createAccessWatchpointRequest(field);
     addLocatableRequest(requestor, req);
     return req;
   }
 
-  public ModificationWatchpointRequest createModificationWatchpointRequest(Breakpoint requestor, Field field) {
+  public ModificationWatchpointRequest createModificationWatchpointRequest(FilteredRequestor requestor, Field field) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ModificationWatchpointRequest req = myEventRequestManager.createModificationWatchpointRequest(field);
     addLocatableRequest(requestor, req);
@@ -334,8 +335,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     process.getManagerThread().invokeLater(new DebuggerCommandImpl() {
       protected void action() throws Exception {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getBreakpointManager();
-        for (Iterator<Breakpoint> iterator = breakpointManager.getBreakpoints().iterator(); iterator.hasNext();) {
-          final Breakpoint breakpoint = iterator.next();
+        for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {
           breakpoint.createRequest(myDebugProcess);
         }
       }

@@ -200,13 +200,17 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     }
 
     public void threadAction() {
-      final ThreadReferenceProxyImpl threadToSelect = getDebuggerContext().getThreadProxy();
-      if(threadToSelect == null) return;
+      final DebuggerContextImpl context = getDebuggerContext();
 
-      final java.util.List<ThreadDescriptorImpl>     threadItems = getThreadList();
+      final ThreadReferenceProxyImpl threadToSelect = context.getThreadProxy();
+      if(threadToSelect == null) {
+        return;
+      }
 
-      SuspendContextImpl threadContext = SuspendManagerUtil.getSuspendContextForThread(getDebuggerContext().getSuspendContext(), threadToSelect);
-      getDebuggerContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramesListCommand(getDebuggerContext(), threadContext));
+      final java.util.List<ThreadDescriptorImpl>  threadItems = getThreadList();
+
+      SuspendContextImpl threadContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), threadToSelect);
+      context.getDebugProcess().getManagerThread().invokeLater(new RefreshFramesListCommand(context, threadContext));
 
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         public void run() {

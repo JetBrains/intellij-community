@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
+import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.MethodExitRequest;
 
 /**
  * Created by IntelliJ IDEA.
@@ -274,9 +276,18 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private void vmAttached() {
     LOG.assertTrue(!isAttached());
-    if(isDetached()) return;
+    if(isDetached()) {
+      return;
+    }
 
     setIsAttached();
+
+    final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
+    if (machineProxy.canGetMethodReturnValues()) {
+      MethodExitRequest request = machineProxy.eventRequestManager().createMethodExitRequest();
+      request.setSuspendPolicy(EventRequest.SUSPEND_NONE); 
+      myReturnValueWatcher = new MethodReturnValueWatcher(request);
+    }
 
     DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().setInitialBreakpointsState();
     myDebugProcessDispatcher.getMulticaster().processAttached(this);
@@ -344,11 +355,20 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
     else {
       showStatusText("");
+      if (myReturnValueWatcher != null) {
+        myReturnValueWatcher.setTrackingEnabled(false);
+      }
       getSuspendManager().voteSuspend(suspendContext);
     }
   }
 
   private void processLocatableEvent(final SuspendContextImpl suspendContext, final LocatableEvent event) {
+    if (myReturnValueWatcher != null && event instanceof MethodExitEvent) {
+      if (myReturnValueWatcher.processMethodExitEvent(((MethodExitEvent)event))) {
+        return;
+      }
+    }
+
     ThreadReference thread = event.thread();
     LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
@@ -379,6 +399,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
           suspendManager.voteResume(suspendContext);
         }
         else {
+          if (myReturnValueWatcher != null) {
+            myReturnValueWatcher.setTrackingEnabled(false);
+          }
           suspendManager.voteSuspend(suspendContext);
           showStatusText(DebugProcessEvents.this, event);
         }

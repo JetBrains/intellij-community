@@ -3,21 +3,19 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.idea.ActionsBundle;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.NativeMethodException;
 import com.sun.jdi.VMDisconnectedException;
@@ -92,7 +90,7 @@ public class PopFrameAction extends DebuggerAction {
 
     if(stackFrameProxy != null && isAtBreakpoint(e)) {
       VirtualMachineProxyImpl virtualMachineProxy = stackFrameProxy.getVirtualMachine();
-      enable = virtualMachineProxy.versionHigher("1.4") && virtualMachineProxy.canPopFrames();
+      enable = virtualMachineProxy.canPopFrames();
     }
 
     if(ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
