@@ -29,7 +29,7 @@ public class RootEntryRootsTest extends TestCase {
     root.createDirectory(null, "c:/root2", null);
 
     root.createFile(null, "c:/root1/file", null, null);
-    root.move("c:/root1/file", "c:/root2", null);
+    root.move("c:/root1/file", "c:/root2");
 
     assertFalse(root.hasEntry("c:/root1/file"));
     assertTrue(root.hasEntry("c:/root2/file"));
@@ -41,7 +41,7 @@ public class RootEntryRootsTest extends TestCase {
       root.createFile(null, "c:/non-existing-root/file", null, null);
       fail();
     }
-    catch (LocalVcsException e) {
+    catch (AssertionError e) {
     }
   }
 

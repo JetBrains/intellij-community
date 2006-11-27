@@ -64,6 +64,11 @@ public class RootEntryTest extends TestCase {
   }
 
   @Test
+  public void testFindingEntryWithSystemDependendName() {
+    
+  }
+
+  @Test
   public void testGettingEntry() {
     Entry e1 = root.getEntry("child");
     Entry e2 = root.getEntry(e1.getId());
@@ -102,14 +107,14 @@ public class RootEntryTest extends TestCase {
       root.getEntry("unknown entry");
       fail();
     }
-    catch (LocalVcsException e) {
+    catch (AssertionError e) {
     }
 
     try {
       root.getEntry(42);
       fail();
     }
-    catch (LocalVcsException e) {
+    catch (AssertionError e) {
     }
   }
 

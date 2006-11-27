@@ -20,14 +20,6 @@ public class Stream {
     myOs = new DataOutputStream(os);
   }
 
-  public Path readPath() throws IOException {
-    return new Path(this);
-  }
-
-  public void writePath(Path p) throws IOException {
-    p.write(this);
-  }
-
   public IdPath readIdPath() throws IOException {
     return new IdPath(this);
   }

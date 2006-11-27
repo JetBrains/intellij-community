@@ -63,7 +63,7 @@ public class ChangeList {
 
   public void labelLastChangeSet(String label) {
     // todo try to remove this check 
-    if (myChangeSets.isEmpty()) throw new LocalVcsException();
+    assert !myChangeSets.isEmpty();
 
     ChangeSet last = myChangeSets.get(myChangeSets.size() - 1);
     last.setLabel(label);

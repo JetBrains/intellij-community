@@ -2,14 +2,19 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Collections;
 
 public abstract class Entry {
-  protected Integer myId;  // todo maybe make it private and make it basic type
+  // todo maybe make them private
+  // todo make it basic type
+  protected Integer myId;
+  protected String myName;
   protected Long myTimestamp;
-  private DirectoryEntry myParent;
+  protected DirectoryEntry myParent;
 
-  public Entry(Integer id, Long timestamp) {
+  public Entry(Integer id, String name, Long timestamp) {
     myId = id;
+    myName = name;
     myTimestamp = timestamp;
   }
 
@@ -31,20 +36,18 @@ public abstract class Entry {
     return myParent.getIdPathAppendedWith(myId);
   }
 
-  public abstract String getName();
+  public String getName() {
+    return myName;
+  }
 
   public String getPath() {
     //todo try to remove this check
-    if (!hasParent()) return getName();
-    return myParent.getPathAppendedWith(getName()).getPath();
+    if (myParent == null) return myName;
+    return myParent.getPathAppendedWith(myName);
   }
 
   public Long getTimestamp() {
     return myTimestamp;
-  }
-
-  public void setTimestamp(Long timestamp) {
-    myTimestamp = timestamp;
   }
 
   public boolean isOutdated(Long timestamp) {
@@ -53,10 +56,6 @@ public abstract class Entry {
 
   public String getContent() {
     throw new UnsupportedOperationException();
-  }
-
-  private boolean hasParent() {
-    return myParent != null;
   }
 
   public DirectoryEntry getParent() {
@@ -72,29 +71,46 @@ public abstract class Entry {
   }
 
   public void addChild(Entry child) {
-    throw new LocalVcsException();
+    throw new UnsupportedOperationException();
   }
 
   public void removeChild(Entry child) {
-    throw new LocalVcsException();
+    throw new UnsupportedOperationException();
   }
 
   public List<Entry> getChildren() {
-    throw new LocalVcsException();
+    return Collections.emptyList();
   }
 
-  protected Entry getChild(Integer id) {
-    throw new LocalVcsException();
+  protected Entry findChild(Integer id) {
+    for (Entry child : getChildren()) {
+      if (child.getId().equals(id)) return child;
+    }
+    return null;
   }
 
-  protected abstract Entry findEntry(Matcher m);
+  protected Entry findEntry(Matcher m) {
+    if (m.matches(this)) return this;
 
+    for (Entry child : getChildren()) {
+      Entry result = child.findEntry(m);
+      if (result != null) return result;
+    }
+    
+    return null;
+  }
+
+  // try to get rid of entries copying
   public abstract Entry copy();
 
-  public abstract Entry renamed(String newName, Long timestamp);
+  public Entry renamed(String newName) {
+    Entry result = copy();
+    result.myName = newName;
+    return result;
+  }
 
   public Entry withContent(String newContent, Long timestamp) {
-    throw new LocalVcsException();
+    throw new UnsupportedOperationException();
   }
 
   public abstract Difference getDifferenceWith(Entry e);
@@ -105,13 +121,5 @@ public abstract class Entry {
 
   protected interface Matcher {
     boolean matches(Entry entry);
-  }
-
-  protected interface NewMatcher {
-    boolean matches(Entry entry);
-
-    boolean isComplete();
-
-    Entry getResult();
   }
 }

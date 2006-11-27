@@ -45,7 +45,7 @@ public class ChangesTest extends TestCase {
   public void testAffectedEntryForRenameChange() {
     root.createFile(42, "name", null, null);
 
-    Change c = new RenameChange("name", "new name", null);
+    Change c = new RenameChange("name", "new name");
     c.applyTo(root);
 
     assertElements(new IdPath[]{idp(42)}, c.getAffectedEntryIdPaths());
@@ -57,7 +57,7 @@ public class ChangesTest extends TestCase {
     root.createDirectory(2, "dir2", null);
     root.createFile(13, "dir1/file", null, null);
 
-    Change c = new MoveChange("dir1/file", "dir2", null);
+    Change c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
 
     assertElements(new IdPath[]{idp(1, 13), idp(2, 13)},

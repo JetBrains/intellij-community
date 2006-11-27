@@ -30,7 +30,7 @@ public class DirectoryEntryTest extends TestCase {
     try {
       dir.addChild(new FileEntry(null, "name", null, null));
       fail();
-    } catch (LocalVcsException e) {}
+    } catch (AssertionError e) {}
   }
 
   @Test
@@ -55,10 +55,10 @@ public class DirectoryEntryTest extends TestCase {
     dir.addChild(file1);
     dir.addChild(file2);
 
-    assertSame(file1, dir.getChild(1));
-    assertSame(file2, dir.getChild(2));
+    assertSame(file1, dir.findChild(1));
+    assertSame(file2, dir.findChild(2));
 
-    assertNull(dir.getChild(99));
+    assertNull(dir.findChild(99));
   }
 
   @Test
@@ -163,7 +163,7 @@ public class DirectoryEntryTest extends TestCase {
     root.addChild(root);
     dir.addChild(child);
 
-    Entry renamed = dir.renamed("new dir", null);
+    Entry renamed = dir.renamed("new dir");
 
     assertNull(renamed.getParent());
     assertEquals(p("new dir"), renamed.getPath());
@@ -206,7 +206,6 @@ public class DirectoryEntryTest extends TestCase {
     Entry e1 = new DirectoryEntry(null, "name", null);
     Entry e2 = new DirectoryEntry(null, "name", null);
 
-    // todo test with different identity but same id
     Entry child = new FileEntry(1, "name", "content", null);
     e2.addChild(child);
 

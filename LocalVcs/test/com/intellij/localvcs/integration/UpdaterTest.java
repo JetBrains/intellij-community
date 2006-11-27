@@ -111,7 +111,7 @@ public class UpdaterTest extends TestCase {
   }
 
   @Test
-  public void testDoesNothingWithUpToDateEntries() {
+  public void testDoesNothingWithUpToDateFiles() {
     vcs.createDirectory("root/dir", 1L);
     vcs.createFile("root/dir/file", "content", 1L);
     vcs.apply();
@@ -145,34 +145,6 @@ public class UpdaterTest extends TestCase {
 
     assertEquals("new content", e.getContent());
     assertEquals(222L, e.getTimestamp());
-  }
-
-  @Test
-  @Ignore
-  public void testUpdatingOutdatedDirectories() {
-    vcs.createDirectory("root/dir", 111L);
-    vcs.apply();
-
-    root.addChild(new TestVirtualFile("dir", 222L));
-    update();
-
-    assertEquals(222L, vcs.getEntry("root/dir").getTimestamp());
-  }
-
-  @Test
-  @Ignore
-  public void testUpdatingOutdatedRoots() {
-    vcs = new LocalVcs(new TestStorage());
-    vcs.createDirectory("c:/root", 111L);
-    vcs.apply();
-
-    root = new TestVirtualFile("c:/root", 222L);
-    update();
-
-    List<Entry> roots = vcs.getRoots();
-
-    assertEquals(1, roots.size());
-    assertEquals(222L, roots.get(0).getTimestamp());
   }
 
   @Test

@@ -70,9 +70,8 @@ public class Updater {
   }
 
   private void updateDirectory(VirtualFile dir) throws IOException {
-    if (myVcs.hasEntry(dir.getPath())) {
-      deleteAbsentFiles(myVcs.getEntry(dir.getPath()), dir);
-    }
+    Entry e = myVcs.findEntry(dir.getPath());
+    if (e != null) deleteAbsentFiles(e, dir);
 
     createNewFiles(dir);
     updateOutdatedFiles(dir);
@@ -112,6 +111,7 @@ public class Updater {
       Entry e = myVcs.findEntry(f.getPath());
       if (areOfSameKind(e, f)) {
         // todo we should update directory and root timestamps too
+        // todo should we treat external file change as deletion and creation new one?
         if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
           myVcs.changeFileContent(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
         }

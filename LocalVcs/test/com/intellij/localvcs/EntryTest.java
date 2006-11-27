@@ -14,40 +14,21 @@ public class EntryTest extends TestCase {
 
   private class MyEntry extends Entry {
     public MyEntry(Long timestamp) {
-      super(null, timestamp);
+      super(null, null, timestamp);
     }
 
-    @Override
-    public String getName() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected Entry findEntry(Matcher m) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public Entry copy() {
       throw new UnsupportedOperationException();
     }
 
-    @Override
-    public Entry renamed(String newName, Long timestamp) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public Difference getDifferenceWith(Entry e) {
       throw new UnsupportedOperationException();
     }
 
-    @Override
     protected Difference asCreatedDifference() {
       throw new UnsupportedOperationException();
     }
 
-    @Override
     protected Difference asDeletedDifference() {
       throw new UnsupportedOperationException();
     }

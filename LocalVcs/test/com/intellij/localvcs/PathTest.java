@@ -5,55 +5,29 @@ import org.junit.Test;
 public class PathTest extends TestCase {
   @Test
   public void testParent() {
-    Path p = new Path("dir1/dir2/file");
-    assertEquals(new Path("dir1/dir2"), p.getParent());
-  }
-
-  @Test
-  public void testParentOfOnePartFile() {
-    Path p = new Path("file");
-    assertNull(p.getParent());
+    assertEquals("dir1/dir2", Path.getParentOf("dir1/dir2/file"));
+    assertNull(Path.getParentOf("file"));
   }
 
   @Test
   public void testName() {
-    assertEquals("file", new Path("file").getName());
-    assertEquals("file", new Path("dir/file").getName());
+    assertEquals("file", Path.getNameOf("file"));
+    assertEquals("file", Path.getNameOf("dir/file"));
   }
 
   @Test
   public void testAppending() {
-    Path p = new Path("file1");
-    assertEquals(new Path("file1/file2"), p.appendedWith("file2"));
+    assertEquals("file1/file2", Path.appended("file1", "file2"));
   }
 
   @Test
   public void testAppendingPathWithDriveLetter() {
-    Path p = new Path("c:/root");
-    assertEquals(new Path("c:/root/file"), p.appendedWith("file"));
+    assertEquals("c:/root/file", Path.appended("c:/root", "file"));
   }
 
   @Test
   public void testRenaming() {
-    Path p = new Path("file1");
-    assertEquals(new Path("file2"), p.renamedWith("file2"));
-  }
-
-  @Test
-  public void testRenamingWithParent() {
-    Path p = new Path("dir/file1");
-    assertEquals(new Path("dir/file2"), p.renamedWith("file2"));
-  }
-
-  @Test
-  public void testParts() {
-    Path p = new Path("dir1/dir2/file");
-    assertElements(new Object[]{"dir1", "dir2", "file"}, p.getParts());
-  }
-
-  @Test
-  public void testPartsOnOnePartFile() {
-    Path p = new Path("file");
-    assertElements(new Object[]{"file"}, p.getParts());
+    assertEquals("dir/file2", Path.renamed("dir/file1", "file2"));
+    assertEquals("file2", Path.renamed("file1", "file2"));
   }
 }

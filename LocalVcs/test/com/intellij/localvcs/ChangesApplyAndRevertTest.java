@@ -66,22 +66,18 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
   @Test
   public void testRenamingFile() {
-    root.createFile(1, "file", null, 111L);
+    root.createFile(1, "file", null, null);
 
-    Change c = new RenameChange("file", "new file", 666L);
+    Change c = new RenameChange("file", "new file");
     c.applyTo(root);
 
     assertFalse(root.hasEntry("file"));
     assertTrue(root.hasEntry("new file"));
 
-    assertEquals(666L, root.getEntry("new file").getTimestamp());
-
     c._revertOn(root);
 
     assertTrue(root.hasEntry("file"));
     assertFalse(root.hasEntry("new file"));
-
-    assertEquals(111L, root.getEntry("file").getTimestamp());
   }
 
   @Test
@@ -90,7 +86,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     root.createDirectory(2, "dir1/dir2", null);
     root.createFile(3, "dir1/dir2/file", null, null);
 
-    Change c = new RenameChange("dir1/dir2", "new dir", null);
+    Change c = new RenameChange("dir1/dir2", "new dir");
     c.applyTo(root);
 
     assertTrue(root.hasEntry("dir1/new dir"));
@@ -110,22 +106,18 @@ public class ChangesApplyAndRevertTest extends TestCase {
   public void testMovingFileFromOneDirectoryToAnother() {
     root.createDirectory(1, "dir1", null);
     root.createDirectory(2, "dir2", null);
-    root.createFile(3, "dir1/file", null, 111L);
+    root.createFile(3, "dir1/file", null, null);
 
-    Change c = new MoveChange("dir1/file", "dir2", 222L);
+    Change c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
 
     assertTrue(root.hasEntry("dir2/file"));
     assertFalse(root.hasEntry("dir1/file"));
 
-    assertEquals(222L, root.getEntry("dir2/file").getTimestamp());
-
     c._revertOn(root);
 
     assertFalse(root.hasEntry("dir2/file"));
     assertTrue(root.hasEntry("dir1/file"));
-
-    assertEquals(111L, root.getEntry("dir1/file").getTimestamp());
   }
 
   @Test
@@ -135,7 +127,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     root.createDirectory(3, "root1/dir", null);
     root.createFile(4, "root1/dir/file", null, null);
 
-    Change c = new MoveChange("root1/dir", "root2", null);
+    Change c = new MoveChange("root1/dir", "root2");
     c.applyTo(root);
 
     assertTrue(root.hasEntry("root2/dir"));
@@ -202,7 +194,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
   public void testKeepingIdOnRenaming() {
     root.createFile(13, "file", null, null);
 
-    Change c = new RenameChange("file", "new name", null);
+    Change c = new RenameChange("file", "new name");
     c.applyTo(root);
     c._revertOn(root);
 
@@ -215,7 +207,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     root.createDirectory(2, "dir2", null);
     root.createFile(3, "dir1/file", null, null);
 
-    Change c = new MoveChange("dir1/file", "dir2", null);
+    Change c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
     c._revertOn(root);
 

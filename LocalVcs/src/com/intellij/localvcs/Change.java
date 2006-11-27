@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class Change {
+  // todo generalize affectedPath stuff
   public abstract void write(Stream s) throws IOException;
 
   public abstract void applyTo(RootEntry root);
@@ -25,6 +26,7 @@ public abstract class Change {
   public Entry revertOn(Entry e) {
     // todo replace with polymorphims
     if (e instanceof FileEntry) return revertFile(e);
-    throw new LocalVcsException();
+    
+    throw new RuntimeException("under construction");
   }
 }

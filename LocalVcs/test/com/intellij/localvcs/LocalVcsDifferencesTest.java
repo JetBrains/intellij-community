@@ -8,7 +8,7 @@ import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 import org.junit.Test;
 
 public class LocalVcsDifferencesTest extends TestCase {
-  // todo test difference on root does not work!!!
+  // todo difference on root does not work!!!
   private LocalVcs vcs = new LocalVcs(new TestStorage());
 
   @Test
@@ -17,7 +17,7 @@ public class LocalVcsDifferencesTest extends TestCase {
     try {
       vcs.putLabel("label");
       fail();
-    } catch (LocalVcsException e) {}
+    } catch (AssertionError e) {}
   }
 
   @Test
@@ -25,7 +25,7 @@ public class LocalVcsDifferencesTest extends TestCase {
     try {
       vcs.getLabelsFor("unknown file");
       fail();
-    } catch (LocalVcsException e) {}
+    } catch (AssertionError e) {}
   }
 
   @Test
@@ -81,7 +81,7 @@ public class LocalVcsDifferencesTest extends TestCase {
     vcs.createFile("file1", "content1", null);
     vcs.apply();
 
-    vcs.rename("file1", "file2", null);
+    vcs.rename("file1", "file2");
     vcs.createFile("file1", "content2", null);
     vcs.apply();
 
@@ -151,7 +151,7 @@ public class LocalVcsDifferencesTest extends TestCase {
     Label one = labels.get(0);
     Label two = labels.get(1);
 
-    // todo can we calculate diffs by timestamp?
+    // todo can we calculate diffs by timestamp? it seems that we can
     Difference d = one.getDifferenceWith(two);
     assertEquals(MODIFIED, d.getKind());
     assertEquals("content", d.getLeft().getContent());

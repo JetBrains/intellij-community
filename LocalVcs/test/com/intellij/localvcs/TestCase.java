@@ -1,6 +1,7 @@
 package com.intellij.localvcs;
 
 import org.junit.Assert;
+import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,13 +28,5 @@ public abstract class TestCase extends Assert {
 
     assertTrue(message, expectedList.size() == actual.size());
     assertTrue(message, actual.containsAll(expectedList));
-  }
-
-  protected static void assertEntiesContents(String[] expectedContents, Collection<Entry> actualEntries) {
-    List<String> actualContents = new ArrayList<String>();
-    for (Entry rev : actualEntries) {
-      actualContents.add(rev.getContent());
-    }
-    assertEquals(expectedContents, actualContents.toArray(new Object[0]));
   }
 }

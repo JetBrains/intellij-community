@@ -5,7 +5,7 @@ import java.util.List;
 
 // todo try to crean up Entry hierarchy
 public class RootEntry extends DirectoryEntry {
-  // todo try to remove difference null-checks
+  // todo try to remove different null-checks
   public RootEntry() {
     super(null, null, null);
   }
@@ -14,17 +14,22 @@ public class RootEntry extends DirectoryEntry {
     super(s);
   }
 
-  // todo it seems that we can get rid of these two methods 
-  protected Path getPathAppendedWith(String name) {
-    return new Path(name);
+  // todo it seems that we can get rid of these two methods
+  protected IdPath getIdPathAppendedWith(Integer id) {
+    // todo test it
+    return new IdPath(id);// todo verify this method.
   }
 
-  protected IdPath getIdPathAppendedWith(Integer id) {
-    return new IdPath(id);// todo verify this method.
+  protected String getPathAppendedWith(String name) {
+    return name;
   }
 
   public boolean hasEntry(String path) {
     return findEntry(path) != null;
+  }
+
+  private boolean hasEntry(Integer id) {
+    return findEntry(id) != null;
   }
 
   protected Entry findEntry(String path) {
@@ -36,9 +41,6 @@ public class RootEntry extends DirectoryEntry {
     return findEntry(new IdMatcher(id));
   }
 
-  public boolean hasEntry(Integer id) {
-    return findEntry(id) != null;
-  }
 
   public Entry getEntry(String path) {
     return getEntry(new PathMatcher(path));
@@ -49,8 +51,10 @@ public class RootEntry extends DirectoryEntry {
   }
 
   private Entry getEntry(Matcher m) {
+    // todo get rid of this method
     Entry result = findEntry(m);
-    if (result == null) throw new LocalVcsException();
+    // todo should we raise more meaningfull exception here?
+    assert result != null;
     return result;
   }
 
@@ -59,17 +63,17 @@ public class RootEntry extends DirectoryEntry {
   }
 
   public void createFile(Integer id, String path, String content, Long timestamp) {
-    FileEntry e = new FileEntry(id, new Path(path).getName(), content, timestamp);
-    addEntry(new Path(path).getParent(), e);
+    FileEntry e = new FileEntry(id, Path.getNameOf(path), content, timestamp);
+    addEntry(Path.getParentOf(path), e);
   }
 
   public void createDirectory(Integer id, String path, Long timestamp) {
-    // todo messsssss!!!!
-    Path p = new Path(path);
-    Path parentPath = p.getParent();
-    String name = p.getName();
+    // todo messsssss!!!! should we introduce createRoot method instead?
+    // todo and simplify addEntry method too? 
+    String name = Path.getNameOf(path);
+    String parentPath = Path.getParentOf(path);
 
-    if (parentPath == null || !hasEntry(parentPath.getPath())) {
+    if (parentPath == null || !hasEntry(parentPath)) { // is it suppose to be a root?
       parentPath = null;
       name = path;
     }
@@ -85,39 +89,33 @@ public class RootEntry extends DirectoryEntry {
     Entry newEntry = oldEntry.withContent(newContent, timestamp);
 
     removeEntry(oldEntry);
-    addEntry(new Path(path).getParent(), newEntry);
+    addEntry(Path.getParentOf(path), newEntry);
   }
 
-  public void rename(String path, String newName, Long timestamp) {
-    // todo maybe remove this check?
-    if (newName.equals(new Path(path).getName())) return;
-
+  public void rename(String path, String newName) {
     Entry oldEntry = getEntry(path);
-    Entry newEntry = oldEntry.renamed(newName, timestamp);
+    Entry newEntry = oldEntry.renamed(newName);
 
     removeEntry(oldEntry);
-    addEntry(new Path(path).getParent(), newEntry);
+    addEntry(Path.getParentOf(path), newEntry);
   }
 
-  public void move(String path, String newParentPath, Long timestamp) {
+  public void move(String path, String newParentPath) {
     Entry e = getEntry(path);
-    e.setTimestamp(timestamp); // todo it smells bed
-
     removeEntry(e);
-    addEntry(new Path(newParentPath), e);
+    addEntry(newParentPath, e);
   }
 
   public void delete(String path) {
     removeEntry(getEntry(path));
   }
 
-  private void addEntry(Path parentPath, Entry entry) {
-    // todo chenge parameter from path to id or better to string
-    // todo just for testing...
+  private void addEntry(String parentPath, Entry entry) {
+    // todo this check is just for testing...
     assert entry.getId() == null || !hasEntry(entry.getId());
 
-    // todo try to remove this logic
-    Entry parent = parentPath == null ? this : getEntry(parentPath.getPath());
+    // todo try to remove this conditional logic
+    Entry parent = parentPath == null ? this : getEntry(parentPath);
     parent.addChild(entry);
   }
 
@@ -128,7 +126,7 @@ public class RootEntry extends DirectoryEntry {
 
   @Override
   public RootEntry copy() {
-    // todo just for avoid casting
+    // todo just for avoid casting so try to remove it
     return (RootEntry)super.copy();
   }
 

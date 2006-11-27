@@ -7,15 +7,12 @@ import java.util.List;
 public class MoveChange extends Change {
   private String myPath;
   private String myNewParentPath;
-  private Long myTimestamp;
-  private Long myOldTimestamp;
   private IdPath myFromIdPath;
   private IdPath myToIdPath;
 
-  public MoveChange(String path, String newParentPath, Long timestamp) {
+  public MoveChange(String path, String newParentPath) {
     myPath = path;
     myNewParentPath = newParentPath;
-    myTimestamp = timestamp;
   }
 
   public MoveChange(Stream s) throws IOException {
@@ -39,21 +36,18 @@ public class MoveChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    Entry e = root.getEntry(myPath);
-
-    myOldTimestamp = e.getTimestamp();
-    myFromIdPath = e.getIdPath();
-    root.move(myPath, myNewParentPath, myTimestamp);
+    myFromIdPath = root.getEntry(myPath).getIdPath();
+    root.move(myPath, myNewParentPath);
     myToIdPath = root.getEntry(getNewPath()).getIdPath();
   }
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.move(getNewPath(), new Path(myPath).getParent().getPath(), myOldTimestamp);
+    root.move(getNewPath(), Path.getParentOf(myPath));
   }
 
   private String getNewPath() {
-    return new Path(myNewParentPath).appendedWith(new Path(myPath).getName()).getPath();
+    return Path.appended(myNewParentPath, Path.getNameOf(myPath));
   }
 
   @Override

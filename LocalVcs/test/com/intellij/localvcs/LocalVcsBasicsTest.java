@@ -7,23 +7,10 @@ public class LocalVcsBasicsTest extends TestCase {
   private LocalVcs vcs = new LocalVcs(new TestStorage());
 
   @Test
-  public void testOnlyApplyThrowsException() {
-    vcs.createFile("file", "", null);
-    vcs.createFile("file", "", null);
-
-    try {
-      vcs.apply();
-      fail();
-    }
-    catch (LocalVcsException e) {
-    }
-  }
-
-  @Test
   public void testClearingChangesOnApply() {
     vcs.createFile("file", "content", null);
     vcs.changeFileContent("file", "new content", null);
-    vcs.rename("file", "new file", null);
+    vcs.rename("file", "new file");
     vcs.delete("new file");
 
     assertFalse(vcs.isClean());
@@ -138,7 +125,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.apply();
     assertTrue(vcs.hasEntry("file"));
 
-    vcs.rename("file", "new file", null);
+    vcs.rename("file", "new file");
     vcs.apply();
     assertFalse(vcs.hasEntry("file"));
     assertTrue(vcs.hasEntry("new file"));
@@ -151,7 +138,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.createFile("dir1/dir2/file", null, null);
     vcs.apply();
 
-    vcs.rename("dir1/dir2", "new dir", null);
+    vcs.rename("dir1/dir2", "new dir");
     vcs.apply();
 
     assertTrue(vcs.hasEntry("dir1/new dir"));
@@ -167,7 +154,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.createFile("dir1/file", null, null);
     vcs.apply();
 
-    vcs.move("dir1/file", "dir2", null);
+    vcs.move("dir1/file", "dir2");
     vcs.apply();
 
     assertTrue(vcs.hasEntry("dir2/file"));
@@ -182,7 +169,7 @@ public class LocalVcsBasicsTest extends TestCase {
     vcs.createFile("root1/dir/file", null, null);
     vcs.apply();
 
-    vcs.move("root1/dir", "root2", null);
+    vcs.move("root1/dir", "root2");
     vcs.apply();
 
     assertTrue(vcs.hasEntry("root2/dir"));

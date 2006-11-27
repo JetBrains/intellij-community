@@ -7,12 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DirectoryEntry extends Entry {
-  protected String myName;
   private List<Entry> myChildren = new ArrayList<Entry>();
 
   public DirectoryEntry(Integer id, String name, Long timestamp) {
-    super(id, timestamp);
-    myName = name;
+    super(id, name, timestamp);
   }
 
   public DirectoryEntry(Stream s) throws IOException {
@@ -36,17 +34,13 @@ public class DirectoryEntry extends Entry {
     }
   }
 
-  public String getName() {
-    return myName;
-  }
-
   protected IdPath getIdPathAppendedWith(Integer id) {
+    // todo test it
     return getIdPath().appendedWith(id);
   }
 
-  protected Path getPathAppendedWith(String name) {
-    // todo make it return String 
-    return new Path(getPath()).appendedWith(name);
+  protected String getPathAppendedWith(String name) {
+    return Path.appended(getPath(), name);
   }
 
   @Override
@@ -57,16 +51,18 @@ public class DirectoryEntry extends Entry {
   @Override
   public void addChild(Entry child) {
     // todo move this check to RootEntry class and clean up tests
-    checkThatEntryDoesNotExists(child);
+    assert doesNotExist(child);
+
     myChildren.add(child);
     child.setParent(this);
   }
 
-  private void checkThatEntryDoesNotExists(Entry child) {
+  private boolean doesNotExist(Entry child) {
     // todo replace with existing find/hasEntry methods
     for (Entry e : myChildren) {
-      if (e.getName().equals(child.getName())) throw new LocalVcsException();
+      if (e.getName().equals(child.getName())) return false;
     }
+    return true;
   }
 
   @Override
@@ -82,37 +78,11 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected Entry getChild(Integer id) {
-    for (Entry child : myChildren) {
-      if (child.getId().equals(id)) return child;
-    }
-    return null;
-  }
-
-  @Override
-  protected Entry findEntry(Matcher m) {
-    if (m.matches(this)) return this;
-
-    for (Entry child : myChildren) {
-      Entry result = child.findEntry(m);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  @Override
   public DirectoryEntry copy() {
     DirectoryEntry result = copyEntry();
     for (Entry child : myChildren) {
       result.addChild(child.copy());
     }
-    return result;
-  }
-
-  public Entry renamed(String newName, Long timestamp) {
-    DirectoryEntry result = copy();
-    result.myName = newName;
-    result.myTimestamp = timestamp;
     return result;
   }
 
@@ -127,32 +97,32 @@ public class DirectoryEntry extends Entry {
     Difference.Kind kind = myName.equals(e.myName) ? NOT_MODIFIED : MODIFIED;
     Difference result = new Difference(false, kind, this, e);
 
-    addCreatedChildren(e, result);
-    addDeletedChildren(e, result);
-    addModifiedChildren(e, result);
+    addCreatedChildrenDifferences(e, result);
+    addDeletedChildrenDifferences(e, result);
+    addModifiedChildrenDifference(e, result);
 
     return result;
   }
 
-  private void addCreatedChildren(DirectoryEntry e, Difference d) {
+  private void addCreatedChildrenDifferences(DirectoryEntry e, Difference d) {
     for (Entry child : e.myChildren) {
-      if (getChild(child.getId()) == null) {
+      if (findChild(child.getId()) == null) {
         d.addChild(child.asCreatedDifference());
       }
     }
   }
 
-  private void addDeletedChildren(DirectoryEntry e, Difference d) {
+  private void addDeletedChildrenDifferences(DirectoryEntry e, Difference d) {
     for (Entry child : myChildren) {
-      if (e.getChild(child.getId()) == null) {
+      if (e.findChild(child.getId()) == null) {
         d.addChild(child.asDeletedDifference());
       }
     }
   }
 
-  private void addModifiedChildren(DirectoryEntry e, Difference d) {
+  private void addModifiedChildrenDifference(DirectoryEntry e, Difference d) {
     for (Entry myChild : myChildren) {
-      Entry itsChild = e.getChild(myChild.getId());
+      Entry itsChild = e.findChild(myChild.getId());
       if (itsChild != null) {
         Difference childDiff = myChild.getDifferenceWith(itsChild);
         d.addChild(childDiff);

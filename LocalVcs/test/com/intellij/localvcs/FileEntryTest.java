@@ -36,33 +36,13 @@ public class FileEntryTest extends TestCase {
 
     dir.addChild(file);
 
-    Entry renamed = file.renamed("new name", null);
+    Entry renamed = file.renamed("new name");
 
     assertEquals(33, renamed.getId());
     assertEquals("new name", renamed.getName());
     assertEquals("content", renamed.getContent());
 
     assertNull(renamed.getParent());
-  }
-
-  @Test
-  public void testCanNotWorkWithChildren() {
-    FileEntry file = new FileEntry(null, null, null, null);
-
-    try {
-      file.addChild(new FileEntry(null, null, null, null));
-      fail();
-    } catch (LocalVcsException e) {}
-
-    try {
-      file.removeChild(new FileEntry(null, null, null, null));
-      fail();
-    } catch (LocalVcsException e) {}
-
-    try {
-      file.getChildren();
-      fail();
-    } catch (LocalVcsException e) {}
   }
 
   @Test

@@ -6,58 +6,44 @@ import java.io.IOException;
 
 public class FileEntry extends Entry {
   // todo change String to ByteArray or something else
-  private FileEntryState myState;
+  private String myContent;
 
   public FileEntry(Integer id, String name, String content, Long timestamp) {
-    super(id, timestamp);
-    myState = new FileEntryState(name, content);
+    super(id, name, timestamp);
+    myContent = content;
   }
 
   public FileEntry(Stream s) throws IOException {
     super(s);
-    myState = new FileEntryState(s.readString(), s.readString());
+    myName = s.readString();
+    myContent = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeString(myState.getName());
-    s.writeString(myState.getContent());
-  }
-
-  @Override
-  public String getName() {
-    return myState.getName();
+    s.writeString(myName);
+    s.writeString(myContent);
   }
 
   @Override
   public String getContent() {
-    return myState.getContent();
-  }
-
-  @Override
-  protected Entry findEntry(Matcher m) {
-    return m.matches(this) ? this : null;
+    return myContent;
   }
 
   @Override
   public FileEntry copy() {
-    // todo create constructor with FileEntryState parameter
-    return new FileEntry(myId, getName(), getContent(), null);
-  }
-
-  public Entry renamed(String newName, final Long timestamp) {
-    return new FileEntry(myId, newName, getContent(), timestamp);
+    return new FileEntry(myId, myName, myContent, null); // todo BUG in timestamp copying!!!
   }
 
   @Override
   public Entry withContent(String newContent, Long timestamp) {
-    return new FileEntry(myId, getName(), newContent, timestamp);
+    return new FileEntry(myId, myName, newContent, timestamp);
   }
 
   @Override
   public Difference getDifferenceWith(Entry e) {
-    boolean modified = !getName().equals(e.getName()) || !getContent().equals(e.getContent());
+    boolean modified = !myName.equals(e.getName()) || !myContent.equals(e.getContent());
     return new Difference(true, modified ? MODIFIED : NOT_MODIFIED, this, e);
   }
 

@@ -1,23 +1,28 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.TestStorage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Messages;
+import org.easymock.EasyMock;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,23 +32,45 @@ public class LocalVcsServiceTest extends Assert {
   private MessageBus bus;
   private LocalVcsService service;
   private List<VirtualFile> roots = new ArrayList<VirtualFile>();
+  private MyStartupManager startupManager;
+  private MyProjectRootManager rootManager;
   private MyVirtualFileManager fileManager;
-
 
   @Before
   public void setUp() {
-    vcs = new LocalVcs(new TestStorage());
+    init(new LocalVcs(new TestStorage()));
+  }
+
+  private void init(LocalVcs v) {
+    vcs = v;
     bus = Messages.newMessageBus();
-    ProjectRootManager rm = new MyProjectRootManager();
+    startupManager = new MyStartupManager();
+    rootManager = new MyProjectRootManager();
     fileManager = new MyVirtualFileManager();
 
-    service = new LocalVcsService(vcs, bus, rm, fileManager);
+    service = new LocalVcsService(vcs, bus, startupManager, rootManager, fileManager);
   }
 
   @Test
   public void testUpdatingRoots() {
     roots.add(new TestVirtualFile("c:/root", null));
     bus.syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(null);
+
+    assertTrue(vcs.hasEntry("c:/root"));
+  }
+
+  @Test
+  public void testDoesNotUpdatingRootsOnInitialization() {
+    roots.add(new TestVirtualFile("c:/root", null));
+    init(new LocalVcs(new TestStorage()));
+
+    assertFalse(vcs.hasEntry("c:/root"));
+  }
+
+  @Test
+  public void testUpdatingRootsOnStartup() {
+    roots.add(new TestVirtualFile("c:/root", null));
+    startupManager.runStartupActivity();
 
     assertTrue(vcs.hasEntry("c:/root"));
   }
@@ -75,6 +102,19 @@ public class LocalVcsServiceTest extends Assert {
   }
 
   @Test
+  public void testChangingFileContent() {
+    vcs.createFile("file", "old content", null);
+    vcs.apply();
+
+    VirtualFile f = new TestVirtualFile("file", "new content", 505L);
+    fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
+
+    Entry e = vcs.getEntry("file");
+    assertEquals("new content", e.getContent());
+    assertEquals(505L, e.getTimestamp());
+  }
+
+  @Test
   public void testDeleting() {
     vcs.createFile("file", null, null);
     vcs.apply();
@@ -90,8 +130,7 @@ public class LocalVcsServiceTest extends Assert {
     vcs.createFile("old name", "old content", null);
     vcs.apply();
 
-    // todo i'm not shure about timestamps here
-    VirtualFile f = new TestVirtualFile("old name", null, 777L);
+    VirtualFile f = new TestVirtualFile("old name", null, null);
     fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, VirtualFile.PROP_NAME, null, "new name"));
 
     assertFalse(vcs.hasEntry("old name"));
@@ -100,12 +139,12 @@ public class LocalVcsServiceTest extends Assert {
     assertNotNull(e);
 
     assertEquals("old content", e.getContent());
-    assertEquals(777L, e.getTimestamp());
   }
 
   @Test
   public void testDoNothingOnAnotherPropertyChanges() throws Exception {
     try {
+      // we just shouldn't throw any exception here to meake test pass
       VirtualFile f = new TestVirtualFile(null, null, null);
       fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, "another property", null, null));
     }
@@ -122,7 +161,7 @@ public class LocalVcsServiceTest extends Assert {
     vcs.createFile("dir1/file", "content", null);
     vcs.apply();
 
-    VirtualFile f = new TestVirtualFile("dir1/file", null, 777L);
+    VirtualFile f = new TestVirtualFile("dir1/file", null, null);
     VirtualFile newParent = new TestVirtualFile("dir2", null);
     fileManager.fireBeforeFileMovement(new VirtualFileMoveEvent(null, f, null, newParent));
 
@@ -132,13 +171,73 @@ public class LocalVcsServiceTest extends Assert {
 
     assertNotNull(e);
     assertEquals("content", e.getContent());
-    assertEquals(777L, e.getTimestamp());
   }
 
-  // todo test releasing of resources
-  // todo test filtering events from another project
+  @Test
+  public void testSkippingEventsFromAnotherProject() {
+    boolean isAnyMethodCalled[] = {false};
+    init(new MyLocalVcs(isAnyMethodCalled));
+    rootManager.setModuleForFileToNull();
+
+    VirtualFile f = new TestVirtualFile(null, null, null);
+    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, null, null, null));
+    fileManager.fireBeforeFileMovement(new VirtualFileMoveEvent(null, f, null, null));
+    fileManager.fireBeforeFileDeletion(new VirtualFileEvent(null, f, null, null));
+
+    assertFalse(isAnyMethodCalled[0]);
+  }
+
+  @Test
+  public void testUnsubscribingFromFileManagerOnDisposal() {
+    assertTrue(fileManager.hasListener());
+    service.dispose();
+    assertFalse(fileManager.hasListener());
+  }
+
+  private class MyStartupManager extends StartupManager {
+    private Runnable myRunnable;
+
+    public void runStartupActivity() {
+      myRunnable.run();
+    }
+
+    public void registerStartupActivity(Runnable r) {
+      myRunnable = r;
+    }
+
+    public void registerPostStartupActivity(Runnable runnable) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void runPostStartup(Runnable runnable) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void runWhenProjectIsInitialized(Runnable runnable) {
+      throw new UnsupportedOperationException();
+    }
+
+    public FileSystemSynchronizer getFileSystemSynchronizer() {
+      throw new UnsupportedOperationException();
+    }
+  }
 
   private class MyProjectRootManager extends ProjectRootManager {
+    private ProjectFileIndex myFileIndex;
+
+    public MyProjectRootManager() {
+      myFileIndex = EasyMock.createMock(ProjectFileIndex.class);
+      setModuleForFile(EasyMock.createMock(Module.class));
+    }
+
+    private void setModuleForFile(Module m) {
+      EasyMock.reset(myFileIndex);
+      EasyMock.expect(myFileIndex.getModuleForFile((VirtualFile)EasyMock.anyObject())).andStubReturn(m);
+      EasyMock.replay(myFileIndex);
+    }
+
     @NotNull
     public VirtualFile[] getContentRoots() {
       return roots.toArray(new VirtualFile[0]);
@@ -146,7 +245,11 @@ public class LocalVcsServiceTest extends Assert {
 
     @NotNull
     public ProjectFileIndex getFileIndex() {
-      throw new UnsupportedOperationException();
+      return myFileIndex;
+    }
+
+    public void setModuleForFileToNull() {
+      setModuleForFile(null);
     }
 
     public void addModuleRootListener(ModuleRootListener listener) {
@@ -231,8 +334,20 @@ public class LocalVcsServiceTest extends Assert {
       myListener = l;
     }
 
+    public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
+      if (listener == myListener) myListener = null;
+    }
+
+    public boolean hasListener() {
+      return myListener != null;
+    }
+
     public void fireFileCreated(VirtualFileEvent e) {
       myListener.fileCreated(e);
+    }
+
+    public void fireContentChanged(VirtualFileEvent e) {
+      myListener.contentsChanged(e);
     }
 
     public void fireBeforeFileDeletion(VirtualFileEvent e) {
@@ -277,10 +392,6 @@ public class LocalVcsServiceTest extends Assert {
       throw new UnsupportedOperationException();
     }
 
-    public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
     public void dispatchPendingEvent(@NotNull VirtualFileListener listener) {
       throw new UnsupportedOperationException();
     }
@@ -303,6 +414,45 @@ public class LocalVcsServiceTest extends Assert {
 
     public void removeVirtualFileManagerListener(VirtualFileManagerListener listener) {
       throw new UnsupportedOperationException();
+    }
+  }
+
+  private class MyLocalVcs extends LocalVcs {
+    private boolean[] myIsAnyMethodCalled;
+
+    public MyLocalVcs(boolean[] isAnyMethodCalled) {
+      super(new TestStorage());
+      myIsAnyMethodCalled = isAnyMethodCalled;
+    }
+
+    @Override
+    public void createFile(String path, String content, Long timestamp) {
+      myIsAnyMethodCalled[0] = true;
+    }
+
+    @Override
+    public void createDirectory(String path, Long timestamp) {
+      myIsAnyMethodCalled[0] = true;
+    }
+
+    @Override
+    public void changeFileContent(String path, String content, Long timestamp) {
+      myIsAnyMethodCalled[0] = true;
+    }
+
+    @Override
+    public void rename(String path, String newName) {
+      myIsAnyMethodCalled[0] = true;
+    }
+
+    @Override
+    public void move(String path, String newParentPath) {
+      myIsAnyMethodCalled[0] = true;
+    }
+
+    @Override
+    public void delete(String path) {
+      myIsAnyMethodCalled[0] = true;
     }
   }
 }

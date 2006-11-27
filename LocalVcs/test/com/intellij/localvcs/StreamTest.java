@@ -23,13 +23,6 @@ public class StreamTest extends TestCase {
   }
 
   @Test
-  public void testPath() throws IOException {
-    Path p = new Path("dir/file");
-    os.writePath(p);
-    assertEquals(p, is.readPath());
-  }
-
-  @Test
   public void testIdPath() throws IOException {
     IdPath p = new IdPath(1, 2, 3);
     os.writeIdPath(p);
@@ -200,7 +193,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testRenameChange() throws IOException {
-    Change c = new RenameChange("entry", "new name", null);
+    Change c = new RenameChange("entry", "new name");
 
     os.writeChange(c);
     Change read = is.readChange();
@@ -215,7 +208,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testMoveChange() throws IOException {
-    Change c = new MoveChange("entry", "dir", null);
+    Change c = new MoveChange("entry", "dir");
 
     os.writeChange(c);
     Change read = is.readChange();

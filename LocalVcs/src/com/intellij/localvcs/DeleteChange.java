@@ -47,7 +47,7 @@ public class DeleteChange extends Change {
     if (e.isDirectory()) {
       root.createDirectory(e.getId(), path, e.getTimestamp());
       for (Entry child : e.getChildren()) {
-        restoreEntryRecursively(root, child, new Path(path).appendedWith(child.getName()).getPath());
+        restoreEntryRecursively(root, child, Path.appended(path, child.getName()));
       }
     } else {
       root.createFile(e.getId(), path, e.getContent(), e.getTimestamp());

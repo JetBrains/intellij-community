@@ -3,7 +3,6 @@ package com.intellij.localvcs;
 import java.util.ArrayList;
 import java.util.List;
 
-// todo get rid of Path parameters
 public class LocalVcs {
   private Storage myStorage;
 
@@ -64,12 +63,12 @@ public class LocalVcs {
     myPendingChanges.add(new ChangeFileContentChange(path, content, timestamp));
   }
 
-  public void rename(String path, String newName, Long timestamp) {
-    myPendingChanges.add(new RenameChange(path, newName, timestamp));
+  public void rename(String path, String newName) {
+    myPendingChanges.add(new RenameChange(path, newName));
   }
 
-  public void move(String path, String newParentPath, Long timestamp) {
-    myPendingChanges.add(new MoveChange(path, newParentPath, timestamp));
+  public void move(String path, String newParentPath) {
+    myPendingChanges.add(new MoveChange(path, newParentPath));
   }
 
   public void delete(String path) {
@@ -92,7 +91,7 @@ public class LocalVcs {
   }
 
   public void putLabel(String label) {
-    // todo maybe join with apply method
+    // todo maybe join with apply method?
     myChangeList.labelLastChangeSet(label);
   }
 

@@ -38,7 +38,7 @@ public class RootEntryFilesTest extends TestCase {
       root.createFile(null, "file", null, null);
       fail();
     }
-    catch (LocalVcsException e) {
+    catch (AssertionError e) {
     }
   }
 
@@ -70,7 +70,7 @@ public class RootEntryFilesTest extends TestCase {
       root.changeFileContent("unknown file", "content", null);
       fail();
     }
-    catch (LocalVcsException e) {
+    catch (AssertionError e) {
     }
   }
 
@@ -78,24 +78,23 @@ public class RootEntryFilesTest extends TestCase {
   public void testRenamingFiles() {
     root.createFile(1, "file", "content", null);
 
-    root.rename("file", "new file", 54L);
+    root.rename("file", "new file");
 
     assertFalse(root.hasEntry("file"));
-    assertTrue(root.hasEntry("new file"));
 
-    Entry e = root.getEntry("new file");
+    Entry e = root.findEntry("new file");
 
+    assertNotNull(e);
     assertEquals("content", e.getContent());
-    assertEquals(54L, e.getTimestamp());
   }
 
   @Test
   public void testRenamingOfAnNonExistingFileThrowsException() {
     try {
-      root.rename("unknown file", "new file", null);
+      root.rename("unknown file", "new file");
       fail();
     }
-    catch (LocalVcsException e) {
+    catch (AssertionError e) {
     }
   }
 
@@ -105,10 +104,10 @@ public class RootEntryFilesTest extends TestCase {
     root.createFile(2, "file2", null, null);
 
     try {
-      root.rename("file1", "file2", null);
+      root.rename("file1", "file2");
       fail();
     }
-    catch (LocalVcsException e) {
+    catch (AssertionError e) {
     }
   }
 
@@ -116,7 +115,7 @@ public class RootEntryFilesTest extends TestCase {
   public void testRenamingFileToSameNameDoesNothing() {
     root.createFile(1, "file", "content", null);
 
-    root.rename("file", "file", null);
+    root.rename("file", "file");
 
     assertTrue(root.hasEntry("file"));
     assertEquals("content", root.getEntry("file").getContent());
@@ -148,7 +147,7 @@ public class RootEntryFilesTest extends TestCase {
       root.delete("unknown file");
       fail();
     }
-    catch (LocalVcsException e) {
+    catch (AssertionError e) {
     }
   }
 }
