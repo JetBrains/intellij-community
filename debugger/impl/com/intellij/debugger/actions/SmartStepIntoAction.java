@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.OrderedSet;
@@ -48,7 +49,8 @@ public class SmartStepIntoAction extends AnAction {
 
   
   private static void doStep(final Project project, final SourcePosition position, final DebuggerSession session) {
-    final FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(position.getFile().getVirtualFile());
+    final VirtualFile file = position.getFile().getVirtualFile();
+    final FileEditor fileEditor = file != null? FileEditorManager.getInstance(project).getSelectedEditor(file) : null;
     if (fileEditor instanceof TextEditor) {
       final List<PsiMethod> methods = findReferencedMethods(position);
       if (methods.size() > 0) {
