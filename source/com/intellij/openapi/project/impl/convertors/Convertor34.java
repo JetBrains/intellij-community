@@ -229,7 +229,7 @@ public class Convertor34 {
       BufferedWriter writer = null;
       try {
         writer = new BufferedWriter(new FileWriter(new File(moduleDirectory.getPath(), "WEB-INF/web.xml")));
-        writer.write(FileTemplateManager.getInstance().getJ2eeTemplate(J2EEFileTemplateNames.WEB_XML_23).getText());
+        writer.write(FileTemplateManager.getInstance().getJ2eeTemplate("web.2_3.xml").getText());
       }
       finally {
         if (writer != null) {
