@@ -489,7 +489,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, VersionsProvider provider, String title, boolean showSearchAgain) {
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain);
+    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple);
     dlg.setVersionsProvider(provider);
     if (title != null) {
       dlg.setTitle(title);
@@ -498,7 +498,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, CommittedChangesProvider provider, String title, boolean showSearchAgain) {
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain);
+    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple);
     dlg.setRecentChangesProvider(provider);
     if (title != null) {
       dlg.setTitle(title);
@@ -566,6 +566,27 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     changesBrowser.show();
     if (changesBrowser.isOK()) {
       return changesBrowser.getSelectedRepositoryVersion();
+    }
+    else {
+      return null;
+    }
+  }
+
+  @Nullable
+  public <T extends CommittedChangeList> T chooseCommittedChangeList(CommittedChangesProvider<T> provider) {
+    final List<T> changes;
+    try {
+      changes = provider.getCommittedChanges();
+    }
+    catch (VcsException e) {
+      return null;
+    }
+    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject,
+                                                              new CommittedChangesTableModel((List<CommittedChangeList>)changes, provider.getColumns()),
+                                                              ChangesBrowserDialog.Mode.Choose);
+    dlg.show();
+    if (dlg.isOK()) {
+      return (T) dlg.getSelectedChangeList();
     }
     else {
       return null;

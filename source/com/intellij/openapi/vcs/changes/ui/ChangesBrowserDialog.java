@@ -22,19 +22,23 @@ import javax.swing.*;
 public class ChangesBrowserDialog extends DialogWrapper {
   private final Project myProject;
   private final ListTableModel<CommittedChangeList> myChanges;
-  private final boolean myShowSearchAgain;
+  private final Mode myMode;
   private VersionsProvider myVersionsProvider;
   private CommittedChangesProvider myCommittedChangesProvider;
   private CommittedChangesBrowser myCommittedChangesBrowser;
 
-  public ChangesBrowserDialog(Project project, ListTableModel<CommittedChangeList> changes, final boolean showSearchAgain) {
+  public enum Mode { Simple, Browse, Choose }
+
+  public ChangesBrowserDialog(Project project, ListTableModel<CommittedChangeList> changes, final Mode mode) {
     super(project, true);
     myProject = project;
     myChanges = changes;
-    myShowSearchAgain = showSearchAgain;
+    myMode = mode;
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    setModal(false);
+    if (mode != Mode.Choose) {
+      setModal(false);
+    }
 
     init();
   }
@@ -65,12 +69,14 @@ public class ChangesBrowserDialog extends DialogWrapper {
   @Override
   protected void createDefaultActions() {
     super.createDefaultActions();
-    getOKAction().putValue(Action.NAME, VcsBundle.message("button.search.again"));
+    if (myMode == Mode.Browse) {
+      getOKAction().putValue(Action.NAME, VcsBundle.message("button.search.again"));
+    }
   }
 
   @Override
   protected Action[] createActions() {
-    if (!myShowSearchAgain) {
+    if (myMode == Mode.Simple) {
       return new Action[] { getCancelAction() };
     }
     return super.createActions();
@@ -79,11 +85,17 @@ public class ChangesBrowserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    if (myVersionsProvider != null) {
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVersionsProvider, getTitle());
+    if (myMode == Mode.Browse) {
+      if (myVersionsProvider != null) {
+        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVersionsProvider, getTitle());
+      }
+      else if (myCommittedChangesProvider != null) {
+        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myCommittedChangesProvider, getTitle());
+      }
     }
-    else if (myCommittedChangesProvider != null) {
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myCommittedChangesProvider, getTitle());
-    }
+  }
+
+  public CommittedChangeList getSelectedChangeList() {
+    return myCommittedChangesBrowser.getSelectedChangeList();
   }
 }

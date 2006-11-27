@@ -83,4 +83,8 @@ public class CommittedChangesBrowser extends JPanel {
       myCommitMessageArea.setText(list != null ? list.getComment() : "");
     }
   }
+
+  public CommittedChangeList getSelectedChangeList() {
+    return mySelectedChangeList;
+  }
 }

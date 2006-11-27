@@ -28,8 +28,8 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 
 import java.util.List;
 
-public interface CommittedChangesProvider {
+public interface CommittedChangesProvider<T extends CommittedChangeList> {
   RefreshableOnComponent createFilterUI();
-  List<CommittedChangeList> getCommittedChanges() throws VcsException;
+  List<T> getCommittedChanges() throws VcsException;
   ChangeListColumn[] getColumns();
 }

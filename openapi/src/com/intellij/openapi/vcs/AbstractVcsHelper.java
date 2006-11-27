@@ -100,6 +100,8 @@ public abstract class AbstractVcsHelper {
 
   @Nullable public abstract RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider);
 
+  @Nullable public abstract <T extends CommittedChangeList> T chooseCommittedChangeList(CommittedChangesProvider<T> provider);
+
   public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
 
   /**
