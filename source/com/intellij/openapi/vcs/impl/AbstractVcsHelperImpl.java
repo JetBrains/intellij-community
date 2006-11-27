@@ -497,7 +497,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     dlg.show();
   }
 
-  private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, RecentChangesProvider provider, String title, boolean showSearchAgain) {
+  private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, CommittedChangesProvider provider, String title, boolean showSearchAgain) {
     final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain);
     dlg.setRecentChangesProvider(provider);
     if (title != null) {
@@ -514,7 +514,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     dlg.show();
   }
 
-  public void showChangesBrowser(final RecentChangesProvider provider, @Nls String title) {
+  public void showChangesBrowser(final CommittedChangesProvider provider, @Nls String title) {
     final RefreshableOnComponent filterUI = provider.createFilterUI();
     boolean ok = true;
     if (filterUI != null) {
@@ -534,7 +534,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
-            versions.addAll(provider.getRecentChanges());
+            versions.addAll(provider.getCommittedChanges());
           }
           catch (VcsException e) {
             exceptions.add(e);

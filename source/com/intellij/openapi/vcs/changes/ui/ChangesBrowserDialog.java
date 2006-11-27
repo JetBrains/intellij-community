@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.RecentChangesProvider;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.util.ui.ListTableModel;
@@ -24,7 +24,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
   private final ListTableModel<CommittedChangeList> myChanges;
   private final boolean myShowSearchAgain;
   private VersionsProvider myVersionsProvider;
-  private RecentChangesProvider myRecentChangesProvider;
+  private CommittedChangesProvider myCommittedChangesProvider;
   private CommittedChangesBrowser myCommittedChangesBrowser;
 
   public ChangesBrowserDialog(Project project, ListTableModel<CommittedChangeList> changes, final boolean showSearchAgain) {
@@ -43,8 +43,8 @@ public class ChangesBrowserDialog extends DialogWrapper {
     myVersionsProvider = versionsProvider;
   }
 
-  public void setRecentChangesProvider(final RecentChangesProvider recentChangesProvider) {
-    myRecentChangesProvider = recentChangesProvider;
+  public void setRecentChangesProvider(final CommittedChangesProvider committedChangesProvider) {
+    myCommittedChangesProvider = committedChangesProvider;
   }
 
   protected String getDimensionServiceKey() {
@@ -82,8 +82,8 @@ public class ChangesBrowserDialog extends DialogWrapper {
     if (myVersionsProvider != null) {
       AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVersionsProvider, getTitle());
     }
-    else if (myRecentChangesProvider != null) {
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myRecentChangesProvider, getTitle());
+    else if (myCommittedChangesProvider != null) {
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myCommittedChangesProvider, getTitle());
     }
   }
 }

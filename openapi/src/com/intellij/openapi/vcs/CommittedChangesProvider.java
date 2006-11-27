@@ -28,7 +28,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 
 import java.util.List;
 
-public interface RecentChangesProvider {
+public interface CommittedChangesProvider {
   RefreshableOnComponent createFilterUI();
-  List<CommittedChangeList> getRecentChanges() throws VcsException;
+  List<CommittedChangeList> getCommittedChanges() throws VcsException;
 }
