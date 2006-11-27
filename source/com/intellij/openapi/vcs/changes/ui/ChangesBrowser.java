@@ -224,10 +224,12 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   private void rebuildList() {
-    final ChangeListManager manager = ChangeListManager.getInstance(myProject);
-    myChangeListsMap.clear();
-    for (Change change : myAllChanges) {
-      myChangeListsMap.put(change, manager.getChangeList(change));
+    if (myChangesToDisplay == null) {
+      final ChangeListManager manager = ChangeListManager.getInstance(myProject);
+      myChangeListsMap.clear();
+      for (Change change : myAllChanges) {
+        myChangeListsMap.put(change, manager.getChangeList(change));
+      }
     }
 
     myViewer.setChangesToDisplay(getCurrentDisplayedChanges());

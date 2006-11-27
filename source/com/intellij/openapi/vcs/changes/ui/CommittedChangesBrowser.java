@@ -27,6 +27,7 @@ public class CommittedChangesBrowser extends JPanel {
   private final ChangesBrowser myChangesView;
   private final ListTableModel<CommittedChangeList> myTableModel;
   private final JTextArea myCommitMessageArea;
+  private CommittedChangeList mySelectedChangeList;
 
   public CommittedChangesBrowser(final Project project, final ListTableModel<CommittedChangeList> tableModel) {
     super(new BorderLayout());
@@ -76,7 +77,10 @@ public class CommittedChangesBrowser extends JPanel {
   private void updateBySelectionChange() {
     final int idx = myChangeListsView.getSelectionModel().getLeadSelectionIndex();
     CommittedChangeList list = idx >= 0 ? myTableModel.getItems().get(idx) : null;
-    myChangesView.setChangesToDisplay(list != null ? new ArrayList<Change>(list.getChanges()) : Collections.<Change>emptyList());
-    myCommitMessageArea.setText(list != null ? list.getComment() : "");
+    if (list != mySelectedChangeList) {
+      mySelectedChangeList = list;
+      myChangesView.setChangesToDisplay(list != null ? new ArrayList<Change>(list.getChanges()) : Collections.<Change>emptyList());
+      myCommitMessageArea.setText(list != null ? list.getComment() : "");
+    }
   }
 }
