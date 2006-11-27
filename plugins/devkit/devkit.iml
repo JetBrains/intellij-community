@@ -19,7 +19,6 @@
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="ui-openapi" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntryProperties />
   </component>
