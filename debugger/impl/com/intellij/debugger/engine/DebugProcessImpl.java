@@ -540,10 +540,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public void showStatusText(final String text) {
     myStatusText = text;
+    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     DebuggerSmoothManager.getInstanceEx().action("DebugProcessImpl.showStatusText", new Runnable() {
       public void run() {
-        if (ProjectManagerEx.getInstanceEx().isProjectOpened(getProject())) {
-          WindowManager.getInstance().getStatusBar(getProject()).setInfo(text);
+        final Project project = getProject();
+        if (projectManager.isProjectOpened(project)) {
+          WindowManager.getInstance().getStatusBar(project).setInfo(text);
           myStatusText = null;
         }
       }
