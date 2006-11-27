@@ -68,7 +68,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   private final Map<EvaluatedXmlName, AttributeChildInvocationHandler> myAttributeChildren = new THashMap<EvaluatedXmlName, AttributeChildInvocationHandler>();
   final private GenericInfoImpl myGenericInfo;
   private final Map<EvaluatedXmlName, Class> myFixedChildrenClasses = new THashMap<EvaluatedXmlName, Class>();
-  private boolean myInvalidated;
+  private Throwable myInvalidated;
   private InvocationCache myInvocationCache;
   private final Factory<Converter> myGenericConverterFactory = new Factory<Converter>() {
     public Converter create() {
@@ -250,7 +250,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   public boolean isValid() {
-    return !myInvalidated;
+    return myInvalidated == null;
   }
 
   @NotNull
@@ -562,7 +562,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   final void checkInitialized(final EvaluatedXmlName qname) {
-    assert isValid(): "element " + myType.toString() + " is not valid";
+    if (!isValid()) {
+      throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
+    }
     checkParentInitialized();
     synchronized (PsiLock.LOCK) {
       if (myInitializedChildren.contains(qname)) {
@@ -663,7 +665,9 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   protected final void detach(boolean invalidate) {
     synchronized (PsiLock.LOCK) {
-      myInvalidated = invalidate;
+      if (invalidate && myInvalidated == null) {
+        myInvalidated = new Throwable();
+      }
       if (!myInitializedChildren.isEmpty()) {
         for (DomInvocationHandler handler : myFixedChildren.values()) {
           handler.detach(invalidate);

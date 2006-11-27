@@ -48,9 +48,9 @@ public abstract class ElementPresentationManager {
     }
   };
 
-  private final static Function<? extends DomElement, String> DEFAULT_NAMER = new Function<DomElement, String>() {
+  private final static Function<Object, String> DEFAULT_NAMER = new Function<Object, String>() {
     @Nullable
-    public String fun(final DomElement element) {
+    public String fun(final Object element) {
       return getElementName(element);
     }
   };
@@ -60,12 +60,12 @@ public abstract class ElementPresentationManager {
   }
 
   @NotNull
-  public <T extends DomElement> Object[] createVariants(Collection<T> elements) {
+  public <T> Object[] createVariants(Collection<T> elements) {
     return createVariants(elements, (Function<T, String>)DEFAULT_NAMER);
   }
 
   @NotNull
-  public abstract  <T extends DomElement> Object[] createVariants(Collection<T> elements, Function<T, String> namer);
+  public abstract <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer);
 
 
   private static final Map<Class, String> ourTypeNames = new HashMap<Class, String>();

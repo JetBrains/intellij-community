@@ -4,17 +4,15 @@
 
 package com.intellij.util.xml;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
-
-import java.util.Collection;
-import java.util.ArrayList;
-
-import com.intellij.util.Function;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
@@ -22,7 +20,7 @@ import javax.swing.*;
 public class ElementPresentationManagerImpl extends ElementPresentationManager implements ApplicationComponent {
 
   @NotNull
-  public  <T extends DomElement> Object[] createVariants(Collection<T> elements, Function<T, String> namer) {
+  public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer) {
     ArrayList<Object> result = new ArrayList<Object>(elements.size());
     for (T element: elements) {
       String name = namer.fun(element);

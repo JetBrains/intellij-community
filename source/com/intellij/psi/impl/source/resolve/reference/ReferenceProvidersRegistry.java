@@ -671,7 +671,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
       null,
       jspReferencesProvider
     );
-
+/*
     registerXmlAttributeValueReferenceProvider(
       new String[] {"name"},
       new ScopeFilter(
@@ -687,7 +687,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
       ),
       new SpringReferencesProvider()
     );
-
+*/
     registerXmlAttributeValueReferenceProvider(
       new String[] {"name"},
       new ScopeFilter(
