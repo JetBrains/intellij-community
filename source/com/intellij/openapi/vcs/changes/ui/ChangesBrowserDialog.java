@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.RecentChangesProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.util.ui.ListTableModel;
@@ -21,21 +22,29 @@ import javax.swing.*;
 public class ChangesBrowserDialog extends DialogWrapper {
   private final Project myProject;
   private final ListTableModel<CommittedChangeList> myChanges;
-  private final VersionsProvider myVersionsProvider;
   private final boolean myShowSearchAgain;
+  private VersionsProvider myVersionsProvider;
+  private RecentChangesProvider myRecentChangesProvider;
   private CommittedChangesBrowser myCommittedChangesBrowser;
 
-  public ChangesBrowserDialog(Project project, ListTableModel<CommittedChangeList> changes, final VersionsProvider provider, final boolean showSearchAgain) {
+  public ChangesBrowserDialog(Project project, ListTableModel<CommittedChangeList> changes, final boolean showSearchAgain) {
     super(project, true);
     myProject = project;
     myChanges = changes;
-    myVersionsProvider = provider;
     myShowSearchAgain = showSearchAgain;
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     setModal(false);
 
     init();
+  }
+
+  public void setVersionsProvider(final VersionsProvider versionsProvider) {
+    myVersionsProvider = versionsProvider;
+  }
+
+  public void setRecentChangesProvider(final RecentChangesProvider recentChangesProvider) {
+    myRecentChangesProvider = recentChangesProvider;
   }
 
   protected String getDimensionServiceKey() {
@@ -70,6 +79,11 @@ public class ChangesBrowserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVersionsProvider, getTitle());
+    if (myVersionsProvider != null) {
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVersionsProvider, getTitle());
+    }
+    else if (myRecentChangesProvider != null) {
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myRecentChangesProvider, getTitle());
+    }
   }
 }

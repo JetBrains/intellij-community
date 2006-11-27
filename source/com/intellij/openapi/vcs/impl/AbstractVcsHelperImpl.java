@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -484,11 +485,21 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(new CommittedChangesTableModel(changelists), null, title, false);
+    showChangesBrowser(new CommittedChangesTableModel(changelists), (VersionsProvider)null, title, false);
   }
 
   private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, VersionsProvider provider, String title, boolean showSearchAgain) {
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, provider, showSearchAgain);
+    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain);
+    dlg.setVersionsProvider(provider);
+    if (title != null) {
+      dlg.setTitle(title);
+    }
+    dlg.show();
+  }
+
+  private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, RecentChangesProvider provider, String title, boolean showSearchAgain) {
+    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain);
+    dlg.setRecentChangesProvider(provider);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -501,6 +512,53 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       dlg.setTitle(title);
     }
     dlg.show();
+  }
+
+  public void showChangesBrowser(final RecentChangesProvider provider, @Nls String title) {
+    final RefreshableOnComponent filterUI = provider.createFilterUI();
+    boolean ok = true;
+    if (filterUI != null) {
+      final FilterDialog dlg = new FilterDialog(myProject, filterUI);
+      dlg.show();
+      ok = dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE;
+    }
+    else {
+      ok = true;
+    }
+
+    if (ok) {
+      final List<CommittedChangeList> versions = new ArrayList<CommittedChangeList>();
+      final List<VcsException> exceptions = new ArrayList<VcsException>();
+      final Ref<CommittedChangesTableModel> tableModelRef = new Ref<CommittedChangesTableModel>();
+
+      final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          try {
+            versions.addAll(provider.getRecentChanges());
+          }
+          catch (VcsException e) {
+            exceptions.add(e);
+          }
+          tableModelRef.set(new CommittedChangesTableModel(versions));
+        }
+      }, VcsBundle.message("browse.changes.progress.title"), true, myProject);
+
+      if (!done) return;
+
+      if (!exceptions.isEmpty()) {
+        Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
+                                 VcsBundle.message("browse.changes.error.title"));
+        return;
+      }
+
+      if (versions.isEmpty()) {
+        Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
+                                 VcsBundle.message("browse.changes.nothing.found.title"));
+        return;
+      }
+
+      showChangesBrowser(tableModelRef.get(), provider, title, filterUI != null);
+    }
   }
 
   public RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider) {

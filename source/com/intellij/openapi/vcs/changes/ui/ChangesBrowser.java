@@ -74,12 +74,14 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
     myShowingAllChangeLists = changeLists.equals(ChangeListManager.getInstance(project).getChangeLists());
     for (ChangeList list : changeLists) {
-      myAllChanges.addAll(list.getChanges());
-      if (list instanceof LocalChangeList && initialListSelection == null) {
-        for(Change c: list.getChanges()) {
-          if (changes.contains(c)) {
-            initialListSelection = list;
-            break;
+      if (list instanceof LocalChangeList) {
+        myAllChanges.addAll(list.getChanges());
+        if (initialListSelection == null) {
+          for(Change c: list.getChanges()) {
+            if (changes.contains(c)) {
+              initialListSelection = list;
+              break;
+            }
           }
         }
       }
