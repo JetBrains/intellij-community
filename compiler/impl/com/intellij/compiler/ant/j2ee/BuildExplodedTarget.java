@@ -11,7 +11,7 @@ import com.intellij.openapi.compiler.make.FileCopyInstruction;
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.J2EEModuleBuildInstruction;
+import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.module.Module;
@@ -67,7 +67,7 @@ public class BuildExplodedTarget extends Target {
         return true;
       }
 
-      public boolean visitJ2EEModuleBuildInstruction(J2EEModuleBuildInstruction instruction) throws RuntimeException {
+      public boolean visitJ2EEModuleBuildInstruction(JavaeeModuleBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = "/"+instruction.getOutputRelativePath();
         final String explodedPathProperty = BuildProperties.getJ2EEExplodedPathProperty();

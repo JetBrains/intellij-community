@@ -18,7 +18,8 @@ package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.compiler.CompileContext;
 
-public interface J2EEModuleBuildInstruction extends BuildInstruction {
+public interface JavaeeModuleBuildInstruction extends BuildInstruction {
+  
   ModuleBuildProperties getBuildProperties();
 
   BuildRecipe getChildInstructions(CompileContext context);

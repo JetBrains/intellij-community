@@ -5,7 +5,7 @@ import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.compiler.impl.make.BuildInstructionBase;
 import com.intellij.compiler.impl.make.BuildRecipeImpl;
-import com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl;
+import com.intellij.compiler.impl.make.JavaeeModuleBuildInstructionImpl;
 import com.intellij.compiler.impl.make.JarAndCopyBuildInstructionImpl;
 import com.intellij.compiler.impl.make.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
@@ -300,7 +300,7 @@ public class DeploymentUtilImpl extends DeploymentUtil implements ApplicationCom
   public void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe,
                                   @NotNull ModuleBuildProperties moduleBuildProperties,
                                   final String relativePath) {
-    buildRecipe.addInstruction(new J2EEModuleBuildInstructionImpl(moduleBuildProperties, relativePath));
+    buildRecipe.addInstruction(new JavaeeModuleBuildInstructionImpl(moduleBuildProperties, relativePath));
   }
 
   public static boolean containsExternalDependencyInstruction(@NotNull ModuleContainer moduleProperties) {

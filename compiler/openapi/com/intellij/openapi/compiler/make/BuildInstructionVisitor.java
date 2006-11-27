@@ -29,7 +29,7 @@ public abstract class BuildInstructionVisitor {
   public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws Exception {
     return visitFileCopyInstruction(instruction);
   }
-  public boolean visitJ2EEModuleBuildInstruction(J2EEModuleBuildInstruction instruction) throws Exception {
+  public boolean visitJ2EEModuleBuildInstruction(JavaeeModuleBuildInstruction instruction) throws Exception {
     return visitInstruction(instruction);
   }
 }

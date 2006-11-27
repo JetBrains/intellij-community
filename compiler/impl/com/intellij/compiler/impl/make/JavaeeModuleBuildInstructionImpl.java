@@ -6,7 +6,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.J2EEModuleBuildInstruction;
+import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.BuildInstruction;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.javaee.JavaeeModuleProperties;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,13 +32,16 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.jar.JarFile;
 
-public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase implements J2EEModuleBuildInstruction {
+public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase implements JavaeeModuleBuildInstruction {
+  //not to be forgotten
+  private static final JavaeeModuleProperties aaa = null;
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
 
   private final ModuleBuildProperties myBuildProperties;
   @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
 
-  public J2EEModuleBuildInstructionImpl(ModuleBuildProperties moduleToBuild, String outputRelativePath) {
+  public JavaeeModuleBuildInstructionImpl(ModuleBuildProperties moduleToBuild, String outputRelativePath) {
     super(outputRelativePath, moduleToBuild.getModule());
     myBuildProperties = moduleToBuild;
     LOG.assertTrue(!isExternalDependencyInstruction());

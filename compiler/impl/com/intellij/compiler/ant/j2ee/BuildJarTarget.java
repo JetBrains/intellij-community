@@ -28,7 +28,7 @@ import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.compiler.make.J2EEModuleBuildInstruction;
+import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
 import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
@@ -85,7 +85,7 @@ public class BuildJarTarget extends Target {
         return true;
       }
 
-      public boolean visitJ2EEModuleBuildInstruction(J2EEModuleBuildInstruction instruction) throws RuntimeException {
+      public boolean visitJ2EEModuleBuildInstruction(JavaeeModuleBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String moduleName = ModuleUtil.getModuleNameInReadAction(instruction.getModule());
         // gather child module dependencies
