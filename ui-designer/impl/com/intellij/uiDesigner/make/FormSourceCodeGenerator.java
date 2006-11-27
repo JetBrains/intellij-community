@@ -1,5 +1,6 @@
 package com.intellij.uiDesigner.make;
 
+import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -8,9 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.*;
@@ -197,7 +200,7 @@ public final class FormSourceCodeGenerator {
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     final PsiElementFactory elementFactory = psiManager.getElementFactory();
 
-    final PsiClass newClass = (PsiClass) classToBind.copy();
+    PsiClass newClass = (PsiClass) classToBind.copy();
 
     cleanup(newClass);
 
@@ -224,8 +227,6 @@ public final class FormSourceCodeGenerator {
 
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
     PsiMethod method = (PsiMethod) newClass.add(fakeClass.getMethods()[0]);
-    method = (PsiMethod) codeStyleManager.reformat(method);
-    PsiElement initializer = null;
 
     // don't generate initializer block if $$$setupUI$$$() is called explicitly from one of the constructors
     boolean needInitializer = true;
@@ -237,8 +238,7 @@ public final class FormSourceCodeGenerator {
     }
 
     if (needInitializer) {
-      initializer = newClass.addBefore(fakeClass.getInitializers()[0], method);
-      initializer = codeStyleManager.reformat(initializer);
+      newClass.addBefore(fakeClass.getInitializers()[0], method);
     }
 
     @NonNls final String grcMethodText = "/** @noinspection ALL */ public javax.swing.JComponent " +
@@ -251,15 +251,48 @@ public final class FormSourceCodeGenerator {
     final String loadLabelTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, JLabel.class, module);
     generateMethodIfRequired(newClass, method, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, loadLabelTextMethodText, myNeedLoadLabelText);
 
-    codeStyleManager.shortenClassReferences(method);
-    if (initializer != null) {
-      codeStyleManager.shortenClassReferences(initializer);
-    }
+    newClass = (PsiClass) codeStyleManager.shortenClassReferences(newClass);
+    newClass = (PsiClass) codeStyleManager.reformat(newClass);
 
-    final String newText = newClass.getText();
-    final String oldText = classToBind.getText();
-    if (!newText.equals(oldText)) {
+    if (!lexemsEqual(classToBind, newClass)) {
       classToBind.replace(newClass);
+    }
+  }
+
+  private static boolean lexemsEqual(final PsiClass classToBind, final PsiClass newClass) {
+    JavaLexer oldTextLexer = new JavaLexer(LanguageLevel.HIGHEST);
+    JavaLexer newTextLexer = new JavaLexer(LanguageLevel.HIGHEST);
+    final char[] oldBuffer = classToBind.getText().toCharArray();
+    final char[] newBuffer = newClass.getText().toCharArray();
+    oldTextLexer.start(oldBuffer);
+    newTextLexer.start(newBuffer);
+
+    while(true) {
+      IElementType oldLexem = oldTextLexer.getTokenType();
+      IElementType newLexem = newTextLexer.getTokenType();
+      if (oldLexem == null || newLexem == null) {
+        // must terminate at the same time
+        return oldLexem == null && newLexem == null;
+      }
+      if (oldLexem != newLexem) {
+        return false;
+      }
+      if (oldLexem != TokenType.WHITE_SPACE && oldLexem != JavaTokenType.DOC_COMMENT) {
+        int oldStart = oldTextLexer.getTokenStart();
+        int newStart = newTextLexer.getTokenStart();
+        int oldLength = oldTextLexer.getTokenEnd() - oldTextLexer.getTokenStart();
+        int newLength = newTextLexer.getTokenEnd() - newTextLexer.getTokenStart();
+        if (oldLength != newLength) {
+          return false;
+        }
+        for(int i=0; i<oldLength; i++) {
+          if (oldBuffer [oldStart+i] != newBuffer [newStart+i]) {
+            return false;
+          }
+        }
+      }
+      oldTextLexer.advance();
+      newTextLexer.advance();
     }
   }
 
@@ -306,16 +339,11 @@ public final class FormSourceCodeGenerator {
     else {
       newMethod = elementFactory.createMethodFromText(methodText, aClass);
       if (oldMethods.length > 0) {
-        oldMethods [0].replace(newMethod);
+        newMethod = (PsiMethod) oldMethods [0].replace(newMethod);
       }
       else {
-        aClass.addAfter(newMethod, anchor);
+        newMethod = (PsiMethod) aClass.addAfter(newMethod, anchor);
       }
-    }
-    if (newMethod != null) {
-      CodeStyleManager csm = CodeStyleManager.getInstance(myProject);
-      newMethod = (PsiMethod)csm.reformat(newMethod);
-      csm.shortenClassReferences(newMethod);
     }
   }
 
