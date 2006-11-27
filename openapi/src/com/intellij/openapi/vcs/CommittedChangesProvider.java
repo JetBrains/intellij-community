@@ -31,4 +31,5 @@ import java.util.List;
 public interface CommittedChangesProvider {
   RefreshableOnComponent createFilterUI();
   List<CommittedChangeList> getCommittedChanges() throws VcsException;
+  ChangeListColumn[] getColumns();
 }

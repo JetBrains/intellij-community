@@ -539,7 +539,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
           catch (VcsException e) {
             exceptions.add(e);
           }
-          tableModelRef.set(new CommittedChangesTableModel(versions));
+          tableModelRef.set(new CommittedChangesTableModel(versions, provider.getColumns()));
         }
       }, VcsBundle.message("browse.changes.progress.title"), true, myProject);
 
