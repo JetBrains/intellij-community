@@ -46,16 +46,17 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
-          final PsiClass aClass = CreateFromUsageUtils.createClass(getRefElement(), myKind, superClassName);
+          PsiJavaCodeReferenceElement refElement = getRefElement();
+          final PsiClass aClass = CreateFromUsageUtils.createClass(refElement, myKind, superClassName);
           if (aClass == null) return;
           try {
-            getRefElement().bindToElement(aClass);
+            refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
           }
 
-          OpenFileDescriptor descriptor = new OpenFileDescriptor(getRefElement().getProject(), aClass.getContainingFile().getVirtualFile(),
+          OpenFileDescriptor descriptor = new OpenFileDescriptor(refElement.getProject(), aClass.getContainingFile().getVirtualFile(),
                                                                  aClass.getTextOffset());
           FileEditorManager.getInstance(aClass.getProject()).openTextEditor(descriptor, true);
         }
