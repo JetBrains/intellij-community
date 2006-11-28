@@ -46,13 +46,13 @@ public class DuplicatesFinder {
       int i = 0;
       do {
         startOffset = controlFlow.getStartOffset(pattern[i++]);
-      } while(startOffset < 0);
+      } while(startOffset < 0 && i < pattern.length);
 
       int endOffset;
       int j = pattern.length - 1;
       do {
         endOffset = controlFlow.getEndOffset(pattern[j--]);
-      } while(endOffset < 0);
+      } while(endOffset < 0 && j >= 0);
 
       IntArrayList exitPoints = new IntArrayList();
       final ArrayList<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
