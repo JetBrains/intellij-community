@@ -34,7 +34,6 @@ import java.util.List;
 
 public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizable {
   public interface Filter {
-    boolean accepts(RepositoryVersion change);
     boolean accepts(CommittedChangeList change);
   }
 
@@ -168,10 +167,6 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
       try {
         final long numBefore = Long.parseLong(CHANGE_BEFORE);
         result.add(new Filter() {
-          public boolean accepts(RepositoryVersion change) {
-            return change.getNumber() <= numBefore;
-          }
-
           public boolean accepts(CommittedChangeList change) {
             return change.getNumber() <= numBefore;
           }
@@ -186,10 +181,6 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
       try {
         final long numAfter = Long.parseLong(CHANGE_AFTER);
         result.add(new Filter() {
-          public boolean accepts(RepositoryVersion change) {
-            return change.getNumber() >= numAfter;
-          }
-
           public boolean accepts(CommittedChangeList change) {
             return change.getNumber() >= numAfter;
           }
@@ -209,13 +200,6 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
                              final boolean before) {
     if (useFilter) {
       result.add(new Filter() {
-        public boolean accepts(RepositoryVersion change) {
-          final Date changeDate = change.getDate();
-          if (changeDate == null) return false;
-
-          return before ? changeDate.before(date) : changeDate.after(date);
-        }
-
         public boolean accepts(CommittedChangeList change) {
           final Date changeDate = change.getCommitDate();
           if (changeDate == null) return false;
@@ -229,13 +213,6 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
   private Filter createFilter() {
     final List<Filter> filters = createFilters();
     return new Filter() {
-      public boolean accepts(RepositoryVersion change) {
-        for (Filter filter : filters) {
-          if (!filter.accepts(change)) return false;
-        }
-        return true;
-      }
-
       public boolean accepts(CommittedChangeList change) {
         for (Filter filter : filters) {
           if (!filter.accepts(change)) return false;
@@ -245,21 +222,12 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
     };
   }
 
-  public void filterChanges(final List changeListInfos) {
+  public void filterChanges(final List<? extends CommittedChangeList> changeListInfos) {
     Filter filter = createFilter();
-    for (Iterator iterator = changeListInfos.iterator(); iterator.hasNext();) {
-      Object o = iterator.next();
-      if (o instanceof RepositoryVersion) {
-        RepositoryVersion changeListInfo = (RepositoryVersion) o;
-        if (!filter.accepts(changeListInfo)) {
-          iterator.remove();
-        }
-      }
-      else if (o instanceof CommittedChangeList) {
-        CommittedChangeList changeListInfo = (CommittedChangeList) o;
-        if (!filter.accepts(changeListInfo)) {
-          iterator.remove();
-        }
+    for (Iterator<? extends CommittedChangeList> iterator = changeListInfos.iterator(); iterator.hasNext();) {
+      CommittedChangeList changeListInfo = iterator.next();
+      if (!filter.accepts(changeListInfo)) {
+        iterator.remove();
       }
     }
   }

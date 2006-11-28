@@ -16,15 +16,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.io.File;
 
 public class CvsChangeList implements CommittedChangeList {
   private long myDate;
@@ -32,7 +31,6 @@ public class CvsChangeList implements CommittedChangeList {
 
   private final long myNumber;
   private final String myDescription;
-  private List<AbstractRevisions> myFileRevisions;
 
   private final String myRootPath;
 

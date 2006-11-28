@@ -8,10 +8,9 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
@@ -23,7 +22,6 @@ public class ChangesBrowserDialog extends DialogWrapper {
   private final Project myProject;
   private final ListTableModel<CommittedChangeList> myChanges;
   private final Mode myMode;
-  private VersionsProvider myVersionsProvider;
   private CommittedChangesProvider myCommittedChangesProvider;
   private CommittedChangesBrowser myCommittedChangesBrowser;
 
@@ -43,11 +41,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
     init();
   }
 
-  public void setVersionsProvider(final VersionsProvider versionsProvider) {
-    myVersionsProvider = versionsProvider;
-  }
-
-  public void setRecentChangesProvider(final CommittedChangesProvider committedChangesProvider) {
+  public void setCommittedChangesProvider(final CommittedChangesProvider committedChangesProvider) {
     myCommittedChangesProvider = committedChangesProvider;
   }
 
@@ -85,13 +79,8 @@ public class ChangesBrowserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    if (myMode == Mode.Browse) {
-      if (myVersionsProvider != null) {
-        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVersionsProvider, getTitle());
-      }
-      else if (myCommittedChangesProvider != null) {
-        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myCommittedChangesProvider, getTitle());
-      }
+    if (myMode == Mode.Browse && myCommittedChangesProvider != null) {
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myCommittedChangesProvider, getTitle());
     }
   }
 

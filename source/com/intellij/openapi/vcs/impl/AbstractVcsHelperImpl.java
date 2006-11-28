@@ -26,25 +26,22 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.checkin.DifferenceType;
+import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserDialog;
+import com.intellij.openapi.vcs.changes.ui.CommittedChangesTableModel;
+import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
-import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
-import com.intellij.openapi.vcs.versions.AbstractRevisions;
-import com.intellij.openapi.vcs.versions.VersionRevisions;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -170,90 +167,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         exception.printStackTrace();
         Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
     }
-
-  public List<Change> createChangeFromAbstractRevisions(final List<AbstractRevisions> revisions) {
-    List<Change> result = new ArrayList<Change>();
-    for (AbstractRevisions revision : revisions) {
-      final DifferenceType type = revision.getDifference();
-      final FileStatus status = convertDiffTypeToStatus(type);
-
-      if (type == DifferenceType.INSERTED) {
-        result.add(new Change(null, createAfterRevision(revision), status));
-      }
-      else if (type == DifferenceType.DELETED) {
-        result.add(new Change(createBeforeRevision(revision), null, status));
-      }
-      else if (type == DifferenceType.MODIFIED) {
-        result.add(new Change(createBeforeRevision(revision), createAfterRevision(revision), status));
-      }
-
-      result.addAll(createChangeFromAbstractRevisions(revision.getDirectories()));
-      result.addAll(createChangeFromAbstractRevisions(revision.getFiles()));
-    }
-
-    return result;
-  }
-
-  private static ContentRevision createBeforeRevision(final AbstractRevisions revisions) {
-    return new ContentRevision() {
-      @Nullable
-      public String getContent() {
-        if (revisions instanceof VersionRevisions) {
-          try {
-            return ((VersionRevisions)revisions).getFirstContent();
-          }
-          catch (VcsException e) {
-            return "";
-          }
-        }
-        return "";
-      }
-
-      @NotNull
-      public FilePath getFile() {
-        return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(revisions.getIOFile());
-      }
-
-      @NotNull
-      public VcsRevisionNumber getRevisionNumber() {
-        return VcsRevisionNumber.NULL;
-      }
-    };
-  }
-
-  private static ContentRevision createAfterRevision(final AbstractRevisions revisions) {
-    return new ContentRevision() {
-      @Nullable
-      public String getContent() {
-        if (revisions instanceof VersionRevisions) {
-          try {
-            return ((VersionRevisions)revisions).getSecondContent();
-          }
-          catch (VcsException e) {
-            return "";
-          }
-        }
-        return "";
-      }
-
-      @NotNull
-      public FilePath getFile() {
-        return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(revisions.getIOFile());
-      }
-
-      @NotNull
-      public VcsRevisionNumber getRevisionNumber() {
-        return VcsRevisionNumber.NULL;
-      }
-    };
-  }
-
-  private static FileStatus convertDiffTypeToStatus(final DifferenceType type) {
-    if (type == DifferenceType.MODIFIED) return FileStatus.MODIFIED;
-    if (type == DifferenceType.INSERTED) return FileStatus.ADDED;
-    if (type == DifferenceType.DELETED) return FileStatus.DELETED;
-    return FileStatus.NOT_CHANGED;
-  }
 
   public void showErrors(final List<VcsException> abstractVcsExceptions, final String tabDisplayName) {
     LOG.assertTrue(tabDisplayName != null, "tabDisplayName should not be null");
@@ -484,21 +397,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(new CommittedChangesTableModel(changelists), (VersionsProvider)null, title, false);
-  }
-
-  private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, VersionsProvider provider, String title, boolean showSearchAgain) {
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple);
-    dlg.setVersionsProvider(provider);
-    if (title != null) {
-      dlg.setTitle(title);
-    }
-    dlg.show();
+    showChangesBrowser(new CommittedChangesTableModel(changelists), null, title, false);
   }
 
   private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, CommittedChangesProvider provider, String title, boolean showSearchAgain) {
     final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple);
-    dlg.setRecentChangesProvider(provider);
+    dlg.setCommittedChangesProvider(provider);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -578,60 +482,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     }
     else {
       return null;
-    }
-  }
-
-  public void showChangesBrowser(VersionsProvider versionsProvider) {
-    showChangesBrowser(versionsProvider, null);
-  }
-
-  public void showChangesBrowser(final VersionsProvider provider, String title) {
-    try {
-      final RefreshableOnComponent filterUI = provider.createFilterUI();
-      boolean ok = true;
-      if (filterUI != null) {
-        final FilterDialog dlg = new FilterDialog(myProject, filterUI);
-        dlg.show();
-        ok = dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE;
-      }
-      else {
-        ok = true;
-      }
-
-      if (ok) {
-        final List<RepositoryVersion> versions = new ArrayList<RepositoryVersion>();
-        final List<VcsException> exceptions = new ArrayList<VcsException>();
-        final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            try {
-              versions.addAll(provider.getFilteredVersions());
-            }
-            catch (VcsException e) {
-              exceptions.add(e);
-            }
-          }
-        }, VcsBundle.message("browse.changes.progress.title"), true, myProject);
-
-        if (!done) return;
-
-        if (!exceptions.isEmpty()) {
-          Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
-                                   VcsBundle.message("browse.changes.error.title"));
-          return;
-        }
-
-        if (versions.isEmpty()) {
-          Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
-                                   VcsBundle.message("browse.changes.nothing.found.title"));
-          return;
-        }
-
-        showChangesBrowser(new RepositoryVersionTableModel(myProject, provider, versions), provider, title, filterUI != null);        
-      }
-    }
-    catch (VcsException e) {
-      Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", e.getMessage()),
-                               VcsBundle.message("browse.changes.error.title"));
     }
   }
 
