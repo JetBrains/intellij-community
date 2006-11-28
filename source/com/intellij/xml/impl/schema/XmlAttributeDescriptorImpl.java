@@ -149,15 +149,21 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     return null;
   }
 
-  public String getName(PsiElement context){
-    final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getDocument().getRootTag();
-    String attributeValue = rootTag.getAttributeValue("targetNamespace");
-    XmlTag tag = (XmlTag)context;
+  public String getName(PsiElement context) {
+    final String form = myTag.getAttributeValue("form");
+    boolean isQualfiedAttr = QUALIFIED_ATTR_VALUE.equals(form);
 
+    final XmlTag rootTag = (((XmlFile) myTag.getContainingFile())).getDocument().getRootTag();
+    String targetNs = rootTag.getAttributeValue("targetNamespace");
+    XmlTag tag = (XmlTag)context;
     String name = getName();
-    if (attributeValue != null && //!attributeValue.equals(tag.getNamespace())) &&
-        QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault"))) {
-      final String prefixByNamespace = tag.getPrefixByNamespace(attributeValue);
+
+    if (targetNs != null && 
+        ( isQualfiedAttr ||
+          QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault"))
+        )
+      ) {
+      final String prefixByNamespace = tag.getPrefixByNamespace(targetNs);
       if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
         name = prefixByNamespace + ":" + name;
       }
