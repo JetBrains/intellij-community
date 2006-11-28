@@ -95,7 +95,12 @@ public class DomElementsHighlightingUtil {
       final TextRange referenceRange = reference.getRangeInElement();
       final TextRange errorRange;
       if (referenceRange.getStartOffset() == referenceRange.getEndOffset()) {
-        errorRange = TextRange.from(referenceRange.getStartOffset() + startOffset, 1);
+        if (element instanceof XmlAttributeValue) {
+          errorRange = TextRange.from(referenceRange.getStartOffset() + startOffset - 1, 2);
+        }
+        else {
+          errorRange = TextRange.from(referenceRange.getStartOffset() + startOffset, 1);
+        }
       } else {
         errorRange = referenceRange.shiftRight(startOffset);
       }
