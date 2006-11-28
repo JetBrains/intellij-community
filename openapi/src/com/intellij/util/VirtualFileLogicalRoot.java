@@ -25,14 +25,25 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class VirtualFileLogicalRoot extends LogicalRoot {
   private VirtualFile myVirtualFile;
+  private LogicalRootType myType;
+
+  public VirtualFileLogicalRoot(final VirtualFile virtualFile, final LogicalRootType type) {
+    myVirtualFile = virtualFile;
+    myType = type;
+  }
 
   public VirtualFileLogicalRoot(final VirtualFile virtualFile) {
-    myVirtualFile = virtualFile;
+    this(virtualFile, LogicalRootType.SOURCE_ROOT);
   }
 
   @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
+  }
+
+  @NotNull
+  public LogicalRootType getType() {
+    return myType;
   }
 
   public boolean equals(final Object o) {

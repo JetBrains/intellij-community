@@ -21,10 +21,13 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -32,6 +35,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -104,6 +108,23 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   }
 
   public void disposeComponent() {
+  }
+
+  @Nullable
+  public LogicalRoot getFileLogicalRoot(@NotNull final Project project, @NotNull final VirtualFile file) {
+    final Module module = ModuleUtil.findModuleForFile(file, project);
+    assert module != null;
+
+    LogicalRoot result = null;
+    final List<LogicalRoot> list = getLogicalRoots(module);
+    for (final LogicalRoot root : list) {
+      if (VfsUtil.isAncestor(root.getVirtualFile(), file, false)) {
+        result = root;
+        break;
+      }
+    }
+
+    return result;
   }
 
   public List<LogicalRoot> getLogicalRoots(@NotNull final Module module) {

@@ -28,4 +28,7 @@ public abstract class LogicalRoot {
   @NotNull
   public abstract VirtualFile getVirtualFile();
 
+  @NotNull
+  public abstract LogicalRootType getType();
+
 }

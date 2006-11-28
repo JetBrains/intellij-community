@@ -21,7 +21,9 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 import java.util.List;
@@ -34,6 +36,9 @@ public abstract class LogicalRootsManager implements ProjectComponent {
   public static LogicalRootsManager getLogicalRootsManager(@NotNull final Project project) {
     return project.getComponent(LogicalRootsManager.class);
   }
+
+  @Nullable
+  public abstract LogicalRoot getFileLogicalRoot(@NotNull final Project project, @NotNull final VirtualFile file);
 
   public abstract List<LogicalRoot> getLogicalRoots(@NotNull final Module module);
 
