@@ -810,6 +810,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       public String getComment() {
         return "";
       }
+
+      public long getNumber() {
+        return -1;
+      }
     };
     final String title = "Compare of '" + SVNPathUtil.tail(sourceURL.toString()) + " and '" + SVNPathUtil.tail(targetURL.toString()) + "'";
     SwingUtilities.invokeLater(new Runnable() {

@@ -79,4 +79,8 @@ public class SvnChangeList implements CommittedChangeList {
   public String getComment() {
     return myLogEntry.getMessage();
   }
+
+  public long getNumber() {
+    return myLogEntry.getRevision();
+  }
 }
