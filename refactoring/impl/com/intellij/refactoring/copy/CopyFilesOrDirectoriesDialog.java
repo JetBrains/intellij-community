@@ -8,11 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.HelpID;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -202,6 +204,6 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   protected void doHelpAction() {
-//    HelpManager.getInstance().invokeHelp(HelpID.COPY_CLASS, getRootPane());
+    HelpManager.getInstance().invokeHelp(HelpID.COPY_CLASS);
   }
 }
