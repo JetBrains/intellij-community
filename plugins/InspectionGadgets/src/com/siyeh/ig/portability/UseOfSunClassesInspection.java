@@ -54,12 +54,14 @@ public class UseOfSunClassesInspection extends VariableInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) deepComponentType;
-            final String className = classType.getCanonicalText();
-
+            @NonNls final String className = classType.getCanonicalText();
             if(className == null || !className.startsWith("sun.")) {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
+            if (typeElement == null) {
+                return;
+            }
             registerError(typeElement);
         }
 
@@ -70,8 +72,7 @@ public class UseOfSunClassesInspection extends VariableInspection {
             if (type == null) {
                 return;
             }
-            if(!(type instanceof PsiClassType))
-            {
+            if(!(type instanceof PsiClassType)) {
                 return;
             }
             final PsiClassType classType = (PsiClassType) type;
@@ -81,6 +82,9 @@ public class UseOfSunClassesInspection extends VariableInspection {
             }
             final PsiJavaCodeReferenceElement classNameElement =
                     newExpression.getClassReference();
+            if (classNameElement == null) {
+                return;
+            }
             registerError(classNameElement);
         }
     }
