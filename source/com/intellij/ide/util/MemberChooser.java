@@ -159,6 +159,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     }
   }
 
+  protected void doHelpAction() {
+  }
+
   protected JComponent createSouthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 

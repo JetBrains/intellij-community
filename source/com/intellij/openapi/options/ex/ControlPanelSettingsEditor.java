@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
@@ -82,6 +83,11 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
 
   protected Action[] createActions() {
     return new Action[]{getCancelAction()};
+  }
+
+  @NonNls
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("preferences");
   }
 
   protected Action[] createLeftSideActions() {
