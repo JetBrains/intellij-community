@@ -402,16 +402,21 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     public boolean addRegion(FoldRegion range) {
-      // During batchProcessing elements are inserted in ascending order, so
+      // During batchProcessing elements are inserted in ascending order, 
       // binary search find acceptable insertion place first time
       int fastIndex = myCachedLastIndex != -1 && myIsBatchFoldingProcessing? myCachedLastIndex + 1:Collections.binarySearch(myRegions, range, OUR_COMPARATOR);
       if (fastIndex < 0) fastIndex = -fastIndex - 1;
 
-      for (int i = fastIndex; i < myRegions.size(); i++) {
+      for (int i = fastIndex - 1; i >=0; --i) {
         final FoldRegion region = myRegions.get(i);
+        if (region.getEndOffset() < range.getStartOffset()) break;
         if (region.isValid() && intersects(region, range)) {
           return false;
         }
+      }
+
+      for (int i = fastIndex; i < myRegions.size(); i++) {
+        final FoldRegion region = myRegions.get(i);
 
         if (range.getStartOffset() < region.getStartOffset() ||
             (range.getStartOffset() == region.getStartOffset() && range.getEndOffset() > region.getEndOffset())) {
