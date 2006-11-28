@@ -181,12 +181,12 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
         if (psiElement instanceof PsiMember) {
           PsiMember member = (PsiMember)psiElement;
           int code = 0;
-          if (member instanceof PsiMethod) {
-            code += ((PsiMethod)member).getParameterList().getParametersCount();
-          }
           String name = member.getName();
           if (name != null) {
             code += name.hashCode();
+          }
+          if (member instanceof PsiMethod) {
+            code += 37 * ((PsiMethod)member).getParameterList().getParametersCount();
           }
           return code;
         }
