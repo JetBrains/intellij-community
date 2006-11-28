@@ -3,6 +3,7 @@ package com.intellij.lang.ant.psi.usages;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
+import com.intellij.lang.ant.HelpID;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
@@ -24,7 +25,7 @@ public class AntUsagesProvider implements FindUsagesProvider {
 
   @Nullable
   public String getHelpId(PsiElement element) {
-    return null;
+    return HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull

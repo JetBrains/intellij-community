@@ -7,6 +7,7 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.LangBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.find.impl.HelpID;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +19,7 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
   }
 
   public String getHelpId(PsiElement psiElement) {
-    return null;
+    return HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull

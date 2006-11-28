@@ -8,6 +8,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.find.impl.HelpID;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +40,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   }
 
   public String getHelpId(PsiElement element) {
-    return null;
+    return HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull
