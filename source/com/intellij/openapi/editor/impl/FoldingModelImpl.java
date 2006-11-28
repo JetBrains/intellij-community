@@ -20,10 +20,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +37,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   private int mySavedCaretY;
   private int mySavedCaretShift;
   private boolean myCaretPositionSaved;
+  private static final Comparator<? super FoldRegion> OUR_COMPARATOR = new Comparator<FoldRegion>() {
+    public int compare(final FoldRegion o1, final FoldRegion o2) {
+      return o1.getStartOffset() - o2.getStartOffset();
+    }
+  };
 
   public FoldingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -93,7 +95,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     myIsBatchFoldingProcessing = true;
+    myFoldTree.myCachedLastIndex = -1;
     operation.run();
+    myFoldTree.myCachedLastIndex = -1;
+    
     if (!oldBatchFlag) {
       if (myFoldRegionsProcessed) {
         notifyBatchFoldingProcessingDone();
@@ -303,11 +308,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     private int[] myCachedEndOffsets;
     private int[] myCachedStartOffsets;
     private int[] myCachedFoldedLines;
-    private LinkedList<FoldRegion> myRegions;  //sorted in tree left-to-right topdown traversal order
+    private int myCachedLastIndex = -1;
+    private ArrayList<FoldRegion> myRegions;  //sorted in tree left-to-right topdown traversal order
 
     public FoldRegionsTree() {
       myCachedVisible = null;
-      myRegions = new LinkedList<FoldRegion>();
+      myRegions = new ArrayList<FoldRegion>();
     }
 
     public boolean isFoldingEnabled() {
@@ -396,8 +402,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     public boolean addRegion(FoldRegion range) {
-      for (int i = 0; i < myRegions.size(); i++) {
-        FoldRegion region = myRegions.get(i);
+      // During batchProcessing elements are inserted in ascending order, so
+      // binary search find acceptable insertion place first time
+      int fastIndex = myCachedLastIndex != -1 && myIsBatchFoldingProcessing? myCachedLastIndex + 1:Collections.binarySearch(myRegions, range, OUR_COMPARATOR);
+      if (fastIndex < 0) fastIndex = -fastIndex - 1;
+
+      for (int i = fastIndex; i < myRegions.size(); i++) {
+        final FoldRegion region = myRegions.get(i);
         if (region.isValid() && intersects(region, range)) {
           return false;
         }
@@ -405,7 +416,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
         if (range.getStartOffset() < region.getStartOffset() ||
             (range.getStartOffset() == region.getStartOffset() && range.getEndOffset() > region.getEndOffset())) {
           for (int j = i + 1; j < myRegions.size(); j++) {
-            FoldRegion next = myRegions.get(j);
+            final FoldRegion next = myRegions.get(j);
             if (next.getEndOffset() >= range.getEndOffset() && next.isValid()) {
               if (next.getStartOffset() < range.getStartOffset()) {
                 return false;
@@ -416,11 +427,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
             }
           }
 
-          myRegions.add(i, range);
+          myRegions.add(myCachedLastIndex = i, range);
           return true;
         }
       }
-      myRegions.addLast(range);
+      myRegions.add(myCachedLastIndex = myRegions.size(),range);
       return true;
     }
 
@@ -458,14 +469,14 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       return outer.getStartOffset() < inner.getStartOffset() && outer.getEndOffset() > inner.getStartOffset();
     }
 
-    private boolean intersects(FoldRegion r1, FoldRegion r2) {
+    private final boolean intersects(FoldRegion r1, FoldRegion r2) {
       final int s1 = r1.getStartOffset();
       final int s2 = r2.getStartOffset();
       final int e1 = r1.getEndOffset();
       final int e2 = r2.getEndOffset();
-      return s1 == s2 && e1 == e2 ||
-             s1 < s2 && s2 < e1 && e1 < e2 ||
-             s2 < s1 && s1 < e2 && e2 < e1;
+      return (s1 == s2 && e1 == e2) ||
+             (s1 < s2 && s2 < e1 && e1 < e2) ||
+             (s2 < s1 && s1 < e2 && e2 < e1);
     }
 
     private boolean contains(FoldRegion region, int offset) {

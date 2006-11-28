@@ -28,14 +28,14 @@ class FoldingPolicy {
   private FoldingPolicy() {}
 
   /**
-   * Returns map from element to range to fold, elements are sorted in reverse start offset order
+   * Returns map from element to range to fold, elements are sorted in start offset order
    */
   public static TreeMap<PsiElement, TextRange> getElementsToFold(PsiElement file, Document document) {
     TreeMap<PsiElement, TextRange> map = new TreeMap<PsiElement, TextRange>(new Comparator<PsiElement>() {
       public int compare(PsiElement element, PsiElement element1) {
-        int startOffsetDiff = element1.getTextRange().getStartOffset() - element.getTextRange().getStartOffset();
+        int startOffsetDiff = element.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
         return startOffsetDiff != 0 ? startOffsetDiff :
-               element1.getTextRange().getEndOffset() - element.getTextRange().getEndOffset();
+               element.getTextRange().getEndOffset() - element1.getTextRange().getEndOffset();
       }
     });
     final Language lang = file.getLanguage();
