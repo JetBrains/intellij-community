@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class SvnCommittedChangesProvider implements CommittedChangesProvider {
+public class SvnCommittedChangesProvider implements CommittedChangesProvider<SvnChangeList> {
   private Project myProject;
   private String myLocation;
   private SvnVcs myVcs;
@@ -59,7 +59,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider {
     return new SvnVersionFilterComponent(myProject);
   }
 
-  public List getCommittedChanges() throws VcsException {
+  public List<SvnChangeList> getCommittedChanges() throws VcsException {
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {

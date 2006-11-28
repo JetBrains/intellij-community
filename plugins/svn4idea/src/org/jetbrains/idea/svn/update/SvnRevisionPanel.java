@@ -19,9 +19,9 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.history.SvnVersionsProvider;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -74,8 +74,8 @@ public class SvnRevisionPanel extends JPanel {
 
   private void chooseRevision() {
     if (myProject != null && myUrlProvider != null) {
-      final RepositoryVersion version =
-        AbstractVcsHelper.getInstance(myProject).chooseRepositoryVersion(new SvnVersionsProvider(myProject, myUrlProvider.getUrl()));
+      final SvnChangeList version =
+        AbstractVcsHelper.getInstance(myProject).chooseCommittedChangeList(new SvnCommittedChangesProvider(myProject, myUrlProvider.getUrl()));
       if (version != null) {
         myRevisionField.setText(String.valueOf(version.getNumber()));
       }

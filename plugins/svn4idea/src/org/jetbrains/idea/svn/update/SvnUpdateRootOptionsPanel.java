@@ -16,16 +16,16 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.history.SvnVersionsProvider;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
+import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -85,8 +85,8 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionText.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final Project project = vcs.getProject();
-        final RepositoryVersion repositoryVersion =
-          AbstractVcsHelper.getInstance(project).chooseRepositoryVersion(new SvnVersionsProvider(project, myURLText.getText()));
+        final SvnChangeList repositoryVersion =
+          AbstractVcsHelper.getInstance(project).chooseCommittedChangeList(new SvnCommittedChangesProvider(project, myURLText.getText()));
         if (repositoryVersion != null) {
           myRevisionText.setText(String.valueOf(repositoryVersion.getNumber()));
         }
