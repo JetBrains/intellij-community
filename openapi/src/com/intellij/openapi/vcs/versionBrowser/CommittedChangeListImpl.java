@@ -33,16 +33,18 @@ public class CommittedChangeListImpl implements CommittedChangeList {
   private Date myCommitDate;
   private String myName;
   private String myComment;
+  private long myNumber;
   private Collection<Change> myChanges;
 
 
   public CommittedChangeListImpl(final String name, final String comment, final String committerName,
-                                 final Date commitDate, final Collection<Change> changes) {
+                                 final long number, final Date commitDate, final Collection<Change> changes) {
     myCommitterName = committerName;
     myCommitDate = commitDate;
     myName = name;
     myComment = comment;
     myChanges = changes;
+    myNumber = number;
   }
 
   public String getCommitterName() {
@@ -51,6 +53,10 @@ public class CommittedChangeListImpl implements CommittedChangeList {
 
   public Date getCommitDate() {
     return myCommitDate;
+  }
+
+  public long getNumber() {
+    return myNumber;
   }
 
   public Collection<Change> getChanges() {

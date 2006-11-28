@@ -27,4 +27,5 @@ import java.util.Date;
 public interface CommittedChangeList extends ChangeList {
   String getCommitterName();
   Date getCommitDate();
+  long getNumber();
 }
