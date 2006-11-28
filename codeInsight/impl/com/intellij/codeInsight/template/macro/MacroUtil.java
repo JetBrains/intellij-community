@@ -144,7 +144,14 @@ public class MacroUtil {
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor(prefix, true, list){
       public boolean execute(PsiElement pe, PsiSubstitutor substitutor) {
-        if(!(pe instanceof PsiField) || PsiUtil.isAccessible((PsiField)pe, place, null)) return super.execute(pe, substitutor);
+        if (pe instanceof PsiVariable) {
+          //exclude variables that are initialized in 'place'
+          final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
+          if (initializer != null && PsiTreeUtil.isAncestor(initializer, place, false)) return true;
+        }
+        if(!(pe instanceof PsiField) || PsiUtil.isAccessible((PsiField)pe, place, null)) {
+          return super.execute(pe, substitutor);
+        }
         return true;
       }
     };
