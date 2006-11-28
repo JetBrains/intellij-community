@@ -97,6 +97,14 @@ public interface PsiBuilder extends UserDataHolder {
      * @param type the type of the node in the AST tree.
      */
     void done(IElementType type);
+
+    /**
+     * Completes this marker and labels it as error element with specified message. Before calling this method,
+     * all markers added after the beginning of this marker must be either dropped or completed.
+     *
+     * @param message for error element
+     */
+    void error(String message);
   }
 
   /**

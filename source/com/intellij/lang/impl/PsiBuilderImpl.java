@@ -104,6 +104,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myType = type;
       PsiBuilderImpl.this.done(this);
     }
+
+    public void error(String message) {
+      myType = ElementType.ERROR_ELEMENT;
+      PsiBuilderImpl.this.error(this, message);
+    }
   }
 
   private Marker preceed(final StartMarker marker) {
@@ -145,11 +150,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static class DoneMarker extends ProductionMarker {
-    public StartMarker myStart;
+    public final StartMarker myStart;
 
     public DoneMarker(final StartMarker marker, int currentLexem) {
       super(currentLexem);
       myStart = marker;
+    }
+  }
+
+  private static class DoneWithErrorMarker extends DoneMarker {
+    public final String myMessage;
+
+    public DoneWithErrorMarker(final StartMarker marker, int currentLexem, String message) {
+      super(marker, currentLexem);
+      myMessage = message;
     }
   }
 
@@ -247,8 +261,24 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     LOG.assertTrue(removed, "The marker must be added before it is dropped.");
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
+  public void error(Marker marker, String message) {
+    doValidnessChecks(marker);
+
+    DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexem, message);
+    ((StartMarker)marker).myDoneMarker = doneMarker;
+    myProduction.add(doneMarker);
+  }
+
   public void done(Marker marker) {
+    doValidnessChecks(marker);
+
+    DoneMarker doneMarker = new DoneMarker((StartMarker)marker, myCurrentLexem);
+    ((StartMarker)marker).myDoneMarker = doneMarker;
+    myProduction.add(doneMarker);
+  }
+
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
+  private void doValidnessChecks(final Marker marker) {
     LOG.assertTrue(((StartMarker)marker).myDoneMarker == null, "Marker already done.");
     int idx = myProduction.lastIndexOf(marker);
     LOG.assertTrue(idx >= 0, "Marker never been added.");
@@ -268,10 +298,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       }
     }
-
-    DoneMarker doneMarker = new DoneMarker((StartMarker)marker, myCurrentLexem);
-    ((StartMarker)marker).myDoneMarker = doneMarker;
-    myProduction.add(doneMarker);
   }
 
   public void error(String messageText) {
@@ -318,7 +344,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (item instanceof StartMarker) {
         StartMarker marker = (StartMarker)item;
         curToken = insertLeafs(curToken, lexIndex, curNode);
-        ASTNode childNode = new CompositeElement(marker.myType);
+        ASTNode childNode;
+
+        if (marker.myType != ElementType.ERROR_ELEMENT) {
+          childNode = new CompositeElement(marker.myType);
+        } else {
+          childNode = new PsiErrorElementImpl();
+          if (marker.myDoneMarker instanceof DoneWithErrorMarker) {
+            ((PsiErrorElementImpl)childNode).setErrorDescription(((DoneWithErrorMarker)marker.myDoneMarker).myMessage);
+          }
+        }
+
         TreeUtil.addChildren((CompositeElement)curNode, (TreeElement)childNode);
         curNode = childNode;
       }
