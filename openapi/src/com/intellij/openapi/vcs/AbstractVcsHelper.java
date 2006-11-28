@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
 import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -97,8 +96,6 @@ public abstract class AbstractVcsHelper {
    * @param versionsProvider
    */
   public abstract void showChangesBrowser(VersionsProvider versionsProvider, String browserTitle);
-
-  @Nullable public abstract RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider);
 
   @Nullable public abstract <T extends CommittedChangeList> T chooseCommittedChangeList(CommittedChangesProvider<T> provider);
 

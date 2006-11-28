@@ -40,7 +40,6 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
@@ -558,17 +557,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       }
 
       showChangesBrowser(tableModelRef.get(), provider, title, filterUI != null);
-    }
-  }
-
-  public RepositoryVersion chooseRepositoryVersion(VersionsProvider versionsProvider) {
-    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, versionsProvider, false);
-    changesBrowser.show();
-    if (changesBrowser.isOK()) {
-      return changesBrowser.getSelectedRepositoryVersion();
-    }
-    else {
-      return null;
     }
   }
 
