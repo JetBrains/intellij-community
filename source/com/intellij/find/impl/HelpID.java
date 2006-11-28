@@ -10,9 +10,7 @@ public interface HelpID {
   @NonNls String FIND_PACKAGE_USAGES = "find.findPackageUsages";
   @NonNls String FIND_CLASS_USAGES = "find.findClassUsages";
   @NonNls String FIND_METHOD_USAGES = "find.findMethodUsages";
-  @NonNls String FIND_FIELD_USAGES = "find.findFieldUsages";
-  @NonNls String FIND_VARIABLE_USAGES = "find.findVariableUsages";
-  @NonNls String FIND_PARAMETER_USAGES = "find.findParameterUsages";
+  @NonNls String FIND_OTHER_USAGES = "find.findOtherUsages";
   @NonNls String FIND_THROW_USAGES = "find.findThrowUsages";
 
 

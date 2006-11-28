@@ -36,7 +36,7 @@ public class InlineConstantFieldHandler {
 
     if (refs.length == 0){
       String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
       return;
     }
 
