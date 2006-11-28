@@ -55,6 +55,11 @@ public interface DomElement extends AnnotatedElement{
 
   @NotNull @NonNls String getXmlElementNamespace();
 
+  /**
+   * @return namespace key if this element or one of its ancestors is annotated with
+   * {@link @Namespace}, or null otherwise, which means that namespace should be equal
+   * to that of the element's parent
+   */
   @Nullable @NonNls String getXmlElementNamespaceKey();
 
   void accept(final DomElementVisitor visitor);

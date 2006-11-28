@@ -215,7 +215,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   @Nullable
   public String getXmlElementNamespaceKey() {
-    return getXmlName().getNamespaceKey();
+    return getXmlName().getXmlName().getNamespaceKey();
   }
 
   public final Module getModule() {
