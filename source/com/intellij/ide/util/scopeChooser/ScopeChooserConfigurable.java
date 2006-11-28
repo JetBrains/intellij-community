@@ -229,7 +229,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;  //todo help id
+    return "project.scopes";  //todo help id
   }
 
   public void projectOpened() {
