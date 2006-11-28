@@ -40,7 +40,12 @@ public class FileReferenceSet {
   private final PsiReferenceProvider myProvider;
   private boolean myCaseSensitive;
   private String myPathString;
-  private final boolean myAllowEmptyFileReferenceAtEnd;
+
+  public boolean isEndingSlashNotAllowed() {
+    return myEndingSlashNotAllowed;
+  }
+
+  private final boolean myEndingSlashNotAllowed;
   private final boolean myUseIncludingJspFileAsContext;
 
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>> DEFAULT_PATH_EVALUATOR_OPTION =
@@ -108,7 +113,7 @@ public class FileReferenceSet {
                           @NotNull ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive,
-                          boolean allowEmptyFileReferenceAtEnd,
+                          boolean endingSlashNotAllowed,
                           boolean useIncludingJspFileAsContext) {
     myType = type;
     myElement = element;
@@ -116,7 +121,7 @@ public class FileReferenceSet {
     myProvider = provider;
     myCaseSensitive = isCaseSensitive;
     myPathString = str.trim();
-    myAllowEmptyFileReferenceAtEnd = allowEmptyFileReferenceAtEnd;
+    myEndingSlashNotAllowed = endingSlashNotAllowed;
     myUseIncludingJspFileAsContext = useIncludingJspFileAsContext;
     myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
 
@@ -171,13 +176,11 @@ public class FileReferenceSet {
     while (true) {
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
-      if (subreferenceText.length() > 0 || index == 0 || myAllowEmptyFileReferenceAtEnd) { // ? check at end
-        final FileReference currentContextRef = createFileReference(
-          new TextRange(myStartInElement + currentSlash + 1, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
-          index++,
-          subreferenceText);
-        referencesList.add(currentContextRef);
-      }
+      final FileReference ref = createFileReference(
+        new TextRange(myStartInElement + currentSlash + 1, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
+        index++,
+        subreferenceText);
+      referencesList.add(ref);
       if ((currentSlash = nextSlash) < 0) {
         break;
       }

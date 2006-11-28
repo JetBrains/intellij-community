@@ -52,11 +52,11 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
     PsiReference resolved = null;
     PsiReference reference = myReferences.get(0);
-    /*
+
     if (reference.resolve() != null) {
       resolved = reference;
     }
-    */
+
     final TextRange range = reference.getRangeInElement();
     int start = range.getStartOffset();
     int end = range.getEndOffset();

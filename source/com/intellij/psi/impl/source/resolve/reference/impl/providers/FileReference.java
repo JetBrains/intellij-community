@@ -121,9 +121,13 @@ public class FileReference implements PsiPolyVariantReference, QuickFixProvider<
     final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
 
     for (final PsiElement context : contexts) {
-      PsiElement resolved = getFileReferenceContext(context).innerResolve(text, myEqualsToCondition);
-      if (resolved != null) {
-        result.add(new PsiElementResolveResult(resolved));
+      if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && myIndex == myFileReferenceSet.getAllReferences().length - 1) {
+        result.add(new PsiElementResolveResult(context));
+      } else {
+        PsiElement resolved = getFileReferenceContext(context).innerResolve(text, myEqualsToCondition);
+        if (resolved != null) {
+          result.add(new PsiElementResolveResult(resolved));
+        }
       }
     }
     final int resultCount = result.size();
