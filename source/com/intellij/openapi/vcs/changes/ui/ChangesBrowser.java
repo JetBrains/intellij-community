@@ -326,6 +326,9 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     if (myChangesToDisplay != null) {
       list = new ArrayList<Change>(myChangesToDisplay);
     }
+    else if (!(mySelectedChangeList instanceof LocalChangeList)) {
+      list = new ArrayList<Change>(mySelectedChangeList.getChanges());
+    }
     else {
       list = filterBySelectedChangeList(myAllChanges);
     }
