@@ -7,29 +7,28 @@
 package com.theoryinpractice.testng.ui;
 
 import java.awt.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.List;
 import javax.swing.*;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
-import javax.swing.tree.TreePath;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.execution.junit2.ui.Formatters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
-import com.intellij.ui.table.TableView;
-import com.intellij.ui.GuiUtils;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.execution.junit2.ui.Formatters;
-import com.theoryinpractice.testng.model.*;
-import com.theoryinpractice.testng.model.TestProxy;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.theoryinpractice.testng.TestNGConsoleView;
+import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.actions.ScrollToTestSourceAction;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
@@ -80,11 +79,11 @@ public class TestNGResults
                 TreePath path = e.getPath();
                 if (path == null) return;
                 TestProxy proxy = TestTreeView.getObject(path);
-                if(proxy == null) return;
-                if(ScrollToTestSourceAction.isScrollEnabled(TestNGResults.this)) {
+                if (proxy == null) return;
+                if (ScrollToTestSourceAction.isScrollEnabled(TestNGResults.this)) {
                     OpenSourceUtil.openSourcesFrom(tree, false);
                 }
-                if(proxy == structure.getRootElement()) {
+                if (proxy == structure.getRootElement()) {
                     console.reset();
                 } else {
                     List<TestNGConsoleView.Chunk> output = proxy.getOutput();
@@ -94,6 +93,7 @@ public class TestNGResults
         });
         progress.setColor(ColorProgressBar.GREEN);
         GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
+        splitPane.setDividerLocation(0.33);
     }
 
     private void updateLabel(JLabel label) {
@@ -123,7 +123,7 @@ public class TestNGResults
         } else {
             classNode = getClassNodeFor(result);
         }
-        if(result.getResult() == MessageHelper.TEST_STARTED) {
+        if (result.getResult() == MessageHelper.TEST_STARTED) {
             TestProxy proxy = new TestProxy();
             proxy.setParent(classNode);
             proxy.setResultMessage(result);
@@ -132,16 +132,16 @@ public class TestNGResults
             treeBuilder.repaintWithParents(proxy);
             count++;
             if (count > total) total = count;
-            if(TestNGConsoleProperties.TRACK_RUNNING_TEST.value(consoleProperties)) {
+            if (TestNGConsoleProperties.TRACK_RUNNING_TEST.value(consoleProperties)) {
                 selectTest(proxy);
             }
         } else {
             model.addTestResult(result);
             animator.setCurrentTestCase(null);
             Object[] children = treeBuilder.getTreeStructure().getChildElements(classNode);
-            for(Object child : children) {
-                TestProxy proxy = (TestProxy)child;
-                if(result.equals(proxy.getResultMessage())) {
+            for (Object child : children) {
+                TestProxy proxy = (TestProxy) child;
+                if (result.equals(proxy.getResultMessage())) {
                     proxy.setResultMessage(result);
                     proxy.setOutput(output);
                     treeBuilder.repaintWithParents(proxy);
@@ -151,7 +151,7 @@ public class TestNGResults
 
         if (result.getResult() == MessageHelper.PASSED_TEST) {
             //passed++;
-        } else if(result.getResult() == MessageHelper.FAILED_TEST) {
+        } else if (result.getResult() == MessageHelper.FAILED_TEST) {
             failed++;
             progress.setColor(ColorProgressBar.RED);
         }
@@ -181,12 +181,12 @@ public class TestNGResults
         TestProxy owner = treeBuilder.getRoot();
         String packageName = packageNameFor(result.getTestClass());
         owner = getChildNodeNamed(owner, packageName);
-        if(owner.getPsiElement() == null) {
+        if (owner.getPsiElement() == null) {
             owner.setPsiElement(PsiManager.getInstance(project).findPackage(packageName));
         }
         owner = getChildNodeNamed(owner, classNameFor(result.getTestClass()));
         //look up the psiclass now
-        if(owner.getPsiElement() == null) {
+        if (owner.getPsiElement() == null) {
             final TestProxy finalOwner = owner;
             ApplicationManager.getApplication().runReadAction(new Runnable()
             {
@@ -209,7 +209,7 @@ public class TestNGResults
     }
 
     private TestProxy getChildNodeNamed(TestProxy currentNode, String node) {
-        for(TestProxy child : currentNode.getResults()) {
+        for (TestProxy child : currentNode.getResults()) {
             if (child.getName().equals(node)) {
                 return child;
             }
@@ -221,11 +221,11 @@ public class TestNGResults
     }
 
     public void selectTest(TestProxy proxy) {
-        if(proxy == null) return;
+        if (proxy == null) return;
         DefaultMutableTreeNode node = treeBuilder.ensureTestVisible(proxy);
-        if(node == null) return;
-        TreePath path = TreeUtil.getPath((TreeNode)tree.getModel().getRoot(), node);
-        if(path == null) return;
+        if (node == null) return;
+        TreePath path = TreeUtil.getPath((TreeNode) tree.getModel().getRoot(), node);
+        if (path == null) return;
         tree.setSelectionPath(path);
         tree.makeVisible(path);
         tree.scrollPathToVisible(path);
@@ -262,12 +262,12 @@ public class TestNGResults
     }
 
     public void finish() {
-        if(end > 0) return;
+        if (end > 0) return;
         this.end = System.currentTimeMillis();
         animator.stop();
         updateLabel(statusLabel);
         rootNode.setInProgress(false);
-        if(TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
+        if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(consoleProperties)) {
             selectTest(rootNode.getFirstDefect());
         } else {
             tree.getSelectionModel().setSelectionPath(new TreePath(treeBuilder.getNodeForElement(rootNode)));
@@ -283,7 +283,7 @@ public class TestNGResults
     }
 
     public TestTreeStructure getTreeStructure() {
-        return (TestTreeStructure)treeBuilder.getTreeStructure();
+        return (TestTreeStructure) treeBuilder.getTreeStructure();
     }
 
     public void rebuildTree() {
