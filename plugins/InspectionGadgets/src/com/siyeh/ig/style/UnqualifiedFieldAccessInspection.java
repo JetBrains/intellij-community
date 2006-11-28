@@ -28,13 +28,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class UnqualifiedFieldAccessInpection extends ExpressionInspection {
+public class UnqualifiedFieldAccessInspection extends ExpressionInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unqualified.field.access.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.STYLE_GROUP_NAME;
     }
@@ -56,6 +58,7 @@ public class UnqualifiedFieldAccessInpection extends ExpressionInspection {
     private static class UnqualifiedFieldAccessFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "add.this.qualifier.quickfix");

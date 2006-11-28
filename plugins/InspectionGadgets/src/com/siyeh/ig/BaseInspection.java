@@ -242,6 +242,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
         return builder.toString();
     }
 
+    @NotNull
     public String getDisplayName() {
         @NonNls final String displayNameSuffix = ".display.name";
         return InspectionGadgetsBundle.message(
