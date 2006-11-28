@@ -19,12 +19,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class UnqualifiedFieldAccessInpection extends ExpressionInspection {
 
@@ -63,8 +65,21 @@ public class UnqualifiedFieldAccessInpection extends ExpressionInspection {
                 throws IncorrectOperationException {
             final PsiReferenceExpression expression =
                     (PsiReferenceExpression) descriptor.getPsiElement();
-            final String newExpression = "this." + expression.getText();
-            replaceExpression(expression, newExpression);
+            final PsiField field = (PsiField)expression.resolve();
+            if (field == null) {
+                return;
+            }
+            final PsiClass containingClass = field.getContainingClass();
+            final PsiClass parentClass =
+                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+            @NonNls final String newExpression;
+            if (!containingClass.equals(parentClass)) {
+                newExpression = containingClass.getQualifiedName() + ".this." +
+                        expression.getText();
+            } else {
+                newExpression = "this." + expression.getText();
+            }
+            replaceExpressionAndShorten(expression, newExpression);
         }
     }
 

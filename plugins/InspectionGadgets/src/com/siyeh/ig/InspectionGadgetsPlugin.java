@@ -722,6 +722,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessarySemicolonInspection.class);
         m_inspectionClasses.add(UnnecessarySuperConstructorInspection.class);
         m_inspectionClasses.add(UnnecessaryThisInspection.class);
+        m_inspectionClasses.add(UnqualifiedFieldAccessInpection.class);
         m_inspectionClasses.add(UnqualifiedStaticUsageInspection.class);
     }
 
