@@ -17,32 +17,26 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsDataConstants;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.checkin.AbstractSvnRevisionsFactory;
+import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
-import org.jetbrains.idea.svn.history.SvnVersionRevisions;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-
-import java.io.File;
-import java.util.*;
 
 public class ShowAllSubmittedFilesAction extends AnAction {
   public ShowAllSubmittedFilesAction() {
@@ -51,35 +45,27 @@ public class ShowAllSubmittedFilesAction extends AnAction {
 
   public void update(AnActionEvent e) {
     super.update(e);
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     if (project == null) {
       e.getPresentation().setEnabled(false);
       return;
     }
-    e.getPresentation().setEnabled(e.getDataContext().getData(VcsDataConstants.VCS_FILE_REVISION) != null);
+    e.getPresentation().setEnabled(e.getData(VcsDataKeys.VCS_FILE_REVISION) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
-
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     if (project == null) return;
-    final VcsFileRevision revision = (VcsFileRevision)e.getDataContext().getData(VcsDataConstants.VCS_FILE_REVISION);
+    final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
     if (revision != null) {
       final SvnFileRevision svnRevision = ((SvnFileRevision)revision);
 
-      final ArrayList<AbstractRevisions> revisions = loadRevisions(project, svnRevision);
+      final SvnChangeList changeList = loadRevisions(project, svnRevision);
 
-      if (revisions != null) {
+      if (changeList != null) {
         long revNumber = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision().getNumber();
-        final List<Change> changes = AbstractVcsHelper.getInstance(project).createChangeFromAbstractRevisions(revisions);
-        CommittedChangeListImpl changeList = new CommittedChangeListImpl(String.valueOf(revNumber),
-                                                                         svnRevision.getCommitMessage(),
-                                                                         svnRevision.getAuthor(),
-                                                                         svnRevision.getRevisionDate(),
-                                                                         changes);
         AbstractVcsHelper.getInstance(project).showChangesBrowser(changeList, getTitle(revNumber));
       }
-
     }
   }
 
@@ -87,9 +73,10 @@ public class ShowAllSubmittedFilesAction extends AnAction {
     return SvnBundle.message("dialog.title.affected.paths", revisionNumber);
   }
 
-  private static ArrayList<AbstractRevisions> loadRevisions(final Project project, final SvnFileRevision svnRevision) {
+  @Nullable
+  private static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision) {
+    final Ref<SvnChangeList> result = new Ref<SvnChangeList>();
     final SvnRevisionNumber number = ((SvnRevisionNumber)svnRevision.getRevisionNumber());
-    final ArrayList<AbstractRevisions> revisions = new ArrayList<AbstractRevisions>();
 
     final SVNRevision targetRevision = ((SvnRevisionNumber)svnRevision.getRevisionNumber()).getRevision();
     final SvnVcs vcs = SvnVcs.getInstance(project);
@@ -113,8 +100,7 @@ public class ShowAllSubmittedFilesAction extends AnAction {
             }
 
             ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.processing.changes"));
-            AbstractSvnRevisionsFactory<SVNLogEntryPath> factory = new EntryRevisionsFactory(vcs, logEntry[0], repos);
-            revisions.addAll(factory.createRevisionsListOn(new String[]{File.separator}));
+            result.set(new SvnChangeList(logEntry [0], repos));
           }
           catch (Exception e) {
             ex[0] = e;
@@ -129,31 +115,6 @@ public class ShowAllSubmittedFilesAction extends AnAction {
       return null;
     }
 
-    return revisions;
-  }
-
-  private static class EntryRevisionsFactory extends AbstractSvnRevisionsFactory<SVNLogEntryPath> {
-    private SVNLogEntry myLogEntry;
-    private SVNRepository myRepository;
-
-    protected EntryRevisionsFactory(SvnVcs svnVcs, SVNLogEntry entry, SVNRepository repos) {
-      super(svnVcs, entry);
-      myLogEntry = entry;
-      myRepository = repos;
-    }
-
-    public Map<File, SVNLogEntryPath> createFileToChangeMap(String[] paths) {
-      Map changedPaths = myLogEntry.getChangedPaths();
-      Map result = new HashMap();
-      for (Iterator logPaths = changedPaths.keySet().iterator(); logPaths.hasNext();) {
-        String logPath = (String)logPaths.next();
-        result.put(new File(logPath), changedPaths.get(logPath));
-      }
-      return result;
-    }
-
-    protected AbstractRevisions createRevisions(final File file) {
-      return new SvnVersionRevisions(myFileToTreeElementMap.get(file), this, myRepository, myLogEntry.getRevision());
-    }
+    return result.get();
   }
 }
