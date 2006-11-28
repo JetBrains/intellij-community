@@ -126,8 +126,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   private CharSequence getFileStartText() {
     final Document document = PsiDocumentManager.getInstance(myXmlFile.getProject()).getCachedDocument(myXmlFile);
     if (document != null) {
-      final CharSequence sequence = document.getCharsSequence();
-      return sequence.subSequence(0, Math.min(sequence.length(), START));
+      return getSubsequence(document.getCharsSequence());
     }
 
     final VirtualFile virtualFile = myXmlFile.getVirtualFile();
@@ -138,7 +137,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
         try {
           reader = new BufferedReader(new InputStreamReader(virtualFile.getInputStream()));
           final char[] buf = new char[START];
-          final int i = reader.read(buf, 0, 1024);
+          final int i = reader.read(buf, 0, START);
           if (i <= 0) return null;
           return new CharArrayCharSequence(buf, 0, i);
         }
@@ -159,6 +158,10 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     return null;
   }
 
+  private static CharSequence getSubsequence(final CharSequence sequence) {
+    return sequence.subSequence(0, Math.min(sequence.length(), START));
+  }
+
   private boolean containsRootTags(String s) {
     for (final String string : myDomManager.getRootTagNames()) {
       if (string != null && s.contains(string)) {
@@ -172,13 +175,13 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   private DomFileDescription<T> findFileDescription(final NullableLazyValue<String> rootTagName, Module module) {
     myCondition.module = module;
     final CharSequence text = getFileStartText();
-    if (text != null && containsRootTags(text.toString()) || rootTagName.getValue() != null) {
+    if (text != null && containsRootTags(text.toString()) || text == null && rootTagName.getValue() != null) {
       final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName.getValue()), myCondition);
       if (description != null) {
         return description;
       }
     }
-    return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(rootTagName.getValue()), myCondition);
+    return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
   }
 
   @Nullable

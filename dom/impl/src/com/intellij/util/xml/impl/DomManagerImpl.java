@@ -380,10 +380,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return myRootTagName2FileDescription.get(rootTagName);
   }
 
-  public final Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions(String rootTagName) {
-    final THashSet<DomFileDescription> set = new THashSet<DomFileDescription>(myAcceptingOtherRootTagNamesDescriptions);
-    set.removeAll(getFileDescriptions(rootTagName));
-    return set;
+  public final Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
+    return myAcceptingOtherRootTagNamesDescriptions;
   }
 
   public final Map<DomFileDescription, Set<DomFileElementImpl>> getFileDescriptions() {
