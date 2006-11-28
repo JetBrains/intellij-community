@@ -21,12 +21,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.vcs.ui.impl.CheckinPanelState</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.ui.impl.CheckinPanelStateImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.VcsConfiguration</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
