@@ -1,16 +1,16 @@
 package com.intellij.jar;
 
 import com.intellij.compiler.CompilerIOUtil;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.deployment.ModuleContainer;
-import com.intellij.openapi.deployment.ModuleLink;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.PackagingCompiler;
 import com.intellij.openapi.compiler.ValidityState;
+import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
+import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.FileCopyInstruction;
+import com.intellij.openapi.deployment.ModuleContainer;
+import com.intellij.openapi.deployment.ModuleLink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -162,7 +162,6 @@ public class JarCompiler implements PackagingCompiler {
       if (outputJarTimestamp != other.outputJarTimestamp) return false;
       return true;
     }
-
   }
 
   static class MyProcItem implements ProcessingItem {
@@ -214,6 +213,7 @@ public class JarCompiler implements PackagingCompiler {
         ProcessingItem[] result = new ProcessingItem[modulesToRebuild.size()];
         int i=0;
         for (Module moduleToBuild : modulesToRebuild) {
+          if (moduleToBuild.getModuleFile() == null) continue;
           result[i++] = new MyProcItem(moduleToBuild);
         }
         return result;
