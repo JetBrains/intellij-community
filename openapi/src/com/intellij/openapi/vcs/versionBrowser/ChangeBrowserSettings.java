@@ -250,13 +250,13 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
     for (Iterator iterator = changeListInfos.iterator(); iterator.hasNext();) {
       Object o = iterator.next();
       if (o instanceof RepositoryVersion) {
-        RepositoryVersion changeListInfo = (RepositoryVersion) iterator.next();
+        RepositoryVersion changeListInfo = (RepositoryVersion) o;
         if (!filter.accepts(changeListInfo)) {
           iterator.remove();
         }
       }
       else if (o instanceof CommittedChangeList) {
-        CommittedChangeList changeListInfo = (CommittedChangeList) iterator.next();
+        CommittedChangeList changeListInfo = (CommittedChangeList) o;
         if (!filter.accepts(changeListInfo)) {
           iterator.remove();
         }

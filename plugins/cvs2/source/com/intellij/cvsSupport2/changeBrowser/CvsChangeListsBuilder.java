@@ -2,13 +2,12 @@ package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.versionBrowser.RepositoryVersion;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 
 import java.util.*;
 
 public class CvsChangeListsBuilder {
-  private final Map<String, Map<String, List<RepositoryVersion>>> myCache = new HashMap<String, Map<String, List<RepositoryVersion>>>();
+  private final Map<String, Map<String, List<CvsChangeList>>> myCache = new HashMap<String, Map<String, List<CvsChangeList>>>();
 
   private long myLastNumber = 0;
   private final String myRootPath;
@@ -21,10 +20,10 @@ public class CvsChangeListsBuilder {
     myProject = project;
   }
 
-  public List<RepositoryVersion> getVersions() {
-    final ArrayList<RepositoryVersion> result = new ArrayList<RepositoryVersion>();
-    for (Map<String, List<RepositoryVersion>> byMessage : myCache.values()) {
-      for (List<RepositoryVersion> versions : byMessage.values()) {
+  public List<CvsChangeList> getVersions() {
+    final ArrayList<CvsChangeList> result = new ArrayList<CvsChangeList>();
+    for (Map<String, List<CvsChangeList>> byMessage : myCache.values()) {
+      for (List<CvsChangeList> versions : byMessage.values()) {
         result.addAll(versions);
       }
     }
@@ -33,36 +32,35 @@ public class CvsChangeListsBuilder {
 
   private void addRevision(RevisionWrapper revision) {
     final Revision cvsRevision = revision.getRevision();
-    CvsRepositoryVersion version = findOrCreateVersionFor(cvsRevision.getMessage(),
-                                                          revision.getTime(),
-                                                          cvsRevision.getAuthor());
+    CvsChangeList version = findOrCreateVersionFor(cvsRevision.getMessage(),
+                                                   revision.getTime(),
+                                                   cvsRevision.getAuthor());
 
     version.addFileRevision(revision);
   }
 
-  private CvsRepositoryVersion findOrCreateVersionFor(final String message, final long date, final String author) {
-    final Map<String, List<RepositoryVersion>> byMessage = myCache.get(message);
+  private CvsChangeList findOrCreateVersionFor(final String message, final long date, final String author) {
+    final Map<String, List<CvsChangeList>> byMessage = myCache.get(message);
     if (byMessage != null) {
-      final List<RepositoryVersion> versions = byMessage.get(author);
+      final List<CvsChangeList> versions = byMessage.get(author);
       if (versions != null) {
-        final CvsRepositoryVersion lastVersion = (CvsRepositoryVersion)versions.get(versions.size() - 1);
+        final CvsChangeList lastVersion = versions.get(versions.size() - 1);
         if (lastVersion.containsDate(date)) {
           return lastVersion;
         }
       }
     }
 
-    final CvsRepositoryVersion result = new CvsRepositoryVersion(myLastNumber, message, date, author, myRootPath, myEnvironment,
-                                                                 myProject);
+    final CvsChangeList result = new CvsChangeList(myLastNumber, message, date, author, myRootPath, myEnvironment, myProject);
     myLastNumber += 1;
 
     if (!myCache.containsKey(message)) {
-      myCache.put(message, new HashMap<String, List<RepositoryVersion>>());
+      myCache.put(message, new HashMap<String, List<CvsChangeList>>());
     }
 
-    final Map<String, List<RepositoryVersion>> filteredByMessages = myCache.get(message);
+    final Map<String, List<CvsChangeList>> filteredByMessages = myCache.get(message);
     if (!filteredByMessages.containsKey(author)) {
-      filteredByMessages.put(author, new ArrayList<RepositoryVersion>());
+      filteredByMessages.put(author, new ArrayList<CvsChangeList>());
     }
 
     filteredByMessages.get(author).add(result);
@@ -75,7 +73,7 @@ public class CvsChangeListsBuilder {
 
     for (LogInformationWrapper log : logs) {
       final String file = log.getFile();
-      if (CvsFileRevision.isAncestor(myRootPath, file)) {
+      if (CvsChangeList.isAncestor(myRootPath, file)) {
         for (Revision revision : log.getRevisions()) {
           revisionWrappers.add(new RevisionWrapper(file, revision));
         }
