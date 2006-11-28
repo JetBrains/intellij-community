@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class UnnecessaryThisInspection extends ExpressionInspection {
+public class UnqualifiedFieldAccessInpection extends ExpressionInspection {
 
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("unnecessary.this.display.name");
+        return InspectionGadgetsBundle.message(
+                "unqualified.field.access.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,73 +38,73 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryThisVisitor();
+        return new UnqualifiedFieldAccessVisitor();
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "unnecessary.this.problem.descriptor");
+                "unqualified.field.access.problem.descriptor");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
-        return new UnnecessaryThisFix();
+        return new UnqualifiedFieldAccessFix();
     }
 
-    private static class UnnecessaryThisFix extends InspectionGadgetsFix {
+    private static class UnqualifiedFieldAccessFix
+            extends InspectionGadgetsFix {
 
         public String getName() {
             return InspectionGadgetsBundle.message(
-                    "unnecessary.this.remove.quickfix");
+                    "add.this.qualifier.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
-            final PsiElement thisToken = descriptor.getPsiElement();
-            final PsiReferenceExpression thisExpression =
-                    (PsiReferenceExpression)thisToken.getParent();
-            assert thisExpression != null;
-            final String newExpression = thisExpression.getReferenceName();
-            replaceExpression(thisExpression, newExpression);
+            final PsiReferenceExpression expression =
+                    (PsiReferenceExpression) descriptor.getPsiElement();
+            final String newExpression = "this." + expression.getText();
+            replaceExpression(expression, newExpression);
         }
     }
 
-    private static class UnnecessaryThisVisitor extends BaseInspectionVisitor {
+    private static class UnqualifiedFieldAccessVisitor
+            extends BaseInspectionVisitor {
 
         public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
+            final PsiElement parent = 
+                    expression.getParent();
+            if (parent instanceof PsiReferenceExpression ||
+                    parent instanceof PsiCallExpression) {
+                // optimization
+                return;
+            }
             final PsiReferenceParameterList parameterList =
                     expression.getParameterList();
             if (parameterList == null) {
                 return;
             }
             if (parameterList.getTypeArguments().length > 0) {
+                // optimization: reference with type arguments are
+                // definitely not references to fields.
                 return;
             }
             final PsiExpression qualifierExpression =
                     expression.getQualifierExpression();
-            if (!(qualifierExpression instanceof PsiThisExpression)) {
+            if (qualifierExpression != null) {
                 return;
             }
-            final PsiThisExpression thisExpression =
-                    (PsiThisExpression)qualifierExpression;
-            if (thisExpression.getQualifier() != null) {
+            final PsiElement element = expression.resolve();
+            if (!(element instanceof PsiField)) {
                 return;
             }
-            if (expression.getParent() instanceof PsiCallExpression) {
-                // method calls are always in error
-                registerError(qualifierExpression);
+            final PsiField field = (PsiField) element;
+            if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            final String varName = expression.getReferenceName();
-            if (varName == null) {
-                return;
-            }
-            if (!VariableSearchUtils.existsLocalOrParameter(varName,
-                    expression)) {
-                registerError(thisExpression);
-            }
+            registerError(expression);
         }
     }
 }
