@@ -196,6 +196,7 @@ Please send your comments and suggestions to asirv@webmethods.com
     <choice>
       <element ref="xsl:result-element"/>
       <any namespace="##other" processContents="skip"/>
+      <any namespace="##local" processContents="skip"/>
     </choice>
   </group>
 
