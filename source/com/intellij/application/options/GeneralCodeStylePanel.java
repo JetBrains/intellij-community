@@ -11,12 +11,16 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collection;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String SYSTEM_DEPENDANT_STRING = ApplicationBundle.message("combobox.crlf.system.dependent");
@@ -31,6 +35,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private IndentOptions myJspIndentOptions = new IndentOptions(IndentOptions.LIST_CONT_INDENT + IndentOptions.LIST_SMART_TABS);
   private IndentOptions myXMLIndentOptions = new IndentOptions(IndentOptions.LIST_CONT_INDENT + IndentOptions.LIST_SMART_TABS);
   private IndentOptions myOtherIndentOptions = new IndentOptions(0);
+
+  private Map<FileType,IndentOptions> myAdditionalIndentOptions = new HashMap<FileType, IndentOptions>();
+
   private TabbedPaneWrapper myIndentOptionsTabs;
   private JCheckBox myCbDontIndentTopLevelMembers;
   private JPanel myIndentPanel;
@@ -43,6 +50,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
+
+    final Collection<FileType> fileTypes = settings.getFileTypesWithAdditionalIndentOptions();
+    for(FileType fileType:fileTypes) {
+      myAdditionalIndentOptions.put(fileType, new IndentOptions(0));
+    }
+    
     myIndentPanel.setLayout(new BorderLayout());
     myIndentPanel.add(createTabOptionsPanel(), BorderLayout.CENTER);
     installPreviewPanel(myPreviewPanel);
@@ -92,8 +105,16 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myIndentOptionsTabs.setEnabledAt(1, enabled);
     myXMLIndentOptions.setEnabled(enabled);
     myIndentOptionsTabs.setEnabledAt(2, enabled);
+
+    int index = 3;
+    for(IndentOptions options:myAdditionalIndentOptions.values()) {
+      options.setEnabled(enabled);
+      myIndentOptionsTabs.setEnabledAt(index, enabled);
+      index++;
+    }
+
     myOtherIndentOptions.setEnabled(enabled);
-    myIndentOptionsTabs.setEnabledAt(3, enabled);
+    myIndentOptionsTabs.setEnabledAt(index, enabled);
   }
 
   private JPanel createTabOptionsPanel() {
@@ -106,7 +127,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.java"), myJavaIndentOptions.createPanel());
     myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.jsp"), myJspIndentOptions.createPanel());
     myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.xml"), myXMLIndentOptions.createPanel());
+
+    for(Map.Entry<FileType,IndentOptions> entry:myAdditionalIndentOptions.entrySet()) {
+      myIndentOptionsTabs.addTab(entry.getKey().getName(), entry.getValue().createPanel());
+    }
+
     myIndentOptionsTabs.addTab(ApplicationBundle.message("tab.indent.other"), myOtherIndentOptions.createPanel());
+
     optionGroup.add(myIndentOptionsTabs.getComponent());
 
     return optionGroup.createPanel();
@@ -188,6 +215,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myXMLIndentOptions.apply(settings.XML_INDENT_OPTIONS);
     myOtherIndentOptions.apply(settings.OTHER_INDENT_OPTIONS);
 
+    for(FileType fileType:settings.getFileTypesWithAdditionalIndentOptions()) {
+      myAdditionalIndentOptions.get(fileType).apply(settings.getAdditionalIndentOptions(fileType));
+    }
     settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
 
     int rightMarginImpl = getRightMarginImpl();
@@ -241,6 +271,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       return true;
     }
 
+    for(FileType fileType:settings.getFileTypesWithAdditionalIndentOptions()) {
+      if (myAdditionalIndentOptions.get(fileType).isModified(settings.getAdditionalIndentOptions(fileType))) {
+        return true;
+      }
+    }
+
     if (myCbDontIndentTopLevelMembers.isSelected() != settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS) {
       return true;
     }
@@ -262,6 +298,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myJspIndentOptions.reset(settings.JSP_INDENT_OPTIONS);
     myXMLIndentOptions.reset(settings.XML_INDENT_OPTIONS);
     myOtherIndentOptions.reset(settings.OTHER_INDENT_OPTIONS);
+
+    for(FileType fileType:settings.getFileTypesWithAdditionalIndentOptions()) {
+      myAdditionalIndentOptions.get(fileType).reset(settings.getAdditionalIndentOptions(fileType));
+    }
 
     myCbDontIndentTopLevelMembers.setSelected(settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
 

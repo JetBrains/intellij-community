@@ -17,25 +17,34 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
+import com.intellij.lang.Language;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   private ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
+  private static final @NonNls String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
+  private static final @NonNls String FILETYPE = "fileType";
 
   public CodeStyleSettings() {
     initTypeToName();
     initImports();
+
     for (final CodeStyleSettingsProvider provider : ApplicationManager.getApplication().getComponents(CodeStyleSettingsProvider.class)) {
       addCustomSettings(provider.createCustomSettings(this));
+    }
+
+    for (final FileTypeIndentOptionsProvider provider : ApplicationManager.getApplication().getComponents(FileTypeIndentOptionsProvider.class)) {
+      registerAdditionalIndentOptions(provider.getFileType(),provider.createIndentOptions());
     }
   }
 
@@ -104,6 +113,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       clon.JSP_INDENT_OPTIONS = (IndentOptions)JSP_INDENT_OPTIONS.clone();
       clon.XML_INDENT_OPTIONS = (IndentOptions)XML_INDENT_OPTIONS.clone();
       clon.OTHER_INDENT_OPTIONS = (IndentOptions)OTHER_INDENT_OPTIONS.clone();
+
+      clon.ourAdditionalIndentOptions = new HashMap<FileType, IndentOptions>();
+      for(Map.Entry<FileType,IndentOptions> optionEntry:ourAdditionalIndentOptions.entrySet()) {
+        clon.ourAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
+      }
       return clon;
     }
     catch (CloneNotSupportedException e) {
@@ -172,6 +186,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public IndentOptions JSP_INDENT_OPTIONS = new IndentOptions();
   public IndentOptions XML_INDENT_OPTIONS = new IndentOptions();
   public IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
+
+  private Map<FileType,IndentOptions> ourAdditionalIndentOptions = new HashMap<FileType, IndentOptions>();
 
   private static final String ourSystemLineSeparator = SystemProperties.getLineSeparator();
 
@@ -1019,6 +1035,26 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
       settings.readExternal(element);
     }
+
+    final List list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
+    if (list != null) {
+      for(Object o:list) {
+        if (o instanceof Element) {
+          final Element additionalIndentElement = (Element)o;
+          final String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
+
+          if (fileTypeId != null) {
+            FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
+
+            if (target != null) {
+              final IndentOptions options = new IndentOptions();
+              options.readExternal(additionalIndentElement);
+              registerAdditionalIndentOptions(target, options);
+            }
+          }
+        }
+      }
+    }
   }
 
   private void importOldIndentOptions(@NonNls Element element) {
@@ -1072,12 +1108,20 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       assert parentCustomSettings != null;
       settings.writeExternal(element, parentCustomSettings);
     }
+
+    for(Map.Entry<FileType,IndentOptions> entry:ourAdditionalIndentOptions.entrySet()) {
+      Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
+      entry.getValue().writeExternal(additionalIndentOptions);
+      additionalIndentOptions.setAttribute(FILETYPE,entry.getKey().getDefaultExtension());
+      element.addContent(additionalIndentOptions);
+    }
   }
 
   public IndentOptions getIndentOptions(FileType fileType) {
     if (USE_SAME_INDENTS || fileType == null || fileType == StdFileTypes.JAVA) return JAVA_INDENT_OPTIONS;
-    // Allow inheriting indent settings for JS from Java, till language indent options API
-    if ("JavaScript".equals(fileType.getName())) return JAVA_INDENT_OPTIONS;
+
+    final IndentOptions indentOptions = ourAdditionalIndentOptions.get(fileType);
+    if (indentOptions != null) return indentOptions;
 
     if (fileType == StdFileTypes.JSP) return JSP_INDENT_OPTIONS;
     if (fileType == StdFileTypes.XML) return XML_INDENT_OPTIONS;
@@ -1536,4 +1580,15 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   }
 
+  private void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
+    ourAdditionalIndentOptions.put(fileType, options);
+  }
+
+  public Collection<FileType> getFileTypesWithAdditionalIndentOptions() {
+    return ourAdditionalIndentOptions.keySet();
+  }
+
+  public IndentOptions getAdditionalIndentOptions(FileType fileType) {
+    return ourAdditionalIndentOptions.get(fileType);
+  }
 }
