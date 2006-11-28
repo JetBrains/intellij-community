@@ -14,7 +14,7 @@ package com.intellij.util.xml;
  * arent known to anyone except you. But when you instantiate the DomElementVisitor
  * interface, you may add there those visitT() methods, and they will be called! You may
  * even name them just visit(), specify the type of the parameter, and everything will be
- * fine. For example, if you have two DOM element classes — Foo and Bar — your visitor
+ * fine. For example, if you have two DOM element classes - Foo and Bar - your visitor
  * may look like this:
  *
  *  class MyVisitor implements DomElementVisitor {
