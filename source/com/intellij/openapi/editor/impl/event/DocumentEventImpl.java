@@ -26,6 +26,9 @@ public class DocumentEventImpl extends DocumentEvent {
   private int myOptimizedLineShift = -1;
   private boolean myOptimizedLineShiftCalculated;
 
+  private int myOptimizedOldLineShift = -1;
+  private boolean myOptimizedOldLineShiftCalculated;
+
   public DocumentEventImpl(Document document,
                            int offset,
                            CharSequence oldString,
@@ -115,7 +118,8 @@ public class DocumentEventImpl extends DocumentEvent {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "DocumentEventImpl[myOffset=" + myOffset + ", myOldLength=" + myOldLength + ", myNewLength=" + myNewLength +", myOldString='" + myOldString + "', myNewString='" + myNewString + "']";
+    return "DocumentEventImpl[myOffset=" + myOffset + ", myOldLength=" + myOldLength + ", myNewLength=" + myNewLength +
+           ", myOldString='" + myOldString + "', myNewString='" + myNewString + "']";
   }
 
   public boolean isWholeTextReplaced() {
@@ -181,21 +185,38 @@ public class DocumentEventImpl extends DocumentEvent {
     if (!myOptimizedLineShiftCalculated) {
       myOptimizedLineShiftCalculated = true;
 
-      if (myOldString.length() == 0) {
-        int lineShift = 0;
-        final CharSequence newFragment = getNewFragment();
-
-        for(int i = 0; i < newFragment.length(); ++i) {
-          final char ch = newFragment.charAt(i);
-
-          if (ch == '\n') {
-            ++lineShift;
-          }
-        }
+      if (myOldLength == 0) {
+        int lineShift = countNewLines(myNewString);
 
         myOptimizedLineShift = lineShift != 0 ? lineShift:-1;
       }
     }
     return myOptimizedLineShift;
+  }
+
+  private static int countNewLines(final CharSequence newFragment) {
+    int lineShift = 0;
+
+    for(int i = 0; i < newFragment.length(); ++i) {
+      final char ch = newFragment.charAt(i);
+
+      if (ch == '\n') {
+        ++lineShift;
+      }
+    }
+    return lineShift;
+  }
+
+  public int getOptimizedOldLineShift() {
+    if (!myOptimizedOldLineShiftCalculated) {
+      myOptimizedOldLineShiftCalculated = true;
+
+      if (myNewLength == 0) {
+        int lineShift = countNewLines(myOldString);
+
+        myOptimizedOldLineShift = lineShift != 0 ? lineShift:-1;
+      }
+    }
+    return myOptimizedOldLineShift;
   }
 }

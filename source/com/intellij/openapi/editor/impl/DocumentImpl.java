@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
@@ -61,6 +62,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
   private boolean myAssertWriteAccess = true;
+  private static final Key<Boolean> DOING_BULK_UPDATE = Key.create("DoingBulkRefromat");
 
   private DocumentImpl() {
     setCyclicBufferSize(0);
@@ -676,6 +678,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public RangeMarker createRangeMarker(final TextRange textRange) {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+  }
+
+  public final boolean isInBulkUpdate() {
+    return getUserData(DOING_BULK_UPDATE) != null;
+  }
+
+  public final void setInBulkUpdate(boolean value) {
+    if (value) putUserData(DOING_BULK_UPDATE,Boolean.TRUE);
+    else putUserData(DOING_BULK_UPDATE,null);
   }
 }
 

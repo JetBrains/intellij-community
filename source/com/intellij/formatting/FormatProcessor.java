@@ -1,20 +1,13 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -199,16 +192,16 @@ class FormatProcessor {
 
     int shift = 0;
     boolean bulkReformat = false;
-    List<Editor> editorsWithBulkReformatNotified = null;
+    DocumentEx updatedDocument = null;
 
     try {
       final int blocksToModifyCount = blocksToModify.size();
       bulkReformat = blocksToModifyCount > 50;
 
       if (bulkReformat) {
-        editorsWithBulkReformatNotified = buildOpenEditorsForModel(model, editorsWithBulkReformatNotified);
+        updatedDocument = getAffectedDocument(model);
 
-        notifyBulkReformatStatus(editorsWithBulkReformatNotified, true);
+        if(updatedDocument != null) updatedDocument.setInBulkUpdate(true);
       }
 
       int index = 0;
@@ -218,50 +211,25 @@ class FormatProcessor {
         ++index;
 
         if (index + 1 == blocksToModifyCount) {
-          notifyBulkReformatStatus(editorsWithBulkReformatNotified, false);
-          editorsWithBulkReformatNotified = null;
+          if(updatedDocument != null) updatedDocument.setInBulkUpdate(false);
+          updatedDocument = null;
         }
       }
     }
     finally {
-      if (bulkReformat && editorsWithBulkReformatNotified != null) {   // emergency clean up
-        notifyBulkReformatStatus(editorsWithBulkReformatNotified, false);
+      if (bulkReformat && updatedDocument != null) {   // emergency clean up
+        updatedDocument.setInBulkUpdate(false);
       }
       model.commitChanges();
     }
   }
 
-  private static void notifyBulkReformatStatus(final List<Editor> editorsWithBulkReformatNotified, boolean status) {
-    if (editorsWithBulkReformatNotified != null) {
-      for(Editor editor:editorsWithBulkReformatNotified) {
-        if (editor instanceof EditorImpl) {
-          //if (status) editor.putUserData(EditorImpl.DOING_BULK_REFORMAT,Boolean.TRUE);
-          //else editor.putUserData(EditorImpl.DOING_BULK_REFORMAT,null);
-        }
-      }
-    }
-  }
-
-  private static List<Editor> buildOpenEditorsForModel(final FormattingModel model, List<Editor> editorsWithBulkReformatNotified) {
+  private static DocumentEx getAffectedDocument(final FormattingModel model) {
     if (model instanceof DocumentBasedFormattingModel) {
       final Document document = ((DocumentBasedFormattingModel)model).getDocument();
-      final Project project = ((DocumentBasedFormattingModel)model).getProject();
-      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-
-      if (psiFile != null && psiFile.getVirtualFile() != null) {
-        final FileEditor[] fileEditors = FileEditorManager.getInstance(project).getEditors(psiFile.getVirtualFile());
-
-        if (fileEditors.length > 0) {
-          for(FileEditor feditor:fileEditors) {
-            if (feditor instanceof TextEditor) {
-              if (editorsWithBulkReformatNotified == null) editorsWithBulkReformatNotified = new ArrayList<Editor>();
-              editorsWithBulkReformatNotified.add(((TextEditor)feditor).getEditor());
-            }
-          }
-        }
-      }
+      if (document instanceof DocumentEx) return (DocumentEx)document; 
     }
-    return editorsWithBulkReformatNotified;
+    return null;
   }
 
   protected int replaceWhiteSpace(final FormattingModel model,

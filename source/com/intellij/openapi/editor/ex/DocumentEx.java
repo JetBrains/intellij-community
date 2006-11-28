@@ -27,6 +27,10 @@ public interface DocumentEx extends Document {
   boolean isInEventsHandling();
 
   void clearLineModificationFlags();
+
+  boolean isInBulkUpdate();
+
+  void setInBulkUpdate(boolean value);
 }
 
 

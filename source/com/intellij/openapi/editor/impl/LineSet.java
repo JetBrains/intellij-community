@@ -59,12 +59,18 @@ public class LineSet{
         return;
       }
 
-      int optimizedLineShift = e.getOptimizedLineShift();
+      final int optimizedLineShift = e.getOptimizedLineShift();
 
       if (optimizedLineShift != -1) {
-        processOptimizedMultilineChange(e, optimizedLineShift);
+        processOptimizedMultilineInsert(e, optimizedLineShift);
       } else {
-        processMultilineChange(e);
+        final int optimizedOldLineShift = e.getOptimizedOldLineShift();
+
+        if (optimizedOldLineShift != -1) {
+          processOptimizedMultilineDelete(e, optimizedOldLineShift);
+        } else {
+          processMultilineChange(e);
+        }
       }
     }
 
@@ -80,7 +86,60 @@ public class LineSet{
 
   private static boolean doTest = false;
 
-  private void processOptimizedMultilineChange(final DocumentEventImpl e, final int optimizedLineShift) {
+  private void processOptimizedMultilineDelete(final DocumentEventImpl e, final int optimizedLineShift) {
+    final int insertionPoint = e.getOffset();
+    final int changedLineIndex = e.getStartOldIndex();
+    final int lengthDiff = e.getOldLength();
+
+    SegmentArrayWithData workingCopySegmentsForTesting = null;
+    SegmentArrayWithData segments; //
+
+    if (doTest) {
+      segments = new SegmentArrayWithData();
+      workingCopySegmentsForTesting = new SegmentArrayWithData();
+      fillSegments(segments, workingCopySegmentsForTesting);
+    } else {
+      segments = mySegments;
+    }
+
+    final int oldSegmentStart = segments.getSegmentStart(changedLineIndex);
+    final int lastChangedEnd = segments.getSegmentEnd(changedLineIndex + optimizedLineShift);
+    final short lastChangedData = segments.getSegmentData(changedLineIndex + optimizedLineShift);
+    final int newSegmentEnd = oldSegmentStart + (insertionPoint - oldSegmentStart) + (lastChangedEnd - insertionPoint - lengthDiff);
+
+    segments.remove(changedLineIndex, changedLineIndex + optimizedLineShift);
+
+    if (newSegmentEnd != 0) {
+      segments.setElementAt(
+        changedLineIndex,
+        oldSegmentStart, newSegmentEnd,
+        lastChangedData | MODIFIED_MASK
+      );
+    } else {
+      segments.remove(changedLineIndex, changedLineIndex + 1);
+    }
+
+// update data after lineIndex, shifting with optimizedLineShift
+    final int segmentCount = segments.getSegmentCount();
+    for(int i = changedLineIndex + 1; i < segmentCount; ++i) {
+      segments.setElementAt(i, segments.getSegmentStart(i) - lengthDiff,
+        segments.getSegmentEnd(i) - lengthDiff,
+        segments.getSegmentData(i)
+      );
+    }
+
+    if (doTest) {
+      final SegmentArrayWithData data = mySegments;
+      mySegments = segments;
+      addEmptyLineAtEnd();
+
+      doCheckResults(workingCopySegmentsForTesting, e, data, segments);
+    } else {
+      addEmptyLineAtEnd();
+    }
+  }
+
+  private void processOptimizedMultilineInsert(final DocumentEventImpl e, final int optimizedLineShift) {
     final int insertionPoint = e.getOffset();
     final int changedLineIndex = e.getStartOldIndex();
     final int lengthDiff = e.getNewLength();
@@ -92,27 +151,14 @@ public class LineSet{
     if (doTest) {
       segments = new SegmentArrayWithData();
       workingCopySegmentsForTesting = new SegmentArrayWithData();
-      for(int i = mySegments.getSegmentCount() - 1; i >=0; --i) {
-        segments.setElementAt(
-          i,
-          mySegments.getSegmentStart(i),
-          mySegments.getSegmentEnd(i),
-          mySegments.getSegmentData(i)
-        );
-        workingCopySegmentsForTesting.setElementAt(
-          i,
-          mySegments.getSegmentStart(i),
-          mySegments.getSegmentEnd(i),
-          mySegments.getSegmentData(i)
-        );
-      }
+      fillSegments(segments, workingCopySegmentsForTesting);
     } else {
       segments = mySegments;
     }
 
     int i;
 
-// update data after lineIndex, shifting with optimizedLineShift
+    // update data after lineIndex, shifting with optimizedLineShift
     for(i = segments.getSegmentCount() - 1; i > changedLineIndex; --i) {
       segments.setElementAt(i + optimizedLineShift, segments.getSegmentStart(i) + lengthDiff,
         segments.getSegmentEnd(i) + lengthDiff,
@@ -158,23 +204,48 @@ public class LineSet{
       mySegments = segments;
       addEmptyLineAtEnd();
 
-      mySegments = workingCopySegmentsForTesting;
-      processMultilineChange(e);
-      mySegments = data;
-
-      assert workingCopySegmentsForTesting.getSegmentCount() == segments.getSegmentCount();
-      for(i =0; i < segments.getSegmentCount();++i) {
-
-        if (workingCopySegmentsForTesting.getSegmentStart(i) != segments.getSegmentStart(i) ||
-            workingCopySegmentsForTesting.getSegmentEnd(i) != segments.getSegmentEnd(i) ||
-            workingCopySegmentsForTesting.getSegmentData(i) != segments.getSegmentData(i)) {
-          assert false;
-        }
-      }
-
-      processMultilineChange(e);
+      doCheckResults(workingCopySegmentsForTesting, e, data, segments);
     } else {
       addEmptyLineAtEnd();
+    }
+  }
+
+  private void doCheckResults(final SegmentArrayWithData workingCopySegmentsForTesting, final DocumentEventImpl e,
+                              final SegmentArrayWithData data,
+                              final SegmentArrayWithData segments) {
+    mySegments = workingCopySegmentsForTesting;
+    processMultilineChange(e);
+    mySegments = data;
+
+    if (workingCopySegmentsForTesting.getSegmentCount() != segments.getSegmentCount()) {
+      assert false;
+    }
+    for(int i =0; i < segments.getSegmentCount();++i) {
+
+      if (workingCopySegmentsForTesting.getSegmentStart(i) != segments.getSegmentStart(i) ||
+          workingCopySegmentsForTesting.getSegmentEnd(i) != segments.getSegmentEnd(i) ||
+          workingCopySegmentsForTesting.getSegmentData(i) != segments.getSegmentData(i)) {
+        assert false;
+      }
+    }
+
+    processMultilineChange(e);
+  }
+
+  private void fillSegments(final SegmentArrayWithData segments, final SegmentArrayWithData workingCopySegmentsForTesting) {
+    for(int i = mySegments.getSegmentCount() - 1; i >=0; --i) {
+      segments.setElementAt(
+        i,
+        mySegments.getSegmentStart(i),
+        mySegments.getSegmentEnd(i),
+        mySegments.getSegmentData(i)
+      );
+      workingCopySegmentsForTesting.setElementAt(
+        i,
+        mySegments.getSegmentStart(i),
+        mySegments.getSegmentEnd(i),
+        mySegments.getSegmentData(i)
+      );
     }
   }
 

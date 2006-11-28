@@ -251,6 +251,13 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   public void clearLineModificationFlags() {
   }
 
+  public boolean isInBulkUpdate() {
+    return false;
+  }
+
+  public void setInBulkUpdate(boolean value) {
+  }
+
   public RangeMarker getTextRange() {
     return myHostRange;
   }

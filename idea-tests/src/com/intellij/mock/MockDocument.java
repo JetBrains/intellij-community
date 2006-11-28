@@ -204,6 +204,13 @@ public class MockDocument implements DocumentEx {
   public void clearLineModificationFlags() {
   }
 
+  public boolean isInBulkUpdate() {
+    return false;
+  }
+
+  public void setInBulkUpdate(boolean value) {
+  }
+
   public void setCyclicBufferSize(int bufferSize) {
   }
 

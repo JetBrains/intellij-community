@@ -61,8 +61,12 @@ public class EditorUtil {
     // If all tabs here goes before any other chars in the line we may use an optimization here.
     boolean useOptimization = true;
     boolean hasNonTabs = false;
-    for (int i = start; i < end; i++) {
+    boolean hasTabs = false;
+    final int maxScanIndex = Math.min(start + columnNumber, end);
+
+    for (int i = start; i < maxScanIndex; i++) {
       if (text.charAt(i) == '\t') {
+        hasTabs = true;
         if (hasNonTabs) {
           useOptimization = false;
           break;
@@ -73,6 +77,8 @@ public class EditorUtil {
     }
 
     if (editor == null || useOptimization) {
+      if (!hasTabs) return Math.min(start + columnNumber, end);
+
       int shift = 0;
       int offset = start;
       for (; offset < end && offset + shift < start + columnNumber; offset++) {

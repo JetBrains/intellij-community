@@ -955,7 +955,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   void validateSize() {
     Dimension dim = getPreferredSize();
 
-    if (!dim.equals(myPreferredSize)) {
+    if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
       myPreferredSize = dim;
 
       stopOptimizedScrolling();
@@ -3825,6 +3825,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private boolean myIsDirty;
     private int myOldEndLine;
     private Dimension mySize;
+    private int myMaxWidth = -1;
 
     public void reset() {
       int visLinesCount = getVisibleLineCount();
@@ -3836,6 +3837,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public void beforeChange(DocumentEvent e) {
+      if (myDocument.isInBulkUpdate()) {
+        myMaxWidth = mySize != null ? mySize.width : -1;
+      }
       myOldEndLine = offsetToVisualPosition(e.getOffset() + e.getOldLength()).line;
     }
 
@@ -3865,10 +3869,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void validateSizes() {
       if (!myIsDirty) return;
 
-      CharSequence text = myDocument.getCharsNoThreadCheck();
       int lineCount = myLineWidths.size();
+
+      if (myMaxWidth != -1 && myDocument.isInBulkUpdate()) {
+        mySize = new Dimension(myMaxWidth, getLineHeight() * lineCount);
+        myIsDirty = false;
+        return;
+      }
+
+      final CharSequence text = myDocument.getCharsNoThreadCheck();
       int end = myDocument.getTextLength();
       int x = 0;
+      final int fontSize = myScheme.getEditorFontSize();
+      final String fontName = myScheme.getEditorFontName();
+
       for (int line = 0; line < lineCount; line++) {
         if (myLineWidths.getQuick(line) != -1) continue;
         x = 0;
@@ -3912,7 +3926,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 line++;
               }
               else {
-                x += charWidth(c, fontType);
+                x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);
                 offset++;
               }
             }

@@ -21,6 +21,7 @@ class EditorChangeAction implements UndoableAction {
   private CharSequence myOldString;
   private CharSequence myNewString;
   private long myTimeStamp;
+  private boolean myBulkUpdate;
 
   public EditorChangeAction(DocumentEx document, int offset,
                             CharSequence oldString, CharSequence newString,
@@ -43,6 +44,7 @@ class EditorChangeAction implements UndoableAction {
       myNewString = "";
     }
     myTimeStamp = oldTimeStamp;
+    myBulkUpdate = document.isInBulkUpdate();
   }
 
   public void undo() {
@@ -63,15 +65,19 @@ class EditorChangeAction implements UndoableAction {
   }
 
   private void exchangeStrings(CharSequence newString, CharSequence oldString) {
+    final DocumentEx document = getDocument();
+    
+    if (myBulkUpdate) document.setInBulkUpdate(true);
     if (newString.length() > 0 && oldString.length() == 0){
-      getDocument().deleteString(myOffset, myOffset + newString.length());
+      document.deleteString(myOffset, myOffset + newString.length());
     }
     else if (oldString.length() > 0 && newString.length() == 0){
-      getDocument().insertString(myOffset, oldString);
+      document.insertString(myOffset, oldString);
     }
     else if (oldString.length() > 0 && newString.length() > 0){
-      getDocument().replaceString(myOffset, myOffset + newString.length(), oldString);
+      document.replaceString(myOffset, myOffset + newString.length(), oldString);
     }
+    if (myBulkUpdate) document.setInBulkUpdate(false);
   }
 
   public void redo() {

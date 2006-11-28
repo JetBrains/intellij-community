@@ -16,6 +16,7 @@ public class ComplementaryFontsRegistry {
   private static ArrayList<String> ourFontNames;
   private static LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
   private static FontKey ourSharedKeyInstance = new FontKey(null, 0, 0);
+  private static FontInfo ourSharedDefaultFont;
   private static TIntHashSet ourUndisplayableChars = new TIntHashSet();
 
   private ComplementaryFontsRegistry() {
@@ -67,6 +68,18 @@ public class ComplementaryFontsRegistry {
   }
 
   public static FontInfo getFontAbleToDisplay(char c, int size, int style, String defaultFontFamily) {
+    if (ourSharedKeyInstance.mySize == size &&
+        ourSharedKeyInstance.myStyle == style &&
+        ourSharedKeyInstance.myFamilyName != null &&
+        ourSharedKeyInstance.myFamilyName.equals(defaultFontFamily) &&
+        ourSharedDefaultFont != null &&
+        ( c < 128 ||
+          ourSharedDefaultFont.canDisplay(c)
+        )
+       ) {
+      return ourSharedDefaultFont;
+    }
+
     ourSharedKeyInstance.myFamilyName = defaultFontFamily;
     ourSharedKeyInstance.mySize = size;
     ourSharedKeyInstance.myStyle = style;
@@ -78,6 +91,7 @@ public class ComplementaryFontsRegistry {
       ourSharedKeyInstance = new FontKey(null, 0, 0);
     }
 
+    ourSharedDefaultFont = defaultFont;
     if (c < 128 || defaultFont.canDisplay(c)) {
       return defaultFont;
     }
