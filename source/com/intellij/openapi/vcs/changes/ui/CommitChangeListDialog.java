@@ -46,7 +46,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private Splitter mySplitter;
   private JPanel myAdditionalOptionsPanel;
 
-  private ChangesBrowser myBrowser;
+  private MultipleChangeListBrowser myBrowser;
   private CommitLegendPanel myLegend;
 
   private List<RefreshableOnComponent> myAdditionalComponents = new ArrayList<RefreshableOnComponent>();
@@ -140,9 +140,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     ArrayList<LocalChangeList> changeLists = new ArrayList<LocalChangeList>(manager.getChangeLists());
     myAllOfDefaultChangeListChangesIncluded = changes.containsAll(defaultList.getChanges());
 
-    myBrowser = new ChangesBrowser(project, changeLists, changes, initialSelection, true, true);
+    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, initialSelection, true, true);
     myBrowser.addRollbackAction();
-    myBrowser.addSelectedListChangeListener(new ChangesBrowser.SelectedListChangeListener() {
+    myBrowser.addSelectedListChangeListener(new MultipleChangeListBrowser.SelectedListChangeListener() {
       public void selectedListChanged() {
         updateComment();
       }

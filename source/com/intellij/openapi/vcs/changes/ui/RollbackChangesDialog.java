@@ -28,7 +28,7 @@ import java.awt.*;
 public class RollbackChangesDialog extends DialogWrapper {
   private Project myProject;
   private final boolean myRefreshSynchronously;
-  private ChangesBrowser myBrowser;
+  private MultipleChangeListBrowser myBrowser;
   @Nullable private JCheckBox myDeleteLocallyAddedFiles;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
@@ -68,7 +68,7 @@ public class RollbackChangesDialog extends DialogWrapper {
 
     myProject = project;
     myRefreshSynchronously = refreshSynchronously;
-    myBrowser = new ChangesBrowser(project, changeLists, changes, null, true, true);
+    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true);
 
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
     setTitle(VcsBundle.message("changes.action.rollback.title"));
