@@ -26,6 +26,9 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.FormSpec;
 
 public class FormLayoutUtils {
+  private FormLayoutUtils() {
+  }
+
   public static String getEncodedRowSpecs(final FormLayout formLayout) {
     StringBuffer result = new StringBuffer();
     for(int i=1; i<=formLayout.getRowCount(); i++) {
@@ -49,6 +52,19 @@ public class FormLayoutUtils {
   }
 
   public static String getEncodedSpec(final FormSpec formSpec) {
-    return formSpec.toString().replace("dluX", "dlu").replace("dluY", "dlu");
+    String result = formSpec.toString();
+    while(true) {
+      int pos = result.indexOf("dluX");
+      if (pos < 0) {
+        pos = result.indexOf("dluY");
+      }
+      if (pos < 0) {
+        break;
+      }
+      result = result.substring(0, pos+3) + result.substring(pos+4);
+    }
+
+
+    return result;
   }
 }
