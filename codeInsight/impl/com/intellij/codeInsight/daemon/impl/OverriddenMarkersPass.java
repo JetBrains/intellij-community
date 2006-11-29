@@ -1,8 +1,8 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -31,7 +31,6 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   private static final Icon IMPLEMENTED_INTERFACE_MARKER_RENDERER = IconLoader.getIcon("/gutter/implementedMethod.png");
   private static final Icon SUBCLASSED_CLASS_MARKER_RENDERER = IconLoader.getIcon("/gutter/overridenMethod.png");
 
-  private final Project myProject;
   private final PsiFile myFile;
   private final Document myDocument;
   private final int myStartOffset;
@@ -47,7 +46,6 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     int endOffset
     ) {
     super(project, document);
-    myProject = project;
     myFile = file;
     myDocument = document;
     myStartOffset = startOffset;
@@ -68,14 +66,10 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     UpdateHighlightersUtil.setLineMarkersToEditor(
       myProject, myDocument, myStartOffset, myEndOffset,
-      myMarkers, UpdateHighlightersUtil.OVERRIDEN_MARKERS_GROUP);
+      myMarkers, Pass.UPDATE_OVERRIDEN_MARKERS);
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.OVERRIDEN_MARKERS);
-  }
-
-  public int getPassId() {
-    return Pass.UPDATE_OVERRIDEN_MARKERS;
   }
 
   private static Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {

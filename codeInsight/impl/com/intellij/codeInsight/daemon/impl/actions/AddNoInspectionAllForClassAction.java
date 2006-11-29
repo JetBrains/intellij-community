@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagAction{
   @NonNls private static final String ID = "ALL";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.AddNoInspectionAllForClassAction");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassAction");
 
   public AddNoInspectionAllForClassAction(final PsiElement context) {
     super(ID, context);

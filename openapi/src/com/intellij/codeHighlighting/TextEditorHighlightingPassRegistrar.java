@@ -17,14 +17,20 @@
 
 package com.intellij.codeHighlighting;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 20-Apr-2006
  */
-public abstract class TextEditorHighlightingPassRegistrar implements ProjectComponent {
+public abstract class TextEditorHighlightingPassRegistrar extends AbstractProjectComponent {
+  protected TextEditorHighlightingPassRegistrar(Project project) {
+    super(project);
+  }
+
   /**
    * @deprecated
    */
@@ -43,7 +49,7 @@ public abstract class TextEditorHighlightingPassRegistrar implements ProjectComp
   public static final int AFTER = 2;
 
   public enum Anchor {
-    FIRST, LAST, BEFORE, AFTER
+    FIRST, LAST, BEFORE, AFTER,
   }
 
   public static TextEditorHighlightingPassRegistrar getInstance(Project project){
@@ -55,10 +61,42 @@ public abstract class TextEditorHighlightingPassRegistrar implements ProjectComp
    */
   public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass);
 
-  public abstract int registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory,
-                                                          Anchor anchor,
-                                                          int anchorPass,
-                                                          boolean needAdditionalIntentionsPass,
-                                                          boolean inPostHighlightingPass);
+  /**
+   * Registers the factory for the new highlighting pass.
+   * Factory will be asked to create the highlighting pass every time IDEA tries to highlight the file.
+   *
+   * @param factory
+   * @param anchor
+   * @param anchorPassId                 id of the anchor pass. Predefined pass Ids are declared in {@link com.intellij.codeHighlighting.Pass}
+   * @param needAdditionalIntentionsPass
+   * @param inPostHighlightingPass
+   * @return the id of the new pass which e.g. can be used as an anchor for the other pass.
+   */
+  public int registerTextEditorHighlightingPass(final TextEditorHighlightingPassFactory factory, final Anchor anchor, final int anchorPassId, boolean needAdditionalIntentionsPass,
+                                                boolean inPostHighlightingPass) {
+    int[] ids = null;
+    switch (anchor) {
+      case AFTER:
+        ids = new int[]{anchorPassId};
+        break;
+      case BEFORE:
+        //todo
+        ids = null;
+        break;
+      case FIRST:
+        ids = null;
+        break;
+      case LAST:
+        //todo
+        ids = null;
+        break;
+    }
+    return registerTextEditorHighlightingPass(factory, ids, null, needAdditionalIntentionsPass, -1);
+  }
 
+  public abstract int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory, 
+                                                         @Nullable final int[] runAfterCompletionOf,
+                                                         @Nullable int[] runAfterOfStartingOf,
+                                                         boolean runIntentionsPassAfter,
+                                                         int forcedPassId);
 }

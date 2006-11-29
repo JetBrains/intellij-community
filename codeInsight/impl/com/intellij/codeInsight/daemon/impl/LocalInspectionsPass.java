@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -42,8 +43,6 @@ import java.util.*;
  */
 public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
-
-  private final Project myProject;
   private final PsiFile myFile;
   private final Document myDocument;
   private final int myStartOffset;
@@ -59,7 +58,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                               int startOffset,
                               int endOffset) {
     super(project, document);
-    myProject = project;
     myFile = file;
     myDocument = document;
     myStartOffset = startOffset;
@@ -244,7 +242,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     addHighlightsFromInjectedPsiProblems(infos);
 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos,
-                                                   UpdateHighlightersUtil.INSPECTION_HIGHLIGHTERS_GROUP);
+                                                   Pass.LOCAL_INSPECTIONS);
     myDescriptors = Collections.emptyList();
     myLevels = Collections.emptyList();
     myTools = Collections.emptyList();
@@ -351,10 +349,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
     options.add(new DisableInspectionToolAction(tool));
     return options;
-  }
-
-  public int getPassId() {
-    return Pass.LOCAL_INSPECTIONS;
   }
 
   private static String renderDescriptionMessage(ProblemDescriptor descriptor) {

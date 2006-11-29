@@ -1,7 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -20,12 +18,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.util.containers.HashMap;
+import com.intellij.codeHighlighting.Pass;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,43 +36,27 @@ public class UpdateHighlightersUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil");
 
-  public static final int NORMAL_HIGHLIGHTERS_GROUP = 1;
-  public static final int POST_HIGHLIGHTERS_GROUP = 2;
-  public static final int INSPECTION_HIGHLIGHTERS_GROUP = 3;
-  public static final int EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP = 4;
-
-  /**
-   * use TextEditorHighlightingPassRegistrar to obtain all list of post highlighting passes
-   */
-  public static final int[] POST_HIGHLIGHT_GROUPS = new int[]{POST_HIGHLIGHTERS_GROUP, INSPECTION_HIGHLIGHTERS_GROUP, EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP};
-  public static final int[] NORMAL_HIGHLIGHT_GROUPS = new int[]{NORMAL_HIGHLIGHTERS_GROUP};
-
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
 
   private UpdateHighlightersUtil() {}
 
   private static void cleanFileLevelHighlights(Project project, Document document, final int group) {
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile != null) {
-      if (psiFile.getViewProvider().isPhysical()) {
-        VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
-        final FileEditorManager manager = FileEditorManager.getInstance(project);
-        for (FileEditor fileEditor : manager.getEditors(vFile)) {
-          final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-          if (infos != null) {
-            List<HighlightInfo> infosToRemove = new ArrayList<HighlightInfo>();
-            for (HighlightInfo info : infos) {
-              if (info.group == group) {
-                manager.removeEditorAnnotation(fileEditor, info.fileLevelComponent);
-                infosToRemove.add(info);
-              }
-            }
-            infos.removeAll(infosToRemove);
-          }
+    if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
+    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+    final FileEditorManager manager = FileEditorManager.getInstance(project);
+    for (FileEditor fileEditor : manager.getEditors(vFile)) {
+      final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+      if (infos == null) continue;
+      List<HighlightInfo> infosToRemove = new ArrayList<HighlightInfo>();
+      for (HighlightInfo info : infos) {
+        if (info.group == group) {
+          manager.removeEditorAnnotation(fileEditor, info.fileLevelComponent);
+          infosToRemove.add(info);
         }
       }
+      infos.removeAll(infosToRemove);
     }
-
   }
 
   public static void setHighlightersToEditor(Project project,
@@ -81,6 +66,7 @@ public class UpdateHighlightersUtil {
                                              Collection<HighlightInfo> highlights,
                                              int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    //serialized implicitly by the dispatch thread
 
     cleanFileLevelHighlights(project, document, group);
 
@@ -205,9 +191,6 @@ public class UpdateHighlightersUtil {
     clearWhiteSpaceOptimizationFlag(document);
   }
 
-  public static final int NORMAL_MARKERS_GROUP = 1;
-  public static final int OVERRIDEN_MARKERS_GROUP = 2;
-
   public static void setLineMarkersToEditor(Project project,
                                             Document document,
                                             int startOffset,
@@ -216,7 +199,7 @@ public class UpdateHighlightersUtil {
                                             int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    ArrayList<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
+    List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
 
     LineMarkerInfo[] oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
     if (oldMarkers != null) {
@@ -261,7 +244,7 @@ public class UpdateHighlightersUtil {
     switch (type) {
       case OVERRIDEN_METHOD:
       case SUBCLASSED_CLASS:
-        return group == OVERRIDEN_MARKERS_GROUP;
+        return group == Pass.UPDATE_OVERRIDEN_MARKERS;
 
       case OVERRIDING_METHOD:
         /*
@@ -269,7 +252,7 @@ public class UpdateHighlightersUtil {
 
         */
       case METHOD_SEPARATOR:
-        return group == NORMAL_MARKERS_GROUP;
+        return group == Pass.UPDATE_ALL;
 
       default:
         LOG.assertTrue(false);
@@ -309,7 +292,7 @@ public class UpdateHighlightersUtil {
       }
       int end = iterator.getEnd();
 
-      ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
+      List<HighlightInfo> array = new ArrayList<HighlightInfo>(highlights.length);
       boolean changes = false;
       for (HighlightInfo info : highlights) {
         RangeHighlighter highlighter = info.highlighter;

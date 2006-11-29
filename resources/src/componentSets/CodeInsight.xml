@@ -126,5 +126,32 @@
       <interface-class>com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.OverriddenMarkersPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
+    </component>
   </project-components>
 </components>

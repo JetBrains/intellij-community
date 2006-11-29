@@ -35,49 +35,51 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter");
 
-  private static final int[] ALL_PASSES = new int[]{
+  private static final int[] EXCEPT_OVERRIDDEN = new int[]{
     Pass.UPDATE_FOLDING,
     Pass.UPDATE_VISIBLE,
     Pass.POPUP_HINTS,
     Pass.UPDATE_ALL,
     Pass.POST_UPDATE_ALL,
+    //Pass.UPDATE_OVERRIDEN_MARKERS,
+    Pass.LOCAL_INSPECTIONS,
+    Pass.POPUP_HINTS2,
+    Pass.EXTERNAL_TOOLS,
+  };
+
+  private final Editor myEditor;
+  private final Document myDocument;
+  private PsiFile myFile;
+  private final Project myProject;
+  private boolean myCompiled;
+  private static final int[] EXCEPT_VISIBLE = new int[]{
+    //Pass.UPDATE_FOLDING,
+    //Pass.UPDATE_VISIBLE,
+    //Pass.POPUP_HINTS,
+    Pass.UPDATE_ALL,
+    Pass.POST_UPDATE_ALL,
     Pass.UPDATE_OVERRIDEN_MARKERS,
     Pass.LOCAL_INSPECTIONS,
     Pass.POPUP_HINTS2,
-    Pass.EXTERNAL_TOOLS
-  };
+    Pass.EXTERNAL_TOOLS,};
 
-  private static final int[] VISIBLE_PASSES = new int[]{
-    Pass.UPDATE_FOLDING,
-    Pass.UPDATE_VISIBLE,
-    Pass.POPUP_HINTS
-  };
-
-
-  private Editor myEditor;
-  private Document myDocument;
-  private PsiFile myFile;
-  private Project myProject;
-  private boolean myCompiled;
-
-  public TextEditorBackgroundHighlighter(Project project, Editor editor) {
+  public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
     myEditor = editor;
     myDocument = myEditor.getDocument();
@@ -97,167 +99,34 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     }
   }
 
-  private TextEditorHighlightingPass[] getPasses(int[] passesToPerform) {
+  private TextEditorHighlightingPass[] getPasses(int[] passesToIgnore) {
     renewFile();
     if (myFile == null) return TextEditorHighlightingPass.EMPTY_ARRAY;
 
-    List<TextEditorHighlightingPass> passes = new ArrayList<TextEditorHighlightingPass>();
     if (myCompiled) {
       if (myFile instanceof PsiJavaFile) {
-        appendPass(passes, Pass.UPDATE_OVERRIDEN_MARKERS); // show overridden markers in compiled classes
+        passesToIgnore = EXCEPT_OVERRIDDEN;
+      }
+      else {
+        return TextEditorHighlightingPass.EMPTY_ARRAY;
       }
     }
-    else if (DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      for (int passToPerform : passesToPerform) {
-        appendPass(passes, passToPerform);
-      }
+    else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
+      return TextEditorHighlightingPass.EMPTY_ARRAY;
     }
-    final TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    passRegistrar.modifyHighlightingPasses(passes, myFile, myEditor);
-    if (passRegistrar.needAdditionalIntentionsPass()){
-      TextRange range = calculateRangeToProcess(myEditor, Pass.POPUP_HINTS2);
-      int startOffset = range.getStartOffset();
-      int endOffset = range.getEndOffset();
-      TextEditorHighlightingPass daemonPass = createDaemonPass(startOffset, endOffset, Pass.POPUP_HINTS2);
-      passes.add(daemonPass);
-    }
-    return passes.toArray(new TextEditorHighlightingPass[passes.size()]);
-  }
+    TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
 
-  private void appendPass(List<TextEditorHighlightingPass> passes, int currentPass) {
-    TextRange range = calculateRangeToProcess(myEditor, currentPass);
-    int startOffset = range.getStartOffset();
-    int endOffset = range.getEndOffset();
-    TextEditorHighlightingPass pass = createDaemonPass(startOffset, endOffset, currentPass);
-    if (pass != null) {
-      passes.add(pass);
-    }
-  }
-
-  @Nullable
-  private TextEditorHighlightingPass createDaemonPass(int startOffset,
-                                                      int endOffset,
-                                                      int pass) {
-    LOG.assertTrue(endOffset <= myDocument.getTextLength());
-    if (startOffset > endOffset) return null;
-
-    switch (pass) {
-      case Pass.UPDATE_FOLDING:
-        return new CodeFoldingPass(myProject, myEditor);
-
-      case Pass.UPDATE_ALL:
-      case Pass.UPDATE_VISIBLE:
-        return new GeneralHighlightingPass(myProject, myFile, myDocument, startOffset, endOffset, pass == Pass.UPDATE_ALL);
-
-      case Pass.POST_UPDATE_ALL:
-        return new PostHighlightingPass(myProject, myFile, myEditor, startOffset, endOffset);
-
-      case Pass.UPDATE_OVERRIDEN_MARKERS:
-        return new OverriddenMarkersPass(myProject, myFile, myDocument, startOffset, endOffset);
-
-      case Pass.LOCAL_INSPECTIONS:
-        return new LocalInspectionsPass(myProject, myFile, myDocument, startOffset, endOffset);
-
-      case Pass.POPUP_HINTS:
-      case Pass.POPUP_HINTS2:
-        return new ShowIntentionsPass(myProject, myEditor, IntentionManager.getInstance(myProject).getIntentionActions(), pass == Pass.POPUP_HINTS2);
-
-      case Pass.EXTERNAL_TOOLS:
-        return new ExternalToolPass(myFile, myEditor, startOffset, endOffset);
-
-      default:
-        LOG.error(Integer.toString(pass));
-        return null;
-    }
+    List<TextEditorHighlightingPass> createdPasses = passRegistrar.instantiatePasses(myFile, myEditor, passesToIgnore);
+    return createdPasses.toArray(new TextEditorHighlightingPass[createdPasses.size()]);
   }
 
   public TextEditorHighlightingPass[] createPassesForVisibleArea() {
-    return getPasses(VISIBLE_PASSES);
+    return getPasses(EXCEPT_VISIBLE);
   }
 
   public TextEditorHighlightingPass[] createPassesForEditor() {
-    return getPasses(ALL_PASSES);
-  }
-
-  private TextRange calculateRangeToProcess(Editor editor, int pass) {
-    if (pass == Pass.POPUP_HINTS || pass == Pass.POPUP_HINTS2) {
-      Rectangle rect = editor.getScrollingModel().getVisibleArea();
-      LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
-      LogicalPosition endPosition = editor.xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
-
-      int visibleStart = editor.logicalPositionToOffset(startPosition);
-      int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
-      return new TextRange(visibleStart, visibleEnd);
-    }
-
-    Document document = editor.getDocument();
-
-    int part;
-    if (pass == Pass.UPDATE_OVERRIDEN_MARKERS) {
-      part = FileStatusMap.OVERRIDEN_MARKERS;
-    }
-    else if (pass == Pass.LOCAL_INSPECTIONS) {
-      part = FileStatusMap.LOCAL_INSPECTIONS;
-    }
-    else {
-      part = FileStatusMap.NORMAL_HIGHLIGHTERS;
-    }
-
-    PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(myProject).getFileStatusMap().getFileDirtyScope(document, part);
-    int startOffset;
-    int endOffset;
-    if (dirtyScope != null && dirtyScope.isValid()) {
-      if (pass != Pass.POST_UPDATE_ALL) {
-        PsiFile file = dirtyScope.getContainingFile();
-        if (file.getTextLength() != document.getTextLength()) {
-          LOG.error("Length wrong! dirtyScope:" + dirtyScope,
-                    "file length:" + file.getTextLength(),
-                    "document length:" + document.getTextLength(),
-                    "file stamp:" + file.getModificationStamp(),
-                    "document stamp:" + document.getModificationStamp(),
-                    "file text     :" + file.getText(),
-                    "document text:" + document.getText());
-        }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Dirty block optimization works");
-        }
-        TextRange range = dirtyScope.getTextRange();
-        startOffset = range.getStartOffset();
-        endOffset = range.getEndOffset();
-      }
-      else {
-        startOffset = 0;
-        endOffset = document.getTextLength();
-      }
-    }
-    else {
-      /*
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Do not update highlighters - highlighters are up to date");
-      }
-      */
-      startOffset = Integer.MAX_VALUE;
-      endOffset = Integer.MIN_VALUE;
-    }
-
-    if (pass == Pass.UPDATE_VISIBLE) {
-      Rectangle rect = editor.getScrollingModel().getVisibleArea();
-      LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
-
-      int visibleStart = editor.logicalPositionToOffset(startPosition);
-      if (visibleStart > startOffset) {
-        startOffset = visibleStart;
-      }
-      LogicalPosition endPosition = editor.xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
-
-      int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
-      if (visibleEnd < endOffset) {
-        endOffset = visibleEnd;
-      }
-    }
-
-    return new TextRange(startOffset, endOffset);
+    return getPasses(ArrayUtil.EMPTY_INT_ARRAY);
   }
 }

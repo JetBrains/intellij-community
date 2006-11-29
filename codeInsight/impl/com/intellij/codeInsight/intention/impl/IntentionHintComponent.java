@@ -38,7 +38,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -94,12 +93,11 @@ public class IntentionHintComponent extends JPanel {
         }
       }
       myQuickFixes = actions;
-      myActions = Arrays.asList(wrapActions(allActions));
+      myActions = wrapActions(allActions);
     }
 
-    private IntentionActionWithTextCaching[] wrapActions(ArrayList<HighlightInfo.IntentionActionDescriptor> actions) {
-      IntentionActionWithTextCaching [] compositeActions = new IntentionActionWithTextCaching[actions.size()];
-      int index = 0;
+    private List<IntentionActionWithTextCaching> wrapActions(ArrayList<HighlightInfo.IntentionActionDescriptor> actions) {
+      List<IntentionActionWithTextCaching> compositeActions = new ArrayList<IntentionActionWithTextCaching>(actions.size());
       for (HighlightInfo.IntentionActionDescriptor pair : actions) {
         if (pair.getAction() != null) {
           IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.getAction(), pair.getDisplayName());
@@ -108,7 +106,7 @@ public class IntentionHintComponent extends JPanel {
               action.addAction(intentionAction, myQuickFixes.contains(intentionAction));
             }
           }
-          compositeActions[index ++] = action;
+          compositeActions.add(action);
         }
       }
       return compositeActions;
@@ -158,6 +156,7 @@ public class IntentionHintComponent extends JPanel {
       return action.getOptionIntentions().size() + action.getOptionFixes().size() > 0;
     }
 
+    @NotNull
     public List<IntentionActionWithTextCaching> getValues() {
       return myActions;
     }
@@ -303,15 +302,13 @@ public class IntentionHintComponent extends JPanel {
     int line = pos.line;
 
 
-    Point location;
     final Point position = editor.logicalPositionToXY(new LogicalPosition(line, 0));
     final int yShift = (ourIntentionIcon.getIconHeight() - editor.getLineHeight() - 1) / 2 - 1;
 
     LOG.assertTrue(editor.getComponent().isDisplayable());
-    location = SwingUtilities.convertPoint(editor.getContentComponent(),
-                                           new Point(editor.getScrollingModel().getVisibleArea().x,
-                                                     position.y + yShift),
-                                           editor.getComponent().getRootPane().getLayeredPane());
+    Point location = SwingUtilities.convertPoint(editor.getContentComponent(),
+                                                 new Point(editor.getScrollingModel().getVisibleArea().x, position.y + yShift),
+                                                 editor.getComponent().getRootPane().getLayeredPane());
 
     return new Point(location.x, location.y);
   }
@@ -407,7 +404,7 @@ public class IntentionHintComponent extends JPanel {
     }
   }
 
-  public void showPopup() {
+  private void showPopup() {
     if (isShowing()) {
       myPopup.show(RelativePoint.getSouthWestOf(this));
     }

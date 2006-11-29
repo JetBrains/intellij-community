@@ -5,8 +5,8 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.AddNoInspectionDocTagAction;
-import com.intellij.codeInsight.daemon.impl.AddSuppressWarningsAnnotationAction;
+import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionDocTagAction;
+import com.intellij.codeInsight.daemon.impl.actions.AddSuppressWarningsAnnotationAction;
 import com.intellij.codeInsight.daemon.impl.SuppressUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;

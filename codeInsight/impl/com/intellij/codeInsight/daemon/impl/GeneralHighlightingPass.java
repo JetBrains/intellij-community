@@ -43,7 +43,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
 
-  private final Project myProject;
   private final PsiFile myFile;
   private final Document myDocument;
   private final int myStartOffset;
@@ -64,7 +63,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
                                  int startOffset,
                                  int endOffset, boolean updateAll) {
     super(project, document);
-    myProject = project;
     myFile = file;
     myDocument = document;
     myStartOffset = startOffset;
@@ -165,15 +163,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    UpdateHighlightersUtil
-      .setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, UpdateHighlightersUtil.NORMAL_MARKERS_GROUP);
+    UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
 
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights,
-                                                   UpdateHighlightersUtil.NORMAL_HIGHLIGHTERS_GROUP);
-  }
-
-  public int getPassId() {
-    return myUpdateAll ? Pass.UPDATE_ALL : Pass.UPDATE_VISIBLE;
+    // highlights from both passes should be in the same layer 
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, Pass.UPDATE_ALL);
   }
 
   public Collection<LineMarkerInfo> queryLineMarkers() {
@@ -213,8 +206,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     final boolean isAntFile = CodeInsightUtil.isAntFile(myFile);
 
     final HighlightInfoHolder holder = createInfoHolder();
+    ProgressManager progressManager = ProgressManager.getInstance();
     for (PsiElement element : elements) {
-      ProgressManager.getInstance().checkCanceled();
+      progressManager.checkCanceled();
 
       if (element != myFile && skipParentsSet.contains(element)) {
         skipParentsSet.add(element.getParent());
@@ -328,8 +322,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info =
-            new LineMarkerInfo(LineMarkerInfo.MarkerType.METHOD_SEPARATOR, element, element.getTextRange().getStartOffset(), null);
+          LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.METHOD_SEPARATOR, element, element.getTextRange().getStartOffset(), null);
           EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;
@@ -369,5 +362,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     List<Problem> problems = HighlightUtil.convertToProblems(infos, file, hasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
     wolf.reportProblems(file, problems);
+  }
+
+  public String toString() {
+    return "GHP "+myUpdateAll +"("+myStartOffset+"-"+myEndOffset+")";
   }
 }

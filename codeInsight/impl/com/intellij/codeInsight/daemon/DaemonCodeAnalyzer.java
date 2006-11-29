@@ -37,8 +37,6 @@ public abstract class DaemonCodeAnalyzer implements ProjectComponent {
    */ 
   public abstract void restart();
 
-  public abstract EditorTracker getEditorTracker();
-
   public abstract FileStatusMap getFileStatusMap();
   public abstract List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes();
 }

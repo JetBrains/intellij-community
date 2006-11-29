@@ -40,10 +40,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       if (action instanceof IntentionActionComposite) {
 
         if (action instanceof QuickFixAction) {
-          fixesToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file));
+          fixesToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file, -1));
         }
         else {
-          intentionsToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file));
+          intentionsToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file, -1));
         }
       }
       else if (action.isAvailable(project, editor, file)) {

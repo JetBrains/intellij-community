@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -11,7 +10,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.PostIntentionsQuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -61,23 +59,20 @@ import java.util.regex.PatternSyntaxException;
 
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
-  private final Project myProject;
   private final Editor myEditor;
   private final IntentionAction[] myIntentionActions;
 
   private final PsiFile myFile;
 
-  private boolean myIsSecondPass;
   private int myStartOffset;
   private int myEndOffset;
+  private final int myPassIdToShowIntentionsFor;
 
-
-  ShowIntentionsPass(Project project, Editor editor, IntentionAction[] intentionActions, boolean isSecondPass) {
+  ShowIntentionsPass(Project project, Editor editor, IntentionAction[] intentionActions, int passId) {
     super(project, editor.getDocument());
+    myPassIdToShowIntentionsFor = passId;
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myIsSecondPass = isSecondPass;
-    myProject = project;
     myEditor = editor;
     myIntentionActions = intentionActions;
 
@@ -132,13 +127,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  public int getPassId() {
-    return myIsSecondPass ? Pass.POPUP_HINTS2 : Pass.POPUP_HINTS;
-  }
-
   private void showIntentionActions() {
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-    boolean showPostIntentions = myIsSecondPass;
     if (LookupManager.getInstance(myProject).getActiveLookup() != null) return;
 
     // do not show intentions if caret is outside visible area
@@ -152,13 +142,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    int offset = myEditor.getCaretModel().getOffset();
     for (IntentionAction action : myIntentionActions) {
       if (action instanceof IntentionActionComposite) {
-        if (action instanceof QuickFixAction || action instanceof PostIntentionsQuickFixAction && showPostIntentions) {
+        if (action instanceof QuickFixAction/* || action instanceof PostIntentionsQuickFixAction && showPostIntentions*/) {
           List<HighlightInfo.IntentionActionDescriptor> availableActions =
-            ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
+            ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile, myPassIdToShowIntentionsFor);
 
-          int offset = myEditor.getCaretModel().getOffset();
           HighlightInfo info = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
           if (info == null || info.getSeverity() == HighlightSeverity.ERROR) {
             fixesToShow.addAll(availableActions);
@@ -195,18 +185,18 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
 
       if (showBulb) {
-        if (myIsSecondPass) {
+        //if (myIsSecondPass) {
           IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
           if (hintComponent != null) {
             hintComponent.updateIfNotShowingPopup(fixesToShow, intentionsToShow);
           }
-        }
+        //}
 
         if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow, fixesToShow, false);
-          if (!myIsSecondPass) {
+          hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow, fixesToShow, false);
+          //if (!myIsSecondPass) {
             codeAnalyzer.setLastIntentionHint(hintComponent);
-          }
+          //}
         }
       }
     }

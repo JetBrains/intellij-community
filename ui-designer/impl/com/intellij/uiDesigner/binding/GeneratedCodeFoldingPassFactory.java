@@ -13,7 +13,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -25,8 +24,8 @@ public class GeneratedCodeFoldingPassFactory implements TextEditorHighlightingPa
     myRegistrar = registrar;
   }
 
-  public TextEditorHighlightingPass createHighlightingPass(@Nullable PsiFile file, final Editor editor) {
-    if (file != null && file.getFileType().equals(StdFileTypes.JAVA)) {
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+    if (file.getFileType().equals(StdFileTypes.JAVA)) {
       return new GeneratedCodeFoldingPass(file, editor);
     }
     return null;
@@ -44,7 +43,7 @@ public class GeneratedCodeFoldingPassFactory implements TextEditorHighlightingPa
   }
 
   public void initComponent() {
-    myRegistrar.registerTextEditorHighlightingPass(this, TextEditorHighlightingPassRegistrar.Anchor.AFTER, Pass.UPDATE_FOLDING, false, false);
+    myRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_FOLDING}, null, false, -1);
   }
 
   public void disposeComponent() {

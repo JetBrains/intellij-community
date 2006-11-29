@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;

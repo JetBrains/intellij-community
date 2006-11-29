@@ -6,7 +6,6 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.editor.Document;
@@ -155,9 +154,6 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
                 }
               }
 
-              public int getPassId() {
-                return Pass.ALL;
-              }
             };
           }
         });

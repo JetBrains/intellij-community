@@ -36,18 +36,23 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
   protected final Document myDocument;
-  private final Project myProject;
+  protected final Project myProject;
   private final long myInitialStamp;
+  private int[] myCompletionPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
+  private int[] myStartingPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
+  private int myId;
 
-
-  protected TextEditorHighlightingPass(final Project project, final Document document) {
+  protected TextEditorHighlightingPass(final Project project, @Nullable final Document document) {
     myDocument = document;
     myProject = project;
-    myInitialStamp = document.getModificationStamp();
+    myInitialStamp = document == null ? 0 : document.getModificationStamp();
   }
 
   @Deprecated
@@ -61,8 +66,8 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   }
 
   private boolean isValid() {
-    if (myDocument.getModificationStamp() != myInitialStamp) return false;
-    if (myProject != null) {
+    if (myDocument != null && myDocument.getModificationStamp() != myInitialStamp) return false;
+    if (myProject != null && myDocument != null) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
       if (file == null || !file.isValid()) return false;
     }
@@ -78,12 +83,37 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public abstract void doCollectInformation(ProgressIndicator progress);
   public abstract void doApplyInformationToEditor();
 
-  /**
-   * You do not have to override this method
-   * @return
-   */
   @Deprecated
   public int getPassId() {
-    return 0;
+    return myId;
+  }
+
+  public final int getId() {
+    return myId;
+  }
+
+  public final void setId(final int id) {
+    myId = id;
+  }
+
+  @NotNull
+  public final int[] getCompletionPredecessorIds() {
+    return myCompletionPredecessorIds;
+  }
+
+  public final void setCompletionPredecessorIds(@NotNull int[] completionPredecessorIds) {
+    myCompletionPredecessorIds = completionPredecessorIds;
+  }
+
+  public Document getDocument() {
+    return myDocument;
+  }
+
+  @NotNull public final int[] getStartingPredecessorIds() {
+    return myStartingPredecessorIds;
+  }
+
+  public final void setStartingPredecessorIds(@NotNull final int[] startingPredecessorIds) {
+    myStartingPredecessorIds = startingPredecessorIds;
   }
 }

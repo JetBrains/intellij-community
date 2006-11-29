@@ -2,7 +2,7 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -28,7 +28,7 @@ public class IntentionManagerImpl extends IntentionManager {
     mySettings = intentionManagerSettings;
 
     addAction(new QuickFixAction());
-    addAction(new PostIntentionsQuickFixAction());
+    //addAction(new PostIntentionsQuickFixAction());
 
     String[] CONTROL_FLOW_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.control.flow")};
     registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CATEGORY);

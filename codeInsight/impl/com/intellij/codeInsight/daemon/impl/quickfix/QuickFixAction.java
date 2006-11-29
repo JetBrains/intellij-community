@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionActionComposite;
 import com.intellij.openapi.editor.Editor;
@@ -16,8 +15,9 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 public final class QuickFixAction extends IntentionActionComposite {
-  protected void addAvailableActions(HighlightInfo info, Editor editor, PsiFile file, List<HighlightInfo.IntentionActionDescriptor> list) {
-    addAvailableActionsForGroups(info, editor, file, list, UpdateHighlightersUtil.NORMAL_HIGHLIGHT_GROUPS );
+  protected void addAvailableActions(HighlightInfo info, Editor editor, PsiFile file, List<HighlightInfo.IntentionActionDescriptor> list,
+                                     final int passId) {
+    addAvailableActionsForGroups(info, editor, file, list, passId == -1 ? null : new int[]{passId});
   }
 
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
@@ -27,7 +27,6 @@ public final class QuickFixAction extends IntentionActionComposite {
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
     registerQuickFixAction(info, null, action, null, null);
   }
-
 
   public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final List<IntentionAction> options, final String displayName) {
     if (info == null || action == null) return;
@@ -39,5 +38,4 @@ public final class QuickFixAction extends IntentionActionComposite {
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
   }
-
 }

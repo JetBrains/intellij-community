@@ -68,10 +68,6 @@ public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
     });
   }
 
-  public int getPassId() {
-    return 7890;
-  }
-
   private static boolean isGeneratedUIInitializer(PsiClassInitializer initializer) {
     PsiCodeBlock body = initializer.getBody();
     if (body.getStatements().length != 1) return false;

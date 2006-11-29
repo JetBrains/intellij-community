@@ -54,7 +54,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     // Q: how about 2 cancelable progresses in time??
     if (ourNeedToCheckCancel) { // smart optimization!
       ourNeedToCheckCancel = false;
-      final ProgressIndicator progress = getInstance().getProgressIndicator();
+      final ProgressIndicator progress = getProgressIndicator();
       if (progress != null) {
         try {
           progress.checkCanceled();
@@ -166,6 +166,11 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
         }
       }
     }
+  }
+
+  public synchronized void progressMe(ProgressIndicator progress) {
+    final Thread currentThread = Thread.currentThread();
+    myThreadToIndicatorMap.put(currentThread, progress);
   }
 
   public ProgressIndicator getProgressIndicator() {

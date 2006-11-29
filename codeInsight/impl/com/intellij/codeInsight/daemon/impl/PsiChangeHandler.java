@@ -61,7 +61,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
       Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(psiFile);
       if (document != null) {
         myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirtyDefensively(psiFile);
-        myDaemonCodeAnalyzer.stopProcess(true);
+        //myDaemonCodeAnalyzer.stopProcess(true);
       }
     }
   }
@@ -99,6 +99,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
       final ASTNode node = child.getNode();
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken ||
           node != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(node.getElementType())) {
+        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, child);
         return;
       }
     }

@@ -9,7 +9,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -18,23 +18,13 @@ import java.util.List;
  * Date: 21-Jun-2006
  */
 public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHighlightingPassRegistrar {
+  protected TextEditorHighlightingPassRegistrarEx(Project project) {
+    super(project);
+  }
+
   public static TextEditorHighlightingPassRegistrarEx getInstanceEx(Project project) {
     return (TextEditorHighlightingPassRegistrarEx)getInstance(project);
   }
 
-  public abstract void modifyHighlightingPasses(final List<TextEditorHighlightingPass> passes,
-                                                                        final PsiFile psiFile,
-                                                                        final Editor editor);
-
-  public abstract boolean needAdditionalIntentionsPass();
-
-  @Nullable
-  public abstract int[] getPostHighlightingPasses();
-
-  /**
-   * Returns ids of passes that must be performed before the specified passId.
-   * That usually means data dependencies,
-   * e.g. PostHighlightingPass relies on GeneralHighlightingPass for the information on the unused stuff.
-   */
-  public abstract int[] getPredecessors(int passId);
+  @NotNull public abstract List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull int[] passesToIgnore);
 }

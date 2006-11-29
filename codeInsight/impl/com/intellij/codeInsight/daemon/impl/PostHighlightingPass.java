@@ -65,7 +65,6 @@ import java.util.Set;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
-  private final Project myProject;
   private final RefCountHolder myRefCountHolder;
   private final PsiFile myFile;
   @Nullable private final Editor myEditor;
@@ -87,7 +86,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                               int startOffset,
                               int endOffset) {
     super(project, document);
-    myProject = project;
     myFile = file;
     myEditor = editor;
     myDocument = document;
@@ -139,7 +137,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     if (myHighlights == null) return;
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
-                                                   myHighlights, UpdateHighlightersUtil.POST_HIGHLIGHTERS_GROUP);
+                                                   myHighlights, Pass.POST_UPDATE_ALL);
 
     DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.NORMAL_HIGHLIGHTERS);
@@ -150,29 +148,26 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private void optimizeImportsOnTheFly() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                OptimizeImportsFix optimizeImportsFix = new OptimizeImportsFix();
-                if ((myHasRedundantImports || myHasMissortedImports)
-                    && optimizeImportsFix.isAvailable(myProject, myEditor, myFile)
-                    && myFile.isWritable()) {
-                  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                  optimizeImportsFix.invoke(myProject, myEditor, myFile);
+    if (myHasRedundantImports || myHasMissortedImports) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  OptimizeImportsFix optimizeImportsFix = new OptimizeImportsFix();
+                  if (optimizeImportsFix.isAvailable(myProject, myEditor, myFile)
+                      && myFile.isWritable()) {
+                    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+                    optimizeImportsFix.invoke(myProject, myEditor, myFile);
+                  }
                 }
-              }
-            });
-          }
-        });
-      }
-    });
-  }
-
-  public int getPassId() {
-    return Pass.POST_UPDATE_ALL;
+              });
+            }
+          });
+        }
+      });
+    }
   }
 
   // for tests only

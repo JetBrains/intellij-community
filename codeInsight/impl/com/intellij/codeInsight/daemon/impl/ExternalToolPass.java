@@ -10,7 +10,6 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 
@@ -27,7 +26,6 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   private final int myEndOffset;
   private AnnotationHolderImpl myAnnotationHolder;
   HighlightInfoHolder myHolder;
-  private Project myProject;
 
   public ExternalToolPass(PsiFile file,
                           Editor editor,
@@ -37,7 +35,6 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
-    myProject = file.getProject();
     myAnnotationHolder = new AnnotationHolderImpl();
   }
 
@@ -53,7 +50,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
         final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject, myStartOffset, myEndOffset);
 
         for (HighlightInfo error : errors) {
-          if (error.group != UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP) {
+          if (error.group != Pass.EXTERNAL_TOOLS) {
             return;
           }
         }
@@ -69,7 +66,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
 
     // This should be done for any result for removing old highlights
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
-                                                   infos, UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP);
+                                                   infos, Pass.EXTERNAL_TOOLS);
     HighlightUtil.addErrorsToWolf(infos, myFile);
   }
 
@@ -80,9 +77,5 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
       infos.add(HighlightUtil.convertToHighlightInfo(annotation));
     }
     return infos;
-  }
-
-  public int getPassId() {
-    return Pass.EXTERNAL_TOOLS;
   }
 }

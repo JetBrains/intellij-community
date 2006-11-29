@@ -25,11 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public abstract class AbstractProjectComponent implements ProjectComponent {
-
   protected final Project myProject;
 
   protected AbstractProjectComponent(Project project) {
-
     myProject = project;
   }
 
@@ -44,6 +42,14 @@ public abstract class AbstractProjectComponent implements ProjectComponent {
   }
 
   public void disposeComponent() {
+
+  }
+
+  public void projectOpened() {
+
+  }
+
+  public void projectClosed() {
 
   }
 }

@@ -40,6 +40,7 @@ public class MockProgressIndicator implements ProgressIndicator {
 
   public void start() {
     myIsRunning = true;
+    myIsCanceled = false;
   }
 
   public void stop() {

@@ -2,8 +2,6 @@
 package com.intellij.codeHighlighting;
 
 public interface Pass {
-  int ALL = 0xFF;
-
   int UPDATE_FOLDING = 0x01;
   int UPDATE_VISIBLE = 0x02;
   int POPUP_HINTS = 0x04;
