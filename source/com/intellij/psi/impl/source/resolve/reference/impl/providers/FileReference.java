@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
@@ -15,11 +16,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -38,283 +37,257 @@ import java.util.List;
 
 /**
  * @author cdr
- */
-public class FileReference implements PsiPolyVariantReference, QuickFixProvider<FileReference>,
-                                                               EmptyResolveMessageProvider {
-  public static final FileReference[] EMPTY = new FileReference[0];
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
+  */
+ public class FileReference implements PsiPolyVariantReference, QuickFixProvider<FileReference>,
+                                                                EmptyResolveMessageProvider {
+   public static final FileReference[] EMPTY = new FileReference[0];
+   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
 
-  private final int myIndex;
-  private TextRange myRange;
-  private final String myText;
-  @NotNull private final FileReferenceSet myFileReferenceSet;
-  private final Condition<String> myEqualsToCondition = new Condition<String>() {
-    public boolean value(String s) {
-      return equalsTo(s);
-    }
-  };
+   private final int myIndex;
+   private TextRange myRange;
+   private final String myText;
+   @NotNull private final FileReferenceSet myFileReferenceSet;
+   private final Condition<String> myEqualsToCondition = new Condition<String>() {
+     public boolean value(String s) {
+       return equalsTo(s);
+     }
+   };
 
-  public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text){
-    myFileReferenceSet = fileReferenceSet;
-    myIndex = index;
-    myRange = range;
-    myText = text;
-  }
+   public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text){
+     myFileReferenceSet = fileReferenceSet;
+     myIndex = index;
+     myRange = range;
+     myText = text;
+   }
 
-  @NotNull private Collection<PsiElement> getContexts(){
-    final FileReference contextRef = getContextReference();
-    if (contextRef == null) {
-      return myFileReferenceSet.getDefaultContexts(myFileReferenceSet.getElement());
-    }
-    else {
-      ResolveResult[] resolveResults = contextRef.multiResolve(false);
-      ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-      for (ResolveResult resolveResult : resolveResults) {
-        result.add(resolveResult.getElement());
-      }
-      return result;
-    }
-  }
+   @NotNull private Collection<PsiFileSystemItem> getContexts(){
+     final FileReference contextRef = getContextReference();
+     if (contextRef == null) {
+       return myFileReferenceSet.getDefaultContexts(myFileReferenceSet.getElement());
+     }
+     ResolveResult[] resolveResults = contextRef.multiResolve(false);
+     ArrayList<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
+     for (ResolveResult resolveResult : resolveResults) {
+       result.add((PsiFileSystemItem)resolveResult.getElement());
+     }
+     return result;
+   }
 
-  @Nullable
-  public static PsiDirectory getPsiDirectory(PsiElement element) {
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      final PsiDirectory directory = helper.getPsiDirectory(element);
-      if (directory != null) {
-        return directory;
-      }
-    }
-    return null;
-  }
+   @Nullable
+   public static PsiDirectory getPsiDirectory(PsiFileSystemItem element) {
+     final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(element);
+     return helper != null ? helper.getPsiDirectory(element) : null;
+   }
 
-  @Nullable
-  public PsiElement getContext() {
-    final PsiReference contextRef = getContextReference();
-    return contextRef != null ? contextRef.resolve() : null;
-  }
+   @Nullable
+   public PsiFileSystemItem getContext() {
+     final FileReference contextRef = getContextReference();
+     return contextRef != null ? contextRef.resolve() : null;
+   }
 
-  @NotNull
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    final PsiManager manager = getElement().getManager();
-    if (manager instanceof PsiManagerImpl) {
-      return ((PsiManagerImpl) manager).getResolveCache().resolveWithCaching(
-        this, MyResolver.INSTANCE, false, false
-      );
-    }
-    return innerResolve();
-  }
+   @NotNull
+   public ResolveResult[] multiResolve(final boolean incompleteCode) {
+     final PsiManager manager = getElement().getManager();
+     if (manager instanceof PsiManagerImpl) {
+       return ((PsiManagerImpl) manager).getResolveCache().resolveWithCaching(
+         this, MyResolver.INSTANCE, false, false
+       );
+     }
+     return innerResolve();
+   }
 
-  @NotNull
-  private static FileReferenceContext getFileReferenceContext(PsiElement context) {
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      final FileReferenceContext referenceContext = helper.getFileReferenceContext(context);
-      if (referenceContext != null) {
-        return referenceContext;
-      }
-    }
-    throw new AssertionError(context);
-  }
+   protected ResolveResult[] innerResolve() {
+     final String text = getText();
+     final Collection<PsiFileSystemItem> contexts = getContexts();
+     final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
 
-  protected ResolveResult[] innerResolve() {
-    final String text = getText();
-    final Collection<PsiElement> contexts = getContexts();
-    final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
+     for (final PsiFileSystemItem context : contexts) {
+     if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast()) {
+         result.add(new PsiElementResolveResult(context));
+       } else {
+       final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(context);
+       if (helper != null) {
+         PsiFileSystemItem resolved = helper.innerResolve(context, text, myEqualsToCondition);
+         if (resolved != null) {
+           result.add(new PsiElementResolveResult(resolved));
+         }
+       }
+       }
+     }
+     final int resultCount = result.size();
+     return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
+   }
 
-    for (final PsiElement context : contexts) {
-      if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && myIndex == myFileReferenceSet.getAllReferences().length - 1) {
-        result.add(new PsiElementResolveResult(context));
-      } else {
-        PsiElement resolved = getFileReferenceContext(context).innerResolve(text, myEqualsToCondition);
-        if (resolved != null) {
-          result.add(new PsiElementResolveResult(resolved));
-        }
-      }
-    }
-    final int resultCount = result.size();
-    return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
-  }
+   public Object[] getVariants(){
+     final String s = getText();
+     if (s != null && s.equals("/")) {
+       return ArrayUtil.EMPTY_OBJECT_ARRAY;
+     }
+     try{
+       final List ret = new ArrayList();
+       final List<Class> allowedClasses = new ArrayList<Class>();
+       allowedClasses.add(PsiFile.class);
+       for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+         allowedClasses.add(helper.getDirectoryClass());
+       }
+       final PsiScopeProcessor proc = myFileReferenceSet.createProcessor(ret, allowedClasses, Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver()));
+       processVariants(proc);
+       return ret.toArray();
+     }
+     catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
+       LOG.error(e);
+       return ArrayUtil.EMPTY_OBJECT_ARRAY;
+     }
+   }
 
-  public Object[] getVariants(){
-    final String s = getText();
-    if (s != null && s.equals("/")) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-    try{
-      final List ret = new ArrayList();
-      final List<Class> allowedClasses = new ArrayList<Class>();
-      allowedClasses.add(PsiFile.class);
-      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-        allowedClasses.add(helper.getDirectoryClass());
-      }
-      final PsiScopeProcessor proc = myFileReferenceSet.createProcessor(ret, allowedClasses, Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver()));
-      processVariants(proc);
-      return ret.toArray();
-    }
-    catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
-      LOG.error(e);
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-  }
+   public void processVariants(@NotNull final PsiScopeProcessor processor) {
+     for (PsiFileSystemItem context : getContexts()) {
+       final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(context);
+       if (helper != null && !helper.processVariants(context, processor)) return;
+     }
+   }
 
-  public void processVariants(@NotNull final PsiScopeProcessor processor) {
-    for (PsiElement context : getContexts()) {
-      if (!getFileReferenceContext(context).processVariants(processor)) return;
-    }
-  }
+   @Nullable
+   public FileReference getContextReference(){
+     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
+   }
 
-  @Nullable
-  public FileReference getContextReference(){
-    return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
-  }
+   public PsiElement getElement(){
+     return myFileReferenceSet.getElement();
+   }
 
-  public PsiElement getElement(){
-    return myFileReferenceSet.getElement();
-  }
+   public PsiFileSystemItem resolve() {
+     ResolveResult[] resolveResults = multiResolve(false);
+     return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
+   }
 
-  public PsiElement resolve() {
-    ResolveResult[] resolveResults = multiResolve(false);
-    return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
-  }
+   private boolean equalsTo(final String name) {
+     return myFileReferenceSet.isCaseSensitive() ? getText().equals(name) :
+            getText().compareToIgnoreCase(name) == 0;
+   }
 
-  private boolean equalsTo(final String name) {
-    return myFileReferenceSet.isCaseSensitive() ? getText().equals(name) :
-           getText().compareToIgnoreCase(name) == 0;
-  }
+   public boolean isReferenceTo(PsiElement element) {
+     if (!(element instanceof PsiFileSystemItem)) return false;
 
-  public boolean isReferenceTo(PsiElement element) {
-    if (!isTargetAccepted(element)) return false;
+     final PsiFileSystemItem resolveResult = resolve();
+     final PsiManager manager = element.getManager();
+     return element instanceof PsiDirectory && manager.areElementsEquivalent(element, getPsiDirectory(resolveResult)) ||
+            manager.areElementsEquivalent(element, resolveResult);
+   }
 
-    final PsiElement resolveResult = resolve();
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      if (helper.isReferenceTo(element, resolveResult)) {
-        return true;
-      }
-    }
-    return false;
-  }
+   public TextRange getRangeInElement() {
+     return myRange;
+   }
 
-  private static boolean isTargetAccepted(final PsiElement element) {
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      if (helper.isTargetAccepted(element)) {
-        return true;
-      }
-    }
-    return false;
-  }
+   public String getCanonicalText() {
+     return myText;
+   }
 
-  public TextRange getRangeInElement(){
-    return myRange;
-  }
+   protected String getText() {
+     return myText;
+   }
 
-  public String getCanonicalText(){
-    return myText;
-  }
+   public boolean isSoft(){
+     return myFileReferenceSet.isSoft();
+   }
 
-  protected String getText() {
-    return myText;
-  }
+   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+     final ElementManipulator<PsiElement> manipulator = GenericReference.getManipulator(getElement());
+     if (manipulator != null) {
+       myFileReferenceSet.setElement(manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName));
+       //Correct ranges
+       int delta = newElementName.length() - myRange.getLength();
+       myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
+       FileReference[] references = myFileReferenceSet.getAllReferences();
+       for (int idx = myIndex + 1; idx < references.length; idx++) {
+         references[idx].myRange = references[idx].myRange.shiftRight(delta);
+       }
+       return myFileReferenceSet.getElement();
+     }
+     throw new IncorrectOperationException("Manipulator for this element is not defined");
+   }
 
-  public boolean isSoft(){
-    return myFileReferenceSet.isSoft();
-  }
+   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
+     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
+     PsiFileSystemItem fileSystemItem = (PsiFileSystemItem) element;
+     VirtualFile dstVFile = PsiUtil.getVirtualFile(fileSystemItem);
 
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final ElementManipulator<PsiElement> manipulator = GenericReference.getManipulator(getElement());
-    if (manipulator != null) {
-      myFileReferenceSet.setElement(manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName));
-      //Correct ranges
-      int delta = newElementName.length() - myRange.getLength();
-      myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
-      FileReference[] references = myFileReferenceSet.getAllReferences();
-      for (int idx = myIndex + 1; idx < references.length; idx++) {
-        references[idx].myRange = references[idx].myRange.shiftRight(delta);
-      }
-      return myFileReferenceSet.getElement();
-    }
-    throw new IncorrectOperationException("Manipulator for this element is not defined");
-  }
+     final PsiFile file = getElement().getContainingFile();
+     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
 
-  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
-    if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
-    PsiFileSystemItem fileSystemItem = (PsiFileSystemItem) element;
-    VirtualFile dstVFile = PsiUtil.getVirtualFile(fileSystemItem);
+     for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+       if (helper.isDoNothingOnBind(file, this)) {
+         return element;
+       }
+     }
 
-    final PsiFile file = getElement().getContainingFile();
-    if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
+     final VirtualFile currentFile = file.getVirtualFile();
+     LOG.assertTrue(currentFile != null);
 
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      if (helper.doNothingOnBind(file, this)) {
-        return element;
-      }
-    }
+     String newName = null;
+     for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+       final String s = helper.getRelativePath(file.getProject(), currentFile, dstVFile);
+       if (s != null) {
+         newName = s;
+         break;
+       }
+     }
 
-    final VirtualFile currentFile = file.getVirtualFile();
-    LOG.assertTrue(currentFile != null);
+     if (newName == null) {
+       throw new IncorrectOperationException("Cannot find path between files; src = " +
+                                             currentFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
+     }
 
-    String newName = null;
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      final String s = helper.getRelativePath(file.getProject(), currentFile, dstVFile);
-      if (s != null) {
-        newName = s;
-        break;
-      }
-    }
+     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
+     final ElementManipulator<PsiElement> manipulator = GenericReference.getManipulator(getElement());
+     if (manipulator == null) {
+       throw new IncorrectOperationException("Manipulator not defined for: " + getElement());
+     }
+     return manipulator.handleContentChange(getElement(), range, newName);
+   }
 
-    if (newName == null) {
-      throw new IncorrectOperationException("Cannot find path between files; src = " +
-                                            currentFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
-    }
+   public void registerQuickfix(HighlightInfo info, FileReference reference) {
+     for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+       helper.registerQuickfix(info, reference);
+     }
+   }
 
-    final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
-    final ElementManipulator<PsiElement> manipulator = GenericReference.getManipulator(getElement());
-    if (manipulator == null) {
-      throw new IncorrectOperationException("Manipulator not defined for: " + getElement());
-    }
-    return manipulator.handleContentChange(getElement(), range, newName);
-  }
+   public int getIndex() {
+     return myIndex;
+   }
 
-  public void registerQuickfix(HighlightInfo info, FileReference reference) {
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      helper.registerQuickfix(info, reference);
-    }
-  }
+   public String getUnresolvedMessagePattern(){
+     final StringBuffer builder = new StringBuffer(JavaErrorMessages.message("error.cannot.resolve"));
+     builder.append(" ").append(myFileReferenceSet.getTypeName());
+     if (!isLast()) {
+       for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+         builder.append(" ").append(JavaErrorMessages.message("error.cannot.resolve.infix")).append(" ").append(helper.getDirectoryTypeName());
+       }
+     }
+     builder.append(" ''{0}''.");
+     return builder.toString();
+   }
 
-  public int getIndex() {
-    return myIndex;
-  }
+   public final boolean isLast() {
+     return myIndex == myFileReferenceSet.getAllReferences().length - 1;
+   }
 
-  public String getUnresolvedMessagePattern(){
-    final StringBuffer builder = new StringBuffer(JavaErrorMessages.message("error.cannot.resolve"));
-    builder.append(" ").append(myFileReferenceSet.getTypeName());
-    if (!isLast()) {
-      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-        builder.append(" ").append(JavaErrorMessages.message("error.cannot.resolve.infix")).append(" ").append(helper.getDirectoryTypeName());
-      }
-    }
-    builder.append(" ''{0}''.");
-    return builder.toString();
-  }
+   @NotNull
+   public FileReferenceSet getFileReferenceSet() {
+     return myFileReferenceSet;
+   }
 
-  public final boolean isLast() {
-    return myIndex == myFileReferenceSet.getAllReferences().length - 1;
-  }
+   public void clearResolveCaches() {
+     final PsiManager manager = getElement().getManager();
+     if (manager instanceof PsiManagerImpl) {
+       ((PsiManagerImpl)manager).getResolveCache().clearResolveCaches(this);
+     }
+   }
 
-  @NotNull
-  public FileReferenceSet getFileReferenceSet() {
-    return myFileReferenceSet;
-  }
-
-  public void clearResolveCaches() {
-    final PsiManager manager = getElement().getManager();
-    if (manager instanceof PsiManagerImpl) {
-      ((PsiManagerImpl)manager).getResolveCache().clearResolveCaches(this);
-    }
-  }
-
-  static class MyResolver implements ResolveCache.PolyVariantResolver {
-    static MyResolver INSTANCE = new MyResolver();
-    public ResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
-      return ((FileReference)ref).innerResolve();
-    }
-  }
-}
+   static class MyResolver implements ResolveCache.PolyVariantResolver {
+         static MyResolver INSTANCE = new MyResolver();
+         public ResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
+                 return ((FileReference)ref).innerResolve();
+               }
+             }
+           }

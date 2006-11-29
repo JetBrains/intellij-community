@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -55,13 +56,18 @@ public class FileReferenceQuickFixProvider {
       return;
     }
 
-    final PsiElement context;
+    final PsiFileSystemItem context;
     if(index > 0) {
       context = fileReferenceSet.getReference(index - 1).resolve();
     } else { // index == 0
-      final Collection<PsiElement> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
-      context = defaultContexts.isEmpty() ? null : defaultContexts.iterator().next();
+      final Collection<PsiFileSystemItem> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
+      if (defaultContexts.isEmpty()) {
+        return;
+      }
+      context = defaultContexts.iterator().next();
     }
+    if (context == null) return;
+
     final PsiDirectory directory = reference.getPsiDirectory(context);
 
     if (directory == null) return;

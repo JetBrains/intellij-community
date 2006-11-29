@@ -6,6 +6,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetBase;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -44,7 +46,7 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
   }
 
   @NotNull
-  public Collection<PsiElement> getDefaultContexts(PsiElement element) {
+  public Collection<PsiFileSystemItem> getDefaultContexts(PsiElement element) {
     if (element instanceof AntElement) {
       final AntFile file = ((AntElement)element).getAntFile();
       if (file != null) {
@@ -58,9 +60,9 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
                 .findFileByPath((new File(vFile.getPath(), path)).getAbsolutePath().replace(File.separatorChar, '/'));
             }
             if (vFile != null) {
-              final PsiElement directory = file.getViewProvider().getManager().findDirectory(vFile);
+              final PsiDirectory directory = file.getViewProvider().getManager().findDirectory(vFile);
               if (directory != null) {
-                return Collections.singleton(directory);
+                return Collections.<PsiFileSystemItem>singleton(directory);
               }
             }
           }

@@ -48,8 +48,8 @@ public class FileReferenceSet {
   private final boolean myEndingSlashNotAllowed;
   private final boolean myUseIncludingJspFileAsContext;
 
-  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>> DEFAULT_PATH_EVALUATOR_OPTION =
-    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiElement>>(PsiBundle.message("default.path.evaluator.option"));
+  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>> DEFAULT_PATH_EVALUATOR_OPTION =
+    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>>(PsiBundle.message("default.path.evaluator.option"));
 
   private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
@@ -211,7 +211,7 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  public Collection<PsiElement> getDefaultContexts(PsiElement element) {
+  public Collection<PsiFileSystemItem> getDefaultContexts(PsiElement element) {
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();
     if (file == null) {
@@ -221,16 +221,16 @@ public class FileReferenceSet {
     if (!file.isPhysical()) file = file.getOriginalFile();
     if (file == null) return Collections.emptyList();
     if (myOptions != null) {
-      final Function<PsiFile, PsiElement> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
+      final Function<PsiFile, PsiFileSystemItem> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
 
       if (value != null) {
-        final PsiElement result = value.fun(file);
-        return result == null ? Collections.<PsiElement>emptyList() : Collections.singleton(result);
+        final PsiFileSystemItem result = value.fun(file);
+        return result == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.singleton(result);
       }
     }
 
 
-    PsiElement result = null;
+    PsiFileSystemItem result = null;
     if (isAbsolutePathReference()) {
       result = getAbsoluteTopLevelDirLocation(file);
     }
@@ -260,7 +260,7 @@ public class FileReferenceSet {
       }
     }
 
-    return result == null ? Collections.<PsiElement>emptyList() : Collections.singleton(result);
+    return result == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.singleton(result);
   }
 
   public String getPathString() {
@@ -272,10 +272,10 @@ public class FileReferenceSet {
   }
 
   @Nullable
-  public static PsiElement getAbsoluteTopLevelDirLocation(final PsiFile file) {
+  public static PsiFileSystemItem getAbsoluteTopLevelDirLocation(final PsiFile file) {
     final List<FileReferenceHelper> helpers = FileReferenceHelperRegistrar.getHelpers();
     for (final FileReferenceHelper helper : helpers) {
-      final PsiElement element = helper.getAbsoluteTopLevelDirLocation(file);
+      final PsiFileSystemItem element = helper.getAbsoluteTopLevelDirLocation(file);
       if (element != null) {
         return element;
       }

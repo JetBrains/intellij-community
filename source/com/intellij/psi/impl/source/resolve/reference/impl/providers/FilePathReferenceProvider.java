@@ -38,7 +38,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
         return true;
       }
 
-      @NotNull public Collection<PsiElement> getDefaultContexts(PsiElement position) {
+      @NotNull public Collection<PsiFileSystemItem> getDefaultContexts(PsiElement position) {
         return getRoots(position);
       }
 
@@ -73,7 +73,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
     return getReferencesByElement(position);
   }
 
-  @NotNull private static Collection<PsiElement> getRoots(PsiElement element) {
+  @NotNull private static Collection<PsiFileSystemItem> getRoots(PsiElement element) {
     Module thisModule = ModuleUtil.findModuleForPsiElement(element);
     if (thisModule == null) return Collections.emptyList();
     List<Module> modules = new ArrayList<Module>();
@@ -81,7 +81,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);
     modules.addAll(Arrays.asList(moduleRootManager.getDependencies()));
 
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
 
     String[] libraryUrls = moduleRootManager.getUrls(OrderRootType.CLASSES);
     for (String libraryUrl : libraryUrls) {

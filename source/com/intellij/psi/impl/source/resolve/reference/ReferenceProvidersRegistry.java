@@ -374,9 +374,9 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
 
     webXmlPathReferenceProvider.addCustomization(
       FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION,
-      new Function<PsiFile, PsiElement>() {
+      new Function<PsiFile, PsiFileSystemItem>() {
         @Nullable
-        public PsiElement fun(final PsiFile file) {
+        public PsiFileSystemItem fun(final PsiFile file) {
           return FileReferenceSet.getAbsoluteTopLevelDirLocation(file);
         }
       }
