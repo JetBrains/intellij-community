@@ -87,13 +87,33 @@ public class ShowDiffAction extends AnAction {
     List<? extends AnAction> createActions(Change change);
   }
 
-  public static void showDiffForChange(final Change[] changes, final int index, final Project project, @Nullable AdditionalToolbarActionsFactory actionsFactory) {
+  public static void showDiffForChange(Change[] changes, int index, final Project project, @Nullable AdditionalToolbarActionsFactory actionsFactory) {
+    Change selectedChange = changes [index];
+    changes = filterDirectoryChanges(changes);
+    index = 0;
+    for(int i=0; i<changes.length; i++) {
+      if (changes [i] == selectedChange) {
+        index = i;
+        break;
+      }
+    }
     final DiffTool tool = DiffManager.getInstance().getDiffTool();
 
     final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
     if (diffReq != null) {
       tool.show(diffReq);
     }
+  }
+
+  private static Change[] filterDirectoryChanges(final Change[] changes) {
+    ArrayList<Change> changesList = new ArrayList<Change>();
+    Collections.addAll(changesList, changes);
+    for(int i=changesList.size()-1; i >= 0; i--) {
+      if (ChangesUtil.getFilePath(changesList.get(i)).isDirectory()) {
+        changesList.remove(i);
+      }
+    }
+    return changesList.toArray(new Change[changesList.size()]);
   }
 
   private static void showDiffForChange(AnActionEvent e,
