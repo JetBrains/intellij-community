@@ -635,6 +635,7 @@ public final class FormEditingUtil {
       clearSelection(root);
       selectComponent(editor, component);
       editor.setSelectionAnchor(component);
+      editor.scrollComponentInView(component);
     }
     finally {
       if (builder != null) {
