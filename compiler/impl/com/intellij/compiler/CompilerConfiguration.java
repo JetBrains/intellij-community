@@ -18,11 +18,13 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;import com.intellij.openapi.fileChooser.FileChooserDescriptor;import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
@@ -35,7 +37,7 @@ import java.util.*;
 public class CompilerConfiguration implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   public static final @NonNls String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
-  public static final int DEPENDENCY_FORMAT_VERSION = 44;
+  public static final int DEPENDENCY_FORMAT_VERSION = 45;
   @NonNls private static final String PROPERTY_IDEA_USE_EMBEDDED_JAVAC = "idea.use.embedded.javac";
 
   public String DEFAULT_COMPILER;

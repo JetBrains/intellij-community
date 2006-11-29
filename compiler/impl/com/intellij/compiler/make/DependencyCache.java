@@ -57,7 +57,7 @@ public class DependencyCache {
 
   public DependencyCacheNavigator getCacheNavigator() throws CacheCorruptedException {
     if (myCacheNavigator == null) {
-      myCacheNavigator = new DependencyCacheNavigator(getCache(), this);
+      myCacheNavigator = new DependencyCacheNavigator(getCache());
     }
     return myCacheNavigator;
   }
@@ -69,7 +69,8 @@ public class DependencyCache {
 
   public Cache getCache() throws CacheCorruptedException {
     if (myCache == null) {
-      myCache = new Cache(myStoreDirectoryPath);
+      final int cacheSize = ApplicationManager.getApplication().isUnitTestMode() ? 4 : 1024; /* base number of cached record views of each type*/
+      myCache = new Cache(myStoreDirectoryPath, cacheSize, true);
     }
 
     return myCache;
@@ -78,7 +79,7 @@ public class DependencyCache {
   public Cache getNewClassesCache() throws CacheCorruptedException {
     if (myNewClassesCache == null) {
       //noinspection HardCodedStringLiteral
-      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp");
+      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 1024, false);
     }
     return myNewClassesCache;
   }
@@ -530,7 +531,7 @@ public class DependencyCache {
 
     final int superQName = cache.getSuperQualifiedName(targetClassId);
     if (superQName != Cache.UNKNOWN) {
-      int superClassId = cache.getClassId(superQName);
+      final int superClassId = cache.getClassId(superQName);
       if (superClassId != Cache.UNKNOWN) {
         cache.addSubclass(superClassId, qName);
         buildSubclassDependencies(qName, superClassId);
@@ -539,7 +540,7 @@ public class DependencyCache {
 
     int[] interfaces = cache.getSuperInterfaces(targetClassId);
     for (final int interfaceName : interfaces) {
-      int superId = cache.getClassId(interfaceName);
+      final int superId = cache.getClassId(interfaceName);
       if (superId != Cache.UNKNOWN) {
         cache.addSubclass(superId, qName);
         buildSubclassDependencies(qName, superId);

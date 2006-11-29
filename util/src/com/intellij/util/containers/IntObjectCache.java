@@ -6,7 +6,7 @@ import java.util.Iterator;
 /**
  * @author lvo
  */
-public class IntObjectCache<T> implements Iterable<T> {
+public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
 
   public static final int DEFAULT_SIZE = 8192;
   public static final int MIN_SIZE = 4;
@@ -21,9 +21,6 @@ public class IntObjectCache<T> implements Iterable<T> {
   private DeletedPairsListener[] myListeners;
   private int myAttempts;
   private int myHits;
-
-  private static final int[] HASHTABLE_SIZES = new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199, 102397,
-    204793, 409579, 819157, 2295859, 4591721, 9183457, 18366923, 36733847, 73467739, 146935499, 293871013, 587742049, 1175484103};
 
   protected static class CacheEntry<T> {
     public int key;
@@ -46,10 +43,7 @@ public class IntObjectCache<T> implements Iterable<T> {
     for (int i = 0; i < myCache.length; ++i) {
       myCache[i] = new CacheEntry<T>();
     }
-    myHashTableSize = cacheSize;
-    int i = 0;
-    while (myHashTableSize > HASHTABLE_SIZES[i]) ++i;
-    myHashTableSize = HASHTABLE_SIZES[i];
+    myHashTableSize = getAdjustedTableSize(cacheSize);
     myHashTable = new int[myHashTableSize];
     myAttempts = 0;
     myHits = 0;
@@ -86,8 +80,14 @@ public class IntObjectCache<T> implements Iterable<T> {
       removeEntryFromHashTable(index);
       myCache[index].hash_next = myFirstFree;
       myFirstFree = index;
-      fireListenersAboutDeletion(index);
+
+      final CacheEntry cacheEntry = myCache[index];
+      final int deletedKey = cacheEntry.key;
+      final Object deletedValue = cacheEntry.value;
+
       myCache[index].value = null;
+
+      fireListenersAboutDeletion(deletedKey, deletedValue);
     }
   }
 
@@ -108,6 +108,9 @@ public class IntObjectCache<T> implements Iterable<T> {
   // Some AbstractMap functions finished
 
   final public void cacheObject(int key, T x) {
+    int deletedKey = 0;
+    Object deletedValue = null;
+
     int index = myFirstFree;
     if (myCount < myCache.length - 1) {
       if (index == 0) {
@@ -124,13 +127,21 @@ public class IntObjectCache<T> implements Iterable<T> {
     else {
       index = myBack;
       removeEntryFromHashTable(index);
-      fireListenersAboutDeletion(index);
+
+      final CacheEntry cacheEntry = myCache[index];
+      deletedKey = cacheEntry.key;
+      deletedValue = cacheEntry.value;
+
       myCache[myBack = myCache[index].prev].next = 0;
     }
     myCache[index].key = key;
     myCache[index].value = x;
     addEntry2HashTable(index);
     add2Top(index);
+    
+    if (deletedValue != null) {
+      fireListenersAboutDeletion(deletedKey, deletedValue);
+    }
   }
 
   final public T tryKey(int key) {
@@ -173,10 +184,7 @@ public class IntObjectCache<T> implements Iterable<T> {
   }
 
   public void resize(int newSize) {
-    IntObjectCache<T> newCache = new IntObjectCache<T>(newSize);
-    for (DeletedPairsListener listener : myListeners) {
-      newCache.addDeletedPairsListener(listener);
-    }
+    final IntObjectCache<T> newCache = new IntObjectCache<T>(newSize);
     final CacheEntry<T>[] cache = myCache;
     int back = myBack;
     while (back != 0) {
@@ -188,6 +196,7 @@ public class IntObjectCache<T> implements Iterable<T> {
     myBack = newCache.myBack;
     myCache = newCache.myCache;
     myHashTable = newCache.myHashTable;
+    myHashTableSize = newCache.myHashTableSize;
     myCount = newCache.myCount;
     myFirstFree = newCache.myFirstFree;
   }
@@ -324,11 +333,10 @@ public class IntObjectCache<T> implements Iterable<T> {
     }
   }
 
-  private void fireListenersAboutDeletion(int index) {
+  private void fireListenersAboutDeletion(final int key, final Object value) {
     if (myListeners != null) {
-      final CacheEntry cacheEntry = myCache[index];
       for (DeletedPairsListener myListener : myListeners) {
-        myListener.objectRemoved(cacheEntry.key, cacheEntry.value);
+        myListener.objectRemoved(key, value);
       }
     }
   }

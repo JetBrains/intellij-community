@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
 
-public class ObjectCache<K,V> implements Iterable<V> {
+public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
 
   public static final int DEFAULT_SIZE = 8192;
   public static final int MIN_SIZE = 4;
@@ -19,9 +19,6 @@ public class ObjectCache<K,V> implements Iterable<V> {
   private DeletedPairsListener[] myListeners;
   private int myAttempts;
   private int myHits;
-
-  private static final int[] HASHTABLE_SIZES = new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199, 102397,
-    204793, 409579, 819157, 2295859, 4591721, 9183457, 18366923, 36733847, 73467739, 146935499, 293871013, 587742049, 1175484103};
 
   protected static class CacheEntry<K, V> {
     public K key;
@@ -42,12 +39,9 @@ public class ObjectCache<K,V> implements Iterable<V> {
     myTop = myBack = 0;
     myCache = new CacheEntry[cacheSize + 1];
     for (int i = 0; i < myCache.length; ++i) {
-      myCache[i] = new CacheEntry<K, V>();
+      myCache[i] = new CacheEntry<K,V>();
     }
-    myHashTableSize = cacheSize;
-    int i = 0;
-    while (myHashTableSize > HASHTABLE_SIZES[i]) ++i;
-    myHashTableSize = HASHTABLE_SIZES[i];
+    myHashTableSize = getAdjustedTableSize(cacheSize);
     myHashTable = new int[myHashTableSize];
     myAttempts = 0;
     myHits = 0;

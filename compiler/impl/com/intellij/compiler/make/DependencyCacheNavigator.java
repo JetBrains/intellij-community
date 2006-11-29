@@ -11,11 +11,9 @@ public class DependencyCacheNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.DependencyCacheNavigator");
 
   private final Cache myCache;
-  private final DependencyCache myDepCache;
 
-  public DependencyCacheNavigator(Cache cache, DependencyCache depCache) {
+  public DependencyCacheNavigator(Cache cache) {
     myCache = cache;
-    myDepCache = depCache;
   }
 
   public void walkSuperClasses(int classQName, ClassInfoProcessor processor) throws CacheCorruptedException {

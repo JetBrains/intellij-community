@@ -30,8 +30,8 @@ public class Cache {
   @NonNls private static final String DECLARATIONS_INDEX_FILE_NAME = "declarations_index.dat";
   @NonNls private static final String CLASSINFO_INDEX_FILE_NAME = "classinfo_index.dat";
 
-  public Cache(String storePath) throws CacheCorruptedException {
-    myViewPool = new ViewPool(storePath);
+  public Cache(String storePath, final int initialCacheSize, final boolean canResize) throws CacheCorruptedException {
+    myViewPool = new ViewPool(storePath, initialCacheSize, canResize);
     myDeclarationsIndexFile = new File(storePath + "/" + DECLARATIONS_INDEX_FILE_NAME);
     myClassInfosIndexFile = new File(storePath + "/" + CLASSINFO_INDEX_FILE_NAME);
   }
@@ -220,7 +220,6 @@ public class Cache {
         return declarationsMap.get(qName);
       }
       final ClassDeclarationView view = myViewPool.getClassDeclarationView(UNKNOWN);
-      view.setClassName(qName);
       final int id = view.getRecordId();
       declarationsMap.put(qName, id);
       return id;

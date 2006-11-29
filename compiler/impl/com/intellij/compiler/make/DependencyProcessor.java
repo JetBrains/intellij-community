@@ -500,171 +500,170 @@ public class DependencyProcessor {
     }
   }
 
-  private void processInheritanceDependencies(boolean hasRemovedMethods) throws CacheCorruptedException {
+  private void processInheritanceDependencies(final boolean hasRemovedMethods) throws CacheCorruptedException {
     final Cache oldCache = myDependencyCache.getCache();
     final Cache newCache = myDependencyCache.getNewClassesCache();
 
-    boolean becameFinal = !CacheUtils.isFinal(oldCache, myQName) && CacheUtils.isFinal(newCache, myQName);
+    final boolean becameFinal = !CacheUtils.isFinal(oldCache, myQName) && CacheUtils.isFinal(newCache, myQName);
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
 
     final Set<MemberInfo> removedConcreteMethods = fetchNonAbstractMethods(myRemovedMembers);
-    final int[] subclasses = oldCache.getSubclasses(oldCache.getClassId(myQName));
-    for (final int subclassQName : subclasses) {
-      if (myDependencyCache.isClassInfoMarked(subclassQName)) {
-        continue;
-      }
-
-      int subclassId = oldCache.getClassId(subclassQName);
-      if (subclassId == Cache.UNKNOWN) {
-        continue;
-      }
-
-      if (hasRemovedMethods && myIsRemoteInterface && !CacheUtils.isInterface(oldCache, subclassQName)) {
-        if (myDependencyCache.markClass(subclassQName)) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) +
-                      "; reason: methods were removed from remote interface: " + myDependencyCache.resolve(myQName));
-          }
+    myDependencyCache.getCacheNavigator().walkSubClasses(myQName, new ClassInfoProcessor() {
+      public boolean process(final int subclassQName) throws CacheCorruptedException {
+        if (myDependencyCache.isClassInfoMarked(subclassQName)) {
+          return true;
         }
-        continue;
-      }
 
-      if (mySuperClassAdded || mySuperInterfaceAdded) {
-        if (myDependencyCache.markClass(subclassQName)) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the superlist of " +
-                      myDependencyCache.resolve(myQName) + " is changed");
-          }
+        int subclassId = oldCache.getClassId(subclassQName);
+        if (subclassId == Cache.UNKNOWN) {
+          return true;
         }
-        continue;
-      }
 
-      // if info became final, mark direct inheritors
-      if (becameFinal) {
-        if (myQName == oldCache.getSuperQualifiedName(subclassId)) {
-          if (myDependencyCache.markClass(subclassQName)) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the class " +
-                        myDependencyCache.resolve(myQName) + " was made final");
-            }
-          }
-          continue;
-        }
-      }
-
-      // process added members
-      for (final MemberInfo member : myAddedMembers) {
-        if (member instanceof MethodInfo) {
-          final MethodInfo method = (MethodInfo)member;
-          if (method.isAbstract()) {
-            // all derived classes should be marked in case an abstract method was added
-            if (myDependencyCache.markClass(subclassQName)) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: added abstract method to " +
-                          myDependencyCache.resolve(myQName));
-              }
-            }
-            break;
-          }
-          if (!method.isPrivate()) {
-            int derivedMethod = oldCache
-              .findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), method.getDescriptor(symbolTable), symbolTable);
-            if (derivedMethod != Cache.UNKNOWN) {
-              if (!method.getReturnTypeDescriptor(symbolTable)
-                .equals(CacheUtils.getMethodReturnTypeDescriptor(oldCache, derivedMethod, symbolTable))) {
-                if (myDependencyCache.markClass(subclassQName)) {
-                  if (LOG.isDebugEnabled()) {
-                    LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: return types of method " +
-                              method + " in base and derived classes are different");
-                  }
-                }
-                break;
-              }
-              if (MakeUtil.isMoreAccessible(method.getFlags(), oldCache.getMethodFlags(derivedMethod))) {
-                if (myDependencyCache.markClass(subclassQName)) {
-                  if (LOG.isDebugEnabled()) {
-                    LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the method " + method +
-                              " in derived class is less accessible than in base class");
-                  }
-                }
-                break;
-              }
-              if (!CacheUtils.areArraysContentsEqual(method.getThrownExceptions(), oldCache.getMethodThrownExceptions(derivedMethod))) {
-                if (myDependencyCache.markClass(subclassQName)) {
-                  if (LOG.isDebugEnabled()) {
-                    LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: exception lists of " +
-                              method + " in base and derived classes are different");
-                  }
-                }
-                break;
-              }
-            }
-            if (hasGenericsNameClashes(method, oldCache, subclassQName)) {
-              if (myDependencyCache.markClass(subclassQName)) {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) +
-                            "; reason: found method with the same name, different generic signature, but the same erasure as " + method);
-                }
-              }
-              break;
-            }
-          }
-        }
-        else if (member instanceof FieldInfo) {
-          if (oldCache.findFieldByName(oldCache.getClassDeclarationId(subclassQName), member.getName()) != Cache.UNKNOWN) {
-            if (myDependencyCache.markClass(subclassQName)) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: added field " + member +
-                          " to base class");
-              }
-            }
-            break;
-          }
-        }
-      }
-
-      // process changed members
-      for (final MemberInfo changedMember : myChangedMembers) {
-        if (changedMember instanceof MethodInfo) {
-          final MethodInfo oldMethod = (MethodInfo)changedMember;
-          MethodChangeDescription changeDescription = (MethodChangeDescription)myChangeDescriptions.get(oldMethod);
-          if (changeDescription.becameAbstract) {
-            if (!ClsUtil.isAbstract(oldCache.getFlags(subclassId))) { // if the subclass was not abstract
-              if (myDependencyCache.markClass(subclassQName)) {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug(
-                    "Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: changed base method " + oldMethod);
-                }
-              }
-              break;
-            }
-          }
-          int derivedMethod = oldCache
-            .findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), oldMethod.getDescriptor(symbolTable), symbolTable);
-          if (derivedMethod != Cache.UNKNOWN) {
-            if (myDependencyCache.markClass(subclassQName)) {
-              if (LOG.isDebugEnabled()) {
-                LOG
-                  .debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: changed base method " + oldMethod);
-              }
-            }
-            break;
-          }
-        }
-      }
-
-      if (!ClsUtil.isAbstract(oldCache.getFlags(subclassId))) {
-        if (hasUnimplementedAbstractMethods(subclassQName, new HashSet<MemberInfo>(removedConcreteMethods))) {
+        if (hasRemovedMethods && myIsRemoteInterface && !CacheUtils.isInterface(oldCache, subclassQName)) {
           if (myDependencyCache.markClass(subclassQName)) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) +
-                        "; reason: the class should be declared abstract because abstract method implementation was removed from its superclass: " +
-                        myDependencyCache.resolve(myQName));
+                        "; reason: methods were removed from remote interface: " + myDependencyCache.resolve(myQName));
+            }
+          }
+          return true;
+        }
+
+        if (mySuperClassAdded || mySuperInterfaceAdded) {
+          if (myDependencyCache.markClass(subclassQName)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the superlist of " +
+                        myDependencyCache.resolve(myQName) + " is changed");
+            }
+          }
+          return true;
+        }
+
+        // if info became final, mark direct inheritors
+        if (becameFinal) {
+          if (myQName == oldCache.getSuperQualifiedName(subclassId)) {
+            if (myDependencyCache.markClass(subclassQName)) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the class " +
+                          myDependencyCache.resolve(myQName) + " was made final");
+              }
+            }
+            return true;
+          }
+        }
+
+        // process added members
+        for (final MemberInfo member : myAddedMembers) {
+          if (member instanceof MethodInfo) {
+            final MethodInfo method = (MethodInfo)member;
+            if (method.isAbstract()) {
+              // all derived classes should be marked in case an abstract method was added
+              if (myDependencyCache.markClass(subclassQName)) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: added abstract method to " +
+                            myDependencyCache.resolve(myQName));
+                }
+              }
+              return true;
+            }
+            if (!method.isPrivate()) {
+              int derivedMethod = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), method.getDescriptor(symbolTable), symbolTable);
+              if (derivedMethod != Cache.UNKNOWN) {
+                if (!method.getReturnTypeDescriptor(symbolTable).equals(CacheUtils.getMethodReturnTypeDescriptor(oldCache, derivedMethod, symbolTable))) {
+                  if (myDependencyCache.markClass(subclassQName)) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: return types of method " +
+                                method + " in base and derived classes are different");
+                    }
+                  }
+                  return true;
+                }
+                if (MakeUtil.isMoreAccessible(method.getFlags(), oldCache.getMethodFlags(derivedMethod))) {
+                  if (myDependencyCache.markClass(subclassQName)) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the method " + method +
+                                " in derived class is less accessible than in base class");
+                    }
+                  }
+                  return true;
+                }
+                if (!CacheUtils.areArraysContentsEqual(method.getThrownExceptions(), oldCache.getMethodThrownExceptions(derivedMethod))) {
+                  if (myDependencyCache.markClass(subclassQName)) {
+                    if (LOG.isDebugEnabled()) {
+                      LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: exception lists of " +
+                                method + " in base and derived classes are different");
+                    }
+                  }
+                  return true;
+                }
+              }
+              if (hasGenericsNameClashes(method, oldCache, subclassQName)) {
+                if (myDependencyCache.markClass(subclassQName)) {
+                  if (LOG.isDebugEnabled()) {
+                    LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) +
+                              "; reason: found method with the same name, different generic signature, but the same erasure as " + method);
+                  }
+                }
+                return true;
+              }
+            }
+          }
+          else if (member instanceof FieldInfo) {
+            if (oldCache.findFieldByName(oldCache.getClassDeclarationId(subclassQName), member.getName()) != Cache.UNKNOWN) {
+              if (myDependencyCache.markClass(subclassQName)) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: added field " + member +
+                            " to base class");
+                }
+              }
+              return true;
             }
           }
         }
+
+        // process changed members
+        for (final MemberInfo changedMember : myChangedMembers) {
+          if (changedMember instanceof MethodInfo) {
+            final MethodInfo oldMethod = (MethodInfo)changedMember;
+            MethodChangeDescription changeDescription = (MethodChangeDescription)myChangeDescriptions.get(oldMethod);
+            if (changeDescription.becameAbstract) {
+              if (!ClsUtil.isAbstract(oldCache.getFlags(subclassId))) { // if the subclass was not abstract
+                if (myDependencyCache.markClass(subclassQName)) {
+                  if (LOG.isDebugEnabled()) {
+                    LOG.debug(
+                      "Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: changed base method " + oldMethod);
+                  }
+                }
+                return true;
+              }
+            }
+            int derivedMethod = oldCache.findMethodsBySignature(oldCache.getClassDeclarationId(subclassQName), oldMethod.getDescriptor(symbolTable), symbolTable);
+            if (derivedMethod != Cache.UNKNOWN) {
+              if (myDependencyCache.markClass(subclassQName)) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: changed base method " + oldMethod);
+                }
+              }
+              return true;
+            }
+          }
+        }
+
+        if (!ClsUtil.isAbstract(oldCache.getFlags(subclassId))) {
+          if (hasUnimplementedAbstractMethods(subclassQName, new HashSet<MemberInfo>(removedConcreteMethods))) {
+            if (myDependencyCache.markClass(subclassQName)) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; reason: the class should be declared abstract because abstract method implementation was removed from its superclass: " +
+                          myDependencyCache.resolve(myQName));
+              }
+            }
+            return true;
+          }
+        }
+        // end of subclass processor
+        return true;
       }
-    }
+    });
   }
 
   private static boolean hasGenericsNameClashes(final MethodInfo baseMethod, final Cache oldCache, final int subclassQName) throws CacheCorruptedException {
