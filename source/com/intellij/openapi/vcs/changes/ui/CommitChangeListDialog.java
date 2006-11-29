@@ -273,13 +273,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void execute(final CommitExecutor commitExecutor) {
-    if (!checkComment()) {
-      return;
-    }
-
-    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
-
-    saveState();
+    if (!saveDialogState()) return;
     final CommitSession session = commitExecutor.createCommitSession();
     boolean isOK = true;
     if (session.getAdditionalConfigurationUI() != null) {
@@ -436,16 +430,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                                             true);
   }
 
-
   protected void doOKAction() {
-    if (!checkComment()) {
-      return;
-    }
+    if (!saveDialogState()) return;
 
-    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
     try {
-      saveState();
-
       runBeforeCommitHandlers(new Runnable() {
         public void run() {
           CommitChangeListDialog.super.doOKAction();
@@ -457,6 +445,22 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     catch (InputException ex) {
       ex.show();
     }
+  }
+
+  private boolean saveDialogState() {
+    if (!checkComment()) {
+      return false;
+    }
+
+    VcsConfiguration.getInstance(myProject).saveCommitMessage(getCommitMessage());
+    try {
+      saveState();
+    }
+    catch(InputException ex) {
+      ex.show();
+      return false;
+    }
+    return true;
   }
 
   @Override
