@@ -8,7 +8,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -29,8 +28,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   protected ChangeList mySelectedChangeList;
   protected Collection<Change> myChangesToDisplay;
   protected Project myProject;
+  private final boolean myCapableOfExcludingChanges;
   protected JPanel myHeaderPanel;
-  protected boolean myReadOnly;
   private DefaultActionGroup myToolBarGroup;
 
   public void setChangesToDisplay(final List<Change> changes) {
@@ -41,12 +40,12 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
-                        ChangeList initialListSelection, final boolean showChangelistChooser,
+                        ChangeList initialListSelection,
                         final boolean capableOfExcludingChanges, final boolean highlightProblems) {
     super(new BorderLayout());
 
     myProject = project;
-    myReadOnly = !showChangelistChooser;
+    myCapableOfExcludingChanges = capableOfExcludingChanges;
 
     myViewer = new ChangesTreeList(myProject, changes, capableOfExcludingChanges, highlightProblems);
     myViewer.setDoubleClickHandler(new Runnable() {
@@ -111,18 +110,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private class MoveAction extends MoveChangesToAnotherListAction {
-    private final Change myChange;
-
-    public MoveAction(final Change change) {
-      myChange = change;
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      askAndMove(myProject, new Change[]{myChange}, null);
-    }
-  }
-
   private class ToggleChangeAction extends CheckboxAction {
     private final Change myChange;
 
@@ -156,17 +143,25 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
     int indexInSelection = Arrays.asList(changes).indexOf(leadSelection);
     if (indexInSelection >= 0) {
-      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, !myReadOnly ? new DiffToolbarActionsFactory() : null);
+      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, new DiffToolbarActionsFactory());
     }
     else {
-      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, !myReadOnly ? new DiffToolbarActionsFactory() : null);
+      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory());
     }
   }
 
   private class DiffToolbarActionsFactory implements ShowDiffAction.AdditionalToolbarActionsFactory {
     public List<? extends AnAction> createActions(Change change) {
-      return Arrays.asList(new MoveAction(change), new ToggleChangeAction(change));
+      return createDiffActions(change);
     }
+  }
+
+  protected List<AnAction> createDiffActions(final Change change) {
+    List<AnAction> actions = new ArrayList<AnAction>();
+    if (myCapableOfExcludingChanges) {
+      actions.add(new ToggleChangeAction(change));
+    }
+    return actions;
   }
 
   protected void rebuildList() {
@@ -175,6 +170,16 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   private JComponent createToolbar() {
     myToolBarGroup = new DefaultActionGroup();
+    buildToolBar(myToolBarGroup);
+
+    for(AnAction action: myViewer.getTreeActions()) {
+      myToolBarGroup.add(action);
+    }
+
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myToolBarGroup, true).getComponent();
+  }
+
+  protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     final ShowDiffAction diffAction = new ShowDiffAction() {
       public void actionPerformed(AnActionEvent e) {
         showDiff();
@@ -184,32 +189,14 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     diffAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       myViewer);
-    myToolBarGroup.add(diffAction);
-
-    if (!myReadOnly) {
-      final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
-        public void actionPerformed(AnActionEvent e) {
-          super.actionPerformed(e);
-          rebuildList();
-        }
-      };
-
-      moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
-      myToolBarGroup.add(moveAction);
-    }
+    toolBarGroup.add(diffAction);
 
     ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
     directoriesAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       myViewer);
 
-    myToolBarGroup.add(directoriesAction);
-
-    for(AnAction action: myViewer.getTreeActions()) {
-      myToolBarGroup.add(action);
-    }
-
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myToolBarGroup, true).getComponent();
+    toolBarGroup.add(directoriesAction);
   }
 
   public List<Change> getCurrentDisplayedChanges() {

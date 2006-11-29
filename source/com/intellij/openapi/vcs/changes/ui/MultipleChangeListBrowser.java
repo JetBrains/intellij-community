@@ -12,7 +12,12 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
@@ -34,10 +39,9 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
   public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                    final ChangeList initialListSelection,
-                                   final boolean showChangelistChooser,
                                    final boolean capableOfExcludingChanges,
                                    final boolean highlightProblems) {
-    super(project, changeLists, changes, initialListSelection, showChangelistChooser, capableOfExcludingChanges, highlightProblems);
+    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems);
 
     myChangeListChooser = new ChangeListChooser(changeLists);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);
@@ -131,7 +135,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private List<Change> filterBySelectedChangeList(final Collection<Change> changes) {
     List<Change> filtered = new ArrayList<Change>();
     for (Change change : changes) {
-      if (myReadOnly || getList(change) == mySelectedChangeList) {
+      if (getList(change) == mySelectedChangeList) {
         filtered.add(change);
       }
     }
@@ -140,6 +144,28 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
   private ChangeList getList(final Change change) {
     return myChangeListsMap.get(change);
+  }
+
+  @Override
+  protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
+    super.buildToolBar(toolBarGroup);
+
+    final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
+      public void actionPerformed(AnActionEvent e) {
+        super.actionPerformed(e);
+        rebuildList();
+      }
+    };
+
+    moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
+    toolBarGroup.add(moveAction);
+  }
+
+  @Override
+  protected List<AnAction> createDiffActions(final Change change) {
+    List<AnAction> actions = super.createDiffActions(change);
+    actions.add(new MoveAction(change));
+    return actions;
   }
 
   private class ChangeListChooser extends JPanel {
@@ -204,6 +230,18 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
 
     public void changeListUpdateDone() {
+    }
+  }
+
+  private class MoveAction extends MoveChangesToAnotherListAction {
+    private final Change myChange;
+
+    public MoveAction(final Change change) {
+      myChange = change;
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      askAndMove(myProject, new Change[]{myChange}, null);
     }
   }
 }
