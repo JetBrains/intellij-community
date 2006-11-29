@@ -128,7 +128,8 @@
     <group id="JavaeeEditorGenerateGroup">
       <action id="GenerateEJBReference" class="com.intellij.codeInsight.generation.actions.GenerateEJBReference"/>
       <action id="GenerateResourceReference" class="com.intellij.codeInsight.generation.actions.GenerateResourceReference"/>
-      <action id="GeneratePersistenceContextReference" class="com.intellij.codeInsight.generation.actions.GeneratePersistenceContextReference"/>
+      <action id="GeneratePersistenceContextReference"
+              class="com.intellij.codeInsight.generation.actions.GeneratePersistenceContextReference"/>
       <action id="GenerateInterceptorMethods" class="com.intellij.codeInsight.generation.actions.GenerateInterceptorMethods"/>
       <action id="GenerateEntityListenerMethods" class="com.intellij.codeInsight.generation.actions.GenerateEntityListenerMethods"/>
 
@@ -169,7 +170,8 @@
       <action id="CreateServletAction" class="com.intellij.javaee.module.view.web.servlet.CreateServletAction" icon="/nodes/servlet.png"/>
       <action id="CreateFilterAction" class="com.intellij.javaee.module.view.web.filter.CreateFilterAction" icon="/ant/filter.png"/>
       <action id="CreateListenerAction" class="com.intellij.javaee.module.view.web.listener.CreateListenerAction" icon="/ant/filter.png"/>
-      <action id="Faces.CreateFacesConfigAction" class="com.intellij.jsf.actions.CreateFacesConfigAction" icon="/fileTypes/facesConfig.png"/>
+      <action id="Faces.CreateFacesConfigAction" class="com.intellij.jsf.actions.CreateFacesConfigAction"
+              icon="/fileTypes/facesConfig.png"/>
 
     </group>
     <group id="GenerateGroup">
@@ -462,9 +464,11 @@
         <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
           <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
           <action id="WordCompletion" class="com.intellij.codeInsight.completion.actions.WordCompletionAction"/>
-          <action id="FastWordCompletion" class="com.intellij.codeInsight.completion.actions.FastWordCompletionAction"/>
           <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
           <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
+          <separator/>
+          <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
+          <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
         </group>
         <separator/>
         <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
@@ -1449,7 +1453,7 @@
         <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
       </action>
       <action id="GuiDesigner.DeleteComponent" class="com.intellij.uiDesigner.palette.DeleteComponentAction"
-        use-shortcut-of="$Delete"/>
+              use-shortcut-of="$Delete"/>
       <action id="GuiDesigner.AddGroup" class="com.intellij.uiDesigner.palette.AddGroupAction"/>
     </group>
 
@@ -1460,7 +1464,7 @@
         <keyboard-shortcut first-keystroke="F2" keymap="$default"/>
       </action>
       <action id="GuiDesigner.DeleteGroup" class="com.intellij.uiDesigner.palette.DeleteGroupAction"
-        use-shortcut-of="$Delete"/>
+              use-shortcut-of="$Delete"/>
     </group>
 
     <!-- ****************************************************************** -->
@@ -1489,7 +1493,7 @@
 
     <group id="AddSupportGroup" popup="true" class="com.intellij.javaee.actions.AddSupportActionGroup">
       <action id="Faces.EnableSupport" class="com.intellij.jsf.actions.AddFacesSupportAction"
-        icon="/actions/addFacesSupport.png">
+              icon="/actions/addFacesSupport.png">
       </action>
 
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
@@ -1503,7 +1507,7 @@
     <action id="Faces.Generate.From.Persistence" class="com.intellij.jsf.actions.GenerateFacesPagesAction"
             text="Generate Faces Pages...">
       <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
-            </action>
+    </action>
 
     <action id="Faces.User.Defined.Faces.Config"
             class="com.intellij.jsf.actions.UserDefinedFacesConfigAction"
@@ -1511,7 +1515,7 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
     </action>
-     <!-- ***** yFiles actions *************************************** -->
+    <!-- ***** yFiles actions *************************************** -->
     <action id="Graph.ZoomIn" class="com.intellij.openapi.graph.builder.actions.ZoomInAction" text="Zoom In">
       <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>
       <keyboard-shortcut first-keystroke="EQUALS" keymap="$default"/>
@@ -1529,7 +1533,8 @@
 
     <action id="Graph.FitContent" class="com.intellij.openapi.graph.builder.actions.FitContentAction" text="Fit Content"/>
 
-    <action id="Graph.Delete" class="com.intellij.openapi.graph.builder.actions.DeleteSelectionAction" use-shortcut-of="$Delete" text="Delete Selection"/>
+    <action id="Graph.Delete" class="com.intellij.openapi.graph.builder.actions.DeleteSelectionAction" use-shortcut-of="$Delete"
+            text="Delete Selection"/>
 
     <action id="Graph.Show.Edge.Labels" class="com.intellij.openapi.graph.builder.actions.ShowEdgeLabels" text="Show Edge Labels"/>
 
@@ -1543,7 +1548,8 @@
     <action id="Graph.Layout.CircularLayouter" class="com.intellij.openapi.graph.builder.actions.layout.CircularLayouterAction"
             text="Circular">
     </action>
-    <action id="Graph.Layout.HierarchicGroupLayouter" class="com.intellij.openapi.graph.builder.actions.layout.HierarchicGroupLayouterAction"
+    <action id="Graph.Layout.HierarchicGroupLayouter"
+            class="com.intellij.openapi.graph.builder.actions.layout.HierarchicGroupLayouterAction"
             text="Hierarchic Group">
     </action>
     <action id="Graph.Layout.OrganicLayouter" class="com.intellij.openapi.graph.builder.actions.layout.OrganicLayouterAction"
@@ -1552,7 +1558,8 @@
     <action id="Graph.Layout.OrthogonalLayouter" class="com.intellij.openapi.graph.builder.actions.layout.OrthogonalLayouterAction"
             text="Orthogonal">
     </action>
-    <action id="Graph.Layout.DirectedOrthogonalLayouter" class="com.intellij.openapi.graph.builder.actions.layout.DirectedOrthogonalLayouterAction"
+    <action id="Graph.Layout.DirectedOrthogonalLayouter"
+            class="com.intellij.openapi.graph.builder.actions.layout.DirectedOrthogonalLayouterAction"
             text="Directed Orthogonal">
     </action>
     <action id="Graph.Layout.TreeLayouter" class="com.intellij.openapi.graph.builder.actions.layout.HVTreeLayouterAction"
@@ -1610,7 +1617,6 @@
     <!-- ***** yFiles actions end*************************************** -->
 
 
-
     <action id="Faces.Navigation.Graph.PageTree.GotoSourceAction" class="com.intellij.jsf.yfilesGraph.actions.GotoSourceAction"
             text="_Jump to source">
     </action>
@@ -1657,32 +1663,35 @@
 
     <group id="PropertyInspectorActions" text="InspectorActions">
       <group id="PropertyInspectorActions.CommonActions">
-        <action id="PropertyInspectorActions.AddProperty" class="com.intellij.designer.inspector.impl.actions.AddPropertyAction" text="Add Property" use-shortcut-of="Generate"/>
-        <action id="PropertyInspectorActions.RemoveProperty" class="com.intellij.designer.inspector.impl.actions.RemovePropertyAction" text="Remove Property" use-shortcut-of="EditorDelete"/>
+        <action id="PropertyInspectorActions.AddProperty" class="com.intellij.designer.inspector.impl.actions.AddPropertyAction"
+                text="Add Property" use-shortcut-of="Generate"/>
+        <action id="PropertyInspectorActions.RemoveProperty" class="com.intellij.designer.inspector.impl.actions.RemovePropertyAction"
+                text="Remove Property" use-shortcut-of="EditorDelete"/>
       </group>
 
-      <action id="PropertyInspectorActions.EditValue" class="com.intellij.designer.inspector.impl.actions.EditPropertyAction" text="Edit Property">
+      <action id="PropertyInspectorActions.EditValue" class="com.intellij.designer.inspector.impl.actions.EditPropertyAction"
+              text="Edit Property">
         <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
       </action>
     </group>
 
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
-        icon="/actions/sync.png"/>
+              icon="/actions/sync.png"/>
       <action id="ChangesView.Commit" class="com.intellij.openapi.vcs.changes.actions.CommitAction"
-        icon="/actions/commit.png"/>
+              icon="/actions/commit.png"/>
       <action id="ChangesView.Rollback" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
-        icon="/actions/rollback.png"/>
+              icon="/actions/rollback.png"/>
       <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
-        icon="/actions/include.png"/>
+              icon="/actions/include.png"/>
       <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
-        icon="/actions/exclude.png"/>
+              icon="/actions/exclude.png"/>
       <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
-        icon="/actions/submit1.png"/>
+              icon="/actions/submit1.png"/>
       <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
-        icon="/actions/fileStatus.png"/>
+              icon="/actions/fileStatus.png"/>
       <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.ShowDiffAction"
-        icon="/actions/diff.png"/>
+              icon="/actions/diff.png"/>
     </group>
 
     <group id="ChangesViewPopupMenu">
@@ -1693,11 +1702,11 @@
       <reference ref="EditSource"/>
       <separator/>
       <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
-        icon="/actions/cancel.png"/>
+              icon="/actions/cancel.png"/>
       <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
-        icon="/actions/include.png"/>
+              icon="/actions/include.png"/>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
-        icon="/actions/exclude.png"/>
+              icon="/actions/exclude.png"/>
       <separator/>
       <reference ref="ChangesView.NewChangeList"/>
       <reference ref="ChangesView.RemoveChangeList"/>

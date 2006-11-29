@@ -34,6 +34,7 @@ public abstract class HighlightManager {
   public static HighlightManager getInstance(Project project) {
     return project.getComponent(HighlightManager.class);
   }
+
   public static final int HIDE_BY_ESCAPE = 0x01;
   public static final int HIDE_BY_ANY_KEY = 0x02;
   public static final int HIDE_BY_TEXT_CHANGE = 0x04;
@@ -44,6 +45,14 @@ public abstract class HighlightManager {
                                          @NotNull TextAttributes attributes,
                                          boolean hideByTextChange,
                                          @Nullable Collection<RangeHighlighter> outHighlighters);
+
+  public abstract void addRangeHighlight(@NotNull Editor editor,
+                                         int startOffset,
+                                         int endOffset,
+                                         @NotNull TextAttributes attributes,
+                                         boolean hideByTextChange,
+                                         boolean hideByAnyKey,
+                                         @Nullable Collection<RangeHighlighter> highlighters);
 
   public abstract boolean removeSegmentHighlighter(@NotNull Editor editor, @NotNull RangeHighlighter highlighter);
 
