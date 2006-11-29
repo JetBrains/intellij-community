@@ -2,9 +2,8 @@ package com.intellij.cvsSupport2.cvsoperations.cvsCommit;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 import org.netbeans.lib.cvsclient.command.commit.CommitCommand;
@@ -48,4 +47,8 @@ public class CommitFilesOperation extends CvsOperationOnFiles {
     return CvsHandler.UNKNOWN_COUNT;
   }
 
+  @Override
+  public boolean runInReadThread() {
+    return false;
+  }
 }
