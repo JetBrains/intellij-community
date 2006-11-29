@@ -22,9 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 public class ProgressManagerImpl extends ProgressManager implements ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.ProgressManager");
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
   private final HashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new HashMap<Thread, ProgressIndicator>();
@@ -32,6 +32,18 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   private static volatile boolean ourNeedToCheckCancel = false;
   private static volatile int ourLockedCheckCounter = 0;
   private List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
+  private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
+    1,
+    Integer.MAX_VALUE,
+    60L,
+    TimeUnit.SECONDS,
+    new LinkedBlockingQueue<Runnable>(),
+    new ThreadFactory() {
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "Process with progress");
+      }
+    }
+  );
 
   public ProgressManagerImpl(Application application) {
     if (!application.isUnitTestMode() && !Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled")) {
@@ -112,6 +124,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   public void initComponent() { }
 
   public void disposeComponent() {
+    ourThreadExecutorsService.shutdownNow();
   }
 
   public boolean hasProgressIndicator() {
@@ -205,7 +218,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
                                                                                    "Stop " + progressTitle);
 
     //noinspection HardCodedStringLiteral
-    Thread thread = new Thread("Process with progress") {
+    Runnable action = new Runnable() {
       public void run() {
         boolean canceled = false;
         try {
@@ -225,7 +238,9 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     };
 
     synchronized (process) {
-      thread.start();
+      synchronized(ourThreadExecutorsService) {
+        ourThreadExecutorsService.submit(action);
+      }
       try {
         process.wait();
       }

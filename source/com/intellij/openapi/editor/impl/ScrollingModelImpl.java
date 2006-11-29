@@ -26,10 +26,22 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.*;
 
 public class ScrollingModelImpl implements ScrollingModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
+  private static final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
+    1,
+    Integer.MAX_VALUE,
+    60L,
+    TimeUnit.SECONDS,
+    new LinkedBlockingQueue<Runnable>(),
+    new ThreadFactory() {
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "AnimatedScrollingThread");
+      }
+    }
+  );
 
   private EditorImpl myEditor;
   private CopyOnWriteArrayList<VisibleAreaListener> myVisibleAreaListeners = new CopyOnWriteArrayList<VisibleAreaListener>();
@@ -38,7 +50,6 @@ public class ScrollingModelImpl implements ScrollingModel {
   private final Object myAnimatedLock = new Object();
   private boolean myAnimationDisabled = false;
   private DocumentAdapter myDocumentListener;
-  @NonNls private static final String ANIMATED_SCROLLING_THREAD_NAME = "AnimatedScrollingThread";
 
   public ScrollingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -270,7 +281,7 @@ public class ScrollingModelImpl implements ScrollingModel {
 
       try {
         myCurrentAnimatedRunnable = new AnimatedScrollingRunnable(startHOffset, startVOffset, hOffset, vOffset);
-        new Thread(myCurrentAnimatedRunnable, ANIMATED_SCROLLING_THREAD_NAME).start();
+        ourThreadExecutorsService.submit(myCurrentAnimatedRunnable);
       }
       catch (NoAnimationRequiredException e) {
         _scrollHorizontally(hOffset);

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.*;
 
 /**
  * @author max
@@ -25,9 +25,21 @@ public class FileSystemSynchronizer {
   private ArrayList<CacheUpdater> myUpdaters = new ArrayList<CacheUpdater>();
   private LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
   private Collection/*<VirtualFile>*/[] myUpdateSets;
+  @NonNls private static final String LOAD_FILES_THREAD_NAME = "File Content Loading Thread";
+
+  private static final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
+    1,
+    Integer.MAX_VALUE,
+    60L,
+    TimeUnit.SECONDS, 
+    new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+      public Thread newThread(Runnable r) {
+        return new Thread(r, LOAD_FILES_THREAD_NAME);
+      }
+    }
+  );
 
   private boolean myIsCancelable = false;
-  @NonNls private static final String LOAD_FILES_THREAD_NAME = "File Content Loading Thread";
 
   public void registerCacheUpdater(@NotNull CacheUpdater cacheUpdater) {
     myUpdaters.add(cacheUpdater);
@@ -126,7 +138,7 @@ public class FileSystemSynchronizer {
     int count = 0;
     final MyContentQueue contentQueue = new MyContentQueue();
 
-    final Thread contentLoadingThread = new Thread(new Runnable() {
+    final Runnable contentLoadingRunnable = new Runnable() {
       public void run() {
         try {
           for (VirtualFile file : myFilesToUpdate) {
@@ -138,9 +150,11 @@ public class FileSystemSynchronizer {
           LOG.error(e);
         }
       }
-    }, LOAD_FILES_THREAD_NAME);
-    contentLoadingThread.setPriority(Thread.currentThread().getPriority());
-    contentLoadingThread.start();
+    };
+
+    synchronized(ourThreadExecutorsService) {
+      ourThreadExecutorsService.submit(contentLoadingRunnable);
+    }
 
     while (true) {
       FileContent content = null;
