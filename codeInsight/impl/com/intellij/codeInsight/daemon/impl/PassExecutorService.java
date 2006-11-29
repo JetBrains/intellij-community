@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -12,7 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntObjectHashMap;
 
 import java.util.ArrayList;
@@ -171,57 +171,52 @@ public class PassExecutorService {
     }
 
     public void run() {
-      try {
-        Thread.currentThread().setName("Highlighting pass " + myPass);
-        ((ProgressManagerImpl)ProgressManager.getInstance()).progressMe(myUpdateProgress);
-        if (myUpdateProgress.isCanceled()) return;
-        LOG.debug(myPass + " started at " + System.currentTimeMillis());
-        for (ScheduledPass successor : mySuccessorsOnSubmit) {
+      Thread.currentThread().setName("Highlighting pass " + myPass);
+      ((ProgressManagerImpl)ProgressManager.getInstance()).progressMe(myUpdateProgress);
+      if (myUpdateProgress.isCanceled()) return;
+      LOG.debug(myPass + " started at " + System.currentTimeMillis());
+      for (ScheduledPass successor : mySuccessorsOnSubmit) {
+        int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
+        if (predecessorsToRun == 0) {
+          submit(successor);
+        }
+      }
+
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          try {
+            if (myUpdateProgress
+              .isCanceled()) { // IMPORTANT: to check here directly: to verify that nothing has changed before getting read lock!
+              throw new ProcessCanceledException();
+            }
+            myPass.doCollectInformation(myUpdateProgress);
+          }
+          catch (ProcessCanceledException e) {
+            LOG.debug(myPass + " canceled");
+          }
+        }
+      });
+      LOG.debug(myPass + " finished at " + System.currentTimeMillis());
+
+      if (!myUpdateProgress.isCanceled()) {
+        for (ScheduledPass successor : mySuccessorsOnCompletion) {
           int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
           if (predecessorsToRun == 0) {
             submit(successor);
           }
         }
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            try {
-              if (myUpdateProgress
-                .isCanceled()) { // IMPORTANT: to check here directly: to verify that nothing has changed before getting read lock!
-                throw new ProcessCanceledException();
-              }
-              myPass.doCollectInformation(myUpdateProgress);
-            }
-            catch (ProcessCanceledException e) {
-              LOG.debug(myPass + " canceled");
-            }
-          }
-        });
-        LOG.debug(myPass + " finished at " + System.currentTimeMillis());
-
-        if (!myUpdateProgress.isCanceled()) {
-          for (ScheduledPass successor : mySuccessorsOnCompletion) {
-            int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
-            if (predecessorsToRun == 0) {
-              submit(successor);
-            }
-          }
-          applyInformationToEditor(this);
-        }
-
-        mySubmittedPasses.remove(this);
-        int toexec = myThreadsToExecuteCountdown.decrementAndGet();
-        if (toexec == 0) {
-          LOG.debug("Stopping");
-          myUpdateProgress.cancel();
-          myUpdateProgress.stop();
-        }
-        else {
-          LOG.debug("Pass "+ myPass +" finished but there is the pass in the queue: "+mySubmittedPasses.keySet().iterator().next().myPass+"; toexec="+toexec);
-        }
+        applyInformationToEditor(this);
       }
-      catch (Throwable e) {
-        LOG.error(e);
+
+      mySubmittedPasses.remove(this);
+      int toexec = myThreadsToExecuteCountdown.decrementAndGet();
+      if (toexec == 0) {
+        LOG.debug("Stopping");
+        myUpdateProgress.cancel();
+        myUpdateProgress.stop();
+      }
+      else {
+        //LOG.debug("Pass "+ myPass +" finished but there is the pass in the queue: "+mySubmittedPasses.keySet().iterator().next().myPass+"; toexec="+toexec);
       }
     }
   }
