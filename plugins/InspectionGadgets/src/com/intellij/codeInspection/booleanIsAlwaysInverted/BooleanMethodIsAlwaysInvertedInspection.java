@@ -11,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -22,14 +23,17 @@ import java.util.Collection;
 public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionTool {
   private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_METHOD");
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("boolean.method.is.always.inverted.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "BooleanMethodIsAlwaysInverted";
@@ -50,9 +54,14 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
       if (!refMethod.isReferenced()) return null;
       if (hasNonInvertedCalls(refMethod)) return null;
       if (refMethod.getSuperMethods().size() > 0) return null;
-      return new ProblemDescriptor[]{manager.createProblemDescriptor(refMethod.getElement(), InspectionsBundle.message(
-        "boolean.method.is.always.inverted.problem.descriptor"), (LocalQuickFix [])null,
-                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      final PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+      final PsiIdentifier psiIdentifier = psiMethod.getNameIdentifier();
+      if (psiIdentifier != null) {
+        return new ProblemDescriptor[] { manager.createProblemDescriptor(psiIdentifier,
+                                                                         InspectionsBundle.message("boolean.method.is.always.inverted.problem.descriptor"),
+                                                                         (LocalQuickFix [])null,
+                                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      }
     }
     return null;
   }
