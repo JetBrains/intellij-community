@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * This class also controls the auto-reparse and auto-hints.
@@ -137,7 +138,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     public void stop() {
       super.stop();
-      LOG.debug("STOPPED", new Throwable());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("STOPPED", new Throwable());
+      }
       synchronized(myStoppedNotify) {
         myStoppedNotify.notifyAll();
       }
@@ -171,6 +174,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NotNull
   public List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes() {
     return myScopes;
+  }
+
+  public ExecutorService getDaemonExecutorService() {
+    return myPassExecutorService.getDaemonExecutorService();
   }
 
   public void projectClosed() {

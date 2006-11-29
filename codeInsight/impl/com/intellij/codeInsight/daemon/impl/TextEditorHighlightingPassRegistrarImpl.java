@@ -148,12 +148,16 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     id2Pass.forEachValue(new TObjectProcedure<TextEditorHighlightingPass>() {
       public boolean execute(TextEditorHighlightingPass pass) {
         for (int id : pass.getCompletionPredecessorIds()) {
-          assert id2Pass.get(id) != null : id;
-          topPasses.remove(id2Pass.get(id));
+          TextEditorHighlightingPass pred = id2Pass.get(id);
+          if (pred != null) {  //can be null if filtered out by passesToIgnore
+            topPasses.remove(pred);
+          }
         }
         for (int id : pass.getStartingPredecessorIds()) {
-          assert id2Pass.get(id) != null : id;
-          topPasses.remove(id2Pass.get(id));
+          TextEditorHighlightingPass pred = id2Pass.get(id);
+          if (pred != null) {  //can be null if filtered out by passesToIgnore
+            topPasses.remove(pred);
+          }
         }
         return true;
       }
@@ -171,11 +175,15 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     if (result.contains(pass)) return;
     for (int id : pass.getCompletionPredecessorIds()) {
       TextEditorHighlightingPass pred = id2Pass.get(id);
-      layout(pred, result, id2Pass);
+      if (pred != null) {
+        layout(pred, result, id2Pass);
+      }
     }
     for (int id : pass.getStartingPredecessorIds()) {
       TextEditorHighlightingPass pred = id2Pass.get(id);
-      layout(pred, result, id2Pass);
+      if (pred != null) {
+        layout(pred, result, id2Pass);
+      }
     }
     result.add(pass);
   }

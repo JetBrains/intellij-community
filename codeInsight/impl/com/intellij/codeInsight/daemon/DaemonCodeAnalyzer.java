@@ -1,17 +1,17 @@
 
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public abstract class DaemonCodeAnalyzer implements ProjectComponent {
   public static DaemonCodeAnalyzer getInstance(Project project) {
@@ -39,4 +39,5 @@ public abstract class DaemonCodeAnalyzer implements ProjectComponent {
 
   public abstract FileStatusMap getFileStatusMap();
   public abstract List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes();
+  public abstract ExecutorService getDaemonExecutorService();
 }

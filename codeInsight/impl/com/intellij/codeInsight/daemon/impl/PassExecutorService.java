@@ -39,6 +39,7 @@ public class PassExecutorService {
   private final ProgressIndicator myUpdateProgress;
   private final Project myProject;
   private final AtomicInteger myThreadsToExecuteCountdown = new AtomicInteger();
+  private ExecutorService myDaemonExecutorService;
 
   public PassExecutorService(ProgressIndicator daemonProgress, Project project) {
     myUpdateProgress = daemonProgress;
@@ -155,6 +156,10 @@ public class PassExecutorService {
       Future<?> future = myExecutorService.submit(pass);
       mySubmittedPasses.put(pass, future);
     }
+  }
+
+  public ExecutorService getDaemonExecutorService() {
+    return myDaemonExecutorService;
   }
 
   private class ScheduledPass implements Runnable {

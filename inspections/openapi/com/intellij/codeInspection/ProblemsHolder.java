@@ -44,10 +44,21 @@ public class ProblemsHolder {
     myProblems.add(myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType));
   }
 
+  public void registerProblem(ProblemDescriptor problemDescriptor) {
+    if (myProblems == null) {
+      myProblems = new ArrayList<ProblemDescriptor>(1);
+    }
+    myProblems.add(problemDescriptor);
+  }
+
   @Nullable
   public List<ProblemDescriptor> getResults() {
     final List<ProblemDescriptor> problems = myProblems;
     myProblems = null;
     return problems;
+  }
+
+  public final InspectionManager getManager() {
+    return myManager;
   }
 }
