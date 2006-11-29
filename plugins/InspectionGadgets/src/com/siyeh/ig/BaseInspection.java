@@ -48,10 +48,12 @@ public abstract class BaseInspection extends LocalInspectionTool {
     @NonNls private static final String INSPECTION_GADGETS_COMPONENT_NAME =
             "InspectionGadgets";
 
+    @NotNull
     public String getShortName() {
         if (m_shortName == null) {
             final Class<? extends BaseInspection> aClass = getClass();
             final String name = aClass.getName();
+            assert name.endsWith(INSPECTION) : "class name must end with the 'Inspection' to correctly calculate the short name: "+name;
             m_shortName = name.substring(name.lastIndexOf((int)'.') + 1,
                     name.length() - INSPECTION.length());
         }
@@ -71,8 +73,8 @@ public abstract class BaseInspection extends LocalInspectionTool {
     }
 
     @Nullable
-    public ProblemDescriptor[] checkFile(PsiFile file,
-                                         InspectionManager manager,
+    public ProblemDescriptor[] checkFile(@NotNull PsiFile file,
+                                         @NotNull InspectionManager manager,
                                          boolean isOnTheFly) {
         /*
         if (telemetryEnabled) {
