@@ -208,7 +208,7 @@ public final class IconLoader {
 
   private static final class CachedImageIcon implements Icon {
     private URL myURL;
-    private Reference<Icon> myRealIcon;
+    private Object myRealIcon;
 
     public CachedImageIcon(URL myURL) {
       this.myURL = myURL;
@@ -217,17 +217,25 @@ public final class IconLoader {
     private synchronized Icon getRealIcon() {
       if (isLoaderDisabled()) return EMPTY_ICON;
 
+      if (myRealIcon instanceof Icon) return (Icon)myRealIcon;
+
       Icon icon;
-      if (myRealIcon != null) {
-        icon = myRealIcon.get();
+      if (myRealIcon instanceof Reference) {
+        icon = ((Reference<Icon>)myRealIcon).get();
         if (icon != null) return icon;
       }
 
       Image image = ImageLoader.loadFromURL(myURL);
       icon = checkIcon(image, myURL);
+
       if (icon != null) {
-        myRealIcon = new SoftReference<Icon>(icon);
+        if (icon.getIconWidth() < 50 && icon.getIconHeight() < 50) {
+          myRealIcon = icon;
+        } else {
+          myRealIcon= new SoftReference<Icon>(icon);
+        }
       }
+      
       return icon != null ? icon : EMPTY_ICON;
     }
 
