@@ -117,9 +117,11 @@ public class MorphAction extends AbstractGuiEditorAction {
 
     if (oldComponent.isDefaultBinding()) {
       final String text = FormInspectionUtil.getText(newComponent.getModule(), newComponent);
-      String binding = BindingProperty.suggestBindingFromText(newComponent, text);
-      if (binding != null) {
-        new BindingProperty(newComponent.getProject()).setValueEx(newComponent, binding);
+      if (text != null) {
+        String binding = BindingProperty.suggestBindingFromText(newComponent, text);
+        if (binding != null) {
+          new BindingProperty(newComponent.getProject()).setValueEx(newComponent, binding);
+        }
       }
       newComponent.setDefaultBinding(true);
     }
