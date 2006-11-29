@@ -388,27 +388,32 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   public void weHaveGotProblem(Problem problem) {
     VirtualFile virtualFile = problem == null ? null : problem.getVirtualFile();
     if (!isToBeHighlighted(virtualFile)) return;
-
+    boolean fireListener = false;
     synchronized (myProblems) {
       ProblemFileInfo storedProblems = myProblems.get(virtualFile);
       if (storedProblems == null) {
         storedProblems = new ProblemFileInfo();
 
         myProblems.put(virtualFile, storedProblems);
-        fireProblemListeners.problemsAppeared(virtualFile);
+        fireListener = true;
       }
       storedProblems.problems.add(problem);
       myCheckingQueue.addIfAbsent(virtualFile);
     }
+    if (fireListener) {
+      fireProblemListeners.problemsAppeared(virtualFile);
+    }
   }
 
   public void clearProblems(@NotNull VirtualFile virtualFile) {
+    ProblemFileInfo old = null;
     synchronized (myProblems) {
-      ProblemFileInfo old = myProblems.remove(virtualFile);
-      if (old != null) {
-        fireProblemListeners.problemsDisappeared(virtualFile);
-      }
+      old = myProblems.remove(virtualFile);
       myCheckingQueue.remove(virtualFile);
+    }
+    // firing outside lock
+    if (old != null) {
+      fireProblemListeners.problemsDisappeared(virtualFile);
     }
   }
 
@@ -447,9 +452,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       return;
     }
     if (!isToBeHighlighted(file)) return;
+    boolean hasProblemsBefore;
+    boolean fireChanged;
     synchronized (myProblems) {
       final ProblemFileInfo oldInfo = myProblems.remove(file);
-      boolean hasProblemsBefore = oldInfo != null;
+      hasProblemsBefore = oldInfo != null;
       ProblemFileInfo storedProblems = new ProblemFileInfo();
       myProblems.put(file, storedProblems);
       for (Problem problem : problems) {
@@ -457,12 +464,13 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         storedProblems.hasSyntaxErrors |= ((ProblemImpl)problem).isSyntaxOnly();
         myCheckingQueue.addIfAbsent(file);
       }
-      if (!hasProblemsBefore) {
-        fireProblemListeners.problemsAppeared(file);
-      }
-      else if (!oldInfo.equals(storedProblems)) {
-        fireProblemListeners.problemsChanged(file);
-      }
+      fireChanged = hasProblemsBefore && !oldInfo.equals(storedProblems);
+    }
+    if (!hasProblemsBefore) {
+      fireProblemListeners.problemsAppeared(file);
+    }
+    else if (fireChanged) {
+      fireProblemListeners.problemsChanged(file);
     }
   }
 
