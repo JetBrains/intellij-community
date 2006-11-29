@@ -86,7 +86,11 @@ public class BraceMatchingUtil {
     }
 
     public int getTokenGroup(IElementType tokenType) {
-      return PAIRED_TOKEN_GROUP;
+      final BracePair[] pairs = myMatcher.getPairs();
+      for (BracePair pair : pairs) {
+        if (tokenType == pair.getLeftBraceType() || tokenType == pair.getRightBraceType()) return PAIRED_TOKEN_GROUP;
+      }
+      return UNDEFINED_TOKEN_GROUP;
     }
 
     public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
