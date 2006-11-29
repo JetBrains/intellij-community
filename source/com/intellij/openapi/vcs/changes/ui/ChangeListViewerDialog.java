@@ -60,7 +60,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
     panel.setLayout(new BorderLayout());
     myChangesBrowser = new ChangesBrowser(myProject, Collections.singletonList(myChangeList),
                                           new ArrayList<Change>(myChangeList.getChanges()),
-                                          myChangeList, false, false);
+                                          myChangeList, false, false, false);
     panel.add(myChangesBrowser, BorderLayout.CENTER);
 
     JPanel commitPanel = new JPanel(new BorderLayout());

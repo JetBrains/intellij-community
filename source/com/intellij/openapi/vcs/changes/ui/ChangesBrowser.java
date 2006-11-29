@@ -42,13 +42,13 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
                         ChangeList initialListSelection, final boolean showChangelistChooser,
-                        final boolean capableOfExcludingChanges) {
+                        final boolean capableOfExcludingChanges, final boolean highlightProblems) {
     super(new BorderLayout());
 
     myProject = project;
     myReadOnly = !showChangelistChooser;
 
-    myViewer = new ChangesTreeList(myProject, changes, capableOfExcludingChanges);
+    myViewer = new ChangesTreeList(myProject, changes, capableOfExcludingChanges, highlightProblems);
     myViewer.setDoubleClickHandler(new Runnable() {
       public void run() {
         showDiff();

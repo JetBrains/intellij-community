@@ -68,7 +68,7 @@ public class RollbackChangesDialog extends DialogWrapper {
 
     myProject = project;
     myRefreshSynchronously = refreshSynchronously;
-    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true);
+    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, true);
 
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
     setTitle(VcsBundle.message("changes.action.rollback.title"));

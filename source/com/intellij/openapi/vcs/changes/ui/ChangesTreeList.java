@@ -36,6 +36,7 @@ public class ChangesTreeList extends JPanel {
   private JList myList;
   private Project myProject;
   private final boolean myShowCheckboxes;
+  private final boolean myHighlightProblems;
   private boolean myShowFlatten;
 
   private Collection<Change> myIncludedChanges;
@@ -46,9 +47,11 @@ public class ChangesTreeList extends JPanel {
   @NonNls private static final String ROOT = "root";
   private CardLayout myCards;
 
-  public ChangesTreeList(final Project project, Collection<Change> initiallyIncluded, final boolean showCheckboxes) {
+  public ChangesTreeList(final Project project, Collection<Change> initiallyIncluded, final boolean showCheckboxes, 
+                         final boolean highlightProblems) {
     myProject = project;
     myShowCheckboxes = showCheckboxes;
+    myHighlightProblems = highlightProblems;
     myIncludedChanges = new HashSet<Change>(initiallyIncluded);
 
     myCards = new CardLayout();
@@ -382,7 +385,7 @@ public class ChangesTreeList extends JPanel {
     public MyTreeCellRenderer() {
       super(new BorderLayout());
       myCheckBox = new JCheckBox();
-      myTextRenderer = new ChangesBrowserNodeRenderer(myProject, false);
+      myTextRenderer = new ChangesBrowserNodeRenderer(myProject, false, myHighlightProblems);
 
       myCheckBox.setBackground(null);
       setBackground(null);

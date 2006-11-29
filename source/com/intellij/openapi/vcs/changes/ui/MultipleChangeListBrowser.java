@@ -35,8 +35,9 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                    final ChangeList initialListSelection,
                                    final boolean showChangelistChooser,
-                                   final boolean capableOfExcludingChanges) {
-    super(project, changeLists, changes, initialListSelection, showChangelistChooser, capableOfExcludingChanges);
+                                   final boolean capableOfExcludingChanges,
+                                   final boolean highlightProblems) {
+    super(project, changeLists, changes, initialListSelection, showChangelistChooser, capableOfExcludingChanges, highlightProblems);
 
     myChangeListChooser = new ChangeListChooser(changeLists);
     myHeaderPanel.add(myChangeListChooser, BorderLayout.EAST);

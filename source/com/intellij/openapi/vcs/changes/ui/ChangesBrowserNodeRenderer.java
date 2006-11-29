@@ -23,11 +23,13 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
   private ChangeListDecorator[] myDecorators;
   private WolfTheProblemSolver myProblemSolver;
+  private final boolean myHighlightProblems;
 
-  public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten) {
+  public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten, final boolean highlightProblems) {
     myShowFlatten = showFlatten;
     myDecorators = project.getComponents(ChangeListDecorator.class);
     myProblemSolver = WolfTheProblemSolver.getInstance(project);
+    myHighlightProblems = highlightProblems;
   }
 
   public void customizeCellRenderer(JTree tree,
@@ -140,7 +142,7 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private void appendFileName(final VirtualFile vFile, final String fileName, final Color color) {
     int style = SimpleTextAttributes.STYLE_PLAIN;
     Color underlineColor = null;
-    if (vFile != null && !vFile.isDirectory() && myProblemSolver.isProblemFile(vFile)) {
+    if (myHighlightProblems && vFile != null && !vFile.isDirectory() && myProblemSolver.isProblemFile(vFile)) {
       underlineColor = Color.red;
       style = SimpleTextAttributes.STYLE_WAVED;
     }
