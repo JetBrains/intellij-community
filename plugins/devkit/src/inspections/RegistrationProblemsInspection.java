@@ -27,6 +27,7 @@ import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateConstructorFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.ImplementOrExtendFix;
@@ -51,6 +52,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   public boolean CHECK_JAVA_CODE = true;
   public boolean CHECK_ACTIONS = true;
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
@@ -59,10 +61,12 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return true;
   }
 
+  @NotNull
   public String getDisplayName() {
     return DevKitBundle.message("inspections.registration.problems.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "ComponentRegistrationProblems";
@@ -109,7 +113,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (CHECK_PLUGIN_XML && isPluginXml(file)) {
       return checkPluginXml((XmlFile)file, manager, isOnTheFly);
     }
@@ -117,7 +121,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkClass(PsiClass checkedClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
 
     if (CHECK_JAVA_CODE &&
@@ -168,7 +172,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (CHECK_ACTIONS && CHECK_JAVA_CODE &&
             method.isConstructor() &&
             method.getNameIdentifier() != null &&
@@ -199,7 +203,12 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
   @Nullable
   private ProblemDescriptor[] checkPluginXml(XmlFile xmlFile, InspectionManager manager, boolean isOnTheFly) {
-    final XmlTag rootTag = xmlFile.getDocument().getRootTag();
+    final XmlDocument document = xmlFile.getDocument();
+    if (document == null) {
+      return null;
+    }
+
+    final XmlTag rootTag = document.getRootTag();
     assert rootTag != null;
 
     final RegistrationChecker checker = new RegistrationChecker(manager, xmlFile, isOnTheFly);
@@ -217,7 +226,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     private final boolean myOnTheFly;
     private final PsiManager myPsiManager;
     private final GlobalSearchScope myScope;
-    private final Set<PsiClass> myInterfaceClasses = new THashSet<PsiClass>();
+    private final Set<String> myInterfaceClasses = new THashSet<String>();
 
     public RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
       myManager = manager;
@@ -263,21 +272,59 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                             DevKitBundle.message("class.interface")),
                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
           } else if (implClass != null) {
-            if (myInterfaceClasses.contains(intfClass)) {
-              addProblem(intf,
-                      DevKitBundle.message("inspections.registration.problems.component.duplicate.interface", intfClass.getQualifiedName()),
-                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            final String fqn = intfClass.getQualifiedName();
+
+            if (type == ComponentType.MODULE) {
+              if (!checkInterface(fqn, intf)) {
+                // module components can be restricted to modules of certain types
+                final String[] keys = makeQualifiedModuleInterfaceNames(component, fqn);
+                for (String key : keys) {
+                  checkInterface(key, intf);
+                  myInterfaceClasses.add(key);
             }
+              }
+            } else {
+              checkInterface(fqn, intf);
+              myInterfaceClasses.add(fqn);
+            }
+
             if (intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
               addProblem(impl,
-                      DevKitBundle.message("inspections.registration.problems.component.incompatible.interface", intfClass.getQualifiedName()),
+                  DevKitBundle.message("inspections.registration.problems.component.incompatible.interface", fqn),
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             }
-            myInterfaceClasses.add(intfClass);
           }
         }
       }
       return true;
+    }
+
+    private boolean checkInterface(String fqn, XmlTagValue value) {
+      if (myInterfaceClasses.contains(fqn)) {
+        addProblem(value,
+            DevKitBundle.message("inspections.registration.problems.component.duplicate.interface", fqn),
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        return true;
+      }
+      return false;
+    }
+
+    private static String[] makeQualifiedModuleInterfaceNames(XmlTag component, String fqn) {
+      final XmlTag[] children = component.findSubTags("option");
+      for (XmlTag child : children) {
+        if ("type".equals(child.getAttributeValue("name"))) {
+          final String value = child.getAttributeValue("value");
+          final SmartList<String> names = new SmartList<String>();
+          if (value != null) {
+            final String[] moduleTypes = value.split(";");
+            for (String moduleType : moduleTypes) {
+              names.add(fqn + "#" + moduleType);
+            }
+          }
+          return names.toArray(new String[names.size()]);
+        }
+      }
+      return new String[]{ fqn };
     }
 
     public boolean process(ActionType type, XmlTag action) {
