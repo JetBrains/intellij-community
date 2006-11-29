@@ -1,18 +1,49 @@
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.CvsBundle;
 
 /**
  * author: lesya
  */
 public class UneditAction extends AsbtractActionFromEditGroup {
+  @Override
+  public void actionPerformed(final CvsContext context) {
+    VirtualFile[] selectedFiles = context.getSelectedFiles();
+    int modifiedFiles = 0;
+    VirtualFile firstModifiedFile = null;
+    for(VirtualFile file: selectedFiles) {
+      if (FileDocumentManager.getInstance().isFileModified(file)) {
+        if (firstModifiedFile == null) {
+          firstModifiedFile = file;
+        }
+        modifiedFiles++;
+      }
+    }
+    if (modifiedFiles > 0) {
+      String message;
+      if (modifiedFiles == 1) {
+        message = CvsBundle.message("unedit.confirmation.single", firstModifiedFile.getPresentableUrl());
+      }
+      else {
+        message = CvsBundle.message("unedit.confirmation.multiple", modifiedFiles);
+      }
+      if (Messages.showOkCancelDialog(context.getProject(), message, CvsBundle.message("unedit.confirmation.title"), Messages.getQuestionIcon()) != 0) {
+        return;
+      }
+    }
+    super.actionPerformed(context);
+  }
+
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("operation.name.unedit");
+    return CvsBundle.message("operation.name.unedit");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
