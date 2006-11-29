@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 
 public interface VcsHistoryProvider {
@@ -33,5 +34,6 @@ public interface VcsHistoryProvider {
   VcsHistorySession createSessionFor(FilePath filePath) throws VcsException;
 
   //return null if your revisions cannot be tree
+  @Nullable
   HistoryAsTreeProvider getTreeHistoryProvider();
 }
