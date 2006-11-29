@@ -195,16 +195,18 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
   @Nullable
   public QuickFix getQuickFix(final String hint) {
-    return myQuickFixes.get(hint);
+    return myQuickFixes != null ? myQuickFixes.get(hint) : null;
   }
 
 
   @Nullable
   public String getHint(final QuickFix fix) {
-    final List<String> list = myQuickFixes.getKeysByValue(fix);
-    if (list != null) {
-      LOG.assertTrue(list.size() == 1);
-      return list.get(0);
+    if (myQuickFixes != null) {
+      final List<String> list = myQuickFixes.getKeysByValue(fix);
+      if (list != null) {
+        LOG.assertTrue(list.size() == 1);
+        return list.get(0);
+      }
     }
     return null;
   }
