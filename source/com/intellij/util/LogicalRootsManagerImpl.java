@@ -47,9 +47,11 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   private final MultiValuesMap<LogicalRootType,NotNullFunction> myProviders = new MultiValuesMap<LogicalRootType, NotNullFunction>();
   private final MultiValuesMap<FileType,LogicalRootType> myFileTypes2RootTypes = new MultiValuesMap<FileType, LogicalRootType>();
   private ModuleManager myModuleManager;
+  private final Project myProject;
 
-  public LogicalRootsManagerImpl(final MessageBus bus, final ModuleManager moduleManager) {
+  public LogicalRootsManagerImpl(final MessageBus bus, final ModuleManager moduleManager, final Project project) {
     myModuleManager = moduleManager;
+    myProject = project;
 
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(ProjectTopics.LOGICAL_ROOTS, new LogicalRootListener() {
@@ -111,8 +113,8 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
   }
 
   @Nullable
-  public LogicalRoot getFileLogicalRoot(@NotNull final Project project, @NotNull final VirtualFile file) {
-    final Module module = ModuleUtil.findModuleForFile(file, project);
+  public LogicalRoot findLogicalRoot(@NotNull final VirtualFile file) {
+    final Module module = ModuleUtil.findModuleForFile(file, myProject);
     assert module != null;
 
     LogicalRoot result = null;

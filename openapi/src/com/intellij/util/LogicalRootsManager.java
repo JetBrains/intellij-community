@@ -38,7 +38,7 @@ public abstract class LogicalRootsManager implements ProjectComponent {
   }
 
   @Nullable
-  public abstract LogicalRoot getFileLogicalRoot(@NotNull final Project project, @NotNull final VirtualFile file);
+  public abstract LogicalRoot findLogicalRoot(@NotNull final VirtualFile file);
 
   public abstract List<LogicalRoot> getLogicalRoots(@NotNull final Module module);
 
