@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -89,21 +90,74 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
             }
             final PsiThisExpression thisExpression =
                     (PsiThisExpression)qualifierExpression;
-            if (thisExpression.getQualifier() != null) {
+            final PsiJavaCodeReferenceElement qualifier =
+                    thisExpression.getQualifier();
+            final String referenceName = expression.getReferenceName();
+            if (referenceName == null) {
                 return;
             }
-            if (expression.getParent() instanceof PsiCallExpression) {
-                // method calls are always in error
-                registerError(qualifierExpression);
-                return;
-            }
-            final String varName = expression.getReferenceName();
-            if (varName == null) {
-                return;
-            }
-            if (!VariableSearchUtils.existsLocalOrParameter(varName,
-                    expression)) {
+            final PsiElement parent = expression.getParent();
+            if (qualifier == null) {
+                if (parent instanceof PsiCallExpression) {
+                    // method calls are always in error
+                    registerError(qualifierExpression);
+                    return;
+                }
+                if (VariableSearchUtils.existsLocalOrParameter(referenceName,
+                        expression)) {
+                    return;
+                }
                 registerError(thisExpression);
+            } else {
+                final String qualifierName = qualifier.getReferenceName();
+                if (qualifierName == null) {
+                    return;
+                }
+                if (parent instanceof PsiCallExpression) {
+                    final PsiCallExpression callExpression =
+                            (PsiCallExpression) parent;
+                    final PsiMethod calledMethod =
+                            callExpression.resolveMethod();
+                    if (calledMethod == null) {
+                        return;
+                    }
+                    PsiClass parentClass = PsiTreeUtil.getParentOfType(
+                            expression, PsiClass.class);
+                    while (parentClass != null) {
+                        if (qualifierName.equals(parentClass.getName())) {
+                            registerError(thisExpression);
+                        }
+                        final PsiMethod method =
+                                parentClass.findMethodBySignature(calledMethod,
+                                        true);
+                        if (method != null) {
+                            return;
+                        }
+                        parentClass =
+                                PsiTreeUtil.getParentOfType(parentClass,
+                                        PsiClass.class);
+                    }
+                } else {
+                    if (VariableSearchUtils.existsLocalOrParameter(referenceName,
+                            expression)) {
+                        return;
+                    }
+                    PsiClass parentClass = PsiTreeUtil.getParentOfType(
+                            expression, PsiClass.class);
+                    while (parentClass != null) {
+                        if (qualifierName.equals(parentClass.getName())) {
+                            registerError(thisExpression);
+                        }
+                        final PsiField field =
+                                parentClass.findFieldByName(referenceName, true);
+                        if (field != null) {
+                            return;
+                        }
+                        parentClass =
+                                PsiTreeUtil.getParentOfType(parentClass,
+                                        PsiClass.class);
+                    }
+                }
             }
         }
     }
