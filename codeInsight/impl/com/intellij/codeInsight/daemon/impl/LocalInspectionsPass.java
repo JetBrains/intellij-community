@@ -103,7 +103,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                   LocalInspectionTool tool = tools[i];
                   PsiElementVisitor elementVisitor = tool.buildVisitor(holder, true);
                   for (PsiElement element : elements) {
-                    //progressManager.checkCanceled();
+                    progressManager.checkCanceled();
                     element.accept(elementVisitor);
                   }
                   //System.out.println("tool finished "+tool);

@@ -40,6 +40,7 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent imp
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
+    if (textRange == null) return null;
     return new GeneralHighlightingPass(file.getProject(), file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), false);
   }
 
@@ -49,35 +50,25 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent imp
     int part = FileStatusMap.NORMAL_HIGHLIGHTERS;
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
-    int startOffset;
-    int endOffset;
-    if (dirtyScope != null && dirtyScope.isValid()) {
-        PsiFile file = dirtyScope.getContainingFile();
-        if (file.getTextLength() != document.getTextLength()) {
-          LOG.error("Length wrong! dirtyScope:" + dirtyScope,
-                    "file length:" + file.getTextLength(),
-                    "document length:" + document.getTextLength(),
-                    "file stamp:" + file.getModificationStamp(),
-                    "document stamp:" + document.getModificationStamp(),
-                    "file text     :" + file.getText(),
-                    "document text:" + document.getText());
-        }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Dirty block optimization works");
-        }
-        TextRange range = dirtyScope.getTextRange();
-        startOffset = range.getStartOffset();
-        endOffset = range.getEndOffset();
+    if (dirtyScope == null || !dirtyScope.isValid()) {
+      return null;
     }
-    else {
-      /*
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Do not update highlighters - highlighters are up to date");
-      }
-      */
-      startOffset = Integer.MAX_VALUE;
-      endOffset = Integer.MIN_VALUE;
+    PsiFile file = dirtyScope.getContainingFile();
+    if (file.getTextLength() != document.getTextLength()) {
+      LOG.error("Length wrong! dirtyScope:" + dirtyScope,
+                "file length:" + file.getTextLength(),
+                "document length:" + document.getTextLength(),
+                "file stamp:" + file.getModificationStamp(),
+                "document stamp:" + document.getModificationStamp(),
+                "file text     :" + file.getText(),
+                "document text:" + document.getText());
     }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Dirty block optimization works");
+    }
+    TextRange range = dirtyScope.getTextRange();
+    int startOffset = range.getStartOffset();
+    int endOffset = range.getEndOffset();
     Rectangle rect = editor.getScrollingModel().getVisibleArea();
     LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));
 

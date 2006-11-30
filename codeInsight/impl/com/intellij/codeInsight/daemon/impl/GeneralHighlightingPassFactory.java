@@ -39,6 +39,7 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
+    if (textRange == null) return null;
     return new GeneralHighlightingPass(file.getProject(), file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true);
   }
 
@@ -48,31 +49,24 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
     int part = FileStatusMap.NORMAL_HIGHLIGHTERS;
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
-    int startOffset;
-    int endOffset;
-    if (dirtyScope != null && dirtyScope.isValid()) {
-        PsiFile file = dirtyScope.getContainingFile();
-        if (file.getTextLength() != document.getTextLength()) {
-          LOG.error("Length wrong! dirtyScope:" + dirtyScope,
-                    "file length:" + file.getTextLength(),
-                    "document length:" + document.getTextLength(),
-                    "file stamp:" + file.getModificationStamp(),
-                    "document stamp:" + document.getModificationStamp(),
-                    "file text     :" + file.getText(),
-                    "document text:" + document.getText());
-        }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Dirty block optimization works");
-        }
-        TextRange range = dirtyScope.getTextRange();
-        startOffset = range.getStartOffset();
-        endOffset = range.getEndOffset();
-    }
-    else {
-      startOffset = 0;
-      endOffset = document.getTextLength();
+    if (dirtyScope == null || !dirtyScope.isValid()) {
+      return null;
     }
 
-    return new TextRange(startOffset, endOffset);
+    PsiFile file = dirtyScope.getContainingFile();
+    if (file.getTextLength() != document.getTextLength()) {
+      LOG.error("Length wrong! dirtyScope:" + dirtyScope,
+                "file length:" + file.getTextLength(),
+                "document length:" + document.getTextLength(),
+                "file stamp:" + file.getModificationStamp(),
+                "document stamp:" + document.getModificationStamp(),
+                "file text     :" + file.getText(),
+                "document text:" + document.getText());
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Dirty block optimization works");
+    }
+    TextRange range = dirtyScope.getTextRange();
+    return range;
   }
 }
