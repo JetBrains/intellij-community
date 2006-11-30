@@ -77,12 +77,14 @@ public class InspectionProfileTest extends TestCase {
                                                     "    </server>\n" +
                                                     "  </used_levels>\n" +
                                                     "  <inspection_tool class=\"JavaDoc\" level=\"WARNING\" enabled=\"false\">\n" +
-                                                    "     <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
+                                                    "     <option name=\"FIELD_OPTIONS\">\n" +
                                                     "       <value>\n" +
-                                                    "         <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "         <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                                    "          <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                                    "          <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
                                                     "       </value>\n" +
                                                     "     </option>\n" +
+                                                    "     <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
+                                                    "     <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
                                                     "     <option name=\"INNER_CLASS_OPTIONS\">\n" +
                                                     "       <value>\n" +
                                                     "         <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
@@ -94,14 +96,12 @@ public class InspectionProfileTest extends TestCase {
                                                     "         <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
                                                     "         <option name=\"REQUIRED_TAGS\" value=\"@return@param@throws or @exception\" />\n" +
                                                     "       </value>\n" + "          </option>\n" +
-                                                    "     <option name=\"FIELD_OPTIONS\">\n" +
+                                                    "     <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
                                                     "       <value>\n" +
-                                                    "          <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
-                                                    "          <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
+                                                    "         <option name=\"ACCESS_JAVADOC_REQUIRED_FOR\" value=\"none\" />\n" +
+                                                    "         <option name=\"REQUIRED_TAGS\" value=\"\" />\n" +
                                                     "       </value>\n" +
                                                     "     </option>\n" +
-                                                    "     <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
-                                                    "     <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
                                                     "     <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
                                                     "  </inspection_tool>" +
                                                     "</inspections>");
