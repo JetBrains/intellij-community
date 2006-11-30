@@ -46,10 +46,18 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
 
     @NotNull
     protected String buildErrorString(Object... infos) {
+        final Integer problemType = (Integer)infos[1];
         final PsiNamedElement namedElement = (PsiNamedElement)infos[0];
         final String name = namedElement.getName();
-        return InspectionGadgetsBundle.message(
-                "type.parameter.extends.final.class.problem.descriptor", name);
+        if (problemType.intValue() == 1) {
+            return InspectionGadgetsBundle.message(
+                    "type.parameter.extends.final.class.problem.descriptor1",
+                    name);
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "type.parameter.extends.final.class.problem.descriptor2",
+                    name);
+        }
     }
 
     @Nullable
@@ -70,16 +78,34 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
                              ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            final PsiTypeParameter typeParameter =
-                    (PsiTypeParameter)element.getParent();
-            final PsiReferenceList extendsList = typeParameter.getExtendsList();
+            final PsiElement parent = element.getParent();
+            if (parent instanceof PsiTypeParameter) {
+                final PsiTypeParameter typeParameter =
+                        (PsiTypeParameter)parent;
+                replaceTypeParemeterAndReferencesWithType(typeParameter);
+            } else if (parent instanceof PsiTypeElement) {
+                final PsiTypeElement typeElement = (PsiTypeElement)parent;
+                final PsiElement lastChild = typeElement.getLastChild();
+                if (lastChild == null) {
+                    return;
+                }
+                typeElement.replace(lastChild);
+
+            }
+        }
+
+        private void replaceTypeParemeterAndReferencesWithType(
+                PsiTypeParameter typeParameter)
+                throws IncorrectOperationException {
+            final PsiReferenceList extendsList =
+                    typeParameter.getExtendsList();
             final PsiClassType[] referenceElements =
                     extendsList.getReferencedTypes();
             if (referenceElements.length < 1) {
                 return;
             }
             final PsiClass finalClass = referenceElements[0].resolve();
-            final PsiManager manager = element.getManager();
+            final PsiManager manager = typeParameter.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
             final PsiJavaCodeReferenceElement classReference =
                     factory.createClassReferenceElement(finalClass);
@@ -119,8 +145,31 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
             final PsiIdentifier nameIdentifier =
                     classParameter.getNameIdentifier();
             if (nameIdentifier != null) {
-                registerError(nameIdentifier, aClass);
+                registerError(nameIdentifier, aClass, Integer.valueOf(1));
             }
+        }
+
+        public void visitTypeElement(PsiTypeElement typeElement) {
+            super.visitTypeElement(typeElement);
+            final PsiType type = typeElement.getType();
+            if (!(type instanceof PsiWildcardType)) {
+                return;
+            }
+            final PsiWildcardType wildcardType = (PsiWildcardType)type;
+            final PsiType extendsBound = wildcardType.getExtendsBound();
+            if (!(extendsBound instanceof PsiClassType)) {
+                return;
+            }
+            final PsiClassType classType = (PsiClassType)extendsBound;
+            final PsiClass aClass = classType.resolve();
+            if (aClass == null) {
+                return;
+            }
+            if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
+                return;
+            }
+            registerError(typeElement.getFirstChild(),
+                    aClass, Integer.valueOf(2));
         }
     }
 }
