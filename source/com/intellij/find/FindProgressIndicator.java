@@ -1,6 +1,7 @@
 package com.intellij.find;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 
 /**
  * @author ven

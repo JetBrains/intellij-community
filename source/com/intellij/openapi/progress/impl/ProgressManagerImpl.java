@@ -1,6 +1,5 @@
 package com.intellij.openapi.progress.impl;
 
-import com.intellij.find.BackgroundableProcessIndicator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;

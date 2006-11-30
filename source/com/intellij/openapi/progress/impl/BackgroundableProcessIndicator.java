@@ -4,7 +4,7 @@
  * Date: Aug 20, 2006
  * Time: 8:40:15 PM
  */
-package com.intellij.find;
+package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.util.ProgressWindow;
