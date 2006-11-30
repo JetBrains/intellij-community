@@ -1,6 +1,6 @@
 package com.intellij.util.xmlb;
 
-public class XmlSerializationException extends Exception {
+public class XmlSerializationException extends RuntimeException {
 
     public XmlSerializationException() {
     }

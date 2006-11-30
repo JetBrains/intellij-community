@@ -3,6 +3,7 @@ package com.intellij.util.xmlb;
 import junit.framework.TestCase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -10,7 +11,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
@@ -24,7 +24,7 @@ public class XmlSerializerTest extends TestCase {
 
     public static class EmptyBean {}
     public void testEmptyBeanSerialization() throws Exception {
-        assertSerialization(
+        doSerializerTest(
                 "<EmptyBean/>",
                 new EmptyBean()
         );
@@ -33,7 +33,7 @@ public class XmlSerializerTest extends TestCase {
     @Tag(name="Bean")
     public static class  EmptyBeanWithCustomName {}
     public void testEmptyBeanSerializationWithCustomName() throws Exception {
-        assertSerialization(
+        doSerializerTest(
                 "<Bean/>",
                 new EmptyBeanWithCustomName()
         );
@@ -48,7 +48,7 @@ public class XmlSerializerTest extends TestCase {
     public void testPublicFieldSerialization() throws Exception {
         BeanWithPublicFields bean = new BeanWithPublicFields();
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields>",
                 bean
         );
@@ -56,7 +56,7 @@ public class XmlSerializerTest extends TestCase {
         bean.INT_V = 2;
         bean.STRING_V = "bye";
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithPublicFields><option name=\"INT_V\" value=\"2\"/><option name=\"STRING_V\" value=\"bye\"/></BeanWithPublicFields>",
                 bean
         );
@@ -69,7 +69,7 @@ public class XmlSerializerTest extends TestCase {
     public void testPublicFieldSerializationWithInheritance() throws Exception {
         BeanWithPublicFieldsDescendant bean = new BeanWithPublicFieldsDescendant();
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithPublicFieldsDescendant><option name=\"NEW_S\" value=\"foo\"/><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFieldsDescendant>",
                 bean
         );
@@ -78,7 +78,7 @@ public class XmlSerializerTest extends TestCase {
         bean.STRING_V = "bye";
         bean.NEW_S = "bar";
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithPublicFieldsDescendant><option name=\"NEW_S\" value=\"bar\"/><option name=\"INT_V\" value=\"2\"/><option name=\"STRING_V\" value=\"bye\"/></BeanWithPublicFieldsDescendant>",
                 bean
         );
@@ -90,14 +90,14 @@ public class XmlSerializerTest extends TestCase {
     }
     public void testSubBeanSerialization() throws Exception {
         BeanWithSubBean bean = new BeanWithSubBean();
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithSubBean><option name=\"BEAN1\"><Bean/></option><option name=\"BEAN2\"><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields></option></BeanWithSubBean>",
                 bean
         );
         bean.BEAN2.INT_V = 2;
         bean.BEAN2.STRING_V = "bye";
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithSubBean><option name=\"BEAN1\"><Bean/></option><option name=\"BEAN2\"><BeanWithPublicFields><option name=\"INT_V\" value=\"2\"/><option name=\"STRING_V\" value=\"bye\"/></BeanWithPublicFields></option></BeanWithSubBean>",
                 bean
         );
@@ -106,15 +106,15 @@ public class XmlSerializerTest extends TestCase {
     public void testNullFieldValue() throws Exception {
         BeanWithPublicFields bean1 = new BeanWithPublicFields();
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields>",
                 bean1
         );
 
         bean1.STRING_V = null;
 
-        assertSerialization(
-                "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/></BeanWithPublicFields>",
+        doSerializerTest(
+                "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\"/></BeanWithPublicFields>",
                 bean1
         );
 
@@ -122,51 +122,51 @@ public class XmlSerializerTest extends TestCase {
         bean2.BEAN1 = null;
         bean2.BEAN2 = null;
 
-        assertSerialization(
-                "<BeanWithSubBean/>",
+        doSerializerTest(
+                "<BeanWithSubBean><option name=\"BEAN1\"/><option name=\"BEAN2\"/></BeanWithSubBean>",
                 bean2
         );
 
     }
 
     public static class BeanWithList {
-        public List VALUES = Arrays.asList(new Object[] {"a", "b", "c"});
+        public List<String> VALUES = new ArrayList<String>(Arrays.asList(new String[] {"a", "b", "c"}));
     }
     public void testListSerialization() throws Exception {
         BeanWithList bean = new BeanWithList();
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithList><option name=\"VALUES\"><collection><option value=\"a\"/><option value=\"b\"/><option value=\"c\"/></collection></option></BeanWithList>",
                 bean
         );
 
-        bean.VALUES = Arrays.asList(new Object[] {"1", "2", "3"});
+        bean.VALUES = new ArrayList<String>(Arrays.asList(new String[] {"1", "2", "3"}));
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithList><option name=\"VALUES\"><collection><option value=\"1\"/><option value=\"2\"/><option value=\"3\"/></collection></option></BeanWithList>",
                 bean
         );
     }
 
     public static class BeanWithSet{
-        public Set VALUES = new HashSet(Arrays.asList(new Object[] {"a", "b", "w"}));
+        public Set<String> VALUES = new HashSet<String>(Arrays.asList(new String[] {"a", "b", "w"}));
     }
     public void testSetSerialization() throws Exception {
         BeanWithSet bean = new BeanWithSet();
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithSet><option name=\"VALUES\"><collection><option value=\"w\"/><option value=\"a\"/><option value=\"b\"/></collection></option></BeanWithSet>",
                 bean
         );
-        bean.VALUES = new HashSet(Arrays.asList(new Object[] {"1", "2", "3"}));
+        bean.VALUES = new HashSet<String>(Arrays.asList(new String[] {"1", "2", "3"}));
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithSet><option name=\"VALUES\"><collection><option value=\"3\"/><option value=\"2\"/><option value=\"1\"/></collection></option></BeanWithSet>",
                 bean
         );
     }
 
     public static class BeanWithMap{
-        public Map VALUES = new HashMap();
+        public Map<String, String> VALUES = new HashMap<String, String>();
         {
             VALUES.put("a", "1");
             VALUES.put("b", "2");
@@ -176,7 +176,7 @@ public class XmlSerializerTest extends TestCase {
 
     public void testMapSerialization() throws Exception {
         BeanWithMap bean = new BeanWithMap();
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithMap><option name=\"VALUES\"><map><entry key=\"a\" value=\"1\"/><entry key=\"c\" value=\"3\"/><entry key=\"b\" value=\"2\"/></map></option></BeanWithMap>",
                 bean
         );
@@ -185,7 +185,7 @@ public class XmlSerializerTest extends TestCase {
         bean.VALUES.put("2", "b");
         bean.VALUES.put("3", "c");
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithMap><option name=\"VALUES\"><map><entry key=\"3\" value=\"c\"/><entry key=\"2\" value=\"b\"/><entry key=\"1\" value=\"a\"/></map></option></BeanWithMap>",
                 bean
         );
@@ -206,14 +206,14 @@ public class XmlSerializerTest extends TestCase {
     public void testPropertySerialization() throws Exception {
         BeanWithProperty bean = new BeanWithProperty();
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithProperty><option name=\"name\" value=\"James\"/></BeanWithProperty>",
                 bean
         );
 
         bean.setName("Bond");
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithProperty><option name=\"name\" value=\"Bond\"/></BeanWithProperty>",
                 bean
         );
@@ -227,27 +227,47 @@ public class XmlSerializerTest extends TestCase {
     public void testFieldWithTagAnnotation() throws Exception {
         BeanWithFieldWithTagAnnotation bean = new BeanWithFieldWithTagAnnotation();
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithFieldWithTagAnnotation><name>hello</name></BeanWithFieldWithTagAnnotation>",
                 bean
         );
 
         bean.STRING_V = "bye";
 
-        assertSerialization(
+        doSerializerTest(
                 "<BeanWithFieldWithTagAnnotation><name>bye</name></BeanWithFieldWithTagAnnotation>",
                 bean
         );
     }
 
-    private void assertSerialization(String expectedText, Object bean)
-            throws ParserConfigurationException, TransformerException, XmlSerializationException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder documentBuilder = factory.newDocumentBuilder();
-        Document document = documentBuilder.newDocument();
+    public void testShuffledDeserialize() throws Exception {
+        BeanWithPublicFields bean = new BeanWithPublicFields();
+        bean.INT_V = 987;
+        bean.STRING_V = "1234";
 
-        Element element = XmlSerializer.serialize(bean, document);
-        document.appendChild(element);
+        Element element = serialize(bean);
+
+        Node node = element.getChildNodes().item(0);
+        element.removeChild(node);
+        element.appendChild(node);
+
+        bean = XmlSerializer.deserialize(element, bean.getClass());
+        assertEquals(987, bean.INT_V);
+        assertEquals("1234", bean.STRING_V);
+    }
+
+    private void doSerializerTest(String expectedText, Object bean)
+            throws ParserConfigurationException, TransformerException, XmlSerializationException {
+        Element element = assertSerializer(bean, expectedText, "Serialization failure");
+
+        //test deserializer
+
+        Object o = XmlSerializer.deserialize(element, bean.getClass());
+        assertSerializer(o, expectedText, "Deserialization failure");
+    }
+
+    private Element assertSerializer(Object bean, String expectedText, String message) throws ParserConfigurationException, XmlSerializationException, TransformerException {
+        Element element = serialize(bean);
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
@@ -262,6 +282,17 @@ public class XmlSerializerTest extends TestCase {
             if (actualString.startsWith(XML_PREFIX)) actualString = actualString.substring(XML_PREFIX.length()).trim();
         }
 
-        assertEquals(expectedText, actualString);
+        assertEquals(message, expectedText, actualString);
+        return element;
+    }
+
+    private Element serialize(Object bean) throws ParserConfigurationException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder documentBuilder = factory.newDocumentBuilder();
+        Document document = documentBuilder.newDocument();
+
+        Element element = XmlSerializer.serialize(bean, document);
+        document.appendChild(element);
+        return element;
     }
 }
