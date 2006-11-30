@@ -61,7 +61,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     action2.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
 
-    LocalInspectionsPass action3 = new LocalInspectionsPass(getProject(), getFile(), document, 0, getFile().getTextLength());
+    LocalInspectionsPass action3 = new LocalInspectionsPass(getProject(), getFile(), document, 0, getFile().getTextLength(),null);
     action3.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights3 = action3.getHighlights();
 

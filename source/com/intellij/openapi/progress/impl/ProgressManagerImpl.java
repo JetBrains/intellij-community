@@ -6,14 +6,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiLock;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +25,7 @@ import java.util.concurrent.*;
 public class ProgressManagerImpl extends ProgressManager implements ApplicationComponent {
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
-  private final HashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new HashMap<Thread, ProgressIndicator>();
+  private final ConcurrentHashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new ConcurrentHashMap<Thread, ProgressIndicator>();
 
   private static volatile boolean ourNeedToCheckCancel = false;
   private static volatile int ourLockedCheckCounter = 0;
@@ -128,34 +126,27 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   }
 
   public boolean hasProgressIndicator() {
-    synchronized (myThreadToIndicatorMap) {
-      return myThreadToIndicatorMap.size() != 0;
-    }
+    return !myThreadToIndicatorMap.isEmpty();
   }
 
   public boolean hasModalProgressIndicator() {
-    synchronized (myThreadToIndicatorMap) {
-      for (ProgressIndicator indicator : myThreadToIndicatorMap.values()) {
-        if (indicator.isModal()) {
-          return true;
-        }
+    for (ProgressIndicator indicator : myThreadToIndicatorMap.values()) {
+      if (indicator.isModal()) {
+        return true;
       }
-      return false;
     }
+    return false;
   }
 
   public void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     Thread currentThread = Thread.currentThread();
 
     ProgressIndicator oldIndicator;
-    synchronized (myThreadToIndicatorMap) {
-      oldIndicator = myThreadToIndicatorMap.get(currentThread);
-      if (progress != null) {
-        myThreadToIndicatorMap.put(currentThread, progress);
-      }
-      else{
-        myThreadToIndicatorMap.remove(currentThread);
-      }
+    if (progress == null) {
+      oldIndicator = myThreadToIndicatorMap.remove(currentThread);
+    }
+    else {
+      oldIndicator = myThreadToIndicatorMap.put(currentThread, progress);
     }
     synchronized (process) {
       process.notify();
@@ -170,26 +161,22 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
       if (progress != null && progress.isRunning()) {
         progress.stop();
       }
-      synchronized (myThreadToIndicatorMap) {
-        if (oldIndicator != null) {
-          myThreadToIndicatorMap.put(currentThread, oldIndicator);
-        }
-        else {
-          myThreadToIndicatorMap.remove(currentThread);
-        }
+      if (oldIndicator == null) {
+        myThreadToIndicatorMap.remove(currentThread);
+      }
+      else {
+        myThreadToIndicatorMap.put(currentThread, oldIndicator);
       }
     }
   }
 
-  public synchronized void progressMe(ProgressIndicator progress) {
+  public void progressMe(ProgressIndicator progress) {
     final Thread currentThread = Thread.currentThread();
     myThreadToIndicatorMap.put(currentThread, progress);
   }
 
   public ProgressIndicator getProgressIndicator() {
-    synchronized (myThreadToIndicatorMap) {
-      return myThreadToIndicatorMap.get(Thread.currentThread());
-    }
+    return myThreadToIndicatorMap.get(Thread.currentThread());
   }
 
   public boolean runProcessWithProgressSynchronously(Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
@@ -238,9 +225,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     };
 
     synchronized (process) {
-      synchronized(ourThreadExecutorsService) {
-        ourThreadExecutorsService.submit(action);
-      }
+      ourThreadExecutorsService.submit(action);
       try {
         process.wait();
       }

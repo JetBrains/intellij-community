@@ -5,9 +5,9 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -16,14 +16,15 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author max
@@ -47,6 +49,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private final Document myDocument;
   private final int myStartOffset;
   private final int myEndOffset;
+  private final ExecutorService myExecutorService;
   @NotNull private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
   @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
@@ -56,12 +59,14 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                               @NotNull PsiFile file,
                               @NotNull Document document,
                               int startOffset,
-                              int endOffset) {
+                              int endOffset,
+                              @Nullable ExecutorService executorService) {
     super(project, document);
     myFile = file;
     myDocument = document;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
+    myExecutorService = executorService;
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
@@ -74,93 +79,99 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private void inspectRoot() {
     if (!HighlightUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-    final Set<PsiElement> workSet = getWorkSet(myFile, myStartOffset, myEndOffset);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
 
-    final ProblemsHolder holder = new ProblemsHolder(iManager);
-    final List<Pair<LocalInspectionTool, PsiElementVisitor>> visitors = new ArrayList<Pair<LocalInspectionTool, PsiElementVisitor>>();
-    for (LocalInspectionTool tool : tools) {
-      final PsiElementVisitor visitor = tool.buildVisitor(holder, true);
-      if (visitor != null) {
-        LOG.assertTrue(!(visitor instanceof PsiRecursiveElementVisitor), "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive");
-        visitors.add(new Pair<LocalInspectionTool, PsiElementVisitor>(tool, visitor));
-      }
+    final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    final int chunkSize = Math.max(10, tools.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some inspections are faster than others
+    List<Runnable> inspectionChunks = new ArrayList<Runnable>();
+    final ProgressIndicator daemonIndicator = progressManager.getProgressIndicator();
+
+    for (int v = 0; v < tools.length; v+=chunkSize) {
+      final int index = v;
+      Runnable chunk = new Runnable() {
+        public void run() {
+          if (daemonIndicator != null) {
+            ((ProgressManagerImpl)progressManager).progressMe(daemonIndicator);
+          }
+          ApplicationManager.getApplication().runReadAction(new Runnable(){
+            public void run() {
+              ProblemsHolder holder = new ProblemsHolder(iManager);
+              try {
+                for (int i = index; i < index + chunkSize && i < tools.length; i++) {
+                  LocalInspectionTool tool = tools[i];
+                  PsiElementVisitor elementVisitor = tool.buildVisitor(holder, true);
+                  for (PsiElement element : elements) {
+                    //progressManager.checkCanceled();
+                    element.accept(elementVisitor);
+                  }
+                  //System.out.println("tool finished "+tool);
+                  if (holder.hasResults()) {
+                    appendDescriptors(holder.getResults(), tool);
+                  }
+                }
+              }
+              catch (ProcessCanceledException e) {
+                // cancel
+              }
+            }
+          });
+        }
+      };
+      inspectionChunks.add(chunk);
     }
 
-    for (PsiElement element : workSet) {
-      ProgressManager.getInstance().checkCanceled();
-      LocalInspectionTool currentTool = null;
-      try {
-        if (element instanceof PsiMethod) {
-          PsiMethod psiMethod = (PsiMethod)element;
-          for (LocalInspectionTool tool : tools) {
-            currentTool = tool;
-            if (GlobalInspectionContextImpl.isToCheckMember(psiMethod, currentTool.getID())) {
-              appendDescriptors(currentTool.checkMethod(psiMethod, iManager, true), currentTool);
-            }
-          }
-        }
-        else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-          PsiClass psiClass = (PsiClass)element;
-          for (LocalInspectionTool tool : tools) {
-            currentTool = tool;
-            if (GlobalInspectionContextImpl.isToCheckMember(psiClass, currentTool.getID())) {
-              appendDescriptors(currentTool.checkClass(psiClass, iManager, true), currentTool);
-            }
-          }
-        }
-        else if (element instanceof PsiField) {
-          PsiField psiField = (PsiField)element;
-          for (LocalInspectionTool tool : tools) {
-            currentTool = tool;
-            if (GlobalInspectionContextImpl.isToCheckMember(psiField, currentTool.getID())) {
-              appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
-            }
-          }
-        }
-        else if (element instanceof PsiFile) {
-          PsiFile psiFile = (PsiFile)element;
-          for (LocalInspectionTool tool : tools) {
-            currentTool = tool;
-            appendDescriptors(currentTool.checkFile(psiFile, iManager, true), currentTool);
-          }
-        }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        if (currentTool != null) {
-          LOG.error("Exception happened in local inspection tool: " + currentTool.getDisplayName(), e);
-        }
-        else {
-          LOG.error(e);
-        }
-      }
+    //final int chunkSize = Math.max(10, elements.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some elements are inspected faster
+    //for (int i = 0; i < elements.length; i += chunkSize) {
+    //  final int index = i;
+    //  Runnable chunk = new Runnable() {
+    //    public void run() {
+    //      ApplicationManager.getApplication().runReadAction(new Runnable(){
+    //        public void run() {
+    //          for (int j = index; j < index + chunkSize && j < elements.length; j++) {
+    //            progressManager.checkCanceled();
+    //            PsiElement element = elements[j];
+    //            //noinspection ForLoopReplaceableByForEach
+    //            for (int v = 0; v < visitors.size(); v++) {
+    //              Pair<LocalInspectionTool, PsiElementVisitor> visitor = visitors.get(v);
+    //              LocalInspectionTool tool = visitor.getFirst();
+    //              //LOG.debug("visiting inspection " + tool);
+    //              element.accept(visitor.getSecond());
+    //              appendDescriptors(holder.getResults(), tool);
+    //              //LOG.debug("finished inspection " + tool);
+    //            }
+    //          }
+    //        }
+    //      });
+    //    }
+    //  };
+    //  inspectionChunks.add(chunk);
+    //}
+    try {
+      invokeAll(inspectionChunks);
+    }
+    catch (ProcessCanceledException e) {
+      //ignore
+    }
+    catch (Throwable e) {
+      LOG.error(e);
     }
 
-    final List<PsiElement> elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
-    if (!visitors.isEmpty()) {
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < elements.size(); i++) {
-        PsiElement element = elements.get(i);
-        //noinspection ForLoopReplaceableByForEach
-        for (int j = 0; j < visitors.size(); j++) {
-          Pair<LocalInspectionTool, PsiElementVisitor> visitor = visitors.get(j);
-          element.accept(visitor.getSecond());
-          appendDescriptors(holder.getResults(), visitor.getFirst());
-        }
-      }
-    }
+    //for (PsiElement element : elements) {
+    //  //noinspection ForLoopReplaceableByForEach
+    //  for (int j = 0; j < visitors.size(); j++) {
+    //    Pair<LocalInspectionTool, PsiElementVisitor> visitor = visitors.get(j);
+    //    element.accept(visitor.getSecond());
+    //    appendDescriptors(holder.getResults(), visitor.getFirst());
+    //  }
+    //}
     inspectInjectedPsi(elements);
   }
 
-  private void inspectInjectedPsi(final List<PsiElement> elements) {
+  private void inspectInjectedPsi(final PsiElement[] elements) {
     myInjectedPsiInspectionResults = new SmartList<InjectedPsiInspectionUtil.InjectedPsiInspectionResult>();
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < elements.size(); i++) {
-      PsiElement element = elements.get(i);
+    for (PsiElement element : elements) {
       if (element instanceof PsiLanguageInjectionHost) {
         PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
         myInjectedPsiInspectionResults.addAll(InjectedPsiInspectionUtil.inspectInjectedPsi(host));
@@ -191,12 +202,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     return highlightInfo;
   }
 
-  private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
-    if (problemDescriptors == null) return;
-    appendDescriptors(Arrays.asList(problemDescriptors), tool);
-  }
-
-  private void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool) {
+  private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
@@ -205,7 +211,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool)) {
         myDescriptors.add(problemDescriptor);
         HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, tool, severity);
-
         myLevels.add(type);
         myTools.add(tool);
       }
@@ -213,20 +218,22 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private static HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor, final LocalInspectionTool tool,
-                                                    final HighlightSeverity severity) {
+  private static HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor,
+                                                               final LocalInspectionTool tool,
+                                                               final HighlightSeverity severity) {
     ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
     HighlightInfoType type = null;
-    if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING  || highlightType == ProblemHighlightType.J2EE_PROBLEM) {
+    if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING || highlightType == ProblemHighlightType.J2EE_PROBLEM) {
       type = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
     }
     else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       type = HighlightInfoType.DEPRECATED;
     }
     else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-      if (JavaDocReferenceInspection.SHORT_NAME.equals(tool.getShortName())){
+      if (JavaDocReferenceInspection.SHORT_NAME.equals(tool.getShortName())) {
         type = HighlightInfoType.JAVADOC_WRONG_REF;
-      } else {
+      }
+      else {
         type = HighlightInfoType.WRONG_REF;
       }
     }
@@ -370,7 +377,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     return message;
   }
 
-  public static List<PsiElement> getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
+  private static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
     final FileViewProvider viewProvider = file.getViewProvider();
     final Set<PsiElement> result = new THashSet<PsiElement>();
     for (Language language : viewProvider.getPrimaryLanguages()) {
@@ -379,38 +386,53 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         result.addAll(CodeInsightUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
       }
     }
-    return Arrays.asList(result.toArray(new PsiElement[result.size()]));
+    return result.toArray(new PsiElement[result.size()]);
   }
 
-  private static Set<PsiElement> getWorkSet(final PsiFile file, final int startOffset, final int endOffset) {
-    final TextRange targetRange = new TextRange(startOffset, endOffset);
-    final Set<PsiElement> workSet = new THashSet<PsiElement>();
-    final FileViewProvider viewProvider = file.getViewProvider();
-    for (Language language : viewProvider.getPrimaryLanguages()) {
-      final PsiFile psiRoot = viewProvider.getPsi(language);
-      psiRoot.accept(new PsiRecursiveElementVisitor() {
-        public void visitMethod(PsiMethod method) {
-          processTarget(method);
-        }
-
-        public void visitClass(PsiClass aClass) {
-          processTarget(aClass);
-        }
-
-        public void visitField(PsiField field) {
-          processTarget(field);
-        }
-
-        private void processTarget(PsiMember member) {
-          final TextRange range = member.getTextRange();
-          if (targetRange.intersects(range)) {
-            workSet.add(member);
-            member.acceptChildren(this);
+  /**
+   * invokes and waits all tasks using threadPool, avoiding thread starvation on the way
+   * @lookat http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
+   */
+  private void invokeAll(@NotNull Collection<Runnable> tasks) throws Throwable {
+    if (myExecutorService == null) {
+      for (Runnable task : tasks) {
+        task.run();
+      }
+      return;
+    }
+    List<Future<Object>> futures = new ArrayList<Future<Object>>(tasks.size());
+    boolean done = false;
+    try {
+      for (Runnable t : tasks) {
+        FutureTask<Object> f = new FutureTask<Object>(t,null);
+        futures.add(f);
+        myExecutorService.execute(f);
+      }
+      // force unstarted futures to execute using the current thread
+      for (Future<Object> f : futures) ((FutureTask)f).run();
+      for (Future<Object> f : futures) {
+        if (!f.isDone()) {
+          try {
+            f.get();
+          }
+          catch (CancellationException ignore) {
+          }
+          catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause != null) {
+              throw cause;
+            }
           }
         }
-      });
-      workSet.add(psiRoot);
+      }
+      done = true;
     }
-    return workSet;
+    finally {
+      if (!done) {
+        for (Future<Object> f : futures) {
+          f.cancel(false);
+        }
+      }
+    }
   }
 }

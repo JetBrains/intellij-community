@@ -82,10 +82,37 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  @Nullable
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return null;
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    return new PsiElementVisitor() {
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      }
+
+      public void visitMethod(PsiMethod method) {
+        addDescriptors(checkMethod(method, holder.getManager(), isOnTheFly));
+      }
+
+      public void visitClass(PsiClass aClass) {
+        addDescriptors(checkClass(aClass, holder.getManager(), isOnTheFly));
+      }
+
+      public void visitField(PsiField field) {
+        addDescriptors(checkField(field, holder.getManager(), isOnTheFly));
+      }
+
+      public void visitFile(PsiFile file) {
+        addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
+      }
+      private void addDescriptors(final ProblemDescriptor[] descriptors) {
+        if (descriptors != null) {
+          for (ProblemDescriptor descriptor : descriptors) {
+            holder.registerProblem(descriptor);
+          }
+        }
+      }
+    };
   }
+
 
   /**
    * @return descriptive name to be used in "suppress" comments and annotations,
@@ -94,5 +121,4 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @NonNls @NotNull public String getID() {
     return getShortName();
   }
-
 }

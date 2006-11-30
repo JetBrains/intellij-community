@@ -28,9 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PassExecutorService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService");
   public static int PROCESSORS = Runtime.getRuntime().availableProcessors();
-  private final ExecutorService myExecutorService = Executors.newFixedThreadPool(PROCESSORS, new ThreadFactory() {
+  private final ExecutorService myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
     public Thread newThread(Runnable r) {
-      Thread t = new Thread(r);
+      Thread t = new Thread(r,"Highlighting thread "+r);
       t.setPriority(Thread.MIN_PRIORITY);
       return t;
     }
@@ -39,7 +39,6 @@ public class PassExecutorService {
   private final ProgressIndicator myUpdateProgress;
   private final Project myProject;
   private final AtomicInteger myThreadsToExecuteCountdown = new AtomicInteger();
-  private ExecutorService myDaemonExecutorService;
 
   public PassExecutorService(ProgressIndicator daemonProgress, Project project) {
     myUpdateProgress = daemonProgress;
@@ -159,7 +158,7 @@ public class PassExecutorService {
   }
 
   public ExecutorService getDaemonExecutorService() {
-    return myDaemonExecutorService;
+    return myExecutorService;
   }
 
   private class ScheduledPass implements Runnable {

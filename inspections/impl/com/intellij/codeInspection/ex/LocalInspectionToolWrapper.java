@@ -6,14 +6,12 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefManagerImpl;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -44,55 +42,12 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
     file.accept(new PsiRecursiveElementVisitor() {
       public void visitElement(PsiElement element) {
-        if (customVisitor != null) {
-          element.accept(customVisitor);
-        }
-
+        element.accept(customVisitor);
         super.visitElement(element);
       }
 
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
-      }
-
-      @Override
-      public void visitJspFile(JspFile file) {
-        final FileViewProvider viewProvider = file.getViewProvider();
-        final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
-        for (Language language : relevantLanguages) {
-          visitElement(viewProvider.getPsi(language));
-        }
-      }
-
-      public void visitField(PsiField field) {
-        super.visitField(field);
-        if (!filterSuppressed || !getContext().isSuppressed(field, myTool.getID())) {
-          ProblemDescriptor[] problemDescriptions = myTool.checkField(field, manager, false);
-          addProblemDescriptors(field, problemDescriptions, filterSuppressed);
-        }
-      }
-
-      public void visitClass(PsiClass aClass) {
-        super.visitClass(aClass);
-        if (!filterSuppressed || !getContext().isSuppressed(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
-          ProblemDescriptor[] problemDescriptions = myTool.checkClass(aClass, manager, false);
-          addProblemDescriptors(aClass, problemDescriptions, filterSuppressed);
-        }
-      }
-
-
-      public void visitMethod(PsiMethod method) {
-        super.visitMethod(method);
-        if (!filterSuppressed || !getContext().isSuppressed(method, myTool.getID())) {
-          ProblemDescriptor[] problemDescriptions = myTool.checkMethod(method, manager, false);
-          addProblemDescriptors(method, problemDescriptions, filterSuppressed);
-        }
-      }
-
-      public void visitFile(PsiFile file) {
-        super.visitFile(file);
-        ProblemDescriptor[] problemDescriptions = myTool.checkFile(file, manager, false);
-        addProblemDescriptors(file, problemDescriptions, filterSuppressed);
       }
     });
 

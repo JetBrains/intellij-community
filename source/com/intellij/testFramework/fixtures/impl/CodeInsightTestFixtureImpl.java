@@ -384,7 +384,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
     Collection<HighlightInfo> highlights3 = null;
     if (myAvailableTools.size() > 0) {
-      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(project, myFile, myEditor.getDocument(), 0, myFile.getTextLength());
+      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(project, myFile, myEditor.getDocument(), 0, myFile.getTextLength(),null);
       inspectionsPass.doCollectInformation(new MockProgressIndicator());
       highlights3 = inspectionsPass.getHighlights();
     }

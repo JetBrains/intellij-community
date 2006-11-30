@@ -41,6 +41,10 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     public int[] errorCount = new int[SeverityRegistrar.getSeveritiesCount()];
     public String [] noInspectionRoots;
     public int rootsNumber;
+
+    public String toString() {
+      return !errorAnalyzingFinished ? "syntaxing" : !inspectionFinished ? "inspecting" : "finshed";
+    }
   }
 
   protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {

@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ExecutorService;
+
 /**
  * @author cdr
 */
@@ -37,7 +39,8 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
-    return new LocalInspectionsPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset());
+    ExecutorService executorService = DaemonCodeAnalyzer.getInstance(myProject).getDaemonExecutorService();
+    return new LocalInspectionsPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(),executorService);
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {

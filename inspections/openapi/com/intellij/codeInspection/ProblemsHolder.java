@@ -38,10 +38,8 @@ public class ProblemsHolder {
   }
 
   public void registerProblem(PsiElement psiElement, String descriptionTemplate, ProblemHighlightType highlightType, LocalQuickFix... fixes) {
-    if (myProblems == null) {
-      myProblems = new ArrayList<ProblemDescriptor>(1);
-    }
-    myProblems.add(myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType));
+    ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType);
+    registerProblem(descriptor);
   }
 
   public void registerProblem(ProblemDescriptor problemDescriptor) {
@@ -60,5 +58,8 @@ public class ProblemsHolder {
 
   public final InspectionManager getManager() {
     return myManager;
+  }
+  public boolean hasResults() {
+    return myProblems != null && !myProblems.isEmpty();
   }
 }
