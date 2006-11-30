@@ -12,13 +12,13 @@ class MapBinding implements Binding {
     private Binding valueBinding;
 
 
-    public MapBinding(ParameterizedType type) {
+    public MapBinding(ParameterizedType type, XmlSerializer serializer) {
         Type[] arguments = type.getActualTypeArguments();
         Type keyType = arguments[0];
         Type valueType = arguments[1];
 
-        keyBinding = XmlSerializer.getBinding(keyType);
-        valueBinding = XmlSerializer.getBinding(valueType);
+        keyBinding = serializer.getBinding(keyType);
+        valueBinding = serializer.getBinding(valueType);
     }
 
     public Node serialize(Object o, Node context) {

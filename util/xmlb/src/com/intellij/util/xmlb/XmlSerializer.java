@@ -14,14 +14,28 @@ import java.util.Map;
  * @author mike
  */
 public class XmlSerializer {
-    private Document document;
+    private static final SerializationFilter TRUE_FILTER = new SerializationFilter() {
+        public boolean accepts(Accessor accessor, Object bean) {
+            return true;
+        }
+    };
 
-    private XmlSerializer(Document document) {
+    private Document document;
+    private SerializationFilter filter;
+
+
+    public XmlSerializer(Document document, SerializationFilter filter) {
         this.document = document;
+        this.filter = filter;
     }
 
     public static Element serialize(Object object, Document document) throws XmlSerializationException {
-        return new XmlSerializer(document).serialize(object);
+        return serialize(object, document, TRUE_FILTER);
+    }
+
+    public static Element serialize(Object object, Document document, SerializationFilter filter) throws XmlSerializationException {
+        if (filter == null) filter = TRUE_FILTER;
+        return new XmlSerializer(document, filter).serialize(object);
     }
 
     private Element serialize(Object object) throws XmlSerializationException {
@@ -32,12 +46,12 @@ public class XmlSerializer {
         }
     }
 
-    static Binding getValueBinding(Object value) {
+    Binding getValueBinding(Object value) {
         Class<?> aClass = value.getClass();
         return getBinding(aClass);
     }
 
-    static Binding getBinding(Type type) {
+    Binding getBinding(Type type) {
         if (type instanceof Class) {
             //noinspection unchecked
             return _getClassBinding((Class<?>) type, type);
@@ -53,14 +67,14 @@ public class XmlSerializer {
         throw new UnsupportedOperationException("Can't get binding for: " + type);
     }
 
-    private static Binding _getClassBinding(Class<?> aClass, Type originalType) {
+    private Binding _getClassBinding(Class<?> aClass, Type originalType) {
         if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
         if (Number.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
         if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
-        if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType) originalType);
-        if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType) originalType);
+        if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType) originalType, this);
+        if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType) originalType, this);
 
-        return new BeanToTagBinding(aClass);
+        return new BeanBinding(aClass, this);
     }
 
     @SuppressWarnings({"unchecked"})
@@ -76,7 +90,8 @@ public class XmlSerializer {
     @SuppressWarnings({"unchecked"})
     public static <T> T deserialize(Element element, Class<T> aClass) throws XmlSerializationException {
         try {
-            return (T) getBinding(aClass).deserialize(null, element);
+            XmlSerializer serializer = new XmlSerializer(element.getOwnerDocument(), TRUE_FILTER);
+            return (T) serializer.getBinding(aClass).deserialize(null, element);
         }
         catch (Exception e) {
             throw new XmlSerializationException(e);
@@ -96,10 +111,10 @@ public class XmlSerializer {
         throw new XmlSerializationException("Can't covert " + value.getClass() + " into " + type);
     }
 
-    static Binding createBindingByAccessor(Accessor accessor) {
+    Binding createBindingByAccessor(Accessor accessor) {
         Tag tag = findAnnotation(accessor.getAnnotations(), Tag.class);
-        if (tag != null) return new TagBinding(accessor, tag);
-        return new OptionTagBinding(accessor);
+        if (tag != null) return new TagBinding(accessor, tag, this);
+        return new OptionTagBinding(accessor, this);
     }
 
 
@@ -108,4 +123,7 @@ public class XmlSerializer {
         return context.getOwnerDocument();
     }
 
+    public SerializationFilter getFilter() {
+        return filter;
+    }
 }

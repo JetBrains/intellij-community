@@ -7,10 +7,10 @@ class OptionTagBinding implements Binding {
     private String myName;
     private Binding myBinding;
 
-    public OptionTagBinding(Accessor accessor) {
+    public OptionTagBinding(Accessor accessor, XmlSerializer xmlSerializer) {
         this.accessor = accessor;
         myName = accessor.getName();
-        myBinding = XmlSerializer.getBinding(accessor.getGenericType());
+        myBinding = xmlSerializer.getBinding(accessor.getGenericType());
     }
 
     public Node serialize(Object o, Node context) {

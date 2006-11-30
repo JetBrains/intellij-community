@@ -9,10 +9,10 @@ class TagBinding implements Binding {
     private String myTagName;
     private Binding binding;
 
-    public TagBinding(Accessor accessor, Tag tagAnnotation) {
+    public TagBinding(Accessor accessor, Tag tagAnnotation, XmlSerializer xmlSerializer) {
         this.accessor = accessor;
         myTagName = tagAnnotation.name();
-        binding = XmlSerializer.getBinding(accessor.getValueClass());
+        binding = xmlSerializer.getBinding(accessor.getValueClass());
     }
 
     public Node serialize(Object o, Node context) {

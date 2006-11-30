@@ -70,7 +70,7 @@ public class XmlSerializerTest extends TestCase {
         BeanWithPublicFieldsDescendant bean = new BeanWithPublicFieldsDescendant();
 
         doSerializerTest(
-                "<BeanWithPublicFieldsDescendant><option name=\"NEW_S\" value=\"foo\"/><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFieldsDescendant>",
+                "<BeanWithPublicFieldsDescendant><option name=\"INT_V\" value=\"1\"/><option name=\"NEW_S\" value=\"foo\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFieldsDescendant>",
                 bean
         );
 
@@ -79,7 +79,7 @@ public class XmlSerializerTest extends TestCase {
         bean.NEW_S = "bar";
 
         doSerializerTest(
-                "<BeanWithPublicFieldsDescendant><option name=\"NEW_S\" value=\"bar\"/><option name=\"INT_V\" value=\"2\"/><option name=\"STRING_V\" value=\"bye\"/></BeanWithPublicFieldsDescendant>",
+                "<BeanWithPublicFieldsDescendant><option name=\"INT_V\" value=\"2\"/><option name=\"NEW_S\" value=\"bar\"/><option name=\"STRING_V\" value=\"bye\"/></BeanWithPublicFieldsDescendant>",
                 bean
         );
     }
@@ -245,7 +245,7 @@ public class XmlSerializerTest extends TestCase {
         bean.INT_V = 987;
         bean.STRING_V = "1234";
 
-        Element element = serialize(bean);
+        Element element = serialize(bean, null);
 
         Node node = element.getChildNodes().item(0);
         element.removeChild(node);
@@ -256,18 +256,35 @@ public class XmlSerializerTest extends TestCase {
         assertEquals("1234", bean.STRING_V);
     }
 
+    public void testFilterSerializer() throws Exception {
+        BeanWithPublicFields bean = new BeanWithPublicFields();
+        assertSerializer(
+                bean,
+                "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/></BeanWithPublicFields>",
+                new SerializationFilter() {
+                    public boolean accepts(Accessor accessor, Object bean) {
+                        return accessor.getName().startsWith("I");
+                    }
+                }
+        );
+    }
+
+    private void assertSerializer(Object bean, String expected, SerializationFilter filter) throws TransformerException, ParserConfigurationException {
+        assertSerializer(bean, expected, "Serialization failure", filter);
+    }
+
     private void doSerializerTest(String expectedText, Object bean)
             throws ParserConfigurationException, TransformerException, XmlSerializationException {
-        Element element = assertSerializer(bean, expectedText, "Serialization failure");
+        Element element = assertSerializer(bean, expectedText, "Serialization failure", null);
 
         //test deserializer
 
         Object o = XmlSerializer.deserialize(element, bean.getClass());
-        assertSerializer(o, expectedText, "Deserialization failure");
+        assertSerializer(o, expectedText, "Deserialization failure", null);
     }
 
-    private Element assertSerializer(Object bean, String expectedText, String message) throws ParserConfigurationException, XmlSerializationException, TransformerException {
-        Element element = serialize(bean);
+    private Element assertSerializer(Object bean, String expectedText, String message, SerializationFilter filter) throws ParserConfigurationException, XmlSerializationException, TransformerException {
+        Element element = serialize(bean, filter);
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
@@ -283,15 +300,17 @@ public class XmlSerializerTest extends TestCase {
         }
 
         assertEquals(message, expectedText, actualString);
+
         return element;
     }
 
-    private Element serialize(Object bean) throws ParserConfigurationException {
+
+    private Element serialize(Object bean, SerializationFilter filter) throws ParserConfigurationException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder = factory.newDocumentBuilder();
         Document document = documentBuilder.newDocument();
 
-        Element element = XmlSerializer.serialize(bean, document);
+        Element element = XmlSerializer.serialize(bean, document, filter);
         document.appendChild(element);
         return element;
     }

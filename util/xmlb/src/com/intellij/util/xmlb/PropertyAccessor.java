@@ -55,10 +55,6 @@ class PropertyAccessor implements Accessor {
         return myPropertyDescriptor.getName();
     }
 
-    public Binding createBinding() {
-        return XmlSerializer.createBindingByAccessor(this);
-    }
-
     public Class<?> getValueClass() {
         return myPropertyDescriptor.getPropertyType();
     }

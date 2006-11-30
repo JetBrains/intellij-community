@@ -35,10 +35,6 @@ class FieldAccessor implements Accessor {
         return myField.getName();
     }
 
-    public Binding createBinding() {
-        return XmlSerializer.createBindingByAccessor(this);
-    }
-
     public Class<?> getValueClass() {
         return myField.getType();
     }

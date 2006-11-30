@@ -12,11 +12,11 @@ import java.util.Collection;
 class CollectionBinding implements Binding {
     private Binding elementBinding;
 
-    public CollectionBinding(ParameterizedType type) {
+    public CollectionBinding(ParameterizedType type, XmlSerializer xmlSerializer) {
         Type[] arguments = type.getActualTypeArguments();
         Type elementType = arguments[0];
 
-        elementBinding = XmlSerializer.getBinding(elementType);
+        elementBinding = xmlSerializer.getBinding(elementType);
 
         if (!elementBinding.getBoundNodeType().isAssignableFrom(Element.class)) {
             elementBinding = new OptionTagBindingWrapper(elementBinding);

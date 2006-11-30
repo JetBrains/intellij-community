@@ -11,32 +11,29 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
-class BeanToTagBinding implements Binding {
+class BeanBinding implements Binding {
     private String myTagName;
-    private Binding[] myPropertyBindings;
+    private Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
     private Class<?> myBeanClass;
+    private SerializationFilter filter;
+    private XmlSerializer serializer;
 
-    public BeanToTagBinding(Class<?> beanClass) {
+    public BeanBinding(Class<?> beanClass, XmlSerializer serializer) {
         this.myBeanClass = beanClass;
+        this.filter = serializer.getFilter();
+        this.serializer = serializer;
         myTagName = getTagName(beanClass);
-        myPropertyBindings = getPropertyBindings(beanClass);
+        initPropertyBindings(beanClass);
     }
 
-    private Binding[] getPropertyBindings(Class<?> beanClass) {
-        List<Binding> bindings = new ArrayList<Binding>();
+    private void initPropertyBindings(Class<?> beanClass) {
         Accessor[] accessors = getAccessors(beanClass);
 
         for (Accessor accessor : accessors) {
-            bindings.add(accessor.createBinding());
+            myPropertyBindings.put(serializer.createBindingByAccessor(accessor), accessor);
         }
-
-        return bindings.toArray(new Binding[bindings.size()]);
-
     }
 
     public Node serialize(Object o, Node context) {
@@ -44,7 +41,20 @@ class BeanToTagBinding implements Binding {
         assert ownerDocument != null;
         Element element = ownerDocument.createElement(myTagName);
 
-        for (Binding binding : myPropertyBindings) {
+        ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
+
+        Collections.sort(bindings, new Comparator<Binding>() {
+            public int compare(Binding b1, Binding b2) {
+                Accessor a1 = myPropertyBindings.get(b1);
+                Accessor a2 = myPropertyBindings.get(b2);
+                return a1.getName().compareTo(a2.getName());
+            }
+        });
+
+        for (Binding binding : bindings) {
+            Accessor accessor = myPropertyBindings.get(binding);
+            if (!filter.accepts(accessor, o)) continue;
+
             Node node = binding.serialize(o, element);
             if (node != element) {
                 element.appendChild(node);
@@ -60,7 +70,7 @@ class BeanToTagBinding implements Binding {
         assert node instanceof Element : "Wrong node: " + node;
         Element e = (Element) node;
 
-        ArrayList<Binding> bindings = new ArrayList<Binding>(Arrays.asList(myPropertyBindings));
+        ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
 
         NodeList childNodes = e.getChildNodes();
         nextNode: for (int i = 0; i < childNodes.getLength(); i++) {

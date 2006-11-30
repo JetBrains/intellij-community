@@ -11,9 +11,6 @@ interface Accessor {
 
     String getName();
 
-    //todo: remove (inline)
-    Binding createBinding();
-
     Class<?> getValueClass();
     Type getGenericType();
 }
