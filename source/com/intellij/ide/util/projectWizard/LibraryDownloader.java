@@ -5,7 +5,6 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.javaee.J2EEBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -77,7 +76,7 @@ public class LibraryDownloader {
             currentLibrary.set(info);
             if (indicator != null) {
               indicator.checkCanceled();
-              indicator.setText(J2EEBundle.message("progress.0.of.1.file.downloaded.text", i, myLibraryInfos.length));
+              indicator.setText(IdeBundle.message("progress.0.of.1.file.downloaded.text", i, myLibraryInfos.length));
             }
 
             final VirtualFile existing = dir.findChild(getExpectedFileName(info));
@@ -95,14 +94,14 @@ public class LibraryDownloader {
           exception[0] = e;
         }
       }
-    }, J2EEBundle.message("progress.download.libraries.title"), true, myProject);
+    }, IdeBundle.message("progress.download.libraries.title"), true, myProject);
 
     if (exception[0] == null) {
       try {
         return moveToDir(existingFiles, downloadedFiles, dir);
       }
       catch (IOException e) {
-        final String title = J2EEBundle.message("progress.download.libraries.title");
+        final String title = IdeBundle.message("progress.download.libraries.title");
         if (myProject != null) {
           Messages.showErrorDialog(myProject, title, e.getMessage());
         }
@@ -115,12 +114,12 @@ public class LibraryDownloader {
 
     deleteFiles(downloadedFiles);
     if (exception[0] instanceof IOException) {
-      String message = J2EEBundle.message("error.library.download.failed");
+      String message = IdeBundle.message("error.library.download.failed");
       if (currentLibrary.get() != null) {
         message += ": " + currentLibrary.get().getDownloadingUrl();
       }
       final boolean tryAgain = IOExceptionDialog.showErrorDialog((IOException)exception[0],
-                                                                 J2EEBundle.message("progress.download.libraries.title"), message);
+                                                                 IdeBundle.message("progress.download.libraries.title"), message);
       if (tryAgain) {
         return doDownload(dir);
       }
@@ -130,7 +129,7 @@ public class LibraryDownloader {
 
   private @Nullable VirtualFile chooseDirectoryForLibraries() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle(J2EEBundle.message("dialog.directory.for.libraries.title"));
+    descriptor.setTitle(IdeBundle.message("dialog.directory.for.libraries.title"));
 
     final VirtualFile[] files;
     if (myProject != null) {
@@ -202,7 +201,7 @@ public class LibraryDownloader {
     if (url == null) return true;
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    indicator.setText2(J2EEBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName(), libraryInfo.getPresentableUrl()));
+    indicator.setText2(IdeBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName(), libraryInfo.getPresentableUrl()));
     File tempFile = null;
     HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 

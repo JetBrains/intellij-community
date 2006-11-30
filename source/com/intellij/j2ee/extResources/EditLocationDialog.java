@@ -1,5 +1,6 @@
 package com.intellij.j2ee.extResources;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -7,7 +8,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.javaee.J2EEBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,9 +31,9 @@ public class EditLocationDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myShowPath = showPath;
-    myTitle = J2EEBundle.message("dialog.title.external.resource");
-    myName = J2EEBundle.message("label.edit.external.resource.uri");
-    myLocation = J2EEBundle.message("label.edit.external.resource.path");
+    myTitle = IdeBundle.message("dialog.title.external.resource");
+    myName = IdeBundle.message("label.edit.external.resource.uri");
+    myLocation = IdeBundle.message("label.edit.external.resource.path");
     init();
   }
 
