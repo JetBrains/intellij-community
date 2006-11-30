@@ -53,7 +53,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.*;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
@@ -87,6 +87,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
   @NonNls private static final String NULL_STR = "null";
   @NonNls private static final String XML_EXTENSION = ".xml";
+
+  private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
+    10,
+    Integer.MAX_VALUE,
+    60L,
+    TimeUnit.SECONDS,
+    new LinkedBlockingQueue<Runnable>(),
+    new ThreadFactory() {
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "ApplicationImpl pooled thread");
+      }
+    }
+  );
+
 
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, String appName) {
     if (isInternal || isUnitTestMode) {
@@ -241,6 +255,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public IdeaPluginDescriptor[] getPlugins() {
     return PluginsFacade.INSTANCE.getPlugins();
+  }
+
+  public Future<?> executeOnPooledThread(Runnable action) {
+    synchronized(ourThreadExecutorsService) {
+      return ourThreadExecutorsService.submit(action);
+    }
   }
 
   private static Thread ourDispatchThread = null;
@@ -433,6 +453,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       disposeComponents();
     }
 
+    ourThreadExecutorsService.shutdownNow();
     super.dispose();
   }
 

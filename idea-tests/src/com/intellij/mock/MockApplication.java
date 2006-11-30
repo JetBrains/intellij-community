@@ -19,6 +19,7 @@ import org.picocontainer.PicoContainer;
 import java.awt.*;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.concurrent.Future;
 
 public class MockApplication extends UserDataHolderBase implements ApplicationEx {
   private final MessageBus myMessageBus = Messages.newMessageBus();
@@ -85,6 +86,11 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
 
   public boolean isDisposed() {
     return false;
+  }
+
+  public Future<?> executeOnPooledThread(Runnable action) {
+    new Thread(action).start();
+    return null; // ?
   }
 
   public BaseComponent getComponent(String name) {

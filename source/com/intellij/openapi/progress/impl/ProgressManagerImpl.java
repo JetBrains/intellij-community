@@ -29,18 +29,6 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   private static volatile boolean ourNeedToCheckCancel = false;
   private static volatile int ourLockedCheckCounter = 0;
   private List<ProgressFunComponentProvider> myFunComponentProviders = new ArrayList<ProgressFunComponentProvider>();
-  private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
-    1,
-    Integer.MAX_VALUE,
-    60L,
-    TimeUnit.SECONDS,
-    new LinkedBlockingQueue<Runnable>(),
-    new ThreadFactory() {
-      public Thread newThread(Runnable r) {
-        return new Thread(r, "Process with progress");
-      }
-    }
-  );
 
   public ProgressManagerImpl(Application application) {
     if (!application.isUnitTestMode() && !Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled")) {
@@ -121,7 +109,6 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
   public void initComponent() { }
 
   public void disposeComponent() {
-    ourThreadExecutorsService.shutdownNow();
   }
 
   public boolean hasProgressIndicator() {
@@ -224,7 +211,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     };
 
     synchronized (process) {
-      ourThreadExecutorsService.submit(action);
+      ApplicationManager.getApplication().executeOnPooledThread(action);
       try {
         process.wait();
       }

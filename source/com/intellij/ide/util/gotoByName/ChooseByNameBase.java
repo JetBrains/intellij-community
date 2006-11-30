@@ -547,7 +547,7 @@ public abstract class ChooseByNameBase{
 
             myCalcElementsThread = new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState);
             myCalcElementsThread.setCanCancel(postRunnable == null);
-            myCalcElementsThread.start();
+            ApplicationManager.getApplication().executeOnPooledThread(myCalcElementsThread);
           }
         };
 
@@ -851,7 +851,7 @@ public abstract class ChooseByNameBase{
 
   private static final String EXTRA_ELEM = "...";
 
-  private class CalcElementsThread extends Thread {
+  private class CalcElementsThread implements Runnable {
     private final String myPattern;
     private boolean myCheckboxState;
     private final CalcElementsCallback myCallback;

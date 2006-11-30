@@ -166,7 +166,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     final String url = findUrl(file, offset, uri);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      new Thread(new Runnable() {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           while(true) {
             try {
@@ -224,7 +224,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
             break; // success fetching
           }
         }
-      }, FETCHING_THREAD_ID).start();
+      });
     }
   }
 

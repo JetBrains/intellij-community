@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.concurrent.Future;
 
 /**
  * Provides access to core application-wide functionality and methods for working with the IDEA
@@ -247,4 +248,11 @@ public interface Application extends ComponentManager {
   IdeaPluginDescriptor[] getPlugins();
 
   boolean isDisposed();
+
+  /**
+   * Requests pooled thread to execute the action
+   * @param action to be executed
+   * @return future result
+   */
+  Future<?> executeOnPooledThread(Runnable action);
 }

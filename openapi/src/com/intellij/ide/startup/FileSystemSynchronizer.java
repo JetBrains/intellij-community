@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,18 +27,6 @@ public class FileSystemSynchronizer {
   private LinkedHashSet<VirtualFile> myFilesToUpdate = new LinkedHashSet<VirtualFile>();
   private Collection/*<VirtualFile>*/[] myUpdateSets;
   @NonNls private static final String LOAD_FILES_THREAD_NAME = "File Content Loading Thread";
-
-  private static final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
-    1,
-    Integer.MAX_VALUE,
-    60L,
-    TimeUnit.SECONDS, 
-    new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-      public Thread newThread(Runnable r) {
-        return new Thread(r, LOAD_FILES_THREAD_NAME);
-      }
-    }
-  );
 
   private boolean myIsCancelable = false;
 
@@ -152,9 +141,7 @@ public class FileSystemSynchronizer {
       }
     };
 
-    synchronized(ourThreadExecutorsService) {
-      ourThreadExecutorsService.submit(contentLoadingRunnable);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(contentLoadingRunnable);
 
     while (true) {
       FileContent content = null;

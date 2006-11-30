@@ -20,7 +20,7 @@ public class DialogAppender extends AppenderSkeleton {
   private static final DefaultIdeaErrorLogger DEFAULT_LOGGER = new DefaultIdeaErrorLogger();
   static final boolean RELEASE_BUILD = false;
 
-  private Thread myDialogThread = null;
+  private Runnable myDialogRunnable = null;
 
   protected synchronized void append(final LoggingEvent event) {
     List<ErrorLogger> loggers = new ArrayList<ErrorLogger>();
@@ -38,7 +38,7 @@ public class DialogAppender extends AppenderSkeleton {
   void appendToLoggers(final LoggingEvent event, ErrorLogger[] errorLoggers) {
 
     if (event.level.isGreaterOrEqual(Priority.WARN)) {
-      if (myDialogThread != null) {
+      if (myDialogRunnable != null) {
         return;
       }
       ThrowableInformation throwable = event.getThrowableInformation();
@@ -53,17 +53,18 @@ public class DialogAppender extends AppenderSkeleton {
         if (logger.canHandle(ideaEvent)) {
 
           //noinspection HardCodedStringLiteral
-          myDialogThread = new Thread(new Runnable() {
+          myDialogRunnable = new Runnable() {
             public void run() {
               try {
                 logger.handle(ideaEvent);
               }
               finally {
-                myDialogThread = null;
+                myDialogRunnable = null;
               }
             }
-          }, "DialogAppender");
-          myDialogThread.start();
+          };
+
+          ApplicationManager.getApplication().executeOnPooledThread(myDialogRunnable);
 
           break;
         }

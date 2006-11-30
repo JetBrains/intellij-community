@@ -30,18 +30,6 @@ import java.util.concurrent.*;
 
 public class ScrollingModelImpl implements ScrollingModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
-  private static final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
-    1,
-    Integer.MAX_VALUE,
-    60L,
-    TimeUnit.SECONDS,
-    new LinkedBlockingQueue<Runnable>(),
-    new ThreadFactory() {
-      public Thread newThread(Runnable r) {
-        return new Thread(r, "AnimatedScrollingThread");
-      }
-    }
-  );
 
   private EditorImpl myEditor;
   private CopyOnWriteArrayList<VisibleAreaListener> myVisibleAreaListeners = new CopyOnWriteArrayList<VisibleAreaListener>();
@@ -281,7 +269,7 @@ public class ScrollingModelImpl implements ScrollingModel {
 
       try {
         myCurrentAnimatedRunnable = new AnimatedScrollingRunnable(startHOffset, startVOffset, hOffset, vOffset);
-        ourThreadExecutorsService.submit(myCurrentAnimatedRunnable);
+        ApplicationManager.getApplication().executeOnPooledThread(myCurrentAnimatedRunnable);
       }
       catch (NoAnimationRequiredException e) {
         _scrollHorizontally(hOffset);

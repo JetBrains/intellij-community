@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -184,7 +185,7 @@ public class JavaDocExternalFilter {
 
     final boolean[] fail = new boolean[1];
     final Exception [] ex = new Exception[1];
-    new Thread(new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         Reader stream = null;
         try {
@@ -223,7 +224,7 @@ public class JavaDocExternalFilter {
           ex[0] = e;
         }
       }
-    }).start();
+    });
 
     if (ex[0] != null) {
       throw ex[0];
