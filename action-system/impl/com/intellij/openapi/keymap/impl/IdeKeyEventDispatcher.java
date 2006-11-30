@@ -29,10 +29,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
+import java.awt.im.InputContext;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * This class is automaton with finite number of state.
@@ -62,6 +64,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private final PresentationFactory myPresentationFactory;
   private JComponent myFoundComponent;
   private boolean myDisposed = false;
+  private boolean myLeftCtrlPressed = false;
+  private boolean myRightAltPressed = false;
+
 
   public IdeKeyEventDispatcher(){
     myState=STATE_INIT;
@@ -83,6 +88,24 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if(e.isConsumed()){
       return false;
+    }
+
+    // http://www.jetbrains.net/jira/browse/IDEADEV-12372
+    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        myLeftCtrlPressed = (e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT);
+      }
+      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+        myLeftCtrlPressed = false;
+      }
+    }
+    else if (e.getKeyCode() == KeyEvent.VK_ALT) {
+      if (e.getID() == KeyEvent.KEY_PRESSED) {
+        myRightAltPressed = (e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT);
+      }
+      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+        myRightAltPressed = false;
+      }
     }
 
     KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -244,6 +267,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private boolean inInitState(Component focusOwner, KeyEvent e, boolean isModalContext, DataContext dataContext) {
+    // http://www.jetbrains.net/jira/browse/IDEADEV-12372
+    if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (KeyEvent.CTRL_MASK | KeyEvent.ALT_MASK)) {
+      final InputContext inputContext = focusOwner.getInputContext();
+      if (inputContext != null) {
+        Locale locale = inputContext.getLocale();
+        if (locale.getLanguage().equals("pl")) {
+          // don't search for shortcuts
+          return false;
+        }
+      }
+    }
+
     KeyStroke originalKeyStroke=KeyStroke.getKeyStrokeForEvent(e);
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
