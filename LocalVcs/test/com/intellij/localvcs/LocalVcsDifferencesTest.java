@@ -21,14 +21,6 @@ public class LocalVcsDifferencesTest extends TestCase {
   }
 
   @Test
-  public void testGettingLabelsForAnUnknownFileThrowsException() {
-    try {
-      vcs.getLabelsFor("unknown file");
-      fail();
-    } catch (AssertionError e) {}
-  }
-
-  @Test
   public void testNamedAndUnnamedLables() {
     vcs.createFile("file", null, null);
     vcs.apply();
@@ -40,8 +32,8 @@ public class LocalVcsDifferencesTest extends TestCase {
     List<Label> labels = vcs.getLabelsFor("file");
     assertEquals(2, labels.size());
 
-    assertEquals("label", labels.get(0).getName());
-    assertNull(labels.get(1).getName());
+    assertNull(labels.get(0).getName());
+    assertEquals("label", labels.get(1).getName());
   }
 
   @Test
@@ -96,11 +88,11 @@ public class LocalVcsDifferencesTest extends TestCase {
     assertEquals(2, labels.size());
 
     e = labels.get(0).getEntry();
-    assertEquals("file1", e.getName());
+    assertEquals("file2", e.getName());
     assertEquals("content1", e.getContent());
 
     e = labels.get(1).getEntry();
-    assertEquals("file2", e.getName());
+    assertEquals("file1", e.getName());
     assertEquals("content1", e.getContent());
   }
 
@@ -116,13 +108,14 @@ public class LocalVcsDifferencesTest extends TestCase {
 
     Entry e = labels.get(0).getEntry();
     assertEquals("file", e.getName());
-    assertEquals("content", e.getContent());
-    assertEquals(123L, e.getTimestamp());
+    assertEquals("new content", e.getContent());
+    assertEquals(456L, e.getTimestamp());
 
     e = labels.get(1).getEntry();
     assertEquals("file", e.getName());
-    assertEquals("new content", e.getContent());
-    assertEquals(456L, e.getTimestamp());
+    assertEquals("content", e.getContent());
+    assertEquals(123L, e.getTimestamp());
+
   }
 
   @Test
@@ -134,7 +127,7 @@ public class LocalVcsDifferencesTest extends TestCase {
 
     List<Label> labels = vcs.getLabelsFor("file");
 
-    assertEquals("content", labels.get(0).getEntry().getContent());
+    assertEquals("content", labels.get(1).getEntry().getContent());
     assertEquals("new content", vcs.getEntry("file").getContent());
   }
 
@@ -148,11 +141,11 @@ public class LocalVcsDifferencesTest extends TestCase {
 
     List<Label> labels = vcs.getLabelsFor("file");
 
-    Label one = labels.get(0);
-    Label two = labels.get(1);
+    Label recent = labels.get(0);
+    Label prev = labels.get(1);
 
     // todo can we calculate diffs by timestamp? it seems that we can
-    Difference d = one.getDifferenceWith(two);
+    Difference d = prev.getDifferenceWith(recent);
     assertEquals(MODIFIED, d.getKind());
     assertEquals("content", d.getLeft().getContent());
     assertEquals("new content", d.getRight().getContent());
@@ -183,10 +176,10 @@ public class LocalVcsDifferencesTest extends TestCase {
     List<Label> labels = vcs.getLabelsFor("dir");
     assertEquals(2, labels.size());
 
-    Label one = labels.get(0);
-    Label two = labels.get(1);
+    Label recent = labels.get(0);
+    Label prev = labels.get(1);
 
-    Difference d = one.getDifferenceWith(two);
+    Difference d = prev.getDifferenceWith(recent);
     assertEquals(NOT_MODIFIED, d.getKind());
     assertEquals(1, d.getChildren().size());
 

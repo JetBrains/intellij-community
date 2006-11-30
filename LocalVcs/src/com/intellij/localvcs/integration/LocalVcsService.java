@@ -1,76 +1,72 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.ProjectTopics;
+import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.FileContent;
+import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.openapi.vfs.*;
 
 import java.io.IOException;
 
 public class LocalVcsService implements Disposable {
   // todo test exceptions...
   // todo use CacheUpdater to update roots
-  
+
   private LocalVcs myVcs;
   private StartupManager myStartupManager;
-  private ProjectRootManager myRootManager;
+  private ProjectRootManagerEx myRootManager;
   private VirtualFileManager myFileManager;
-  private MessageBusConnection myConnection;
   private VirtualFileAdapter myFileListener;
 
-  public LocalVcsService(LocalVcs vcs, MessageBus b, StartupManager sm, ProjectRootManager rm, VirtualFileManager fm) {
+  public LocalVcsService(LocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManager fm) {
     myVcs = vcs;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
-    myConnection = b.connect();
 
-    subscribeToStartupManager();
-    subscribeToRootChanges();
-    subscribeToFileChanges();
+    registerStartupActivity();
   }
 
   public void dispose() {
     myFileManager.removeVirtualFileListener(myFileListener);
   }
 
-  private void subscribeToStartupManager() {
-    myStartupManager.registerStartupActivity(new Runnable() {
-      public void run() {
+  private void registerStartupActivity() {
+    FileSystemSynchronizer fs = myStartupManager.getFileSystemSynchronizer();
+    fs.registerCacheUpdater(new MyCacheUpdater() {
+      public void updatingDone() {
+        updateRoots();
+        subscribeForRootChanges();
+        subscribeForFileChanges();
+      }
+    });
+  }
+
+  private void subscribeForRootChanges() {
+    myRootManager.registerChangeUpdater(new MyCacheUpdater() {
+      public void updatingDone() {
+        //System.out.println("updating roots");
         updateRoots();
       }
     });
   }
 
-  private void subscribeToRootChanges() {
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      public void beforeRootsChange(ModuleRootEvent event) {
-      }
-
-      public void rootsChanged(ModuleRootEvent event) {
-        updateRoots();
-      }
-    });
-  }
-
-  private void subscribeToFileChanges() {
+  private void subscribeForFileChanges() {
     myFileListener = new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent e) {
         if (notForMe(e)) return;
+        //System.out.println("file created");
         createFile(e.getFile());
       }
 
       @Override
       public void contentsChanged(VirtualFileEvent e) {
         if (notForMe(e)) return;
+        //System.out.println("content changed");
         changeFileContent(e.getFile());
       }
 
@@ -78,18 +74,21 @@ public class LocalVcsService implements Disposable {
       public void beforePropertyChange(VirtualFilePropertyEvent e) {
         if (notForMe(e)) return;
         if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
+        //System.out.println("renamed");
         rename(e.getFile(), (String)e.getNewValue());
       }
 
       @Override
       public void beforeFileMovement(VirtualFileMoveEvent e) {
         if (notForMe(e)) return;
+        //System.out.println("before moved");
         move(e.getFile(), e.getNewParent());
       }
 
       @Override
       public void beforeFileDeletion(VirtualFileEvent e) {
         if (notForMe(e)) return;
+        //System.out.println("before deleted");
         delete(e.getFile());
       }
 
@@ -150,5 +149,17 @@ public class LocalVcsService implements Disposable {
   private void delete(VirtualFile f) {
     myVcs.delete(f.getPath());
     myVcs.apply();
+  }
+
+  private abstract class MyCacheUpdater implements CacheUpdater {
+    public VirtualFile[] queryNeededFiles() {
+      return new VirtualFile[0];
+    }
+
+    public void processFile(FileContent c) {
+    }
+
+    public void canceled() {
+    }
   }
 }

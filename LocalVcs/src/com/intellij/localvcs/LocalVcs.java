@@ -2,6 +2,7 @@ package com.intellij.localvcs;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 public class LocalVcs {
   private Storage myStorage;
@@ -105,6 +106,7 @@ public class LocalVcs {
       result.add(new Label(e, cl, cs, myRoot));
     }
 
+    Collections.reverse(result);    
     return result;
   }
 }

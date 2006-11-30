@@ -7,10 +7,8 @@ import com.intellij.localvcs.TestStorage;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Ignore;
 
 import java.io.IOException;
-import java.util.List;
 
 public class UpdaterTest extends TestCase {
   private LocalVcs vcs;
@@ -29,7 +27,8 @@ public class UpdaterTest extends TestCase {
   public void testAddingRoots() throws IOException {
     vcs = new LocalVcs(new TestStorage());
 
-    Updater.update(vcs, new TestVirtualFile("c:/root1", 1L), new TestVirtualFile("c:/root2", 2L));
+    update(new TestVirtualFile("c:/root1", 1L),
+           new TestVirtualFile("c:/root2", 2L));
 
     Entry e1 = vcs.findEntry("c:/root1");
     Entry e2 = vcs.findEntry("c:/root2");
@@ -44,21 +43,15 @@ public class UpdaterTest extends TestCase {
   @Test
   public void testDoesNotAddNestedRoots() throws IOException {
     vcs = new LocalVcs(new TestStorage());
-    Updater.update(vcs, new TestVirtualFile("c:/root", null), new TestVirtualFile("c:/root/nested", null));
 
-    assertTrue(vcs.hasEntry("c:/root"));
-    assertFalse(vcs.hasEntry("c:/root/nested"));
-  }
+    TestVirtualFile parent = new TestVirtualFile("c:/parent", null);
+    TestVirtualFile child = new TestVirtualFile("child", null);
+    parent.addChild(child);
 
-  @Test
-  public void testSelectingOnlyNotNestedRoots() {
-    VirtualFile[] result = Updater.selectNonNestedRoots(new TestVirtualFile("c:/dir1", null), new TestVirtualFile("c:/dir1/dir2", null), new TestVirtualFile("c:/dir2", null),
-                                                        new TestVirtualFile("c:/dir2/dir3/dir4", null), new TestVirtualFile("c:/dir3/dir4", null));
+    update(parent, child);
 
-    assertEquals(3, result.length);
-    assertEquals("c:/dir1", result[0].getPath());
-    assertEquals("c:/dir2", result[1].getPath());
-    assertEquals("c:/dir3/dir4", result[2].getPath());
+    assertTrue(vcs.hasEntry("c:/parent"));
+    assertFalse(vcs.hasEntry("c:/root/child"));
   }
 
   @Test
@@ -67,7 +60,7 @@ public class UpdaterTest extends TestCase {
     vcs.createDirectory("c:/root", null);
     vcs.apply();
 
-    Updater.update(vcs, new TestVirtualFile("c:/another root", null));
+    update(new TestVirtualFile("c:/another root", null));
 
     assertFalse(vcs.hasEntry("c:/root"));
     assertTrue(vcs.hasEntry("c:/another root"));
@@ -162,8 +155,12 @@ public class UpdaterTest extends TestCase {
   }
 
   private void update() {
+    update(root);
+  }
+
+  private void update(VirtualFile... roots) {
     try {
-      Updater.update(vcs, root);
+      Updater.update(vcs, roots);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

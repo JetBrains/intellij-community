@@ -1,16 +1,16 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.mock.MockFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.InputStream;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestVirtualFile extends VirtualFile {
   private String myName;
@@ -66,7 +66,12 @@ public class TestVirtualFile extends VirtualFile {
 
   @NotNull
   public VirtualFileSystem getFileSystem() {
-    throw new UnsupportedOperationException();
+    return new MockFileSystem() {
+      @Override
+      public boolean equals(Object o) {
+        return true;
+      }
+    };
   }
 
   public boolean isWritable() {
@@ -79,7 +84,7 @@ public class TestVirtualFile extends VirtualFile {
 
   @Nullable
   public VirtualFile getParent() {
-    return null;
+    return myParent;
   }
 
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {

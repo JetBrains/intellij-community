@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class Updater {
     myRoots = selectNonNestedRoots(roots);
   }
 
-  public static VirtualFile[] selectNonNestedRoots(VirtualFile... roots) {
+  private VirtualFile[] selectNonNestedRoots(VirtualFile... roots) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile left : roots) {
       if (!isNested(left, roots)) result.add(left);
@@ -31,10 +32,10 @@ public class Updater {
     return result.toArray(new VirtualFile[0]);
   }
 
-  private static boolean isNested(VirtualFile f, VirtualFile... roots) {
+  private boolean isNested(VirtualFile f, VirtualFile... roots) {
     for (VirtualFile another : roots) {
       if (f == another) continue;
-      if (f.getPath().startsWith(another.getPath())) return true;
+      if (VfsUtil.isAncestor(another, f, false)) return true;
     }
     return false;
   }

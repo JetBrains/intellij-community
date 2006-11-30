@@ -2,7 +2,6 @@ package com.intellij.localvcslong;
 
 
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.idea.Bombed;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.integration.LocalVcsComponent;
@@ -18,12 +17,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.idea.Bombed;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 
-@Bombed(year = 2006,
+@Bombed(year = 2007,
         month = Calendar.NOVEMBER,
         day = 27,
         time = 19,
@@ -52,6 +52,12 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     Entry e = getLocalVcs().findEntry(root.getPath());
     assertNotNull(e);
     assertTrue(e.isDirectory());
+  }
+
+  public void testUpdatingFilesOnRootsChanges() throws IOException {
+    VirtualFile root = addContentRootWithFile("file.java");
+
+    assertNotNull(getLocalVcs().findEntry(root.getPath() + "/file.java"));
   }
 
   public void ignoreTestUpdatingOnStartup() throws Exception {
@@ -83,23 +89,26 @@ public class LocalVcsComponentTest extends IdeaTestCase {
   }
 
   private LocalVcs getLocalVcs() {
-    return getLocalVcs(getProject());
-  }
-
-  private LocalVcs getLocalVcs(Project p) {
-    return p.getComponent(LocalVcsComponent.class).getLocalVcs();
+    return getProject().getComponent(LocalVcsComponent.class).getLocalVcs();
   }
 
   private VirtualFile addContentRoot() {
-    return addContentRoot(myModule);
+    return addContentRootWithFile(null);
   }
 
-  private VirtualFile addContentRoot(Module module) {
+  private VirtualFile addContentRootWithFile(String fileName) {
     try {
       LocalFileSystem fs = LocalFileSystem.getInstance();
-      VirtualFile root = fs.findFileByIoFile(createTempDirectory());
+      File dir = createTempDirectory();
 
-      ModuleRootManager rm = ModuleRootManager.getInstance(module);
+      if (fileName != null) {
+        File f = new File(dir, fileName);
+        f.createNewFile();
+      }
+
+      VirtualFile root = fs.findFileByIoFile(dir);
+
+      ModuleRootManager rm = ModuleRootManager.getInstance(myModule);
       ModifiableRootModel m = rm.getModifiableModel();
       m.addContentEntry(root);
       m.commit();
