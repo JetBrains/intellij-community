@@ -11,6 +11,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -19,10 +20,12 @@ class BeanBinding implements Binding {
   private Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
   private Class<?> myBeanClass;
   private SerializationFilter filter;
-  private XmlSerializer serializer;
+  private XmlSerializerImpl serializer;
   @NonNls private static final String CLASS_PROPERTY = "class";
 
-  public BeanBinding(Class<?> beanClass, XmlSerializer serializer) {
+  public BeanBinding(Class<?> beanClass, XmlSerializerImpl serializer) {
+    assert !beanClass.isArray() : "Bean is an array";
+    assert !beanClass.isPrimitive() : "Bean is primitive type";
     myBeanClass = beanClass;
     filter = serializer.getFilter();
     this.serializer = serializer;
@@ -39,7 +42,7 @@ class BeanBinding implements Binding {
   }
 
   public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializer.getOwnerDocument(context);
+    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
     assert ownerDocument != null;
     Element element = ownerDocument.createElement(myTagName);
 
@@ -133,6 +136,14 @@ class BeanBinding implements Binding {
       PropertyDescriptor[] propertyDescriptors = info.getPropertyDescriptors();
       for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
         if (propertyDescriptor.getName().equals(CLASS_PROPERTY)) continue;
+        final Method readMethod = propertyDescriptor.getReadMethod();
+        final Method writeMethod = propertyDescriptor.getWriteMethod();
+
+        if (readMethod == null) continue;
+        if (writeMethod == null) continue;
+
+        if (XmlSerializerImpl.findAnnotation(readMethod.getAnnotations(), Transient.class) != null ||
+            XmlSerializerImpl.findAnnotation(writeMethod.getAnnotations(), Transient.class) != null) continue;
 
         accessors.add(new PropertyAccessor(propertyDescriptor));
       }
@@ -140,7 +151,7 @@ class BeanBinding implements Binding {
       Field[] fields = aClass.getFields();
       for (Field field : fields) {
         int modifiers = field.getModifiers();
-        if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers)) {
+        if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) && XmlSerializerImpl.findAnnotation(field.getAnnotations(), Transient.class) == null) {
           accessors.add(new FieldAccessor(field));
         }
       }

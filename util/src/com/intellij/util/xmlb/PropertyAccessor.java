@@ -1,5 +1,7 @@
 package com.intellij.util.xmlb;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -31,7 +33,7 @@ class PropertyAccessor implements Accessor {
 
   public void write(Object o, Object value) {
     try {
-      myPropertyDescriptor.getWriteMethod().invoke(o, XmlSerializer.convert(value, myPropertyDescriptor.getPropertyType()));
+      myPropertyDescriptor.getWriteMethod().invoke(o, XmlSerializerImpl.convert(value, myPropertyDescriptor.getPropertyType()));
     }
     catch (IllegalAccessException e) {
       throw new XmlSerializationException(e);
@@ -65,5 +67,11 @@ class PropertyAccessor implements Accessor {
 
   public Type getGenericType() {
     return myPropertyDescriptor.getReadMethod().getGenericReturnType();
+  }
+
+
+  @NonNls
+  public String toString() {
+    return "PropertyAccessor[" + myPropertyDescriptor.getReadMethod().getDeclaringClass().getName() + "." + getName() +"]";
   }
 }

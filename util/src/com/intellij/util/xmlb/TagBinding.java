@@ -9,14 +9,14 @@ class TagBinding implements Binding {
   private String myTagName;
   private Binding binding;
 
-  public TagBinding(Accessor accessor, Tag tagAnnotation, XmlSerializer xmlSerializer) {
+  public TagBinding(Accessor accessor, Tag tagAnnotation, XmlSerializerImpl xmlSerializer) {
     this.accessor = accessor;
     myTagName = tagAnnotation.name();
     binding = xmlSerializer.getBinding(accessor.getValueClass());
   }
 
   public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializer.getOwnerDocument(context);
+    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
     Object value = accessor.read(o);
     if (value == null) return context;
 
@@ -30,7 +30,7 @@ class TagBinding implements Binding {
 
   public Object deserialize(Object o, Node node) {
     Object v = binding.deserialize(o, node.getChildNodes().item(0));
-    Object value = XmlSerializer.convert(v, accessor.getValueClass());
+    Object value = XmlSerializerImpl.convert(v, accessor.getValueClass());
     accessor.write(o, value);
     return o;
   }

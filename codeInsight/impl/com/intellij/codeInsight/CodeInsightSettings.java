@@ -11,9 +11,11 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.List;
 /**
  *
  */
+@SuppressWarnings({"deprecation"})
 public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, ExportableApplicationComponent {
   @NonNls private static final String EXCLUDED_PACKAGE = "EXCLUDED_PACKAGE";
   @NonNls private static final String ATTRIBUTE_NAME = "NAME";
@@ -38,14 +41,17 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
     return "editor.codeinsight";
   }
 
+  @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile(this)};
   }
 
+  @NotNull
   public String getPresentableName() {
     return CodeInsightBundle.message("codeinsight.settings");
   }
 
+  @Nullable
   public Object clone() {
     try {
       return super.clone();
@@ -116,21 +122,25 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
+  //todo: remove when migrating
+  @Transient
   public String[] EXCLUDED_PACKAGES = new String[0];
 
   public CodeInsightSettings(EditorActionManager actionManager) {
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, new EnterHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)));
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END, new EndHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END)));
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET, new SelectWordHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)));
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET, new UnSelectWordHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)));
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_PASTE, new PasteHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE)));
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_COPY, new CopyHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_COPY)));
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_CUT, new CutHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_CUT)));
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES, new JoinLinesHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES)));
-    actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
+    if (actionManager != null) {
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, new EnterHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END, new EndHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET, new SelectWordHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET, new UnSelectWordHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_UNSELECT_WORD_AT_CARET)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_PASTE, new PasteHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_COPY, new CopyHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_COPY)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_CUT, new CutHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_CUT)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES, new JoinLinesHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
 
-    TypedAction typedAction = actionManager.getTypedAction();
-    typedAction.setupHandler(new TypedHandler(typedAction.getHandler()));
+      TypedAction typedAction = actionManager.getTypedAction();
+      typedAction.setupHandler(new TypedHandler(typedAction.getHandler()));
+    }
   }
 
   public void initComponent() { }

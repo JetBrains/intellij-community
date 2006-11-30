@@ -12,7 +12,7 @@ class MapBinding implements Binding {
   private Binding valueBinding;
 
 
-  public MapBinding(ParameterizedType type, XmlSerializer serializer) {
+  public MapBinding(ParameterizedType type, XmlSerializerImpl serializer) {
     Type[] arguments = type.getActualTypeArguments();
     Type keyType = arguments[0];
     Type valueType = arguments[1];
@@ -24,7 +24,7 @@ class MapBinding implements Binding {
   public Node serialize(Object o, Node context) {
     Map map = (Map)o;
 
-    Document ownerDocument = XmlSerializer.getOwnerDocument(context);
+    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
 
     Element m = ownerDocument.createElement(Constants.MAP);
 

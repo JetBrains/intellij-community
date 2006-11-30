@@ -22,7 +22,7 @@ class FieldAccessor implements Accessor {
 
   public void write(Object o, Object value) {
     try {
-      myField.set(o, XmlSerializer.convert(value, myField.getType()));
+      myField.set(o, XmlSerializerImpl.convert(value, myField.getType()));
     }
     catch (IllegalAccessException e) {
       throw new XmlSerializationException(e);

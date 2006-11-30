@@ -14,13 +14,13 @@ class PrimitiveValueBinding implements Binding {
   }
 
   public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializer.getOwnerDocument(context);
+    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
     return ownerDocument.createTextNode(String.valueOf(o));
   }
 
   @Nullable
   public Object deserialize(Object o, Node node) {
-    return XmlSerializer.convert(node.getNodeValue(), myType);
+    return XmlSerializerImpl.convert(node.getNodeValue(), myType);
   }
 
   public boolean isBoundTo(Node node) {

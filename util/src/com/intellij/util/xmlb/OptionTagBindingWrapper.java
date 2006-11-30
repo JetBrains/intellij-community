@@ -16,7 +16,7 @@ class OptionTagBindingWrapper implements Binding {
   }
 
   public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializer.getOwnerDocument(context);
+    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
     Element e = ownerDocument.createElement(Constants.OPTION);
     Node n = binding.serialize(o, e);
     e.setAttribute(Constants.VALUE, n.getNodeValue());

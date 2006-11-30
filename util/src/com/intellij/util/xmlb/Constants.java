@@ -10,4 +10,5 @@ interface Constants {
   @NonNls String ENTRY = "entry";
   @NonNls String KEY = "key";
   @NonNls String NAME = "name";
+  @NonNls String ARRAY = "array";
 }

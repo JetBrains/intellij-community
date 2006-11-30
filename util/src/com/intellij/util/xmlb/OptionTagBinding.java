@@ -7,14 +7,14 @@ class OptionTagBinding implements Binding {
   private String myName;
   private Binding myBinding;
 
-  public OptionTagBinding(Accessor accessor, XmlSerializer xmlSerializer) {
+  public OptionTagBinding(Accessor accessor, XmlSerializerImpl xmlSerializer) {
     this.accessor = accessor;
     myName = accessor.getName();
     myBinding = xmlSerializer.getBinding(accessor.getGenericType());
   }
 
   public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializer.getOwnerDocument(context);
+    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
     Element targetElement = ownerDocument.createElement(Constants.OPTION);
     Object value = accessor.read(o);
 
