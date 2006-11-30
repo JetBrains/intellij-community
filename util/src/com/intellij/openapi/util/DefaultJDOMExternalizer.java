@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 import org.jdom.Verifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -29,6 +30,9 @@ import java.lang.reflect.Modifier;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class DefaultJDOMExternalizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DefaultJDOMExternalizer");
+
+  private DefaultJDOMExternalizer() {
+  }
 
   public interface JDOMFilter{
     boolean isAccept(Field field);
@@ -118,6 +122,7 @@ public class DefaultJDOMExternalizer {
     }
   }
 
+  @Nullable
   public static String filterXMLCharacters(String value) {
     if (value != null) {
       StringBuilder builder = null;
@@ -241,7 +246,7 @@ public class DefaultJDOMExternalizer {
               field.set(data, new Color(rgb));
             }
             catch (NumberFormatException ex) {
-              System.out.println("value=" + value);
+              LOG.debug("Wrong color value: " + value, ex);
               throw new InvalidDataException();
             }
           }
@@ -265,13 +270,13 @@ public class DefaultJDOMExternalizer {
         }
       }
       catch (NoSuchFieldException ex) {
+        LOG.debug(ex);
       }
       catch (SecurityException ex) {
         throw new InvalidDataException();
       }
       catch (IllegalAccessException ex) {
-        ex.printStackTrace();
-        throw new InvalidDataException();
+        throw new InvalidDataException(ex);
       }
       catch (InstantiationException ex) {
         throw new InvalidDataException();

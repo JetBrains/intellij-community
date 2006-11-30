@@ -252,6 +252,7 @@ public class XmlSerializerTest extends TestCase {
         element.appendChild(node);
 
         bean = XmlSerializer.deserialize(element, bean.getClass());
+        assert bean != null;
         assertEquals(987, bean.INT_V);
         assertEquals("1234", bean.STRING_V);
     }
