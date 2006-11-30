@@ -16,9 +16,6 @@
  */
 package org.intellij.images.vfs;
 
-import com.intellij.javaee.web.WebModuleProperties;
-import com.intellij.javaee.web.WebRoot;
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -27,6 +24,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.LogicalRoot;
+import com.intellij.util.LogicalRootsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,17 +108,14 @@ public final class IfsUtil {
     public static String getReferencePath(Project project, VirtualFile file) {
         File ioFile = VfsUtil.virtualToIoFile(file);
         StringBuilder pathBuffer = new StringBuilder();
-        WebModuleProperties wmp = WebUtil.getWebModuleProperties(project, file);
-        if (wmp != null) {
-            WebRoot root = WebUtil.findParentWebRoot(file, wmp.getWebRoots(true));
-            if (root != null && root.getFile() != null) {
-                File base = VfsUtil.virtualToIoFile(root.getFile());
-                if (base.equals(ioFile)) {
-                    pathBuffer.append(file.getPath());
-                } else {
-                    pathBuffer.append("/");
-                    pathBuffer.append(FileUtil.getRelativePath(base, ioFile));
-                }
+        final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(file);
+        if (logicalRoot != null) {
+            File base = VfsUtil.virtualToIoFile(logicalRoot.getVirtualFile());
+            if (base.equals(ioFile)) {
+                pathBuffer.append(file.getPath());
+            } else {
+                pathBuffer.append("/");
+                pathBuffer.append(FileUtil.getRelativePath(base, ioFile));
             }
         }
         ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
