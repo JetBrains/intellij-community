@@ -54,9 +54,6 @@ public class DoubleCheckedLockingInspection extends ExpressionInspection {
                 return;
             }
             PsiStatement thenBranch = statement.getThenBranch();
-            if (thenBranch == null) {
-                return;
-            }
             thenBranch = ControlFlowUtils.stripBraces(thenBranch);
             if (!(thenBranch instanceof PsiSynchronizedStatement)) {
                 return;

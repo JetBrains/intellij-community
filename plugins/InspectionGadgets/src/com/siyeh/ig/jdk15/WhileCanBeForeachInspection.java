@@ -82,7 +82,6 @@ public class WhileCanBeForeachInspection extends StatementInspection {
             replaceWhileWithForEach(whileStatement);
         }
 
-        @Nullable
         private static void replaceWhileWithForEach(
                 @NotNull PsiWhileStatement whileStatement)
                 throws IncorrectOperationException {

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006 Dave Griffith
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -6,8 +21,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
-public class ReflectionForUnavailableAnnotationInspection extends ExpressionInspection {
+public class ReflectionForUnavailableAnnotationInspection
+        extends ExpressionInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -32,17 +49,20 @@ public class ReflectionForUnavailableAnnotationInspection extends ExpressionInsp
         return new ReflectionForUnavailableAnnotationVisitor();
     }
 
-    private static class ReflectionForUnavailableAnnotationVisitor extends BaseInspectionVisitor {
+    private static class ReflectionForUnavailableAnnotationVisitor
+            extends BaseInspectionVisitor {
 
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!"isAnnotationPresent".equals(methodName) && !"getAnnotation".equals(methodName)) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"isAnnotationPresent".equals(methodName) &&
+                    !"getAnnotation".equals(methodName)) {
                 return;
             }
-
             final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression[] args = argumentList.getExpressions();
             if (args.length != 1) {
@@ -66,34 +86,42 @@ public class ReflectionForUnavailableAnnotationInspection extends ExpressionInsp
             if (!"java.lang.Class".equals(containingClass.getQualifiedName())) {
                 return;
             }
-            final PsiTypeElement operand = ((PsiClassObjectAccessExpression) arg).getOperand();
+            final PsiClassObjectAccessExpression classObjectAccessExpression =
+                    (PsiClassObjectAccessExpression)arg;
+            final PsiTypeElement operand =
+                    classObjectAccessExpression.getOperand();
 
-            final PsiClassType annotationClassType = (PsiClassType) operand.getType();
+            final PsiClassType annotationClassType =
+                    (PsiClassType) operand.getType();
             final PsiClass annotationClass = annotationClassType.resolve();
             if (annotationClass == null) {
                 return;
             }
-
+            final PsiModifierList modifierList =
+                    annotationClass.getModifierList();
+            if (modifierList == null) {
+                return;
+            }
             final PsiAnnotation retentionAnnotation =
-                    annotationClass.getModifierList().findAnnotation("java.lang.annotation.Retention");
+                    modifierList.findAnnotation("java.lang.annotation.Retention");
             if (retentionAnnotation == null) {
                 registerError(arg);
                 return;
             }
-            final PsiAnnotationParameterList parameters = retentionAnnotation.getParameterList();
+            final PsiAnnotationParameterList parameters =
+                    retentionAnnotation.getParameterList();
             final PsiNameValuePair[] attributes = parameters.getAttributes();
             for (PsiNameValuePair attribute : attributes) {
-                final String name = attribute.getName();
-                if (name == null ||"value".equals(name)) {
+                @NonNls final String name = attribute.getName();
+                if (name == null || "value".equals(name)) {
                     final PsiAnnotationMemberValue value = attribute.getValue();
-                    final String text = value.getText();
+                    @NonNls final String text = value.getText();
                     if (!text.contains("RUNTIME")) {
                         registerError(arg);
                         return;
                     }
                 }
             }
-
         }
     }
 }

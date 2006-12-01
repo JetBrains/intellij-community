@@ -1,17 +1,29 @@
+/*
+ * Copyright 2006 Dave Griffith
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAllDotInspection extends ExpressionInspection {
 
@@ -42,7 +54,8 @@ public class ReplaceAllDotInspection extends ExpressionInspection {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            @NonNls final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
             if (!"replaceAll".equals(methodName)) {
                 return;
             }
@@ -55,7 +68,6 @@ public class ReplaceAllDotInspection extends ExpressionInspection {
             if (!PsiUtil.isConstantExpression(arg)) {
                 return;
             }
-
             final PsiType argType = arg.getType();
             if (argType == null) {
                 return;
@@ -63,7 +75,8 @@ public class ReplaceAllDotInspection extends ExpressionInspection {
             if (!"java.lang.String".equals(argType.getCanonicalText())) {
                 return;
             }
-            final String argValue = (String) ConstantExpressionUtil.computeCastTo(arg, argType);
+            final String argValue =
+                    (String) ConstantExpressionUtil.computeCastTo(arg, argType);
             if (!".".equals(argValue)) {
                 return;
             }
@@ -75,10 +88,10 @@ public class ReplaceAllDotInspection extends ExpressionInspection {
             if (containingClass == null) {
                 return;
             }
-            if (!"java.lang.String".equals(containingClass.getQualifiedName())) {
+            final String qualifiedName = containingClass.getQualifiedName();
+            if (!"java.lang.String".equals(qualifiedName)) {
                 return;
             }
-
             registerMethodCallError(expression);
         }
     }

@@ -16,14 +16,12 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertAsNameInspection extends BaseInspection {
@@ -48,41 +46,6 @@ public class AssertAsNameInspection extends BaseInspection {
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return new RenameFix();
-    }
-
-    public ProblemDescriptor[] doCheckClass(
-            PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
-        aClass.accept(visitor);
-        return visitor.getErrors();
-    }
-
-    public ProblemDescriptor[] doCheckMethod(
-            PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
-        }
-        if (!containingClass.isPhysical()) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
-        method.accept(visitor);
-        return visitor.getErrors();
-    }
-
-    public ProblemDescriptor[] doCheckField(
-            PsiField field, InspectionManager mgr, boolean isOnTheFly) {
-        final PsiClass containingClass = field.getContainingClass();
-        if (containingClass == null) {
-            return super.doCheckField(field, mgr, isOnTheFly);
-        }
-        if (!containingClass.isPhysical()) {
-            return super.doCheckField(field, mgr, isOnTheFly);
-        }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
-        field.accept(visitor);
-        return visitor.getErrors();
     }
 
     public BaseInspectionVisitor buildVisitor() {

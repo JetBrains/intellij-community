@@ -38,12 +38,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class ConventionInspection extends BaseInspection {
+
+    /**
+     * public fields for the DefaultJDomExternalizer
+     * @noinspection PublicField
+     * */
+    public String m_regex = getDefaultRegex();
     /** @noinspection PublicField*/
-    public String m_regex = getDefaultRegex();      // this is public for the DefaultJDomExternalizer
+    public int m_minLength = getDefaultMinLength();
     /** @noinspection PublicField*/
-    public int m_minLength = getDefaultMinLength();  // this is public for the DefaultJDomExternalizer
-    /** @noinspection PublicField*/
-    public int m_maxLength = getDefaultMaxLength();    // this is public for the DefaultJDomExternalizer
+    public int m_maxLength = getDefaultMaxLength();
     protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
     @NonNls protected abstract String getDefaultRegex();
@@ -90,35 +94,42 @@ public abstract class ConventionInspection extends BaseInspection {
         final GridBagLayout layout = new GridBagLayout();
         final JPanel panel = new JPanel(layout);
 
-        final JLabel patternLabel = new JLabel(InspectionGadgetsBundle.message("convention.pattern.option"));
+        final JLabel patternLabel = new JLabel(
+                InspectionGadgetsBundle.message("convention.pattern.option"));
         patternLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        final JLabel minLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.min.length.option"));
+        final JLabel minLengthLabel = new JLabel(
+                InspectionGadgetsBundle.message("convention.min.length.option"));
         minLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-        final JLabel maxLengthLabel = new JLabel(InspectionGadgetsBundle.message("convention.max.length.option"));
+        final JLabel maxLengthLabel = new JLabel(
+                InspectionGadgetsBundle.message("convention.max.length.option"));
         maxLengthLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 
         final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
         numberFormat.setParseIntegerOnly(true);
         numberFormat.setMinimumIntegerDigits(1);
         numberFormat.setMaximumIntegerDigits(2);
-        final InternationalFormatter formatter = new InternationalFormatter(numberFormat);
+        final InternationalFormatter formatter =
+                new InternationalFormatter(numberFormat);
         formatter.setAllowsInvalid(false);
         formatter.setCommitsOnValidEdit(true);
 
-        final JFormattedTextField minLengthField = new JFormattedTextField(formatter);
+        final JFormattedTextField minLengthField =
+                new JFormattedTextField(formatter);
         final Font panelFont = panel.getFont();
         minLengthField.setFont(panelFont);
         minLengthField.setValue(m_minLength);
         minLengthField.setColumns(2);
         FormattedTextFieldMacFix.apply(minLengthField);
 
-        final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
+        final JFormattedTextField maxLengthField =
+                new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
         maxLengthField.setValue(m_maxLength);
         maxLengthField.setColumns(2);
         FormattedTextFieldMacFix.apply(maxLengthField);
 
-        final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());
+        final JFormattedTextField regexField =
+                new JFormattedTextField(new RegExFormatter());
         regexField.setFont(panelFont);
         regexField.setValue(m_regexPattern);
         regexField.setColumns(REGEX_COLUMN_COUNT);
@@ -184,5 +195,4 @@ public abstract class ConventionInspection extends BaseInspection {
 
         return panel;
     }
-
 }
