@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -28,8 +29,8 @@ import java.util.Map;
 public class MethodBodyChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.MethodBodyChecker");
 
-  // pair(return type canonical name, file template name) -> method template
-  private static final Map<Pair<String,String>, PsiMethod> TEMPLATE_METHOD_BODIES = new THashMap<Pair<String, String>, PsiMethod>();
+  // return type canonical name + superMethodName + file template name -> method template
+  private static final Map<String, PsiMethod> TEMPLATE_METHOD_BODIES = new THashMap<String, PsiMethod>();
   private static Project DEFAULT_PROJECT;
   private static PsiClassType OBJECT_TYPE;
 
@@ -44,7 +45,8 @@ public class MethodBodyChecker {
     }
     try {
       final String fileTemplateName = getMethodFileTemplate(superSignatures, true).getName();
-      Pair<String,String> key = Pair.create(returnType.getCanonicalText(), fileTemplateName);
+      String methodName = superSignatures.isEmpty() ? "" : superSignatures.get(0).getName();
+      String key = returnType.getCanonicalText() + "+" + methodName + "+"+fileTemplateName;
       PsiMethod method = TEMPLATE_METHOD_BODIES.get(key);
       if (method == null) {
         method = PsiManager.getInstance(DEFAULT_PROJECT).getElementFactory().createMethod("x", returnType);
@@ -69,7 +71,7 @@ public class MethodBodyChecker {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null || aClass.isInterface()) return;
     List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
-    final PsiMethod superMethod = superSignatures.size() ==0 ? null : superSignatures.get(0).getMethod();
+    final PsiMethod superMethod = superSignatures.isEmpty() ? null : superSignatures.get(0).getMethod();
     final PsiMethod templateMethod = getTemplateMethod(returnType, superSignatures, aClass);
     if (PsiEquivalenceUtil.areElementsEquivalent(body, templateMethod.getBody(), new Comparator<PsiElement>(){
       public int compare(final PsiElement element1, final PsiElement element2) {
@@ -91,7 +93,7 @@ public class MethodBodyChecker {
                                                     final boolean useDefaultTemplate) {
     FileTemplateManager templateManager = FileTemplateManager.getInstance();
     FileTemplate template;
-    if (superSignatures.size() == 0) {
+    if (superSignatures.isEmpty()) {
       String name = FileTemplateManager.TEMPLATE_FROM_USAGE_METHOD_BODY;
       template = useDefaultTemplate ? templateManager.getDefaultTemplate(name) : templateManager.getCodeTemplate(name);
     }
@@ -134,7 +136,7 @@ public class MethodBodyChecker {
       return null;
     }
     final ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
         PsiType returnType = method.getReturnType();
         if (method.isConstructor() || returnType == null) return;
         PsiCodeBlock body = method.getBody();

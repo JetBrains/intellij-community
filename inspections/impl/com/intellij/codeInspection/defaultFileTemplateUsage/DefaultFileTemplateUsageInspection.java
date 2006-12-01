@@ -10,6 +10,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -23,21 +24,24 @@ public class DefaultFileTemplateUsageInspection extends LocalInspectionTool {
   public boolean CHECK_TRY_CATCH_SECTION = true;
   public boolean CHECK_METHOD_BODY = true;
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.GENERAL_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("default.file.template.display.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "DefaultFileTemplate";
   }
 
   @Nullable
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     Collection<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
     if (CHECK_METHOD_BODY) {
       MethodBodyChecker.checkMethodBody(method, manager, descriptors);
@@ -73,7 +77,7 @@ public class DefaultFileTemplateUsageInspection extends LocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!CHECK_TRY_CATCH_SECTION) return null;
     CatchBodyVisitor visitor = new CatchBodyVisitor(manager, new ArrayList<ProblemDescriptor>());
     PsiClassInitializer[] initializers = aClass.getInitializers();
@@ -85,7 +89,7 @@ public class DefaultFileTemplateUsageInspection extends LocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!CHECK_FILE_HEADER) return null;
     ProblemDescriptor descriptor = FileHeaderChecker.checkFileHeader(file, manager);
     return descriptor == null ? null : new ProblemDescriptor[]{descriptor};
@@ -102,15 +106,17 @@ public class DefaultFileTemplateUsageInspection extends LocalInspectionTool {
 
   public static LocalQuickFix createEditFileTemplateFix(final FileTemplate templateToEdit, final LocalQuickFix replaceTemplateFix) {
     return new LocalQuickFix() {
+      @NotNull
       public String getName() {
         return InspectionsBundle.message("default.file.template.edit.template");
       }
 
+      @NotNull
       public String getFamilyName() {
         return getName();
       }
 
-      public void applyFix(Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
         final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
         SwingUtilities.invokeLater(new Runnable(){
           public void run() {
