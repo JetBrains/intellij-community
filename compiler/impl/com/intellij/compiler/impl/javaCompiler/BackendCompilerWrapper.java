@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 
 
 public class BackendCompilerWrapper {
@@ -398,14 +400,16 @@ public class BackendCompilerWrapper {
     try {
       Process process = myCompiler.launchProcess(chunk, outputDir, myCompileContext);
       final ClassParsingThread classParsingThread = new ClassParsingThread();
-      classParsingThread.start();
+      final Future<?> classParsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(classParsingThread);
+      
       OutputParser errorParser = myCompiler.createErrorParser(outputDir);
       CompilerParsingThread errorParsingThread = errorParser == null
                                                  ? null
                                                  : new SynchedCompilerParsing(process, myCompileContext, errorParser, classParsingThread,
                                                                               true, errorParser.isTrimLines());
+      Future<?> errorParsingThreadFuture = null;
       if (errorParsingThread != null) {
-        errorParsingThread.start();
+        errorParsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(errorParsingThread);
       }
 
       OutputParser outputParser = myCompiler.createOutputParser(outputDir);
@@ -413,8 +417,9 @@ public class BackendCompilerWrapper {
                                                   ? null
                                                   : new SynchedCompilerParsing(process, myCompileContext, outputParser, classParsingThread,
                                                                                false, outputParser.isTrimLines());
+      Future<?> outputParsingThreadFuture = null;
       if (outputParsingThread != null) {
-        outputParsingThread.start();
+        outputParsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(outputParsingThread);
       }
 
       try {
@@ -425,10 +430,10 @@ public class BackendCompilerWrapper {
         exitValue = process.exitValue();
       }
 
-      joinThread(errorParsingThread);
-      joinThread(outputParsingThread);
+      joinThread(errorParsingThreadFuture);
+      joinThread(outputParsingThreadFuture);
       classParsingThread.stopParsing();
-      joinThread(classParsingThread);
+      joinThread(classParsingThreadFuture);
 
       registerParsingException(outputParsingThread);
       registerParsingException(errorParsingThread);
@@ -439,13 +444,13 @@ public class BackendCompilerWrapper {
     }
   }
 
-  private static void joinThread(final Thread thread) {
-    if (thread != null) {
+  private static void joinThread(final Future<?> threadFuture) {
+    if (threadFuture != null) {
       try {
-        thread.join();
+        threadFuture.get();
       }
       catch (InterruptedException e) {
-      }
+      } catch(ExecutionException e) {}
     }
   }
 
@@ -790,15 +795,10 @@ public class BackendCompilerWrapper {
     return map;
   }
 
-  private class ClassParsingThread extends Thread {
+  private class ClassParsingThread implements Runnable {
     private final BlockingQueue<String> myPaths = new ArrayBlockingQueue<String>(50000);
     private CacheCorruptedException myError = null;
     private final String myStopThreadToken = new String();
-
-    public ClassParsingThread() {
-      //noinspection HardCodedStringLiteral
-      super("Class Parsing Thread");
-    }
 
     public void run() {
       String path;

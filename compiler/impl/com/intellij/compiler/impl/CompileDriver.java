@@ -267,7 +267,7 @@ public class CompileDriver {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();   
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final Thread compileThread = new Thread("Compile Thread") {
+    final Runnable compileThread = new Runnable() {
       public void run() {
         synchronized (CompilerManager.getInstance(myProject)) {
           ProgressManager.getInstance().runProcess(new Runnable() {
@@ -288,8 +288,7 @@ public class CompileDriver {
         }
       }
     };
-    compileThread.setPriority(Thread.NORM_PRIORITY);
-    compileThread.start();
+    ApplicationManager.getApplication().executeOnPooledThread(compileThread);
   }
 
   private void doCompile(final CompileContextImpl compileContext,

@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Eugene Zhuravlev
@@ -71,11 +73,13 @@ public class JavacOutputParserPool {
     final Process setupProcess = Runtime.getRuntime().exec(setupCmdLine);
 
     final CompilerParsingThread setupProcessParsingThread = new CompilerParsingThreadImpl(setupProcess, myContext, outputParser, true, true);
-    setupProcessParsingThread.start();
+    final Future<?> parsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(setupProcessParsingThread);
     try {
-      setupProcessParsingThread.join();
+      parsingThreadFuture.get();
     }
     catch (InterruptedException e) {
+    }
+    catch (ExecutionException e) {
     }
     return outputParser;
   }

@@ -35,6 +35,8 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Eugene Zhuravlev
@@ -234,11 +236,14 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
         }
       }
     };
-    parsingThread.start();
+
+    final Future<?> parsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(parsingThread);
     try {
-      parsingThread.join();
+      parsingThreadFuture.get();
     }
     catch (InterruptedException e) {
+    }
+    catch (ExecutionException e) {
     }
     return successfullyCompiledItems.toArray(new RmicProcessingItem[successfullyCompiledItems.size()]);
   }

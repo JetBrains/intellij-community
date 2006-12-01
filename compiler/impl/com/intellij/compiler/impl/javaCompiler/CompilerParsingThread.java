@@ -14,7 +14,7 @@ import java.io.*;
  * @author Eugene Zhuravlev
  *         Date: Mar 30, 2004
  */
-public abstract class CompilerParsingThread extends Thread implements OutputParser.Callback {
+public abstract class CompilerParsingThread implements Runnable, OutputParser.Callback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompilerParsingThread");
   public static final @NonNls String TERMINATION_STRING = "__terminate_read__";
   private Reader myCompilerOutStreamReader;
@@ -29,8 +29,6 @@ public abstract class CompilerParsingThread extends Thread implements OutputPars
 
 
   public CompilerParsingThread(Process process, OutputParser outputParser, final boolean readErrorStream, boolean trimLines) {
-    //noinspection HardCodedStringLiteral
-    super("CompilerParsingThread");
     myProcess = process;
     myOutputParser = outputParser;
     myTrimLines = trimLines;

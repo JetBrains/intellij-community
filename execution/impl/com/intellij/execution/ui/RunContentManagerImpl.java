@@ -534,14 +534,14 @@ public class RunContentManagerImpl implements RunContentManager {
       private ProgressIndicator myProgressIndicator;
       private Semaphore mySemaphore = new Semaphore();
 
-      private Thread myWaitThread = new Thread() {
+      private Runnable myWaitThread = new Runnable() {
         public void run() {
           descriptor.getProcessHandler().waitFor();
           mySemaphore.up();
         }
       };
 
-      private Thread myCancelListener = new Thread() {
+      private Runnable myCancelListener = new Runnable() {
         public void run() {
           for(;;) {
             if(myProgressIndicator != null && (myProgressIndicator.isCanceled() || !myProgressIndicator.isRunning())) {
@@ -565,8 +565,8 @@ public class RunContentManagerImpl implements RunContentManager {
           myProgressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
         }
 
-        myWaitThread.start();
-        myCancelListener.start();
+        ApplicationManager.getApplication().executeOnPooledThread(myWaitThread);
+        ApplicationManager.getApplication().executeOnPooledThread(myCancelListener);
 
         mySemaphore.down();
         mySemaphore.waitFor();

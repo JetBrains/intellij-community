@@ -17,11 +17,14 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.Semaphore;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 
 public class OSProcessHandler extends ProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
@@ -39,27 +42,28 @@ public class OSProcessHandler extends ProcessHandler {
   private static class ProcessWaitFor  {
     private final Semaphore myWaitSemaphore = new Semaphore();
 
-    private final Thread myWaitForThread;
+    private final Future<?> myWaitForThreadFuture;
     private int myExitCode;
 
     public void detach() {
-      myWaitForThread.interrupt();
+      myWaitForThreadFuture.cancel(true);
       myWaitSemaphore.up();
     }
 
     public ProcessWaitFor(final Process process) {
       myWaitSemaphore.down();
-      myWaitForThread = new Thread() {
-        public void run() {
-          try {
-            myExitCode = process.waitFor();
+      myWaitForThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(
+        new Runnable() {
+          public void run() {
+            try {
+              myExitCode = process.waitFor();
+            }
+            catch (InterruptedException e) {
+            }
+            myWaitSemaphore.up();
           }
-          catch (InterruptedException e) {
-          }
-          myWaitSemaphore.up();
         }
-      };
-      myWaitForThread.start();
+      );
     }
 
     public int waitFor() {
@@ -90,10 +94,10 @@ public class OSProcessHandler extends ProcessHandler {
     addProcessListener(new ProcessAdapter() {
       public void startNotified(final ProcessEvent event) {
         try {
-          stdoutThread.start();
-          stderrThread.start();
+          final Future<?> stdOutReadingFuture = ApplicationManager.getApplication().executeOnPooledThread(stdoutThread);
+          final Future<?> stdErrReadingFuture = ApplicationManager.getApplication().executeOnPooledThread(stderrThread);
 
-          new Thread() {
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
             public void run() {
               int exitCode = 0;
 
@@ -104,15 +108,16 @@ public class OSProcessHandler extends ProcessHandler {
                 stderrThread.setProcessTerminated(true);
                 stdoutThread.setProcessTerminated(true);
 
-                stderrThread.join(0);
-                stdoutThread.join(0);
+                stdErrReadingFuture.get();
+                stdOutReadingFuture.get();
               }
               catch (InterruptedException e) {
               }
+              catch (ExecutionException e) {}
 
               onOSProcessTerminated(exitCode);
             }
-          }.start();
+          });
         }
         finally {
           removeProcessListener(this);
@@ -145,14 +150,14 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   protected void detachProcessImpl() {
-    new Thread(new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         closeStreams();
 
         myWaitFor.detach();
         notifyProcessDetached();
       }
-    }).start();
+    });
   }
 
   private void closeStreams() {
@@ -182,7 +187,7 @@ public class OSProcessHandler extends ProcessHandler {
     return CharsetToolkit.getIDEOptionsCharset();
   }
 
-  private static abstract class ReadProcessThread extends Thread {
+  private static abstract class ReadProcessThread implements Runnable {
     private static final int NOTIFY_TEXT_DELAY = 300;
 
     private final Reader myReader;
@@ -194,9 +199,6 @@ public class OSProcessHandler extends ProcessHandler {
     private boolean myIsProcessTerminated = false;
 
     public ReadProcessThread(final Reader reader) {
-      //noinspection HardCodedStringLiteral
-      super("ReadProcessThread "+reader.getClass().getName());
-      setPriority(Thread.MAX_PRIORITY);
       myReader = reader;
       myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     }
@@ -210,35 +212,41 @@ public class OSProcessHandler extends ProcessHandler {
     }
 
     public void run() {
-      myAlarm.addRequest(new Runnable() {
-        public void run() {
-          if(!isClosed()) {
-            myAlarm.addRequest(this, NOTIFY_TEXT_DELAY);
-            checkTextAvailable();
-          }
-        }
-      }, NOTIFY_TEXT_DELAY);
-
+      Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
       try {
-        while (!isClosed()) {
-          final int c = readNextByte();
-          if (c == -1) {
-            break;
+        myAlarm.addRequest(new Runnable() {
+          public void run() {
+            if(!isClosed()) {
+              myAlarm.addRequest(this, NOTIFY_TEXT_DELAY);
+              checkTextAvailable();
+            }
           }
-          synchronized (myBuffer) {
-            myBuffer.append((char)c);
-          }
-          if (c == '\n') { // not by '\r' because of possible '\n'
-            checkTextAvailable();
+        }, NOTIFY_TEXT_DELAY);
+
+        try {
+          while (!isClosed()) {
+            final int c = readNextByte();
+            if (c == -1) {
+              break;
+            }
+            synchronized (myBuffer) {
+              myBuffer.append((char)c);
+            }
+            if (c == '\n') { // not by '\r' because of possible '\n'
+              checkTextAvailable();
+            }
           }
         }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        e.printStackTrace();
-      }
+        catch (Exception e) {
+          LOG.error(e);
+          e.printStackTrace();
+        }
 
-      close();
+        close();
+      }
+      finally {
+        Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
+      }
     }
 
     private int readNextByte() {
@@ -271,20 +279,20 @@ public class OSProcessHandler extends ProcessHandler {
       }
     }
 
-    public void close() {
+    private void close() {
       synchronized (this) {
         if (isClosed()) {
           return;
         }
         myIsClosed = true;
       }
-      try {
-        if(Thread.currentThread() != this) {
-          join(0);
-        }
-      }
-      catch (InterruptedException e) {
-      }
+      //try {
+      //  if(Thread.currentThread() != this) {
+      //    join(0);
+      //  }
+      //}
+      //catch (InterruptedException e) {
+      //}
       // must close after the thread finished its execution, cause otherwise
       // the thread will try to read from the closed (and nulled) stream
       try {

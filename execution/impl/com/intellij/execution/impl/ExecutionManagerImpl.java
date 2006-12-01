@@ -97,9 +97,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
           final Map<String, Boolean> beforeRun = runManager.getStepsBeforeLaunch(runConfiguration);
           final Boolean enabled = beforeRun.get(AntConfiguration.ANT);
+
           if (enabled != null && enabled.booleanValue() && antConfiguration != null &&
               antConfiguration.hasTasksToExecuteBeforeRun(runConfiguration)) {
-            final Thread thread = new Thread(new Runnable() {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
               public void run() {
                 final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
                 if (antConfiguration.executeTaskBeforeRun(dataContext, runConfiguration)) {
@@ -107,7 +108,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                 }
               }
             });
-            thread.start();
           }
           else {
             startRunnable.run();

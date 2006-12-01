@@ -85,8 +85,8 @@ public final class ExecutionHandler {
         return;
       }
     }
-    @NonNls final String threadName = "Ant build";
-    Thread thread = new Thread(new Runnable() {
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         synchronized (builder) {
           try {
@@ -98,8 +98,7 @@ public final class ExecutionHandler {
           }
         }
       }
-    }, threadName);
-    thread.start();
+    });
   }
 
   private static void runBuild(final BuildProgressWindow progress,
@@ -151,7 +150,7 @@ public final class ExecutionHandler {
     WindowManager.getInstance().getStatusBar(project).setInfo(AntBundle.message("ant.build.started.status.message"));
 
     final CheckCancelThread checkThread = new CheckCancelThread(progress, handler);
-    checkThread.start();
+    ApplicationManager.getApplication().executeOnPooledThread(checkThread);
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
@@ -181,7 +180,7 @@ public final class ExecutionHandler {
     errorView.startScrollerThread();
   }
 
-  static final class CheckCancelThread extends Thread {
+  static final class CheckCancelThread implements Runnable {
     private final BuildProgressWindow myProgressWindow;
     private final OSProcessHandler myProcessHandler;
     private boolean myCanceled;
