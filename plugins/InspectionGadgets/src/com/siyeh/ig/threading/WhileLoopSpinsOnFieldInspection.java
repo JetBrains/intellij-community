@@ -17,12 +17,26 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreNonEmtpyLoops = false;
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "while.loop.spins.on.field.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.THREADING_GROUP_NAME;
@@ -34,17 +48,24 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
                 "while.loop.spins.on.field.problem.descriptor");
     }
 
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "while.loop.spins.on.field.ignore.non.empty.loops.option"),
+                this, "ignoreNonEmtpyLoops");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new WhileLoopSpinsOnFieldVisitor();
     }
 
-    private static class WhileLoopSpinsOnFieldVisitor
+    private class WhileLoopSpinsOnFieldVisitor
             extends BaseInspectionVisitor {
 
         public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiStatement body = statement.getBody();
-            if (!statementIsEmpty(body)) {
+            if (ignoreNonEmtpyLoops && !statementIsEmpty(body)) {
                 return;
             }
             final PsiExpression condition = statement.getCondition();
@@ -54,7 +75,8 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
             registerStatementError(statement);
         }
 
-        private static boolean isSimpleFieldComparison(PsiExpression condition) {
+        private boolean isSimpleFieldComparison(PsiExpression condition) {
+            condition = PsiUtil.deparenthesizeExpression(condition);
             if (condition == null) {
                 return false;
             }
@@ -62,58 +84,53 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
                 return true;
             }
             if (condition instanceof PsiPrefixExpression) {
+                final PsiPrefixExpression prefixExpression =
+                        (PsiPrefixExpression) condition;
                 final PsiExpression operand =
-                        ((PsiPrefixExpression)condition).getOperand();
+                        prefixExpression.getOperand();
                 return isSimpleFieldComparison(operand);
             }
             if (condition instanceof PsiPostfixExpression) {
+                final PsiPostfixExpression postfixExpression =
+                        (PsiPostfixExpression) condition;
                 final PsiExpression operand =
-                        ((PsiPostfixExpression)condition).getOperand();
+                        postfixExpression.getOperand();
                 return isSimpleFieldComparison(operand);
             }
-            if (condition instanceof PsiParenthesizedExpression) {
-                final PsiExpression operand =
-                        ((PsiParenthesizedExpression)condition).getExpression();
-                return isSimpleFieldComparison(operand);
-            }
-
             if (condition instanceof PsiBinaryExpression) {
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression)condition;
                 final PsiExpression lOperand = binaryExpression.getLOperand();
                 final PsiExpression rOperand = binaryExpression.getROperand();
-                return isSimpleFieldComparison(lOperand) &&
-                        isLiteral(rOperand) ||
-                        (isSimpleFieldComparison(rOperand) && isLiteral(lOperand));
+                if (isLiteral(rOperand)) {
+                    return isSimpleFieldComparison(lOperand);
+                } else if (isLiteral(lOperand)) {
+                    return isSimpleFieldComparison(rOperand);
+                } else {
+                    return false;
+                }
             }
             return false;
         }
 
-        private static boolean isLiteral(PsiExpression expression) {
+        private boolean isLiteral(PsiExpression expression) {
+            expression = PsiUtil.deparenthesizeExpression(expression);
             if (expression == null) {
                 return false;
-            }
-            if (expression instanceof PsiParenthesizedExpression) {
-                final PsiExpression operand =
-                        ((PsiParenthesizedExpression)expression).getExpression();
-                return isSimpleFieldAccess(operand);
             }
             return expression instanceof PsiLiteralExpression;
         }
 
-        private static boolean isSimpleFieldAccess(PsiExpression expression) {
+        private boolean isSimpleFieldAccess(PsiExpression expression) {
+            expression = PsiUtil.deparenthesizeExpression(expression);
             if (expression == null) {
                 return false;
-            }
-            if (expression instanceof PsiParenthesizedExpression) {
-                final PsiExpression operand =
-                        ((PsiParenthesizedExpression)expression).getExpression();
-                return isSimpleFieldAccess(operand);
             }
             if (!(expression instanceof PsiReferenceExpression)) {
                 return false;
             }
-            final PsiElement referent = ((PsiReference)expression).resolve();
+            final PsiReference reference = (PsiReference) expression;
+            final PsiElement referent = reference.resolve();
             if (!(referent instanceof PsiField)) {
                 return false;
             }
@@ -121,7 +138,7 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
             return !field.hasModifierProperty(PsiModifier.VOLATILE);
         }
 
-        private static boolean statementIsEmpty(PsiStatement statement) {
+        private boolean statementIsEmpty(PsiStatement statement) {
             if (statement == null) {
                 return false;
             }
@@ -129,11 +146,12 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
                 return true;
             }
             if (statement instanceof PsiBlockStatement) {
-                final PsiCodeBlock codeBlock =
-                        ((PsiBlockStatement)statement).getCodeBlock();
-                final PsiStatement[] statements = codeBlock.getStatements();
-                for (PsiStatement statement1 : statements) {
-                    if (!statementIsEmpty(statement1)) {
+                final PsiBlockStatement blockStatement =
+                        (PsiBlockStatement) statement;
+                final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+                final PsiStatement[] codeBlockStatements = codeBlock.getStatements();
+                for (PsiStatement codeBlockStatement : codeBlockStatements) {
+                    if (!statementIsEmpty(codeBlockStatement)) {
                         return false;
                     }
                 }
