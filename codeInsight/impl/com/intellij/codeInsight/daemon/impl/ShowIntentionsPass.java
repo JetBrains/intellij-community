@@ -48,7 +48,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -97,7 +97,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!myEditor.getContentComponent().hasFocus()) return;
 
     HighlightInfo[] visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset);
-    if (visibleHighlights == null) return;
 
     PsiElement[] elements = new PsiElement[visibleHighlights.length];
     for (int i = 0; i < visibleHighlights.length; i++) {
@@ -202,10 +201,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  @Nullable
+  @NotNull
   private HighlightInfo[] getVisibleHighlights(int startOffset, int endOffset) {
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(myEditor.getDocument(), myProject);
-    if (highlights == null) return null;
+    if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
 
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {

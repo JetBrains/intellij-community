@@ -30,7 +30,7 @@ public class PassExecutorService {
   public static int PROCESSORS = Runtime.getRuntime().availableProcessors();
   private final ExecutorService myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
     public Thread newThread(Runnable r) {
-      Thread t = new Thread(r,"Highlighting thread "+r);
+      Thread t = new Thread(r,"Highlighting thread");
       t.setPriority(Thread.MIN_PRIORITY);
       return t;
     }
@@ -132,7 +132,7 @@ public class PassExecutorService {
         scheduledPass.myRunningPredecessorsCount.incrementAndGet();
       }
     }
-    if (completionPredecessorIds.length == 0 && startingPredecessorIds.length == 0 && !freePasses.contains(scheduledPass)) {
+    if (scheduledPass.myRunningPredecessorsCount.get() == 0 && !freePasses.contains(scheduledPass)) {
       freePasses.add(scheduledPass);
     }
     return scheduledPass;
