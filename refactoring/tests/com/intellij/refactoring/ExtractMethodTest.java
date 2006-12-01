@@ -249,6 +249,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testIDEADEV11036() throws Exception {
+    doTest();
+  }
 
   private void doExitPointsTest(boolean shouldSucceed) throws Exception {
     String fileName = getTestName(false) + ".java";

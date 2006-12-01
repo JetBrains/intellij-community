@@ -20,6 +20,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -59,7 +61,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private PsiExpression myExpression;
 
-  private PsiElement myCodeFragementMember; // parent of myCodeFragment
+  private PsiElement myCodeFragmentMember; // parent of myCodeFragment
 
   private String myMethodName; // name for extracted method
   private PsiType myReturnType; // return type for extracted method
@@ -92,6 +94,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myGenerateConditionalExit;
   private PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
+  private Map<PsiMethodCallExpression,PsiMethod> myOverloadsResolveMap;
 
   public ExtractMethodProcessor(Project project,
                                 Editor editor,
@@ -181,7 +184,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
-    myCodeFragementMember = codeFragment.getParent();
+    myCodeFragmentMember = codeFragment.getParent();
 
     try {
       myControlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
@@ -281,7 +284,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     PsiType returnStatementType = null;
     if (myHasReturnStatement) {
-      returnStatementType = myCodeFragementMember instanceof PsiMethod ? ((PsiMethod)myCodeFragementMember).getReturnType() : null;
+      returnStatementType = myCodeFragmentMember instanceof PsiMethod ? ((PsiMethod)myCodeFragmentMember).getReturnType() : null;
     }
     myHasReturnStatementOutput = returnStatementType != null && returnStatementType != PsiType.VOID;
 
@@ -369,7 +372,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean shouldBeStatic() {
-    PsiElement codeFragementMember = myCodeFragementMember;
+    PsiElement codeFragementMember = myCodeFragmentMember;
     while (codeFragementMember != null && PsiTreeUtil.isAncestor(myTargetClass, codeFragementMember, true)) {
       if (((PsiModifierListOwner)codeFragementMember).hasModifierProperty(PsiModifier.STATIC)) {
         return true;
@@ -413,7 +416,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     LogicalPosition pos = new LogicalPosition(0, 0);
     myEditor.getCaretModel().moveToLogicalPosition(pos);
 
+    SearchScope processConflictsScope = myMethodVisibility.equals(PsiModifier.PRIVATE) ?
+                                        new LocalSearchScope(myTargetClass) :
+                                        GlobalSearchScope.projectScope(myProject);
+
+    myOverloadsResolveMap = ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
+    
     PsiMethodCallExpression methodCall = doExtract();
+    ExtractMethodUtil.decodeOverloadTargets(myOverloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
 
     LogicalPosition pos1 = new LogicalPosition(line, col);
     myEditor.getCaretModel().moveToLogicalPosition(pos1);
@@ -798,7 +808,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (skipInstanceQualifier) {
       if (myNeedChangeContext) {
         boolean needsThisQualifier = false;
-        PsiElement parent = myCodeFragementMember;
+        PsiElement parent = myCodeFragmentMember;
         while (!myTargetClass.equals(parent)) {
           if (parent instanceof PsiMethod) {
             String methodName = ((PsiMethod)parent).getName();
@@ -898,7 +908,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void chooseTargetClass() {
     myNeedChangeContext = false;
-    myTargetClass = (PsiClass)myCodeFragementMember.getParent();
+    myTargetClass = (PsiClass)myCodeFragmentMember.getParent();
     if (myTargetClass instanceof PsiAnonymousClass) {
       PsiElement target = myTargetClass.getParent();
       PsiElement targetMember = myTargetClass;
@@ -913,7 +923,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         List<PsiVariable> array = new ArrayList<PsiVariable>();
         boolean success = true;
         for (PsiElement element : myElements) {
-          if (!ControlFlowUtil.collectOuterLocals(array, element, myCodeFragementMember, targetMember)) {
+          if (!ControlFlowUtil.collectOuterLocals(array, element, myCodeFragmentMember, targetMember)) {
             success = false;
             break;
           }
@@ -933,7 +943,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void chooseAnchor() {
-    myAnchor = myCodeFragementMember;
+    myAnchor = myCodeFragmentMember;
     while (!myAnchor.getParent().equals(myTargetClass)) {
       myAnchor = myAnchor.getParent();
     }
