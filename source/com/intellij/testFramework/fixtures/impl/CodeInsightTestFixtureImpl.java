@@ -13,6 +13,7 @@ import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
@@ -45,10 +46,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -58,6 +56,7 @@ import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.refactoring.rename.RenameProcessor;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -204,6 +203,22 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
       protected void run() throws Throwable {
         configureByFiles(filesBefore);
         new CodeCompletionHandler().invoke(getProject(), myEditor, myFile);
+        checkResultByFile(fileAfter, false);
+      }
+    }.execute().throwException();
+  }
+
+  public void testCompletion(String fileBefore, String fileAfter) throws Throwable {
+    testCompletion(new String[] { fileBefore }, fileAfter);
+  }
+
+  public void testRename(final String fileBefore, final String fileAfter, final String newName) throws Throwable {
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+      protected void run() throws Throwable {
+        configureByFiles(fileBefore);
+        PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+        assert element != null: "element not found at caret position, offset " + myEditor.getCaretModel().getOffset();
+        new RenameProcessor(myProjectFixture.getProject(), element, newName, false, false).run();
         checkResultByFile(fileAfter, false);
       }
     }.execute().throwException();

@@ -61,23 +61,23 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   /**
    * Enables inspections for highlighting tests.
-   * Should be called BEFORE {@link #setUp()} 
+   * Should be called BEFORE {@link #setUp()}.
    *
-   * @param inspections inspections to be enabled in highliting tests
+   * @param inspections inspections to be enabled in highliting tests.
    */
   void enableInspections(LocalInspectionTool... inspections);
 
   /**
-   * Runs highliting test for the given files
-   * Checks for {@link #ERROR_MARKER} markers by default
+   * Runs highliting test for the given files.
+   * Checks for {@link #ERROR_MARKER} markers by default.
    *
-   * @param checkWarnings enables {@link #WARNING_MARKER} support
-   * @param checkInfos enables {@link #INFO_MARKER} support
-   * @param checkWeakWarnings enables {@link #INFORMATION_MARKER} support
-   * @param filePaths the first file is tested only; the others are just copied along the first
+   * @param checkWarnings enables {@link #WARNING_MARKER} support.
+   * @param checkInfos enables {@link #INFO_MARKER} support.
+   * @param checkWeakWarnings enables {@link #INFORMATION_MARKER} support.
+   * @param filePaths the first file is tested only; the others are just copied along the first.
    *
-   * @return highlighting duration in milliseconds
-   * @throws Throwable any exception thrown during highlighting
+   * @return highlighting duration in milliseconds.
+   * @throws Throwable any exception thrown during highlighting.
    */
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, String... filePaths) throws Throwable;
 
@@ -85,7 +85,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * Runs highliting test for the given files.
    * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
    *
-   * @param filePaths the first file is tested only; the others are just copied along the first
+   * @param filePaths the first file is tested only; the others are just copied along the first.
    *
    * @return highlighting duration in milliseconds
    * @throws Throwable any exception thrown during highlighting
@@ -95,9 +95,9 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    *
-   * @param filePath file to be processed
-   * @return null if no reference found
-   * @throws Throwable any exception
+   * @param filePath file to be processed.
+   * @return null if no reference found.
+   * @throws Throwable any exception.
    *
    * @see #getReferenceAtCaretPositionWithAssertion(String)
    */
@@ -120,9 +120,27 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   @NotNull
   Collection<IntentionAction> getAvailableIntentions(String... filePaths) throws Throwable;
 
+  /**
+   * Launches the given action. Use {@link #checkResultByFile(String)} to check the result.
+   *
+   * @param action the action to be launched.
+   * @throws Throwable any exception.
+   */
   void launchAction(IntentionAction action) throws Throwable;
+
+  void checkResultByFile(String filePath) throws Throwable;
 
   void testCompletion(String[] filesBefore, String fileAfter) throws Throwable;
 
-  void checkResultByFile(String filePath) throws Throwable;
+  void testCompletion(String fileBefore, String fileAfter) throws Throwable;
+
+  /**
+   * Launches renaming refactoring and checks the result.
+   *
+   * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
+   * @param fileAfter result file to be checked against.
+   * @param newName new name for the element.
+   * @throws Throwable any exception.
+   */
+  void testRename(String fileBefore, String fileAfter, String newName) throws Throwable;
 }
