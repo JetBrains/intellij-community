@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.theoryinpractice.testng.TestNGConsoleView;
+import com.theoryinpractice.testng.Printable;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
 
@@ -21,7 +21,7 @@ public class TestProxy
     private TestResultMessage resultMessage;
     private String name;
     private TestProxy parent;
-    private List<TestNGConsoleView.Chunk> output;
+    private List<Printable> output;
     private PsiElement psiElement;
     private boolean inProgress;
 
@@ -57,9 +57,9 @@ public class TestProxy
         return filter.select(results);
     }
 
-    public List<TestNGConsoleView.Chunk> getOutput() {
+    public List<Printable> getOutput() {
         if (output != null) return output;
-        List<TestNGConsoleView.Chunk> total = new ArrayList<TestNGConsoleView.Chunk>();
+        List<Printable> total = new ArrayList<Printable>();
         for (TestProxy child : results) {
             total.addAll(child.getOutput());
         }
@@ -152,7 +152,7 @@ public class TestProxy
         return parent;
     }
 
-    public void setOutput(List<TestNGConsoleView.Chunk> output) {
+    public void setOutput(List<Printable> output) {
         this.output = output;
     }
 

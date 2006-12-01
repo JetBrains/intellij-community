@@ -36,6 +36,7 @@
     </project-components>
     <change-notes>
         <![CDATA[<li>Fixed initial splitter size from being 50%, now a much tidyer 33%/66% split.</li>
+        <li>Implemented 'click to view difference' for multiline strings</li>
         ]]>
     </change-notes>
 </idea-plugin>

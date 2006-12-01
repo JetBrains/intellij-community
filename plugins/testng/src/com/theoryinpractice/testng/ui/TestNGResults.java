@@ -28,6 +28,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.theoryinpractice.testng.TestNGConsoleView;
+import com.theoryinpractice.testng.Printable;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.actions.ScrollToTestSourceAction;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -86,8 +87,7 @@ public class TestNGResults
                 if (proxy == structure.getRootElement()) {
                     console.reset();
                 } else {
-                    List<TestNGConsoleView.Chunk> output = proxy.getOutput();
-                    console.setView(output);
+                    console.setView(proxy.getOutput());
                 }
             }
         });
@@ -112,7 +112,7 @@ public class TestNGResults
         label.setText(sb.toString());
     }
 
-    public void addTestResult(TestResultMessage result, List<TestNGConsoleView.Chunk> output) {
+    public void addTestResult(TestResultMessage result, List<Printable> output) {
 
         // TODO This should be an action button which rebuilds the tree when toggled.
         boolean flattenPackages = true;
@@ -288,5 +288,9 @@ public class TestNGResults
 
     public void rebuildTree() {
         treeBuilder.updateFromRoot();
+    }
+
+    public void dispose() {
+        treeBuilder.dispose();
     }
 }

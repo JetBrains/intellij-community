@@ -53,7 +53,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
             }
         } else {
             setIcon(Animator.getCurrentFrame());
-            append(node.getUserObject().toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(node.getUserObject() != null ? node.getUserObject().toString() : "null", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
     }
 
