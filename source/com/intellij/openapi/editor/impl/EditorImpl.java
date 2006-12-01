@@ -2358,7 +2358,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public TypeSafeDataContext getDataContext() {
-    return getProjectAwareDataContext(DataManager.getInstance().getDataContext(getContentComponent()));
+    return getProjectAwareDataContext(DataManager.getInstance().getTSDataContext(getContentComponent()));
   }
 
   private TypeSafeDataContext getProjectAwareDataContext(final TypeSafeDataContext original) {

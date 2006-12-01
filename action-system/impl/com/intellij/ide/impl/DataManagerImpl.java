@@ -130,11 +130,15 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return data;
   }
 
-  public TypeSafeDataContext getDataContext(Component component) {
+  public TypeSafeDataContext getTSDataContext(Component component) {
     return new MyDataContext(component);
   }
 
-  public TypeSafeDataContext getDataContext(@NotNull Component component, int x, int y) {
+  public DataContext getDataContext(Component component) {
+    return getTSDataContext(component);
+  }
+
+  public TypeSafeDataContext getTSDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
       throw new IllegalArgumentException("wrong point: x=" + x + "; y=" + y);
     }
@@ -144,30 +148,38 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     if (component instanceof JTabbedPane) {
       JTabbedPane tabbedPane = (JTabbedPane)component;
       int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, x, y);
-      return getDataContext(index != -1 ? tabbedPane.getComponentAt(index) : tabbedPane);
+      return getTSDataContext(index != -1 ? tabbedPane.getComponentAt(index) : tabbedPane);
     }
     else {
-      return getDataContext(component);
+      return getTSDataContext(component);
     }
+  }
+
+  public TypeSafeDataContext getDataContext(@NotNull Component component, int x, int y) {
+    return getTSDataContext(component, x, y);
   }
 
   public void setWindowManager(WindowManagerEx windowManager) {
     myWindowManager = windowManager;
   }
 
-  public TypeSafeDataContext getDataContext() {
-    return getDataContext(getFocusedComponent());
+  public DataContext getDataContext() {
+    return getTSDataContext();
+  }
+
+  public TypeSafeDataContext getTSDataContext() {
+    return getTSDataContext(getFocusedComponent());
   }
 
   public TypeSafeDataContext getDataContextTest(Component component) {
-    TypeSafeDataContext dataContext = getDataContext(component);
+    TypeSafeDataContext dataContext = getTSDataContext(component);
     if (myWindowManager == null) {
       return dataContext;
     }
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     Component focusedComponent = myWindowManager.getFocusedComponent(project);
     if (focusedComponent != null) {
-      dataContext = getDataContext(focusedComponent);
+      dataContext = getTSDataContext(focusedComponent);
     }
     return dataContext;
   }
