@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,98 +17,122 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VariableSearchUtils {
+
     private VariableSearchUtils() {
         super();
     }
 
-    public static boolean existsLocalOrParameter(String varName, PsiElement expression) {
-        if (existsParameter(varName, expression)) {
+    public static boolean existsLocalOrParameter(@NotNull String varName,
+                                                 @Nullable PsiElement context) {
+        if (context == null) {
+            return false;
+        }
+        if (existsParameter(varName, context)) {
             return true;
         }
-        if (existsLocal(varName, expression)) {
+        if (existsLocal(varName, context)) {
             return true;
         }
-        if (existsForLoopLocal(varName, expression)) {
+        if (existsForLoopLocal(varName, context)) {
             return true;
         }
-        return existsForeachLoopLocal(varName, expression);
+        return existsForeachLoopLocal(varName, context);
     }
 
-    private static boolean existsParameter(String varName, PsiElement element) {
+    private static boolean existsParameter(@NotNull String varName,
+                                           PsiElement context) {
         PsiMethod ancestor =
-                PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-        while(ancestor != null){
-        final PsiParameterList paramList = ancestor.getParameterList();
-            final PsiParameter[] parameters = paramList.getParameters();
-            for(final PsiParameter parameter : parameters){
-                final String paramName = parameter.getName();
-                if(paramName.equals(varName)){
+                PsiTreeUtil.getParentOfType(context, PsiMethod.class);
+        while (ancestor != null) {
+            final PsiParameterList parameterList = ancestor.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            for (final PsiParameter parameter : parameters) {
+                final String parameterName = parameter.getName();
+                if (varName.equals(parameterName)) {
                     return true;
                 }
             }
-            ancestor = PsiTreeUtil.getParentOfType(ancestor,
-                                                               PsiMethod.class);
+            ancestor = PsiTreeUtil.getParentOfType(ancestor, PsiMethod.class);
         }
         return false;
     }
 
-    private static boolean existsLocal(String varName, PsiElement element) {
-        PsiCodeBlock ancestor = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
+    private static boolean existsLocal(@NotNull String variableName,
+                                       PsiElement context) {
+        PsiCodeBlock ancestor =
+                PsiTreeUtil.getParentOfType(context, PsiCodeBlock.class);
         while (ancestor != null) {
             final PsiStatement[] statements = ancestor.getStatements();
-            for(final PsiStatement statement : statements){
-                if(statement instanceof PsiDeclarationStatement){
-                    final PsiDeclarationStatement decl = (PsiDeclarationStatement) statement;
-                    final PsiElement[] elements = decl.getDeclaredElements();
-                    for(PsiElement element1 : elements){
-                        if(!(element1 instanceof PsiLocalVariable)){
+            for (final PsiStatement statement : statements) {
+                if (statement instanceof PsiDeclarationStatement) {
+                    final PsiDeclarationStatement declarationStatement =
+                            (PsiDeclarationStatement) statement;
+                    final PsiElement[] elements =
+                            declarationStatement.getDeclaredElements();
+                    for (PsiElement element : elements) {
+                        if (!(element instanceof PsiLocalVariable)) {
                             continue;
                         }
-                        final PsiLocalVariable localVar = (PsiLocalVariable) element1;
-                        final String localVarName = localVar.getName();
-                        if(localVarName.equals(varName)){
+                        final PsiLocalVariable localVariable =
+                                (PsiLocalVariable) element;
+                        final String localVariableName =
+                                localVariable.getName();
+                        if(variableName.equals(localVariableName)) {
                             return true;
                         }
                     }
                 }
             }
-            ancestor = PsiTreeUtil.getParentOfType(ancestor, PsiCodeBlock.class);
+            ancestor =
+                    PsiTreeUtil.getParentOfType(ancestor, PsiCodeBlock.class);
         }
         return false;
     }
 
-    private static boolean existsForLoopLocal(String varName, PsiElement element) {
-        PsiForStatement forLoopAncestor = PsiTreeUtil.getParentOfType(element, PsiForStatement.class);
+    private static boolean existsForLoopLocal(@NotNull String variableName, 
+                                              PsiElement context) {
+        PsiForStatement forLoopAncestor =
+                PsiTreeUtil.getParentOfType(context, PsiForStatement.class);
         while (forLoopAncestor != null) {
-            final PsiStatement initialization = forLoopAncestor.getInitialization();
-
+            final PsiStatement initialization =
+                    forLoopAncestor.getInitialization();
             if (initialization instanceof PsiDeclarationStatement) {
-                final PsiDeclarationStatement decl = (PsiDeclarationStatement) initialization;
-                final PsiElement[] elements = decl.getDeclaredElements();
-                for(PsiElement element1 : elements){
-                    final PsiLocalVariable localVar = (PsiLocalVariable) element1;
-                    final String localVarName = localVar.getName();
-                    if(localVarName.equals(varName)){
+                final PsiDeclarationStatement declarationStatement =
+                        (PsiDeclarationStatement) initialization;
+                final PsiElement[] elements =
+                        declarationStatement.getDeclaredElements();
+                for (PsiElement element : elements) {
+                    final PsiLocalVariable localVariable =
+                            (PsiLocalVariable) element;
+                    final String localVariableName = localVariable.getName();
+                    if (variableName.equals(localVariableName)) {
                         return true;
                     }
                 }
             }
-            forLoopAncestor = PsiTreeUtil.getParentOfType(forLoopAncestor, PsiForStatement.class);
+            forLoopAncestor = PsiTreeUtil.getParentOfType(forLoopAncestor,
+                    PsiForStatement.class);
         }
         return false;
     }
 
-    private static boolean existsForeachLoopLocal(String varName, PsiElement element) {
-        PsiForeachStatement forLoopAncestor = PsiTreeUtil.getParentOfType(element, PsiForeachStatement.class);
+    private static boolean existsForeachLoopLocal(@NotNull String variableName,
+                                                  PsiElement context) {
+        PsiForeachStatement forLoopAncestor =
+                PsiTreeUtil.getParentOfType(context, PsiForeachStatement.class);
         while (forLoopAncestor != null) {
-            final PsiParameter parameter = forLoopAncestor.getIterationParameter();
-
-            if (parameter.getName().equals(varName)) {
+            final PsiParameter parameter =
+                    forLoopAncestor.getIterationParameter();
+            final String parameterName = parameter.getName();
+            if (variableName.equals(parameterName)) {
                 return true;
             }
-            forLoopAncestor = PsiTreeUtil.getParentOfType(forLoopAncestor, PsiForeachStatement.class);
+            forLoopAncestor = PsiTreeUtil.getParentOfType(forLoopAncestor,
+                    PsiForeachStatement.class);
         }
         return false;
     }

@@ -9,6 +9,17 @@ public class UnnecessaryThisInspection
         this.m_foo = 3;
     }
 
+    class X {
+        private int m_foo;
+
+        public void fooBar() {};
+
+        void foo() {
+            UnnecessaryThisInspection.this.m_foo = 4;
+            UnnecessaryThisInspection.this.fooBar();
+        }
+    }
+
     public void fooBaz( int m_foo)
     {
         this.m_foo = 3;
