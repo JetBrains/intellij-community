@@ -9,7 +9,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Can be implemented by {@link com.intellij.util.xml.Converter} instance
+ * Can be implemented by {@link com.intellij.util.xml.Converter} instance, or used with
+ * {@link @com.intellij.util.xml.Referencing} annotation.
  *
  * @author peter
  */

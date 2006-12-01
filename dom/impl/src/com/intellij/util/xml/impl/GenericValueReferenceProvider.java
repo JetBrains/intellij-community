@@ -20,8 +20,8 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +49,8 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
 
-    DomElement domElement = DomManager.getDomManager(psiElement.getManager().getProject()).getDomElement(tag);
+    final DomManager domManager = DomManager.getDomManager(psiElement.getManager().getProject());
+    DomElement domElement = domManager.getDomElement(tag);
     if (domElement == null) {
       return PsiReference.EMPTY_ARRAY;
     }
@@ -71,27 +72,36 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     GenericDomValue domValue = (GenericDomValue)domElement;
 
-    final Converter converter = domValue.getConverter();
-
+    final Referencing referencing = domValue.getAnnotation(Referencing.class);
+    final Object converter;
+    if (referencing == null) {
+      converter = domValue.getConverter();
+    }
+    else {
+      Class<? extends CustomReferenceConverter> clazz = referencing.value();
+      converter = ((ConverterManagerImpl)domManager.getConverterManager()).getInstance(clazz);
+    }
     PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter);
 
     // creating "declaration" reference
-    DomElement parent = domElement.getParent();
     if (references.length == 0) {
       final NameValue nameValue = domElement.getAnnotation(NameValue.class);
       if (nameValue != null && nameValue.referencable()) {
+        DomElement parent = domElement.getParent();
+        assert parent != null;
         references = ArrayUtil.append(references, PsiReferenceBase.createSelfReference(psiElement, parent.getXmlElement()), PsiReference.class);
       }
     }
     return references;
   }
 
-  private static <T extends Annotation> DomInvocationHandler getInvocationHandler(final GenericDomValue domValue) {
+  @Nullable
+  private static DomInvocationHandler getInvocationHandler(final GenericDomValue domValue) {
     return DomManagerImpl.getDomInvocationHandler(domValue);
   }
 
   @NotNull
-  private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Converter converter) {
+  private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Object converter) {
     if (converter instanceof CustomReferenceConverter) {
       return ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, new AbstractConvertContext() {
         @NotNull
@@ -110,6 +120,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     final boolean isResolvingConverter = converter instanceof ResolvingConverter;
 
     final DomInvocationHandler invocationHandler = getInvocationHandler(domValue);
+    assert invocationHandler != null;
     final Class clazz = DomUtil.getGenericValueParameter(invocationHandler.getDomElementType());
     if (clazz == null) return PsiReference.EMPTY_ARRAY;
 

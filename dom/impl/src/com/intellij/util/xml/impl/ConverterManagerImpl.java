@@ -17,7 +17,7 @@ import java.util.Map;
  * @author peter
  */
 class ConverterManagerImpl implements ConverterManager {
-  private final InstanceMap<Converter> myConverterInstances = new InstanceMap<Converter>();
+  private final InstanceMap<Object> myConverterInstances = new InstanceMap<Object>();
   private final Map<Class,Converter> mySimpleConverters = new HashMap<Class, Converter>();
 
   ConverterManagerImpl() {
@@ -38,7 +38,11 @@ class ConverterManagerImpl implements ConverterManager {
 
   @NotNull
   public final Converter getConverterInstance(final Class<? extends Converter> converterClass) {
-    return myConverterInstances.get(converterClass);
+    return getInstance(converterClass);
+  }
+
+  <T> T getInstance(Class<T> clazz) {
+    return (T)myConverterInstances.get(clazz);
   }
 
   @Nullable

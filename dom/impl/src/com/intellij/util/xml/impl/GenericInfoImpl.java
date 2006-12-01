@@ -622,10 +622,15 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (classes.length == 1 && classes[0].equals(myClass)) {
       for (final DomChildDescriptionImpl description : getChildrenDescriptions()) {
         final Convert annotation = description.getAnnotation(Convert.class);
-        final boolean hasResolveConverter = annotation != null && ReflectionCache.isAssignable(ResolvingConverter.class, annotation.value());
+        final boolean hasResolveConverter = annotation != null &&
+                                            (ReflectionCache.isAssignable(ResolvingConverter.class, annotation.value()) ||
+                                             ReflectionCache.isAssignable(CustomReferenceConverter.class, annotation.value()));
         final Type type = description.getType();
         if (condition.value(DomReflectionUtil.getRawType(type))) {
-          if (hasResolveConverter || !String.class.equals(DomUtil.getGenericValueParameter(type)) || description.getAnnotation(NameValue.class) != null) {
+          if (hasResolveConverter ||
+              !String.class.equals(DomUtil.getGenericValueParameter(type)) ||
+              description.getAnnotation(NameValue.class) != null ||
+              description.getAnnotation(Referencing.class) != null) {
             set.add(description.getXmlElementName());
           }
         } else {
