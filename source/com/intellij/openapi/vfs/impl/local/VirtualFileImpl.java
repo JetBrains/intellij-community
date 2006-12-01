@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,8 @@ public class VirtualFileImpl extends VirtualFile {
   private byte myFlags = 0;
 
   private long myModificationStamp = LocalTimeCounter.currentTime();
+
+  //do not delete or rename without correcting native code
   private long myTimeStamp = -1; // -1, if file content has not been requested yet
 
   private static final VirtualFileImpl[] EMPTY_VIRTUAL_FILE_ARRAY = new VirtualFileImpl[0];
@@ -54,14 +57,34 @@ public class VirtualFileImpl extends VirtualFile {
     File file,
     boolean isDirectory
   ) {
+    setNameAndParent(parent, file);
+    cacheIsDirectory(isDirectory);
+    if (!isDirectory) {
+      myTimeStamp = file.lastModified();
+    }
+  }
+
+  //used to construct files under windows only to speedup
+  VirtualFileImpl(
+    VirtualFileImpl parent,
+    File file
+  ) {
+    assert SystemInfo.isWindows && FileWatcher.isAvailable();
+    setNameAndParent(parent, file);
+    if (!FileWatcher.setFileAttributes(this, file.getPath())) { //native method failed
+      final boolean isDirectory = file.isDirectory();
+      cacheIsDirectory(isDirectory);
+      if (!isDirectory) {
+        myTimeStamp = file.lastModified();
+      }
+    }
+  }
+
+  private void setNameAndParent(final VirtualFileImpl parent, final File file) {
     myParent = parent;
     setName(file.getName());
     if (myName.length() == 0) {
       LOG.error("file:" + file.getPath());
-    }
-    cacheIsDirectory(isDirectory);
-    if (!isDirectory) {
-      myTimeStamp = file.lastModified();
     }
   }
 
@@ -153,7 +176,7 @@ public class VirtualFileImpl extends VirtualFile {
   public boolean isWritable() {
     synchronized (ourFileSystem.LOCK) {
       if (!isWritableInitialized()) {
-        myFlags |= IS_WRITABLE_INITIALIZED_FLAG;
+        cacheIsWritableInitialized();
         final boolean canWrite = getPhysicalFile().canWrite();
         cacheIsWritable(canWrite);
         return canWrite;
@@ -162,6 +185,12 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
+  //do not delete or rename without correcting native code
+  private void cacheIsWritableInitialized() {
+    myFlags |= IS_WRITABLE_INITIALIZED_FLAG;
+  }
+
+  //do not delete or rename without correcting native code
   private void cacheIsWritable(final boolean canWrite) {
     if (canWrite) {
       myFlags |= IS_WRITABLE_FLAG;
@@ -170,6 +199,7 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
+  //do not delete or rename without correcting native code
   private void cacheIsDirectory(final boolean isDirectory) {
     if (isDirectory) {
       myFlags |= IS_DIRECTORY_FLAG;
@@ -226,7 +256,11 @@ public class VirtualFileImpl extends VirtualFile {
               String childPath = path + f.getName();
               VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.remove(childPath);
               if (child == null || !child.isValid()) {
-                child = new VirtualFileImpl(this, f, f.isDirectory());
+                if (SystemInfo.isWindows && FileWatcher.isAvailable()) {
+                  child = new VirtualFileImpl(this, f);
+                } else {
+                  child = new VirtualFileImpl(this, f, f.isDirectory());
+                }
               }
               myChildren[i] = child;
             }
