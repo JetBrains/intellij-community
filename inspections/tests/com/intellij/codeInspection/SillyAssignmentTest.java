@@ -21,4 +21,8 @@ public class SillyAssignmentTest extends InspectionTestCase {
   public void testMultiple() throws Exception {
     doTest();
   }
+
+  public void testSuppressed() throws Exception {
+    doTest();
+  }
 }
