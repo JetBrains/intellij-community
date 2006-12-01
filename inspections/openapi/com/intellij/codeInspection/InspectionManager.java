@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,4 +51,10 @@ public abstract class InspectionManager {
 
   
   @NotNull public abstract Project getProject();
+
+  public abstract ProblemDescriptor createProblemDescriptor(final PsiElement psiElement, 
+                                                            final TextRange rangeInElement,
+                                                            @NotNull final String descriptionTemplate,
+                                                            final ProblemHighlightType highlightType,
+                                                            final LocalQuickFix... fixes);
 }

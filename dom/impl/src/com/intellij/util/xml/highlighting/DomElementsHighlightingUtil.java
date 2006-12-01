@@ -5,6 +5,7 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
@@ -40,12 +41,12 @@ public class DomElementsHighlightingUtil {
     }
   };
 
-  public static List<ProblemDescriptor> createProblemDescriptors(final DomElementProblemDescriptor problemDescriptor) {
+  public static List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, ProblemDescriptor>() {
       public ProblemDescriptor fun(final Pair<TextRange, PsiElement> s) {
         final PsiElement element = s.second;
-        return new ProblemDescriptorImpl(element, element, problemDescriptor.getDescriptionTemplate(), problemDescriptor.getFixes(), type, false) {
+        return new ProblemDescriptorImpl(element, element, problemDescriptor.getDescriptionTemplate(), problemDescriptor.getFixes(), type, false, null) {
 
           public final PsiElement getPsiElement() {
             return getStartElement();

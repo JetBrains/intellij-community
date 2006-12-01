@@ -7,24 +7,24 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.profile.Profile;
+import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.EventDispatcher;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.Profile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +177,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
 
   public List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
-    return DomElementsHighlightingUtil.createProblemDescriptors(problemDescriptor);
+    return DomElementsHighlightingUtil.createProblemDescriptors(manager, problemDescriptor);
   }
 
   public boolean isHighlightingFinished(final DomElement[] domElements) {

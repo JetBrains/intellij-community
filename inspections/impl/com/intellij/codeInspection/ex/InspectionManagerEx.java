@@ -123,7 +123,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
                                                    LocalQuickFix[] fixes,
                                                    ProblemHighlightType highlightType,
                                                    boolean isAfterEndOfLine) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine);
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null);
   }
 
   @NotNull
@@ -132,8 +132,17 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
                                                    @NotNull String descriptionTemplate,
                                                    ProblemHighlightType highlightType,
                                                    LocalQuickFix... fixes) {
-    return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false);
+    return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null);
   }
+
+  public ProblemDescriptor createProblemDescriptor(final PsiElement psiElement,
+                                                   final TextRange rangeInElement,
+                                                   @NotNull final String descriptionTemplate,
+                                                   final ProblemHighlightType highlightType,
+                                                   final LocalQuickFix... fixes) {
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement);
+  }
+
 
   @Nullable
   public static String getSuppressedInspectionIdsIn(PsiElement element) {

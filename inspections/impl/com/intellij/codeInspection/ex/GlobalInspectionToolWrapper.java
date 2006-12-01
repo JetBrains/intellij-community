@@ -130,7 +130,7 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
                                                                        ((ProblemDescriptor)problemDescriptor).getEndElement(),
                                                                        problemDescriptor.getDescriptionTemplate(),
                                                                        new LocalQuickFix[]{(LocalQuickFix)fix},
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null);
         return new QuickFixWrapper(descriptor, 0);
       }
       else {

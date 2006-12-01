@@ -8,12 +8,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +30,10 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private ProblemHighlightType myHighlightType;
   private Navigatable myNavigatable;
   private boolean myAfterEndOfLine;
+  private TextRange myTextRangeInElement;
 
-  public ProblemDescriptorImpl(PsiElement startElement, PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine) {
+  public ProblemDescriptorImpl(PsiElement startElement, PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
+                               ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
     super(fixes, descriptionTemplate);
     LOG.assertTrue(startElement.isValid(), "Invalid PsiElement");
     LOG.assertTrue(startElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
@@ -48,16 +50,20 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     myEndSmartPointer = startElement == endElement ? null : SmartPointerManager.getInstance(project).createLazyPointer(endElement);
 
     myAfterEndOfLine = isAfterEndOfLine;
+    myTextRangeInElement = rangeInElement;
   }
 
   public PsiElement getPsiElement() {
     PsiElement startElement = getStartElement();
+    if (myEndSmartPointer == null) {
+      return startElement;
+    }
     PsiElement endElement = getEndElement();
     if (startElement == endElement) {
       return startElement;
     }
     if (startElement == null || endElement == null) return null;
-    return PsiTreeUtil.findCommonParent(startElement,endElement);
+    return PsiTreeUtil.findCommonParent(startElement, endElement);
   }
 
   public PsiElement getStartElement() {
@@ -95,6 +101,10 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
       return textRange;
     }
     LOG.assertTrue(!isAfterEndOfLine());
+    if (myTextRangeInElement != null) {
+      return new TextRange(textRange.getStartOffset() + myTextRangeInElement.getStartOffset(),
+                           textRange.getStartOffset() + myTextRangeInElement.getEndOffset());
+    }
     return new TextRange(textRange.getStartOffset(), endElement.getTextRange().getEndOffset());
   }
 

@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -37,7 +38,10 @@ public class ProblemsHolder {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
-  public void registerProblem(PsiElement psiElement, String descriptionTemplate, ProblemHighlightType highlightType, LocalQuickFix... fixes) {
+  public void registerProblem(PsiElement psiElement,
+                              String descriptionTemplate,
+                              ProblemHighlightType highlightType,
+                              LocalQuickFix... fixes) {
     ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType);
     registerProblem(descriptor);
   }
@@ -47,6 +51,19 @@ public class ProblemsHolder {
       myProblems = new ArrayList<ProblemDescriptor>(1);
     }
     myProblems.add(problemDescriptor);
+  }
+
+  public void registerProblem(PsiReference reference, String descriptionTemplate, ProblemHighlightType highlightType) {
+    if (myProblems == null) {
+      myProblems = new ArrayList<ProblemDescriptor>(1);
+    }
+
+    LocalQuickFix[] fixes = null;
+    if (reference instanceof LocalQuickFixProvider) {
+      fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
+    }
+
+    myProblems.add(myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType, fixes));
   }
 
   @Nullable
