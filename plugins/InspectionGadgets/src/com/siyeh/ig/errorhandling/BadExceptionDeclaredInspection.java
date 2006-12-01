@@ -18,11 +18,14 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceList;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +34,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -52,9 +57,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
 
     /** @noinspection PublicField*/
     public boolean ignoreTestCases = false;
-    private final List<String> exceptionsList = new ArrayList<String>(32);
+    private final List<String> exceptionList = new ArrayList<String>(32);
     private final Object lock = new Object();
-
 
     public BadExceptionDeclaredInspection() {
         parseCallCheckString();
@@ -68,9 +72,9 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
     private void parseCallCheckString(){
         final String[] strings = exceptionCheckString.split(",");
         synchronized(lock){
-            exceptionsList.clear();
+            exceptionList.clear();
             for(String string : strings){
-                exceptionsList.add(string);
+                exceptionList.add(string);
             }
         }
     }
@@ -84,7 +88,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
         final StringBuffer buffer = new StringBuffer();
         synchronized(lock){
             boolean first = true;
-            for(String exceptionName : exceptionsList){
+            for(String exceptionName : exceptionList){
                 if(first){
                     first = false;
                 } else{
@@ -120,37 +124,35 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
     }
 
     private class BadExceptionDeclaredVisitor extends BaseInspectionVisitor{
+
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if(ignoreTestCases){
-                final PsiClass aClass =
-                        ClassUtils.getContainingClass(method);
-                if(aClass != null && ClassUtils.isSubclass(aClass,
-                        "junit.framework.TestCase")){
+                final PsiClass aClass = ClassUtils.getContainingClass(method);
+                if(aClass != null &&
+                        ClassUtils.isSubclass(aClass, "junit.framework.Test")){
                     return;
                 }
             }
             final PsiReferenceList throwsList = method.getThrowsList();
             final PsiJavaCodeReferenceElement[] references =
                     throwsList.getReferenceElements();
+            final List<String> exceptionListCopy;
+            synchronized(lock){
+                exceptionListCopy = new ArrayList<String>(exceptionList);
+            }
             for(PsiJavaCodeReferenceElement reference : references){
                 final PsiClass thrownClass = (PsiClass) reference.resolve();
-                if(thrownClass != null){
-                    final String text = thrownClass.getQualifiedName();
-                    if(text != null){
-
-                        final List<String> exceptionListCopy;
-                        synchronized(lock){
-                            exceptionListCopy = new ArrayList<String>(
-                                    exceptionsList);
-                        }
-                        for(Object aExceptionsList : exceptionListCopy){
-                            final String exceptionClass =
-                                    (String) aExceptionsList;
-                            if(text.equals(exceptionClass)){
-                                registerError(reference);
-                            }
-                        }
+                if (thrownClass == null) {
+                    continue;
+                }
+                final String text = thrownClass.getQualifiedName();
+                if (text == null) {
+                    continue;
+                }
+                for(String exceptionClassName : exceptionListCopy){
+                    if(text.equals(exceptionClassName)){
+                        registerError(reference);
                     }
                 }
             }
@@ -168,7 +170,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
             super();
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
-            table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            table.setSelectionMode(
+                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             final ReturnCheckSpecificationTableModel model =
                     new ReturnCheckSpecificationTableModel();
             table.setModel(model);
@@ -176,24 +179,25 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
                 public void actionPerformed(ActionEvent e){
                     final int listSize;
                     synchronized(lock){
-                        listSize = exceptionsList.size();
-                        exceptionsList.add("");
+                        listSize = exceptionList.size();
+                        exceptionList.add("");
                     }
                     model.fireTableStructureChanged();
 
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            final Rectangle rect = table.getCellRect(listSize, 0, true);
+                            final Rectangle rect =
+                                    table.getCellRect(listSize, 0, true);
                             table.scrollRectToVisible(rect);
                             table.editCellAt(listSize, 0);
-                            final TableCellEditor editor = table.getCellEditor();
+                            final TableCellEditor editor =
+                                    table.getCellEditor();
                             final Component component =
                                     editor.getTableCellEditorComponent(table,
                                             null, true, listSize, 0);
                             component.requestFocus();
                         }
                     });
-
                 }
             });
             deleteButton.addActionListener(new ActionListener(){
@@ -206,7 +210,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
                     Arrays.sort(selectedRows);
                     synchronized(lock){
                         for(int i = selectedRows.length - 1; i >= 0; i--){
-                            exceptionsList.remove(selectedRows[i]);
+                            exceptionList.remove(selectedRows[i]);
                         }
                     }
                     model.fireTableStructureChanged();
@@ -236,7 +240,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
 
         public int getRowCount(){
             synchronized(lock){
-                return exceptionsList.size();
+                return exceptionList.size();
             }
         }
 
@@ -249,7 +253,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
                     "exception.class.column.name");
         }
 
-        public Class getColumnClass(int columnIndex){
+        public Class<?> getColumnClass(int columnIndex){
             return String.class;
         }
 
@@ -259,13 +263,13 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
 
         public Object getValueAt(int rowIndex, int columnIndex){
             synchronized(lock){
-                return exceptionsList.get(rowIndex);
+                return exceptionList.get(rowIndex);
             }
         }
 
         public void setValueAt(Object aValue, int rowIndex, int columnIndex){
             synchronized(lock){
-                exceptionsList.set(rowIndex, (String) aValue);
+                exceptionList.set(rowIndex, (String) aValue);
             }
         }
     }
