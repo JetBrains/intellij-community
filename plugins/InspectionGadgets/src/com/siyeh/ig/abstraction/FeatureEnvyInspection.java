@@ -22,12 +22,19 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JComponent;
 import java.util.Set;
 
 public class FeatureEnvyInspection extends MethodInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreTestCases = false;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("feature.envy.display.name");
@@ -45,13 +52,24 @@ public class FeatureEnvyInspection extends MethodInspection {
                 "feature.envy.problem.descriptor", className);
     }
 
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "feature.envy.ignore.test.cases.option"), this, 
+                "ignoreTestCases");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new FeatureEnvyVisitor();
     }
 
-    private static class FeatureEnvyVisitor extends BaseInspectionVisitor {
+    private class FeatureEnvyVisitor extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
+            if (ignoreTestCases &&
+                    TestUtils.isJUnitTestMethod(method)) {
+                return;
+            }
             final PsiIdentifier nameIdentifier = method.getNameIdentifier();
             if (nameIdentifier == null) {
                 return;
