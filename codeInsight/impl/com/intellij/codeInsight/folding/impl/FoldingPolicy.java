@@ -685,6 +685,10 @@ class FoldingPolicy {
     if (range.equals(fileRange)) return false;
 
     LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= fileRange.getEndOffset());
+    // PSI element text ranges may be invalid because of reparse exception (see, for example, IDEA-10617) 
+    if (range.getStartOffset() < 0 || range.getEndOffset() > fileRange.getEndOffset()) {
+      return false;
+    }
     if (!allowOneLiners) {
       int startLine = document.getLineNumber(range.getStartOffset());
       int endLine = document.getLineNumber(range.getEndOffset() - 1);
