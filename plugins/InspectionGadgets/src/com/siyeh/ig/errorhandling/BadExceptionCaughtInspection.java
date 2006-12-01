@@ -18,34 +18,38 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BadExceptionCaughtInspection extends ExpressionInspection {
+
     /** @noinspection PublicField*/
     public String exceptionCheckString =
-            "java.lang.NullPointerException" + "," +
-            "java.lang.IllegalMonitorStateException" + "," +
+            "java.lang.NullPointerException" + ',' +
+            "java.lang.IllegalMonitorStateException" + ',' +
             "java.lang.ArrayIndexOutOfBoundsException";
 
-    private final List<String> exceptionsList = new ArrayList<String>(32);
-    private final Object lock = new Object();
+    final List<String> exceptionsList = new ArrayList<String>(32);
+    final Object lock = new Object();
 
-    {
+    public BadExceptionCaughtInspection() {
         parseExceptionsString();
     }
 
@@ -56,9 +60,9 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
 
     private void parseExceptionsString() {
         final String[] strings = exceptionCheckString.split(",");
-        synchronized(lock){
+        synchronized(lock) {
             exceptionsList.clear();
-            for(String string : strings){
+            for (String string : strings) {
                 exceptionsList.add(string);
             }
         }
@@ -70,13 +74,13 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
     }
 
     private void formatCallCheckString() {
-        final StringBuffer buffer = new StringBuffer();
-        synchronized(lock){
+        final StringBuilder buffer = new StringBuilder();
+        synchronized (lock) {
             boolean first = true;
-            for(String exceptionName : exceptionsList){
-                if(first){
+            for (String exceptionName : exceptionsList) {
+                if (first) {
                     first = false;
-                } else{
+                } else {
                     buffer.append(',');
                 }
                 buffer.append(exceptionName);
@@ -85,9 +89,10 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
         exceptionCheckString = buffer.toString();
     }
 
-    public String getID(){
+    public String getID() {
         return "ProhibitedExceptionCaught";
     }
+
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "bad.exception.caught.display.name");
@@ -115,30 +120,26 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
     private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
-
             super.visitTryStatement(statement);
             final PsiParameter[] catchBlockParameters =
                     statement.getCatchBlockParameters();
-            for(final PsiParameter parameter : catchBlockParameters){
-                if(parameter == null){
+            for (PsiParameter parameter : catchBlockParameters) {
+                if(parameter == null) {
                     continue;
                 }
                 final PsiType type = parameter.getType();
                 final String text = type.getCanonicalText();
-                if(text == null){
+                if (text == null) {
                     continue;
                 }
-
-                final List<String> exceptionListCopy;
-                synchronized(lock){
-                    exceptionListCopy = new ArrayList<String>(exceptionsList);
+                final Set<String> exceptionListCopy;
+                synchronized (lock) {
+                    exceptionListCopy = new HashSet<String>(exceptionsList);
                 }
-                for(String exceptionClass : exceptionListCopy){
-                    if(text.equals(exceptionClass)){
-                        final PsiTypeElement typeElement =
-                                parameter.getTypeElement();
-                        registerError(typeElement);
-                    }
+                if (exceptionListCopy.contains(text)) {
+                    final PsiTypeElement typeElement =
+                            parameter.getTypeElement();
+                    registerError(typeElement);
                 }
             }
         }
@@ -154,14 +155,15 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
             super();
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
-            table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            table.setSelectionMode(
+                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             final ReturnCheckSpecificationTableModel model =
                     new ReturnCheckSpecificationTableModel();
             table.setModel(model);
             addButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     final int listSize;
-                    synchronized(lock){
+                    synchronized (lock) {
                         listSize = exceptionsList.size();
                         exceptionsList.add("");
                     }
@@ -169,12 +171,15 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
 
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
-                            final Rectangle rect = table.getCellRect(listSize, 0, true);
+                            final Rectangle rect =
+                                    table.getCellRect(listSize, 0, true);
                             table.scrollRectToVisible(rect);
                             table.editCellAt(listSize, 0);
-                            final TableCellEditor editor = table.getCellEditor();
+                            final TableCellEditor editor =
+                                    table.getCellEditor();
                             final Component component =
-                                    editor.getTableCellEditorComponent(table, null, true, listSize, 0);
+                                    editor.getTableCellEditorComponent(table,
+                                            null, true, listSize, 0);
                             component.requestFocus();
                         }
                     });
@@ -189,7 +194,7 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
                     }
                     final int row = selectedRows[selectedRows.length - 1] - 1;
                     Arrays.sort(selectedRows);
-                    synchronized(lock){
+                    synchronized(lock) {
                         for (int i = selectedRows.length - 1; i >= 0; i--) {
                             exceptionsList.remove(selectedRows[i]);
                         }
@@ -210,10 +215,11 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
         }
     }
 
-    private class ReturnCheckSpecificationTableModel extends AbstractTableModel {
+    private class ReturnCheckSpecificationTableModel
+            extends AbstractTableModel {
 
         public int getRowCount() {
-            synchronized(lock){
+            synchronized (lock) {
                 return exceptionsList.size();
             }
         }
@@ -223,10 +229,11 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
         }
 
         public String getColumnName(int columnIndex) {
-            return InspectionGadgetsBundle.message("exception.class.column.name");
+            return InspectionGadgetsBundle.message(
+                    "exception.class.column.name");
         }
 
-        public Class getColumnClass(int columnIndex) {
+        public Class<?> getColumnClass(int columnIndex) {
             return String.class;
         }
 
@@ -235,13 +242,13 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
         }
 
         public Object getValueAt(int rowIndex, int columnIndex) {
-            synchronized(lock){
+            synchronized (lock) {
                 return exceptionsList.get(rowIndex);
             }
         }
 
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            synchronized(lock){
+            synchronized (lock) {
                 exceptionsList.set(rowIndex, (String)aValue);
             }
         }

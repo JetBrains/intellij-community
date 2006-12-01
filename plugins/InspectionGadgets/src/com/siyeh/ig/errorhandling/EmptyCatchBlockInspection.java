@@ -35,7 +35,7 @@ public class EmptyCatchBlockInspection extends StatementInspection {
     public boolean m_includeComments = true;
     /** @noinspection PublicField */
     public boolean m_ignoreTestCases = true;
-    /** @noinspecion PublicField */
+    /** @noinspection PublicField */
     public boolean m_ignoreIgnoreParameter = true;
 
     public String getDisplayName() {

@@ -35,25 +35,24 @@ import java.awt.EventQueue;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BadExceptionThrownInspection extends ExpressionInspection{
+
     /**@noinspection PublicField*/
     public String exceptionCheckString =
-      "java.lang.Throwable" + "," +
-      "java.lang.Exception" + "," +
-      "java.lang.Error" + "," +
-      "java.lang.RuntimeException" + "," +
-      "java.lang.NullPointerException" + "," +
-      "java.lang.ClassCastException" + "," +
+      "java.lang.Throwable" + ',' +
+      "java.lang.Exception" + ',' +
+      "java.lang.Error" + ',' +
+      "java.lang.RuntimeException" + ',' +
+      "java.lang.NullPointerException" + ',' +
+      "java.lang.ClassCastException" + ',' +
       "java.lang.ArrayIndexOutOfBoundsException";
 
-    private final List<String> exceptionsList = new ArrayList<String>(32);
-    private final Object lock = new Object();
+    final List<String> exceptionsList = new ArrayList<String>(32);
+    final Object lock = new Object();
 
-    {
+    public BadExceptionThrownInspection(){
         parseCallCheckString();
     }
 
@@ -78,7 +77,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
     }
 
     private void formatCallCheckString(){
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuilder buffer = new StringBuilder();
         synchronized(lock){
             boolean first=true;
             for(String exceptionName : exceptionsList){
@@ -123,6 +122,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
     }
 
     private class BadExceptionThrownVisitor extends BaseInspectionVisitor{
+
         public void visitThrowStatement(PsiThrowStatement statement){
             super.visitThrowStatement(statement);
             final PsiExpression exception = statement.getException();
@@ -134,15 +134,12 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
                 return;
             }
             final String text = type.getCanonicalText();
-            final List<String> exceptionListCopy;
+            final Set<String> exceptionListCopy;
             synchronized(lock){
-                exceptionListCopy = new ArrayList<String>(exceptionsList);
+                exceptionListCopy = new HashSet<String>(exceptionsList);
             }
-            for(String exceptionClass : exceptionListCopy){
-                if(text.equals(exceptionClass)){
-                    registerStatementError(statement, type);
-                    return;
-                }
+            if(exceptionListCopy.contains(text)){
+                registerStatementError(statement, type);
             }
         }
     }
@@ -234,7 +231,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection{
                     "exception.class.column.name");
         }
 
-        public Class getColumnClass(int columnIndex){
+        public Class<?> getColumnClass(int columnIndex){
             return String.class;
         }
 
