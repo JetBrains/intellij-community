@@ -258,9 +258,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public Future<?> executeOnPooledThread(Runnable action) {
-    synchronized(ourThreadExecutorsService) {
-      return ourThreadExecutorsService.submit(action);
-    }
+    return ourThreadExecutorsService.submit(action);
   }
 
   private static Thread ourDispatchThread = null;
