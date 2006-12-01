@@ -18,13 +18,16 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.idea.Bombed;
 import junit.framework.TestCase;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.io.IOException;
+import java.util.Calendar;
 
+@Bombed(year = 2006,month = Calendar.DECEMBER, day = 1,time = 15,user = "cdr",description = "hren knows")
 public class InspectionProfileTest extends TestCase {
   private IdeaTestFixture myFixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().getFixture();
 
