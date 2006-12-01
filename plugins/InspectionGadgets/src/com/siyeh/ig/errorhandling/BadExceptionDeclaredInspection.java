@@ -18,10 +18,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
@@ -39,9 +36,7 @@ import java.awt.EventQueue;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BadExceptionDeclaredInspection extends MethodInspection{
 
@@ -128,32 +123,29 @@ public class BadExceptionDeclaredInspection extends MethodInspection{
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if(ignoreTestCases){
-                final PsiClass aClass = ClassUtils.getContainingClass(method);
-                if(aClass != null &&
-                        ClassUtils.isSubclass(aClass, "junit.framework.Test")){
+                final PsiClass containingClass = method.getContainingClass();
+                if(ClassUtils.isSubclass(containingClass,
+                        "junit.framework.Test")){
                     return;
                 }
             }
             final PsiReferenceList throwsList = method.getThrowsList();
             final PsiJavaCodeReferenceElement[] references =
                     throwsList.getReferenceElements();
-            final List<String> exceptionListCopy;
+            final Set<String> exceptionListCopy;
             synchronized(lock){
-                exceptionListCopy = new ArrayList<String>(exceptionList);
+                exceptionListCopy = new HashSet<String>(exceptionList);
             }
             for(PsiJavaCodeReferenceElement reference : references){
-                final PsiClass thrownClass = (PsiClass) reference.resolve();
-                if (thrownClass == null) {
+                final PsiElement element = reference.resolve();
+                if (!(element instanceof PsiClass)) {
                     continue;
                 }
-                final String text = thrownClass.getQualifiedName();
-                if (text == null) {
-                    continue;
-                }
-                for(String exceptionClassName : exceptionListCopy){
-                    if(text.equals(exceptionClassName)){
-                        registerError(reference);
-                    }
+                final PsiClass thrownClass = (PsiClass)element;
+                final String qualifiedName = thrownClass.getQualifiedName();
+                if (qualifiedName != null &&
+                        exceptionListCopy.contains(qualifiedName)) {
+                    registerError(reference);
                 }
             }
         }
