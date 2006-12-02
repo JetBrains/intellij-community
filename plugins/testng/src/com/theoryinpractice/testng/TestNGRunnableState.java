@@ -12,6 +12,7 @@ import java.util.*;
 
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.DefaultCoverageFileProvider;
+import com.intellij.coverage.CoverageSuite;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -83,12 +84,16 @@ public class TestNGRunnableState extends JavaCommandLineState
                 client.stopTest();
 
                 if (config.isCoverageEnabled()) {
-                    CoverageDataManager.getInstance(config.getProject())
+                    DefaultCoverageFileProvider fileProvider = new DefaultCoverageFileProvider(config.getCoverageFileName());
+                    LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
+
+                    CoverageSuite coverageSuite = CoverageDataManager.getInstance(config.getProject())
                             .addCoverageSuite(config.getGeneratedName() + " Coverage Results",
-                                              new DefaultCoverageFileProvider(config.getCoverageFileName()),
+                                              fileProvider,
                                               new String[] {},
                                               new Date().getTime(),
                                               !config.isMergeDataByDefault());
+                    LOGGER.info("Added coverage data with name '" + coverageSuite.getPresentableName() + "'");
                 }
             }
 
