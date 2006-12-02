@@ -42,8 +42,8 @@ public class VirtualFileImpl extends VirtualFile {
 
   private long myModificationStamp = LocalTimeCounter.currentTime();
 
-  //do not delete or rename without correcting native code
-  private long myTimeStamp = -1; // -1, if file content has not been requested yet
+  //do not delete or rename or change visibility without correcting native code
+  public long myTimeStamp = -1; // -1, if file content has not been requested yet
 
   private static final VirtualFileImpl[] EMPTY_VIRTUAL_FILE_ARRAY = new VirtualFileImpl[0];
 
@@ -185,13 +185,13 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
-  //do not delete or rename without correcting native code
-  private void cacheIsWritableInitialized() {
+  //do not delete or rename or change visibility without correcting native code
+  public void cacheIsWritableInitialized() {
     myFlags |= IS_WRITABLE_INITIALIZED_FLAG;
   }
 
-  //do not delete or rename without correcting native code
-  private void cacheIsWritable(final boolean canWrite) {
+  //do not delete or rename or change visibility without correcting native code
+  public void cacheIsWritable(final boolean canWrite) {
     if (canWrite) {
       myFlags |= IS_WRITABLE_FLAG;
     } else {
@@ -199,8 +199,8 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
-  //do not delete or rename without correcting native code
-  private void cacheIsDirectory(final boolean isDirectory) {
+  //do not delete or rename or change visibility without correcting native code
+  public void cacheIsDirectory(final boolean isDirectory) {
     if (isDirectory) {
       myFlags |= IS_DIRECTORY_FLAG;
     } else {
