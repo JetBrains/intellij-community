@@ -406,7 +406,7 @@ public class Cache {
       final int[] ids = view.getFieldIds();
       for (final int id : ids) {
         final NameDescriptorPair pair = view.getFieldNameAndDescriptor(id);
-        if (pair.name == name && pair.descriptor == descriptor) {
+        if (pair != null && pair.name == name && pair.descriptor == descriptor) {
           return id;
         }
       }
@@ -423,7 +423,7 @@ public class Cache {
       final int[] ids = view.getFieldIds();
       for (final int id : ids) {
         final NameDescriptorPair pair = view.getFieldNameAndDescriptor(id);
-        if (pair.name == name) {
+        if (pair != null && pair.name == name) {
           return id;
         }
       }
@@ -440,7 +440,7 @@ public class Cache {
       final int[] ids = view.getMethodIds();
       for (final int id : ids) {
         final NameDescriptorPair pair = view.getMethodNameAndDescriptor(id);
-        if (pair.name == name && pair.descriptor == descriptor) {
+        if (pair != null && pair.name == name && pair.descriptor == descriptor) {
           return id;
         }
       }
@@ -458,7 +458,7 @@ public class Cache {
       final TIntArrayList list = new TIntArrayList();
       for (final int id : ids) {
         final NameDescriptorPair pair = view.getMethodNameAndDescriptor(id);
-        if (pair.name == name) {
+        if (pair != null && pair.name == name) {
           list.add(id);
         }
       }
@@ -475,7 +475,7 @@ public class Cache {
       final int[] ids = view.getMethodIds();
       for (int methodId : ids) {
         final NameDescriptorPair pair = view.getMethodNameAndDescriptor(methodId);
-        if (signature.equals(CacheUtils.getMethodSignature(symbolTable.getSymbol(pair.name), symbolTable.getSymbol(pair.descriptor)))) {
+        if (pair != null && signature.equals(CacheUtils.getMethodSignature(symbolTable.getSymbol(pair.name), symbolTable.getSymbol(pair.descriptor)))) {
           return methodId;
         }
       }

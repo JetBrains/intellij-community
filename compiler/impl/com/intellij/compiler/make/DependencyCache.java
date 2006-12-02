@@ -69,8 +69,9 @@ public class DependencyCache {
 
   public Cache getCache() throws CacheCorruptedException {
     if (myCache == null) {
-      final int cacheSize = ApplicationManager.getApplication().isUnitTestMode() ? 4 : 1024; /* base number of cached record views of each type*/
-      myCache = new Cache(myStoreDirectoryPath, cacheSize, true);
+      // base number of cached record views of each type
+      final int cacheSize = /*ApplicationManager.getApplication().isUnitTestMode() ? 4 :*/ 1024;
+      myCache = new Cache(myStoreDirectoryPath, cacheSize, false);
     }
 
     return myCache;
@@ -79,7 +80,7 @@ public class DependencyCache {
   public Cache getNewClassesCache() throws CacheCorruptedException {
     if (myNewClassesCache == null) {
       //noinspection HardCodedStringLiteral
-      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 1024, false);
+      myNewClassesCache = new Cache(myStoreDirectoryPath + "/tmp", 2048, false);
     }
     return myNewClassesCache;
   }

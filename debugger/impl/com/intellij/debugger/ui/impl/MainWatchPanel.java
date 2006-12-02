@@ -5,21 +5,21 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.impl.watch.InplaceEditor;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.Disposable;
 import com.intellij.ui.ListenerUtil;
 
 import javax.swing.*;
@@ -28,9 +28,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class MainWatchPanel extends WatchPanel implements DataProvider {
-  private KeyStroke myRemoveWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
-  private KeyStroke myNewWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
-  private KeyStroke myEditWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0);
+  private final KeyStroke myRemoveWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
+  private final KeyStroke myNewWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
+  private final KeyStroke myEditWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0);
 
   public MainWatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project,stateManager);

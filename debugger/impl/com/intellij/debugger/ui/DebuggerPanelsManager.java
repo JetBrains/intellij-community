@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -37,15 +38,15 @@ public class DebuggerPanelsManager implements ProjectComponent{
 
   private final Project myProject;
 
-  private PositionHighlighter myEditorManager;
-  private HashMap<ProcessHandler, DebuggerSessionTab> mySessionTabs = new HashMap<ProcessHandler, DebuggerSessionTab>();
+  private final PositionHighlighter myEditorManager;
+  private final HashMap<ProcessHandler, DebuggerSessionTab> mySessionTabs = new HashMap<ProcessHandler, DebuggerSessionTab>();
   private final EditorColorsListener myColorsListener;
 
   public DebuggerPanelsManager(Project project, EditorColorsManager colorsManager) {
     myProject = project;
     myColorsListener = new EditorColorsListener() {
       public void globalSchemeChange(EditorColorsScheme scheme) {
-        updateContextPointDescription();
+        myEditorManager.updateContextPointDescription();
       }
     };
     colorsManager.addEditorColorsListener(myColorsListener);
@@ -62,10 +63,6 @@ public class DebuggerPanelsManager implements ProjectComponent{
         }
       }
     });
-
-    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
-    LOG.assertTrue(contentManager != null, "Content manager is null");
-    contentManager.addRunContentListener(myContentListener, GenericDebuggerRunner.getRunnerInfo());
   }
 
   private DebuggerStateManager getContextManager() {
@@ -138,12 +135,17 @@ public class DebuggerPanelsManager implements ProjectComponent{
 
 
   public void projectOpened() {
+    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    LOG.assertTrue(contentManager != null, "Content manager is null");
+    contentManager.addRunContentListener(myContentListener, GenericDebuggerRunner.getRunnerInfo());
   }
 
   public void projectClosed() {
-    ExecutionManager.getInstance(myProject).getContentManager().removeRunContentListener(myContentListener);
+    final RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    contentManager.removeRunContentListener(myContentListener);
   }
 
+  @NotNull
   public String getComponentName() {
     return "DebuggerPanelsManager";
   }
@@ -159,6 +161,7 @@ public class DebuggerPanelsManager implements ProjectComponent{
     return project.getComponent(DebuggerPanelsManager.class);
   }
 
+  @Nullable
   public MainWatchPanel getWatchPanel() {
     DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
     DebuggerSessionTab sessionTab = getSessionTab(context.getDebuggerSession());
@@ -184,11 +187,9 @@ public class DebuggerPanelsManager implements ProjectComponent{
     return mySessionTabs.get(processHandler);
   }
 
+  @Nullable
   private DebuggerSessionTab getSessionTab(DebuggerSession session) {
     return session != null ? getSessionTab(session.getProcess().getExecutionResult().getProcessHandler()) : null;
   }
 
-  public void updateContextPointDescription() {
-    myEditorManager.updateContextPointDescription();
-  }
 }

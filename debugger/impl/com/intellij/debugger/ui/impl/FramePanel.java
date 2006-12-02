@@ -35,10 +35,10 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class FramePanel extends DebuggerPanel implements DataProvider{
-  private JComboBox myThreadsCombo;
-  private JComboBox myFramesCombo;
-  private ThreadsListener myThreadsListener;
-  private FramesListener myFramesListener;
+  private final JComboBox myThreadsCombo;
+  private final JComboBox myFramesCombo;
+  private final ThreadsListener myThreadsListener;
+  private final FramesListener myFramesListener;
   @NonNls private static final String HELP_ID = "debugging.debugFrame";
 
   public FramePanel(Project project, DebuggerStateManager stateManager) {
@@ -153,6 +153,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   }
 
+  // todo: rewrite to be list selection listener
   private class FramesListener implements ActionListener{
     boolean myIsEnabled = true;
 
