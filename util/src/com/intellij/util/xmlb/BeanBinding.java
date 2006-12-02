@@ -1,5 +1,6 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -69,29 +70,37 @@ class BeanBinding implements Binding {
     return element;
   }
 
-  public Object deserialize(Object o, Node node) {
+  public Object deserialize(Object o, Node... nodes) {
     Object result = instantiateBean();
 
-    assert node instanceof Element : "Wrong node: " + node;
-    Element e = (Element)node;
+    assert nodes.length == 1;
+    assert nodes[0] instanceof Element : "Wrong node: " + nodes;
+    Element e = (Element)nodes[0];
 
     ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
 
     NodeList childNodes = e.getChildNodes();
+
+    MultiMap<Binding, Node> data = new MultiMap<Binding, Node>();
+
     nextNode:
     for (int i = 0; i < childNodes.getLength(); i++) {
       Node child = childNodes.item(i);
 
-      for (Iterator<Binding> j = bindings.iterator(); j.hasNext();) {
-        Binding binding = j.next();
+      for (Binding binding : bindings) {
         if (binding.isBoundTo(child)) {
-          j.remove();
-          binding.deserialize(result, child);
+          data.putValue(binding, child);
           continue nextNode;
         }
       }
 
       throw new XmlSerializationException("Format error: no binding for " + child);
+    }
+
+    for (Object o1 : data.keySet()) {
+      Binding binding = (Binding)o1;
+      List<Node> nn = data.get(binding);
+      binding.deserialize(result, (Node[])nn.toArray(new Node[nn.size()]));
     }
 
     return result;
@@ -113,16 +122,16 @@ class BeanBinding implements Binding {
   }
 
   public boolean isBoundTo(Node node) {
-    throw new UnsupportedOperationException("Method isBoundTo is not supported in " + getClass());
+    return node instanceof Element && node.getNodeName().equals(myTagName);
   }
 
   public Class<? extends Node> getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
+    return Element.class;
   }
 
   private static String getTagName(Class<?> aClass) {
-    Tag tag = aClass.getAnnotation(Tag.class);
-    if (tag != null) return tag.name();
+    Property tag = aClass.getAnnotation(Property.class);
+    if (tag != null && tag.tagName().length() != 0) return tag.tagName();
 
     return aClass.getSimpleName();
   }

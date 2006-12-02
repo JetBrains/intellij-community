@@ -1,5 +1,6 @@
 package com.intellij.util.xmlb;
 
+import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -12,16 +13,29 @@ import java.util.List;
 abstract class AbstractCollectionBinding implements Binding {
   private Binding myElementBinding;
   private Class myElementType;
+  private XmlSerializerImpl myXmlSerializer;
   private String myTagName;
 
   public AbstractCollectionBinding(Class elementType, XmlSerializerImpl xmlSerializer, String tagName) {
     myElementType = elementType;
+    myXmlSerializer = xmlSerializer;
     myTagName = tagName;
-    myElementBinding = xmlSerializer.getBinding(elementType);
+  }
 
-    if (!myElementBinding.getBoundNodeType().isAssignableFrom(Element.class)) {
-      myElementBinding = new OptionTagBindingWrapper(myElementBinding);
+  protected Binding getElementBinding() {
+    if (myElementBinding == null) {
+      myElementBinding = myXmlSerializer.getBinding(myElementType);
+
+      if (!myElementBinding.getBoundNodeType().isAssignableFrom(Element.class)) {
+        myElementBinding = createElementTagWrapper(myElementBinding);
+      }
     }
+
+    return myElementBinding;
+  }
+
+  protected Binding createElementTagWrapper(final Binding elementBinding) {
+    return new TagBindingWrapper(elementBinding, Constants.OPTION, Constants.VALUE);
   }
 
   abstract Object processResult(List result, Object target);
@@ -31,38 +45,61 @@ abstract class AbstractCollectionBinding implements Binding {
     Collection collection = getCollection(o);
     Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
 
-    Element c = ownerDocument.createElement(myTagName);
+    Node result = getTagName() != null ? ownerDocument.createElement(getTagName()) : ownerDocument.createDocumentFragment();
     for (Object e : collection) {
-      c.appendChild(myElementBinding.serialize(e, c));
+      result.appendChild(getElementBinding().serialize(e, result));
     }
 
-    return c;
+    return result;
   }
 
-  public Object deserialize(Object o, Node node) {
+  public Object deserialize(Object o, Node... nodes) {
     List result = new ArrayList();
 
-    Element e = (Element)node;
-    NodeList childNodes = e.getChildNodes();
-    for (int i = 0; i < childNodes.getLength(); i++) {
-      Object v = myElementBinding.deserialize(o, childNodes.item(i));
-      //noinspection unchecked
-      result.add(v);
+    if (getTagName() != null) {
+      assert nodes.length == 1;
+      Element e = (Element)nodes[0];
+      NodeList childNodes = e.getChildNodes();
+      for (int i = 0; i < childNodes.getLength(); i++) {
+        Object v = getElementBinding().deserialize(o, childNodes.item(i));
+        //noinspection unchecked
+        result.add(v);
+      }
     }
+    else {
+      for (Node node : nodes) {
+        Object v = getElementBinding().deserialize(o, node);
+        //noinspection unchecked
+        result.add(v);
+      }
+    }
+
 
     return processResult(result, o);
   }
 
   public boolean isBoundTo(Node node) {
-    return node instanceof Element && node.getNodeName().equals(Constants.COLLECTION);
+    if (!(node instanceof Element)) return false;
+
+    final String tagName = getTagName();
+    if (tagName == null) {
+      return getElementBinding().isBoundTo(node);
+    }
+
+    return node.getNodeName().equals(tagName);
   }
 
   public Class<? extends Node> getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
+    return Element.class;
   }
 
 
   public Class getElementType() {
     return myElementType;
+  }
+
+  @Nullable
+  public String getTagName() {
+    return myTagName;
   }
 }

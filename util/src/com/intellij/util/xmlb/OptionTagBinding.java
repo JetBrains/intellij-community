@@ -10,7 +10,7 @@ class OptionTagBinding implements Binding {
   public OptionTagBinding(Accessor accessor, XmlSerializerImpl xmlSerializer) {
     this.accessor = accessor;
     myName = accessor.getName();
-    myBinding = xmlSerializer.getBinding(accessor.getGenericType());
+    myBinding = xmlSerializer.getBinding(accessor);
   }
 
   public Node serialize(Object o, Node context) {
@@ -34,8 +34,9 @@ class OptionTagBinding implements Binding {
     return targetElement;
   }
 
-  public Object deserialize(Object o, Node node) {
-    Element element = ((Element)node);
+  public Object deserialize(Object o, Node... nodes) {
+    assert nodes.length == 1;
+    Element element = ((Element)nodes[0]);
     Attr valueAttr = element.getAttributeNode(Constants.VALUE);
 
     if (valueAttr != null) {
@@ -43,9 +44,14 @@ class OptionTagBinding implements Binding {
       accessor.write(o, value);
     }
     else {
-      Node valueNode = element.getChildNodes().item(0);
-      Object value = valueNode != null ? myBinding.deserialize(accessor.read(o), valueNode) : null;
-      accessor.write(o, value);
+      final Node[] children = DomUtil.toArray(element.getChildNodes());
+      if (children.length > 0) {
+        Object value = myBinding.deserialize(accessor.read(o), children);
+        accessor.write(o, value);
+      }
+      else {
+        accessor.write(o, null);
+      }
     }
 
     return o;

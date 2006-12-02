@@ -12,6 +12,7 @@ class FieldAccessor implements Accessor {
   }
 
   public Object read(Object o) {
+    assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + " should be: " + myField.getDeclaringClass();
     try {
       return myField.get(o);
     }
@@ -21,6 +22,7 @@ class FieldAccessor implements Accessor {
   }
 
   public void write(Object o, Object value) {
+    assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + " should be: " + myField.getDeclaringClass();
     try {
       myField.set(o, XmlSerializerImpl.convert(value, myField.getType()));
     }

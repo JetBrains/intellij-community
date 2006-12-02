@@ -19,8 +19,10 @@ class PrimitiveValueBinding implements Binding {
   }
 
   @Nullable
-  public Object deserialize(Object o, Node node) {
-    return XmlSerializerImpl.convert(node.getNodeValue(), myType);
+  public Object deserialize(Object o, Node... nodes) {
+    assert nodes.length == 1;
+
+    return XmlSerializerImpl.convert(nodes[0].getNodeValue(), myType);
   }
 
   public boolean isBoundTo(Node node) {

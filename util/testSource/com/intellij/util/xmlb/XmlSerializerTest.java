@@ -29,7 +29,7 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<EmptyBean/>", new EmptyBean());
   }
 
-  @Tag(name = "Bean")
+  @Property(tagName = "Bean")
   public static class EmptyBeanWithCustomName {
   }
 
@@ -197,7 +197,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithFieldWithTagAnnotation {
-    @Tag(name = "name")
+    @Property(tagName = "name")
     public String STRING_V = "hello";
   }
 
@@ -237,7 +237,6 @@ public class XmlSerializerTest extends TestCase {
     });
   }
 
-
   public static class BeanWithArray {
     public String[] ARRAY_V = new String[] {"a", "b"};
   }
@@ -263,6 +262,104 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<BeanWithTransient/>", bean);
   }
 
+  public static class BeanWithArrayWithoutTagName {
+    @Array(surroundWithTag = false)
+    public String[] V = new String[]{"a"};
+  }
+  public void testArrayAnnotationWithoutTagNAmeGivesError() throws Exception {
+    final BeanWithArrayWithoutTagName bean = new BeanWithArrayWithoutTagName();
+
+    try {
+      doSerializerTest("<BeanWithFieldWithTagAnnotation><name>hello</name></BeanWithFieldWithTagAnnotation>", bean);
+    }
+    catch (XmlSerializationException e) {
+      return;
+    }
+
+    fail("No Exception");
+  }
+
+  public static class BeanWithArrayWithElementTagName {
+    @Array(elementTag = "vvalue", elementValueAttribute = "v")
+    public String[] V = new String[]{"a", "b"};
+  }
+  public void testArrayAnnotationWithElementTag() throws Exception {
+    final BeanWithArrayWithElementTagName bean = new BeanWithArrayWithElementTagName();
+
+    doSerializerTest("<BeanWithArrayWithElementTagName><option name=\"V\"><array><vvalue v=\"a\"/><vvalue v=\"b\"/></array></option></BeanWithArrayWithElementTagName>", bean);
+
+    bean.V = new String[] {"1", "2", "3"};
+
+    doSerializerTest("<BeanWithArrayWithElementTagName><option name=\"V\"><array><vvalue v=\"1\"/><vvalue v=\"2\"/><vvalue v=\"3\"/></array></option></BeanWithArrayWithElementTagName>", bean);
+  }
+
+  public static class BeanWithArrayWithoutTag {
+    @Array(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    public String[] V = new String[]{"a", "b"};
+    public int INT_V = 1;
+  }
+  public void testArrayWithoutTag() throws Exception {
+    final BeanWithArrayWithoutTag bean = new BeanWithArrayWithoutTag();
+
+    doSerializerTest("<BeanWithArrayWithoutTag><option name=\"INT_V\" value=\"1\"/><option name=\"V\"><vvalue v=\"a\"/><vvalue v=\"b\"/></option></BeanWithArrayWithoutTag>", bean);
+
+    bean.V = new String[] {"1", "2", "3"};
+
+    doSerializerTest("<BeanWithArrayWithoutTag><option name=\"INT_V\" value=\"1\"/><option name=\"V\"><vvalue v=\"1\"/><vvalue v=\"2\"/><vvalue v=\"3\"/></option></BeanWithArrayWithoutTag>", bean);
+  }
+
+
+  public static class BeanWithPropertyWithoutTagOnPrimitiveValue {
+    @Property(surroundWithTag = false)
+    public int INT_V = 1;
+  }
+  public void testPropertyWithoutTagWithPrimitiveType() throws Exception {
+    final BeanWithPropertyWithoutTagOnPrimitiveValue bean = new BeanWithPropertyWithoutTagOnPrimitiveValue();
+
+    try {
+      doSerializerTest("<BeanWithFieldWithTagAnnotation><name>hello</name></BeanWithFieldWithTagAnnotation>", bean);
+    }
+    catch (XmlSerializationException e) {
+      return;
+    }
+
+    fail("No Exception");
+  }
+
+  public static class BeanWithPropertyWithoutTag {
+    @Property(surroundWithTag = false)
+    public BeanWithPublicFields BEAN1 = new BeanWithPublicFields();
+    public int INT_V = 1;
+  }
+  public void testPropertyWithoutTag() throws Exception {
+    final BeanWithPropertyWithoutTag bean = new BeanWithPropertyWithoutTag();
+
+    doSerializerTest("<BeanWithPropertyWithoutTag><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/></BeanWithPropertyWithoutTag>", bean);
+
+    bean.INT_V = 2;
+    bean.BEAN1.STRING_V = "junk";
+
+    doSerializerTest("<BeanWithPropertyWithoutTag><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"junk\"/></BeanWithPublicFields><option name=\"INT_V\" value=\"2\"/></BeanWithPropertyWithoutTag>", bean);
+  }
+
+
+  public static class BeanWithArrayWithoutAllsTag {
+    @Property(surroundWithTag = false)
+    @Array(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    public String[] V = new String[]{"a", "b"};
+    public int INT_V = 1;
+  }
+  public void testArrayWithoutAllTags() throws Exception {
+    final BeanWithArrayWithoutAllsTag bean = new BeanWithArrayWithoutAllsTag();
+
+    doSerializerTest("<BeanWithArrayWithoutAllsTag><option name=\"INT_V\" value=\"1\"/><vvalue v=\"a\"/><vvalue v=\"b\"/></BeanWithArrayWithoutAllsTag>", bean);
+
+    bean.INT_V = 2;
+    bean.V = new String[] {"1", "2", "3"};
+
+    doSerializerTest("<BeanWithArrayWithoutAllsTag><option name=\"INT_V\" value=\"2\"/><vvalue v=\"1\"/><vvalue v=\"2\"/><vvalue v=\"3\"/></BeanWithArrayWithoutAllsTag>", bean);
+  }
+  //---------------------------------------------------------------------------------------------------
   private void assertSerializer(Object bean, String expected, SerializationFilter filter)
     throws TransformerException, ParserConfigurationException {
     assertSerializer(bean, expected, "Serialization failure", filter);

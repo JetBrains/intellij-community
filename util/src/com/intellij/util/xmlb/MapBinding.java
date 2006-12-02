@@ -61,11 +61,12 @@ class MapBinding implements Binding {
     return m;
   }
 
-  public Object deserialize(Object o, Node node) {
+  public Object deserialize(Object o, Node... nodes) {
     Map map = (Map)o;
     map.clear();
 
-    Element m = (Element)node;
+    assert nodes.length == 1;
+    Element m = (Element)nodes[0];
 
     NodeList list = m.getChildNodes();
     for (int i = 0; i < list.getLength(); i++) {

@@ -7,7 +7,7 @@ interface Binding {
   Node serialize(Object o, Node context);
 
   @Nullable
-  Object deserialize(Object context, Node node);
+  Object deserialize(Object context, Node... nodes);
 
   boolean isBoundTo(Node node);
 

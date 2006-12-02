@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * @deprecated {@link com.intellij.util.xmlb.XmlSerializer} should be used instead
@@ -47,12 +45,6 @@ public class DefaultJDOMExternalizer {
 
   public static void writeExternal(Object data, Element parentNode, JDOMFilter filter) throws WriteExternalException {
     Field[] fields = data.getClass().getFields();
-
-    Arrays.sort(fields, new Comparator<Field>() {
-      public int compare(Field o1, Field o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
 
     for (Field field : fields) {
       if (field.getName().indexOf('$') >= 0) continue;

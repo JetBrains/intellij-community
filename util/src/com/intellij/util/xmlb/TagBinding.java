@@ -9,10 +9,10 @@ class TagBinding implements Binding {
   private String myTagName;
   private Binding binding;
 
-  public TagBinding(Accessor accessor, Tag tagAnnotation, XmlSerializerImpl xmlSerializer) {
+  public TagBinding(Accessor accessor, Property tagAnnotation, XmlSerializerImpl xmlSerializer) {
     this.accessor = accessor;
-    myTagName = tagAnnotation.name();
-    binding = xmlSerializer.getBinding(accessor.getValueClass());
+    myTagName = tagAnnotation.tagName();
+    binding = xmlSerializer.getBinding(accessor);
   }
 
   public Node serialize(Object o, Node context) {
@@ -28,8 +28,9 @@ class TagBinding implements Binding {
     return v;
   }
 
-  public Object deserialize(Object o, Node node) {
-    Object v = binding.deserialize(o, node.getChildNodes().item(0));
+  public Object deserialize(Object o, Node... nodes) {
+    assert nodes.length == 1;
+    Object v = binding.deserialize(o, nodes[0].getChildNodes().item(0));
     Object value = XmlSerializerImpl.convert(v, accessor.getValueClass());
     accessor.write(o, value);
     return o;

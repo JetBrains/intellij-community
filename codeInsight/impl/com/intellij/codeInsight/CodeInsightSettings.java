@@ -11,7 +11,8 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.xmlb.Transient;
+import com.intellij.util.xmlb.Array;
+import com.intellij.util.xmlb.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,10 +123,14 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
-  //todo: remove when migrating
-  @Transient
+  @Property(surroundWithTag = false)
+  @Array(
+    surroundWithTag = false,
+    elementTag = "EXCLUDED_PACKAGE",
+    elementValueAttribute = "NAME"
+  )
   public String[] EXCLUDED_PACKAGES = new String[0];
-
+  
   public CodeInsightSettings(EditorActionManager actionManager) {
     if (actionManager != null) {
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, new EnterHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)));

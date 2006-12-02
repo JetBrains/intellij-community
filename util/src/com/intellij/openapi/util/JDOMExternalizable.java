@@ -19,6 +19,7 @@ import org.jdom.Element;
 
 /**
  *
+ * @deprecated USe {@link com.intellij.openapi.components.PersitentStateComponent} instead.
  *
  */
 public interface JDOMExternalizable {

@@ -34,30 +34,34 @@ class XmlSerializerImpl {
     }
   }
 
-  Binding getValueBinding(Object value) {
-    Class<?> aClass = value.getClass();
-    return getBinding(aClass);
+  Binding getBinding(Type type) {
+    return getTypeBinding(type, null);
   }
 
-  Binding getBinding(Type type) {
+  Binding getBinding(Accessor accessor) {
+    return getTypeBinding(accessor.getGenericType(), accessor);
+  }
+
+  private Binding getTypeBinding(Type type, Accessor accessor) {
     if (type instanceof Class) {
       //noinspection unchecked
-      return _getClassBinding((Class<?>)type, type);
+      return _getClassBinding((Class<?>)type, type, accessor);
     }
     else if (type instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)type;
       Type rawType = parameterizedType.getRawType();
       assert rawType instanceof Class;
       //noinspection unchecked
-      return _getClassBinding((Class<?>)rawType, type);
+      return _getClassBinding((Class<?>)rawType, type, accessor);
     }
 
     throw new UnsupportedOperationException("Can't get binding for: " + type);
   }
 
-  private Binding _getClassBinding(Class<?> aClass, Type originalType) {
+
+  private Binding _getClassBinding(Class<?> aClass, Type originalType, final Accessor accessor) {
     if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
-    if (aClass.isArray()) return new ArrayBinding(aClass.getComponentType(), this);
+    if (aClass.isArray()) return new ArrayBinding(this, aClass, accessor);
     if (Number.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType)originalType, this);
@@ -92,8 +96,18 @@ class XmlSerializerImpl {
   }
 
   Binding createBindingByAccessor(Accessor accessor) {
-    Tag tag = findAnnotation(accessor.getAnnotations(), Tag.class);
-    if (tag != null) return new TagBinding(accessor, tag, this);
+    Property tag = findAnnotation(accessor.getAnnotations(), Property.class);
+    if (tag != null) {
+      if (tag.tagName().length() > 0) return new TagBinding(accessor, tag, this);
+      if (!tag.surroundWithTag()) {
+        final Binding binding = getTypeBinding(accessor.getGenericType(), accessor);
+        if (!Element.class.isAssignableFrom(binding.getBoundNodeType())) {
+          throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
+        }
+        return new AccessorBindingWrapper(accessor, binding);
+      }
+    }
+
     return new OptionTagBinding(accessor, this);
   }
 
