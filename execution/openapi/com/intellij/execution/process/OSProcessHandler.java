@@ -113,10 +113,19 @@ public class OSProcessHandler extends ProcessHandler {
     addProcessListener(new ProcessAdapter() {
       public void startNotified(final ProcessEvent event) {
         try {
-          final Future<?> stdOutReadingFuture = ApplicationManager.getApplication().executeOnPooledThread(stdoutThread);
-          final Future<?> stdErrReadingFuture = ApplicationManager.getApplication().executeOnPooledThread(stderrThread);
+          final Application application = ApplicationManager.getApplication();
+          final Future<?> stdOutReadingFuture;
+          final Future<?> stdErrReadingFuture;
+          if (application != null) {
+            stdOutReadingFuture = application.executeOnPooledThread(stdoutThread);
+            stdErrReadingFuture = application.executeOnPooledThread(stderrThread);
+          }
+          else {
+            stdOutReadingFuture = getOurThreadExecutorsService().submit(stdoutThread);
+            stdErrReadingFuture = getOurThreadExecutorsService().submit(stderrThread);
+          }
 
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          final Runnable action = new Runnable() {
             public void run() {
               int exitCode = 0;
 
@@ -132,11 +141,18 @@ public class OSProcessHandler extends ProcessHandler {
               }
               catch (InterruptedException e) {
               }
-              catch (ExecutionException e) {}
+              catch (ExecutionException e) {
+              }
 
               onOSProcessTerminated(exitCode);
             }
-          });
+          };
+          if (application != null) {
+            application.executeOnPooledThread(action);
+          }
+          else {
+            getOurThreadExecutorsService().submit(action);
+          }
         }
         finally {
           removeProcessListener(this);
@@ -169,14 +185,20 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   protected void detachProcessImpl() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    final Application application = ApplicationManager.getApplication();
+    final Runnable runnable = new Runnable() {
       public void run() {
         closeStreams();
 
         myWaitFor.detach();
         notifyProcessDetached();
       }
-    });
+    };
+    if (application != null) {
+      application.executeOnPooledThread(runnable);
+    } else {
+      getOurThreadExecutorsService().submit(runnable);
+    }
   }
 
   private void closeStreams() {
