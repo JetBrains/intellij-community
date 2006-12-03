@@ -125,6 +125,13 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         setGeneratedName();
     }
 
+    public void setPackageConfiguration(Module module, PsiPackage pkg) {
+        data.setPackage(pkg);
+        setModule(module);
+        data.TEST_OBJECT = TestType.PACKAGE.getType();
+        setGeneratedName();
+    }
+    
     public void setMethodConfiguration(Location<PsiMethod> location) {
         setModule(data.setTestMethod(location));
         setGeneratedName();

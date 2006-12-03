@@ -193,6 +193,11 @@ public class TestData implements Cloneable
         return setMainClass(location.getParentElement(PsiClass.class));
     }
 
+    public Module setPackage(PsiPackage pkg) {
+        PACKAGE_NAME = pkg.getQualifiedName();
+        return null;
+    }
+    
     public Module setMainClass(PsiClass psiclass) {
         MAIN_CLASS_NAME = ExecutionUtil.getRuntimeQualifiedName(psiclass);
         PsiPackage psipackage = JUnitUtil.getContainingPackage(psiclass);
