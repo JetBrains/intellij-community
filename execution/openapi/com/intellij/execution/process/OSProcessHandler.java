@@ -15,16 +15,16 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.Semaphore;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.concurrent.Future;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 
 public class OSProcessHandler extends ProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
@@ -32,6 +32,21 @@ public class OSProcessHandler extends ProcessHandler {
   private final String myCommandLine;
 
   private final ProcessWaitFor myWaitFor;
+
+  private static ExecutorService ourThreadExecutorsService = null;
+
+  public static ExecutorService getOurThreadExecutorsService() {
+    if (ourThreadExecutorsService == null) {
+      ourThreadExecutorsService =
+        new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+          @SuppressWarnings({"HardCodedStringLiteral"})
+          public Thread newThread(Runnable r) {
+            return new Thread(r, "OSProcessHandler pooled thread");
+          }
+        });
+    }
+    return ourThreadExecutorsService;
+  }
 
   public OSProcessHandler(final Process process, final String commandLine) {
     myProcess = process;
@@ -52,18 +67,22 @@ public class OSProcessHandler extends ProcessHandler {
 
     public ProcessWaitFor(final Process process) {
       myWaitSemaphore.down();
-      myWaitForThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(
-        new Runnable() {
-          public void run() {
-            try {
-              myExitCode = process.waitFor();
-            }
-            catch (InterruptedException e) {
-            }
-            myWaitSemaphore.up();
+      final Application application = ApplicationManager.getApplication();
+      final Runnable action = new Runnable() {
+        public void run() {
+          try {
+            myExitCode = process.waitFor();
           }
+          catch (InterruptedException e) {
+          }
+          myWaitSemaphore.up();
         }
-      );
+      };
+      if (application != null) {
+        myWaitForThreadFuture = application.executeOnPooledThread(action);
+      } else {
+        myWaitForThreadFuture = getOurThreadExecutorsService().submit(action);
+      }
     }
 
     public int waitFor() {
