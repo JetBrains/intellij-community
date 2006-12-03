@@ -77,8 +77,11 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       }
 
       private void checkCall(PsiCall expression) {
-        PsiMethod method = expression.resolveMethod();
-        if (method != null && method.isVarArgs()) {
+        final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+        PsiElement element = resolveResult.getElement();
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+        if (element instanceof PsiMethod && ((PsiMethod)element).isVarArgs()) {
+          PsiMethod method = (PsiMethod)element;
           PsiParameter[] parameters = method.getParameterList().getParameters();
           PsiExpressionList argumentList = expression.getArgumentList();
           if (argumentList != null) {
@@ -88,7 +91,8 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
               PsiParameter lastParameter = parameters[args.length - 1];
               PsiType lastParamType = lastParameter.getType();
               LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
-              if (lastArg instanceof PsiNewExpression && ((PsiEllipsisType) lastParamType).toArrayType().equals(lastArg.getType())) {
+              if (lastArg instanceof PsiNewExpression &&
+                  substitutor.substitute(((PsiEllipsisType) lastParamType).toArrayType()).equals(lastArg.getType())) {
                 PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression) lastArg).getArrayInitializer();
                 PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
                 if (isSafeToFlatten(expression, method, initializers)) {
