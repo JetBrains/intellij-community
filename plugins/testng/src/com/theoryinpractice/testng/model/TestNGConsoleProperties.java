@@ -88,6 +88,11 @@ public class TestNGConsoleProperties extends StoringPropertyContainer
         return null;
     }
 
+    public void dispose()
+    {
+        myListeners.clear();
+    }
+    
     @Override
     protected void onPropertyChanged(AbstractProperty property, Object obj)
     {

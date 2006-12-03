@@ -55,12 +55,13 @@ public class TestNGResults
     private Animator animator;
 
     private Pattern packagePattern = Pattern.compile("(.*)\\.(.*)");
-    private Pattern assertionMessagePattern = Pattern.compile("(?:.*)java.lang.AssertionError:\\s(.*)\\n.*");
     private TreeRootNode rootNode;
     private TestNGConsoleProperties consoleProperties;
     private JPanel toolbarPanel;
     private JSplitPane splitPane;
     private static final String NO_PACKAGE = "No Package";
+    private ToolbarPanel toolbar;
+    private TestNGResults.OpenSourceSelectionListener openSourceListener;
 
     public TestNGResults(final Project project, final TestNGConsoleView console) {
         this.project = project;
@@ -72,26 +73,13 @@ public class TestNGResults
         tree.attachToModel(project, structure.getRootElement(), console.getConsoleProperties());
         treeBuilder = new TestTreeBuilder(tree, structure);
         toolbarPanel.setLayout(new BorderLayout());
-        toolbarPanel.add(new ToolbarPanel(console.getConsoleProperties(), this));
+        toolbar = new ToolbarPanel(console.getConsoleProperties(), this);
+        toolbarPanel.add(toolbar);
         animator = new Animator(treeBuilder);
-        tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener()
-        {
-            public void valueChanged(TreeSelectionEvent e) {
-                TreePath path = e.getPath();
-                if (path == null) return;
-                TestProxy proxy = TestTreeView.getObject(path);
-                if (proxy == null) return;
-                if (ScrollToTestSourceAction.isScrollEnabled(TestNGResults.this)) {
-                    OpenSourceUtil.openSourcesFrom(tree, false);
-                }
-                if (proxy == structure.getRootElement()) {
-                    console.reset();
-                } else {
-                    console.setView(proxy.getOutput());
-                }
-            }
-        });
+        openSourceListener = new OpenSourceSelectionListener(structure, console);
+        tree.getSelectionModel().addTreeSelectionListener(openSourceListener);
         progress.setColor(ColorProgressBar.GREEN);
+        splitPane.setDividerLocation(0.33);
         GuiUtils.replaceJSplitPaneWithIDEASplitter(splitPane);
         splitPane.setDividerLocation(0.33);
     }
@@ -292,5 +280,37 @@ public class TestNGResults
 
     public void dispose() {
         treeBuilder.dispose();
+        animator.dispose();
+        toolbar.dispose();
+        openSourceListener.structure = null;
+        openSourceListener.console = null;
+        tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
+        tree.dispose();
+    }
+
+    private class OpenSourceSelectionListener implements TreeSelectionListener
+    {
+        private TestTreeStructure structure;
+        private TestNGConsoleView console;
+
+        public OpenSourceSelectionListener(TestTreeStructure structure, TestNGConsoleView console) {
+            this.structure = structure;
+            this.console = console;
+        }
+
+        public void valueChanged(TreeSelectionEvent e) {
+            TreePath path = e.getPath();
+            if (path == null) return;
+            TestProxy proxy = TestTreeView.getObject(path);
+            if (proxy == null) return;
+            if (ScrollToTestSourceAction.isScrollEnabled(TestNGResults.this)) {
+                OpenSourceUtil.openSourcesFrom(tree, false);
+            }
+            if (proxy == structure.getRootElement()) {
+                console.reset();
+            } else {
+                console.setView(proxy.getOutput());
+            }
+        }
     }
 }

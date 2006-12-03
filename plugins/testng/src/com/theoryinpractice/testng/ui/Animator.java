@@ -70,4 +70,10 @@ public class Animator implements Runnable
         setCurrentTestCase(null);
         cancelAlarm();
     }
+
+    public void dispose() {
+        treeBuilder = null;
+        proxy = null;
+        alarm = null;
+    }
 }

@@ -118,6 +118,11 @@ public class TestNGConsoleView implements ConsoleView
 
     public void dispose() {
         console.dispose();
+        console = null;
+        testNGResults.dispose();
+        testNGResults = null;
+        consoleProperties.dispose();
+        consoleProperties = null;
     }
 
     private List<Printable> getPrintables(TestResultMessage result, String s, ConsoleViewContentType type) {
