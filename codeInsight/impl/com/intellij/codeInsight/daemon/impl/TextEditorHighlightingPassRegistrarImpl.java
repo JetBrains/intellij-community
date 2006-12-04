@@ -109,19 +109,20 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         PassConfig passConfig = myRegisteredPassFactories.get(passId);
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
         final TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
-        if (pass == null) return true;
-        TIntArrayList ids =  new TIntArrayList(passConfig.completionPredecessorIds.length);
-        for (int id : passConfig.completionPredecessorIds) {
-          if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
+        if (pass != null) {
+          TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);
+          for (int id : passConfig.completionPredecessorIds) {
+            if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
+          }
+          pass.setCompletionPredecessorIds(ids.toNativeArray());
+          ids = new TIntArrayList(passConfig.startingPredecessorIds.length);
+          for (int id : passConfig.startingPredecessorIds) {
+            if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
+          }
+          pass.setStartingPredecessorIds(ids.toNativeArray());
+          pass.setId(passId);
+          id2Pass.put(passId, pass);
         }
-        pass.setCompletionPredecessorIds(ids.toNativeArray());
-        ids = new TIntArrayList(passConfig.startingPredecessorIds.length);
-        for (int id : passConfig.startingPredecessorIds) {
-          if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
-        }
-        pass.setStartingPredecessorIds(ids.toNativeArray());
-        pass.setId(passId);
-        id2Pass.put(passId, pass);
         if (passConfig.runIntentionsPassAfter) {
           Project project = psiFile.getProject();
           ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, new IntentionAction[]{new QuickFixAction()}, passId);
