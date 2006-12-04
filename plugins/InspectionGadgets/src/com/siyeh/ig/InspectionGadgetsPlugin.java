@@ -797,6 +797,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(EmptySynchronizedStatementInspection.class);
         m_inspectionClasses.add(ExtendsThreadInspection.class);
         m_inspectionClasses.add(FieldAccessedSynchronizedAndUnsynchronizedInspection.class);
+        m_inspectionClasses.add(MethodMayBeSynchronizedInspection.class);
         m_inspectionClasses.add(NakedNotifyInspection.class);
         m_inspectionClasses.add(NestedSynchronizedStatementInspection.class);
         m_inspectionClasses.add(NonSynchronizedMethodOverridesSynchronizedMethodInspection.class);
