@@ -102,4 +102,12 @@ public class DifferenceNode implements TreeNode, PresentableDiffTreeNode {
   protected FileTypeManager getFileTypeManager() {
     return FileTypeManager.getInstance();
   }
+
+  public Entry getLeftEntry() {
+    return myDiff.getLeft();
+  }
+
+  public Entry getRightEntry() {
+    return myDiff.getRight();
+  }
 }
