@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -542,6 +543,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       }
       return super.getMostRecentFocusOwner();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      UIUtil.applyRenderingHints(g);
+      super.paint(g);
     }
 
     private class MyWindowListener extends WindowAdapter {

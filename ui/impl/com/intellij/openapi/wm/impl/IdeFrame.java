@@ -194,4 +194,10 @@ public class IdeFrame extends JFrame implements DataProvider {
     }
     super.dispose();
   }
+
+  @Override
+  public void paint(Graphics g) {
+    UIUtil.applyRenderingHints(g);
+    super.paint(g);
+  }
 }

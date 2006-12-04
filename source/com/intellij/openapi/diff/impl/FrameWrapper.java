@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -150,6 +151,12 @@ public class FrameWrapper {
 
     public Object getData(String dataId) {
       return myDatas.get(dataId);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      UIUtil.applyRenderingHints(g);
+      super.paint(g);
     }
   }
 }

@@ -271,6 +271,7 @@ public class SimpleColoredComponent extends JComponent {
     xOffset+=myBorder.getBorderInsets(this).left;
 
     // Paint text
+    UIUtil.applyRenderingHints(g);
     for(int i=0;i<myFragments.size();i++){
       final SimpleTextAttributes attributes=getAttributes().get(i);
       Font font=getFont();

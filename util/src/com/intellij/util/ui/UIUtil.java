@@ -28,6 +28,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.Map;
 
 /**
  * @author max
@@ -616,6 +617,15 @@ public class UIUtil {
 
     for(i1 = i1 != x - 1 ? y1 - 2 : y1 - 1; i1 >= y; i1 -= 2){
       drawLine(g, x, i1, x, i1);
+    }
+  }
+
+  public static void applyRenderingHints(final Graphics g) {
+    Toolkit tk = Toolkit.getDefaultToolkit();
+    //noinspection HardCodedStringLiteral
+    Map map = (Map)(tk.getDesktopProperty("awt.font.desktophints"));
+    if (map != null) {
+        ((Graphics2D) g).addRenderingHints(map);
     }
   }
 }
