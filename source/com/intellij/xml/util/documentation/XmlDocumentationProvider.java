@@ -1,18 +1,9 @@
 package com.intellij.xml.util.documentation;
 
-import com.intellij.ant.AntConfigurationOld;
-import com.intellij.ant.BuildFile;
-import com.intellij.ant.impl.AntInstallation;
-import com.intellij.ant.impl.references.PsiNoWhereElement;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -33,9 +24,6 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
-import java.io.IOException;
-
 /**
  * Created by IntelliJ IDEA.
  * User: maxim
@@ -45,10 +33,6 @@ import java.io.IOException;
  */
 public class XmlDocumentationProvider implements JavaDocManager.DocumentationProvider {
   private static final Key<XmlElementDescriptor> DESCRIPTOR_KEY = Key.create("Original element");
-  @NonNls private static final String CORE_TASKS_FOLDER_NAME = "/CoreTasks/";
-  @NonNls private static final String CORE_TYPES_FOLDER_NAME = "/CoreTypes/";
-  @NonNls private static final String OPTIONAL_TASKS_FOLDER_NAME = "/OptionalTasks/";
-  @NonNls private static final String OPTIONAL_TYPES_FOLDER_NAME = "/OptionalTypes/";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.documentation.XmlDocumentationProvider");
 
@@ -108,66 +92,6 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
       }
 
       return generateDoc(processor.result, name, typeName);
-    } else if (element instanceof PsiNoWhereElement) {
-      PsiFile containingFile = originalElement.getContainingFile();
-      AntConfigurationOld instance = AntConfigurationOld.getInstance(originalElement.getProject());
-
-      for (BuildFile buildFile : instance.getBuildFiles()) {
-        if (buildFile.getXmlFile().equals(containingFile)) {
-          AntInstallation installation = BuildFile.ANT_INSTALLATION.get(buildFile.getAllOptions());
-
-          if (installation != null) {
-            final @NonNls String path = AntInstallation.HOME_DIR.get(installation.getProperties()) + "/docs/manual";
-            XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class);
-
-            if (tag == null) return null;
-
-            @NonNls final String helpFileShortName = tag.getName() + ".html";
-
-
-            File file = new File(path);
-            File helpFile = null;
-
-            if (file.exists()) {
-              File candidateHelpFile = new File(path + CORE_TASKS_FOLDER_NAME + helpFileShortName);
-              if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
-
-              if (helpFile == null) {
-                candidateHelpFile = new File(path + CORE_TYPES_FOLDER_NAME + helpFileShortName);
-                if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
-              }
-
-              if (helpFile == null) {
-                candidateHelpFile = new File(path + OPTIONAL_TASKS_FOLDER_NAME + helpFileShortName);
-                if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
-              }
-
-              if (helpFile == null) {
-                candidateHelpFile = new File(path + OPTIONAL_TYPES_FOLDER_NAME + helpFileShortName);
-                if (candidateHelpFile.exists()) helpFile = candidateHelpFile;
-              }
-            }
-
-            if (helpFile != null) {
-              final File helpFile1 = helpFile;
-              VirtualFile fileByIoFile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-                public VirtualFile compute() {
-                  return LocalFileSystem.getInstance().findFileByIoFile(helpFile1);
-                }
-              });
-
-              if (fileByIoFile != null) {
-                try {
-                  return VfsUtil.loadText(fileByIoFile);
-                }
-                catch (IOException e) {
-                  // ignore exception
-                }
-              }
-            }
-          }
-        }
-      }
     }
 
     return null;
