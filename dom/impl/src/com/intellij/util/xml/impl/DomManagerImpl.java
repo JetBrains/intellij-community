@@ -32,7 +32,12 @@ import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.StdLanguages;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -196,12 +201,20 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     });
 
-    /*
     StdLanguages.XML.injectAnnotator(new Annotator() {
       public void annotate(PsiElement psiElement, AnnotationHolder holder) {
         final DomFileDescription description = getDomFileDescription(psiElement);
         if (description != null && description.isAutomaticHighlightingEnabled()) {
-          final DomElement domElement = getDomElement(psiElement);
+          final DomElement domElement;
+          if (psiElement instanceof XmlTag) {
+            domElement = getDomElement((XmlTag)psiElement);
+          }
+          else if (psiElement instanceof XmlAttribute) {
+            domElement = getDomElement((XmlAttribute)psiElement);
+
+          } else {
+            return;
+          }
           if (domElement != null) {
             final List<Annotation> list = (List<Annotation>)holder;
             for (final DomElementProblemDescriptor descriptor : annotationsManager.getProblemHolder(domElement).getProblems(domElement)) {
@@ -211,7 +224,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         }
       }
     }, project);
-    */
   }
 
   private void processVfsChange(final VirtualFile file) {
