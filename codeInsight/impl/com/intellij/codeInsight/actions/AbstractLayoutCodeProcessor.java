@@ -392,7 +392,8 @@ public abstract class AbstractLayoutCodeProcessor {
               }, modalityState);
       }
     };
-    new Thread(runnable, myCommandName).start();
+
+    ApplicationManager.getApplication().executeOnPooledThread(runnable);
   }
 
   public void testRun() throws IncorrectOperationException {
