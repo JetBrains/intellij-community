@@ -34,6 +34,13 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
     @SuppressWarnings({"PublicField"})
     public boolean onlyWarnOnAbstractMethods = false;
 
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.final.on.parameter.display.name");
+    }
+
     public String getID() {
         return "UnnecessaryFinalForMethodParameter";
     }
