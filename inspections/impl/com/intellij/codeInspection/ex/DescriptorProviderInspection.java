@@ -14,9 +14,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
@@ -41,25 +41,36 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   private HashMap<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
 
-  public void addProblemElement(RefEntity refElement, CommonProblemDescriptor... descriptions) {
+  public void addProblemElement(RefEntity refElement, CommonProblemDescriptor... descriptions){
+    addProblemElement(refElement, true, descriptions);
+  }
+
+  public void addProblemElement(RefEntity refElement, boolean filterSuppresssed, CommonProblemDescriptor... descriptions) {
     if (refElement == null) return;
     if (descriptions == null || descriptions.length == 0) return;
-    if (ourOutputPath == null) {
-      CommonProblemDescriptor[] problems = getProblemElements().get(refElement);
-      if (problems == null) {
-        problems = descriptions;
+    if (filterSuppresssed) {
+      if (ourOutputPath == null) {
+        CommonProblemDescriptor[] problems = getProblemElements().get(refElement);
+        if (problems == null) {
+          problems = descriptions;
+        }
+        else {
+          problems = ArrayUtil.mergeArrays(problems, descriptions, CommonProblemDescriptor.class);
+        }
+        getProblemElements().put(refElement, problems);
+        for (CommonProblemDescriptor description : descriptions) {
+          getProblemToElements().put(description, refElement);
+          collectQuickFixes(description.getFixes(), refElement);
+        }
       }
       else {
-        problems = ArrayUtil.mergeArrays(problems, descriptions, CommonProblemDescriptor.class);
-      }
-      getProblemElements().put(refElement, problems);
-      for (CommonProblemDescriptor description : descriptions) {
-        getProblemToElements().put(description, refElement);
-        collectQuickFixes(description.getFixes(), refElement);
+        writeOutput(descriptions, refElement);
       }
     }
-    else {
-      writeOutput(descriptions, refElement);
+    else { //just need to collect problems
+      for (CommonProblemDescriptor description : descriptions) {
+        getProblemToElements().put(description, refElement);
+      }
     }
   }
 

@@ -4,7 +4,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +16,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author max
@@ -89,34 +91,8 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     for (Map.Entry<RefElement, List<ProblemDescriptor>> entry : problems.entrySet()) {
       final List<ProblemDescriptor> problemDescriptors = entry.getValue();
       addProblemElement(entry.getKey(),
+                        filterSuppressed,
                         problemDescriptors.toArray(new CommonProblemDescriptor[problemDescriptors.size()]));
-    }
-  }
-
-  private ProblemDescriptor[] filterUnsuppressedProblemDescriptions(ProblemDescriptor[] problemDescriptions) {
-    Set<ProblemDescriptor> set = null;
-    for (ProblemDescriptor description : problemDescriptions) {
-      final PsiElement element = description.getPsiElement();
-      if ((element instanceof PsiModifierListOwner && getContext().isSuppressed(element, myTool.getID())) || InspectionManagerEx.inspectionResultSuppressed(element, myTool)) {
-        if (set == null) set = new LinkedHashSet<ProblemDescriptor>(Arrays.asList(problemDescriptions));
-        set.remove(description);
-      }
-    }
-    return set == null ? problemDescriptions : set.toArray(new ProblemDescriptor[set.size()]);
-  }
-
-  private void addProblemDescriptors(PsiElement element, ProblemDescriptor[] problemDescriptions, final boolean filterSuppressed) {
-    if (problemDescriptions != null) {
-      if (filterSuppressed) {
-        problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
-      }
-      if (problemDescriptions.length != 0) {
-        RefManager refManager = getContext().getRefManager();
-        RefElement refElement = refManager.getReference(element);
-        if (refElement != null) {
-          addProblemElement(refElement, problemDescriptions);
-        }
-      }
     }
   }
 

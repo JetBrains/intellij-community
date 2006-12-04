@@ -103,12 +103,13 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
 
   public void processFile(final AnalysisScope analysisScope,
                           final InspectionManager manager,
-                          final GlobalInspectionContext context) {
+                          final GlobalInspectionContext context,
+                          final boolean filterSuppressed) {
     context.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        CommonProblemDescriptor[] descriptors = myTool.checkElement(refEntity, analysisScope, manager, context);
+        CommonProblemDescriptor[] descriptors = myTool.checkElement(refEntity, analysisScope, manager, context, GlobalInspectionToolWrapper.this);
         if (descriptors != null) {
-          addProblemElement(refEntity, descriptors);
+          addProblemElement(refEntity, filterSuppressed, descriptors);
         }
       }
     });

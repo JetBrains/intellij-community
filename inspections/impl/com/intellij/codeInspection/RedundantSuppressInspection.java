@@ -128,7 +128,9 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
       }
     }
 
+    final AnalysisScope scope = new AnalysisScope(psiElement.getContainingFile());    
     GlobalInspectionContextImpl globalContext = ((InspectionManagerEx)InspectionManager.getInstance(project)).createNewGlobalContext(false);
+    globalContext.setCurrentScope(scope);
     final RefManagerImpl refManager = ((RefManagerImpl)globalContext.getRefManager());
     refManager.inspectionReadActionStarted();
     final List<ProblemDescriptor> result;
@@ -146,7 +148,10 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
         }
         else if (tool instanceof GlobalInspectionToolWrapper) {
           GlobalInspectionToolWrapper global = (GlobalInspectionToolWrapper)tool;
-          global.processFile(new AnalysisScope(psiElement.getContainingFile()), manager, globalContext);
+          if (global.getTool().isGraphNeeded()) {
+            refManager.findAllDeclarations();
+          }
+          global.processFile(scope, manager, globalContext, false);
           descriptors = global.getProblemDescriptors();
         }
         else {
