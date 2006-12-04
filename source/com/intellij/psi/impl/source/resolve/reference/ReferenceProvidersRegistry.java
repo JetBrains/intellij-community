@@ -6,11 +6,23 @@ import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulatorsRegistry;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.NotFilter;
+import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.ScopeFilter;
+import com.intellij.psi.filters.TextFilter;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
@@ -18,11 +30,36 @@ import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.el.impl.ELLiteralManipulator;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagValueManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.CustomizableReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.CustomizingReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FilePathReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.HibernateReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspImportListReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspUriReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.TaglibReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.el.ELLiteralExpression;
-import com.intellij.psi.xml.*;
-import com.intellij.util.Function;
+import com.intellij.psi.xml.XmlAttlistDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlProcessingInstruction;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ReflectionCache;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
@@ -59,7 +96,6 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
   public static ReferenceProviderType PROPERTIES_FILE_KEY_PROVIDER = new ReferenceProviderType("Properties File Key Provider");
   public static ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
   public static ReferenceProviderType PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Path References Provider");
-  public static ReferenceProviderType DYNAMIC_PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Dynamic Path References Provider");
   public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER = new ReferenceProviderType("Css Class or ID Provider");
   public static ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");
   public static ReferenceProviderType SCHEMA_PROVIDER = new ReferenceProviderType("Schema references provider");
@@ -87,8 +123,6 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
 
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
     myReferenceTypeToProviderMap.put(PATH_REFERENCES_PROVIDER, new JspxIncludePathReferenceProvider());
-//    myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new JspxDynamicPathReferenceProvider());
-    myReferenceTypeToProviderMap.put(DYNAMIC_PATH_REFERENCES_PROVIDER, new WebPathReferenceProvider(false, true, true));
     myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider(false));
 
     registerXmlAttributeValueReferenceProvider(
@@ -247,41 +281,6 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
       true
     );
 */
-    WebPathReferenceProvider dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd = new WebPathReferenceProvider(false, false, true);
-
-    registerXmlAttributeValueReferenceProvider(
-      new String[]{"value"},
-      new ScopeFilter(
-        new ParentElementFilter(
-          new AndFilter(
-            new NamespaceFilter(XmlUtil.JSTL_CORE_URIS),
-            new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter("url")
-            )
-          ), 2
-        )
-      ), dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd
-    );
-
-    registerXmlAttributeValueReferenceProvider(
-      new String[]{"url"},
-      new ScopeFilter(
-        new ParentElementFilter(
-          new AndFilter(
-            new NamespaceFilter(XmlUtil.JSTL_CORE_URIS),
-            new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new OrFilter(
-                new TextFilter("import"),
-                new TextFilter("redirect")
-              )
-            )
-          ), 2
-        )
-      ), dynamicPathReferenceProviderNoEmptyFileReferencesAtEnd
-    );
-
     PsiReferenceProvider propertiesReferenceProvider = getProviderByType(PROPERTIES_FILE_KEY_PROVIDER);
     registerXmlAttributeValueReferenceProvider(
       new String[]{"key"},
@@ -328,72 +327,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
       ), propertiesReferenceProvider
     );
 
-    registerXmlAttributeValueReferenceProvider(
-      new String[]{"page"},
-      new ScopeFilter(
-        new ParentElementFilter(
-          new OrFilter(
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.JSP_URI),
-              new AndFilter(
-                new ClassFilter(XmlTag.class),
-                new TextFilter("include","forward")
-              )
-            ),
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.STRUTS_HTML_URI),
-              new AndFilter(
-                new ClassFilter(XmlTag.class),
-                new TextFilter("rewrite")
-              )
-            )
-          ), 2
-        )
-      ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
-    );
 
-    registerXmlAttributeValueReferenceProvider(
-      new String[]{"template", "src"},
-      new ScopeFilter(
-        new ParentElementFilter(
-          new AndFilter(
-            new NamespaceFilter(XmlUtil.FACELETS_URI),
-            new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter(new String[] { "decorate","composition","include"})
-            )
-          ), 2
-        )
-      ), getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER)
-    );
-
-    final PsiReferenceProvider pathReferenceProvider = getProviderByType(PATH_REFERENCES_PROVIDER);
-    final CustomizingReferenceProvider webXmlPathReferenceProvider = new CustomizingReferenceProvider(
-      (CustomizableReferenceProvider)pathReferenceProvider
-    );
-
-    webXmlPathReferenceProvider.addCustomization(
-      FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION,
-      new Function<PsiFile, PsiFileSystemItem>() {
-        @Nullable
-        public PsiFileSystemItem fun(final PsiFile file) {
-          return FileReferenceSet.getAbsoluteTopLevelDirLocation(file);
-        }
-      }
-    );
-
-    final NamespaceFilter webAppNSFilter = new NamespaceFilter(XmlUtil.WEB_XML_URIS);
-    registerXmlTagReferenceProvider(
-      new String[]{"taglib-location"}, webAppNSFilter,
-      true,
-      webXmlPathReferenceProvider
-    );
-
-    registerXmlTagReferenceProvider(
-      new String[]{"small-icon","large-icon"}, webAppNSFilter,
-      true,
-      getProviderByType(PATH_REFERENCES_PROVIDER)
-    );
 
     registerXmlAttributeValueReferenceProvider(
       new String[]{"tagdir"},
@@ -459,52 +393,6 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
       ),
       true,
       new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
-    );
-
-    final NamespaceFilter jsfNsFilter = new NamespaceFilter(XmlUtil.JSF_URIS);
-    /*
-    registerXmlTagReferenceProvider(
-      new String[] {
-        "render-kit-class","renderer-class","managed-bean-class","attribute-class","component-class",
-        "converter-for-class", "converter-class", "key-class", "value-class",
-        "referenced-bean-class", "validator-class", "application-factory", "faces-context-factory",
-        "render-kit-factory", "lifecycle-factory", "view-handler", "variable-resolver", "phase-listener",
-        "property-resolver", "state-manager", "action-listener", "navigation-handler"
-      },
-      jsfNsFilter,
-      true,
-      getProviderByType(CLASS_REFERENCE_PROVIDER)
-    );
-    */
-
-    final JSFReferencesProvider jsfProvider = new JSFReferencesProvider(getProviderByType(DYNAMIC_PATH_REFERENCES_PROVIDER));
-
-    registerXmlTagReferenceProvider(
-      jsfProvider.getTagNames(),
-      jsfNsFilter,
-      true,
-      jsfProvider
-    );
-
-    registerXmlAttributeValueReferenceProvider(
-      jsfProvider.getAttributeNames(),
-      new ParentElementFilter( new NamespaceFilter(XmlUtil.JSF_HTML_URI), 2),
-      true,
-      jsfProvider
-    );
-
-    registerXmlAttributeValueReferenceProvider(
-      jsfProvider.getIdForAttributeNames(),
-      jsfProvider.getIdForFilter(),
-      true,
-      jsfProvider
-    );
-
-    registerXmlAttributeValueReferenceProvider(
-      jsfProvider.getIdForJSFC(),
-      jsfProvider.getJSFCFilter(),
-      true,
-      jsfProvider
     );
 
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
