@@ -187,7 +187,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myCodeFragmentMember = codeFragment.getParent();
 
     try {
-      myControlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
+      myControlFlow = ControlFlowFactory.getInstance(myProject).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
     }
     catch (AnalysisCanceledException e) {
       throw new PrepareFailedException(RefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());
@@ -421,7 +421,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                         GlobalSearchScope.projectScope(myProject);
 
     myOverloadsResolveMap = ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
-    
+
     PsiMethodCallExpression methodCall = doExtract();
     ExtractMethodUtil.decodeOverloadTargets(myOverloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
 

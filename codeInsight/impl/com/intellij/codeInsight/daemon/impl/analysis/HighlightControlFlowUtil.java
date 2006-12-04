@@ -39,7 +39,7 @@ public class HighlightControlFlowUtil {
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(method.getProject()).getControlFlow(body,
                                                                         LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
                                                                         false);
       if (!ControlFlowUtil.returnPresent(controlFlow)) {
@@ -69,7 +69,7 @@ public class HighlightControlFlowUtil {
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock,
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock,
                                                                         LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
                                                                         false);
       final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
@@ -211,7 +211,7 @@ public class HighlightControlFlowUtil {
    */
   private static boolean variableDefinitelyAssignedIn(PsiVariable variable, PsiElement context) {
     try {
-      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+      ControlFlow controlFlow = ControlFlowFactory.getInstance(variable.getProject()).getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
       return ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow);
     }
     catch (AnalysisCanceledException e) {
@@ -221,7 +221,7 @@ public class HighlightControlFlowUtil {
 
   private static boolean variableDefinitelyNotAssignedIn(PsiVariable variable, PsiElement context) {
     try {
-      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+      ControlFlow controlFlow = ControlFlowFactory.getInstance(variable.getProject()).getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
       return ControlFlowUtil.isVariableDefinitelyNotAssigned(variable, controlFlow);
     }
     catch (AnalysisCanceledException e) {
@@ -366,7 +366,7 @@ public class HighlightControlFlowUtil {
     Collection<PsiReferenceExpression> codeBlockProblems = uninitializedVarProblems.get(topBlock);
     if (codeBlockProblems == null) {
       try {
-        final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(topBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        final ControlFlow controlFlow = ControlFlowFactory.getInstance(topBlock.getProject()).getControlFlow(topBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
         codeBlockProblems = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       }
       catch (AnalysisCanceledException e) {
@@ -494,7 +494,7 @@ public class HighlightControlFlowUtil {
             final PsiCodeBlock body = initializer.getBody();
             if (body == codeBlock) return null;
             try {
-              final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
+              final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body,
                                                                                 LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
               if (!ControlFlowUtil.isVariableDefinitelyNotAssigned(field, controlFlow)) {
                 alreadyAssigned = true;
@@ -546,7 +546,7 @@ public class HighlightControlFlowUtil {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {
-        final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
       }
       catch (AnalysisCanceledException e) {
@@ -696,7 +696,7 @@ public class HighlightControlFlowUtil {
     final PsiCodeBlock body = initializer.getBody();
     // unhandled exceptions already reported
     try {
-      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body,
                                                                         LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
                                                                         false);
       final int completionReasons = ControlFlowUtil.getCompletionReasons(controlFlow, 0, controlFlow.getSize());

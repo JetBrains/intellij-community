@@ -100,7 +100,7 @@ public class ExceptionUtil {
         // if finally block completes normally, exception not catched
         // if finally block completes abruptly, exception gets lost
         try {
-          ControlFlow flow = ControlFlowFactory.getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+          ControlFlow flow = ControlFlowFactory.getInstance(finallyBlock.getProject()).getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
           int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
           PsiClassType[] thrownExceptions = getThrownExceptions(finallyBlock);
           if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) {
@@ -463,7 +463,7 @@ public class ExceptionUtil {
 
   private static boolean blockCompletesAbruptly(final PsiCodeBlock finallyBlock) {
     try {
-      ControlFlow flow = ControlFlowFactory.getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+      ControlFlow flow = ControlFlowFactory.getInstance(finallyBlock.getProject()).getControlFlow(finallyBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
       int completionReasons = ControlFlowUtil.getCompletionReasons(flow, 0, flow.getSize());
       if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) return true;
     }

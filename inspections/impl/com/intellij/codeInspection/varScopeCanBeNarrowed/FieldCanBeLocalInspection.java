@@ -105,7 +105,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
       private void checkCodeBlock(final PsiCodeBlock body, final Set<PsiField> candidates) {
         try {
-          final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
+          final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, AllVariablesControlFlowPolicy.getInstance());
           final PsiVariable[] usedVars = ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize());
           for (PsiVariable usedVariable : usedVars) {
             if (usedVariable instanceof PsiField) {

@@ -78,7 +78,7 @@ class InlineLocalHandler {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     try {
-      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
+      ControlFlow controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
       PsiElement commonParent = PsiTreeUtil.findCommonParent(local, lastUsage);
       PsiElement anchor = lastUsage;
       while (!commonParent.equals(anchor.getParent())) {
@@ -169,7 +169,7 @@ class InlineLocalHandler {
 //            PsiReference firstWriteUsage = refs[toInlines.size()];
             ControlFlow controlFlow;
             try {
-              controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
+              controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
             }
             catch (AnalysisCanceledException e) {
               controlFlow = ControlFlow.EMPTY;

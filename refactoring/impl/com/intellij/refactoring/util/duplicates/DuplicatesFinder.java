@@ -40,7 +40,7 @@ public class DuplicatesFinder {
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
     try {
-      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeFragment.getProject()).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false);
 
       int startOffset;
       int i = 0;

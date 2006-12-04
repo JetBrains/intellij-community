@@ -95,7 +95,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
 
     ControlFlow controlFlow;
     try {
-      controlFlow = ControlFlowFactory.getControlFlow(outerCodeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+      controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(outerCodeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
     }
     catch (AnalysisCanceledException e) {
       return;

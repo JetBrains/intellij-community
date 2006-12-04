@@ -1101,7 +1101,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiCodeBlock body = method.getBody();
     ControlFlow controlFlow;
     try {
-      controlFlow = ControlFlowFactory.getControlFlow(body, new LocalsControlFlowPolicy(body), false);
+      controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, new LocalsControlFlowPolicy(body), false);
     }
     catch (AnalysisCanceledException e) {
       return false;

@@ -123,7 +123,7 @@ public class DefUseUtil {
 
     ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getControlFlow(body, ourPolicy);
+      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy);
     }
     catch (AnalysisCanceledException e) {
       return null;
@@ -331,7 +331,7 @@ public class DefUseUtil {
 
     protected RefsDefs(PsiCodeBlock body) throws AnalysisCanceledException {
       this.body = body;
-      flow = ControlFlowFactory.getControlFlow(body, ourPolicy);
+      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy);
       instructions = flow.getInstructions();
     }
 

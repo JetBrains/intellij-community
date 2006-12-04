@@ -14,6 +14,8 @@ import gnu.trove.TIntArrayList;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 class ControlFlowAnalyzer extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowAnalyzer");
 
@@ -27,7 +29,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
   private List<PsiElement> myFinallyBlocks = new ArrayList<PsiElement>();
   private List<PsiElement> myUnhandledExceptionCatchBlocks = new ArrayList<PsiElement>();
-  private Map<PsiElement, ControlFlow> myRegisteredSubControlFlows = new THashMap<PsiElement, ControlFlow>();
 
   // element to jump to from inner (sub)expression in "jump to begin" situation.
   // E.g. we should jump to "then" branch if condition expression evaluated to true inside if statement
@@ -52,7 +53,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   private Map<PsiElement,TIntArrayList> offsetsAddElementStart = new THashMap<PsiElement, TIntArrayList>();
   // map: PsiElement element -> TIntArrayList instructionOffsetsToPatch with getEndOffset(element)
   private Map<PsiElement,TIntArrayList> offsetsAddElementEnd = new THashMap<PsiElement, TIntArrayList>();
-
+  private final ControlFlowFactory myControlFlowFactory;
 
   // use ControlFlowFactory.getControlFlow()
   ControlFlowAnalyzer(PsiElement codeFragment, ControlFlowPolicy policy) {
@@ -81,8 +82,10 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     myEnabledShortCircuit = enabledShortCircuit;
     myEvaluateConstantIfConfition = evaluateConstantIfConfition;
     myAssignmentTargetsAreElements = assignmentTargetsAreElements;
+    myControlFlowFactory = ControlFlowFactory.getInstance(codeFragment.getProject());
   }
 
+  @NotNull
   ControlFlow buildControlFlow() throws AnalysisCanceledException {
     // push guard outer statement offsets in case when nested expression is incorrect
     myStartJumpRoles.add(ControlFlow.JUMP_ROLE_GOTO_END);
@@ -99,7 +102,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       cleanupNonPatchedInstructionOffsets();
     }
     catch (AnalysisCanceledSoftException e) {
-      flushCreatedSubFlows();
+      myControlFlowFactory.flushInvalidControlFlows();
       throw new AnalysisCanceledException(e.getErrorElement());
     }
 
@@ -196,12 +199,6 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
   }
 
-  private void flushCreatedSubFlows() {
-    for (PsiElement element : myRegisteredSubControlFlows.keySet()) {
-      ControlFlowFactory.flushControlFlows(element);
-    }
-  }
-
   private void startElement(PsiElement element) {
     if (PsiUtil.hasErrorElementChild(element)) {
       // do not perform control flow analysis for incomplete code
@@ -242,7 +239,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       PsiElement block = myUnhandledExceptionCatchBlocks.get(i);
       // cannot jump to outer catch blocks (belonging to outer try stmt) if current try{} has finally block
       if (block == null) {
-        if (myFinallyBlocks.size() != 0) {
+        if (!myFinallyBlocks.isEmpty()) {
           break;
         }
         else {
@@ -258,7 +255,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
 
     // generate jump to the top finally block
-    if (myFinallyBlocks.size() != 0) {
+    if (!myFinallyBlocks.isEmpty()) {
       final PsiElement finallyBlock = myFinallyBlocks.get(myFinallyBlocks.size() - 1);
       ConditionalThrowToInstruction throwToInstruction = new ConditionalThrowToInstruction(-2);
       myCurrentFlow.addInstruction(throwToInstruction);
@@ -349,10 +346,10 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
 
     finishElement(codeFragment);
+
     // cache child code block in hope it will be needed
     ControlFlowSubRange flow = new ControlFlowSubRange(myCurrentFlow, prevOffset, myCurrentFlow.getSize());
-    ControlFlowFactory.registerControlFlow(codeFragment, flow, myEvaluateConstantIfConfition, myPolicy);
-    myRegisteredSubControlFlows.put(codeFragment, flow);
+    myControlFlowFactory.registerSubRange(codeFragment, flow,myEvaluateConstantIfConfition, myPolicy);
   }
 
   public void visitCodeBlock(PsiCodeBlock block) {
@@ -372,8 +369,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     finishElement(block);
     // cache child code block in hope it will be needed
     ControlFlowSubRange flow = new ControlFlowSubRange(myCurrentFlow, prevOffset, myCurrentFlow.getSize());
-    ControlFlowFactory.registerControlFlow(block, flow, myEvaluateConstantIfConfition, myPolicy);
-    myRegisteredSubControlFlows.put(block, flow);
+    myControlFlowFactory.registerSubRange(block, flow, myEvaluateConstantIfConfition, myPolicy);
   }
 
   private void emitEmptyInstruction() {
@@ -798,7 +794,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     else {
       instruction = new GoToInstruction(0, ControlFlow.JUMP_ROLE_GOTO_END, true);
       myCurrentFlow.addInstruction(instruction);
-      if (myFinallyBlocks.size() == 0) {
+      if (myFinallyBlocks.isEmpty()) {
         addElementOffsetLater(myCodeFragment, false);
       }
       else {
@@ -882,10 +878,10 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
     final List<PsiElement> blocks = findThrowToBlocks(statement);
     PsiElement element;
-    if (blocks.size() == 0 || blocks.get(0) == null) {
+    if (blocks.isEmpty() || blocks.get(0) == null) {
       ThrowToInstruction instruction = new ThrowToInstruction(0);
       myCurrentFlow.addInstruction(instruction);
-      if (myFinallyBlocks.size() == 0) {
+      if (myFinallyBlocks.isEmpty()) {
         element = myCodeFragment;
         addElementOffsetLater(element, false);
       }
@@ -939,7 +935,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
         blocks.add(myCatchBlocks.get(i));
       }
     }
-    if (blocks.size() == 0) {
+    if (blocks.isEmpty()) {
       // consider it as throw at the end of the control flow
       blocks.add(null);
     }

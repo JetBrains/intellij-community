@@ -114,7 +114,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
           hasInitializers = true;
           ControlFlow flow;
           try {
-            flow = ControlFlowFactory.getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+            flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
           }
           catch (AnalysisCanceledException e) {
             flow = ControlFlow.EMPTY;
@@ -147,7 +147,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
               hasInitializers = true;
               ControlFlow flow;
               try {
-                flow = ControlFlowFactory.getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+                flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
               }
               catch (AnalysisCanceledException e) {
                 flow = ControlFlow.EMPTY;

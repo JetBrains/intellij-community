@@ -358,7 +358,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
         PsiCodeBlock body = method.getBody();
         try {
-          ControlFlow flow = ControlFlowFactory.getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+          ControlFlow flow = ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
 
           List<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
           ControlFlowUtil.findExitPointsAndStatements(flow, flow.getStartOffset(body), flow.getEndOffset(body), new IntArrayList(),

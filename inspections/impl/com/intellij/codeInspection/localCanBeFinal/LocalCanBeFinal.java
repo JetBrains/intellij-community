@@ -84,7 +84,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
           return PsiTreeUtil.getParentOfType(psiVariable, PsiClass.class) == PsiTreeUtil.getParentOfType(body, PsiClass.class);
         }
       };
-      flow = ControlFlowFactory.getControlFlow(body, policy, false);
+      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, policy, false);
     }
     catch (AnalysisCanceledException e) {
       return null;

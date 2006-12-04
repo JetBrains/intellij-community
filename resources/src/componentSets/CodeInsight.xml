@@ -153,5 +153,8 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.psi.controlFlow.ControlFlowFactory</implementation-class>
+    </component>
   </project-components>
 </components>
