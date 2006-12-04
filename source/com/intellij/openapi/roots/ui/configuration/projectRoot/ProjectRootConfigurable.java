@@ -9,14 +9,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,13 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
@@ -85,15 +72,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * User: anna
@@ -523,7 +503,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
     };
 
-    final OrderEntry[] entries = myModulesConfigurator.getModuleEditor(module).getModifiableRootModel().getOrderEntries();
+    final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
+    LOG.assertTrue(moduleEditor != null, "Module editor was not created");
+    final OrderEntry[] entries = moduleEditor.getModifiableRootModel().getOrderEntries();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry orderEntry = (LibraryOrderEntry)entry;
@@ -597,7 +579,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       myLevel2Providers.put(table.getTableLevel(), new LibrariesModifiableModel(table));
     }
     for (Module module : myModulesConfigurator.getModules()) {
-      final ModifiableRootModel modelProxy = myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy();
+      final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
+      LOG.assertTrue(moduleEditor != null, "Module editor was not created");
+      final ModifiableRootModel modelProxy = moduleEditor.getModifiableRootModelProxy();
       myModule2LibrariesMap.put(module, new LibrariesModifiableModel(modelProxy.getModuleLibraryTable()));
     }
     reloadTree();
@@ -898,12 +882,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private Set<String> getDependencies(final Condition<OrderEntry> condition) {
     final Set<String> result = new TreeSet<String>();
-    final Module[] modules = myModulesConfigurator.getModules();
-    for (final Module module : modules) {
-      final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
-      if (moduleEditor != null) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final Module[] modules = myModulesConfigurator.getModules();
+        for (final Module module : modules) {
+          final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
+          if (moduleEditor != null) {
             final OrderEntry[] entries = moduleEditor.getModifiableRootModel().getOrderEntries();
             for (OrderEntry entry : entries) {
               if (condition.value(entry)) {
@@ -911,10 +895,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
                 break;
               }
             }
+
           }
-        });
+        }
       }
-    }
+    });
     return result;
   }
 
@@ -939,13 +924,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void deleteLibraryNode(LibraryOrderEntry libraryOrderEntry) {
-    final MyNode node = findNodeByObject(myModulesNode, libraryOrderEntry.getLibrary());
-    if (node != null) {
-      final TreeNode parent = node.getParent();
-      node.removeFromParent();
-      ((DefaultTreeModel)myTree.getModel()).reload(parent);
-      final Module module = libraryOrderEntry.getOwnerModule();
-      myModule2LibrariesMap.get(module).removeLibrary(libraryOrderEntry.getLibrary());
+    final Library library = libraryOrderEntry.getLibrary();
+    if (library != null) {
+      final MyNode node = findNodeByObject(myModulesNode, library);
+      if (node != null) {
+        final TreeNode parent = node.getParent();
+        node.removeFromParent();
+        ((DefaultTreeModel)myTree.getModel()).reload(parent);
+        final Module module = libraryOrderEntry.getOwnerModule();
+        myModule2LibrariesMap.get(module).removeLibrary(library);
+      }
     }
   }
 
@@ -1043,6 +1031,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   public void addLibraryOrderEntry(final Module module, final Library library) {
     final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
+    LOG.assertTrue(moduleEditor != null, "Current module editor was not initialized");
     final ModifiableRootModel modelProxy = moduleEditor.getModifiableRootModelProxy();
     final OrderEntry[] entries = modelProxy.getOrderEntries();
     for (OrderEntry entry : entries) {
@@ -1091,6 +1080,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       addNode(node, parent);
       ((DefaultTreeModel)myTree.getModel()).reload(parent);
       selectNodeInTree(node);
+      myValidityCache.clear(); //missing modules added
     }
   }
 
@@ -1132,12 +1122,11 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return isInitialized(myProjectConfigurable) ? myProjectConfigurable.getCompilerOutputUrl() : ProjectRootManager.getInstance(myProject).getCompilerOutputUrl();
   }
 
-  /*public void initDependantsPanel(final OrderPanel<ModifiableRootModel> dependantsPanel) {
-    final Module[] modules = myModulesConfigurator.getModules();
-    for (Module module : modules) {
-      dependantsPanel.add(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy());
-    }
-  }*/
+  @Nullable
+  public Module getModule(final String moduleName) {
+    if (moduleName == null) return null;
+    return myModulesConfigurator != null ? myModulesConfigurator.getModule(moduleName) : myModuleManager.findModuleByName(moduleName);
+  }
 
   private class MyDataProviderWrapper extends JPanel implements DataProvider {
     public MyDataProviderWrapper(final JComponent component) {
@@ -1199,11 +1188,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       if (editableObject instanceof ProjectJdk) {
         final ProjectJdk jdk = (ProjectJdk)editableObject;
         myJdksTreeModel.removeJdk(jdk);
-        Module[] modules = getModules();
-        for (Module module : modules) {
-          myValidityCache.remove(module);
-        }
         myJdkDependencyCache.remove(jdk);
+        myValidityCache.clear();
       }
       else if (editableObject instanceof Module) {
         final Module module = (Module)editableObject;
@@ -1227,7 +1213,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         else {
           Module module = (Module)((MyNode)node.getParent()).getConfigurable().getEditableObject();
           myModule2LibrariesMap.get(module).removeLibrary(library);
-          myModulesConfigurator.getModuleEditor(module).updateOrderEntriesInEditors(); //in order to update classpath panel
+          final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
+          LOG.assertTrue(moduleEditor != null, "Current module editor was not initialized");
+          moduleEditor.updateOrderEntriesInEditors(); //in order to update classpath panel
         }
       }
       return true;
@@ -1235,7 +1223,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
  }
 
   public LibraryTableModifiableModelProvider getModifiableModelProvider(final Module module) {
-    return getModifiableModelProvider(myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy());
+    final ModuleEditor moduleEditor = myModulesConfigurator.getModuleEditor(module);
+    LOG.assertTrue(moduleEditor != null, "Current module editor was not initialized");
+    return getModifiableModelProvider(moduleEditor.getModifiableRootModelProxy());
   }
 
   private LibraryTableModifiableModelProvider getModifiableModelProvider(final ModifiableRootModel model) {

@@ -66,16 +66,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myProjectConfigurable = new ProjectConfigurable(project, this, configurable.getProjectJdksModel());
   }
 
-  public synchronized void disposeUIResources() {
-    for (final ModuleEditor moduleEditor : myModuleEditors) {
-      final ModifiableRootModel model = moduleEditor.dispose();
-      if (model != null) {
-        model.dispose();
-      }
-    }
-    myModuleEditors.clear();
+  public void disposeUIResources() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        for (final ModuleEditor moduleEditor : myModuleEditors) {
+          final ModifiableRootModel model = moduleEditor.dispose();
+          if (model != null) {
+            model.dispose();
+          }
+        }
+        myModuleEditors.clear();
+
         myModuleModel.dispose();
       }
     });
@@ -86,7 +87,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myProjectConfigurable;
   }
 
-  public synchronized Module[] getModules() {
+  public Module[] getModules() {
     return myModuleModel.getModules();
   }
 
@@ -100,7 +101,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  public synchronized ModuleEditor getModuleEditor(Module module) {
+  public ModuleEditor getModuleEditor(Module module) {
     for (final ModuleEditor moduleEditor : myModuleEditors) {
       if (module.equals(moduleEditor.getModule())) {
         return moduleEditor;
@@ -123,20 +124,24 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  public synchronized void resetModuleEditors() {
+  public void resetModuleEditors() {
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
 
-    for (final ModuleEditor moduleEditor : myModuleEditors) {
-      moduleEditor.removeChangeListener(this);
-    }
-    myModuleEditors.clear();
-    final Module[] modules = myModuleModel.getModules();
-    if (modules.length > 0) {
-      for (Module module : modules) {
-        createModuleEditor(module, null);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (final ModuleEditor moduleEditor : myModuleEditors) {
+          moduleEditor.removeChangeListener(ModulesConfigurator.this);
+        }
+        myModuleEditors.clear();
+        final Module[] modules = myModuleModel.getModules();
+        if (modules.length > 0) {
+          for (Module module : modules) {
+            createModuleEditor(module, null);
+          }
+          Collections.sort(myModuleEditors, myModuleEditorComparator);
+        }
       }
-      Collections.sort(myModuleEditors, myModuleEditorComparator);
-    }
+    });
     myModified = false;
   }
 
@@ -151,7 +156,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public GraphGenerator<ModifiableRootModel> createGraphGenerator() {
-    final Map<Module, ModifiableRootModel> models = new HashMap<Module,ModifiableRootModel>();
+    final Map<Module, ModifiableRootModel> models = new HashMap<Module, ModifiableRootModel>();
     for (ModuleEditor moduleEditor : myModuleEditors) {
       models.put(moduleEditor.getModule(), moduleEditor.getModifiableRootModel());
     }
@@ -175,41 +180,49 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }));
   }
 
-  public synchronized void apply() throws ConfigurationException {
+  public void apply() throws ConfigurationException {
     final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
 
-    final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
-    for (final ModuleEditor moduleEditor : myModuleEditors) {
-      final ModifiableRootModel model = moduleEditor.applyAndDispose();
-      if (model != null) {
-        models.add(model);
-      }
-    }
-
-    J2EEModuleUtilEx.checkJ2EEModulesAcyclic(models);
+    final ConfigurationException[] ex = new ConfigurationException[1];
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
-       public void run() {
-         try {
-           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-           projectRootManager.multiCommit(myModuleModel, rootModels);
-         }
-         finally {
-           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-           for (Module module: myModuleModel.getModules()) {
-             if (!module.isDisposed()) {
-               final ModuleEditor moduleEditor = getModuleEditor(module);
-               if (moduleEditor != null) {
-                 final ModuleBuilder builder = moduleEditor.getModuleBuilder();
-                 if (builder != null) {
-                   builder.addSupport(module);
-                 }
-               }
-             }
-           }
-         }
-       }
-     });
+      public void run() {
+        try {
+          final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
+          for (final ModuleEditor moduleEditor : myModuleEditors) {
+            final ModifiableRootModel model = moduleEditor.applyAndDispose();
+            if (model != null) {
+              models.add(model);
+            }
+          }
+
+          J2EEModuleUtilEx.checkJ2EEModulesAcyclic(models);
+          final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
+          projectRootManager.multiCommit(myModuleModel, rootModels);
+        }
+        catch (ConfigurationException e) {
+          ex[0] = e;
+        }
+        finally {
+          myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+          for (Module module : myModuleModel.getModules()) {
+            if (!module.isDisposed()) {
+              final ModuleEditor moduleEditor = getModuleEditor(module);
+              if (moduleEditor != null) {
+                final ModuleBuilder builder = moduleEditor.getModuleBuilder();
+                if (builder != null) {
+                  builder.addSupport(module);
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (ex[0] != null) {
+      throw ex[0];
+    }
 
     if (!J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), true)) {
       throw new ConfigurationException(null);
@@ -220,11 +233,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModified = false;
   }
 
-  public synchronized void setModified(final boolean modified) {
+  public void setModified(final boolean modified) {
     myModified = modified;
   }
 
-  public synchronized ModifiableModuleModel getModuleModel() {
+  public ModifiableModuleModel getModuleModel() {
     return myModuleModel;
   }
 
@@ -234,20 +247,24 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  public synchronized Module addModule(Component parent) {
+  public Module addModule(Component parent) {
     if (myProject.isDefault()) return null;
     final ModuleBuilder builder = runModuleWizard(parent);
     if (builder != null) {
       final Module module = createModule(builder);
       if (module != null) {
-        createModuleEditor(module, builder);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            createModuleEditor(module, builder);
+          }
+        });
       }
       return module;
     }
     return null;
   }
 
-  private synchronized Module createModule(final ModuleBuilder builder) {
+  private Module createModule(final ModuleBuilder builder) {
     final Exception[] ex = new Exception[]{null};
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       @SuppressWarnings({"ConstantConditions"})
@@ -268,11 +285,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return module;
   }
 
-  synchronized void addModule(final ModuleBuilder moduleBuilder) {
+  void addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
-      createModuleEditor(module, moduleBuilder);
-      Collections.sort(myModuleEditors, myModuleEditorComparator);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          createModuleEditor(module, moduleBuilder);
+          Collections.sort(myModuleEditors, myModuleEditorComparator);
+        }
+      });
       processModuleCountChanged(myModuleEditors.size() - 1, myModuleEditors.size());
     }
   }
@@ -288,7 +309,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private synchronized boolean doRemoveModule(ModuleEditor selectedEditor) {
+  private boolean doRemoveModule(ModuleEditor selectedEditor) {
 
     String question;
     if (myModuleEditors.size() == 1) {
@@ -333,7 +354,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
-  public synchronized boolean isModified() {
+  public boolean isModified() {
     if (myModuleModel.isChanged()) {
       return true;
     }
@@ -347,7 +368,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  public static boolean showDialog(Project project, @Nullable final String moduleToSelect, final String tabNameToSelect, final boolean showModuleWizard) {
+  public static boolean showDialog(Project project,
+                                   @Nullable final String moduleToSelect,
+                                   final String tabNameToSelect,
+                                   final boolean showModuleWizard) {
     final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, projectRootConfigurable, new Runnable() {
       public void run() {

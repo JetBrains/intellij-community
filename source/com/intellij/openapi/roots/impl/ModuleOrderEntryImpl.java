@@ -150,10 +150,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
       return myModule;
     }
     if (myModule == null) {
-      final Module[] modules = ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).getModules();
-      for (Module module : modules) {
-        if (Comparing.strEqual(module.getName(), myModuleName)) return module;
-      }
+      return ProjectRootConfigurable.getInstance(myRootModel.getModule().getProject()).getModule(myModuleName);      
     }
     return myModule;
   }
