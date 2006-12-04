@@ -17,15 +17,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public class SurroundWithIfFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.SurroundWithIfFix");
-  private PsiExpression myExpression;
-  private String myText;
+  private final PsiExpression myExpression;
+  private final String myText;
 
+  @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.surround.if.quickfix", myExpression.getText());
   }
@@ -43,7 +45,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     return null;
   }
 
-  public void applyFix(Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     PsiStatement anchorStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     LOG.assertTrue(anchorStatement != null);
@@ -52,8 +54,13 @@ public class SurroundWithIfFix implements LocalQuickFix {
     PsiFile file = element.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = documentManager.getDocument(file);
+    PsiElement[] elements = new PsiElement[]{anchorStatement};
+    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
+    if (prev instanceof PsiComment && InspectionManagerEx.getSuppressedInspectionIdsIn(prev) != null) {
+      elements = new PsiElement[]{prev, anchorStatement};
+    }
     try {
-      TextRange textRange = new JavaWithIfSurrounder().surroundElements(project, editor, new PsiElement[]{anchorStatement});
+      TextRange textRange = new JavaWithIfSurrounder().surroundElements(project, editor, elements);
       if (textRange == null) return;
 
       @NonNls String newText = myText + " != null";
@@ -67,6 +74,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     }
   }
 
+  @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("inspection.surround.if.family");
   }

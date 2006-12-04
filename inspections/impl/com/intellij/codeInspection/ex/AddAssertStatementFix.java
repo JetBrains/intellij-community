@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddAssertStatementFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.AddAssertStatementFix");
-  private PsiExpression myExpressionToAssert;
+  private final PsiExpression myExpressionToAssert;
 
   @NotNull
   public String getName() {
@@ -29,29 +29,32 @@ public class AddAssertStatementFix implements LocalQuickFix {
     LOG.assertTrue(PsiType.BOOLEAN.equals(myExpressionToAssert.getType()));
   }
 
-  public void applyFix(Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    PsiStatement anchorStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-    LOG.assertTrue(anchorStatement != null);
+    PsiElement anchorElement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    LOG.assertTrue(anchorElement != null);
+    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorElement, PsiWhiteSpace.class);
+    if (prev instanceof PsiComment && InspectionManagerEx.getSuppressedInspectionIdsIn(prev) != null) {
+      anchorElement = prev;
+    }
 
-    @NonNls String text = "assert c;";
-    PsiAssertStatement assertStatement;
     try {
       final PsiElementFactory factory = element.getManager().getElementFactory();
-      assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, null);
+      @NonNls String text = "assert c;";
+      PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, null);
       final PsiExpression assertCondition = assertStatement.getAssertCondition();
       assert assertCondition != null;
       assertCondition.replace(myExpressionToAssert);
-      final PsiElement parent = anchorStatement.getParent();
+      final PsiElement parent = anchorElement.getParent();
       if (parent instanceof PsiCodeBlock) {
-        parent.addBefore(assertStatement, anchorStatement);
+        parent.addBefore(assertStatement, anchorElement);
       }
       else {
         PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", null);
         final PsiCodeBlock block = blockStatement.getCodeBlock();
         block.add(assertStatement);
-        block.add(anchorStatement);
-        anchorStatement.replace(blockStatement);
+        block.add(anchorElement);
+        anchorElement.replace(blockStatement);
       }
     }
     catch (IncorrectOperationException e) {
