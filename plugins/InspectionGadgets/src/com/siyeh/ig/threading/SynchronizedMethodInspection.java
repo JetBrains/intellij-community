@@ -33,10 +33,15 @@ import javax.swing.*;
 
 public class SynchronizedMethodInspection extends MethodInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_includeNativeMethods = true;
+
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "synchronized.method.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.THREADING_GROUP_NAME;
@@ -98,8 +103,7 @@ public class SynchronizedMethodInspection extends MethodInspection {
                 final String className = containingClass.getName();
                 replacementText = "{ synchronized(" + className + ".class){" +
                         text.substring(1) + '}';
-            }
-            else {
+            } else {
                 replacementText = "{ synchronized(this){" + text.substring(1) +
                         '}';
             }
