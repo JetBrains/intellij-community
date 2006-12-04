@@ -312,26 +312,35 @@ public class DirectoryEntryTest extends TestCase {
   }
 
   @Test
+  public void testNoesNotIncludeNonModifiedChildDifferences() {
+    Entry e1 = new DirectoryEntry(null, "name", null);
+    Entry e2 = new DirectoryEntry(null, "name", null);
+
+    e1.addChild(new FileEntry(1, "name", "content", null));
+    e2.addChild(new FileEntry(1, "name", "content", null));
+
+    e1.addChild(new FileEntry(2, "another name", "content", null));
+
+    Difference d = e1.getDifferenceWith(e2);
+    assertEquals(1, d.getChildren().size());
+
+    assertEquals(DELETED, d.getChildren().get(0).getKind());
+  }
+
+  @Test
   public void testDifferenceWithNotModifiedChildWithDifferentIdentity() {
     Entry e1 = new DirectoryEntry(null, "name", null);
     Entry e2 = new DirectoryEntry(null, "name", null);
 
-    Entry child1 = new FileEntry(1, "name", "content", null);
-    Entry child2 = new FileEntry(1, "name", "content", null);
-
-    e1.addChild(child1);
-    e2.addChild(child2);
+    e1.addChild(new FileEntry(1, "name", "content", null));
+    e2.addChild(new FileEntry(1, "name", "content", null));
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(NOT_MODIFIED, d.getKind());
     assertSame(e1, d.getLeft());
     assertSame(e2, d.getRight());
 
-    assertEquals(1, d.getChildren().size());
-    d = d.getChildren().get(0);
-    assertEquals(NOT_MODIFIED, d.getKind());
-    assertSame(child1, d.getLeft());
-    assertSame(child2, d.getRight());
+    assertEquals(0, d.getChildren().size());
   }
 
   @Test

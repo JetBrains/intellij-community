@@ -205,4 +205,29 @@ public class LocalVcsDifferencesTest extends TestCase {
     Difference d = labels.get(0).getDifferenceWith(labels.get(2));
     assertFalse(d.hasDifference());
   }
+
+  @Test
+  public void testDoesNotIncludeNotModifiedDifferences() {
+    vcs.createDirectory("dir1", null);
+    vcs.createDirectory("dir1/dir2", null);
+    vcs.createFile("dir1/dir2/file", "", null);
+    vcs.createDirectory("dir1/dir3", null);
+    vcs.apply();
+
+    vcs.createFile("dir1/dir3/file", "", null);
+    vcs.apply();
+
+    List<Label> labels = vcs.getLabelsFor("dir1");
+    Label recent = labels.get(0);
+    Label prev = labels.get(1);
+
+    Difference d = prev.getDifferenceWith(recent);
+
+    assertEquals(1, d.getChildren().size());
+    d = d.getChildren().get(0);
+
+    assertEquals("dir3", d.getLeft().getName());
+    assertEquals(NOT_MODIFIED, d.getKind());
+    assertEquals(1, d.getChildren().size());
+  }
 }

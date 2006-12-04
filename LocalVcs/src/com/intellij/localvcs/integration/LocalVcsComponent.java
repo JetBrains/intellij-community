@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,10 @@ public class LocalVcsComponent implements ProjectComponent {
   private VirtualFileManager myFileManager;
   private LocalVcs myVcs;
   private LocalVcsService myService;
+
+  public static LocalVcsComponent getInstance(Project p) {
+     return p.getComponent(LocalVcsComponent.class);
+  }
 
   public LocalVcsComponent(StartupManager sm, ProjectRootManagerEx rm, VirtualFileManager fm) {
     myStartupManager = sm;

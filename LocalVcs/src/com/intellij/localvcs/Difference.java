@@ -1,11 +1,33 @@
 package com.intellij.localvcs;
 
+import com.intellij.openapi.vcs.checkin.DifferenceType;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Difference {
   public enum Kind {
-    NOT_MODIFIED, CREATED, MODIFIED, DELETED
+    NOT_MODIFIED {
+      public DifferenceType getDifferenceType() {
+        return DifferenceType.NOT_CHANGED;
+      }
+    },
+    MODIFIED {
+      public DifferenceType getDifferenceType() {
+        return DifferenceType.MODIFIED;
+      }
+    },
+    CREATED {
+      public DifferenceType getDifferenceType() {
+        return DifferenceType.INSERTED;
+      }
+    },
+    DELETED {
+      public DifferenceType getDifferenceType() {
+        return DifferenceType.DELETED;
+      }
+    };
+    public abstract DifferenceType getDifferenceType();
   }
 
   private boolean myIsFile;
@@ -30,6 +52,10 @@ public class Difference {
     return myKind;
   }
 
+  public DifferenceType getDifferenceType() {
+    return myKind.getDifferenceType();
+  }
+
   public Entry getLeft() {
     return myLeft;
   }
@@ -47,7 +73,7 @@ public class Difference {
   }
 
   public boolean hasDifference() {
-    if (myKind.equals(Kind.MODIFIED)) return true;
+    if (!myKind.equals(Kind.NOT_MODIFIED)) return true;
 
     for (Difference child : myChildren) {
       if (child.hasDifference()) return true;

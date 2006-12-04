@@ -43,6 +43,7 @@ public class FileEntry extends Entry {
 
   @Override
   public Difference getDifferenceWith(Entry e) {
+    // todo calculate difference by timestamp;
     boolean modified = !myName.equals(e.getName()) || !myContent.equals(e.getContent());
     return new Difference(true, modified ? MODIFIED : NOT_MODIFIED, this, e);
   }

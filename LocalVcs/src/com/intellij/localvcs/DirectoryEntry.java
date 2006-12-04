@@ -125,7 +125,7 @@ public class DirectoryEntry extends Entry {
       Entry itsChild = e.findChild(myChild.getId());
       if (itsChild != null) {
         Difference childDiff = myChild.getDifferenceWith(itsChild);
-        d.addChild(childDiff);
+        if (childDiff.hasDifference()) d.addChild(childDiff);
       }
     }
   }
