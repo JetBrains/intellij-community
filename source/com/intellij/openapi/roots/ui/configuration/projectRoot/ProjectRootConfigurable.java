@@ -9,8 +9,14 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -24,12 +30,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.ModuleLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
@@ -55,9 +69,12 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,8 +85,15 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * User: anna
@@ -84,10 +108,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   private MyNode myJdksNode;
 
-  private MyNode myGlobalLibrariesNode;
-  private LibrariesModifiableModel myGlobalLibrariesProvider;
-
-  private LibrariesModifiableModel myProjectLibrariesProvider;
+  private final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<String, LibrariesModifiableModel>();
+  private final Map<String, MyNode> myLevel2Nodes = new THashMap<String, MyNode>();
 
   private Map<Module, LibrariesModifiableModel> myModule2LibrariesMap = new HashMap<Module, LibrariesModifiableModel>();
 
@@ -96,16 +118,12 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private MyNode myProjectNode;
   private MyNode myGlobalPartNode;
 
-  private MyNode myProjectLibrariesNode;
   private Project myProject;
 
   private ModuleManager myModuleManager;
   private ModulesConfigurator myModulesConfigurator;
   private ProjectConfigurable myProjectConfigurable;
   private ProjectJdksModel myJdksTreeModel = new ProjectJdksModel();
-
-  private MyNode myApplicationServerLibrariesNode;
-  private LibrariesModifiableModel myApplicationServerLibrariesProvider;
 
   private boolean myDisposed = true;
 
@@ -323,17 +341,25 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     myRoot.removeAllChildren();
 
+    myGlobalPartNode = new MyNode(new GlobalResourcesConfigurable(), true);
+
+    myLevel2Nodes.clear();
+    final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
+    for (final String s : myLevel2Providers.keySet()) {
+      final LibrariesModifiableModel provider = myLevel2Providers.get(s);
+      myLevel2Nodes.put(s, createLibrariesNode(registrar.getLibraryTableByLevel(s, myProject), provider, createModifiableModelProvider(s)));
+    }
+    myGlobalPartNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.APPLICATION_LEVEL));
+    for (final LibraryTable table : registrar.getCustomLibraryTables()) {
+      myGlobalPartNode.add(myLevel2Nodes.get(table.getTableLevel()));
+    }
+
     myProjectNode = new MyNode(myProjectConfigurable, true);
     myRoot.add(myProjectNode);
     createProjectNodes();
 
-    myGlobalPartNode = new MyNode(new GlobalResourcesConfigurable(), true);
     myRoot.add(myGlobalPartNode);
     createProjectJdks();
-
-    myGlobalLibrariesNode = createLibrariesNode(LibraryTablesRegistrar.getInstance().getLibraryTable(), myGlobalLibrariesProvider, getGlobalLibrariesProvider());
-
-    myApplicationServerLibrariesNode = createLibrariesNode(ApplicationServersManager.getInstance().getLibraryTable(), myApplicationServerLibrariesProvider, getApplicationServerLibrariesProvider());
 
     ((DefaultTreeModel)myTree.getModel()).reload();
 
@@ -352,14 +378,13 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private MyNode createLibrariesNode(final LibraryTable table,
                                      LibrariesModifiableModel provider,
                                      final LibraryTableModifiableModelProvider modelProvider) {
-    provider = new LibrariesModifiableModel(table.getModifiableModel());
-    LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table.getTableLevel() );
+    provider = new LibrariesModifiableModel(table);
+    LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table);
     MyNode node = new MyNode(librariesConfigurable, true);
     final Library[] libraries = provider.getLibraries();
     for (Library library : libraries) {
       addNode(new MyNode(new LibraryConfigurable(modelProvider, library, myProject, TREE_UPDATER)), node);
     }
-    myGlobalPartNode.add(node);
     return node;
   }
 
@@ -406,15 +431,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
 
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
-    myProjectLibrariesProvider = new LibrariesModifiableModel(table.getModifiableModel());
-    final LibrariesConfigurable librariesConfigurable = new LibrariesConfigurable(table.getTableLevel() );
+    final LibrariesModifiableModel projectLibrariesProvider = new LibrariesModifiableModel(table);
+    myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, projectLibrariesProvider);
 
-    myProjectLibrariesNode = new MyNode(librariesConfigurable, true);
-    final Library[] libraries = myProjectLibrariesProvider.getLibraries();
-    for (Library library1 : libraries) {
-      addNode(new MyNode(new LibraryConfigurable(getProjectLibrariesProvider(), library1, myProject, TREE_UPDATER)), myProjectLibrariesNode);
-    }
-    myProjectNode.add(myProjectLibrariesNode);
+    myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
   }
 
   public boolean updateProjectTree(final Module[] modules, final ModuleGroup group) {
@@ -493,6 +513,14 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       public String getTableLevel() {
         return LibraryTableImplUtil.MODULE_LEVEL;
       }
+
+      public LibraryTablePresentation getLibraryTablePresentation() {
+        return ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+      }
+
+      public boolean isLibraryTableEditable() {
+        return true;
+      }
     };
 
     final OrderEntry[] entries = myModulesConfigurator.getModuleEditor(module).getModifiableRootModel().getOrderEntries();
@@ -527,27 +555,32 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public LibraryTableModifiableModelProvider getGlobalLibrariesProvider() {
-    return new LibraryTableModifiableModelProvider() {
-      public LibraryTable.ModifiableModel getModifiableModel() {
-        return myGlobalLibrariesProvider;
-      }
+    return createModifiableModelProvider(LibraryTablesRegistrar.APPLICATION_LEVEL);
+  }
 
-      public String getTableLevel() {
-        return LibraryTablesRegistrar.APPLICATION_LEVEL;
-      }
-    };
+  private LibraryTableModifiableModelProvider createModifiableModelProvider(final String level) {
+    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, myProject);
+    return new LibraryTableModifiableModelProvider() {
+        public LibraryTable.ModifiableModel getModifiableModel() {
+          return myLevel2Providers.get(level);
+        }
+
+        public String getTableLevel() {
+          return table.getTableLevel();
+        }
+
+        public LibraryTablePresentation getLibraryTablePresentation() {
+          return table.getPresentation();
+        }
+
+        public boolean isLibraryTableEditable() {
+          return table.isEditable();
+        }
+      };
   }
 
   public LibraryTableModifiableModelProvider getProjectLibrariesProvider() {
-    return new LibraryTableModifiableModelProvider() {
-      public LibraryTable.ModifiableModel getModifiableModel() {
-        return myProjectLibrariesProvider;
-      }
-
-      public String getTableLevel() {
-        return LibraryTablesRegistrar.PROJECT_LEVEL;
-      }
-    };
+    return createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
   }
 
   public void reset() {
@@ -556,14 +589,16 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myModulesConfigurator.resetModuleEditors();
     myProjectConfigurable = myModulesConfigurator.getModulesConfigurable();
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
-    myProjectLibrariesProvider = new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject).getModifiableModel());
-    myGlobalLibrariesProvider = new LibrariesModifiableModel(tablesRegistrar.getLibraryTable().getModifiableModel());
-    myApplicationServerLibrariesProvider =
-      new LibrariesModifiableModel(ApplicationServersManager.getInstance().getLibraryTable().getModifiableModel());
-    final Module[] modules = myModulesConfigurator.getModules();
-    for (Module module : modules) {
+
+    myLevel2Providers.clear();
+    myLevel2Providers.put(LibraryTablesRegistrar.APPLICATION_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable()));
+    myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, new LibrariesModifiableModel(tablesRegistrar.getLibraryTable(myProject)));
+    for (final LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
+      myLevel2Providers.put(table.getTableLevel(), new LibrariesModifiableModel(table));
+    }
+    for (Module module : myModulesConfigurator.getModules()) {
       final ModifiableRootModel modelProxy = myModulesConfigurator.getModuleEditor(module).getModifiableRootModelProxy();
-      myModule2LibrariesMap.put(module, new LibrariesModifiableModel(modelProxy.getModuleLibraryTable().getModifiableModel()));
+      myModule2LibrariesMap.put(module, new LibrariesModifiableModel(modelProxy.getModuleLibraryTable()));
     }
     reloadTree();
     super.reset();
@@ -589,9 +624,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        myProjectLibrariesProvider.deferredCommit();
-        myGlobalLibrariesProvider.deferredCommit();
-        myApplicationServerLibrariesProvider.deferredCommit();
+        for (final LibrariesModifiableModel provider : myLevel2Providers.values()) {
+          provider.deferredCommit();
+        }
         for (Module module : myModule2LibrariesMap.keySet()) {
           if (!module.isDisposed()){ //do not update deleted modules
             myModule2LibrariesMap.get(module).deferredCommit();
@@ -632,9 +667,9 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     }
     isModified |= isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified();
     isModified |= myJdksTreeModel.isModified();
-    isModified |= myGlobalLibrariesProvider.isChanged();
-    isModified |= myApplicationServerLibrariesProvider.isChanged();
-    isModified |= myProjectLibrariesProvider.isChanged();
+    for (final LibrariesModifiableModel provider : myLevel2Providers.values()) {
+      isModified |= provider.isChanged();
+    }
     return isModified;
   }
 
@@ -657,9 +692,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myJdksTreeModel.disposeUIResources();
     myModulesConfigurator.disposeUIResources();
     myModule2LibrariesMap.clear();
-    myProjectLibrariesProvider = null;
-    myGlobalLibrariesProvider = null;
-    myApplicationServerLibrariesProvider = null;
+    myLevel2Providers.clear();
+    myLevel2Nodes.clear();
     myJdkDependencyCache.clear();
     myLibraryDependencyCache.clear();
     myValidityCache.clear();
@@ -759,31 +793,18 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     final LibraryTable table = library.getTable();
     if (table != null){
       final String level = table.getTableLevel();
-      if (level == LibraryTablesRegistrar.APPLICATION_LEVEL) {
-        final LibraryConfigurable configurable = new LibraryConfigurable(getGlobalLibrariesProvider(), library, myProject, TREE_UPDATER);
-        final MyNode node = new MyNode(configurable);
-        addNode(node, myGlobalLibrariesNode);
-        return node;
-      }
-      else if (level == LibraryTablesRegistrar.PROJECT_LEVEL) {
-        final LibraryConfigurable configurable = new LibraryConfigurable(getProjectLibrariesProvider(), library, myProject, TREE_UPDATER);
-        final MyNode node = new MyNode(configurable);
-        addNode(node, myProjectLibrariesNode);
-        return node;
-      }
-      else {
-        final LibraryConfigurable configurable = new LibraryConfigurable(getApplicationServerLibrariesProvider(), library, myProject, TREE_UPDATER);
-        final MyNode node = new MyNode(configurable);
-        addNode(node, myApplicationServerLibrariesNode);
-        return node;
-      }
-    } else { //module library
-      LOG.assertTrue(module != null);
-      final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(module), library, presentableName, myProject, TREE_UPDATER);
+      final LibraryConfigurable configurable = new LibraryConfigurable(createModifiableModelProvider(level), library, myProject, TREE_UPDATER);
       final MyNode node = new MyNode(configurable);
-      addNode(node, findNodeByObject(myModulesNode, module));
+      addNode(node, myLevel2Nodes.get(level));
       return node;
     }
+
+    //module library
+    LOG.assertTrue(module != null);
+    final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(module), library, presentableName, myProject, TREE_UPDATER);
+    final MyNode node = new MyNode(configurable);
+    addNode(node, findNodeByObject(myModulesNode, module));
+    return node;
   }
 
   @Nullable
@@ -901,16 +922,13 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myModulesConfigurator.getModulesConfigurable().setStartModuleWizardOnShow(show);
   }
 
-  public LibraryTableModifiableModelProvider getApplicationServerLibrariesProvider() {
-    return new LibraryTableModifiableModelProvider() {
-      public LibraryTable.ModifiableModel getModifiableModel() {
-        return myApplicationServerLibrariesProvider;
+  public List<LibraryTableModifiableModelProvider> getCustomLibrariesProviders() {
+    return ContainerUtil.map2List(LibraryTablesRegistrar.getInstance().getCustomLibraryTables(), new NotNullFunction<LibraryTable, LibraryTableModifiableModelProvider>() {
+      @NotNull
+      public LibraryTableModifiableModelProvider fun(final LibraryTable libraryTable) {
+        return createModifiableModelProvider(libraryTable.getTableLevel());
       }
-
-      public String getTableLevel() {
-        return ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES;
-      }
-    };
+    });
   }
 
   public DefaultMutableTreeNode createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
@@ -949,13 +967,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
 
   @Nullable
   public Library getLibrary(final String libraryName, final String libraryLevel) {
-    if (Comparing.strEqual(libraryLevel, LibraryTablesRegistrar.PROJECT_LEVEL)) {
-      return findLibraryModel(libraryName, myProjectLibrariesProvider);
-    }
-    else if (Comparing.strEqual(libraryLevel, LibraryTablesRegistrar.APPLICATION_LEVEL)) {
-      return findLibraryModel(libraryName, myGlobalLibrariesProvider);
-    }
-    return findLibraryModel(libraryName, myApplicationServerLibrariesProvider);
+    return findLibraryModel(libraryLevel, myLevel2Providers.get(libraryLevel));
   }
 
   @Nullable
@@ -1161,7 +1173,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
             if (editableObject instanceof ProjectJdk || editableObject instanceof Module) return true;
             if (editableObject instanceof Library) {
               final LibraryTable table = ((Library)editableObject).getTable();
-              return table == null || !ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(table.getTableLevel());
+              return table == null || table.isEditable();
             }
           }
           return false;
@@ -1208,12 +1220,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         final LibraryTable table = library.getTable();
         if (table != null) {
           final String level = table.getTableLevel();
-          if (level == LibraryTablesRegistrar.APPLICATION_LEVEL) {
-            myGlobalLibrariesProvider.removeLibrary(library);
-          }
-          else if (level == LibraryTablesRegistrar.PROJECT_LEVEL) {
-            myProjectLibrariesProvider.removeLibrary(library);
-          }
+          myLevel2Providers.get(level).removeLibrary(library);
           invalidateModules(myLibraryDependencyCache.get(library));
           myLibraryDependencyCache.remove(library);
         }
@@ -1234,13 +1241,22 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private LibraryTableModifiableModelProvider getModifiableModelProvider(final ModifiableRootModel model) {
     return new LibraryTableModifiableModelProvider() {
       public LibraryTable.ModifiableModel getModifiableModel() {
-        final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
-        myModule2LibrariesMap.put(model.getModule(), new LibrariesModifiableModel(modifiableModel));
+        final LibraryTable table = model.getModuleLibraryTable();
+        final LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
+        myModule2LibrariesMap.put(model.getModule(), new LibrariesModifiableModel(table));
         return modifiableModel;
       }
 
       public String getTableLevel() {
         return LibraryTableImplUtil.MODULE_LEVEL;
+      }
+
+      public LibraryTablePresentation getLibraryTablePresentation() {
+        return ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+      }
+
+      public boolean isLibraryTableEditable() {
+        return true;
       }
     };
   }

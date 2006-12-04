@@ -36,29 +36,34 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.List;
 
 public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements ApplicationComponent {
   private static final Map<String, LibraryTable> myLibraryTables = new HashMap<String, LibraryTable>();
 
+  @NotNull
   public LibraryTable getLibraryTable() {
     return ApplicationManager.getApplication().getComponent(LibraryTable.class);
   }
 
-  public LibraryTable getLibraryTable(Project project) {
+  @NotNull
+  public LibraryTable getLibraryTable(@NotNull Project project) {
     return project.getComponent(LibraryTable.class);
   }
 
-  public LibraryTable getLibraryTableByLevel(String level, Project project) {
+  public LibraryTable getLibraryTableByLevel(String level, @NotNull Project project) {
     if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(level)) return getLibraryTable(project);
     if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(level)) return getLibraryTable();
     return myLibraryTables.get(level);
   }
 
-  public void registerLibraryTable(LibraryTable libraryTable) {
+  public void registerLibraryTable(@NotNull LibraryTable libraryTable) {
     String tableLevel = libraryTable.getTableLevel();
     final LibraryTable oldTable = myLibraryTables.put(tableLevel, libraryTable);
     if (oldTable != null) {
@@ -66,15 +71,40 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
     }
   }
 
+  @NotNull
   public LibraryTable registerLibraryTable(final String customLevel) {
     LibraryTable table = new LibraryTableBase() {
       public String getTableLevel() {
         return customLevel;
       }
+
+      public LibraryTablePresentation getPresentation() {
+        return new LibraryTablePresentation() {
+          public String getDisplayName(boolean plural) {
+            return customLevel;
+          }
+
+          public String getDescription() {
+            throw new UnsupportedOperationException("Method getDescription is not yet implemented in " + getClass().getName());
+          }
+
+          public String getLibraryTableEditorTitle() {
+            throw new UnsupportedOperationException("Method getLibraryTableEditorTitle is not yet implemented in " + getClass().getName());
+          }
+        };
+      }
+
+      public boolean isEditable() {
+        return false;
+      }
     };
 
     registerLibraryTable(table);
     return table;
+  }
+
+  public List<LibraryTable> getCustomLibraryTables() {
+    return new SmartList<LibraryTable>(myLibraryTables.values());
   }
 
   @NotNull

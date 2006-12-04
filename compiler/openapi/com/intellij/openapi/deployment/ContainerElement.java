@@ -24,6 +24,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -39,7 +40,7 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable,
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
 
-  protected ContainerElement(Module parentModule) {
+  protected ContainerElement(@Nullable Module parentModule) {
     myParentModule = parentModule;
   }
 
@@ -67,6 +68,7 @@ public abstract class ContainerElement implements JDOMExternalizable, Cloneable,
     return myAttributes.get(name);
   }
 
+  @Nullable
   public Module getParentModule() {
     return myParentModule;
   }

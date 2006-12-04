@@ -5,7 +5,6 @@ import com.intellij.compiler.ant.taskdefs.Include;
 import com.intellij.compiler.ant.taskdefs.Path;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
@@ -95,24 +94,25 @@ public class BuildProperties extends CompositeGenerator {
 
     LibraryDefinitionsGeneratorFactory factory = new LibraryDefinitionsGeneratorFactory((ProjectEx)project, genOptions);
 
-    final Generator projectLibs = factory.create(LibraryTablesRegistrar.getInstance().getLibraryTable(project), getProjectBaseDir(project),
+    final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
+    final Generator projectLibs = factory.create(registrar.getLibraryTable(project), getProjectBaseDir(project),
                                                  CompilerBundle.message("generated.ant.build.project.libraries.comment"));
     if (projectLibs != null) {
       add(projectLibs);
     }
 
-    final Generator globalLibs = factory.create(LibraryTablesRegistrar.getInstance().getLibraryTable(), null,
+    final Generator globalLibs = factory.create(registrar.getLibraryTable(), null,
                                                 CompilerBundle.message("generated.ant.build.global.libraries.comment"));
     if (globalLibs != null) {
       add(globalLibs);
     }
 
-    LibraryTable appServerLibraryTable = ApplicationServersManager.getInstance().getLibraryTable();
-    if (appServerLibraryTable.getLibraries().length != 0) {
-      final Generator appServerLibs = factory.create(appServerLibraryTable, null,
-                                                     CompilerBundle.message("generated.ant.build.application.server.libraries.comment"));
-      if (appServerLibs != null){
-        add(appServerLibs);
+    for (final LibraryTable table : registrar.getCustomLibraryTables()) {
+      if (table.getLibraries().length != 0) {
+        final Generator appServerLibs = factory.create(table, null, table.getPresentation().getDisplayName(true));
+        if (appServerLibs != null){
+          add(appServerLibs);
+        }
       }
     }
   }

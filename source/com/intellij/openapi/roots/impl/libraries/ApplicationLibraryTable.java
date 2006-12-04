@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
@@ -20,6 +21,19 @@ import java.io.File;
  */
 public class ApplicationLibraryTable extends LibraryTableBase implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private PathMacrosImpl myPathMacros;
+  public static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+    public String getDisplayName(boolean plural) {
+      return ProjectBundle.message("global.library.display.name", plural ? 2 : 1);
+    }
+
+    public String getDescription() {
+      return ProjectBundle.message("libraries.node.text.ide");
+    }
+
+    public String getLibraryTableEditorTitle() {
+      return ProjectBundle.message("library.configure.global.title");
+    }
+  };
 
   public ApplicationLibraryTable(PathMacrosImpl pathMacros) {
     myPathMacros = pathMacros;
@@ -27,6 +41,14 @@ public class ApplicationLibraryTable extends LibraryTableBase implements NamedJD
 
   public String getTableLevel() {
     return LibraryTablesRegistrar.APPLICATION_LEVEL;
+  }
+
+  public LibraryTablePresentation getPresentation() {
+    return GLOBAL_LIBRARY_TABLE_PRESENTATION;
+  }
+
+  public boolean isEditable() {
+    return true;
   }
 
   public String getExternalFileName() {

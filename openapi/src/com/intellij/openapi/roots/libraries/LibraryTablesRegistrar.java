@@ -18,6 +18,10 @@ package com.intellij.openapi.roots.libraries;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class LibraryTablesRegistrar {
   @NonNls public static final String PROJECT_LEVEL = "project";
@@ -27,9 +31,20 @@ public abstract class LibraryTablesRegistrar {
     return ApplicationManager.getApplication().getComponent(LibraryTablesRegistrar.class);
   }
 
+  @NotNull
   public abstract LibraryTable getLibraryTable();
-  public abstract LibraryTable getLibraryTable(Project project);
-  public abstract LibraryTable getLibraryTableByLevel(String level, Project project);
-  public abstract void registerLibraryTable(LibraryTable libraryTable);
-  public abstract LibraryTable registerLibraryTable(String customLevel);
+
+  @NotNull
+  public abstract LibraryTable getLibraryTable(@NotNull Project project);
+
+  @Nullable
+  public abstract LibraryTable getLibraryTableByLevel(@NonNls String level, @NotNull Project project);
+
+  public abstract void registerLibraryTable(@NotNull LibraryTable libraryTable);
+
+  @Deprecated
+  @NotNull
+  public abstract LibraryTable registerLibraryTable(@NonNls String customLevel);
+
+  public abstract List<LibraryTable> getCustomLibraryTables();
 }

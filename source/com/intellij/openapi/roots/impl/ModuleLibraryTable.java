@@ -1,11 +1,13 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +29,19 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   private static final OrderEntryToLibraryConvertor ORDER_ENTRY_TO_LIBRARY_CONVERTOR = new OrderEntryToLibraryConvertor();
   private ProjectRootManagerImpl myProjectRootManager;
   private VirtualFilePointerManager myFilePointerManager;
+  public static final LibraryTablePresentation MODULE_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+    public String getDisplayName(boolean plural) {
+      return ProjectBundle.message("module.library.display.name", plural ? 2 : 1);
+    }
+
+    public String getDescription() {
+      throw new UnsupportedOperationException("Method getDescription is not yet implemented in " + getClass().getName());
+    }
+
+    public String getLibraryTableEditorTitle() {
+      throw new UnsupportedOperationException("Method getLibraryTableEditorTitle is not yet implemented in " + getClass().getName());
+    }
+  };
 
   ModuleLibraryTable(RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
     myRootModel = rootModel;
@@ -79,6 +94,14 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
 
   public String getTableLevel() {
     return LibraryTableImplUtil.MODULE_LEVEL;
+  }
+
+  public LibraryTablePresentation getPresentation() {
+    return MODULE_LIBRARY_TABLE_PRESENTATION;
+  }
+
+  public boolean isEditable() {
+    return true;
   }
 
   @Nullable

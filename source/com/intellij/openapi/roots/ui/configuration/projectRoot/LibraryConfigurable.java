@@ -4,18 +4,15 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableEditor;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
@@ -95,17 +92,10 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
   }
 
   public String getBannerSlogan() {
-    int libraryType;
     final LibraryTable libraryTable = myLibrary.getTable();
-    if (libraryTable == null){
-      libraryType = 4;
-    } else if (Comparing.strEqual(libraryTable.getTableLevel(), LibraryTablesRegistrar.APPLICATION_LEVEL)){
-      libraryType = 1;
-    } else if (Comparing.strEqual(libraryTable.getTableLevel(), ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES)){
-      libraryType = 2;
-    } else {
-      libraryType = 3;
-    }
+    String libraryType = libraryTable == null
+                         ? ProjectBundle.message("module.library.display.name", false)
+                         : libraryTable.getPresentation().getDisplayName(false);
     return ProjectBundle.message("project.roots.library.banner.text", myLibraryName, libraryType);
   }
 

@@ -4,13 +4,10 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.PanelWithText;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
@@ -18,11 +15,11 @@ import javax.swing.*;
 public class LibrariesConfigurable extends NamedConfigurable <String> {
   private static final Icon ICON = IconLoader.getIcon("/modules/library.png");
   
-  private String myLibraryTable;
+  private LibraryTable myLibraryTable;
 
   private PanelWithText myPanel = new PanelWithText();
 
-  protected LibrariesConfigurable(final String libraryTable) {
+  protected LibrariesConfigurable(final LibraryTable libraryTable) {
     myLibraryTable = libraryTable;
   }
 
@@ -34,6 +31,7 @@ public class LibrariesConfigurable extends NamedConfigurable <String> {
   }
 
   public final void disposeUIResources() {
+    myLibraryTable = null;
   }
 
   public final boolean isModified() {
@@ -42,24 +40,13 @@ public class LibrariesConfigurable extends NamedConfigurable <String> {
 
 
   public JComponent createOptionsPanel() {
-    final int choice = getChoice();
-    myPanel.setText(choice == 1
-                    ? ProjectBundle.message("libraries.node.text.ide")
-                    : choice == 2
-                      ? ProjectBundle.message("libraries.node.text.application.server")
-                      : ProjectBundle.message("libraries.node.text.project"));
+    myPanel.setText(myLibraryTable.getPresentation().getDescription());
     return myPanel;
   }
 
 
   public String getDisplayName() {
-    return ProjectBundle.message("libraries.node.display.name", getChoice());
-  }
-
-  private int getChoice() {
-    return Comparing.strEqual(myLibraryTable, LibraryTablesRegistrar.APPLICATION_LEVEL)
-                 ? 1
-                 : Comparing.strEqual(myLibraryTable, ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES) ? 2 : 3;
+    return myLibraryTable.getPresentation().getDisplayName(true);
   }
 
   public String getHelpTopic() {
@@ -75,7 +62,7 @@ public class LibrariesConfigurable extends NamedConfigurable <String> {
   }
 
   public String getEditableObject() {
-    return myLibraryTable;
+    return myLibraryTable.getTableLevel();
   }
 
   public String getBannerSlogan() {

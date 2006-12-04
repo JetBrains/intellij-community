@@ -22,8 +22,8 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
 
   private LibraryTable.ModifiableModel myLibrariesModifiableModel;
 
-  public LibrariesModifiableModel(final LibraryTable.ModifiableModel librariesModifiableModel) {
-    myLibrariesModifiableModel = librariesModifiableModel;
+  public LibrariesModifiableModel(final LibraryTable table) {
+    myLibrariesModifiableModel = table.getModifiableModel();
   }
 
   public Library createLibrary(String name) {

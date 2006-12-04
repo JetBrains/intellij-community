@@ -4,25 +4,33 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcher;
 import com.intellij.openapi.roots.watcher.ModuleRootsWatcherFactory;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.deployment.ModuleLink;
-import com.intellij.openapi.deployment.ContainerElement;
-import com.intellij.openapi.deployment.PackagingMethod;
-import com.intellij.openapi.deployment.LibraryLink;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ExternalizableString;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.deployment.ModuleContainer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Alexey Kudravtsev
@@ -275,6 +283,7 @@ public class ModuleContainerImpl implements ModuleContainer {
 
   }
 
+  @NotNull
   public Module getModule() {
     return myParentModule;
   }

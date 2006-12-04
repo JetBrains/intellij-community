@@ -151,7 +151,7 @@ public abstract class DeploymentUtil {
 
   public abstract ModuleLink createModuleLink(Module dep, Module module);
 
-  public abstract LibraryLink createLibraryLink(Library library, Module parentModule);
+  public abstract LibraryLink createLibraryLink(Library library, @NotNull Module parentModule);
 
   public abstract ModuleContainer createModuleContainer(@NotNull Module module);
 

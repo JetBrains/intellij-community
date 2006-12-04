@@ -4,7 +4,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +19,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
@@ -53,8 +52,18 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
@@ -94,6 +103,14 @@ public class LibraryTableEditor implements Disposable {
 
       public String getTableLevel() {
         return libraryTable.getTableLevel();
+      }
+
+      public LibraryTablePresentation getLibraryTablePresentation() {
+        return libraryTable.getPresentation();
+      }
+
+      public boolean isLibraryTableEditable() {
+        return libraryTable.isEditable();
       }
     });
   }
@@ -736,16 +753,7 @@ public class LibraryTableEditor implements Disposable {
 
     public MyDialogWrapper(final Component parent) {
       super(parent, true);
-      final String tableLevel = LibraryTableEditor.this.myLibraryTable.getTableLevel();
-      if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(tableLevel)) {
-        setTitle(ProjectBundle.message("library.configure.project.title"));
-      }
-      else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(tableLevel)) {
-        setTitle(ProjectBundle.message("library.configure.global.title"));
-      }
-      else if (ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(tableLevel)) {
-        setTitle(ProjectBundle.message("library.configure.appserver.title"));
-      }
+      setTitle(LibraryTableEditor.this.myLibraryTable.getLibraryTablePresentation().getLibraryTableEditorTitle());
       init();
     }
 

@@ -31,20 +31,17 @@
  */
 package com.intellij.openapi.deployment;
 
-import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.deployment.PackagingMethod;
-import com.intellij.openapi.deployment.ContainerElement;
-import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -91,9 +88,15 @@ public class LibraryLinkImpl extends LibraryLink {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.LibraryLink");
   private LibraryInfo myLibraryInfo;
+  private final Project myProject;
 
-  public LibraryLinkImpl(Library library, Module parentModule) {
+  public LibraryLinkImpl(@Nullable Library library, @NotNull Module parentModule) {
+    this(library, parentModule.getProject(), parentModule);
+  }
+
+  public LibraryLinkImpl(@Nullable Library library, @NotNull Project project, @Nullable Module parentModule) {
     super(parentModule);
+    myProject = project;
     if (library == null) {
       myLibraryInfo = new LibraryInfoImpl();
     }
@@ -141,18 +144,8 @@ public class LibraryLinkImpl extends LibraryLink {
     if (levelName.equals(MODULE_LEVEL)) {
       return CompilerBundle.message("library.link.description.module.library");
     }
-    else if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(levelName)) {
-      return CompilerBundle.message("library.link.description.global.library");
-    }
-    else if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(levelName)) {
-      return CompilerBundle.message("library.link.description.project.library");
-    }
-    else if (ApplicationServersManager.APPLICATION_SERVER_MODULE_LIBRARIES.equals(levelName)) {
-      return CompilerBundle.message("library.link.description.application.server.library");
-    }
-    else {
-      return "???";
-    }
+    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(levelName, myProject);
+    return table == null ? "???" : table.getPresentation().getDisplayName(false);
   }
 
   public String getDescriptionForPackagingMethod(PackagingMethod method) {
@@ -344,10 +337,7 @@ public class LibraryLinkImpl extends LibraryLink {
         String url = myUrls.size() == 1 ? myUrls.get(0) : null;
         return findModuleLibrary(module, provider, myName, url);
       }
-      else {
-        return LibraryLink.findLibrary(myName, myLevel, module.getProject());
-      }
-
+      return LibraryLink.findLibrary(myName, myLevel, module.getProject());
     }
 
     public void readExternal(Element element) throws InvalidDataException {
@@ -380,12 +370,8 @@ public class LibraryLinkImpl extends LibraryLink {
     }
 
     public String getLevel() {
-      if (myLibrary.getTable() == null) {
-        return MODULE_LEVEL;
-      }
-      else {
-        return myLibrary.getTable().getTableLevel();
-      }
+      final LibraryTable table = myLibrary.getTable();
+      return table == null ? MODULE_LEVEL : table.getTableLevel();
     }
 
     public Library getLibrary() {

@@ -465,7 +465,7 @@ public class ClasspathPanel extends JPanel {
   private void initPopupActions() {
     if (myPopupActions == null) {
       final ProjectRootConfigurable projectRootConfigurable = ProjectRootConfigurable.getInstance(myProject);
-      myPopupActions = new PopupAction[] {
+      final List<PopupAction> actions = new ArrayList<PopupAction>(Arrays.<PopupAction>asList(
         new ChooseAndAddAction<Library>(1, ProjectBundle.message("classpath.add.module.library.action"), Icons.JAR_ICON) {
           protected TableItem createTableItem(final Library item) {
             final OrderEntry[] entries = myRootModel.getOrderEntries();
@@ -497,7 +497,7 @@ public class ClasspathPanel extends JPanel {
             }
             final LibraryOrderEntry libraryOrderEntry = ((LibraryOrderEntry)entry);
             if (!LibraryTableImplUtil.MODULE_LEVEL.equals(libraryOrderEntry.getLibraryLevel())) {
-              return null;  
+              return null;
             }
             final VirtualFile[] files = libraryOrderEntry.getLibrary().getFiles(OrderRootType.CLASSES);
             final VirtualFile file = files.length == 0? null : files[0];
@@ -509,9 +509,15 @@ public class ClasspathPanel extends JPanel {
           }
         },
         new ChooseNamedLibraryAction(2, ProjectBundle.message("classpath.add.project.library.action"), projectRootConfigurable.getProjectLibrariesProvider()),
-        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), projectRootConfigurable.getGlobalLibrariesProvider()),
-        new ChooseNamedLibraryAction(4, ProjectBundle.message("classpath.add.appserver.library.action"), projectRootConfigurable.getApplicationServerLibrariesProvider(), false),
-        new ChooseAndAddAction<Module>(5, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
+        new ChooseNamedLibraryAction(3, ProjectBundle.message("classpath.add.global.library.action"), projectRootConfigurable.getGlobalLibrariesProvider())
+      ));
+
+      int index = 4;
+      for (final LibraryTableModifiableModelProvider provider : projectRootConfigurable.getCustomLibrariesProviders()) {
+        actions.add(new ChooseNamedLibraryAction(index++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
+      }
+
+      actions.add(new ChooseAndAddAction<Module>(index, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
           }
@@ -524,7 +530,9 @@ public class ClasspathPanel extends JPanel {
             return new ChooseModulesToAddDialog(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"));
           }
         }
-      };
+     );
+
+      myPopupActions = actions.toArray(new PopupAction[actions.size()]);
 
       myIcons = new Icon[myPopupActions.length];
       for (int idx = 0; idx < myPopupActions.length; idx++) {
@@ -969,13 +977,9 @@ public class ClasspathPanel extends JPanel {
     private boolean myLibraryTableEditable;
 
     public ChooseNamedLibraryAction(final int index, final String title, final LibraryTableModifiableModelProvider libraryTable) {
-      this(index, title, libraryTable, true);
-    }
-
-    public ChooseNamedLibraryAction(final int index, final String title, final LibraryTableModifiableModelProvider libraryTable, boolean isLibraryTableEditable) {
       super(index, title, Icons.LIBRARY_ICON);
       myLibraryTableModelProvider = libraryTable;
-      myLibraryTableEditable = isLibraryTableEditable;
+      myLibraryTableEditable = libraryTable.isLibraryTableEditable();
     }
 
     protected TableItem createTableItem(final Library item) {

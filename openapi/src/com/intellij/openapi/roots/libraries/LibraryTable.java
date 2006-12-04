@@ -16,8 +16,8 @@
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 import java.util.Iterator;
@@ -42,6 +42,10 @@ public interface LibraryTable {
   Library getLibraryByName(@NotNull String name);
 
   String getTableLevel();
+
+  LibraryTablePresentation getPresentation();
+
+  boolean isEditable();
 
   ModifiableModel getModifiableModel();
 

@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 
 public interface LibraryTableModifiableModelProvider {
 
@@ -8,4 +9,7 @@ public interface LibraryTableModifiableModelProvider {
 
   String getTableLevel();
 
+  LibraryTablePresentation getLibraryTablePresentation();
+
+  boolean isLibraryTableEditable();
 }
