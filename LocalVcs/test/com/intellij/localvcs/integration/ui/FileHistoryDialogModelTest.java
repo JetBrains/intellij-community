@@ -1,9 +1,7 @@
 package com.intellij.localvcs.integration.ui;
 
-import static org.junit.Assert.fail;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.TestStorage;
-import com.intellij.localvcs.integration.ui.FileHistoryDialogModel;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockFileDocumentManagerImpl;

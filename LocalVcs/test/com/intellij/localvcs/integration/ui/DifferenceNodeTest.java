@@ -1,27 +1,24 @@
 package com.intellij.localvcs.integration.ui;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.*;
 import com.intellij.localvcs.Difference;
 import com.intellij.localvcs.DirectoryEntry;
-import com.intellij.localvcs.FileEntry;
 import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.integration.ui.DifferenceNode;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.localvcs.FileEntry;
 import com.intellij.mock.MockFileTypeManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.util.Icons;
-import org.junit.Test;
-import org.junit.Assert;
 import org.easymock.EasyMock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import org.junit.Test;
 
 import javax.swing.*;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class DifferenceNodeTest {
   private MyFileTypeManager typeManager = new MyFileTypeManager();
-
 
 
   @Test

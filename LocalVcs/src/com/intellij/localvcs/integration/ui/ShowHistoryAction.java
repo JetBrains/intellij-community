@@ -12,9 +12,7 @@ public class ShowHistoryAction extends AnAction {
     VirtualFile f = e.getData(DataKeys.VIRTUAL_FILE);
     Project p = e.getData(DataKeys.PROJECT);
 
-    DialogWrapper d = f.isDirectory()
-                      ? new DirectoryHistoryDialog(f, p)
-                      : new FileHistoryDialog(f, p);
+    DialogWrapper d = f.isDirectory() ? new DirectoryHistoryDialog(f, p) : new FileHistoryDialog(f, p);
     d.show();
   }
 }
