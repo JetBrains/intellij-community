@@ -17,15 +17,22 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean onlyWarnOnAbstractMethods = false;
 
     public String getID() {
         return "UnnecessaryFinalForMethodParameter";
@@ -44,6 +51,14 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
                 parameterName);
     }
 
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "unnecessary.final.on.parameter.only.interface.option"),
+                this, "onlyWarnOnAbstractMethods");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryFinalOnParameterVisitor();
     }
@@ -52,16 +67,13 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
         return new RemoveModifierFix(location);
     }
 
-    private static class UnnecessaryFinalOnParameterVisitor
+    private class UnnecessaryFinalOnParameterVisitor
             extends BaseInspectionVisitor {
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters == null) {
-                return;
-            }
             for (final PsiParameter parameter : parameters) {
                 checkParameter(method, parameter);
             }
@@ -82,6 +94,9 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
             }
             if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 registerModifierError(PsiModifier.FINAL, parameter, parameter);
+                return;
+            }
+            if (onlyWarnOnAbstractMethods) {
                 return;
             }
             if (VariableAccessUtils.variableIsUsedInInnerClass(parameter,
