@@ -13,7 +13,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -22,22 +21,21 @@ import java.util.List;
  * @author peter
 */
 public class IdRefReference extends JspReferencesProvider.BasicAttributeValueReference {
-  @NonNls public static final String ID_ATTR_NAME = "id";
 
   public IdRefReference(final PsiElement element, int offset) {
     super(element, offset);
   }
 
   protected PsiElement getIdValueElement(XmlTag tag) {
-    return tag.getAttribute(ID_ATTR_NAME, null).getValueElement();
+    return tag.getAttribute(IdReferenceProvider.ID_ATTR_NAME, null).getValueElement();
   }
 
   protected String getIdValue(final XmlTag subTag) {
-    return subTag.getAttributeValue(ID_ATTR_NAME);
+    return subTag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME);
   }
 
   protected boolean isAcceptableTagType(final XmlTag subTag) {
-    return subTag.getAttributeValue(ID_ATTR_NAME) != null;
+    return subTag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME) != null;
   }
 
   private static Key<CachedValue<List<XmlTag>>> ourBeansCachedValueKey = Key.create("my.beans.cached.value");

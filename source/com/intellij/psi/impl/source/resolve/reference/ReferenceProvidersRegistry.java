@@ -40,6 +40,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.Customizing
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdReferencesProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FilePathReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.HibernateReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspImportListReferenceProvider;
@@ -393,6 +394,15 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
       ),
       true,
       new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
+    );
+
+    final IdReferenceProvider jsfProvider = new IdReferenceProvider();
+
+    registerXmlAttributeValueReferenceProvider(
+      jsfProvider.getIdForAttributeNames(),
+      jsfProvider.getIdForFilter(),
+      true,
+      jsfProvider
     );
 
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
