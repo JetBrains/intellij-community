@@ -9,15 +9,20 @@ import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MessageBusConnectionImpl implements MessageBusConnection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
 
   private final MessageBusImpl myBus;
-  private final Queue<Message> myPendingMessages = new LinkedList<Message>();
+  private final ThreadLocal<Queue<Message>> myPendingMessages = new ThreadLocal<Queue<Message>>() {
+    @Override
+    protected Queue<Message> initialValue() {
+      return new ConcurrentLinkedQueue<Message>();
+    }
+  };
   private MessageHandler myDefaultHandler;
   private Map<Topic, Object> mySubscriptions = new HashMap<Topic, Object>();
 
@@ -60,13 +65,13 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   public void deliverImmediately() {
-    while (!myPendingMessages.isEmpty()) {
+    while (!myPendingMessages.get().isEmpty()) {
       myBus.deliverSingleMessage();
     }
   }
 
   void deliverMessage(Message message) {
-    final Message messageOnLocalQueue = myPendingMessages.poll();
+    final Message messageOnLocalQueue = myPendingMessages.get().poll();
     assert messageOnLocalQueue == message;
 
     final Topic topic = message.getTopic();
@@ -89,7 +94,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   void scheduleMessageDelivery(Message message) {
-    myPendingMessages.offer(message);
+    myPendingMessages.get().offer(message);
   }
 
   public String toString() {

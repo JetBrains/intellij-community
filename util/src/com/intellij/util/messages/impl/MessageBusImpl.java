@@ -17,7 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class MessageBusImpl implements MessageBus {
-  private final Queue<DeliveryJob> myMessageQueue = new ConcurrentLinkedQueue<DeliveryJob>();
+  private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = new ThreadLocal<Queue<DeliveryJob>>() {
+    @Override
+    protected Queue<DeliveryJob> initialValue() {
+      return new ConcurrentLinkedQueue<DeliveryJob>();
+    }
+  };
   private final Map<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final Map<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
@@ -97,7 +102,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public void dispose() {
-    myMessageQueue.clear();
+    myMessageQueue.get().clear();
     if (myParentBus != null) {
       myParentBus.notifyChildBusDisposed(this);
     }
@@ -108,7 +113,7 @@ public class MessageBusImpl implements MessageBus {
     final List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers != null) {
       for (MessageBusConnectionImpl subscriber : topicSubscribers) {
-        myMessageQueue.offer(new DeliveryJob(subscriber, message));
+        myMessageQueue.get().offer(new DeliveryJob(subscriber, message));
         subscriber.scheduleMessageDelivery(message);
       }
     }
@@ -127,7 +132,7 @@ public class MessageBusImpl implements MessageBus {
   private void pumpMessages() {
     DeliveryJob job;
     do {
-      job = myMessageQueue.poll();
+      job = myMessageQueue.get().poll();
       if (job == null) break;
       job.connection.deliverMessage(job.message);
     }
@@ -153,7 +158,7 @@ public class MessageBusImpl implements MessageBus {
       topicSubscribers.remove(connection);
     }
 
-    final Iterator<DeliveryJob> i = myMessageQueue.iterator();
+    final Iterator<DeliveryJob> i = myMessageQueue.get().iterator();
     while (i.hasNext()) {
       final DeliveryJob job = i.next();
       if (job.connection == connection) {
@@ -163,7 +168,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public void deliverSingleMessage() {
-    final DeliveryJob job = myMessageQueue.poll();
+    final DeliveryJob job = myMessageQueue.get().poll();
     if (job == null) return;
     job.connection.deliverMessage(job.message);
   }
