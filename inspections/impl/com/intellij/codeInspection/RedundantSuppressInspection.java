@@ -167,11 +167,13 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
             }
           }
           if (!hasErrorInsideSuppressedScope) {
-            PsiElement element = suppressedScope instanceof PsiComment
-                                 ? PsiTreeUtil.skipSiblingsForward(suppressedScope, PsiWhiteSpace.class)
-                                 : suppressedScope.getFirstChild();
-            PsiElement annotation = InspectionManagerEx.getElementToolSuppressedIn(element, toolId);
-            if (annotation != null && annotation.isValid()) {
+            PsiMember psiMember;
+            if (suppressedScope instanceof PsiMember) {
+              psiMember = (PsiMember)suppressedScope;
+            } else {
+              psiMember = PsiTreeUtil.getParentOfType(suppressedScope, PsiDocCommentOwner.class);
+            }
+            if (psiMember != null && psiMember.isValid()) {
               String description = InspectionsBundle.message("inspection.redundant.suppression.description");
               if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<String, QuickFix>();
               QuickFix fix = myQuickFixes.get(toolId);
@@ -179,8 +181,18 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
                 fix = new RemoveSuppressWarningAction(toolId);
                 myQuickFixes.put(toolId, fix);
               }
-              ProblemDescriptor descriptor = manager.createProblemDescriptor(annotation, description, (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-              result.add(descriptor);
+              PsiElement identifier = null;
+              if (psiMember instanceof PsiMethod) {
+                identifier = ((PsiMethod)psiMember).getNameIdentifier();
+              } else if (psiMember instanceof PsiField) {
+                identifier = ((PsiField)psiMember).getNameIdentifier();
+              } else if (psiMember instanceof PsiClass) {
+                identifier = ((PsiClass)psiMember).getNameIdentifier();
+              }
+              if (identifier == null) {
+                identifier = psiMember;
+              }
+              result.add(manager.createProblemDescriptor(identifier, description, (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
         }
