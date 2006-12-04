@@ -492,6 +492,11 @@ public class UIUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  public static Color getOptionPaneBackground() {
+    return UIManager.getColor("OptionPane.background");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderQuaquaLookAndFeel() {
     return UIManager.getLookAndFeel().getName().indexOf("Quaqua") >= 0;
   }

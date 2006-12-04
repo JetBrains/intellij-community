@@ -508,8 +508,6 @@ public class Messages {
         JLabel label = new JLabel();
         final JTextPane messageComponent = new JTextPane();
         messageComponent.setFont(label.getFont());
-        messageComponent.setBackground(label.getBackground());
-        messageComponent.setForeground(label.getForeground());
         if (BasicHTML.isHTMLString(myMessage)) {
           final HTMLEditorKit editorKit = new HTMLEditorKit();
           editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(label.getFont(), label.getForeground()));
@@ -517,8 +515,10 @@ public class Messages {
           messageComponent.setContentType("text/html");
         }
         messageComponent.setText(myMessage);
-        messageComponent.setEditable(false);
+        messageComponent.setEditable(false);                                                         
         messageComponent.setCaretPosition(0);
+        messageComponent.setBackground(UIUtil.getOptionPaneBackground());
+        messageComponent.setForeground(label.getForeground());
 
         final Dimension screenSize = messageComponent.getToolkit().getScreenSize();
         final Dimension textSize = messageComponent.getPreferredSize();
