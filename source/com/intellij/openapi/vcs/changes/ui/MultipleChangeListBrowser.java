@@ -10,24 +10,24 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
-import java.awt.*;
-import java.awt.event.ItemListener;
-import java.awt.event.ItemEvent;
 
 public class MultipleChangeListBrowser extends ChangesBrowser {
   private ChangeListChooser myChangeListChooser;
@@ -52,6 +52,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   @Override
   protected void setInitialSelection(final List<? extends ChangeList> changeLists, final List<Change> changes, final ChangeList initialListSelection) {
     myAllChanges = new ArrayList<Change>();
+    mySelectedChangeList = initialListSelection;
 
     for (ChangeList list : changeLists) {
       if (list instanceof LocalChangeList) {
@@ -101,7 +102,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     myDispatcher.removeListener(listener);
   }
 
-  protected void setSelectedList(final ChangeList list) {
+  private void setSelectedList(final ChangeList list) {
     mySelectedChangeList = list;
     rebuildList();
     myDispatcher.getMulticaster().selectedListChanged();
