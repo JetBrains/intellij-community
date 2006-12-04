@@ -1,12 +1,11 @@
 package com.intellij.javadoc;
 
 import com.intellij.CommonBundle;
-import com.intellij.ant.impl.MapDataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
@@ -65,7 +64,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
       dataContext = DataManager.getInstance().getDataContext(component);
     }
     else {
-      dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
+      dataContext = SimpleDataContext.getProjectContext(myProject);
     }
 
     if (dialog.isGenerationForPackage() && !dialog.isGenerationWithSubpackages()) {

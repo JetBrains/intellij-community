@@ -1,9 +1,8 @@
 package com.intellij.ide.macro;
 
-import com.intellij.ant.impl.MapDataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -26,7 +25,7 @@ public final class MacrosDialog extends DialogWrapper {
 
   public MacrosDialog(Project project) {
     super(project, true);
-    MacroManager.getInstance().cacheMacrosPreview(MapDataContext.singleData(DataConstants.PROJECT, project));
+    MacroManager.getInstance().cacheMacrosPreview(SimpleDataContext.getProjectContext(project));
     setTitle(IdeBundle.message("title.macros"));
     setOKButtonText(IdeBundle.message("button.insert"));
 
