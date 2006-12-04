@@ -130,15 +130,11 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return data;
   }
 
-  public TypeSafeDataContext getTSDataContext(Component component) {
+  public DataContext getDataContext(Component component) {
     return new MyDataContext(component);
   }
 
-  public DataContext getDataContext(Component component) {
-    return getTSDataContext(component);
-  }
-
-  public TypeSafeDataContext getTSDataContext(@NotNull Component component, int x, int y) {
+  public DataContext getDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
       throw new IllegalArgumentException("wrong point: x=" + x + "; y=" + y);
     }
@@ -148,15 +144,11 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     if (component instanceof JTabbedPane) {
       JTabbedPane tabbedPane = (JTabbedPane)component;
       int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, x, y);
-      return getTSDataContext(index != -1 ? tabbedPane.getComponentAt(index) : tabbedPane);
+      return getDataContext(index != -1 ? tabbedPane.getComponentAt(index) : tabbedPane);
     }
     else {
-      return getTSDataContext(component);
+      return getDataContext(component);
     }
-  }
-
-  public TypeSafeDataContext getDataContext(@NotNull Component component, int x, int y) {
-    return getTSDataContext(component, x, y);
   }
 
   public void setWindowManager(WindowManagerEx windowManager) {
@@ -164,22 +156,18 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   public DataContext getDataContext() {
-    return getTSDataContext();
+    return getDataContext(getFocusedComponent());
   }
 
-  public TypeSafeDataContext getTSDataContext() {
-    return getTSDataContext(getFocusedComponent());
-  }
-
-  public TypeSafeDataContext getDataContextTest(Component component) {
-    TypeSafeDataContext dataContext = getTSDataContext(component);
+  public DataContext getDataContextTest(Component component) {
+    DataContext dataContext = getDataContext(component);
     if (myWindowManager == null) {
       return dataContext;
     }
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     Component focusedComponent = myWindowManager.getFocusedComponent(project);
     if (focusedComponent != null) {
-      dataContext = getTSDataContext(focusedComponent);
+      dataContext = getDataContext(focusedComponent);
     }
     return dataContext;
   }
@@ -230,7 +218,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return "DataManager";
   }
 
-  public class MyDataContext implements TypeSafeDataContext {
+  public class MyDataContext implements DataContext {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
     // the weak reference. For example, Swing often remembers menu items
@@ -282,12 +270,6 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     @NonNls
     public String toString() {
       return "component=" + String.valueOf(myRef.get());
-    }
-
-    @Nullable
-    public <T> T getData(@NotNull DataKey<T> key) {
-      //noinspection unchecked
-      return (T) getData(key.getName());
     }
   }
 

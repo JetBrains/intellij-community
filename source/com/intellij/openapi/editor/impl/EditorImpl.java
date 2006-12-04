@@ -2357,25 +2357,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  public TypeSafeDataContext getDataContext() {
-    return getProjectAwareDataContext(DataManager.getInstance().getTSDataContext(getContentComponent()));
+  public DataContext getDataContext() {
+    return getProjectAwareDataContext(DataManager.getInstance().getDataContext(getContentComponent()));
   }
 
-  private TypeSafeDataContext getProjectAwareDataContext(final TypeSafeDataContext original) {
+  private DataContext getProjectAwareDataContext(final DataContext original) {
     if (original.getData(DataConstants.PROJECT) == myProject) return original;
 
-    return new TypeSafeDataContext() {
+    return new DataContext() {
       public Object getData(String dataId) {
         if (DataConstants.PROJECT.equals(dataId)) {
           return myProject;
         }
         return original.getData(dataId);
-      }
-
-      @Nullable
-      public <T> T getData(@NotNull DataKey<T> key) {
-        //noinspection unchecked
-        return (T) getData(key.getName());
       }
     };
   }

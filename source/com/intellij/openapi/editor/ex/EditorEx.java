@@ -4,7 +4,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
-import com.intellij.openapi.actionSystem.TypeSafeDataContext;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Key;
@@ -82,7 +82,7 @@ public interface EditorEx extends Editor {
 
   void setFile(VirtualFile vFile);
 
-  TypeSafeDataContext getDataContext();
+  DataContext getDataContext();
 
   boolean processKeyTyped(KeyEvent e);
 

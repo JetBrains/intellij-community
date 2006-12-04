@@ -23,6 +23,7 @@
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -48,5 +49,11 @@ public class DataKey<T> {
 
   public String getName() {
     return myName;
+  }
+
+  @Nullable
+  public T getData(DataContext dataContext) {
+    //noinspection unchecked
+    return (T) dataContext.getData(myName);
   }
 }

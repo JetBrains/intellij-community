@@ -16,7 +16,6 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.TypeSafeDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,14 +33,10 @@ public abstract class DataManager {
    */
   public abstract DataContext getDataContext();
 
-  public abstract TypeSafeDataContext getTSDataContext();
-
   /**
    * @return {@link DataContext} constructed by the specified <code>component</code>
    */
   public abstract DataContext getDataContext(Component component);
-
-  public abstract TypeSafeDataContext getTSDataContext(Component component);
 
   /**
    * @return {@link DataContext} constructed be the specified <code>component</code>
@@ -52,6 +47,4 @@ public abstract class DataManager {
    * component's bounds
    */
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
-
-  public abstract TypeSafeDataContext getTSDataContext(@NotNull Component component, int x, int y);
 }
