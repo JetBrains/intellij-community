@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -25,42 +24,30 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
  */
 
 public final class TextAttributesKey implements Comparable<TextAttributesKey>, JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.TextAttributesKey");
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
 
   public String myExternalName;
   public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
-  private static Map<String, TextAttributesKey> ourRegistry = new HashMap<String, TextAttributesKey>();
+  private static ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
 
   private TextAttributesKey(String externalName) {
     myExternalName = externalName;
-    register();
   }
 
   //read external only
   public TextAttributesKey() {
   }
 
-  private void register() {
-    if (ourRegistry.containsKey(myExternalName)) {
-      LOG.error("Key " + myExternalName + " already registered.");
-    }
-    else {
-      ourRegistry.put(myExternalName, this);
-    }
-  }
-
   @NotNull public static TextAttributesKey find(@NotNull @NonNls String externalName) {
-    TextAttributesKey key = ourRegistry.get(externalName);
-    return key != null ? key : new TextAttributesKey(externalName);
+    ourRegistry.putIfAbsent(externalName, new TextAttributesKey(externalName));
+    return ourRegistry.get(externalName);
   }
 
   public String toString() {
@@ -102,13 +89,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    * @return the new key instance, or an existing instance if the key with the same
    *         identifier was already registered.
    */
-
-  public static TextAttributesKey createTextAttributesKey(@NonNls String externalName,
-                                                          TextAttributes defaultAttributes) {
-    TextAttributesKey key = ourRegistry.get(externalName);
-    if (key == null) {
-      key = find(externalName);
-    }
+  @NotNull public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
+    TextAttributesKey key = find(externalName);
     if (key.getDefaultAttributes() == null) {
       key.myDefaultAttributes = defaultAttributes;
     }
@@ -122,7 +104,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    * @return the new key instance, or an existing instance if the key with the same
    *         identifier was already registered.
    */
-  public static TextAttributesKey createTextAttributesKey(@NonNls String externalName) {
+  @NotNull public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName) {
     return find(externalName);
   }
 
@@ -147,8 +129,6 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
   }
 
   public int hashCode() {
-    int result;
-    result = myExternalName.hashCode();
-    return result;
+    return myExternalName.hashCode();
   }
 }
