@@ -93,7 +93,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Integer.MAX_VALUE,
     60L,
     TimeUnit.SECONDS,
-    new LinkedBlockingQueue<Runnable>(),
+    new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
       public Thread newThread(Runnable r) {
         return new Thread(r, "ApplicationImpl pooled thread");
