@@ -17,11 +17,13 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vcs.FilePath;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -32,12 +34,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class AbstractSvnUpdatePanel {
-
-  @NonNls public static final String HEAD_REVISION = "HEAD";
-
   protected final SvnVcs myVCS;
 
-  private Map<FilePath, SvnPanel> myRootToPanel = new LinkedHashMap<FilePath, SvnPanel>();
+  private final Map<FilePath, SvnPanel> myRootToPanel = new LinkedHashMap<FilePath, SvnPanel>();
 
   public AbstractSvnUpdatePanel(final SvnVcs vcs) {
     myVCS = vcs;
@@ -101,15 +100,19 @@ public abstract class AbstractSvnUpdatePanel {
     }
   }
 
-  private SVNURL getUrlFor(final FilePath root) {
+  @Nullable
+  private SVNURL getUrlFor(@NotNull final FilePath root) {
     try {
       SVNWCClient wcClient = myVCS.createWCClient();
-      return wcClient.doInfo(root.getIOFile(), SVNRevision.WORKING).getURL();
+      final SVNInfo info = wcClient.doInfo(root.getIOFile(), SVNRevision.WORKING);
+      if (info != null) {
+        return info.getURL();
+      }
+      return null;
     }
     catch (SVNException e) {
       return null;
     }
-
   }
 
   protected abstract JComponent getPanel();
