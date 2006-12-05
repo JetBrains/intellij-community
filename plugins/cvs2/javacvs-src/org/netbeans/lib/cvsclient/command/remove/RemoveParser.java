@@ -32,7 +32,7 @@ final class RemoveParser extends DefaultEntryParser {
 	// Implemented ============================================================
 
 	public void gotEntry(FileObject fileObject, Entry entry) {
-		if (!entry.isRemoved()) {
+		if (entry != null && !entry.isRemoved()) {
 			return;
 		}
 
