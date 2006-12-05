@@ -29,8 +29,8 @@ import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -62,11 +62,15 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
     myLocation = location;
   }
 
-  public RefreshableOnComponent createFilterUI() {
+  public ChangeBrowserSettings createDefaultSettings() {
+    return new ChangeBrowserSettings();
+  }
+
+  public ChangesBrowserSettingsEditor createFilterUI() {
     return new SvnVersionFilterComponent(myProject);
   }
 
-  public List<SvnChangeList> getAllCommittedChanges(final int maxCount) throws VcsException {
+  public List<SvnChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
     ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject));
@@ -75,26 +79,26 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
       if (path.exists()) {
         String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), path, progress);
         for(String url: urls) {
-          result.addAll(getCommittedChanges(url, maxCount));
+          result.addAll(getCommittedChanges(url, maxCount, settings));
         }
       }
     }
     return result;
   }
 
-  public List<SvnChangeList> getCommittedChanges(VirtualFile root) throws VcsException {
+  public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root) throws VcsException {
     if (myLocation != null) {
-      return getCommittedChanges(myLocation, 0);
+      return getCommittedChanges(myLocation, 0, settings);
     }
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), new File(root.getPath()), progress);
     if (urls.length == 1) {
-      return getCommittedChanges(urls [0], 0);
+      return getCommittedChanges(urls [0], 0, settings);
     }
     return Collections.emptyList();
   }
 
-  public List<SvnChangeList> getCommittedChanges(String location, final int maxCount) throws VcsException {
+  public List<SvnChangeList> getCommittedChanges(String location, final int maxCount, final ChangeBrowserSettings settings) throws VcsException {
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
@@ -105,7 +109,6 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
       SVNLogClient logger = SvnVcs.getInstance(myProject).createLogClient();
       final SVNRepository repository = SvnVcs.getInstance(myProject).createRepository(location);
 
-      final ChangeBrowserSettings settings = ChangeBrowserSettings.getSettings(myProject);
       final SvnChangesBrowserSettings svnSettings = SvnChangesBrowserSettings.getSettings(myProject);
 
       final String author = svnSettings.getAuthorFilter();

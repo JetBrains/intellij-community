@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(getStandardPanel(), BorderLayout.CENTER);
     myProject = project;
-    init();
+    init(new ChangeBrowserSettings());
   }
 
   protected void updateAllEnabled(final ActionEvent e) {
@@ -44,18 +45,18 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
     updatePair(myUseAuthorFilter, myAuthorField, e);
   }
 
-  protected void initValues() {
-    super.initValues();
-    final SvnChangesBrowserSettings settings = SvnChangesBrowserSettings.getSettings(myProject);
-    myUseAuthorFilter.setSelected(settings.USE_AUTHOR_FIELD);
-    myAuthorField.setText(settings.AUTHOR);
+  protected void initValues(ChangeBrowserSettings settings) {
+    super.initValues(settings);
+    final SvnChangesBrowserSettings svnSettings = SvnChangesBrowserSettings.getSettings(myProject);
+    myUseAuthorFilter.setSelected(svnSettings.USE_AUTHOR_FIELD);
+    myAuthorField.setText(svnSettings.AUTHOR);
   }
 
-  public void saveValues() {
-    super.saveValues();
-    final SvnChangesBrowserSettings settings = SvnChangesBrowserSettings.getSettings(myProject);
-    settings.AUTHOR = myAuthorField.getText();
-    settings.USE_AUTHOR_FIELD = myUseAuthorFilter.isSelected();
+  public void saveValues(ChangeBrowserSettings settings) {
+    super.saveValues(settings);
+    final SvnChangesBrowserSettings svnSettings = SvnChangesBrowserSettings.getSettings(myProject);
+    svnSettings.AUTHOR = myAuthorField.getText();
+    svnSettings.USE_AUTHOR_FIELD = myUseAuthorFilter.isSelected();
   }
 
   protected void installCheckBoxListener(final ActionListener filterListener) {
