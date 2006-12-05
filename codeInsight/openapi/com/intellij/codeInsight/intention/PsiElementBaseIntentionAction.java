@@ -22,6 +22,7 @@
  */
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class PsiElementBaseIntentionAction implements IntentionAction {
+public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
+
   /**
    * Checks whether this intention is available at a caret offset in file.
    * If this method returns true, a light bulb for this intention is shown.

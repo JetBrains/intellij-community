@@ -2,6 +2,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -10,23 +11,24 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
-public class SplitDeclarationAction extends BaseIntentionAction {
+public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.split.declaration.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
+
+    int offset = editor.getCaretModel().getOffset();
     if (!(element instanceof PsiJavaToken)) return false;
     if (element instanceof PsiCompiledElement) return false;
-    if (!file.getManager().isInProject(file)) return false;
+    if (!element.getManager().isInProject(element)) return false;
 
     final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, PsiClass.class);
     if (context instanceof PsiDeclarationStatement) {

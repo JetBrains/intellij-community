@@ -157,8 +157,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
           }
         }
       }
-      else if ((action instanceof PsiElementBaseIntentionAction && ((PsiElementBaseIntentionAction)action).isAvailable(myProject, injectedEditor, injectedElement))
-               ||  action.isAvailable(myProject, injectedEditor, injectedFile)) {
+      else if (action instanceof PsiElementBaseIntentionAction && ((PsiElementBaseIntentionAction)action).isAvailable(myProject, injectedEditor, injectedElement)
+               || action.isAvailable(myProject, injectedEditor, injectedFile)) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
         intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));

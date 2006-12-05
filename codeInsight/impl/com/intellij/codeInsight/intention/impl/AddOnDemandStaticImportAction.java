@@ -2,6 +2,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -13,11 +14,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class AddOnDemandStaticImportAction extends BaseIntentionAction {
+public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction");
 
   @NotNull
@@ -25,9 +27,8 @@ public class AddOnDemandStaticImportAction extends BaseIntentionAction {
     return CodeInsightBundle.message("intention.add.on.demand.static.import.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) > 0) return false;
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+    if (element == null || LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(element)) > 0) return false;
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
       if (refExpr.getParent() instanceof PsiReferenceExpression &&

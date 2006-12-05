@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -10,27 +10,30 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
-public class RemoveRedundantElseAction implements IntentionAction {
+public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction");
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("remove.redundant.else.fix");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("remove.redundant.else.fix");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-    if (elementAt instanceof PsiKeyword &&
-        elementAt.getParent() instanceof PsiIfStatement &&
-        PsiKeyword.ELSE.equals(elementAt.getText())) {
-      PsiIfStatement ifStatement = (PsiIfStatement)elementAt.getParent();
+  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+    if (element instanceof PsiKeyword &&
+        element.getParent() instanceof PsiIfStatement &&
+        PsiKeyword.ELSE.equals(element.getText())) {
+      PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
       if (ifStatement.getElseBranch() == null) return false;
       if (ifStatement.getThenBranch() == null) return false;
       PsiElement block = PsiTreeUtil.getParentOfType(ifStatement, PsiCodeBlock.class);

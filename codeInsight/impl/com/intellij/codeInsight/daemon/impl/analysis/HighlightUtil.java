@@ -1801,6 +1801,7 @@ public class HighlightUtil {
   }
 
   public static TextRange getMethodDeclarationTextRange(PsiMethod method) {
+    if (method instanceof JspHolderMethod) return new TextRange(0,0);
     int start = method.getModifierList().getTextRange().getStartOffset();
     int end = method.getThrowsList().getTextRange().getEndOffset();
     return new TextRange(start, end);
@@ -1871,9 +1872,7 @@ public class HighlightUtil {
         if (!result.isStaticsScopeCorrect()) {
           String description = buildProblemWithStaticDescription(resolved);
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
-          if (resolved != null) {
-            registerStaticProblemQuickFixAction(resolved, info, ref);
-          }
+          registerStaticProblemQuickFixAction(resolved, info, ref);
           if (ref instanceof PsiReferenceExpression) {
             QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction((PsiReferenceExpression)ref));
           }

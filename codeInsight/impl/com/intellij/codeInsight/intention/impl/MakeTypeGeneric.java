@@ -1,34 +1,38 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
  */
-public class MakeTypeGeneric implements IntentionAction {
+public class MakeTypeGeneric extends PsiElementBaseIntentionAction {
   private PsiVariable myVariable;
   private PsiType myNewVariableType;
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.make.type.generic.family");
   }
 
+  @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.make.type.generic.text", myVariable.getName(), myNewVariableType.getPresentableText());
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) > 0) return false;
-    if (!file.isWritable()) return false;
-    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
+    if (element == null) return false;
+    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(element)) > 0) return false;
+    if (!element.isWritable()) return false;
     myVariable = null;
     myNewVariableType = null;
     if (element instanceof PsiIdentifier) {

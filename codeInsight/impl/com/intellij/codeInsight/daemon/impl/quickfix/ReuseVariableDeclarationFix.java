@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,10 +28,12 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     this.identifier = identifier;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("reuse.variable.declaration.family");
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("reuse.variable.declaration.text", variable.getName());
   }
@@ -43,8 +46,6 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
         && variable.isValid()
         && variable instanceof PsiLocalVariable
         && previousVariable != null
-        && previousVariable.getType() != null
-        && variable.getType() != null
         && Comparing.equal(previousVariable.getType(), variable.getType())
         && identifier != null
         && identifier.isValid()

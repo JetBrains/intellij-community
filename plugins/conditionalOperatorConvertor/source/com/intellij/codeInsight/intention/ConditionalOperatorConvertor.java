@@ -9,17 +9,19 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-@NonNls public class ConditionalOperatorConvertor implements ProjectComponent, IntentionAction {
+@NonNls public class ConditionalOperatorConvertor extends PsiElementBaseIntentionAction implements ProjectComponent, IntentionAction {
 
   public static ConditionalOperatorConvertor getInstance(Project project) {
     return project.getComponent(ConditionalOperatorConvertor.class);
   }
 
-  public ConditionalOperatorConvertor(Project project, IntentionManager intentionManager) {
+  public ConditionalOperatorConvertor(IntentionManager intentionManager) {
     intentionManager.registerIntentionAndMetaData(this, "Conditional Operator");
   }
 
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "TernaryOperatorConverter";
   }
@@ -39,25 +42,25 @@ import org.jetbrains.annotations.NonNls;
   public void disposeComponent() {
   }
 
+  @NotNull
   public String getText() {
     return "Convert ternary operator to if statement";
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
-    final PsiElement element = file.findElementAt(offset);
+  public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
     if (!element.isWritable()) return false;
 
     if (element instanceof PsiJavaToken) {
-      final PsiJavaToken token = ((PsiJavaToken)element);
+      final PsiJavaToken token = (PsiJavaToken)element;
       if (token.getTokenType() != JavaTokenType.QUEST) return false;
       if (token.getParent() instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression = ((PsiConditionalExpression)token.getParent());
+        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)token.getParent();
         if (conditionalExpression.getThenExpression() == null
             || conditionalExpression.getElseExpression() == null) {
           return false;
@@ -72,7 +75,7 @@ import org.jetbrains.annotations.NonNls;
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
-    PsiConditionalExpression conditionalExpression = (PsiConditionalExpression) PsiTreeUtil.getParentOfType(element,
+    PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(element,
                                                                                                             PsiConditionalExpression.class, false);
     if (conditionalExpression == null) return;
     if (conditionalExpression.getThenExpression() == null || conditionalExpression.getElseExpression() == null) return;
@@ -87,7 +90,7 @@ import org.jetbrains.annotations.NonNls;
 
     // Maintain declrations
     if (originalStatement instanceof PsiDeclarationStatement) {
-      final PsiDeclarationStatement declaration = ((PsiDeclarationStatement)originalStatement);
+      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)originalStatement;
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       PsiLocalVariable variable = null;
       for (PsiElement declaredElement : declaredElements) {

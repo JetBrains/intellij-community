@@ -22,7 +22,7 @@ public class ConditionalToIfTest extends LightCodeInsightTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myAction = new ConditionalOperatorConvertor(getProject(), IntentionManager.getInstance(getProject()));
+    myAction = new ConditionalOperatorConvertor(IntentionManager.getInstance(getProject()));
     myAction.initComponent();
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     myElseOnNewLine = settings.ELSE_ON_NEW_LINE;
