@@ -35,17 +35,31 @@ public class OSProcessHandler extends ProcessHandler {
 
   private static ExecutorService ourThreadExecutorsService = null;
 
-  public static ExecutorService getOurThreadExecutorsService() {
-    if (ourThreadExecutorsService == null) {
-      ourThreadExecutorsService =
-        new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-          @SuppressWarnings({"HardCodedStringLiteral"})
-          public Thread newThread(Runnable r) {
-            return new Thread(r, "OSProcessHandler pooled thread");
-          }
-        });
+  public static Future<?> executeOnPooledThread(Runnable task) {
+    final Application application = ApplicationManager.getApplication();
+
+    if (application != null) {
+      return application.executeOnPooledThread(task);
     }
-    return ourThreadExecutorsService;
+    else {
+      if (ourThreadExecutorsService == null) {
+        ourThreadExecutorsService = new ThreadPoolExecutor(
+          10,
+          Integer.MAX_VALUE,
+          60L,
+          TimeUnit.SECONDS,
+          new SynchronousQueue<Runnable>(),
+          new ThreadFactory() {
+            @SuppressWarnings({"HardCodedStringLiteral"})
+            public Thread newThread(Runnable r) {
+              return new Thread(r, "OSProcessHandler pooled thread");
+            }
+          }
+        );
+      }
+
+      return ourThreadExecutorsService.submit(task);
+    }
   }
 
   public OSProcessHandler(final Process process, final String commandLine) {
@@ -67,7 +81,6 @@ public class OSProcessHandler extends ProcessHandler {
 
     public ProcessWaitFor(final Process process) {
       myWaitSemaphore.down();
-      final Application application = ApplicationManager.getApplication();
       final Runnable action = new Runnable() {
         public void run() {
           try {
@@ -78,11 +91,8 @@ public class OSProcessHandler extends ProcessHandler {
           myWaitSemaphore.up();
         }
       };
-      if (application != null) {
-        myWaitForThreadFuture = application.executeOnPooledThread(action);
-      } else {
-        myWaitForThreadFuture = getOurThreadExecutorsService().submit(action);
-      }
+
+      myWaitForThreadFuture = executeOnPooledThread(action);
     }
 
     public int waitFor() {
@@ -113,17 +123,8 @@ public class OSProcessHandler extends ProcessHandler {
     addProcessListener(new ProcessAdapter() {
       public void startNotified(final ProcessEvent event) {
         try {
-          final Application application = ApplicationManager.getApplication();
-          final Future<?> stdOutReadingFuture;
-          final Future<?> stdErrReadingFuture;
-          if (application != null) {
-            stdOutReadingFuture = application.executeOnPooledThread(stdoutThread);
-            stdErrReadingFuture = application.executeOnPooledThread(stderrThread);
-          }
-          else {
-            stdOutReadingFuture = getOurThreadExecutorsService().submit(stdoutThread);
-            stdErrReadingFuture = getOurThreadExecutorsService().submit(stderrThread);
-          }
+          final Future<?> stdOutReadingFuture = executeOnPooledThread(stdoutThread);
+          final Future<?> stdErrReadingFuture = executeOnPooledThread(stderrThread);
 
           final Runnable action = new Runnable() {
             public void run() {
@@ -147,12 +148,8 @@ public class OSProcessHandler extends ProcessHandler {
               onOSProcessTerminated(exitCode);
             }
           };
-          if (application != null) {
-            application.executeOnPooledThread(action);
-          }
-          else {
-            getOurThreadExecutorsService().submit(action);
-          }
+
+          executeOnPooledThread(action);
         }
         finally {
           removeProcessListener(this);
@@ -185,7 +182,6 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   protected void detachProcessImpl() {
-    final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       public void run() {
         closeStreams();
@@ -194,11 +190,8 @@ public class OSProcessHandler extends ProcessHandler {
         notifyProcessDetached();
       }
     };
-    if (application != null) {
-      application.executeOnPooledThread(runnable);
-    } else {
-      getOurThreadExecutorsService().submit(runnable);
-    }
+
+    executeOnPooledThread(runnable);
   }
 
   private void closeStreams() {

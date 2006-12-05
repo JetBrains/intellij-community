@@ -97,11 +97,11 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     // need this because search with PSI is perormed during hotswap
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    new Thread() {
+    final Runnable thread = new Runnable() {
       public void run() {
         final HashMap<DebuggerSession, HashMap<String, HotSwapFile>> modifiedClasses = getModifiedClasses(sessions);
 
-        if(modifiedClasses.isEmpty()) {
+        if (modifiedClasses.isEmpty()) {
           final Application application = ApplicationManager.getApplication();
           application.invokeLater(new Runnable() {
             public void run() {
@@ -111,11 +111,12 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
           return;
         }
 
-        final HashMap<DebuggerSession, HashMap<String, HotSwapFile>> classesToReload = new HashMap<DebuggerSession, HashMap<String, HotSwapFile>>();
-        if(askBeforeHotswap) {
+        final HashMap<DebuggerSession, HashMap<String, HotSwapFile>> classesToReload =
+          new HashMap<DebuggerSession, HashMap<String, HotSwapFile>>();
+        if (askBeforeHotswap) {
           String runHotswap = DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE;
 
-          if(DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
+          if (DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
             classesToReload.putAll(modifiedClasses);
           }
           else if (DebuggerSettings.RUN_HOTSWAP_NEVER.equals(runHotswap)) {
@@ -127,7 +128,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
                 RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions);
                 dialog.show();
 
-                if(dialog.isOK()) {
+                if (dialog.isOK()) {
                   for (DebuggerSession debuggerSession : dialog.getSessionsToReload()) {
                     classesToReload.put(debuggerSession, modifiedClasses.get(debuggerSession));
                   }
@@ -143,7 +144,8 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
         reloadModifiedClasses(classesToReload);
 
       }
-    }.start();
+    };
+    ApplicationManager.getApplication().executeOnPooledThread(thread);
   }
 
   private void reloadModifiedClasses(final HashMap<DebuggerSession, HashMap<String, HotSwapFile>> modifiedClasses) {

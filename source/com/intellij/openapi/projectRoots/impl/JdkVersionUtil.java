@@ -11,9 +11,11 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
+import java.util.concurrent.Future;
 
 public class JdkVersionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JdkVersionUtil");
@@ -30,9 +32,10 @@ public class JdkVersionUtil {
       //noinspection HardCodedStringLiteral
       Process process = Runtime.getRuntime().exec(new String[] {homePath + File.separator + "bin" + File.separator + "java",  "-version"});
       VersionParsingThread parsingThread = new VersionParsingThread(process.getErrorStream(), versionString);
-      parsingThread.start();
+      final Future<?> parsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(parsingThread);
       ReadStreamThread readThread = new ReadStreamThread(process.getInputStream());
-      readThread.start();
+      ApplicationManager.getApplication().executeOnPooledThread(readThread);
+
       try {
         try {
           process.waitFor();
@@ -44,9 +47,9 @@ public class JdkVersionUtil {
       }
       finally {
         try {
-          parsingThread.join();
+          parsingThreadFuture.get();
         }
-        catch (InterruptedException e) {
+        catch (Exception e) {
           LOG.info(e);
         }
       }
@@ -57,7 +60,7 @@ public class JdkVersionUtil {
     return versionString[0];
   }
 
-  public static class ReadStreamThread extends Thread {
+  public static class ReadStreamThread implements Runnable {
     private InputStream myStream;
 
     protected ReadStreamThread(InputStream stream) {
@@ -77,7 +80,7 @@ public class JdkVersionUtil {
     }
   }
 
-  public static class VersionParsingThread extends Thread {
+  public static class VersionParsingThread implements Runnable {
     private Reader myReader;
     private InputStream myStream;
     private boolean mySkipLF = false;

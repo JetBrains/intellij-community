@@ -72,7 +72,8 @@ public abstract class LogConsole extends AdditionalTabComponent {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
-    myReaderThread.start();
+
+    ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);
   }
 
   private JComponent createToolbar(){
@@ -239,13 +240,11 @@ public abstract class LogConsole extends AdditionalTabComponent {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsole");
 
-  private class ReaderThread extends Thread{
+  private class ReaderThread implements Runnable {
     private BufferedReader myFileStream;
     private boolean myRunning = true;
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
     public ReaderThread(File file){
-      //noinspection HardCodedStringLiteral
-      super("Reader Thread");
       try {
         try {
           myFileStream = new BufferedReader(new FileReader(file));

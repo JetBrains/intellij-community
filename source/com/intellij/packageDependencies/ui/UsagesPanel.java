@@ -56,7 +56,7 @@ public class UsagesPanel extends JPanel implements Disposable, DataProvider {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        new Thread(new Runnable() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             final ProgressIndicator progress = new PanelProgressIndicator(new Consumer<JComponent>() {
               public void consume(final JComponent component) {
@@ -102,7 +102,7 @@ public class UsagesPanel extends JPanel implements Disposable, DataProvider {
               }
             }, progress);
           }
-        }).start();
+        });
       }
     }, 300);
   }

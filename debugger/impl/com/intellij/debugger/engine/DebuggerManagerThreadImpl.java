@@ -180,7 +180,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       }
     });
 
-    new Thread() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
@@ -188,7 +188,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
           }
         }, progressWindow);
       }
-    }.start();
+    });
   }
 
 

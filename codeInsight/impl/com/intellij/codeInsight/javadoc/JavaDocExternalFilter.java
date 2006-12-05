@@ -26,6 +26,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.concurrent.Future;
 
 /**
  * Created by IntelliJ IDEA.
@@ -288,11 +289,11 @@ public class JavaDocExternalFilter {
     if (surl == null) return null;    
     if (MyJavadocFetcher.isFree()) {
       final MyJavadocFetcher fetcher = new MyJavadocFetcher(surl);
-      fetcher.start();
+      final Future<?> fetcherFuture = ApplicationManager.getApplication().executeOnPooledThread(fetcher);
       try {
-        fetcher.join();
+        fetcherFuture.get();
       }
-      catch (InterruptedException e) {
+      catch (Exception e) {
         return null;
       }
       final Exception exception = fetcher.getException();
@@ -324,15 +325,13 @@ public class JavaDocExternalFilter {
     return externalDoc;
   }
 
-  private static class MyJavadocFetcher extends Thread {
+  private static class MyJavadocFetcher implements Runnable {
     private static boolean ourFree = true;
     private final StringBuffer data = new StringBuffer();
     private final String surl;
     private final Exception [] myExceptions = new Exception[1];
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     public MyJavadocFetcher(final String surl) {
-      super("External Javadoc Fetcher");
       this.surl = surl;
       ourFree = false;
     }

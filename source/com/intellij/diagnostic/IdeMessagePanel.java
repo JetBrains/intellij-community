@@ -7,6 +7,7 @@ package com.intellij.diagnostic;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -60,21 +61,24 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     if (myOpeningInProgress) return;
     myOpeningInProgress = true;
 
-    new Thread() {
+    final Runnable task = new Runnable() {
       public void run() {
         try {
-          while(isOtherModalWindowActive()) {
+          while (isOtherModalWindowActive()) {
             if (myDialog != null) return;
-            sleep(300);
+            Thread.sleep(300);
           }
 
           _openFatals();
-        } catch (InterruptedException e) {}
+        }
+        catch (InterruptedException e) {
+        }
         finally {
           myOpeningInProgress = false;
         }
       }
-    }.start();
+    };
+    ApplicationManager.getApplication().executeOnPooledThread(task);
   }
 
   private void _openFatals() {
