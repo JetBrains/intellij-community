@@ -234,7 +234,9 @@ public class SvnUtil {
 
     public Collection<File> handleWorkingCopyRoot(File root, ProgressIndicator progress) {
       final Collection<File> result = new HashSet<File>();
-      progress.setText(SvnBundle.message("progress.text.discovering.location", root.getAbsolutePath()));
+      if (progress != null) {
+        progress.setText(SvnBundle.message("progress.text.discovering.location", root.getAbsolutePath()));
+      }
       try {
         SVNWCClient wcClient = myVcs.createWCClient();
         SVNInfo info = wcClient.doInfo(root, SVNRevision.WORKING);

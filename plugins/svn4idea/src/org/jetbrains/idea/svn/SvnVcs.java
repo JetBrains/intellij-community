@@ -48,9 +48,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.update.AbstractSvnUpdateIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
@@ -96,6 +98,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private final SvnDiffProvider mySvnDiffProvider;
   private VcsShowConfirmationOption myAddConfirmation;
   private SvnEditFileProvider myEditFilesProvider;
+  private SvnCommittedChangesProvider myCommittedChangesProvider;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
@@ -143,6 +146,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     myAnnotationProvider = new SvnAnnotationProvider(this);
     mySvnDiffProvider = new SvnDiffProvider(this);
     myEditFilesProvider = new SvnEditFileProvider(this);
+    myCommittedChangesProvider = new SvnCommittedChangesProvider(project);
 
   }
 
@@ -513,4 +517,9 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
       SvnFileStatus.SWITCHED};
   }
 
+
+  @Override @Nullable
+  public CommittedChangesProvider getCommittedChangesProvider() {
+    return myCommittedChangesProvider;
+  }
 }

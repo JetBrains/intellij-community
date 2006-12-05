@@ -28,10 +28,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -43,32 +46,64 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Collections;
+import java.io.File;
 
 public class SvnCommittedChangesProvider implements CommittedChangesProvider<SvnChangeList> {
   private Project myProject;
   private String myLocation;
-  private SvnVcs myVcs;
+
+  public SvnCommittedChangesProvider(final Project project) {
+    myProject = project;
+  }
 
   public SvnCommittedChangesProvider(final Project project, final String location) {
     myProject = project;
     myLocation = location;
-    myVcs = SvnVcs.getInstance(project);
   }
 
   public RefreshableOnComponent createFilterUI() {
     return new SvnVersionFilterComponent(myProject);
   }
 
-  public List<SvnChangeList> getCommittedChanges() throws VcsException {
+  public List<SvnChangeList> getAllCommittedChanges(final int maxCount) throws VcsException {
+    ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject));
+    for(VirtualFile root: roots) {
+      final File path = new File(root.getPath());
+      if (path.exists()) {
+        String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), path, progress);
+        for(String url: urls) {
+          result.addAll(getCommittedChanges(url, maxCount));
+        }
+      }
+    }
+    return result;
+  }
+
+  public List<SvnChangeList> getCommittedChanges(VirtualFile root) throws VcsException {
+    if (myLocation != null) {
+      return getCommittedChanges(myLocation, 0);
+    }
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), new File(root.getPath()), progress);
+    if (urls.length == 1) {
+      return getCommittedChanges(urls [0], 0);
+    }
+    return Collections.emptyList();
+  }
+
+  public List<SvnChangeList> getCommittedChanges(String location, final int maxCount) throws VcsException {
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
-      progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myLocation));
+      progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
     }
     try {
-      SVNLogClient logger = myVcs.createLogClient();
-      final SVNRepository repository = myVcs.createRepository(myLocation);
+      SVNLogClient logger = SvnVcs.getInstance(myProject).createLogClient();
+      final SVNRepository repository = SvnVcs.getInstance(myProject).createRepository(location);
 
       final ChangeBrowserSettings settings = ChangeBrowserSettings.getSettings(myProject);
       final SvnChangesBrowserSettings svnSettings = SvnChangesBrowserSettings.getSettings(myProject);
@@ -100,7 +135,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
         revisionAfter = SVNRevision.create(1);
       }
 
-      logger.doLog(SVNURL.parseURIEncoded(myLocation), new String[]{""}, revisionBefore, revisionBefore, revisionAfter, false, true, 0,
+      logger.doLog(SVNURL.parseURIEncoded(location), new String[]{""}, revisionBefore, revisionBefore, revisionAfter, false, true, maxCount,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
                        if (progress != null) {
@@ -121,6 +156,6 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
   }
 
   public ChangeListColumn[] getColumns() {
-    return new ChangeListColumn[] { ChangeListColumn.NUMBER, ChangeListColumn.NAME, ChangeListColumn.DATE };
+    return new ChangeListColumn[] { ChangeListColumn.NUMBER, ChangeListColumn.NAME, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION };
   }
 }
