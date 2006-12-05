@@ -47,47 +47,53 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
                                         final int componentLocal) {
     FontDescriptor descriptor = (FontDescriptor) property.getPropertyValue(lwComponent);
     if (descriptor.isFixedFont() && !descriptor.isFullyDefinedFont()) {
-      final int fontLocal = generator.newLocal(ourFontType);
       generator.loadLocal(componentLocal);
+      generatePushFont(generator, componentLocal, lwComponent, descriptor, property.getReadMethodName());
 
-      Type componentType = AsmCodeGenerator.typeFromClassName(lwComponent.getComponentClassName());
-      Method getFontMethod = new Method(property.getReadMethodName(), ourFontType, new Type[0] );
-      generator.invokeVirtual(componentType, getFontMethod);
-      generator.storeLocal(fontLocal);
-
-      generator.loadLocal(componentLocal);
-      generator.newInstance(ourFontType);
-      generator.dup();
-      if (descriptor.getFontName() != null) {
-        generator.push(descriptor.getFontName());
-      }
-      else {
-        generator.loadLocal(fontLocal);
-        generator.invokeVirtual(ourFontType, ourGetNameMethod);
-      }
-
-      if (descriptor.getFontStyle() >= 0) {
-        generator.push(descriptor.getFontStyle());
-      }
-      else {
-        generator.loadLocal(fontLocal);
-        generator.invokeVirtual(ourFontType, ourGetStyleMethod);
-      }
-
-      if (descriptor.getFontSize() >= 0) {
-        generator.push(descriptor.getFontSize());
-      }
-      else {
-        generator.loadLocal(fontLocal);
-        generator.invokeVirtual(ourFontType, ourGetSizeMethod);
-      }
-
-      generator.invokeConstructor(ourFontType, ourInitMethod);
       Method setFontMethod = new Method(property.getWriteMethodName(), Type.VOID_TYPE, new Type[] { ourFontType } );
+      Type componentType = AsmCodeGenerator.typeFromClassName(lwComponent.getComponentClassName());
       generator.invokeVirtual(componentType, setFontMethod);
       return true;
     }
     return false;
+  }
+
+  public static void generatePushFont(final GeneratorAdapter generator, final int componentLocal, final LwComponent lwComponent,
+                                      final FontDescriptor descriptor, final String readMethodName) {
+    final int fontLocal = generator.newLocal(ourFontType);
+
+    generator.loadLocal(componentLocal);
+    Type componentType = AsmCodeGenerator.typeFromClassName(lwComponent.getComponentClassName());
+    Method getFontMethod = new Method(readMethodName, ourFontType, new Type[0] );
+    generator.invokeVirtual(componentType, getFontMethod);
+    generator.storeLocal(fontLocal);
+
+    generator.newInstance(ourFontType);
+    generator.dup();
+    if (descriptor.getFontName() != null) {
+      generator.push(descriptor.getFontName());
+    }
+    else {
+      generator.loadLocal(fontLocal);
+      generator.invokeVirtual(ourFontType, ourGetNameMethod);
+    }
+
+    if (descriptor.getFontStyle() >= 0) {
+      generator.push(descriptor.getFontStyle());
+    }
+    else {
+      generator.loadLocal(fontLocal);
+      generator.invokeVirtual(ourFontType, ourGetStyleMethod);
+    }
+
+    if (descriptor.getFontSize() >= 0) {
+      generator.push(descriptor.getFontSize());
+    }
+    else {
+      generator.loadLocal(fontLocal);
+      generator.invokeVirtual(ourFontType, ourGetSizeMethod);
+    }
+    generator.invokeConstructor(ourFontType, ourInitMethod);
   }
 
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {

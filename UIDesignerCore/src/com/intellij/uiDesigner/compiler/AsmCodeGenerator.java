@@ -766,7 +766,7 @@ public class AsmCodeGenerator {
         else {
           generator.push((String) null);
         }
-        pushBorderProperties(container, generator, borderTitle);
+        pushBorderProperties(container, generator, borderTitle, componentLocal);
         generator.invokeStatic(ourBorderFactoryType, ourCreateTitledBorderMethod);
 
         // set border
@@ -775,15 +775,17 @@ public class AsmCodeGenerator {
       }
     }
 
-    private void pushBorderProperties(final LwContainer container, final GeneratorAdapter generator, final StringDescriptor borderTitle) {
+    private void pushBorderProperties(final LwContainer container, final GeneratorAdapter generator, final StringDescriptor borderTitle,
+                                      final int componentLocal) {
       pushPropValue(generator, "java.lang.String", borderTitle);
       generator.push(container.getBorderTitleJustification());
       generator.push(container.getBorderTitlePosition());
-      if (container.getBorderTitleFont() == null) {
+      final FontDescriptor font = container.getBorderTitleFont();
+      if (font == null) {
         generator.push((String) null);
       }
       else {
-        pushPropValue(generator, Font.class.getName(), container.getBorderTitleFont());
+        FontPropertyCodeGenerator.generatePushFont(generator, componentLocal, container, font, "getFont");
       }
       if (container.getBorderTitleColor() == null) {
         generator.push((String) null);
