@@ -490,7 +490,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   @Nullable
   public GenericAttributeValue getDomElement(final XmlAttribute attribute) {
     final DomInvocationHandler handler = _getDomElement(attribute.getParent());
-    final String attributeName = attribute.getLocalName();
     if (handler == null) return null;
     final List<AttributeChildDescriptionImpl> list = handler.getGenericInfo().getAttributeChildrenDescriptions();
     final AttributeChildDescriptionImpl description = ContainerUtil.find(list, new Condition<AttributeChildDescriptionImpl>() {
@@ -499,6 +498,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
         return attribute.getLocalName().equals(name.getLocalName()) && name.isNamespaceAllowed(handler, attribute.getNamespace());
       }
     });
+    if (description == null) return null;
     return (GenericAttributeValue)handler.getAttributeChild(description.getXmlName().createEvaluatedXmlName(handler)).getProxy();
   }
 
