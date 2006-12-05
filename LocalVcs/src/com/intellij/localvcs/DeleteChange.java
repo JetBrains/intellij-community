@@ -5,22 +5,20 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DeleteChange extends Change {
-  private String myPath;
   private Entry myAffectedEntry;
-  private IdPath myAffectedEntryIdPath;
 
   public DeleteChange(String path) {
-    myPath = path;
+    super(path);
   }
 
   public DeleteChange(Stream s) throws IOException {
-    myPath = s.readString();
+    super(s);
     myAffectedEntry = s.readEntry();
   }
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writeString(myPath);
+    super.write(s);
     s.writeEntry(myAffectedEntry);
   }
 
@@ -31,7 +29,7 @@ public class DeleteChange extends Change {
   @Override
   public void applyTo(RootEntry root) {
     myAffectedEntry = root.getEntry(myPath);
-    myAffectedEntryIdPath = myAffectedEntry.getIdPath();
+    addAffectedIdPath(myAffectedEntry.getIdPath());
 
     root.delete(myPath);
   }
@@ -52,10 +50,5 @@ public class DeleteChange extends Change {
     } else {
       root.createFile(e.getId(), path, e.getContent(), e.getTimestamp());
     }
-  }
-
-  @Override
-  protected List<IdPath> getAffectedEntryIdPaths() {
-    return Arrays.asList(myAffectedEntryIdPath);
   }
 }

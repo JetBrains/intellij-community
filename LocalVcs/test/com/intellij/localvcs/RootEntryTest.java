@@ -21,7 +21,7 @@ public class RootEntryTest extends TestCase {
 
   @Test
   public void testPathToChildren() {
-    assertEquals(p("child"), child.getPath());
+    assertEquals("child", child.getPath());
   }
 
   @Test

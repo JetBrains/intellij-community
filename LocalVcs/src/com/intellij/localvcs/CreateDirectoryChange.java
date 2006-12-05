@@ -6,43 +6,44 @@ import java.util.List;
 
 public class CreateDirectoryChange extends Change {
   private Integer myId;
-  private String myPath;
   private Long myTimestamp;
-  
-  private IdPath myAffectedEntryIdPath;
 
   public CreateDirectoryChange(Integer id, String path, Long timestamp) {
+    super(path);
     myId = id;
-    myPath = path;
     myTimestamp = timestamp;
   }
 
   public CreateDirectoryChange(Stream s) throws IOException {
-    myPath = s.readString();
+    super(s);
+    myId = s.readInteger();
+    myTimestamp = s.readLong();
   }
+
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writeString(myPath);
+    super.write(s);
+    s.writeInteger(myId);
+    s.writeLong(myTimestamp);
   }
 
-  public String getPath() {
-    return myPath;
+  public Integer getId() {
+    return myId;
+  }
+
+  public Long getTimestamp() {
+    return myTimestamp;
   }
 
   @Override
   public void applyTo(RootEntry root) {
     root.createDirectory(myId, myPath, myTimestamp);
-    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
+    addAffectedIdPath(root.getEntry(myPath).getIdPath());
   }
 
   @Override
   public void _revertOn(RootEntry root) {
     root.delete(myPath);
-  }
-
-  @Override
-  protected List<IdPath> getAffectedEntryIdPaths() {
-    return Arrays.asList(myAffectedEntryIdPath);
   }
 }

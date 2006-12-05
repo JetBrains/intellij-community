@@ -9,12 +9,12 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class TestCase extends Assert {
-  protected static IdPath idp(Integer... parts) {
-    return new IdPath(parts);
+  protected static <T> T[] a(T... objects) {
+    return objects;
   }
 
-  protected static String p(String name) {
-    return name;
+  protected static IdPath idp(Integer... parts) {
+    return new IdPath(parts);
   }
 
   protected static ChangeSet cs(Change... changes) {

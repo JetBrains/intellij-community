@@ -32,9 +32,9 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected void updateDiffs() {
-    SimpleContent left = new SimpleContent(myModel.getLeftContent());
-    SimpleContent right = new SimpleContent(myModel.getRightContent());
+    String left = myModel.getLeftContent();
+    String right = myModel.getRightContent();
 
-    myDiffPanel.setContents(left, right);
+    myDiffPanel.setDiffRequest(createDiffRequest(left, right));
   }
 }

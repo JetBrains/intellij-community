@@ -2,7 +2,6 @@ package com.intellij.localvcs;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Ignore;
 
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -23,29 +22,58 @@ public class StreamTest extends TestCase {
   }
 
   @Test
-  public void testIdPath() throws IOException {
+  public void testString() throws Exception {
+    os.writeString("hello");
+    os.writeString(null);
+
+    assertEquals("hello", is.readString());
+    assertNull(is.readString());
+  }
+
+  @Test
+  public void testInteger() throws Exception {
+    os.writeInteger(1);
+    os.writeInteger(null);
+
+    assertEquals(1, is.readInteger());
+    assertNull(is.readInteger());
+  }
+
+  @Test
+  public void testLong() throws Exception {
+    os.writeLong(1L);
+    os.writeLong(null);
+
+    assertEquals(1L, is.readLong());
+    assertNull(is.readLong());
+  }
+
+  @Test
+  public void testIdPath() throws Exception {
     IdPath p = new IdPath(1, 2, 3);
     os.writeIdPath(p);
     assertEquals(p, is.readIdPath());
   }
 
   @Test
-  public void testFileEntry() throws IOException {
-    Entry e = new FileEntry(42, "file", "content", null);
+  public void testFileEntry() throws Exception {
+    Entry e = new FileEntry(42, "file", "content", 123L);
 
     os.writeEntry(e);
     Entry result = is.readEntry();
 
     assertEquals(FileEntry.class, result.getClass());
+
     assertEquals(42, result.getId());
     assertEquals("file", result.getName());
     assertEquals("content", result.getContent());
+    assertEquals(123L, result.getTimestamp());
   }
 
   @Test
   public void testDoesNotWriteEntryParent() throws IOException {
     Entry parent = new DirectoryEntry(null, null, null);
-    Entry e = new FileEntry(42, "file", "content", null);
+    Entry e = new FileEntry(42, null, null, null);
 
     parent.addChild(e);
     os.writeEntry(e);
@@ -55,98 +83,140 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testEmptyDirectoryEntry() throws IOException {
-    Entry e = new DirectoryEntry(13, "name", null);
+    Entry e = new DirectoryEntry(13, "name", 666L);
 
     os.writeEntry(e);
     Entry result = is.readEntry();
 
     assertEquals(DirectoryEntry.class, result.getClass());
+
     assertEquals(13, result.getId());
     assertEquals("name", result.getName());
+    assertEquals(666L, result.getTimestamp());
   }
 
   @Test
   public void testDirectoryEntryWithChildren() throws IOException {
-    Entry dir = new DirectoryEntry(13, "dir", null);
-    Entry subDir = new DirectoryEntry(66, "subDir", null);
-
-    dir.addChild(new FileEntry(1, "subFile", "1", null));
+    Entry dir = new DirectoryEntry(1, null, null);
+    Entry subDir = new DirectoryEntry(2, null, null);
     dir.addChild(subDir);
-    subDir.addChild(new FileEntry(2, "subSubFile", "2", null));
+    subDir.addChild(new FileEntry(3, "a", null, null));
+    subDir.addChild(new FileEntry(4, "b", null, null));
 
     os.writeEntry(dir);
     Entry result = is.readEntry();
 
     List<Entry> children = result.getChildren();
+    assertEquals(1, children.size());
+
+    Entry e = children.get(0);
+    assertEquals(DirectoryEntry.class, e.getClass());
+    assertEquals(2, e.getId());
+    assertSame(result, e.getParent());
+
+    children = e.getChildren();
     assertEquals(2, children.size());
 
     assertEquals(FileEntry.class, children.get(0).getClass());
-    assertEquals("subFile", children.get(0).getName());
-    assertEquals(p("dir/subFile"), children.get(0).getPath());
+    assertEquals(3, children.get(0).getId());
+    assertSame(e, children.get(0).getParent());
 
-    assertEquals(DirectoryEntry.class, children.get(1).getClass());
-    assertEquals("subDir", children.get(1).getName());
-    assertEquals(p("dir/subDir"), children.get(1).getPath());
-
-    assertEquals(1, children.get(1).getChildren().size());
-    assertEquals("subSubFile", children.get(1).getChildren().get(0).getName());
+    assertEquals(FileEntry.class, children.get(1).getClass());
+    assertEquals(4, children.get(1).getId());
+    assertSame(e, children.get(1).getParent());
   }
 
   @Test
-  @Ignore
   public void testRootEntryWithRootWithChildren() throws IOException {
-    RootEntry e = new RootEntry();
+    RootEntry r = new RootEntry();
 
-    e.addChild(new FileEntry(1, "file", "", null));
-    e.addChild(new DirectoryEntry(2, "dir", null));
+    r.createDirectory(1, "c:/root", null);
+    r.createFile(2, "c:/root/file", null, null);
 
-    os.writeEntry(e);
-    Entry result = is.readEntry();
+    os.writeEntry(r);
+    Entry read = is.readEntry();
 
-    assertEquals(RootEntry.class, result.getClass());
+    assertEquals(RootEntry.class, read.getClass());
+
+    RootEntry result = (RootEntry)read;
     assertNull(result.getId());
-    assertEquals("c:/root", result.getName());
+    assertNull(result.getName());
 
     List<Entry> children = result.getChildren();
-    assertEquals(2, children.size());
+    assertEquals(1, children.size());
 
-    assertEquals(FileEntry.class, children.get(0).getClass());
-    assertEquals("file", children.get(0).getName());
-    assertEquals(p("c:/root/file"), children.get(0).getPath());
+    Entry e = result.findEntry("c:/root");
+    assertNotNull(e);
+    assertEquals(DirectoryEntry.class, e.getClass());
 
-    assertEquals(DirectoryEntry.class, children.get(1).getClass());
-    assertEquals("dir", children.get(1).getName());
-    assertEquals(p("c:/root/dir"), children.get(1).getPath());
+    e = result.findEntry("c:/root/file");
+    assertNotNull(e);
+    assertEquals(FileEntry.class, e.getClass());
   }
-
-  // todo test AffectedEntyPath saving for Changes 
 
   @Test
   public void testCreateFileChange() throws IOException {
-    Change c = new CreateFileChange(null, "file", "content", null);
+    Change c = new CreateFileChange(1, "file", "content", 777L);
+    c.applyTo(new RootEntry());
 
     os.writeChange(c);
-    Change result = is.readChange();
+    Change read = is.readChange();
 
-    assertEquals(CreateFileChange.class, result.getClass());
+    assertEquals(CreateFileChange.class, read.getClass());
+    CreateFileChange result = (CreateFileChange)read;
 
-    assertEquals(p("file"), ((CreateFileChange)result).getPath());
-    assertEquals("content", ((CreateFileChange)result).getContent());
+    assertEquals("file", result.getPath());
+    assertElements(a(idp(1)), result.getAffectedIdPaths());
+
+    assertEquals(1, result.getId());
+    assertEquals("content", result.getContent());
+    assertEquals(777L, result.getTimestamp());
   }
 
   @Test
   public void testCreateDirectoryChange() throws IOException {
-    Change c = new CreateDirectoryChange(null, "dir", null);
+    Change c = new CreateDirectoryChange(2, "dir", 333L);
+    c.applyTo(new RootEntry());
 
     os.writeChange(c);
-    Change result = is.readChange();
+    Change read = is.readChange();
 
-    assertEquals(CreateDirectoryChange.class, result.getClass());
-    assertEquals(p("dir"), ((CreateDirectoryChange)result).getPath());
+    assertEquals(CreateDirectoryChange.class, read.getClass());
+    CreateDirectoryChange result = (CreateDirectoryChange)read;
+
+    assertEquals("dir", result.getPath());
+    assertElements(a(idp(2)), result.getAffectedIdPaths());
+
+    assertEquals(2, result.getId());
+    assertEquals(333L, result.getTimestamp());
   }
 
   @Test
-  public void testAppliedDeleteChange() throws IOException {
+  public void testChangeFileContentChange() throws IOException {
+    RootEntry root = new RootEntry();
+    root.createFile(1, "file", "old content", 1L);
+
+    Change c = new ChangeFileContentChange("file", "new content", 2L);
+    c.applyTo(root);
+
+    os.writeChange(c);
+    Change read = is.readChange();
+
+    assertEquals(ChangeFileContentChange.class, read.getClass());
+    ChangeFileContentChange result = (ChangeFileContentChange)read;
+
+    assertEquals("file", result.getPath());
+    assertElements(a(idp(1)), result.getAffectedIdPaths());
+
+    assertEquals("new content", result.getNewContent());
+    assertEquals(2L, result.getNewTimestamp());
+
+    assertEquals("old content", result.getOldContent());
+    assertEquals(1L, result.getOldTimestamp());
+  }
+
+  @Test
+  public void testDeleteChange() throws IOException {
     RootEntry root = new RootEntry();
 
     root.createDirectory(1, "entry", null);
@@ -157,73 +227,69 @@ public class StreamTest extends TestCase {
     c.applyTo(root);
 
     os.writeChange(c);
-    Entry result = ((DeleteChange)is.readChange()).getAffectedEntry();
+    Change read = is.readChange();
 
-    assertEquals(DirectoryEntry.class, result.getClass());
-    assertEquals("entry", result.getName());
+    assertEquals(DeleteChange.class, read.getClass());
+    DeleteChange result = (DeleteChange)read;
 
-    assertEquals(2, result.getChildren().size());
-    assertEquals(p("entry/file"), result.getChildren().get(0).getPath());
-    assertEquals(p("entry/dir"), result.getChildren().get(1).getPath());
+    assertElements(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals("entry", result.getPath());
+
+    Entry e = result.getAffectedEntry();
+
+    assertEquals(DirectoryEntry.class, e.getClass());
+    assertEquals("entry", e.getName());
+
+    assertEquals(2, e.getChildren().size());
+    assertEquals("entry/file", e.getChildren().get(0).getPath());
+    assertEquals("entry/dir", e.getChildren().get(1).getPath());
   }
 
   @Test
-  public void testAppliedChangeFileContentChange() throws IOException {
+  public void testRenameChange() throws IOException {
     RootEntry root = new RootEntry();
-    root.createFile(1, "file", "content", null);
+    root.createFile(1, "old name", null, null);
 
-    Change c = new ChangeFileContentChange("file", "new content", null);
+    Change c = new RenameChange("old name", "new name");
     c.applyTo(root);
 
     os.writeChange(c);
     Change read = is.readChange();
 
-    assertEquals(ChangeFileContentChange.class, read.getClass());
-
-    ChangeFileContentChange result = ((ChangeFileContentChange)read);
-
-    assertEquals(p("file"), result.getPath());
-    assertEquals("new content", result.getNewContent());
-
-    assertEquals("content", result.getOldContent());
-    assertElements(new IdPath[]{idp(1)}, result.getAffectedEntryIdPaths());
-  }
-
-  // todo test affected paths storing for all changes and other theirs props
-
-  @Test
-  public void testRenameChange() throws IOException {
-    Change c = new RenameChange("entry", "new name");
-
-    os.writeChange(c);
-    Change read = is.readChange();
-
     assertEquals(RenameChange.class, read.getClass());
-
     RenameChange result = ((RenameChange)read);
 
-    assertEquals(p("entry"), result.getPath());
+    assertElements(a(idp(1)), result.getAffectedIdPaths());
+
+    assertEquals("old name", result.getPath());
     assertEquals("new name", result.getNewName());
   }
 
   @Test
   public void testMoveChange() throws IOException {
-    Change c = new MoveChange("entry", "dir");
+    RootEntry root = new RootEntry();
+    root.createDirectory(1, "dir1", null);
+    root.createDirectory(2, "dir2", null);
+    root.createFile(3, "dir1/file", null, null);
+
+    Change c = new MoveChange("dir1/file", "dir2");
+    c.applyTo(root);
 
     os.writeChange(c);
     Change read = is.readChange();
 
     assertEquals(MoveChange.class, read.getClass());
-
     MoveChange result = ((MoveChange)read);
 
-    assertEquals(p("entry"), result.getPath());
-    assertEquals(p("dir"), result.getNewParentPath());
+    assertEquals("dir1/file", result.getPath());
+    assertElements(a(idp(1, 3), idp(2, 3)), result.getAffectedIdPaths());
+
+    assertEquals("dir2", result.getNewParentPath());
   }
 
   @Test
   public void testChangeSet() throws IOException {
-    ChangeSet c = cs(new CreateFileChange(null, "", "", null));
+    ChangeSet c = cs(new CreateFileChange(null, null, null, null));
     c.setLabel("label");
 
     os.writeChangeSet(c);

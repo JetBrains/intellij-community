@@ -78,13 +78,13 @@ public class DirectoryEntryTest extends TestCase {
 
     dir.addChild(file);
 
-    assertEquals(p("dir/file"), file.getPath());
+    assertEquals("dir/file", file.getPath());
   }
 
   @Test
   public void testPathWithoutParent() {
-    assertEquals(p("dir"), new DirectoryEntry(null, "dir", null).getPath());
-    assertEquals(p("file"), new FileEntry(null, "file", null, null).getPath());
+    assertEquals("dir", new DirectoryEntry(null, "dir", null).getPath());
+    assertEquals("file", new FileEntry(null, "file", null, null).getPath());
   }
 
   @Test
@@ -93,7 +93,7 @@ public class DirectoryEntryTest extends TestCase {
     Entry copy = dir.copy();
 
     assertEquals(42, copy.getId());
-    assertEquals(p("name"), copy.getPath());
+    assertEquals("name", copy.getPath());
   }
 
   @Test
@@ -166,7 +166,7 @@ public class DirectoryEntryTest extends TestCase {
     Entry renamed = dir.renamed("new dir");
 
     assertNull(renamed.getParent());
-    assertEquals(p("new dir"), renamed.getPath());
+    assertEquals("new dir", renamed.getPath());
 
     List<Entry> newChildren = renamed.getChildren();
     assertEquals(1, renamed.getChildren().size());

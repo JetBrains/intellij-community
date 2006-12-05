@@ -85,6 +85,16 @@ public class Stream {
     if (i != null) myOs.writeInt(i);
   }
 
+  public Long readLong() throws IOException {
+    if (!myIs.readBoolean()) return null;
+    return myIs.readLong();
+  }
+
+  public void writeLong(Long l) throws IOException {
+    myOs.writeBoolean(l != null);
+    if (l != null) myOs.writeLong(l);
+  }
+
   private Object readSubclass(String className) throws IOException {
     try {
       Class clazz = Class.forName(className);

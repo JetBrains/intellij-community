@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diff.SimpleDiffRequest;
+import com.intellij.openapi.diff.SimpleContent;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -65,6 +67,13 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   protected abstract void updateDiffs();
+
+  protected SimpleDiffRequest createDiffRequest(String left, String right) {
+    // todo add timestamps
+    SimpleDiffRequest r = new SimpleDiffRequest(null, "title");
+    r.setContents(new SimpleContent(left), new SimpleContent(right));
+    return r;
+  }
 
   private class MyTableModel extends AbstractTableModel {
     public int getRowCount() {

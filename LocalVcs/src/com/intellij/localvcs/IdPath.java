@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+// todo do something with this class - i dont like it 
 public class IdPath {
   private List<Integer> myParts;
 

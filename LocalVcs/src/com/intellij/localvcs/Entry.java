@@ -20,13 +20,16 @@ public abstract class Entry {
 
   public Entry(Stream s) throws IOException {
     myId = s.readInteger();
+    myName = s.readString();
+    myTimestamp = s.readLong();
   }
 
   public void write(Stream s) throws IOException {
     s.writeInteger(myId);
+    s.writeString(myName);
+    s.writeLong(myTimestamp);
   }
 
-  // todo generalize Path and IdPath
   public Integer getId() {
     return myId;
   }

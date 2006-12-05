@@ -15,8 +15,6 @@ public class DirectoryEntry extends Entry {
 
   public DirectoryEntry(Stream s) throws IOException {
     super(s);
-    myName = s.readString();
-
     int count = s.readInteger();
     while (count-- > 0) {
       addChild(s.readEntry());
@@ -26,8 +24,6 @@ public class DirectoryEntry extends Entry {
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeString(myName);
-
     s.writeInteger(myChildren.size());
     for (Entry child : myChildren) {
       s.writeEntry(child);

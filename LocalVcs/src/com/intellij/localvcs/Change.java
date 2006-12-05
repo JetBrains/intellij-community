@@ -1,32 +1,73 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Change {
-  // todo generalize affectedPath stuff
-  public abstract void write(Stream s) throws IOException;
+  private List<IdPath> myAffectedIdPaths = new ArrayList<IdPath>();
+  protected String myPath;
+
+  protected Change(String path) {
+    myPath = path;
+  }
+
+  protected Change(Stream s) throws IOException {
+    myPath = s.readString();
+    int count = s.readInteger();
+    while (count-- > 0) {
+      addAffectedIdPath(s.readIdPath());
+    }
+  }
+
+  public void write(Stream s) throws IOException {
+    s.writeString(myPath);
+    s.writeInteger(myAffectedIdPaths.size());
+    for (IdPath p : myAffectedIdPaths) {
+      s.writeIdPath(p);
+    }
+  }
+
+  public String getPath() {
+    return myPath;
+  }
 
   public abstract void applyTo(RootEntry root);
 
   public abstract void _revertOn(RootEntry root);
 
+  public Entry revertFile(Entry e) {
+    return e;
+  }
+
+  public Entry revertOn(Entry e) {
+    // todo replace with polymorphims
+    if (e instanceof FileEntry) return revertFile(e);
+    throw new RuntimeException("under construction");
+  }
+
   public boolean affects(Entry e) {
     // todo test it
-    for (IdPath p : getAffectedEntryIdPaths()) {
+    for (IdPath p : myAffectedIdPaths) {
       if (p.contains(e.getId())) return true;
     }
     return false;
   }
 
-  protected abstract List<IdPath> getAffectedEntryIdPaths();
+  protected boolean isFor(Entry e) {
+    // todo test it
+    for (IdPath p : myAffectedIdPaths) {
+      if (p.getName().equals(e.getId())) return true;
+    }
+    return false;
+  }
 
-  public Entry revertFile(Entry e) { return e; }
+  protected void addAffectedIdPath(IdPath p) {
+    myAffectedIdPaths.add(p);
+  }
 
-  public Entry revertOn(Entry e) {
-    // todo replace with polymorphims
-    if (e instanceof FileEntry) return revertFile(e);
-    
-    throw new RuntimeException("under construction");
+  // todo try to remove it
+  protected List<IdPath> getAffectedIdPaths() {
+    return myAffectedIdPaths;
   }
 }

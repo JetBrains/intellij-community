@@ -5,29 +5,22 @@ import java.util.Arrays;
 import java.util.List;
 
 public class RenameChange extends Change {
-  // todo remove unnecessary fields from all changes (such as path)
-  private String myPath;
   private String myNewName;
-  private IdPath myAffectedEntryIdPath;
 
   public RenameChange(String path, String newName) {
-    myPath = path;
+    super(path);
     myNewName = newName;
   }
 
   public RenameChange(Stream s) throws IOException {
-    myPath = s.readString();
+    super(s);
     myNewName = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writeString(myPath);
+    super.write(s);
     s.writeString(myNewName);
-  }
-
-  public String getPath() {
-    return myPath;
   }
 
   public String getNewName() {
@@ -36,7 +29,7 @@ public class RenameChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    myAffectedEntryIdPath = root.getEntry(myPath).getIdPath();
+    addAffectedIdPath(root.getEntry(myPath).getIdPath());
     root.rename(myPath, myNewName);
   }
 
@@ -49,13 +42,8 @@ public class RenameChange extends Change {
   }
 
   @Override
-  protected List<IdPath> getAffectedEntryIdPaths() {
-    return Arrays.asList(myAffectedEntryIdPath);
-  }
-
-  @Override
   public Entry revertFile(Entry e) {
-    if (!myAffectedEntryIdPath.getName().equals(e.getId())) return e;
+    if (!isFor(e)) return e;
     return e.renamed(myPath);
   }
 }

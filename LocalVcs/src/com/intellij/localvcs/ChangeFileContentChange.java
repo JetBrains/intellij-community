@@ -1,40 +1,34 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 public class ChangeFileContentChange extends Change {
-  private String myPath;
   private String myNewContent;
-  private Long myTimestamp;
   private String myOldContent;
+  private Long myNewTimestamp;
   private Long myOldTimestamp;
-  private IdPath myAffectedEntryIdPath;
 
   public ChangeFileContentChange(String path, String newContent, Long timestamp) {
-    myPath = path;
+    super(path);
     myNewContent = newContent;
-    myTimestamp = timestamp;
+    myNewTimestamp = timestamp;
   }
 
   public ChangeFileContentChange(Stream s) throws IOException {
-    myPath = s.readString();
-    myAffectedEntryIdPath = s.readIdPath();
+    super(s);
     myNewContent = s.readString();
     myOldContent = s.readString();
+    myNewTimestamp = s.readLong();
+    myOldTimestamp = s.readLong();
   }
 
   @Override
   public void write(Stream s) throws IOException {
-    s.writeString(myPath);
-    s.writeIdPath(myAffectedEntryIdPath);
+    super.write(s);
     s.writeString(myNewContent);
     s.writeString(myOldContent);
-  }
-
-  public String getPath() {
-    return myPath;
+    s.writeLong(myNewTimestamp);
+    s.writeLong(myOldTimestamp);
   }
 
   public String getNewContent() {
@@ -45,15 +39,24 @@ public class ChangeFileContentChange extends Change {
     return myOldContent;
   }
 
+
+  public Long getNewTimestamp() {
+    return myNewTimestamp;
+  }
+
+  public Long getOldTimestamp() {
+    return myOldTimestamp;
+  }
+
   @Override
   public void applyTo(RootEntry root) {
     Entry affectedEntry = root.getEntry(myPath);
 
     myOldContent = affectedEntry.getContent();
     myOldTimestamp = affectedEntry.getTimestamp();
-    myAffectedEntryIdPath = affectedEntry.getIdPath();
+    addAffectedIdPath(affectedEntry.getIdPath());
 
-    root.changeFileContent(myPath, myNewContent, myTimestamp);
+    root.changeFileContent(myPath, myNewContent, myNewTimestamp);
   }
 
   @Override
@@ -62,13 +65,8 @@ public class ChangeFileContentChange extends Change {
   }
 
   @Override
-  protected List<IdPath> getAffectedEntryIdPaths() {
-    return Arrays.asList(myAffectedEntryIdPath);
-  }
-
-  @Override
   public Entry revertFile(Entry e) {
-    if (!myAffectedEntryIdPath.getName().equals(e.getId())) return e;
+    if (!isFor(e)) return e;
     return e.withContent(myOldContent, myOldTimestamp); 
   }
 }

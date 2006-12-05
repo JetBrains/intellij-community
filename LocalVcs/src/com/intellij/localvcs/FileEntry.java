@@ -15,14 +15,12 @@ public class FileEntry extends Entry {
 
   public FileEntry(Stream s) throws IOException {
     super(s);
-    myName = s.readString();
     myContent = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeString(myName);
     s.writeString(myContent);
   }
 
