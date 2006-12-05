@@ -1,9 +1,6 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
@@ -415,8 +412,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   }
 
   private boolean insertingAnnotation() {
-    return myLookupItem.getObject() instanceof PsiClass &&
-           ((PsiClass)myLookupItem.getObject()).isAnnotationType();
+    final Object obj = myLookupItem.getObject();
+    if (!(obj instanceof PsiClass)) return false;
+    final PsiClass aClass = ((PsiClass)obj);
+    if (!aClass.isAnnotationType()) return false;
+    final PsiAnnotation retentionPolicy = AnnotationUtil.findAnnotation((PsiClass)obj, "java.lang.annotation.Retention");
+    if (retentionPolicy == null) return true; //CLASS by default
+    final PsiAnnotationMemberValue value = retentionPolicy.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    return !(value instanceof PsiReferenceExpression) || !"RUNTIME".equals(((PsiReferenceExpression)value).getReferenceName());
   }
 
   private boolean hasOverloads() {
