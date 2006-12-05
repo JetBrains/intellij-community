@@ -78,4 +78,7 @@ public interface Content extends UserDataHolder {
 
   void setPinned(boolean locked);
   boolean isPinnable();
+
+  boolean isCloseable();
+  void setCloseable(boolean closeable);
 }

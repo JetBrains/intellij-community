@@ -73,6 +73,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     ChangeListManager.getInstance(myProject).addChangeListListener(myListener);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final Content content = PeerFactory.getInstance().getContentFactory().createContent(createChangeViewComponent(), "Local", false);
+    content.setCloseable(false);
     myContentManager.addContent(content);
 
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);

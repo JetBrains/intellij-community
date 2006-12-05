@@ -1725,5 +1725,6 @@
       <reference ref="ChangesView.Diff"/>
     </group>
 
+    <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
   </actions>
 </component>

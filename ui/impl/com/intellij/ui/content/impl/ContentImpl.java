@@ -29,6 +29,7 @@ public class ContentImpl implements Content {
   private Disposable myDisposer = null;
   private String myTabName;
   private String myToolwindowTitle;
+  private boolean myCloseable = true;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -178,5 +179,13 @@ public class ContentImpl implements Content {
 
   public boolean isPinnable() {
     return myPinnable;
+  }
+
+  public boolean isCloseable() {
+    return myCloseable;
+  }
+
+  public void setCloseable(final boolean closeable) {
+    myCloseable = closeable;
   }
 }

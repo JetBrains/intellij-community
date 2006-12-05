@@ -106,6 +106,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     else {
       if (myContent == null) {
         myContent = PeerFactory.getInstance().getContentFactory().createContent(myTree, "Shelf", false);
+        myContent.setCloseable(false);
         myContentManager.addContent(myContent);
       }
       myTree.setModel(buildChangesModel());

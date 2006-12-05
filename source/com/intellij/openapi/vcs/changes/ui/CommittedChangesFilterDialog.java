@@ -13,6 +13,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,6 +25,7 @@ public class CommittedChangesFilterDialog extends DialogWrapper {
     super(project, false);
     myPanel = panel;
     myPanel.restoreState();
+    setTitle(VcsBundle.message("browse.changes.filter.title"));
     init();
   }
 

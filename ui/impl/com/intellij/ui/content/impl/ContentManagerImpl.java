@@ -210,7 +210,15 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public boolean canCloseAllContents() {
-    return getContentCount() > 0 && canCloseContents();
+    if (!canCloseContents()) {
+      return false;
+    }
+    for(Content content: myContents) {
+      if (content.isCloseable()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public Content getSelectedContent() {

@@ -116,8 +116,8 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myContent != null && myManager.canCloseContents());
-      presentation.setVisible(myManager.canCloseContents());
+      presentation.setEnabled(myContent != null && myManager.canCloseContents() && myContent.isCloseable());
+      presentation.setVisible(myManager.canCloseContents() && myContent.isCloseable());
       presentation.setText(myManager.getCloseActionName());
     }
   }
@@ -131,7 +131,12 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myManager.removeAllContents();
+      Content[] contents = myManager.getContents();
+      for (Content content : contents) {
+        if (content.isCloseable()) {
+          myManager.removeContent(content);
+        }
+      }
     }
 
     public void update(AnActionEvent e) {
@@ -155,7 +160,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     public void actionPerformed(AnActionEvent e) {
       Content[] contents = myManager.getContents();
       for (Content content : contents) {
-        if (myContent != content) {
+        if (myContent != content && content.isCloseable()) {
           myManager.removeContent(content);
         }
       }

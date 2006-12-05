@@ -38,6 +38,10 @@ import org.jetbrains.annotations.Nullable;
 public class ChangesViewContentManager implements ProjectComponent {
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
 
+  public static ChangesViewContentManager getInstance(Project project) {
+    return project.getComponent(ChangesViewContentManager.class);
+  }
+
   private Project myProject;
   private ContentManager myContentManager;
   private ToolWindow myToolWindow;
@@ -49,7 +53,7 @@ public class ChangesViewContentManager implements ProjectComponent {
     myProject = project;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myConnection = project.getMessageBus().connect();
-    myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(false, myProject);
+    myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
   }
 
   public void projectOpened() {
@@ -100,6 +104,10 @@ public class ChangesViewContentManager implements ProjectComponent {
 
   public void removeContent(final Content content) {
     myContentManager.removeContent(content);
+  }
+
+  public void setSelectedContent(final Content content) {
+    myContentManager.setSelectedContent(content);
   }
 
   private class MyVcsListener implements VcsListener {
