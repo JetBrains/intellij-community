@@ -34,7 +34,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-public class CvsCommittedChangesProvider implements CommittedChangesProvider<CvsChangeList> {
+public class CvsCommittedChangesProvider implements CommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
   private final Project myProject;
 
   @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
@@ -47,7 +47,7 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return new ChangeBrowserSettings();
   }
 
-  public ChangesBrowserSettingsEditor createFilterUI() {
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI() {
     return new CvsVersionFilterComponent(myProject);
   }
 

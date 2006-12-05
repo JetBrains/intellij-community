@@ -26,7 +26,7 @@ import java.beans.PropertyVetoException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-public abstract class StandardVersionFilterComponent implements ChangesBrowserSettingsEditor {
+public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSettings> implements ChangesBrowserSettingsEditor<T> {
   private JPanel myPanel;
 
   public JPanel getVersionNumberPanel() {
@@ -53,6 +53,7 @@ public abstract class StandardVersionFilterComponent implements ChangesBrowserSe
   private DatePicker myDateBefore;
 
   private final Project myProject;
+  private T mySettings;
 
   public StandardVersionFilterComponent(Project project) {
     myProject = project;
@@ -61,7 +62,7 @@ public abstract class StandardVersionFilterComponent implements ChangesBrowserSe
     myDateBefore.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
   }
 
-  protected void init(final ChangeBrowserSettings settings) {
+  protected void init(final T settings) {
     installCheckBoxesListeners();
     initValues(settings);
     updateAllEnabled(null);
@@ -96,7 +97,7 @@ public abstract class StandardVersionFilterComponent implements ChangesBrowserSe
     updatePair(myUseNumAfterFilter, myNumAfter, e);
   }
 
-  protected void initValues(ChangeBrowserSettings settings) {
+  protected void initValues(T settings) {
     myUseDateBeforeFilter.setSelected(settings.USE_DATE_BEFORE_FILTER);
     myUseDateAfterFilter.setSelected(settings.USE_DATE_AFTER_FILTER);
     myUseNumBeforeFilter.setSelected(settings.USE_CHANGE_BEFORE_FILTER);
@@ -114,7 +115,7 @@ public abstract class StandardVersionFilterComponent implements ChangesBrowserSe
 
 
   }
-  public void saveValues(ChangeBrowserSettings settings) {
+  public void saveValues(T settings) {
     settings.USE_DATE_BEFORE_FILTER = myUseDateBeforeFilter.isSelected();
     settings.USE_DATE_AFTER_FILTER = myUseDateAfterFilter.isSelected();
     settings.USE_CHANGE_BEFORE_FILTER = myUseNumBeforeFilter.isSelected();
@@ -133,13 +134,13 @@ public abstract class StandardVersionFilterComponent implements ChangesBrowserSe
     myUseNumAfterFilter.addActionListener(filterListener);
   }
 
-  public ChangeBrowserSettings getSettings() {
-    ChangeBrowserSettings settings = new ChangeBrowserSettings();
-    saveValues(settings);
-    return settings;
+  public T getSettings() {
+    saveValues(mySettings);
+    return mySettings;
   }
 
-  public void setSettings(ChangeBrowserSettings settings) {
+  public void setSettings(T settings) {
+    mySettings = settings;
     initValues(settings);
   }
 }

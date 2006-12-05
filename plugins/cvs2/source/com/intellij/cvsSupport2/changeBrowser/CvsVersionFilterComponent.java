@@ -9,7 +9,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class CvsVersionFilterComponent extends StandardVersionFilterComponent {
+public class CvsVersionFilterComponent extends StandardVersionFilterComponent<ChangeBrowserSettings> {
   private JTextField myUserField;
   private JCheckBox myUseUserFilter;
 

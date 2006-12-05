@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +84,7 @@ public abstract class AbstractVcsHelper {
   public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
   public abstract void showChangesBrowser(CommittedChangesProvider provider, final VirtualFile root, @Nls String title);
 
-  @Nullable public abstract <T extends CommittedChangeList> T chooseCommittedChangeList(CommittedChangesProvider<T> provider);
+  @Nullable public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider);
 
   public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
 

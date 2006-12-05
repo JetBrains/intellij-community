@@ -23,17 +23,17 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
-public interface CommittedChangesProvider<T extends CommittedChangeList> {
-  ChangeBrowserSettings createDefaultSettings();
-  ChangesBrowserSettingsEditor createFilterUI();
-  List<T> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException;
-  List<T> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root) throws VcsException;
+public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> {
+  U createDefaultSettings();
+  ChangesBrowserSettingsEditor<U> createFilterUI();
+  List<T> getAllCommittedChanges(U settings, final int maxCount) throws VcsException;
+  List<T> getCommittedChanges(U settings, VirtualFile root) throws VcsException;
   ChangeListColumn[] getColumns();
 }
