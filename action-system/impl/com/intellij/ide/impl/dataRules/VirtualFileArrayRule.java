@@ -27,7 +27,7 @@ public class VirtualFileArrayRule implements GetDataRule {
     // Try to detect multiselection.
 
     Project project = (Project)dataProvider.getData(DataConstants.PROJECT_CONTEXT);
-    if (project != null) {
+    if (project != null && !project.isDisposed()) {
       return ProjectRootManager.getInstance(project).getContentRoots();
     }
 
@@ -37,7 +37,7 @@ public class VirtualFileArrayRule implements GetDataRule {
     }
 
     Module selectedModule = (Module)dataProvider.getData(DataConstants.MODULE_CONTEXT);
-    if (selectedModule != null) {
+    if (selectedModule != null && !selectedModule.isDisposed()) {
       return ModuleRootManager.getInstance(selectedModule).getContentRoots();
     }
 
