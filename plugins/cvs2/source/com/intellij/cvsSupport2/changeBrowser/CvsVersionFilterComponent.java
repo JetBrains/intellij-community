@@ -22,7 +22,7 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent {
     myProject = project;
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(super.getDatePanel(), BorderLayout.CENTER);
-    init();
+    init(new ChangeBrowserSettings());
   }
 
   public JComponent getPanel() {
@@ -34,16 +34,14 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent {
     myUseUserFilter.addActionListener(filterListener);
   }
 
-  protected void initValues() {
-    super.initValues();
-    final ChangeBrowserSettings settings = ChangeBrowserSettings.getSettings(myProject);
+  protected void initValues(ChangeBrowserSettings settings) {
+    super.initValues(settings);
     myUseUserFilter.setSelected(settings.USE_USER_FILTER);
     myUserField.setText(settings.USER);
   }
 
-  public void saveValues() {
-    super.saveValues();
-    final ChangeBrowserSettings settings = ChangeBrowserSettings.getSettings(myProject);
+  public void saveValues(ChangeBrowserSettings settings) {
+    super.saveValues(settings);
     settings.USE_USER_FILTER = myUseUserFilter.isSelected();
     settings.USER = myUserField.getText();
   }

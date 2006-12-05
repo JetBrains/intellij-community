@@ -70,7 +70,7 @@ public class CommittedChangesViewManager implements ProjectComponent {
     else {
       if (myContent == null) {
         if (myComponent == null) {
-          myComponent = new CommittedChangesPanel(myProject, myProvider);
+          myComponent = new CommittedChangesPanel(myProject, myProvider, myProvider.createDefaultSettings());
         }
         myContent = PeerFactory.getInstance().getContentFactory().createContent(myComponent, "Committed", false);
         myContent.setCloseable(false);

@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.michaelbaranov.microba.calendar.DatePicker;
 
 import javax.swing.*;
@@ -27,7 +26,7 @@ import java.beans.PropertyVetoException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-public abstract class StandardVersionFilterComponent implements RefreshableOnComponent {
+public abstract class StandardVersionFilterComponent implements ChangesBrowserSettingsEditor {
   private JPanel myPanel;
 
   public JPanel getVersionNumberPanel() {
@@ -55,15 +54,6 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
 
   private final Project myProject;
 
-  /**
-   * @deprecated no dateformat parameter should be externally passed.
-   * @param project
-   * @param dateformat
-   */
-  public StandardVersionFilterComponent(Project project, DateFormat dateformat) {
-    this(project);
-  }
-
   public StandardVersionFilterComponent(Project project) {
     myProject = project;
 
@@ -71,9 +61,9 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
     myDateBefore.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
   }
 
-  protected void init() {
+  protected void init(final ChangeBrowserSettings settings) {
     installCheckBoxesListeners();
-    initValues();
+    initValues(settings);
     updateAllEnabled(null);
   }
 
@@ -106,8 +96,7 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
     updatePair(myUseNumAfterFilter, myNumAfter, e);
   }
 
-  protected void initValues() {
-    final ChangeBrowserSettings settings = ChangeBrowserSettings.getSettings(myProject);
+  protected void initValues(ChangeBrowserSettings settings) {
     myUseDateBeforeFilter.setSelected(settings.USE_DATE_BEFORE_FILTER);
     myUseDateAfterFilter.setSelected(settings.USE_DATE_AFTER_FILTER);
     myUseNumBeforeFilter.setSelected(settings.USE_CHANGE_BEFORE_FILTER);
@@ -125,9 +114,7 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
 
 
   }
-
-  public void saveValues() {
-    final ChangeBrowserSettings settings = ChangeBrowserSettings.getSettings(myProject);
+  public void saveValues(ChangeBrowserSettings settings) {
     settings.USE_DATE_BEFORE_FILTER = myUseDateBeforeFilter.isSelected();
     settings.USE_DATE_AFTER_FILTER = myUseDateAfterFilter.isSelected();
     settings.USE_CHANGE_BEFORE_FILTER = myUseNumBeforeFilter.isSelected();
@@ -146,17 +133,15 @@ public abstract class StandardVersionFilterComponent implements RefreshableOnCom
     myUseNumAfterFilter.addActionListener(filterListener);
   }
 
-  public void refresh() {
+  public ChangeBrowserSettings getSettings() {
+    ChangeBrowserSettings settings = new ChangeBrowserSettings();
+    saveValues(settings);
+    return settings;
   }
 
-  public void saveState() {
-    saveValues();
+  public void setSettings(ChangeBrowserSettings settings) {
+    initValues(settings);
   }
-
-  public void restoreState() {
-    initValues();
-  }
-
 }
 
   

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -30,10 +31,12 @@ public class CommittedChangesPanel extends JPanel {
   private CommittedChangesBrowser myBrowser;
   private final Project myProject;
   private CommittedChangesProvider myProvider;
+  private ChangeBrowserSettings mySettings;
   private VirtualFile myRoot;
 
-  public CommittedChangesPanel(Project project, final CommittedChangesProvider provider) {
+  public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings) {
     super(new BorderLayout());
+    mySettings = settings;
     myProject = project;
     myProvider = provider;
     myBrowser = new CommittedChangesBrowser(project, new CommittedChangesTableModel(new ArrayList<CommittedChangeList>()));
@@ -58,10 +61,10 @@ public class CommittedChangesPanel extends JPanel {
         try {
           final List<CommittedChangeList> list;
           if (myRoot == null) {
-            list = myProvider.getAllCommittedChanges(50);
+            list = myProvider.getAllCommittedChanges(mySettings, 50);
           }
           else {
-            list = myProvider.getCommittedChanges(myRoot);
+            list = myProvider.getCommittedChanges(mySettings, myRoot);
           }
           myBrowser.setModel(new CommittedChangesTableModel(list, myProvider.getColumns()));
         }
@@ -76,9 +79,10 @@ public class CommittedChangesPanel extends JPanel {
   }
 
   private void setChangesFilter() {
-    CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, myProvider.createFilterUI());
+    CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, myProvider.createFilterUI(), mySettings);
     filterDialog.show();
     if (filterDialog.isOK()) {
+      mySettings = filterDialog.getSettings();
       refreshChanges();
     }
   }

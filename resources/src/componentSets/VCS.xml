@@ -66,11 +66,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
       <option name="workspace" value="true"/>

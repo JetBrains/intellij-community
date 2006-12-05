@@ -24,15 +24,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ArrayList;
 
 public class CvsCommittedChangesProvider implements CommittedChangesProvider<CvsChangeList> {
   private final Project myProject;
@@ -43,11 +43,15 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     myProject = project;
   }
 
-  public RefreshableOnComponent createFilterUI() {
+  public ChangeBrowserSettings createDefaultSettings() {
+    return new ChangeBrowserSettings();
+  }
+
+  public ChangesBrowserSettingsEditor createFilterUI() {
     return new CvsVersionFilterComponent(myProject);
   }
 
-  public List<CvsChangeList> getAllCommittedChanges(final int maxCount) throws VcsException {
+  public List<CvsChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
     return new ArrayList<CvsChangeList>();
   }
 
@@ -55,25 +59,23 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME };
   }
 
-  public List<CvsChangeList> getCommittedChanges(VirtualFile root) throws VcsException {
+  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root) throws VcsException {
     final String module = CvsUtil.getModuleName(root);
     if (module != null) {
       CvsHistoryCache cache = CvsHistoryCache.create();
 
       try {
-        final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(root);
-        final CvsHistoryCacheElement cacheElement = cache.getCache(settings, module);
+        final CvsConnectionSettings connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(root);
+        final CvsHistoryCacheElement cacheElement = cache.getCache(connectionSettings, module);
 
-        final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, settings, myProject);
+        final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject);
 
 
-        final ChangeBrowserSettings browserSettings = ChangeBrowserSettings.getSettings(myProject);
-
-        Date date = browserSettings.getDateBeforeFilter();
+        Date date = settings.getDateBeforeFilter();
         if (date == null) {
           date = new Date();
         }
-        final CvsResult executionResult = runRLogOperation(settings, module, cacheElement, date);
+        final CvsResult executionResult = runRLogOperation(connectionSettings, module, cacheElement, date);
 
         if (!executionResult.hasNoErrors()) {
           throw executionResult.composeError();
@@ -86,11 +88,11 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
           final List<LogInformationWrapper> logs = cacheElement.getLogInformationList();
           builder.addLogs(logs);
           final List<CvsChangeList> versions = builder.getVersions();
-          browserSettings.filterChanges(versions);
-          if (browserSettings.USE_USER_FILTER) {
+          settings.filterChanges(versions);
+          if (settings.USE_USER_FILTER) {
             for (Iterator<CvsChangeList> iterator = versions.iterator(); iterator.hasNext();) {
               CvsChangeList repositoryVersion = iterator.next();
-              if (!Comparing.equal(browserSettings.USER, repositoryVersion.getCommitterName())) {
+              if (!Comparing.equal(settings.USER, repositoryVersion.getCommitterName())) {
                 iterator.remove();
               }
             }

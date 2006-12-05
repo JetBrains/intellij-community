@@ -10,21 +10,25 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class CommittedChangesFilterDialog extends DialogWrapper {
-  private final RefreshableOnComponent myPanel;
+  private final ChangesBrowserSettingsEditor myPanel;
+  private ChangeBrowserSettings mySettings;
 
-  public CommittedChangesFilterDialog(Project project, RefreshableOnComponent panel) {
+  public CommittedChangesFilterDialog(Project project, ChangesBrowserSettingsEditor panel, ChangeBrowserSettings settings) {
     super(project, false);
     myPanel = panel;
-    myPanel.restoreState();
+    //noinspection unchecked
+    myPanel.setSettings(settings);
     setTitle(VcsBundle.message("browse.changes.filter.title"));
     init();
   }
@@ -36,7 +40,16 @@ public class CommittedChangesFilterDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myPanel.saveState();
+    mySettings = myPanel.getSettings();
     super.doOKAction();
+  }
+
+  public ChangeBrowserSettings getSettings() {
+    return mySettings;
+  }
+
+  @Override @NonNls
+  protected String getDimensionServiceKey() {
+    return "AbstractVcsHelper.FilterDialog";
   }
 }

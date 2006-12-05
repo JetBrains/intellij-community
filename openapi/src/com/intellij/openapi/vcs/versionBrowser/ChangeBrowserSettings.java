@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -24,7 +22,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.text.SyncDateFormat;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,7 +29,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizable {
+public class ChangeBrowserSettings implements JDOMExternalizable {
   public interface Filter {
     boolean accepts(CommittedChangeList change);
   }
@@ -57,28 +54,6 @@ public class ChangeBrowserSettings implements ProjectComponent, JDOMExternalizab
 
   private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.LONG,
                                                                                                             SimpleDateFormat.LONG));
-
-
-  public static ChangeBrowserSettings getSettings(Project project) {
-    return project.getComponent(ChangeBrowserSettings.class);
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ChangeBrowserSettings";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);

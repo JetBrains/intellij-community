@@ -32,16 +32,15 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserDialog;
-import com.intellij.openapi.vcs.changes.ui.CommittedChangesTableModel;
-import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -418,12 +417,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(final CommittedChangesProvider provider, final VirtualFile root, @Nls String title) {
-    final RefreshableOnComponent filterUI = provider.createFilterUI();
+    final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI();
+    ChangeBrowserSettings settings = provider.createDefaultSettings();
     boolean ok = true;
     if (filterUI != null) {
-      final FilterDialog dlg = new FilterDialog(myProject, filterUI);
+      final CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(myProject, filterUI, settings);
       dlg.show();
       ok = dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE;
+      settings = dlg.getSettings();
     }
     else {
       ok = true;
@@ -434,10 +435,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       final List<VcsException> exceptions = new ArrayList<VcsException>();
       final Ref<CommittedChangesTableModel> tableModelRef = new Ref<CommittedChangesTableModel>();
 
+      final ChangeBrowserSettings settings1 = settings;
       final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
-            versions.addAll(provider.getCommittedChanges(root));
+            versions.addAll(provider.getCommittedChanges(settings1, root));
           }
           catch (VcsException e) {
             exceptions.add(e);
@@ -468,7 +470,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   public <T extends CommittedChangeList> T chooseCommittedChangeList(CommittedChangesProvider<T> provider) {
     final List<T> changes;
     try {
-      changes = provider.getCommittedChanges(myProject.getProjectFile().getParent());
+      changes = provider.getCommittedChanges(provider.createDefaultSettings(), myProject.getProjectFile().getParent());
     }
     catch (VcsException e) {
       return null;
@@ -631,34 +633,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     }
 
     public void selectionChanged(ContentManagerEvent event) {
-    }
-  }
-
-  private static class FilterDialog extends DialogWrapper {
-    private RefreshableOnComponent myFilterUI;
-
-    public FilterDialog(Project project, final RefreshableOnComponent filterUI) {
-      super(project, true);
-      myFilterUI = filterUI;
-
-      myFilterUI.restoreState();
-      setTitle(VcsBundle.message("browse.changes.filter.title"));
-      init();
-    }
-
-    @Override
-    protected void doOKAction() {
-      super.doOKAction();
-      myFilterUI.saveState();
-    }
-
-    protected JComponent createCenterPanel() {
-      return myFilterUI.getComponent();
-    }
-
-    @Override @NonNls
-    protected String getDimensionServiceKey() {
-      return "AbstractVcsHelper.FilterDialog";
     }
   }
 }
