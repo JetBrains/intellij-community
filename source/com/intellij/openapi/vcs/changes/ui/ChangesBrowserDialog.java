@@ -7,7 +7,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -79,9 +78,11 @@ public class ChangesBrowserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
+    /*
     if (myMode == Mode.Browse && myCommittedChangesProvider != null) {
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myCommittedChangesProvider, getTitle());
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myCommittedChangesProvider, root, getTitle());
     }
+    */
   }
 
   public CommittedChangeList getSelectedChangeList() {

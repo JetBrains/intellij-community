@@ -93,4 +93,22 @@ public abstract class ChangeListColumn<T extends ChangeList> {
       };
     }
   };
+
+  public static ChangeListColumn<CommittedChangeList> DESCRIPTION = new ChangeListColumn<CommittedChangeList>() {
+    public String getTitle() {
+      return VcsBundle.message("column.name.revision.list.description");
+    }
+
+    public Object getValue(final CommittedChangeList changeList) {
+      return changeList.getName();
+    }
+
+    public Comparator<CommittedChangeList> getComparator() {
+      return new Comparator<CommittedChangeList>() {
+        public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      };
+    }
+  };
 }

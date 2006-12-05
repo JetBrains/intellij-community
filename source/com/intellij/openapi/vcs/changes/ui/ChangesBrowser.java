@@ -31,6 +31,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   private final boolean myCapableOfExcludingChanges;
   protected JPanel myHeaderPanel;
   private DefaultActionGroup myToolBarGroup;
+  private JPanel myListPanel;
 
   public void setChangesToDisplay(final List<Change> changes) {
     myChangesToDisplay = changes;
@@ -57,10 +58,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     setInitialSelection(changeLists, changes, initialListSelection);
     rebuildList();
 
-    JPanel listPanel = new JPanel(new BorderLayout());
-    listPanel.add(myViewer);
-    listPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.dialog.changed.files.label")));
-    add(listPanel, BorderLayout.CENTER);
+    myListPanel = new JPanel(new BorderLayout());
+    myListPanel.add(myViewer);
+    myListPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.dialog.changed.files.label")));
+    add(myListPanel, BorderLayout.CENTER);
 
     myHeaderPanel = new JPanel(new BorderLayout());
     myHeaderPanel.add(createToolbar(), BorderLayout.WEST);
@@ -93,6 +94,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public JPanel getHeaderPanel() {
     return myHeaderPanel;
+  }
+
+  public JPanel getListPanel() {
+    return myListPanel;
   }
 
   public void calcData(DataKey key, DataSink sink) {

@@ -25,11 +25,13 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
 public interface CommittedChangesProvider<T extends CommittedChangeList> {
   RefreshableOnComponent createFilterUI();
-  List<T> getCommittedChanges() throws VcsException;
+  List<T> getAllCommittedChanges(final int maxCount) throws VcsException;
+  List<T> getCommittedChanges(VirtualFile root) throws VcsException;
   ChangeListColumn[] getColumns();
 }

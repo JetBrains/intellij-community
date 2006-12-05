@@ -14,11 +14,12 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 
 public class ShowChangesViewAction extends AbstractVcsAction {
   protected void actionPerformed(VcsContext e) {
-    ToolWindowManager.getInstance(e.getProject()).getToolWindow(ChangesViewManager.TOOLWINDOW_ID).show(null);
+    ToolWindowManager.getInstance(e.getProject()).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).show(null);
   }
 
   protected void update(VcsContext vcsContext, Presentation presentation) {

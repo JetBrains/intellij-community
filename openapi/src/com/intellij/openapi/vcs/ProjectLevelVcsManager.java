@@ -190,4 +190,6 @@ public abstract class ProjectLevelVcsManager {
    * @since 6.0
    */
   public abstract boolean isBackgroundVcsOperationRunning();
+
+  public abstract VirtualFile[] getRootsUnderVcs(AbstractVcs vcs);
 }

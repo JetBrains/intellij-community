@@ -10,10 +10,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ProjectTopics;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.Content;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.TreeExpander;
@@ -22,29 +18,21 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -53,8 +41,6 @@ import java.awt.event.KeyEvent;
 import java.util.Collection;
 
 public class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
-  public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
-
   private boolean SHOW_FLATTEN_MODE = true;
 
   private ChangesListView myView;
@@ -62,78 +48,43 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   private final Project myProject;
 
   private Alarm myRepaintAlarm;
-  private Alarm myVcsChangeAlarm;
 
   private boolean myDisposed = false;
 
   private ChangeListListener myListener = new MyChangeListListener();
-  private VcsListener myVcsListener = new MyVcsListener();
   private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
+  private ChangesViewContentManager myContentManager;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
-  private ToolWindow myToolWindow;
-  private final MessageBusConnection myConnection;
-  private ContentManager myContentManager;
 
   public static ChangesViewManager getInstance(Project project) {
     return project.getComponent(ChangesViewManager.class);
   }
 
-  public ChangesViewManager(Project project) {
+  public ChangesViewManager(Project project, ChangesViewContentManager contentManager) {
     myProject = project;
+    myContentManager = contentManager;
     myView = new ChangesListView(project);
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-
-    myConnection = project.getMessageBus().connect();
-  }
-
-  public ContentManager getContentManager() {
-    return myContentManager;
   }
 
   public void projectOpened() {
     ChangeListManager.getInstance(myProject).addChangeListListener(myListener);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager != null) {
-          myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(false, myProject);
-          final Content content = PeerFactory.getInstance().getContentFactory().createContent(createChangeViewComponent(), "Local", false);
-          myContentManager.addContent(content);
-          myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
-          myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowChanges.png"));
-          updateToolWindowAvailability();
+    final Content content = PeerFactory.getInstance().getContentFactory().createContent(createChangeViewComponent(), "Local", false);
+    myContentManager.addContent(content);
 
-          myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
-          ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
-          WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
-          SelectInManager.getInstance(myProject).addTarget(new SelectInChangesViewTarget(myProject));
-        }
-      }
-    });
-  }
-
-  private void updateToolWindowAvailability() {
-    final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
-    myToolWindow.setAvailable(abstractVcses.length > 0, null);
+    WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
+    SelectInManager.getInstance(myProject).addTarget(new SelectInChangesViewTarget(myProject));
   }
 
   public void projectClosed() {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
-    ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
-    myConnection.disconnect();
 
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
-    myVcsChangeAlarm.cancelAllRequests();
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    if (myToolWindow != null) {
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
-    }
   }
 
   @NonNls @NotNull
@@ -319,27 +270,6 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
       SHOW_FLATTEN_MODE = !state;
       myView.setShowFlatten(SHOW_FLATTEN_MODE);
       refreshView();
-    }
-  }
-
-  private class MyVcsListener implements VcsListener {
-    public void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs) {
-      myVcsChangeAlarm.cancelAllRequests();
-      myVcsChangeAlarm.addRequest(new Runnable() {
-        public void run() {
-          updateToolWindowAvailability();
-        }
-      }, 100, ModalityState.NON_MODAL);
-    }
-  }
-
-  private class MyModuleListener extends ModuleAdapter {
-    public void moduleAdded(Project project, Module module) {
-      updateToolWindowAvailability();
-    }
-
-    public void moduleRemoved(Project project, Module module) {
-      updateToolWindowAvailability();
     }
   }
 

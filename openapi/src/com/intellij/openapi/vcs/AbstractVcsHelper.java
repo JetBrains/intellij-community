@@ -81,7 +81,7 @@ public abstract class AbstractVcsHelper {
   public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
   public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
   public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
-  public abstract void showChangesBrowser(CommittedChangesProvider provider, @Nls String title);
+  public abstract void showChangesBrowser(CommittedChangesProvider provider, final VirtualFile root, @Nls String title);
 
   @Nullable public abstract <T extends CommittedChangeList> T chooseCommittedChangeList(CommittedChangesProvider<T> provider);
 

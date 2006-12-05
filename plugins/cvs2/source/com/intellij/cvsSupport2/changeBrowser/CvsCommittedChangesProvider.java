@@ -32,15 +32,14 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 
 public class CvsCommittedChangesProvider implements CommittedChangesProvider<CvsChangeList> {
-  private final VirtualFile myFile;
   private final Project myProject;
 
   @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
 
-  public CvsCommittedChangesProvider(VirtualFile file, Project project) {
-    myFile = file;
+  public CvsCommittedChangesProvider(Project project) {
     myProject = project;
   }
 
@@ -48,17 +47,21 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return new CvsVersionFilterComponent(myProject);
   }
 
+  public List<CvsChangeList> getAllCommittedChanges(final int maxCount) throws VcsException {
+    return new ArrayList<CvsChangeList>();
+  }
+
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME };
   }
 
-  public List<CvsChangeList> getCommittedChanges() throws VcsException {
-    final String module = CvsUtil.getModuleName(myFile);
+  public List<CvsChangeList> getCommittedChanges(VirtualFile root) throws VcsException {
+    final String module = CvsUtil.getModuleName(root);
     if (module != null) {
       CvsHistoryCache cache = CvsHistoryCache.create();
 
       try {
-        final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(myFile);
+        final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(root);
         final CvsHistoryCacheElement cacheElement = cache.getCache(settings, module);
 
         final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, settings, myProject);
@@ -102,7 +105,7 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
 
     }
     else {
-      throw new VcsException(CvsBundle.message("cannot.find.repository.location.error.message", myFile.getPath()));
+      throw new VcsException(CvsBundle.message("cannot.find.repository.location.error.message", root.getPath()));
     }
   }
 

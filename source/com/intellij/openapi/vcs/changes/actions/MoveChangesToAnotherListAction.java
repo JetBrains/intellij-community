@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -92,7 +93,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
 
     if (!askAndMove(project, changes, unversionedFiles)) return;
     if (activateChangesView) {
-      ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewManager.TOOLWINDOW_ID);
+      ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
       if (!window.isVisible()) {
         window.activate(new Runnable() {
           public void run() {

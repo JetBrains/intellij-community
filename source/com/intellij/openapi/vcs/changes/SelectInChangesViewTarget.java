@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
@@ -28,7 +29,7 @@ public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
   }
 
   public String getToolWindowId() {
-    return ChangesViewManager.TOOLWINDOW_ID;
+    return ChangesViewContentManager.TOOLWINDOW_ID;
   }
 
   @Nullable public String getMinorViewId() {
@@ -58,7 +59,7 @@ public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
       }
     };
     if (requestFocus) {
-      ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewManager.TOOLWINDOW_ID).activate(runnable);
+      ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).activate(runnable);
     }
     else {
       runnable.run();

@@ -25,9 +25,10 @@ import java.util.Collections;
 public class CommittedChangesBrowser extends JPanel {
   private final TableView myChangeListsView;
   private final ChangesBrowser myChangesView;
-  private final ListTableModel<CommittedChangeList> myTableModel;
+  private ListTableModel<CommittedChangeList> myTableModel;
   private final JTextArea myCommitMessageArea;
   private CommittedChangeList mySelectedChangeList;
+  private JPanel myLeftPanel;
 
   public CommittedChangesBrowser(final Project project, final ListTableModel<CommittedChangeList> tableModel) {
     super(new BorderLayout());
@@ -37,15 +38,8 @@ public class CommittedChangesBrowser extends JPanel {
     myChangeListsView = new TableView(myTableModel);
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    JPanel changesPanel = new JPanel(new BorderLayout());
-    changesPanel.add(new JScrollPane(myChangeListsView), BorderLayout.CENTER);
-    changesPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("committed.changes.title")));
-
-    JSplitPane splitter = new JSplitPane();
-    splitter.setLeftComponent(changesPanel);
-
     myChangesView = new ChangesBrowser(project, tableModel.getItems(), Collections.<Change>emptyList(), null, false, false);
-    splitter.setRightComponent(myChangesView);
+    myChangesView.getListPanel().setBorder(null);
 
     myChangeListsView.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -62,16 +56,31 @@ public class CommittedChangesBrowser extends JPanel {
     JPanel commitPanel = new JPanel(new BorderLayout());
     commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
     commitPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("label.commit.comment")));
-    
+
+    myLeftPanel = new JPanel(new BorderLayout());
+    myLeftPanel.add(new JScrollPane(myChangeListsView), BorderLayout.CENTER);
+    myLeftPanel.add(commitPanel, BorderLayout.SOUTH);
+
+    JSplitPane splitter = new JSplitPane();
+    splitter.setLeftComponent(myLeftPanel);
+    splitter.setRightComponent(myChangesView);
 
     add(splitter, BorderLayout.CENTER);
-    add(commitPanel, BorderLayout.SOUTH);
 
     updateBySelectionChange();
   }
 
+  public void addToolBar(JComponent toolBar) {
+    myLeftPanel.add(toolBar, BorderLayout.NORTH);
+  }
+
   public void dispose() {
     myChangesView.dispose();
+  }
+
+  public void setModel(ListTableModel<CommittedChangeList> tableModel) {
+    myTableModel = tableModel;
+    myChangeListsView.setModel(tableModel);
   }
 
   private void updateBySelectionChange() {

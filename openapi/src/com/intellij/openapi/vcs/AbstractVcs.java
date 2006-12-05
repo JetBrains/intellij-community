@@ -217,5 +217,10 @@ public abstract class AbstractVcs {
   public UpdateEnvironment getIntegrateEnvironment() {
     return null;
   }
+
+  @Nullable
+  public CommittedChangesProvider getCommittedChangesProvider() {
+    return null;
+  }
 }
 

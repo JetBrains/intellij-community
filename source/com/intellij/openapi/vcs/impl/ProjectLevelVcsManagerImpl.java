@@ -49,6 +49,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
@@ -590,6 +591,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public boolean isBackgroundVcsOperationRunning() {
     return myBackgroundOperationCounter > 0;
+  }
+
+  public VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for(Module module: modules) {
+      if (ModuleLevelVcsManager.getInstance(module).getActiveVcs() == vcs) {
+        for(VirtualFile contentRoot: ModuleRootManager.getInstance(module).getContentRoots()) {
+          result.add(contentRoot);
+          // TODO: filter out ancestors
+        }
+      }
+    }
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   public void notifyModuleVcsChanged(Module module, AbstractVcs newVcs) {

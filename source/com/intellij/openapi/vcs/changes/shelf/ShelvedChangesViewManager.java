@@ -10,28 +10,26 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ide.DeleteProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,22 +45,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
-  private ToolWindowManagerEx myToolWindowManager;
+  private ChangesViewContentManager myContentManager;
   private ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
   private ChangesViewManager myChangesViewManager;
-  private ToolWindowManagerListener myToolWindowManagerListener = new MyToolWindowManagerListener();
   private Tree myTree = new ShelfTree();
   private Content myContent = null;
   private ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
 
   public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
 
-  public ShelvedChangesViewManager(Project project, ToolWindowManagerEx toolWindowManager, ShelveChangesManager shelveChangesManager,
+  public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,
                                    final ChangesViewManager changesViewManager, final MessageBus bus) {
     myProject = project;
     myChangesViewManager = changesViewManager;
-    myToolWindowManager = toolWindowManager;
+    myContentManager = contentManager;
     myShelveChangesManager = shelveChangesManager;
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -82,11 +79,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    myToolWindowManager.addToolWindowManagerListener(myToolWindowManagerListener);
   }
 
   public void projectClosed() {
-    myToolWindowManager.removeToolWindowManagerListener(myToolWindowManagerListener);
   }
 
   @NonNls @NotNull
@@ -101,21 +96,17 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private void updateChangesContent() {
-    final ContentManager contentManager = myChangesViewManager.getContentManager();
-    if (contentManager == null) {
-      return;
-    }
     final List<ShelvedChangeList> changes = myShelveChangesManager.getShelvedChangeLists();
     if (changes.size() == 0) {
       if (myContent != null) {
-        contentManager.removeContent(myContent);
+        myContentManager.removeContent(myContent);
       }
       myContent = null;
     }
     else {
       if (myContent == null) {
         myContent = PeerFactory.getInstance().getContentFactory().createContent(myTree, "Shelf", false);
-        contentManager.addContent(myContent);
+        myContentManager.addContent(myContent);
       }
       myTree.setModel(buildChangesModel());
     }
@@ -136,17 +127,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
     return model;
-  }
-
-  private class MyToolWindowManagerListener implements ToolWindowManagerListener {
-    public void toolWindowRegistered(String id) {
-      if (id.equals(ChangesViewManager.TOOLWINDOW_ID)) {
-        updateChangesContent();
-      }
-    }
-
-    public void stateChanged() {
-    }
   }
 
   private class ShelfTree extends Tree implements TypeSafeDataProvider {
