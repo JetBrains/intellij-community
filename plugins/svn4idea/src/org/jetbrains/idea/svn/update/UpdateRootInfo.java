@@ -15,13 +15,12 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNInputFileChannel;
-import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
 
@@ -55,6 +54,10 @@ public class UpdateRootInfo {
     catch (SVNException e) {
       return null;
     }
+  }
+
+  public String getUrlAsString() {
+    return myUrl;
   }
 
   public SVNRevision getRevision() {
