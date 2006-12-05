@@ -22,11 +22,21 @@ import java.util.Set;
 
 /**
  * @author dsl
+ *
+ * @see com.intellij.refactoring.RefactoringFactory#createRename(com.intellij.psi.PsiElement, String)
  */
 public interface RenameRefactoring extends Refactoring {
+
+  /**
+   * Add element to be renamed.
+   *
+   * @param element element to be renamed.
+   * @param newName new name for the element.
+   */
   void addElement(PsiElement element, String newName);
 
   Set<PsiElement> getElements();
+
   Collection<String> getNewNames();
 
   void setShouldRenameVariables(boolean value);
