@@ -260,8 +260,8 @@ public class CodeInsightUtil {
     final StatisticsManager statisticsManager = StatisticsManager.getInstance();
     Comparator<PsiClass> comparator = new Comparator<PsiClass>() {
       public int compare(PsiClass aClass, PsiClass bClass) {
-        int count1 = statisticsManager.getMemberUseCount(null, aClass, null);
-        int count2 = statisticsManager.getMemberUseCount(null, bClass, null);
+        int count1 = statisticsManager.getMemberUseCount(null, aClass);
+        int count2 = statisticsManager.getMemberUseCount(null, bClass);
         if (count1 != count2) return count2 - count1;
         boolean inProject1 = aClass.getManager().isInProject(aClass);
         boolean inProject2 = bClass.getManager().isInProject(aClass);

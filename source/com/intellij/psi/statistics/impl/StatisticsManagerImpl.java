@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.codeStyle.StatisticsManagerEx;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -46,15 +47,8 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   private StatisticsManagerImpl() {
   }
 
-  public int getMemberUseCount(PsiType qualifierType, PsiMember member, Map<PsiType, PsiType> normalizedItems) {
-    if (qualifierType != null && normalizedItems != null) {
-      if (normalizedItems.containsKey(qualifierType)) {
-        qualifierType = normalizedItems.get(qualifierType);
-      }
-      else {
-        normalizedItems.put(qualifierType, qualifierType = normalizeType(qualifierType, member.getManager()));
-      }
-    }
+  public int getMemberUseCount(PsiType qualifierType, PsiMember member) {
+    qualifierType = TypeConversionUtil.erasure(qualifierType);
     String key1 = getMemberUseKey1(qualifierType);
     if (key1 == null) return 0;
     String key2 = getMemberUseKey2(member);
@@ -64,25 +58,8 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     return unit.getData(key1, key2);
   }
 
-  private PsiType normalizeType(PsiType type, PsiManager manager){
-    if(type instanceof PsiClassType){
-      return manager.getElementFactory().createType(((PsiClassType) type).resolve());
-    }
-    else if(type instanceof PsiArrayType){
-      final PsiType componentType = normalizeType(((PsiArrayType) type).getComponentType(), manager);
-      final int dimension = type.getArrayDimensions();
-      type = componentType;
-      for (int i = 0; i < dimension; i++) {
-        type = new PsiArrayType(type);
-      }
-      return type;
-    }
-
-    return type;
-  }
-
   public void incMemberUseCount(PsiType qualifierType, PsiMember member) {
-    qualifierType = normalizeType(qualifierType, member.getManager());
+    qualifierType = TypeConversionUtil.erasure(qualifierType);
     String key1 = getMemberUseKey1(qualifierType);
     if (key1 == null) return;
     String key2 = getMemberUseKey2(member);

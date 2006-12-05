@@ -624,12 +624,12 @@ public class CreateFromUsageUtils {
     final StatisticsManager statisticsManager = StatisticsManager.getInstance();
     Arrays.sort(members, new Comparator<PsiMember>() {
       public int compare(final PsiMember m1, final PsiMember m2) {
-        int result = statisticsManager.getMemberUseCount(null, m2, null) - statisticsManager.getMemberUseCount(null, m1, null);
+        int result = statisticsManager.getMemberUseCount(null, m2) - statisticsManager.getMemberUseCount(null, m1);
         if (result != 0) return result;
         final PsiClass aClass = m1.getContainingClass();
         final PsiClass bClass = m2.getContainingClass();
         if (aClass == null || bClass == null) return 0;
-        return statisticsManager.getMemberUseCount(null, bClass, null) - statisticsManager.getMemberUseCount(null, aClass, null);
+        return statisticsManager.getMemberUseCount(null, bClass) - statisticsManager.getMemberUseCount(null, aClass);
       }
     });
 

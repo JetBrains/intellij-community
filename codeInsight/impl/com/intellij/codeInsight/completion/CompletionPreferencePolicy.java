@@ -22,7 +22,6 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private final ExpectedTypeInfo[] myExpectedInfos;
 
   private Map<LookupItem, Integer> myItemToIndexMap = new HashMap<LookupItem, Integer>();
-  private Map<PsiType, PsiType> myNormalizedItems = new HashMap<PsiType, PsiType>();
 
   private CodeStyleManager myCodeStyleManager;
   private String myPrefix;
@@ -148,8 +147,8 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       PsiType qualifierType1 = CompletionUtil.getQualifierType(item1);
       PsiType qualifierType2 = CompletionUtil.getQualifierType(item2);
       if (qualifierType1 != null && qualifierType2 != null){
-        int count1 = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)o1, myNormalizedItems);
-        int count2 = StatisticsManager.getInstance().getMemberUseCount(qualifierType2, (PsiMember)o2, myNormalizedItems);
+        int count1 = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)o1);
+        int count2 = StatisticsManager.getInstance().getMemberUseCount(qualifierType2, (PsiMember)o2);
         return count2 - count1;
       }
     }
@@ -176,7 +175,7 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
         return Integer.MAX_VALUE;
       }
 
-      int count = StatisticsManager.getInstance().getMemberUseCount(type, (PsiClass)o, myNormalizedItems);
+      int count = StatisticsManager.getInstance().getMemberUseCount(type, (PsiClass)o);
       if(count == 0){
         if(componentType.equals(objectType)){
           return 1;

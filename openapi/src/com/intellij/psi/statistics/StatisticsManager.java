@@ -43,7 +43,7 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
     return ApplicationManager.getApplication().getComponent(StatisticsManager.class);
   }
 
-  public abstract int getMemberUseCount(PsiType qualifierType, PsiMember member, Map<PsiType, PsiType> normalizedItems);
+  public abstract int getMemberUseCount(PsiType qualifierType, PsiMember member);
   public abstract void incMemberUseCount(PsiType qualifierType, PsiMember member);
 
   public abstract String[] getNameSuggestions(PsiType type, NameContext context, String prefix);
