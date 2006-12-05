@@ -25,7 +25,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
+public class SvnVersionFilterComponent extends StandardVersionFilterComponent<ChangeBrowserSettings> {
   private JCheckBox myUseAuthorFilter;
   private JTextField myAuthorField;
   private JPanel myPanel;
@@ -47,16 +47,14 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent {
 
   protected void initValues(ChangeBrowserSettings settings) {
     super.initValues(settings);
-    final SvnChangesBrowserSettings svnSettings = SvnChangesBrowserSettings.getSettings(myProject);
-    myUseAuthorFilter.setSelected(svnSettings.USE_AUTHOR_FIELD);
-    myAuthorField.setText(svnSettings.AUTHOR);
+    myUseAuthorFilter.setSelected(settings.USE_USER_FILTER);
+    myAuthorField.setText(settings.USER);
   }
 
   public void saveValues(ChangeBrowserSettings settings) {
     super.saveValues(settings);
-    final SvnChangesBrowserSettings svnSettings = SvnChangesBrowserSettings.getSettings(myProject);
-    svnSettings.AUTHOR = myAuthorField.getText();
-    svnSettings.USE_AUTHOR_FIELD = myUseAuthorFilter.isSelected();
+    settings.USER = myAuthorField.getText();
+    settings.USE_USER_FILTER = myUseAuthorFilter.isSelected();
   }
 
   protected void installCheckBoxListener(final ActionListener filterListener) {

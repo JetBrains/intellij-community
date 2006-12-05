@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Collections;
 import java.io.File;
 
-public class SvnCommittedChangesProvider implements CommittedChangesProvider<SvnChangeList> {
+public class SvnCommittedChangesProvider implements CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
   private Project myProject;
   private String myLocation;
 
@@ -66,7 +66,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
     return new ChangeBrowserSettings();
   }
 
-  public ChangesBrowserSettingsEditor createFilterUI() {
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI() {
     return new SvnVersionFilterComponent(myProject);
   }
 
@@ -109,9 +109,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
       SVNLogClient logger = SvnVcs.getInstance(myProject).createLogClient();
       final SVNRepository repository = SvnVcs.getInstance(myProject).createRepository(location);
 
-      final SvnChangesBrowserSettings svnSettings = SvnChangesBrowserSettings.getSettings(myProject);
-
-      final String author = svnSettings.getAuthorFilter();
+      final String author = settings.getUserFilter();
       final Date dateFrom = settings.getDateAfterFilter();
       final Long changeFrom = settings.getChangeAfterFilter();
       final Date dateTo = settings.getDateBeforeFilter();
