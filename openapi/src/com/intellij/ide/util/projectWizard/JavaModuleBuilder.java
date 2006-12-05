@@ -54,8 +54,7 @@ public class JavaModuleBuilder extends ModuleBuilder {
     final String path = acceptParameter(moduleRootPath);
     if (path != null) {
       try {
-        // use canonical path to be sure symlinks are resolved
-        myContentEntryPath = new File(path).getCanonicalPath();
+        myContentEntryPath = FileUtil.resolveShortWindowsName(path);
       }
       catch (IOException e) {
         myContentEntryPath = path;
@@ -122,7 +121,7 @@ public class JavaModuleBuilder extends ModuleBuilder {
       // should set only absolute paths
       String canonicalPath;
       try {
-        canonicalPath = new File(myCompilerOutputPath).getCanonicalPath();
+        canonicalPath = FileUtil.resolveShortWindowsName(myCompilerOutputPath);
       }
       catch (IOException e) {
         canonicalPath = myCompilerOutputPath;

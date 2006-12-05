@@ -25,6 +25,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.concurrency.SwingWorker;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -37,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -225,8 +225,7 @@ public class SourcePathsStep extends ModuleWizardStep {
       if (selectedElements.size() > 0) {
         paths = new ArrayList<Pair<String, String>>(selectedElements.size());
 
-        for (Iterator<Pair<String, String>> iterator = selectedElements.iterator(); iterator.hasNext();) {
-          final Pair<String, String> path = iterator.next();
+        for (final Pair<String, String> path : selectedElements) {
           paths.add(Pair.create(path.first.replace(File.separatorChar, '/'), path.second));
         }
       }
@@ -381,12 +380,11 @@ public class SourcePathsStep extends ModuleWizardStep {
     }
     final List<Pair<File,String>> suggestedRoots = JavaUtil.suggestRoots(entryFile);
     final List<Pair<String,String>> paths = new ArrayList<Pair<String, String>>();
-    for (int idx = 0; idx < suggestedRoots.size(); idx++) {
-      final Pair<File,String> suggestedRoot = suggestedRoots.get(idx);
+    for (final Pair<File, String> suggestedRoot : suggestedRoots) {
       try {
-        // important: should check canonical file because of symlinks
-        if (FileUtil.isAncestor(entryFile, suggestedRoot.first.getCanonicalFile(), false)) {
-          paths.add(Pair.create(suggestedRoot.first.getCanonicalPath(), suggestedRoot.second));
+        if (FileUtil.isAncestor(entryFile, suggestedRoot.first, false)) {
+          final String path = FileUtil.resolveShortWindowsName(suggestedRoot.first.getPath());
+          paths.add(Pair.create(path, suggestedRoot.second));
         }
       }
       catch (IOException e) {
@@ -411,6 +409,7 @@ public class SourcePathsStep extends ModuleWizardStep {
       myField = textField;
     }
 
+    @Nullable
     private VirtualFile getContentEntryDir() {
       final String contentEntryPath = myBuilder.getContentEntryPath();
       if (contentEntryPath != null) {

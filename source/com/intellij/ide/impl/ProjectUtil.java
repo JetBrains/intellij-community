@@ -87,7 +87,7 @@ public class ProjectUtil {
               final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
               String canonicalPath = compileOutput;
               try {
-                canonicalPath = new File(compileOutput).getCanonicalPath();
+                canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
               }
               catch (IOException e) {
                 //file doesn't exist
@@ -183,14 +183,15 @@ public class ProjectUtil {
     if (lastProjectLocation == null) {
       return;
     }
+    String path = lastProjectLocation.getPath();
     try {
-      lastProjectLocation = lastProjectLocation.getCanonicalFile();
+      path = FileUtil.resolveShortWindowsName(path);
     }
     catch (IOException e) {
       LOG.info(e);
       return ;
     }
-    GeneralSettings.getInstance().setLastProjectLocation(lastProjectLocation.getPath().replace(File.separatorChar, '/'));
+    GeneralSettings.getInstance().setLastProjectLocation(path.replace(File.separatorChar, '/'));
   }
 
   /**

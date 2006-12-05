@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,8 +81,7 @@ public class FileUtil {
   }
 
   public static boolean isAncestor(File ancestor, File file, boolean strict) throws IOException {
-    ancestor = ancestor.getCanonicalFile();
-    File parent = strict ? file.getCanonicalFile().getParentFile() : file.getCanonicalFile();
+    File parent = strict ? file.getParentFile() : file;
     while (true) {
       if (parent == null) {
         return false;
@@ -509,5 +509,14 @@ public class FileUtil {
     int index = fileName.lastIndexOf('.');
     if (index < 0) return "";
     return fileName.substring(index + 1).toLowerCase();
+  }
+
+  @NotNull
+  public static String resolveShortWindowsName(@NotNull final String path) throws IOException {
+    if (SystemInfo.isWindows) {
+      //todo: this resolves symlinks on Windows, but we'd rather not do it
+      return new File(path.replace(File.separatorChar, '/')).getCanonicalPath();
+    }
+    return path;
   }
 }

@@ -33,7 +33,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.File;
 import java.io.IOException;
 
 public class BuildElementsEditor extends ModuleElementsEditor {
@@ -182,7 +181,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
           // should set only absolute paths
           String canonicalPath;
           try {
-            canonicalPath = new File(path).getCanonicalPath();
+            canonicalPath = FileUtil.resolveShortWindowsName(path);
           }
           catch (IOException e) {
             canonicalPath = path;

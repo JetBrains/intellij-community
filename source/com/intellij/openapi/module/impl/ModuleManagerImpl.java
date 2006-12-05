@@ -587,10 +587,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
       assertWritable();
       try {
-        String canonicalPath = new File(filePath.replace('/', File.separatorChar)).getCanonicalPath();
-        if (canonicalPath != null) {
-          filePath = canonicalPath;
-        }
+        filePath = FileUtil.resolveShortWindowsName(filePath);
       }
       catch (IOException e) {
       }
@@ -635,10 +632,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
                                                               LoadCancelledException {
       final File moduleFile = new File(filePath);
       try {
-        String canonicalPath = moduleFile.getCanonicalPath();
-        if (canonicalPath != null) {
-          filePath = canonicalPath;
-        }
+        filePath = FileUtil.resolveShortWindowsName(filePath);
       }
       catch (IOException e) {
       }

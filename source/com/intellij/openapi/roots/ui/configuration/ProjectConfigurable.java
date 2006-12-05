@@ -200,7 +200,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
         String canonicalPath = myProjectCompilerOutput.getText();
         if (canonicalPath != null && canonicalPath.length() > 0) {
           try {
-            canonicalPath = new File(canonicalPath).getCanonicalPath();
+            canonicalPath = FileUtil.resolveShortWindowsName(canonicalPath);
           }
           catch (IOException e) {
             //file doesn't exist yet

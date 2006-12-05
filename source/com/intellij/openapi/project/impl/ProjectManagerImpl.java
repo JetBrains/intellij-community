@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -187,10 +188,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private static String canonicalize(final String filePath) {
     if (filePath == null) return null;
     try {
-      String canonicalPath = new File(filePath).getCanonicalPath();
-      if (canonicalPath != null) {
-        return canonicalPath;
-      }
+      return FileUtil.resolveShortWindowsName(filePath);
     }
     catch (IOException e) {
       // OK. File does not yet exist so it's canonical path will be equal to its original path.
