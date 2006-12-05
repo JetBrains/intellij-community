@@ -53,6 +53,8 @@ public class RedundantThrows extends GlobalInspectionTool {
 
       if (refMethod.hasSuperMethods()) return null;
 
+      if (refMethod.isEntry()) return null;
+
       PsiClass[] unThrown = refMethod.getUnThrownExceptions();
       if (unThrown == null) return null;
 

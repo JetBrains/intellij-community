@@ -22,4 +22,9 @@ public class RedundantThrowTest extends InspectionTestCase {
 
   public void testSCR14543() throws Exception { doTest(); }
   public void testRemote() throws Exception { doTest(); }
+
+  public void testEntryPoint() throws Exception {
+    final RedundantThrows tool = new RedundantThrows();
+    doTest("redundantThrow/" + getTestName(false), tool, false, true);
+  }
 }

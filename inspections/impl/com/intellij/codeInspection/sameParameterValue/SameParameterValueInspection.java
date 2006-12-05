@@ -29,6 +29,8 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
 
       if (refMethod.hasSuperMethods()) return null;
 
+      if (refMethod.isEntry()) return null;
+
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
         String value = refParameter.getActualValueIfSame();

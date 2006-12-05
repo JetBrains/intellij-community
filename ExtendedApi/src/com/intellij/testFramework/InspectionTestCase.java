@@ -12,6 +12,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,6 +55,11 @@ public abstract class InspectionTestCase extends PsiTestCase {
   public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange) throws Exception {
     doTest(folderName, new GlobalInspectionToolWrapper(tool), checkRange);
   }
+
+  public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange, boolean runDeadCodeFirst) throws Exception {
+    doTest(folderName, new GlobalInspectionToolWrapper(tool), "java 1.4", checkRange, runDeadCodeFirst);
+  }
+
   public void doTest(@NonNls String folderName, InspectionTool tool) throws Exception {
     doTest(folderName, tool, "java 1.4");
   }
@@ -67,12 +73,16 @@ public abstract class InspectionTestCase extends PsiTestCase {
   }
 
   public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName, boolean checkRange) throws Exception {
-    final String testDir = getTestDataPath() + "/"+folderName;
-    runTool(testDir, jdkName, tool);
+    doTest(folderName, tool, jdkName, checkRange, false);
+  }
+
+  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName, boolean checkRange, boolean runDeadCodeFirst) throws Exception {
+    final String testDir = getTestDataPath() + "/" + folderName;
+    runTool(testDir, jdkName, tool, runDeadCodeFirst);
 
     final Element root = new Element("problems");
     final Document doc = new Document(root);
-    tool.updateContent();  //e.g. dead code need check for reachables  
+    tool.updateContent();  //e.g. dead code need check for reachables
     tool.exportResults(root);
 
     File file = new File(testDir + "/expected.xml");
@@ -82,6 +92,10 @@ public abstract class InspectionTestCase extends PsiTestCase {
   }
 
   protected void runTool(@NonNls final String testDir, @NonNls final String jdkName, final InspectionTool tool) {
+    runTool(testDir, jdkName, tool, false);
+  }
+
+  protected void runTool(final String testDir, final String jdkName, final InspectionTool tool, boolean runDeadCodeFirst) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -99,6 +113,16 @@ public abstract class InspectionTestCase extends PsiTestCase {
     final GlobalInspectionContextImpl globalContext = inspectionManager.createNewGlobalContext(true);
     globalContext.setCurrentScope(scope);
 
+    if (runDeadCodeFirst) {
+      runTool(new DeadCodeInspection(), scope, globalContext, inspectionManager);
+    }
+    runTool(tool, scope, globalContext, inspectionManager);
+  }
+
+  private static void runTool(final InspectionTool tool,
+                              final AnalysisScope scope,
+                              final GlobalInspectionContextImpl globalContext,
+                              final InspectionManagerEx inspectionManager) {
     tool.initialize(globalContext);
     if (tool.isGraphNeeded()){
       ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
