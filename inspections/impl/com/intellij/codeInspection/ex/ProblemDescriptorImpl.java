@@ -23,14 +23,14 @@ import org.jetbrains.annotations.Nullable;
 public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implements ProblemDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.ProblemDescriptorImpl");
 
-  @NotNull private SmartPsiElementPointer myStartSmartPointer;
-  @Nullable private SmartPsiElementPointer myEndSmartPointer;
+  @NotNull private final SmartPsiElementPointer myStartSmartPointer;
+  @Nullable private final SmartPsiElementPointer myEndSmartPointer;
 
 
-  private ProblemHighlightType myHighlightType;
+  private final ProblemHighlightType myHighlightType;
   private Navigatable myNavigatable;
-  private boolean myAfterEndOfLine;
-  private TextRange myTextRangeInElement;
+  private final boolean myAfterEndOfLine;
+  private final TextRange myTextRangeInElement;
 
   public ProblemDescriptorImpl(PsiElement startElement, PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
@@ -93,7 +93,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public TextRange getTextRange() {
     PsiElement startElement = getStartElement();
-    PsiElement endElement = getEndElement();
+    PsiElement endElement = myEndSmartPointer == null ? startElement : getEndElement();
     if (startElement == null || endElement == null) return null;
     TextRange textRange = startElement.getTextRange();
     if (startElement == endElement) {

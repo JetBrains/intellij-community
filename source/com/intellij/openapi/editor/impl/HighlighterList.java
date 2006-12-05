@@ -4,17 +4,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import gnu.trove.THashSet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
 
 public class HighlighterList {
-  private ArrayList<RangeHighlighterImpl> mySegmentHighlighters = new ArrayList<RangeHighlighterImpl>();
+  private final ArrayList<RangeHighlighterImpl> mySegmentHighlighters = new ArrayList<RangeHighlighterImpl>();
+  private final Set<RangeHighlighterImpl> myHighlightersSet = new THashSet<RangeHighlighterImpl>();
   private boolean myIsDirtied = false;
-  private DocumentAdapter myDocumentListener;
-  private Document myDoc;
+  private final DocumentAdapter myDocumentListener;
+  private final Document myDoc;
   private int myLongestHighlighterLength = 0;
 
   public HighlighterList(Document doc) {
@@ -37,19 +36,20 @@ public class HighlighterList {
 
   private void sortMarkers() {
     myLongestHighlighterLength = 0;
-    RangeHighlighterImpl[] segmentHighlighters = mySegmentHighlighters.toArray(new RangeHighlighterImpl[mySegmentHighlighters.size()]);
-    for (int i = 0; i < segmentHighlighters.length; i++) {
-      RangeHighlighterImpl segmentHighlighter = segmentHighlighters[i];
-      if (!segmentHighlighter.isValid()) mySegmentHighlighters.remove(segmentHighlighter);
-      myLongestHighlighterLength =
-      Math.max(myLongestHighlighterLength, segmentHighlighter.getEndOffset() - segmentHighlighter.getStartOffset());
+    mySegmentHighlighters.clear();
+    Iterator<RangeHighlighterImpl> iterator = myHighlightersSet.iterator();
+    while (iterator.hasNext()) {
+      RangeHighlighterImpl rangeHighlighter = iterator.next();
+      if (rangeHighlighter.isValid()) {
+        mySegmentHighlighters.add(rangeHighlighter);
+        myLongestHighlighterLength = Math.max(myLongestHighlighterLength, rangeHighlighter.getEndOffset() - rangeHighlighter.getStartOffset());
+      }
+      else {
+        iterator.remove();
+      }
     }
-
     Collections.sort(mySegmentHighlighters, new Comparator<RangeHighlighterImpl>() {
       public int compare(RangeHighlighterImpl r1, RangeHighlighterImpl r2) {
-//        RangeHighlighterImpl r1 = (RangeHighlighterImpl) o1;
-//        RangeHighlighterImpl r2 = (RangeHighlighterImpl) o2;
-
         if (r1.getAffectedAreaStartOffset() != r2.getAffectedAreaStartOffset()) {
           return r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
         }
@@ -65,7 +65,7 @@ public class HighlighterList {
     myIsDirtied = false;
   }
 
-  public Iterator getHighlighterIterator() {
+  public Iterator<RangeHighlighterImpl> getHighlighterIterator() {
     if (myIsDirtied) sortMarkers();
     return mySegmentHighlighters.iterator();
   }
@@ -77,11 +77,11 @@ public class HighlighterList {
 
   public void addSegmentHighlighter(RangeHighlighter segmentHighlighter) {
     myIsDirtied = true;
-    mySegmentHighlighters.add((RangeHighlighterImpl)segmentHighlighter);
+    myHighlightersSet.add((RangeHighlighterImpl)segmentHighlighter);
   }
 
   public void removeSegmentHighlighter(RangeHighlighter segmentHighlighter) {
     myIsDirtied = true;
-    mySegmentHighlighters.remove(segmentHighlighter);
+    myHighlightersSet.remove(segmentHighlighter);
   }
 }
