@@ -1,7 +1,10 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
 import com.sun.jdi.VMDisconnectedException;
+
+import java.util.concurrent.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,36 +18,82 @@ public abstract class InvokeThread<E> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.InvokeThread");
   private final String myWorkerThreadName;
 
-  private static int N = 0;
+  private static ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<WorkerThreadRequest>();
 
-  protected static class WorkerThread<E> extends Thread {
+  public abstract static class WorkerThreadRequest<E> implements Runnable {
     private final InvokeThread<E> myOwner;
+    private volatile Future<?> myRequestFuture;
 
-    private boolean myIsInterrupted = false;
-
-    protected WorkerThread(InvokeThread<E> owner, String name) {
-      super(name + (N ++));
-      setPriority(Thread.NORM_PRIORITY);
+    protected WorkerThreadRequest(InvokeThread<E> owner) {
       myOwner = owner;
     }
 
     public void interrupt() {
-      myIsInterrupted = true;
-      super.interrupt();
+      assert myRequestFuture != null;
+      myRequestFuture.cancel( this != getCurrentThreadRequest() );  // do not hard interrupt current thread
     }
 
     public boolean isInterrupted() {
-      return myIsInterrupted || super.isInterrupted();
+      assert myRequestFuture != null;
+      return myRequestFuture.isCancelled();
+    }
+
+    public void join() throws InterruptedException, ExecutionException {
+      assert myRequestFuture != null;
+      try {
+        myRequestFuture.get();
+      } catch(CancellationException ex) {
+
+      }
+    }
+
+    public void join(long timeout) throws InterruptedException, ExecutionException {
+      assert myRequestFuture != null;
+      try {
+        myRequestFuture.get(timeout, TimeUnit.MILLISECONDS);
+      }
+      catch (TimeoutException e) {
+        return;
+      } catch (CancellationException e) {
+        return;
+      }
+    }
+
+    final void setRequestFuture(Future<?> requestFuture) {
+      myRequestFuture = requestFuture;
     }
 
     public InvokeThread<E> getOwner() {
       return myOwner;
     }
+
+    public boolean isDone() {
+      assert myRequestFuture != null;
+      return myRequestFuture.isDone();
+    }
+
+    protected void beforeRun() {
+      int retry = 0;
+      while (myRequestFuture == null && retry < 20) {
+        try {
+          Thread.sleep(100);
+          ++retry;
+        }
+        catch (InterruptedException e) {
+        }
+      }
+      assert myRequestFuture != null;
+      ourWorkerRequest.set(this);
+    }
+
+    protected void afterRun() {
+      ourWorkerRequest.set(null);
+    }
   }
 
   protected final EventQueue<E> myEvents;
 
-  private WorkerThread myWorkerThread = null;
+  private WorkerThreadRequest myCurrentRequest = null;
 
   public InvokeThread(String name, int countPriorites) {
     myEvents = new EventQueue<E>(countPriorites);
@@ -55,35 +104,39 @@ public abstract class InvokeThread<E> {
   protected abstract void processEvent(E e);
 
   protected void startNewWorkerThread() {
-    WorkerThread workerThread = new WorkerThread(this, myWorkerThreadName) {
+    final WorkerThreadRequest workerRequest = new WorkerThreadRequest(this) {
       public void run() {
-        InvokeThread.this.run();
+         beforeRun();
+         try {
+           InvokeThread.this.run(this);
+         } finally {
+           afterRun();
+         }
       }
     };
-    myWorkerThread = workerThread;
-    workerThread.start();
+    myCurrentRequest = workerRequest;
+    workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }
 
   protected void restartWorkerThread() {
-    getWorkerThread().interrupt();
+    getCurrentRequest().interrupt();
     try {
-      getWorkerThread().join(RESTART_TIMEOUT);
+      getCurrentRequest().join(RESTART_TIMEOUT);
     }
-    catch (InterruptedException e) {
+    catch (Exception e) {
       throw new RuntimeException(e);
     }
     startNewWorkerThread();
   }
 
-  public void run() {
-    Thread current = Thread.currentThread();
+  public void run(WorkerThreadRequest current) {
 
     for(;;) {
       try {
         if(current.isInterrupted()) break;
 
-        if(getWorkerThread() != current) {
-          LOG.assertTrue(false, "Expected " + current + " instead of " + getWorkerThread());
+        if(getCurrentRequest() != current) {
+          LOG.assertTrue(false, "Expected " + current + " instead of " + getCurrentRequest());
         }
 
         processEvent(myEvents.get());
@@ -103,13 +156,13 @@ public abstract class InvokeThread<E> {
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Thread " + this.toString() + " exited");
+      LOG.debug("Request " + this.toString() + " exited");
     }
   }
 
   protected static InvokeThread currentThread() {
-    Thread thread = Thread.currentThread();
-    return thread instanceof WorkerThread ? ((WorkerThread)thread).getOwner() : null;
+    final WorkerThreadRequest request = getCurrentThreadRequest();
+    return request != null? request.getOwner() : null;
   }
 
   public void invokeLater(E r, int priority) {
@@ -119,17 +172,23 @@ public abstract class InvokeThread<E> {
     myEvents.put(r, priority);
   }
 
-  protected void switchToThread(WorkerThread newWorkerThread) {
-    LOG.assertTrue(Thread.currentThread() instanceof WorkerThread);
-    myWorkerThread = newWorkerThread;
+  protected void switchToRequest(WorkerThreadRequest newWorkerThread) {
+    final WorkerThreadRequest request = getCurrentThreadRequest();
+    LOG.assertTrue(request != null);
+    myCurrentRequest = newWorkerThread;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Closing " + Thread.currentThread() + " new thread = " + newWorkerThread);
+      LOG.debug("Closing " + request + " new request = " + newWorkerThread);
     }
-    Thread.currentThread().interrupt();
+
+    request.interrupt();
   }
 
-  public Thread getWorkerThread() {
-    return myWorkerThread;
+  public WorkerThreadRequest getCurrentRequest() {
+    return myCurrentRequest;
+  }
+
+  public static WorkerThreadRequest getCurrentThreadRequest() {
+    return ourWorkerRequest.get();
   }
 
   public void close() {

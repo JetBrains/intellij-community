@@ -89,14 +89,31 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NonNls private static final String XML_EXTENSION = ".xml";
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
-    10,
+    15,
     Integer.MAX_VALUE,
     60L,
     TimeUnit.SECONDS,
     new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
       public Thread newThread(Runnable r) {
-        return new Thread(r, "ApplicationImpl pooled thread");
+        return new Thread(r, "ApplicationImpl pooled thread") {
+          public void interrupt() {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Interrupted worker, will remove from pool");
+            }
+            super.interrupt();
+          }
+
+          public void run() {
+            try {
+              super.run();
+            } catch(Throwable t) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Worker exits due to exception", t);
+              }
+            }
+          }
+        };
       }
     }
   );

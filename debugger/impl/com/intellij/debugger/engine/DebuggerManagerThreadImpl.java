@@ -15,8 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Alarm;
 import com.sun.jdi.VMDisconnectedException;
 
-import javax.swing.*;
-
 /**
  * Created by IntelliJ IDEA.
  * User: lex
@@ -199,22 +197,22 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       process.run();
     }
     finally {
-      final WorkerThread thread = (WorkerThread)Thread.currentThread();
+      final WorkerThreadRequest request = getCurrentThreadRequest();
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Switching back to " + thread);
+        LOG.debug("Switching back to " + request);
       }
 
       super.invokeAndWait(new DebuggerCommandImpl() {
         protected void action() throws Exception {
-          switchToThread(thread);
+          switchToRequest(request);
         }
 
         protected void commandCancelled() {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Event queue was closed, killing thread");
+            LOG.debug("Event queue was closed, killing request");
           }
-          thread.interrupt();
+          request.interrupt();
         }
       }, NORMAL_PRIORITY);
     }
