@@ -271,7 +271,6 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     return list;
   }
 
-
   private Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 

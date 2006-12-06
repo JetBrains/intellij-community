@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +54,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
-  private ProgressIndicator myUpdateProgress = new ProgressIndicatorBase();
+  private volatile ProgressIndicator myUpdateProgress = new DaemonProgressIndicator();
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
 
@@ -86,7 +85,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myLastSettings = (DaemonCodeAnalyzerSettings)mySettings.clone();
 
     myFileStatusMap = new FileStatusMap(myProject);
-    myPassExecutorService = new PassExecutorService(myUpdateProgress, myProject);
+    myPassExecutorService = new PassExecutorService(this, myProject);
   }
 
   @NotNull
@@ -124,11 +123,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
     };
     reloadScopes();
-    myUpdateProgress = new MyMockProgressIndicator(stoppedNotify);
+    createProgressIndicatorForTests(stoppedNotify);
 
-    myPassExecutorService = new PassExecutorService(myUpdateProgress, myProject);
+    myPassExecutorService = new PassExecutorService(this, myProject);
     myInitialized = true;
+    myDisposed = false;
+
+    myAlarm.cancelAllRequests();
+    myPassExecutorService.cancelAll();
+    myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
   }
+
+  public void createProgressIndicatorForTests(final Object stoppedNotify) {
+    myUpdateProgress = new MyMockProgressIndicator(stoppedNotify);
+  }
+
   private static class MyMockProgressIndicator extends MockProgressIndicator {
     private final Object myStoppedNotify;
 
@@ -138,16 +147,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     public void stop() {
       super.stop();
+      cancel();
       if (LOG.isDebugEnabled()) {
         LOG.debug("STOPPED", new Throwable());
       }
       synchronized(myStoppedNotify) {
         myStoppedNotify.notifyAll();
       }
-    }
-
-    public void cancel() {
-      super.cancel();
     }
   }
 
@@ -299,14 +305,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myUpdateProgress;
   }
 
-  public void stopProcess(boolean toRestartAlarm) {
-    myUpdateProgress.cancel();
+  public synchronized void stopProcess(boolean toRestartAlarm) {
+    renewUpdateProgress();
     myAlarm.cancelAllRequests();
     myPassExecutorService.cancelAll();
     if (toRestartAlarm && !myDisposed && myInitialized && myDaemonListeners.myIsFrameFocused) {
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
       //LOG.debug("restarted ",new Throwable());
     }
+  }
+
+  private void renewUpdateProgress() {
+    myUpdateProgress.cancel();
+    myUpdateProgress = myUpdateProgress instanceof MyMockProgressIndicator ?
+                       new MyMockProgressIndicator(((MyMockProgressIndicator)myUpdateProgress).myStoppedNotify) :
+                       new DaemonProgressIndicator();
   }
 
   @Nullable
@@ -492,7 +505,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         }
         if (!myUpdateByTimerEnabled) return;
         if (myDisposed) return;
-
+        renewUpdateProgress();
         final FileEditor[] activeEditors = myDaemonListeners.getSelectedEditors();
         for (FileEditor fileEditor : activeEditors) {
           BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();

@@ -25,9 +25,9 @@ public class ProgressIndicatorBase implements ProgressIndicator {
 
   private volatile boolean myIndeterminate;
 
-  private ArrayList<String> myTextStack = new ArrayList<String>();
-  private DoubleArrayList myFractionStack = new DoubleArrayList();
-  private ArrayList<String> myText2Stack = new ArrayList<String>();
+  private final ArrayList<String> myTextStack = new ArrayList<String>();
+  private final DoubleArrayList myFractionStack = new DoubleArrayList();
+  private final ArrayList<String> myText2Stack = new ArrayList<String>();
   private volatile int myNonCancelableCount = 0;
 
   private ProgressIndicator myModalityProgress = null;
@@ -74,7 +74,6 @@ public class ProgressIndicatorBase implements ProgressIndicator {
   public void stop(){
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
-
     exitModality();
   }
 
@@ -157,7 +156,7 @@ public class ProgressIndicatorBase implements ProgressIndicator {
 
   public void popState(){
     synchronized(this){
-      LOG.assertTrue(myTextStack.size() > 0);
+      LOG.assertTrue(!myTextStack.isEmpty());
       setText(myTextStack.remove(myTextStack.size() - 1));
       setFraction(myFractionStack.remove(myFractionStack.size() - 1));
       setText2(myText2Stack.remove(myText2Stack.size() - 1));
