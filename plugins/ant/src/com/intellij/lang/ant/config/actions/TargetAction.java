@@ -9,11 +9,9 @@ import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
 
 public final class TargetAction extends AnAction {
   public static final String DEFAULT_TARGET_NAME = AntBundle.message("ant.target.name.default.target");
-  @NonNls public static final String ACTION_ID_PREFIX = "Ant_";
 
   private final String myBuildName;
   private final String[] myTargets;

@@ -426,7 +426,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     synchronized (myLock) {
       // unregister Ant actions
       ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      final String[] oldIds = actionManager.getActionIds(TargetAction.ACTION_ID_PREFIX);
+      final String[] oldIds = actionManager.getActionIds(ACTION_ID_PREFIX);
       for (String oldId : oldIds) {
         actionManager.unregisterAction(oldId);
       }

@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.*;
-import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
@@ -74,7 +73,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     if (modelName == null || modelName.trim().length() == 0) return null;
     final StringBuilder name = StringBuilderSpinAllocator.alloc();
     try {
-      name.append(TargetAction.ACTION_ID_PREFIX);
+      name.append(AntConfiguration.ACTION_ID_PREFIX);
       name.append(modelName);
       name.append('_');
       name.append(getName());

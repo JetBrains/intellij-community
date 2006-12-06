@@ -2,7 +2,6 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
-import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -54,7 +53,7 @@ public class MetaTarget implements AntBuildTargetBase {
   public String getActionId() {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append(TargetAction.ACTION_ID_PREFIX);
+      builder.append(AntConfiguration.ACTION_ID_PREFIX);
       builder.append('_');
       builder.append(myName);
       return builder.toString();

@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -34,6 +35,7 @@ public abstract class AntConfiguration implements ProjectComponent {
   private static final Map<Project, AntConfiguration> CONFIGURATIONS = new HashMap<Project, AntConfiguration>();
   private final Project myProject;
   public static final String ANT = AntBundle.message("run.ant.target.step.before.run");
+  @NonNls public static final String ACTION_ID_PREFIX = "Ant_";
 
   protected AntConfiguration(final Project project) {
     myProject = project;

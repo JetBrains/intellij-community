@@ -1,6 +1,5 @@
 package com.intellij.openapi.keymap.impl.ui;
 
-import com.intellij.ant.actions.TargetAction;
 import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.search.SearchUtil;
@@ -174,7 +173,7 @@ public class ActionsTreeUtil {
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          if (id.startsWith(TargetAction.ACTION_ID_PREFIX)) continue;
+          if (id.startsWith(AntConfiguration.ACTION_ID_PREFIX)) continue;
           if (id.startsWith(Tool.ACTION_ID_PREFIX)) continue;
           if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
@@ -237,7 +236,7 @@ public class ActionsTreeUtil {
 
   private static Group createAntGroup(Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(TargetAction.ACTION_ID_PREFIX);
+    String[] ids = actionManager.getActionIds(AntConfiguration.ACTION_ID_PREFIX);
     Arrays.sort(ids);
     Group group = new Group(KeyMapBundle.message("ant.targets.group.title"), ANT_ICON, ANT_OPEN_ICON);
 

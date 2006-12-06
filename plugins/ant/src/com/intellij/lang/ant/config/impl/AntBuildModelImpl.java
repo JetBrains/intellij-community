@@ -1,7 +1,6 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.*;
-import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
@@ -53,7 +52,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     if (getDefaultTargetName() == null) return null;
     final String projectName = getName();
     if (projectName == null || projectName.trim().length() == 0) return null;
-    return TargetAction.ACTION_ID_PREFIX + projectName;
+    return AntConfiguration.ACTION_ID_PREFIX + projectName;
 
   }
 
