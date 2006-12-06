@@ -181,18 +181,6 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       return false;
     }
 
-    if (insertingAnnotation()) {
-      final Document document = context.editor.getDocument();
-      PsiDocumentManager.getInstance(context.project).commitDocument(document);
-      PsiElement elementAt = myFile.findElementAt(myContext.startOffset);
-      if (elementAt instanceof PsiIdentifier && isAtTokenNeeded()) {
-        final PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
-        if (parent instanceof PsiModifierListOwner) {
-          int expectedOffsetForAtToken = elementAt.getTextRange().getStartOffset();
-          document.insertString(expectedOffsetForAtToken, "@");
-        }
-      }
-    }
     return true;
   }
 
