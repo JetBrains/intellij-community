@@ -110,8 +110,16 @@ public class DomImplUtil {
   }
 
   public static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final DomInvocationHandler handler) {
-    final String localName = evaluatedXmlName.getLocalName();
-    return localName.equals(tag.getLocalName()) && evaluatedXmlName.isNamespaceAllowed(handler, tag.getNamespace());
+    return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), handler);
+  }
+
+  public static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName,
+                                        final String localName,
+                                        final String qName,
+                                        final String namespace,
+                                        final DomInvocationHandler handler) {
+    final String localName1 = evaluatedXmlName.getLocalName();
+    return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(handler, namespace);
   }
 
   public static boolean containsTagName(final Set<XmlName> qnames1, final XmlTag subTag, final DomInvocationHandler handler) {

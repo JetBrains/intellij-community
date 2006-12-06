@@ -39,7 +39,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
     }
   };
 
-  private Map<XmlTag,TagChangeSet> myChangeSets = new HashMap<XmlTag, TagChangeSet>();
+  private final Map<XmlTag,TagChangeSet> myChangeSets = new HashMap<XmlTag, TagChangeSet>();
   private boolean myDocumentChanged;
   private final DomManagerImpl myDomManager;
 

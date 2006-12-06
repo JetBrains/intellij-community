@@ -242,11 +242,19 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   protected final XmlTag createChildTag(final EvaluatedXmlName tagName) {
+    final String localName = tagName.getLocalName();
+    if (localName.contains(":")) {
+      try {
+        return myXmlTag.getManager().getElementFactory().createTagFromText("<" + localName + "/>");
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+
     final XmlElement element = getXmlElement();
     assert element != null;
-    final String namespace = tagName.getNamespace(element);
-    final String localName = tagName.getLocalName();
-    return myXmlTag.createChildTag(localName, namespace, "", false);
+    return myXmlTag.createChildTag(localName, tagName.getNamespace(element), "", false);
   }
 
   public boolean isValid() {
