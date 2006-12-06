@@ -270,11 +270,12 @@ public class FileTemplateUtil{
                                                 boolean reformat,
                                                 String extension) throws IncorrectOperationException{
     if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
-    PsiJavaFile psiJavaFile = (PsiJavaFile)PsiManager.getInstance(project).getElementFactory().createFileFromText("myclass" + "." + extension, content);
-    PsiClass[] classes = psiJavaFile.getClasses();
+    final PsiFile psiFile = PsiManager.getInstance(project).getElementFactory().createFileFromText("myclass" + "." + extension, content);
+    final PsiClass[] classes = psiFile instanceof PsiJavaFile? ((PsiJavaFile)psiFile).getClasses() : PsiClass.EMPTY_ARRAY;
     if(classes.length == 0){
       throw new IncorrectOperationException("This template did not produce Java class nor interface!");
     }
+    PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
     PsiClass createdClass = classes[0];
     if(reformat){
       CodeStyleManager.getInstance(project).reformat(psiJavaFile);
