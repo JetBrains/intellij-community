@@ -111,7 +111,19 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
-            registerError(typeElement, typeElement);
+            if (typeElement == null) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement reference =
+                    typeElement.getInnermostComponentReferenceElement();
+            if (reference == null) {
+                return;
+            }
+            final PsiElement nameElement = reference.getReferenceNameElement();
+            if (nameElement == null) {
+                return;
+            }
+            registerError(nameElement, nameElement);
         }
 
         public void visitMethod(@NotNull PsiMethod method) {
@@ -128,7 +140,20 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
                 return;
             }
             final PsiTypeElement typeElement = method.getReturnTypeElement();
-            registerError(typeElement, typeElement);
+            if (typeElement == null) {
+                return;
+            }
+            final PsiJavaCodeReferenceElement referenceElement =
+                    typeElement.getInnermostComponentReferenceElement();
+            if (referenceElement == null) {
+                return;
+            }
+            final PsiElement nameElement =
+                    referenceElement.getReferenceNameElement();
+            if (nameElement == null) {
+                return;
+            }
+            registerError(nameElement, nameElement);
         }
     }
 }
