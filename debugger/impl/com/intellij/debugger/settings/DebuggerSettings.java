@@ -45,6 +45,10 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public String RUN_HOTSWAP_AFTER_COMPILE;
   public boolean COMPILE_BEFORE_HOTSWAP;
 
+  public volatile float THREADS_FRAME_SPLITTER_PROPORTION = 0.25f;
+  public volatile float FRAME_WATCHES_SPLITTER_PROPORTION = 0.20f;
+  public volatile boolean WATCHES_VISIBLE = true;
+
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
   public DebuggerSettings(ColorSettingsPages pages) {

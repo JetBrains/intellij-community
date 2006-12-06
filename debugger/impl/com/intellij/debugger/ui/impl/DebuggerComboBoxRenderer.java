@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
@@ -26,10 +27,8 @@ public class DebuggerComboBoxRenderer extends BasicComboBoxRenderer {
     return component;
   }
 
-  private Icon getIcon(Object item) {
-    if (item == null) {
-      return null;
-    }
+  @Nullable
+  private static Icon getIcon(Object item) {
     if (item instanceof ThreadDescriptorImpl) {
       ThreadDescriptorImpl descriptor = (ThreadDescriptorImpl)item;
       return descriptor.getIcon();

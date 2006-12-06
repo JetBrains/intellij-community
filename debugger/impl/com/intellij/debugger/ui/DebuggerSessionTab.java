@@ -13,7 +13,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.DebuggerPanel;
 import com.intellij.debugger.ui.impl.FramePanel;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
-import com.intellij.debugger.ui.impl.ThreadsPanel;
+import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.diagnostic.logging.LogConsole;
@@ -41,11 +41,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
-import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
@@ -65,7 +63,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
 
   private static final Icon CONSOLE_ICON = IconLoader.getIcon("/debugger/console.png");
-  private static final Icon THREADS_ICON = IconLoader.getIcon("/debugger/threads.png");
+  //private static final Icon THREADS_ICON = IconLoader.getIcon("/debugger/threads.png");
   private static final Icon FRAME_ICON = IconLoader.getIcon("/debugger/frame.png");
   private static final Icon WATCHES_ICON = IconLoader.getIcon("/debugger/watches.png");
 
@@ -82,12 +80,9 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private ActionToolbar myFirstToolbar;
   private ActionToolbar mySecondToolbar;
 
-  /**
-   * 4 debugger views
-   */
   private final JPanel myContentPanel;
   private final FramePanel myFramePanel;
-  private final ThreadsPanel myThreadsPanel;
+  //private final ThreadsPanel myThreadsPanel;
   private final MainWatchPanel myWatchPanel;
 
   private ExecutionConsole  myConsole;
@@ -149,33 +144,36 @@ public class DebuggerSessionTab implements LogConsoleManager {
       });
     }
 
-    myWatchPanel = new MainWatchPanel(getProject(), getContextManager()) {
-      protected boolean isViewVisible() {
-        return myViewsContentManager.getSelectedContent().getComponent() == this;
-      }
-    };
-    updateWatchTreeTab();
+    myWatchPanel = new MainWatchPanel(getProject(), getContextManager(), WATCHES_ICON);
+    //updateWatchTreeTab();
 
     myFramePanel = new FramePanel(getProject(), getContextManager()) {
-      protected boolean isViewVisible() {
+      protected boolean isUpdateEnabled() {
         return myViewsContentManager.getSelectedContent().getComponent() == this;
       }
     };
+    if (DebuggerSettings.getInstance().WATCHES_VISIBLE) {
+      myFramePanel.setWatchPanel(myWatchPanel);
+    }
 
+    /*
     myThreadsPanel = new ThreadsPanel(getProject(), getContextManager()) {
-      protected boolean isViewVisible() {
+      protected boolean isUpdateEnabled() {
         return myViewsContentManager.getSelectedContent().getComponent() == this;
       }
     };
+    */
 
     TabbedPaneContentUI ui = new TabbedPaneContentUI(SwingConstants.TOP);
     myViewsContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(ui, false, getProject());
 
-    Content content = PeerFactory.getInstance().getContentFactory()
-      .createContent(myThreadsPanel, DebuggerBundle.message("debugger.session.tab.threads.title"), false);
+    Content content;
+    /*
+    content = PeerFactory.getInstance().getContentFactory().createContent(myThreadsPanel, DebuggerBundle.message("debugger.session.tab.threads.title"), false);
     content.setIcon(THREADS_ICON);
     content.putUserData(CONTENT_KIND, THREADS_CONTENT);
     myViewsContentManager.addContent(content);
+    */
 
     content = PeerFactory.getInstance().getContentFactory().createContent(myFramePanel,
                                                                           DebuggerBundle.message("debugger.session.tab.frames.title"), false);
@@ -183,11 +181,12 @@ public class DebuggerSessionTab implements LogConsoleManager {
     content.putUserData(CONTENT_KIND, FRAME_CONTENT);
     myViewsContentManager.addContent(content);
 
-    content = PeerFactory.getInstance().getContentFactory().createContent(myWatchPanel,
-                                                                          DebuggerBundle.message("debugger.session.tab.watches.title"), false);
+    /*
+    content = PeerFactory.getInstance().getContentFactory().createContent(myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), false);
     content.setIcon(WATCHES_ICON);
     content.putUserData(CONTENT_KIND, WATCHES_CONTENT);
     myViewsContentManager.addContent(content);
+    */
 
     myViewsContentManager.addContentManagerListener(new ContentManagerAdapter() {
       public void selectionChanged(ContentManagerEvent event) {
@@ -316,6 +315,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     }
   }
 
+  /*
   private void updateWatchTreeTab() {
     class MyContentUpdater extends TreeModelAdapter {
       public void updateContent() {
@@ -338,52 +338,46 @@ public class DebuggerSessionTab implements LogConsoleManager {
     updater.updateContent();
     myWatchPanel.getWatchTree().getModel().addTreeModelListener(updater);
   }
+  */
 
   private static ActionToolbar createSecondToolbar() {
-    ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    AnAction action = actionManager.getAction(DebuggerActions.STEP_OVER);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.STEP_INTO);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.STEP_OUT);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.FORCE_STEP_INTO);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.POP_FRAME);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.RUN_TO_CURSOR);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.VIEW_BREAKPOINTS);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.MUTE_BREAKPOINTS);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.TOGGLE_STEP_SUSPEND_POLICY);
-    if (action != null) group.add(action);
+
+    addActionToGroup(group, DebuggerActions.SHOW_EXECUTION_POINT);
+    addActionToGroup(group, DebuggerActions.STEP_OVER);
+    addActionToGroup(group, DebuggerActions.STEP_INTO);
+    addActionToGroup(group, DebuggerActions.STEP_OUT);
+    addActionToGroup(group, DebuggerActions.FORCE_STEP_INTO);
+    addActionToGroup(group, DebuggerActions.POP_FRAME);
+    addActionToGroup(group, DebuggerActions.RUN_TO_CURSOR);
+    addActionToGroup(group, DebuggerActions.VIEW_BREAKPOINTS);
+    addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
+    addActionToGroup(group, DebuggerActions.TOGGLE_STEP_SUSPEND_POLICY);
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
 
+  private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action != null) group.add(action);
+  }
+
   private ActionToolbar createFirstToolbar(RunContentDescriptor contentDescriptor, JComponent component) {
     DefaultActionGroup group = new DefaultActionGroup();
-    ActionManager actionManager = ActionManager.getInstance();
-
-    // first toolbar
-
     RestartAction restarAction = new RestartAction(myRunner, myConfiguration, contentDescriptor.getProcessHandler(), DEBUG_AGAIN_ICON,
                                                    contentDescriptor, myRunnerSettings, myConfigurationSettings);
     group.add(restarAction);
     restarAction.registerShortcut(component);
-    AnAction action = actionManager.getAction(DebuggerActions.RESUME);
-    if (action != null) group.add(action);
-    action = actionManager.getAction(DebuggerActions.PAUSE);
-    if (action != null) group.add(action);
-    AnAction stopAction = actionManager.getAction(IdeActions.ACTION_STOP_PROGRAM);
-    if (action != null) group.add(stopAction);
-    action = actionManager.getAction(DebuggerActions.EVALUATE_EXPRESSION);
-    if (action != null) group.add(action);
+
+    addActionToGroup(group, DebuggerActions.RESUME);
+    addActionToGroup(group, DebuggerActions.PAUSE);
+    addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
+    addActionToGroup(group, DebuggerActions.EXPORT_THREADS);
+    addActionToGroup(group, DebuggerActions.EVALUATE_EXPRESSION);
+
     group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
     group.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(myRunner.getInfo().getHelpId()));
+    group.add(new ShowWatchesAction());
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
 
@@ -402,10 +396,11 @@ public class DebuggerSessionTab implements LogConsoleManager {
   }
 
   public void dispose() {
+    DebuggerSettings.getInstance().WATCHES_VISIBLE = myWatchPanel.isUpdateEnabled();
     disposeSession();
-    myThreadsPanel.dispose();
+    //myThreadsPanel.dispose();
     myFramePanel.dispose();
-    myWatchPanel.dispose();
+    //myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
     for (AdditionalTabComponent tabComponent : myAdditionalContent.keySet()) {
       tabComponent.dispose();
@@ -427,11 +422,16 @@ public class DebuggerSessionTab implements LogConsoleManager {
   }
 
   public void reuse(DebuggerSessionTab reuseSession) {
-    getDebugProcess().setSuspendPolicy(reuseSession.getDebugProcess().getSuspendPolicy());
+    final DebugProcessImpl reuseProcess = reuseSession.getDebugProcess();
+    final DebugProcessImpl process = getDebugProcess();
+    if (process != null && reuseProcess != null) {
+      process.setSuspendPolicy(reuseProcess.getSuspendPolicy());
+    }
     DebuggerTreeNodeImpl[] watches = reuseSession.getWatchPanel().getWatchTree().getWatches();
 
+    final WatchDebuggerTree watchTree = getWatchPanel().getWatchTree();
     for (DebuggerTreeNodeImpl watch : watches) {
-      getWatchPanel().getWatchTree().addWatch((WatchItemDescriptor)watch.getDescriptor());
+      watchTree.addWatch((WatchItemDescriptor)watch.getDescriptor());
     }
   }
 
@@ -538,6 +538,41 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
     public void setState(DebuggerContextImpl context, int state, int event, String description) {
       myDebuggerSession.getContextManager().setState(context, state, event, description);
+    }
+  }
+
+  private class ShowWatchesAction extends ToggleAction {
+    private volatile boolean myWatchesShown;
+
+    public ShowWatchesAction() {
+      super("", DebuggerBundle.message("action.show.watches.description"), WATCHES_ICON);
+      myWatchesShown = DebuggerSettings.getInstance().WATCHES_VISIBLE;
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      final boolean watchesShown = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+      presentation.setText(watchesShown ? DebuggerBundle.message("action.show.watches.text.hile") : DebuggerBundle
+        .message("action.show.watches.text.show"));
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return myWatchesShown;
+    }
+
+    public void setSelected(AnActionEvent e, boolean show) {
+      myWatchesShown = show;
+      myWatchPanel.setUpdateEnabled(show);
+      if (show) {
+        myFramePanel.setWatchPanel(myWatchPanel);
+        if (myWatchPanel.isRefreshNeeded()) {
+          myWatchPanel.rebuildIfVisible();
+        }
+      }
+      else {
+        myFramePanel.setWatchPanel(null);
+      }
     }
   }
 }

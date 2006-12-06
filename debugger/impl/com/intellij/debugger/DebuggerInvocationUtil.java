@@ -1,12 +1,12 @@
 package com.intellij.debugger;
 
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -20,9 +20,9 @@ public class DebuggerInvocationUtil {
     LOG.assertTrue(runnable != null);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if(project == null || project.isDisposed()) return;
-
-        runnable.run();
+        if (project != null && !project.isDisposed()) {
+          runnable.run();
+        }
       }
     });
   }

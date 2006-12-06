@@ -4,6 +4,7 @@
  */
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.ListenerUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -31,9 +33,13 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   private final KeyStroke myRemoveWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
   private final KeyStroke myNewWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
   private final KeyStroke myEditWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0);
+  private boolean myUpdateEnabled = true;
 
-  public MainWatchPanel(Project project, DebuggerStateManager stateManager) {
+  public MainWatchPanel(Project project, DebuggerStateManager stateManager, final Icon icon) {
     super(project,stateManager);
+    final JLabel label = new JLabel(DebuggerBundle.message("debugger.session.tab.watches.title"));
+    label.setIcon(icon);
+    add(label, BorderLayout.NORTH);
     final WatchDebuggerTree watchTree = getWatchTree();
 
     final AnAction removeWatchesAction = ActionManager.getInstance().getAction(DebuggerActions.REMOVE_WATCH);
@@ -66,6 +72,14 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         editWatchAction.unregisterCustomShortcutSet(watchTree);
       }
     });
+  }
+
+  public boolean isUpdateEnabled() {
+    return myUpdateEnabled;
+  }
+
+  public void setUpdateEnabled(final boolean updateEnabled) {
+    myUpdateEnabled = updateEnabled;
   }
 
   protected ActionPopupMenu createPopupMenu() {

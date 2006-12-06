@@ -13,26 +13,27 @@ import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.NativeMethodException;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.Nullable;
 
 public class PopFrameAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = e.getData(DataKeys.PROJECT);
     StackFrameProxyImpl stackFrame = getStackFrameProxy(e);
-    if(stackFrame == null) return;
-
+    if(stackFrame == null) {
+      return;
+    }
     try {
       DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-
       DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-
-      if(debugProcess == null) return;
-
+      if(debugProcess == null) {
+        return;
+      }
       debugProcess.getManagerThread().invokeLater(debugProcess.createPopFrameCommand(debuggerContext, stackFrame));
     }
     catch (NativeMethodException e2){
@@ -44,7 +45,8 @@ public class PopFrameAction extends DebuggerAction {
     }
   }
 
-  private StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
+  @Nullable
+  private static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if(selectedNode != null) {
       NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
@@ -53,9 +55,7 @@ public class PopFrameAction extends DebuggerAction {
           StackFrameDescriptorImpl frameDescriptor = ((StackFrameDescriptorImpl)descriptor);
           return frameDescriptor.getStackFrame();
         }
-        else {
-          return null;
-        }
+        return null;
       }
       else if(descriptor instanceof ThreadDescriptorImpl || descriptor instanceof ThreadGroupDescriptorImpl) {
         return null;
@@ -64,17 +64,16 @@ public class PopFrameAction extends DebuggerAction {
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
     StackFrameProxyImpl frameProxy = debuggerContext.getFrameProxy();
 
-    if(frameProxy == null) return null;
-
-    if(frameProxy.isBottom()) return null;
-
+    if(frameProxy == null || frameProxy.isBottom()) {
+      return null;
+    }
     return frameProxy;
   }
 
-  private boolean isAtBreakpoint(AnActionEvent e) {
+  private static boolean isAtBreakpoint(AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if(selectedNode != null && selectedNode.getDescriptor() instanceof StackFrameDescriptorImpl) {
-      DebuggerTreeNodeImpl parent = (DebuggerTreeNodeImpl)selectedNode.getParent();
+      DebuggerTreeNodeImpl parent = selectedNode.getParent();
       if(parent != null) {
         return ((ThreadDescriptorImpl)parent.getDescriptor()).isAtBreakpoint();
       }
@@ -95,7 +94,8 @@ public class PopFrameAction extends DebuggerAction {
 
     if(ActionPlaces.MAIN_MENU.equals(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
       e.getPresentation().setEnabled(enable);
-    } else {
+    }
+    else {
       e.getPresentation().setVisible(enable);
     }
   }

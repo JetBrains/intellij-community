@@ -1,13 +1,12 @@
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.settings.ThreadsViewConfigurable;
-import com.intellij.debugger.ui.impl.ThreadsDebuggerTree;
+import com.intellij.debugger.settings.ThreadsViewSettings;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
-import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.project.Project;
 
 /**
  * User: lex
@@ -22,7 +21,7 @@ public class CustomizeThreadsViewAction extends DebuggerAction {
   }
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(getTree(e.getDataContext()) instanceof ThreadsDebuggerTree);
+    e.getPresentation().setVisible(true);
     e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_THREADS_VIEW));
   }
 }

@@ -75,7 +75,7 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
     }
   }
 
-  protected boolean isViewVisible() {
+  protected boolean isUpdateEnabled() {
     return true;
   }
 
@@ -86,7 +86,7 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
   private final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public final void rebuildIfVisible() {
-    if(isViewVisible()) {
+    if(isUpdateEnabled()) {
       myRefreshNeeded = false;
       myRebuildAlarm.cancelAllRequests();
       myRebuildAlarm.addRequest(new Runnable() {
