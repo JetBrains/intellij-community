@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -133,13 +134,23 @@ public class GenerateMembersUtil {
     editor.getSelectionModel().removeSelection();
   }
 
-  static PsiElement insert(PsiElement parent, PsiElement element, PsiElement anchor, boolean before)
+  static PsiElement insert(PsiClass aClass, PsiMember member, PsiElement anchor, boolean before)
       throws IncorrectOperationException {
+    if (member instanceof PsiMethod) {
+      final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
+      final boolean generateFinals = CodeStyleSettingsManager.getSettings(aClass.getProject()).GENERATE_FINAL_PARAMETERS;
+      for (final PsiParameter parameter : parameters) {
+        final PsiModifierList modifierList = parameter.getModifierList();
+        assert modifierList != null;
+        modifierList.setModifierProperty(PsiModifier.FINAL, generateFinals);
+      }
+    }
+
     if (anchor != null) {
-      return before ? parent.addBefore(element, anchor) : parent.addAfter(element, anchor);
+      return before ? aClass.addBefore(member, anchor) : aClass.addAfter(member, anchor);
     }
     else {
-      return parent.add(element);
+      return aClass.add(member);
     }
   }
 
