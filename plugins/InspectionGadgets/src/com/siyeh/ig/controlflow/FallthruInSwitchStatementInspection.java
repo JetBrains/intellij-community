@@ -16,13 +16,18 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FallthruInSwitchStatementInspection extends StatementInspection {
 
@@ -40,8 +45,35 @@ public class FallthruInSwitchStatementInspection extends StatementInspection {
                 "fallthru.in.switch.statement.problem.descriptor");
     }
 
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new FallthruInSwitchStatementFix();
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new FallthroughInSwitchStatementVisitor();
+    }
+
+    private static class FallthruInSwitchStatementFix
+            extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "fallthru.in.switch.statement.quickfix");
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiSwitchLabelStatement labelStatement =
+                    (PsiSwitchLabelStatement) descriptor.getPsiElement();
+            final PsiManager manager = labelStatement.getManager();
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiStatement breakStatement =
+                    factory.createStatementFromText("break;", labelStatement);
+            final PsiElement parent = labelStatement.getParent();
+            parent.addBefore(breakStatement, labelStatement);
+        }
     }
 
     private static class FallthroughInSwitchStatementVisitor
@@ -62,8 +94,7 @@ public class FallthruInSwitchStatementInspection extends StatementInspection {
                         registerError(child);
                     }
                     switchLabelValid = true;
-                }
-                else {
+                } else {
                     switchLabelValid =
                             !ControlFlowUtils.statementMayCompleteNormally(
                                     child);
