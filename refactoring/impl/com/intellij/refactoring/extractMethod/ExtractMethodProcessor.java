@@ -241,9 +241,23 @@ public class ExtractMethodProcessor implements MatchProvider {
           public void visitReferenceExpression(PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiVariable && isDeclaredInside((PsiVariable)resolved)) {
-              outputVariables.add((PsiVariable)resolved);
+            if (resolved instanceof PsiVariable) {
+              final PsiVariable variable = (PsiVariable)resolved;
+              if (isWrittenInside(variable)) {
+                outputVariables.add(variable);
+              }
             }
+          }
+
+          private boolean isWrittenInside(final PsiVariable variable) {
+            final List<Instruction> instructions = myControlFlow.getInstructions();
+            for (int i = myFlowStart; i < myFlowEnd; i++) {
+              Instruction instruction = instructions.get(i);
+              if (instruction instanceof WriteVariableInstruction &&
+                  variable.equals(((WriteVariableInstruction)instruction).variable)) return true;
+            }
+
+            return false;
           }
         });
       }
