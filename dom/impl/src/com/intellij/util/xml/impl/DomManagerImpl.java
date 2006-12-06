@@ -228,7 +228,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   private void processVfsChange(final VirtualFile file) {
     if (!file.isValid()) {
-      for (final Set<DomFileElementImpl> set : myFileDescriptions.values()) {
+      for (final Set<DomFileElementImpl> set : new HashSet<Set<DomFileElementImpl>>(myFileDescriptions.values())) {
         for (final DomFileElementImpl fileElement : new HashSet<DomFileElementImpl>(set)) {
           processFileChange(fileElement.getFile());
         }
