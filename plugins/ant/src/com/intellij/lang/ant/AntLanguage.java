@@ -1,16 +1,22 @@
 package com.intellij.lang.ant;
 
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.ant.config.impl.configuration.AntStructureViewTreeModel;
+import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.usages.AntUsagesProvider;
 import com.intellij.lang.ant.validation.AntAnnotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,5 +78,17 @@ public class AntLanguage extends Language {
       myUsagesProvider = new AntUsagesProvider();
     }
     return myUsagesProvider;
+  }
+
+  public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
+    final PsiFile antFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+    if (antFile != null && antFile instanceof AntFile) {
+      return new TreeBasedStructureViewBuilder() {
+        public StructureViewModel createStructureViewModel() {
+          return new AntStructureViewTreeModel((AntFile)antFile);
+        }
+      };
+    }
+    return null;
   }
 }

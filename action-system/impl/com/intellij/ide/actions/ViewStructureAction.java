@@ -1,8 +1,5 @@
-
 package com.intellij.ide.actions;
 
-import com.intellij.ant.impl.dom.impl.AntDOMProject;
-import com.intellij.ant.impl.ui.AntFileStructureList;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -36,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  *
  */
-public class ViewStructureAction extends AnAction implements TreeActionsOwner{
+public class ViewStructureAction extends AnAction implements TreeActionsOwner {
   public ViewStructureAction() {
     setEnabledInModalContext(true);
   }
@@ -56,10 +53,8 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    final StructureViewBuilder structureViewBuilder = AntFileStructureList.canShowFor(psiFile) ? null : fileEditor.getStructureViewBuilder();
-
     Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
-    DialogWrapper dialog = createDialog(psiFile, structureViewBuilder, editor, project, navigatable, fileEditor);
+    DialogWrapper dialog = createDialog(psiFile, editor, project, navigatable, fileEditor);
     if (dialog != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
@@ -69,46 +64,41 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
     }
   }
 
-   private DialogWrapper createDialog(PsiFile psiFile,
-                                      StructureViewBuilder structureViewBuilder,
-                                      final Editor editor,
-                                      Project project,
-                                      Navigatable navigatable, final FileEditor fileEditor) {
-     if (AntFileStructureList.canShowFor(psiFile) && AntDOMProject.getOtCreate(psiFile) != null) {
-       return AntFileStructureList.createDialog(editor, psiFile);
-     }
+  private DialogWrapper createDialog(PsiFile psiFile,
+                                     final Editor editor, Project project, Navigatable navigatable, final FileEditor fileEditor) {
+    final StructureViewModel structureViewModel;
+    Disposable auxDisposable = null;
 
-     final StructureViewModel structureViewModel;
-     Disposable auxDisposable = null;
+    final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
 
-     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
-       structureViewModel = ((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel();
-     }
-     else if (psiFile instanceof PropertiesFile){
-       structureViewModel = new PropertiesFileStructureViewModel((PropertiesFile)psiFile);
-     }
-     else if (PsiUtil.isInJspFile(psiFile)) {
-       Language language = ((LanguageFileType)psiFile.getFileType()).getLanguage();
-       StructureViewComposite structureViewComposite =
-         (StructureViewComposite)language.getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
-       StructureView structureView = structureViewComposite.getSelectedStructureView();
-       structureViewModel = ((StructureViewComponent)structureView).getTreeModel();
-       auxDisposable = structureViewComposite;
-     }
-     else {
-       return null;
-     }
+    if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
+      structureViewModel = ((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel();
+    }
+    else if (psiFile instanceof PropertiesFile) {
+      structureViewModel = new PropertiesFileStructureViewModel((PropertiesFile)psiFile);
+    }
+    else if (PsiUtil.isInJspFile(psiFile)) {
+      Language language = ((LanguageFileType)psiFile.getFileType()).getLanguage();
+      StructureViewComposite structureViewComposite =
+        (StructureViewComposite)language.getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
+      StructureView structureView = structureViewComposite.getSelectedStructureView();
+      structureViewModel = ((StructureViewComponent)structureView).getTreeModel();
+      auxDisposable = structureViewComposite;
+    }
+    else {
+      return null;
+    }
 
-     if (auxDisposable == null) {
-       auxDisposable = new Disposable() {
-         public void dispose() {
-           structureViewModel.dispose();
-         }
-       };
-     }
+    if (auxDisposable == null) {
+      auxDisposable = new Disposable() {
+        public void dispose() {
+          structureViewModel.dispose();
+        }
+      };
+    }
 
-     return createStructureViewBasedDialog(structureViewModel, editor, project, navigatable, auxDisposable);
-   }
+    return createStructureViewBasedDialog(structureViewModel, editor, project, navigatable, auxDisposable);
+  }
 
   public FileStructureDialog createStructureViewBasedDialog(final StructureViewModel structureViewModel,
                                                             final Editor editor,
@@ -118,7 +108,7 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
     return new FileStructureDialog(new TreeModelWrapper(structureViewModel, this), editor, project, navigatable, alternativeDisposable);
   }
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
@@ -143,7 +133,8 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
       presentation.setEnabled(false);
       return;
     }
-    presentation.setEnabled(virtualFile.getFileType().getStructureViewBuilder(virtualFile, project) != null || AntFileStructureList.canShowFor(psiFile));
+    presentation.setEnabled(
+      virtualFile.getFileType().getStructureViewBuilder(virtualFile, project) != null );
   }
 
   public void setActionActive(String name, boolean state) {
@@ -151,8 +142,6 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
   }
 
   public boolean isActionActive(String name) {
-    return InheritedMembersFilter.ID.equals(name)
-           || KindSorter.ID.equals(name)
-           || Sorter.ALPHA_SORTER_ID.equals(name);
+    return InheritedMembersFilter.ID.equals(name) || KindSorter.ID.equals(name) || Sorter.ALPHA_SORTER_ID.equals(name);
   }
 }

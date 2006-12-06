@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="idea_rt" />
     <orderEntry type="module" module-name="execution-impl" />
+    <orderEntry type="module" module-name="idea" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

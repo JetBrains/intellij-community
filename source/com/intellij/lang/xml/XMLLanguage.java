@@ -8,18 +8,18 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.*;
+import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
-import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
@@ -33,7 +33,9 @@ import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,6 +120,10 @@ public class XMLLanguage extends CompositeLanguage {
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     if (psiFile instanceof XmlFile) {
+      StructureViewBuilder builder = getStructureViewBuilderForExtensions( psiFile );
+      if ( builder != null ) {
+        return builder;
+      }
       return new TreeBasedStructureViewBuilder() {
         public StructureViewModel createStructureViewModel() {
           return new XmlStructureViewTreeModel((XmlFile)psiFile);
@@ -127,6 +133,16 @@ public class XMLLanguage extends CompositeLanguage {
     else {
       return null;
     }
+  }
+
+  private StructureViewBuilder getStructureViewBuilderForExtensions(final PsiFile psiFile) {
+    for ( Language language : getLanguageExtensionsForFile ( psiFile ) ) {
+      final StructureViewBuilder builder = language.getStructureViewBuilder(psiFile);
+      if ( builder != null ) {
+        return builder; 
+      }
+    }
+    return null;
   }
 
   @Nullable
