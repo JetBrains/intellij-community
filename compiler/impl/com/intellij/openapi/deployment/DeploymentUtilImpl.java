@@ -5,9 +5,10 @@ import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.compiler.impl.make.BuildInstructionBase;
 import com.intellij.compiler.impl.make.BuildRecipeImpl;
-import com.intellij.compiler.impl.make.JavaeeModuleBuildInstructionImpl;
 import com.intellij.compiler.impl.make.JarAndCopyBuildInstructionImpl;
+import com.intellij.compiler.impl.make.JavaeeModuleBuildInstructionImpl;
 import com.intellij.compiler.impl.make.ModuleBuilder;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -16,11 +17,11 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
+import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.FileCopyInstruction;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
-import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -42,17 +43,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -467,7 +466,7 @@ public class DeploymentUtilImpl extends DeploymentUtil implements ApplicationCom
     return new ModuleLinkImpl(dep, module);
   }
 
-  public LibraryLink createLibraryLink(Library library, Module parentModule) {
+  public LibraryLink createLibraryLink(Library library, @NotNull Module parentModule) {
     return new LibraryLinkImpl(library, parentModule);
   }
 
@@ -558,32 +557,6 @@ public class DeploymentUtilImpl extends DeploymentUtil implements ApplicationCom
       return compileScope.getAffectedModules();
     }
     return Module.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  public static File writeManifest(final BuildRecipe buildRecipe, final CompileContext context, final File outputPath) throws IOException {
-    Manifest manifest = getInstance().createManifest(buildRecipe);
-    if (manifest == null) {
-      final File file = getInstance().findUserSuppliedManifestFile(buildRecipe);
-      LOG.assertTrue(file != null);
-      context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("message.text.using.user.supplied.manifest", file.getAbsolutePath()), null, -1, -1);
-    }
-    else {
-      File manifestFile = new File(outputPath, JarFile.MANIFEST_NAME);
-      FileUtil.createParentDirs(manifestFile);
-      FileOutputStream out = null;
-      try {
-        out = new FileOutputStream(manifestFile);
-        manifest.write(out);
-      }
-      finally {
-        if (out != null) {
-          out.close();
-        }
-      }
-      return manifestFile;
-    }
-    return null;
   }
 
   public static String getOrCreateExplodedDir(@NotNull ModuleBuildProperties moduleBuildProperties) {

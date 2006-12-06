@@ -1,16 +1,17 @@
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ExpandMacroToPathMap;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
-import com.intellij.openapi.util.*;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,8 +21,8 @@ import java.io.File;
  *  @author dsl
  */
 public class ApplicationLibraryTable extends LibraryTableBase implements NamedJDOMExternalizable, ExportableApplicationComponent {
-  private PathMacrosImpl myPathMacros;
-  public static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+  private final PathMacrosImpl myPathMacros;
+  private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("global.library.display.name", plural ? 2 : 1);
     }
@@ -63,10 +64,6 @@ public class ApplicationLibraryTable extends LibraryTableBase implements NamedJD
   @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("library.global.settings");
-  }
-
-  public static LibraryTable getInstance() {
-    return ApplicationManager.getApplication().getComponent(LibraryTable.class);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

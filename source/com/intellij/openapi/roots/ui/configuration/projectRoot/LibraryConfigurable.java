@@ -28,10 +28,10 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
   private static final Icon ICON = IconLoader.getIcon("/modules/library.png");
 
   private LibraryTableEditor myLibraryEditor;
-  private Library myLibrary;
+  private final Library myLibrary;
   private String myLibraryName;
-  private LibraryTableModifiableModelProvider myModel;
-  private Project myProject;
+  private final LibraryTableModifiableModelProvider myModel;
+  private final Project myProject;
 
   protected LibraryConfigurable(final LibraryTableModifiableModelProvider libraryTable,
                                 final Library library,
@@ -94,7 +94,7 @@ public class LibraryConfigurable extends NamedConfigurable<Library> {
   public String getBannerSlogan() {
     final LibraryTable libraryTable = myLibrary.getTable();
     String libraryType = libraryTable == null
-                         ? ProjectBundle.message("module.library.display.name", false)
+                         ? ProjectBundle.message("module.library.display.name", 1)
                          : libraryTable.getPresentation().getDisplayName(false);
     return ProjectBundle.message("project.roots.library.banner.text", myLibraryName, libraryType);
   }

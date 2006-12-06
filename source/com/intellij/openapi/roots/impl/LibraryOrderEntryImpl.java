@@ -127,10 +127,10 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     Library library = null;
     if (myLibrary == null) {
       if (myLibraryName != null) {
-        library = rootConfigurable.getLibrary(myLibraryName, myLibraryLevel);
+        library = rootConfigurable.getLibrary(myLibraryLevel);
       }
     } else {
-      library = rootConfigurable.getLibrary(myLibrary.getName(), myLibrary.getTable().getTableLevel());
+      library = rootConfigurable.getLibrary(myLibrary.getTable().getTableLevel());
     }
     if (library != null) { //library was not deleted
       return library;

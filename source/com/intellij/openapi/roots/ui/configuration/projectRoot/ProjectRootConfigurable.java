@@ -84,38 +84,38 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
 
-  public boolean myPlainMode;
+  private boolean myPlainMode;
 
   private MyNode myJdksNode;
 
   private final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<String, LibrariesModifiableModel>();
   private final Map<String, MyNode> myLevel2Nodes = new THashMap<String, MyNode>();
 
-  private Map<Module, LibrariesModifiableModel> myModule2LibrariesMap = new HashMap<Module, LibrariesModifiableModel>();
+  private final Map<Module, LibrariesModifiableModel> myModule2LibrariesMap = new HashMap<Module, LibrariesModifiableModel>();
 
   private MyNode myModulesNode;
 
   private MyNode myProjectNode;
   private MyNode myGlobalPartNode;
 
-  private Project myProject;
+  private final Project myProject;
 
-  private ModuleManager myModuleManager;
+  private final ModuleManager myModuleManager;
   private ModulesConfigurator myModulesConfigurator;
   private ProjectConfigurable myProjectConfigurable;
-  private ProjectJdksModel myJdksTreeModel = new ProjectJdksModel();
+  private final ProjectJdksModel myJdksTreeModel = new ProjectJdksModel();
 
   private boolean myDisposed = true;
 
-  private Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
-  private Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
-  private Map<Module, Map<String, Set<String>>> myValidityCache = new HashMap<Module, Map<String, Set<String>>>();
-  private Map<Library, Boolean> myLibraryPathValidityCache = new HashMap<Library, Boolean>(); //can be invalidated on startup only
-  private Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
+  private final Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
+  private final Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
+  private final Map<Module, Map<String, Set<String>>> myValidityCache = new HashMap<Module, Map<String, Set<String>>>();
+  private final Map<Library, Boolean> myLibraryPathValidityCache = new HashMap<Library, Boolean>(); //can be invalidated on startup only
+  private final Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
 
-  private Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  private Alarm myReloadProjectAlarm = new Alarm();
+  private final Alarm myReloadProjectAlarm = new Alarm();
 
   @NonNls private static final String DELETED_LIBRARIES = "lib";
   private static final String NO_JDK = ProjectBundle.message("project.roots.module.jdk.problem.message");
@@ -916,11 +916,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     });
   }
 
-  public DefaultMutableTreeNode createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
+  public void createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
     final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(model), libraryOrderEntry.getLibrary(), truncateModuleLibraryName(libraryOrderEntry), myProject, TREE_UPDATER);
     final MyNode node = new MyNode(configurable);
     addNode(node, findNodeByObject(myModulesNode, libraryOrderEntry.getOwnerModule()));
-    return node;
   }
 
   public void deleteLibraryNode(LibraryOrderEntry libraryOrderEntry) {
@@ -954,7 +953,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   @Nullable
-  public Library getLibrary(final String libraryName, final String libraryLevel) {
+  public Library getLibrary(final String libraryLevel) {
     return findLibraryModel(libraryLevel, myLevel2Providers.get(libraryLevel));
   }
 

@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
  *  @author dsl
  */
 public class ProjectLibraryTable extends LibraryTableBase implements ProjectComponent {
-  public static final LibraryTablePresentation PROJECT_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
+  private static final LibraryTablePresentation PROJECT_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     public String getDisplayName(boolean plural) {
       return ProjectBundle.message("project.library.display.name", plural ? 2 : 1);
     }
