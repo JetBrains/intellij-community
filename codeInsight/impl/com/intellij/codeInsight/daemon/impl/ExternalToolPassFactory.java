@@ -25,7 +25,7 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
 
   public ExternalToolPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.LOCAL_INSPECTIONS}, true, Pass.EXTERNAL_TOOLS);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL, Pass.UPDATE_VISIBLE}, new int[]{Pass.LOCAL_INSPECTIONS}, true, Pass.EXTERNAL_TOOLS);
   }
 
   @NonNls
