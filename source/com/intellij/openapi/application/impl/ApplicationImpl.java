@@ -76,6 +76,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
 
   private Thread myExceptionalThreadWithReadAccess = null;
+  private Runnable myExceptionalThreadWithReadAccessRunnable;
 
   private int myInEditorPaintCounter = 0;
   private long myStartTime = 0;
@@ -475,7 +476,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
     assertIsDispatchThread();
 
-    if (myExceptionalThreadWithReadAccess != null || ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (myExceptionalThreadWithReadAccess != null ||
+        myExceptionalThreadWithReadAccessRunnable != null ||
+        ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       process.run();
       return true;
     }
@@ -483,51 +486,40 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     final ProgressWindow progress = new ProgressWindow(canBeCanceled, project);
     progress.setTitle(progressTitle);
 
-    class MyThread extends Thread {
-      private final Runnable myProcess;
-
-      public MyThread() {
-        //noinspection HardCodedStringLiteral
-        super("Process with Progress");
-        myProcess = process;
-      }
-
-      public void run() {
-        if (myExceptionalThreadWithReadAccess != this) {
-          if (myExceptionalThreadWithReadAccess == null) {
-            LOG.error("myExceptionalThreadWithReadAccess = null!");
-          }
-          else {
-            LOG.error("myExceptionalThreadWithReadAccess != thread, process = " + ((MyThread)myExceptionalThreadWithReadAccess).myProcess);
-          }
-        }
-
-        try {
-          ProgressManager.getInstance().runProcess(myProcess, progress);
-        }
-        catch (ProcessCanceledException e) {
-          // ok to ignore.
-        }
-      }
-    }
-    final MyThread thread = new MyThread();
     try {
-      myExceptionalThreadWithReadAccess = thread;
-
+      myExceptionalThreadWithReadAccessRunnable = process;
       final boolean[] threadStarted = new boolean[]{false};
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          if (myExceptionalThreadWithReadAccess != thread) {
-            if (myExceptionalThreadWithReadAccess == null) {
-              LOG.error("myExceptionalThreadWithReadAccess = null!");
+          if (myExceptionalThreadWithReadAccessRunnable != process) {
+            if (myExceptionalThreadWithReadAccessRunnable == null) {
+              LOG.error("myExceptionalThreadWithReadAccessRunnable = null!");
             }
             else {
-              LOG.error("myExceptionalThreadWithReadAccess != thread, process = " + ((MyThread)myExceptionalThreadWithReadAccess)
-                .myProcess);
+              LOG.error("myExceptionalThreadWithReadAccessRunnable != process, process = " + myExceptionalThreadWithReadAccessRunnable);
             }
           }
 
-          thread.start();
+          executeOnPooledThread(new Runnable() {
+            public void run() {
+              if (myExceptionalThreadWithReadAccessRunnable != process) {
+                if (myExceptionalThreadWithReadAccessRunnable == null) {
+                  LOG.error("myExceptionalThreadWithReadAccessRunnable = null!");
+                }
+                else {
+                  LOG.error("myExceptionalThreadWithReadAccessRunnable != process, process = " + myExceptionalThreadWithReadAccessRunnable);
+                }
+              }
+
+              myExceptionalThreadWithReadAccess = Thread.currentThread();
+              try {
+                ProgressManager.getInstance().runProcess(process, progress);
+              }
+              catch (ProcessCanceledException e) {
+                // ok to ignore.
+              }
+            }
+          });
           threadStarted[0] = true;
         }
       });
@@ -538,6 +530,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     finally {
       myExceptionalThreadWithReadAccess = null;
+      myExceptionalThreadWithReadAccessRunnable = null;
     }
 
     return !progress.isCanceled();
