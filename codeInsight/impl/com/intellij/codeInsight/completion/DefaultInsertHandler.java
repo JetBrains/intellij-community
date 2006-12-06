@@ -181,6 +181,20 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       return false;
     }
 
+    if (insertingAnnotation()) {
+      final Document document = context.editor.getDocument();
+      PsiDocumentManager.getInstance(context.project).commitDocument(document);
+      PsiElement elementAt = myFile.findElementAt(myContext.startOffset);
+      if (elementAt instanceof PsiIdentifier &&
+          PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null //we are inserting '@' only in annotation parameters
+          && isAtTokenNeeded()) {
+        final PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
+        if (parent instanceof PsiModifierListOwner) {
+          int expectedOffsetForAtToken = elementAt.getTextRange().getStartOffset();
+          document.insertString(expectedOffsetForAtToken, "@");
+        }
+      }
+    }
     return true;
   }
 
@@ -385,13 +399,15 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       PsiDocumentManager.getInstance(myContext.project).commitDocument(document);
       PsiElement elementAt = myFile.findElementAt(myContext.startOffset);
       if (elementAt instanceof PsiIdentifier) {
-        final PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
-        if (parent instanceof PsiModifierListOwner) {
-          final PsiClass psiClass = (PsiClass)myLookupItem.getObject();
-          for (PsiMethod m : psiClass.getMethods()) {
-            if (!(m instanceof PsiAnnotationMethod)) continue;
-            final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
-            if (defaultValue == null) return true;
+        if (insertingNotRuntimeAnnotation() || PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null) {
+          final PsiElement parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, PsiCodeBlock.class);
+          if (parent instanceof PsiModifierListOwner) {
+            final PsiClass psiClass = (PsiClass)myLookupItem.getObject();
+            for (PsiMethod m : psiClass.getMethods()) {
+              if (!(m instanceof PsiAnnotationMethod)) continue;
+              final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
+              if (defaultValue == null) return true;
+            }
           }
         }
       }
@@ -399,7 +415,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     return false;
   }
 
-  private boolean insertingAnnotation() {
+  private boolean insertingNotRuntimeAnnotation() {
     final Object obj = myLookupItem.getObject();
     if (!(obj instanceof PsiClass)) return false;
     final PsiClass aClass = ((PsiClass)obj);
@@ -408,6 +424,13 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (retentionPolicy == null) return true; //CLASS by default
     final PsiAnnotationMemberValue value = retentionPolicy.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
     return !(value instanceof PsiReferenceExpression) || !"RUNTIME".equals(((PsiReferenceExpression)value).getReferenceName());
+  }
+
+  private boolean insertingAnnotation() {
+    final Object obj = myLookupItem.getObject();
+    if (!(obj instanceof PsiClass)) return false;
+    final PsiClass aClass = ((PsiClass)obj);
+    return aClass.isAnnotationType();
   }
 
   private boolean hasOverloads() {
