@@ -18,11 +18,11 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +85,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * Runs highliting test for the given files.
    * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
    *
-   * @param filePaths the first file is tested only; the others are just copied along the first.
+   * @param filePaths the first file is tested only; the others are just copied along with the first.
    *
    * @return highlighting duration in milliseconds
    * @throws Throwable any exception thrown during highlighting
@@ -117,6 +117,13 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   @NotNull
   PsiReference getReferenceAtCaretPositionWithAssertion(String filePath) throws Throwable;
 
+  /**
+   * Collects available intentions in the whole file or at caret position if {@link #CARET_MARKER} presents. 
+   *
+   * @param filePaths the first file is tested only; the others are just copied along with the first.
+   * @return available intentions.
+   * @throws Throwable any exception.
+   */
   @NotNull
   Collection<IntentionAction> getAvailableIntentions(String... filePaths) throws Throwable;
 

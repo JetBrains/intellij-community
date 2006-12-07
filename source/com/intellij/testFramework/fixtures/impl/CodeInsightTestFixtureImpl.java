@@ -5,6 +5,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
@@ -13,7 +14,6 @@ import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
@@ -52,11 +52,11 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.refactoring.rename.RenameProcessor;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -155,12 +155,15 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     new WriteCommandAction.Simple(project) {
 
       protected void run() throws Throwable {
-        configureByFiles(filePaths);
+        final int offset = configureByFiles(filePaths);
 
         final Collection<HighlightInfo> infos = doHighlighting();
         for (HighlightInfo info :infos) {
           if (info.quickFixActionRanges != null) {
             for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+              if (offset > 0 && !pair.getSecond().contains(offset)) {
+                continue;
+              }
               IntentionAction action = pair.first.getAction();
               if (action.isAvailable(project, myEditor, myFile)) {
                 availableActions.add(action);
@@ -182,6 +185,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
             availableActions.add(intentionAction);
           }
         }
+        
       }
     }.execute().throwException();
 
@@ -301,15 +305,26 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     myTempDirFixture.tearDown();
   }
 
-  protected void configureByFiles(@NonNls String... filePaths) throws IOException {
+  protected int configureByFiles(@NonNls String... filePaths) throws IOException {
     myFile = null;
     myEditor = null;
+    int offset = -1;
     for (String filePath : filePaths) {
-      configureByFile(filePath);
+      int fileOffset = configureByFile(filePath);
+      if (fileOffset > 0) {
+        offset = fileOffset;
+      }
     }
+    return offset;
   }
 
-  protected void configureByFile(@NonNls String filePath) throws IOException {
+  /**
+   *
+   * @param filePath
+   * @return caret offset or -1 if caret marker does not present
+   * @throws IOException
+   */
+  protected int configureByFile(@NonNls String filePath) throws IOException {
     String fullPath = getTempDirPath() + "/" + filePath;
 
     final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
@@ -324,18 +339,20 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-
+    int offset = -1;
     if (myFile == null) myFile = myPsiManager.findFile(copy);
     if (myEditor == null) {
       myEditor = createEditor(copy);
       assert myEditor != null;
       if (loader.caretMarker != null) {
-        myEditor.getCaretModel().moveToOffset(loader.caretMarker.getStartOffset());
+        offset = loader.caretMarker.getStartOffset();
+        myEditor.getCaretModel().moveToOffset(offset);
       }
       if (loader.selStartMarker != null && loader.selEndMarker != null) {
         myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
       }
     }
+    return offset;
   }
 
   @Nullable
