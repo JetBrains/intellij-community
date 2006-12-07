@@ -13,7 +13,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -204,11 +203,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       type = HighlightInfoType.DEPRECATED;
     }
     else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-      if (JavaDocReferenceInspection.SHORT_NAME.equals(tool.getShortName())) {
-        type = HighlightInfoType.JAVADOC_WRONG_REF;
+      if (severity == HighlightSeverity.ERROR) {
+        type = HighlightInfoType.WRONG_REF;
       }
       else {
-        type = HighlightInfoType.WRONG_REF;
+        type = SeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
       }
     }
     else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {

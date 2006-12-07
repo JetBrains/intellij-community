@@ -1,13 +1,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -21,7 +19,6 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -40,7 +37,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -208,7 +204,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
-      if (canBeHint(info.type)
+      if (isWrongRef(info.type)
           && startOffset <= info.startOffset && info.endOffset <= endOffset
           && !myEditor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
         array.add(info);
@@ -226,23 +222,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
 
     final HighlightInfoType infoType = info.type;
-    if (infoType == HighlightInfoType.WRONG_REF) {
-      return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
-    }
-    else if (isWrongJavadocRef(infoType)) {
-      HighlightDisplayKey javadocKey = HighlightDisplayKey.find(JavaDocReferenceInspection.SHORT_NAME);
-      LOG.assertTrue(javadocKey != null);
-      if (InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile).getErrorLevel(javadocKey) ==
-          HighlightDisplayLevel.ERROR) {
-        return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
-      }
-    }
-
-    return false;
+    return isWrongRef(infoType) && showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
   }
 
-  private static boolean isWrongJavadocRef(final HighlightInfoType infoType) {
-    return infoType.getAttributesKey() == HighlightInfoType.JAVADOC_WRONG_REF.getAttributesKey();
+  private static boolean isWrongRef(final HighlightInfoType infoType) {
+    return infoType.getAttributesKey() == HighlightInfoType.WRONG_REF.getAttributesKey();
   }
 
   private static boolean showAddImportHint(Editor editor, PsiJavaCodeReferenceElement ref) {
@@ -378,9 +362,5 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset = editor.getCaretModel().getOffset();
 
     return range.grown(1).contains(offset);
-  }
-
-  private static boolean canBeHint(HighlightInfoType type) {
-    return type == HighlightInfoType.WRONG_REF || isWrongJavadocRef(type);
   }
 }
