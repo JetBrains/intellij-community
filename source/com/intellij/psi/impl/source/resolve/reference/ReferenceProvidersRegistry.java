@@ -290,7 +290,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
           new AndFilter(
             new OrFilter(
               new NamespaceFilter(XmlUtil.JSTL_FORMAT_URIS),
-              new NamespaceFilter(XmlUtil.STRUTS_BEAN_URI)
+              new NamespaceFilter(XmlUtil.STRUTS_BEAN_URI, XmlUtil.APACHE_I18N_URI)
             ),
             new AndFilter(
               new ClassFilter(XmlTag.class),

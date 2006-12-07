@@ -90,6 +90,7 @@ public class XmlUtil {
 
   @NonNls public static final String SPRING_URI = "http://www.springframework.org/tags";
   @NonNls public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
+  @NonNls public static final String APACHE_I18N_URI = "http://jakarta.apache.org/taglibs/i18n-1.0";
   @NonNls public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
   @NonNls public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
 
