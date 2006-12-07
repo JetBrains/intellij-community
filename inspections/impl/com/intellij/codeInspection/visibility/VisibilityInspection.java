@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.visibility;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -18,12 +19,10 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.javaee.ejb.EjbModuleUtil;
-import com.intellij.javaee.model.common.ejb.EjbRootElement;
-import com.intellij.javaee.model.common.ejb.EntityBean;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -139,29 +138,9 @@ public class VisibilityInspection extends FilteringInspectionTool {
         getFilter().addIgnoreList(refElement);
       }
     }
-
-    final EjbRootElement[] newEjbModels = EjbModuleUtil.getEjbModels(getContext().getProject());
-    for (final EjbRootElement ejbRootElement : newEjbModels) {
-      for (final EntityBean entityBean : ejbRootElement.getEnterpriseBeans().getEntities()) {
-        PsiClass primaryKeyClass = entityBean.getPrimKeyClass().getValue();
-        if (primaryKeyClass != null) {
-          for (PsiField field : primaryKeyClass.getFields()) {
-            RefField refField = (RefField)getRefManager().getReference(field);
-            if (refField != null) {
-              getFilter().addIgnoreList(refField);
-            }
-          }
-
-          for (PsiMethod constructor : primaryKeyClass.getConstructors()) {
-            if (constructor.getParameterList().getParametersCount() == 0) {
-              RefMethod refConstructor = (RefMethod)getRefManager().getReference(constructor);
-              if (refConstructor != null) {
-                getFilter().addIgnoreList(refConstructor);
-              }
-            }
-          }
-        }
-      }
+    final Object[] addins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.VISIBLITY_TOOL).getExtensions();
+    for (Object addin : addins) {
+      ((VisibilityExtension)addin).fillIgnoreList(getRefManager(), getFilter());
     }
   }
 

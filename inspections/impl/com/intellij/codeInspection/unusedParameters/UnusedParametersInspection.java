@@ -217,7 +217,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
 
           removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
 
-          getFilter().ignore(refMethod);
+          getFilter().addIgnoreList(refMethod);
         }
       }
 
