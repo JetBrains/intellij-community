@@ -233,6 +233,7 @@
       <action id="LocalVcs.ShowHistory" class="com.intellij.localVcs.actions.ShowHistoryAction"/>
       <action id="LocalVcs.HistoryForBlock" class="com.intellij.localVcs.actions.HistoryForSelectedBlockAction"/>
       <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction"/>
+      <action id="NewLocalVcs.ShowHistory" class="com.intellij.localvcs.integration.ui.ShowHistoryAction"/>
     </group>
 
     <group id="VcsGroups" popup="true">
