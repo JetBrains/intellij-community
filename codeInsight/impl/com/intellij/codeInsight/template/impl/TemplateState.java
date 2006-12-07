@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.DefaultCharFilter;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
@@ -323,7 +322,7 @@ public class TemplateState implements Disposable {
 
               PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
               codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
-              PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
+              unblockDocument();
 
               mySegments.setSegmentsGreedy(true);
               restoreEmptyVariables(indices);
@@ -511,7 +510,7 @@ public class TemplateState implements Disposable {
             }
             try {
               paramList.add(aClass.copy());
-              CodeInsightUtil.forcePsiPostprocessAndRestoreElement(paramList);
+              unblockDocument();
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -522,9 +521,14 @@ public class TemplateState implements Disposable {
         TextRange range = getCurrentVariableRange();
         if (range != null) {
           addImportForClass(aClass, range.getStartOffset(), range.getEndOffset());
+          unblockDocument();
         }
       }
     }
+  }
+
+  private void unblockDocument() {
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
   }
 
   private void addImportForClass(final PsiClass aClass, int startOffset, int endOffset) {
@@ -677,7 +681,7 @@ public class TemplateState implements Disposable {
     }
 
     //some psi operations may block the document, unblock here
-    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
+    unblockDocument();
 
     int nextVariableNumber = getNextVariableNumber(myCurrentVariableNumber);
     if (nextVariableNumber == -1) {
@@ -909,7 +913,7 @@ public class TemplateState implements Disposable {
         try {
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
-          PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
+          unblockDocument();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
