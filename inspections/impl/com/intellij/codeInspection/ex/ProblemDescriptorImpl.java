@@ -94,16 +94,18 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   public TextRange getTextRange() {
     PsiElement startElement = getStartElement();
     PsiElement endElement = myEndSmartPointer == null ? startElement : getEndElement();
-    if (startElement == null || endElement == null) return null;
+    if (startElement == null || endElement == null) {
+      return null;
+    }
+
     TextRange textRange = startElement.getTextRange();
     if (startElement == endElement) {
       if (isAfterEndOfLine()) return new TextRange(textRange.getEndOffset()-1, textRange.getEndOffset());
+      if (myTextRangeInElement != null) {
+        return new TextRange(textRange.getStartOffset() + myTextRangeInElement.getStartOffset(),
+                             textRange.getStartOffset() + myTextRangeInElement.getEndOffset());
+      }
       return textRange;
-    }
-    LOG.assertTrue(!isAfterEndOfLine());
-    if (myTextRangeInElement != null) {
-      return new TextRange(textRange.getStartOffset() + myTextRangeInElement.getStartOffset(),
-                           textRange.getStartOffset() + myTextRangeInElement.getEndOffset());
     }
     return new TextRange(textRange.getStartOffset(), endElement.getTextRange().getEndOffset());
   }
