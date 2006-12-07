@@ -17,9 +17,9 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.javaee.ejb.EjbHelper;
-import com.intellij.javaee.ejb.role.EjbMethodRole;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -35,7 +35,7 @@ import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class MethodMayBeStaticInspection extends MethodInspection{
 
@@ -121,11 +121,10 @@ public class MethodMayBeStaticInspection extends MethodInspection{
             if(containingClass == null){
                 return;
             }
-            final EjbHelper helper = EjbHelper.getEjbHelper();
-            final EjbMethodRole ejbRole = helper.getEjbRole(method);
-            if (ejbRole != null) {
-                return;
-            }
+            final Object[] addins = Extensions.getRootArea().getExtensionPoint("com.intellij.cantBeStatic").getExtensions();
+            for (Object addin : addins) {
+              if (((Condition<PsiMember>)addin).value(method)) return;
+            }            
             final PsiElement scope = containingClass.getScope();
             if(!(scope instanceof PsiJavaFile) &&
                     !containingClass.hasModifierProperty(PsiModifier.STATIC)){
