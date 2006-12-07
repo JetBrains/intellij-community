@@ -11,6 +11,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +26,10 @@ import org.jetbrains.annotations.NonNls;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * XML sample:
@@ -147,7 +152,7 @@ public final class UpdateChecker implements ApplicationComponent {
     }
     final Document[] document = new Document[] {null};
     final Exception[] exception = new Exception[] {null};
-    Thread downloadThread = new Thread(new Runnable() {
+    Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(getUpdateUrl());
@@ -167,11 +172,18 @@ public final class UpdateChecker implements ApplicationComponent {
         }
       }
     });
-    downloadThread.start();
-    downloadThread.join(5 * 1000); // Wait for 5 seconds.
 
-    if (downloadThread.isAlive()) {
-      downloadThread.interrupt();
+    try {
+      downloadThreadFuture.get(5, TimeUnit.SECONDS);
+    }
+    catch (ExecutionException e) {
+      throw e;
+    }
+    catch (TimeoutException e) {
+    }
+
+    if (!downloadThreadFuture.isDone()) {
+      downloadThreadFuture.cancel(true);
       throw new ConnectionException(IdeBundle.message("updates.timeout.error"));
     }
 

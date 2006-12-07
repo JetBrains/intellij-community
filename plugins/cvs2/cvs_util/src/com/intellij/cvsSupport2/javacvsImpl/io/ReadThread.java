@@ -15,7 +15,7 @@ import java.util.Collection;
  * author: lesya
  */
 
-public class ReadThread extends Thread {
+public class ReadThread implements Runnable {
 
   public final static Collection<ReadThread> READ_THREADS = new ArrayList<ReadThread>();
 
@@ -37,10 +37,8 @@ public class ReadThread extends Thread {
   @NonNls private static final String NAME = "CvsReadThread";
 
   public ReadThread(InputStream inputStream, ICvsCommandStopper cvsCommandStopper) {
-    super(NAME);
     myInputStream = inputStream;
     myCvsCommandStopper = cvsCommandStopper;
-    setPriority(Thread.MAX_PRIORITY);
     READ_THREADS.add(this);
   }
 
@@ -66,31 +64,37 @@ public class ReadThread extends Thread {
   }
 
   public void run() {
-    LOG.info("Starting CvsReadThread " + this);
-    while (true) {
-      try {
-        waitForRead();
-        if (myAtEndOfStream || (myException != null)) {
-          executionCompleted();
+    Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+    try {
+      LOG.info("Starting CvsReadThread " + this);
+      while (true) {
+        try {
+          waitForRead();
+          if (myAtEndOfStream || (myException != null)) {
+            executionCompleted();
+            return;
+          }
+          int result = myInputStream.read(myReadBuffer);
+          if (result > 0) {
+            writeAndNotify(result);
+          }
+          else if (result == END_OF_STREAM) {
+            detectEndAndNotify();
+            return;
+          }
+        }
+        catch (IOException e) {
+          detectExceptionAndNotify(e);
           return;
         }
-        int result = myInputStream.read(myReadBuffer);
-        if (result > 0) {
-          writeAndNotify(result);
-        }
-        else if (result == END_OF_STREAM) {
-          detectEndAndNotify();
+        catch (Throwable t) {
+          detectExceptionAndNotify(new IOException(t.getLocalizedMessage()));
           return;
         }
       }
-      catch (IOException e) {
-        detectExceptionAndNotify(e);
-        return;
-      }
-      catch (Throwable t) {
-        detectExceptionAndNotify(new IOException(t.getLocalizedMessage()));
-        return;
-      }
+    }
+    finally {
+      Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
     }
   }
 

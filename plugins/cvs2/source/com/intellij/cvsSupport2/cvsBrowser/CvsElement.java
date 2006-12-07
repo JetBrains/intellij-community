@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.Future;
 
 public class CvsElement extends DefaultMutableTreeNode {
 
@@ -26,7 +27,7 @@ public class CvsElement extends DefaultMutableTreeNode {
   private boolean myCanBecheckedOut = true;
   private CvsTreeModel myModel;
   private final Project myProject;
-  private Thread myLoadingThread;
+  private Future<?> myLoadingThreadFuture;
 
   private final Alarm myPeriodAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
@@ -99,12 +100,11 @@ public class CvsElement extends DefaultMutableTreeNode {
 
       getModel().insertNodeInto(loadingNode, this, 0);
       myModel.getCvsTree().getTree().setEnabled(false);
-      myLoadingThread = new Thread(new Runnable() {
+      myLoadingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           myDataProvider.fillContentFor(CvsElement.this, myProject, new MyGetContentCallback(loadingNode));
         }
       });
-      myLoadingThread.start();
 
       final Runnable periodRequest = new Runnable() {
         public void run() {
@@ -193,7 +193,7 @@ public class CvsElement extends DefaultMutableTreeNode {
         remove(myLoadingNode);
       }
       myModel.getCvsTree().getTree().setEnabled(true);
-      myLoadingThread = null;
+      myLoadingThreadFuture = null;
     }
 
     public void loginAborted() {
@@ -208,8 +208,8 @@ public class CvsElement extends DefaultMutableTreeNode {
   }
 
   public void release() {
-    if (myLoadingThread != null) {
-      myLoadingThread.interrupt();
+    if (myLoadingThreadFuture != null) {
+      myLoadingThreadFuture.cancel(true);
     }
     if (children == null) return;
     Object[] nodes = children.toArray();

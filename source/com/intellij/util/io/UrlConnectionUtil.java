@@ -4,6 +4,7 @@
 
 package com.intellij.util.io;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author nik
@@ -35,19 +39,21 @@ public class UrlConnectionUtil {
   public static InputStream getConnectionInputStreamWithException(URLConnection connection, ProgressIndicator pi) throws IOException {
     InputStreamGetter getter = new InputStreamGetter(connection);
     //noinspection HardCodedStringLiteral
-    final Thread thread = new Thread(getter, "InputStreamGetter");
-    thread.start();
+    final Future<?> getterFuture = ApplicationManager.getApplication().executeOnPooledThread(getter);
 
     while (true) {
       pi.checkCanceled();
       try {
-        thread.join(50);
+        try {
+          getterFuture.get(50, TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException e) {}
         pi.setIndeterminate(true);
         pi.setText(pi.getText());
-        if (!thread.isAlive()) break;
+        if (getterFuture.isDone()) break;
       }
-      catch (InterruptedException e) {
-        throw new ProcessCanceledException();
+      catch (Exception e) {
+        throw new ProcessCanceledException(e);
       }
     }
     if (getter.getException() != null) {

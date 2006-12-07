@@ -1405,7 +1405,7 @@ public class CompileDriver {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     //noinspection HardCodedStringLiteral
-    new Thread("Compile Task Thread") {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         synchronized (CompilerManager.getInstance(myProject)) {
           ProgressManager.getInstance().runProcess(new Runnable() {
@@ -1425,7 +1425,7 @@ public class CompileDriver {
           }, compileContext.getProgressIndicator());
         }
       }
-    }.start();
+    });
   }
 
   private boolean executeCompileTasks(CompileContext context, boolean beforeTasks) {

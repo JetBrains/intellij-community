@@ -21,12 +21,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -274,22 +274,36 @@ public class FileUtil {
   }
 
   private static void startDeletionThread(final File... tempFiles) {
-    //noinspection HardCodedStringLiteral
-    Thread t = new Thread("File deletion thread") {
+    final Runnable deleteFilesTask = new Runnable() {
       public void run() {
-        ShutDownTracker.getInstance().registerStopperThread(this);
+        final Thread currentThread = Thread.currentThread();
+        currentThread.setPriority(Thread.MIN_PRIORITY);
+        ShutDownTracker.getInstance().registerStopperThread(currentThread);
         try {
           for (File tempFile : tempFiles) {
             delete(tempFile);
           }
         }
         finally {
-          ShutDownTracker.getInstance().unregisterStopperThread(this);
+          ShutDownTracker.getInstance().unregisterStopperThread(currentThread);
+          currentThread.setPriority(Thread.NORM_PRIORITY);
         }
       }
     };
-    t.setPriority(Thread.MIN_PRIORITY);
-    t.start();
+
+    try {
+// Attempt to execute on pooled thread
+      final Class<?> aClass = Class.forName("com.intellij.openapi.application.ApplicationManager");
+      final Method getApplicationMethod = aClass.getMethod("getApplication");
+      final Object application = getApplicationMethod.invoke(null);
+      final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
+      executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
+    }
+    catch (Exception e) {
+      //noinspection HardCodedStringLiteral
+      Thread t = new Thread(deleteFilesTask, "File deletion thread");
+      t.start();
+    }
   }
 
   private static File renameToTempFile(File file) {

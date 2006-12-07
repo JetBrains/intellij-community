@@ -339,7 +339,7 @@ public class ScopeEditorPanel {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
-        new Thread(){
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
           public void run() {
             if (updateText && myCurrentScope != null) {
               myIsInUpdate = true;
@@ -351,7 +351,7 @@ public class ScopeEditorPanel {
               runnable.run();
             }
           }
-        }.start();
+        });
       }
     }, 1000);
   }

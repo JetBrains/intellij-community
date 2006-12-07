@@ -4,7 +4,9 @@ import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 
 import java.io.IOException;
 import java.io.InputStream;
-                    
+
+import com.intellij.openapi.application.ApplicationManager;
+
 /**
  * author: lesya
  */
@@ -17,7 +19,7 @@ public class InputStreamWrapper extends InputStream {
                             ICvsCommandStopper cvsCommandStopper,
                             ReadWriteStatistics statistics) {
     myReadThread = new ReadThread(original, cvsCommandStopper);
-    myReadThread.start();
+    ApplicationManager.getApplication().executeOnPooledThread(myReadThread);
     myReadThread.waitForStart();
     myStatistics = statistics;
   }

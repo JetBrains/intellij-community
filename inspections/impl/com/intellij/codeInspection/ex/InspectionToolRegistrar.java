@@ -146,7 +146,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   private synchronized void buildInspectionIndex(final InspectionTool[] tools) {
     if (myWords2InspectionToolNameMap == null) {
       myWords2InspectionToolNameMap = new HashMap<String, ArrayList<String>>();
-      new Thread(){
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
         public void run() {
           try {
             for (InspectionTool tool : tools) {
@@ -165,7 +165,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
             LOG.error(e);
           }
         }
-      }.start();
+      });
     }
   }
 
