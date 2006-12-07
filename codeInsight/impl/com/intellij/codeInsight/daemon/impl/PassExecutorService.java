@@ -186,7 +186,7 @@ public class PassExecutorService {
     }
 
     public void run() {
-      info("Started " + (myPass+""), myUpdateProgress);
+      info("Started " + myPass, myUpdateProgress);
       Thread.currentThread().setName("Highlighting pass " + myPass);
 
       if (myUpdateProgress.isCanceled()) return;
@@ -224,15 +224,18 @@ public class PassExecutorService {
       }
 
       mySubmittedPasses.remove(this);
-      int toexec = myThreadsToExecuteCountdown.decrementAndGet();
-      if (toexec == 0) {
-        LOG.debug("Stopping");
-        myUpdateProgress.stop();
+      // check that it is not remnant from the previous attempt, canceled long ago
+      if (myUpdateProgress == myDaemonCodeAnalyzer.getUpdateProgress()) {
+        int toexec = myThreadsToExecuteCountdown.decrementAndGet();
+        if (toexec == 0) {
+          LOG.debug("Stopping");
+          myUpdateProgress.stop();
+        }
+        else {
+          //LOG.debug("Pass "+ myPass +" finished but there is the pass in the queue: "+mySubmittedPasses.keySet().iterator().next().myPass+"; toexec="+toexec);
+        }
       }
-      else {
-        //LOG.debug("Pass "+ myPass +" finished but there is the pass in the queue: "+mySubmittedPasses.keySet().iterator().next().myPass+"; toexec="+toexec);
-      }
-      info("Finished "+ (myPass+""), myUpdateProgress);
+      info("Finished " + myPass, myUpdateProgress);
     }
   }
 
@@ -259,7 +262,7 @@ public class PassExecutorService {
   }
 
 
-  private static ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
+  private static final ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
   private static int getThreadNum() {
     int size = threads.size();
     Integer number = threads.putIfAbsent(Thread.currentThread(), size);
