@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
@@ -10,11 +11,10 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.javaee.ejb.EjbHelper;
-import com.intellij.javaee.ejb.role.EjbImplMethodRole;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -428,7 +428,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (docComment == null) {
       if (isJavaDocRequired(psiMethod)) {
         if (superMethods.length > 0) return null;
-        if (EjbHelper.getEjbHelper().getEjbRole(psiMethod) instanceof EjbImplMethodRole) return null;
+        final Object[] addins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVADOC_LOCAL).getExtensions();
+        for (Object addin : addins) {
+          if (((Condition<PsiMember>)addin).value(psiMethod)) return null;
+        }
         if (superMethods.length == 0) {
           final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
           return nameIdentifier != null ? new ProblemDescriptor[] { createDescriptor(nameIdentifier, JavaDocLocalInspection.REQUIRED_JAVADOC_IS_ABSENT, manager)} : null;

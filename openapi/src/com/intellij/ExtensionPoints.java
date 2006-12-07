@@ -97,4 +97,8 @@ public interface ExtensionPoints {
   @NonNls String INSPECTION_ENRTY_POINT = "com.intellij.entryPoint";
 
   @NonNls String DEAD_CODE_TOOL = "com.intellij.deadCode";
+
+  @NonNls String JAVADOC_LOCAL = "com.intellij.javaDocNotNecessary";
+
+  @NonNls String VISIBLITY_TOOL = "com.intellij.visibility";
 }
