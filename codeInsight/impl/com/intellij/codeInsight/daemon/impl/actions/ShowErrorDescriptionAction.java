@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowErrorDescriptionHandler;
 import com.intellij.openapi.editor.Editor;
@@ -24,7 +23,7 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction{
   }
 
   protected boolean isEnabledForFile(Project project, Editor editor, PsiFile file) {
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl) DaemonCodeAnalyzer.getInstance(project);
+    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     HighlightInfo info = codeAnalyzer.findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
     return info != null && info.description != null;
   }

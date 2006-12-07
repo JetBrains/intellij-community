@@ -92,7 +92,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
 
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     myRefCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(document, myFile);
     myStyleManager = (CodeStyleManagerEx)CodeStyleManager.getInstance(myProject);
     myCurentEntryIndex = -1;
@@ -139,7 +139,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
                                                    myHighlights, Pass.POST_UPDATE_ALL);
 
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.NORMAL_HIGHLIGHTERS);
 
     if (timeToOptimizeImports() && myEditor != null) {

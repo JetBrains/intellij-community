@@ -68,7 +68,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
       myProject, myDocument, myStartOffset, myEndOffset,
       myMarkers, Pass.UPDATE_OVERRIDEN_MARKERS);
 
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.OVERRIDEN_MARKERS);
   }
 

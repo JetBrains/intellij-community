@@ -159,7 +159,7 @@ public class HighlightInfo {
   public int fixEndOffset;
   public RangeMarker fixMarker;
 
-  public String description;
+  public final String description;
   public String toolTip;
   public final HighlightSeverity severity;
 
@@ -250,17 +250,15 @@ public class HighlightInfo {
   }
 
   public static class IntentionActionDescriptor {
-    private IntentionAction myAction;
-    private List<IntentionAction> myOptions;
-    private String myDisplayName;
-
+    private final IntentionAction myAction;
+    private final List<IntentionAction> myOptions;
+    private final String myDisplayName;
 
     public IntentionActionDescriptor(final IntentionAction action, final List<IntentionAction> options, final String displayName) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
     }
-
 
     public IntentionAction getAction() {
       return myAction;

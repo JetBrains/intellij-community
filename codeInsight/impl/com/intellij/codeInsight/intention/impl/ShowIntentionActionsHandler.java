@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.lang.annotation.HighlightSeverity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,11 +38,20 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     ArrayList<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     ArrayList<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     for (IntentionAction action : intentionActions) {
       if (action instanceof IntentionActionComposite) {
-
         if (action instanceof QuickFixAction) {
-          fixesToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file, -1));
+          List<HighlightInfo.IntentionActionDescriptor> actions = ((IntentionActionComposite)action).getAvailableActions(editor, file, -1);
+          for (HighlightInfo.IntentionActionDescriptor descriptor : actions) {
+            HighlightInfo info = codeAnalyzer.findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), true);
+            if (info == null || info.getSeverity() == HighlightSeverity.ERROR) {
+              fixesToShow.add(descriptor);
+            }
+            else {
+              intentionsToShow.add(descriptor);
+            }
+          }
         }
         else {
           intentionsToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file, -1));
