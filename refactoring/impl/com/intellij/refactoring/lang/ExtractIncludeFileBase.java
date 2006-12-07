@@ -2,6 +2,7 @@ package com.intellij.refactoring.lang;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,8 +33,9 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.find.FindManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -161,7 +163,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
-    ExtractIncludeDialog dialog = new ExtractIncludeDialog(file.getContainingDirectory(), (LanguageFileType)fileType);
+    ExtractIncludeDialog dialog = new ExtractIncludeDialog(file.getContainingDirectory(), getExtractExtension(fileType));
     dialog.show();
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       final PsiDirectory targetDirectory = dialog.getTargetDirectory();
@@ -195,6 +197,11 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
       }, REFACTORING_NAME, null);
 
     }
+  }
+
+  @NonNls
+  protected String getExtractExtension(final FileType extractFileType) {
+    return extractFileType.getDefaultExtension();
   }
 
   public boolean isValidRange(final XmlTagChild firstToExtract,final XmlTagChild lastToExtract) {

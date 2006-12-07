@@ -4,16 +4,15 @@ import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -31,8 +30,8 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myTargetDirectoryField;
   private JTextField myNameField;
   private final PsiDirectory myCurrentDirectory;
-  private final LanguageFileType myFileType;
   private static final String REFACTORING_NAME = RefactoringBundle.message("extractIncludeFile.name");
+  private final String myExtension;
 
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
@@ -41,13 +40,13 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private PsiDirectory myTargetDirectory;
 
   public String getTargetFileName () {
-    return myNameField.getText().trim() + "." + myFileType.getDefaultExtension();
+    return myNameField.getText().trim() + "." + myExtension;
   }
 
-  public ExtractIncludeDialog(final PsiDirectory currentDirectory, final LanguageFileType fileType) {
+  public ExtractIncludeDialog(final PsiDirectory currentDirectory, final String extension) {
     super(false);
     myCurrentDirectory = currentDirectory;
-    myFileType = fileType;
+    myExtension = extension;
     setTitle(REFACTORING_NAME);
     init();
   }
@@ -111,7 +110,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
             String directoryName = myTargetDirectoryField.getText().replace(File.separatorChar, '/');
             try {
               PsiDirectory targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), directoryName);
-              String targetFileName = getTargetFileName();
+              String targetFileName = getTargetFileName() + "." + myExtension;
               targetDirectory.checkCreateFile(targetFileName);
               final String webPath = ExtractJspIncludeFileHandler.getWebPath(myCurrentDirectory, targetDirectory);
               myTargetDirectory = webPath == null ? null : targetDirectory;
