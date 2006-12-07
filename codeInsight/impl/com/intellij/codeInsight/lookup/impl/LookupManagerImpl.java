@@ -138,11 +138,11 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         }
 
         private void dispose(){
-          if (myActiveLookup == null) return;
           alarm.cancelAllRequests();
           if (daemonCodeAnalyzer != null) {
             daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
           }
+          if (myActiveLookup == null) return;
           myActiveLookup.removeLookupListener(this);
           Lookup lookup = myActiveLookup;
           myActiveLookup = null;

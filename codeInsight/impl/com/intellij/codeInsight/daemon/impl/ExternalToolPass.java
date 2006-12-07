@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
@@ -24,8 +23,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
-  private AnnotationHolderImpl myAnnotationHolder;
-  HighlightInfoHolder myHolder;
+  private final AnnotationHolderImpl myAnnotationHolder;
 
   public ExternalToolPass(PsiFile file,
                           Editor editor,

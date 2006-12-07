@@ -51,7 +51,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     }
 
     if (StringUtil.isEmpty(text)) return true;
-
+      
     SearchScope searchScope = p.getEffectiveSearchScope();
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
@@ -79,15 +79,9 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
 
     final PsiSearchHelper helper = PsiManager.getInstance(refElement.getProject()).getSearchHelper();
 
-    if (!helper.processElementsWithWord(processor,
-                                        searchScope,
-                                        text,
-                                        searchContext,
-                                        refElement.getLanguage() == StdLanguages.JAVA  //todo: temporary hack!!
-    )) {
-      return false;
-    }
+    return helper.processElementsWithWord(processor, searchScope, text, searchContext, 
+                                          refElement.getLanguage() == StdLanguages.JAVA //todo: temporary hack!!
+    );
 
-    return true;
   }
 }
