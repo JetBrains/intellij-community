@@ -27,6 +27,7 @@ public interface FileStatus extends NamedComponent {
   Color COLOR_MISSING = new Color(97, 97, 97);
   Color COLOR_ADDED = new Color(10, 119, 0);
   Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
+  Color COLOR_HIJACKED = Color.ORANGE.darker();
   Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
   FileStatus NOT_CHANGED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"), COLOR_NOT_CHANGED);
@@ -36,6 +37,7 @@ public interface FileStatus extends NamedComponent {
   FileStatus MERGE = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("MERGED", VcsBundle.message("file.status.name.merged"), COLOR_MERGE);
   FileStatus UNKNOWN = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("UNKNOWN", VcsBundle.message("file.status.name.unknown"), COLOR_UNKNOWN);
   FileStatus IGNORED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("IDEA_FILESTATUS_IGNORED", VcsBundle.message("file.status.name.ignored"), new Color(114, 114, 56));
+  FileStatus HIJACKED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("HIJACKED", VcsBundle.message("file.status.name.hijacked"), COLOR_HIJACKED);
   FileStatus MERGED_WITH_CONFLICTS = PeerFactory.getInstance().getFileStatusFactory()
    .createFileStatus("IDEA_FILESTATUS_MERGED_WITH_CONFLICTS", VcsBundle.message("file.status.name.merged.with.conflicts"), Color.red);
   FileStatus DELETED_FROM_FS = PeerFactory.getInstance().getFileStatusFactory()
