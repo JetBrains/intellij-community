@@ -57,13 +57,16 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
           PsiGenerationInfo<PsiMethod>[] results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
 
-          PsiMethod firstMethod = results[0].getPsiMember();
-          final PsiCodeBlock block = firstMethod.getBody();
-          final PsiElement first = block.getFirstBodyElement();
-          LOG.assertTrue(first != null);
-          editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
-          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          editor.getSelectionModel().removeSelection();
+          if (results != null) {
+            PsiMethod firstMethod = results[0].getPsiMember();
+            final PsiCodeBlock block = firstMethod.getBody();
+            assert block != null;
+            final PsiElement first = block.getFirstBodyElement();
+            assert first != null;
+            editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
+            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+            editor.getSelectionModel().removeSelection();
+          }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
