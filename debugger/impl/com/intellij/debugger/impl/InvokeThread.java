@@ -30,7 +30,8 @@ public abstract class InvokeThread<E> {
 
     public void interrupt() {
       assert myRequestFuture != null;
-      myRequestFuture.cancel( this != getCurrentThreadRequest() );  // do not hard interrupt current thread
+
+      myRequestFuture.cancel( true );  
     }
 
     public boolean isInterrupted() {
@@ -43,7 +44,6 @@ public abstract class InvokeThread<E> {
       try {
         myRequestFuture.get();
       } catch(CancellationException ex) {
-
       }
     }
 
@@ -88,6 +88,7 @@ public abstract class InvokeThread<E> {
 
     protected void afterRun() {
       ourWorkerRequest.set(null);
+      boolean b = Thread.interrupted(); // reset interrupted status to return into pool
     }
   }
 
