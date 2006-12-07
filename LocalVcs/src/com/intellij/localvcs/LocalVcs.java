@@ -47,7 +47,6 @@ public class LocalVcs {
     return myRoot.getRoots();
   }
 
-  // todo timestamp parameter is a bit ugly
   public void createFile(String path, String content, Long timestamp) {
     myPendingChanges.add(new CreateFileChange(getNextId(), path, content, timestamp));
   }

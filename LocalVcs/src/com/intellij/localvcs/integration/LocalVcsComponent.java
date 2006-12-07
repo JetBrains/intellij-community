@@ -1,70 +1,82 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.ChangeList;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.RootEntry;
 import com.intellij.localvcs.Storage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.SettingsSavingComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LocalVcsComponent implements ProjectComponent {
-  private StartupManager myStartupManager;
+import java.io.File;
+
+public class LocalVcsComponent implements ProjectComponent, SettingsSavingComponent {
+  private Project myProject;
+  private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManager myFileManager;
   private LocalVcs myVcs;
   private LocalVcsService myService;
 
-  public static LocalVcsComponent getInstance(Project p) {
-     return p.getComponent(LocalVcsComponent.class);
+  public static LocalVcs getLocalVcsFor(Project p) {
+    return p.getComponent(LocalVcsComponent.class).getLocalVcs();
   }
 
-  public LocalVcsComponent(StartupManager sm, ProjectRootManagerEx rm, VirtualFileManager fm) {
+  public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManager fm) {
+    myProject = p;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
   }
 
   public void initComponent() {
-    if (isDisabled()) {
-      //System.out.println("localvcs is disabled");
-      return;
-    }
-    //System.out.println("localvcs is initialized");
+    if (isDisabled()) return;
 
-
-    myVcs = new LocalVcs(new Storage(null) {
-      @Override
-      public ChangeList loadChangeList() {
-        return new ChangeList();
-      }
-
-      @Override
-      public RootEntry loadRootEntry() {
-        return new RootEntry();
-      }
-
-      @Override
-      public Integer loadCounter() {
-        return 0;
+    myStartupManager.registerPreStartupActivity(new Runnable() {
+      public void run() {
+        initVcs();
+        initService();
       }
     });
+  }
+
+  private void initVcs() {
+    myVcs = new LocalVcs(new Storage(getStorageDir()));
+  }
+
+  protected void initService() {
     myService = new LocalVcsService(myVcs, myStartupManager, myRootManager, myFileManager);
+  }
+
+  public File getStorageDir() {
+    File vcs = new File(getSystemPath(), "vcs");
+
+    String prefix = myProject.getName();
+    String postfix = Integer.toHexString(myProject.getProjectFilePath().hashCode());
+
+    return new File(vcs, prefix + "." + postfix);
+  }
+
+  protected String getSystemPath() {
+    return PathManager.getSystemPath();
+  }
+
+  public void save() {
+    if (myVcs != null) myVcs.store();
   }
 
   public void disposeComponent() {
     if (isDisabled()) return;
     Disposer.dispose(myService);
-    //System.out.println("localvcs is disposed");
   }
 
-  private boolean isDisabled() {
+  protected boolean isDisabled() {
     if (System.getProperty("localvcs.enabled") != null) return false;
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     return true;

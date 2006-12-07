@@ -20,7 +20,6 @@ import java.util.Map;
 public class DifferenceNodeTest {
   private MyFileTypeManager typeManager = new MyFileTypeManager();
 
-
   @Test
   public void testStructure() {
     Difference d = new Difference(false, null, null, null);

@@ -29,7 +29,7 @@ public class Label {
 
   public Difference getDifferenceWith(Label right) {
     // todo it seems that entries should always exist, but i'm not sure...
-    // i cant figure aout any test for it
+    // todo i cant figure out any test for it
     Entry leftEntry = getEntry();
     Entry rightEntry = right.getEntry();
 

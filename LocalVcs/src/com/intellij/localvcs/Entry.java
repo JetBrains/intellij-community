@@ -103,7 +103,7 @@ public abstract class Entry {
     return null;
   }
 
-  // try to get rid of entries copying
+  // todo try to get rid of entries copying
   public abstract Entry copy();
 
   public Entry renamed(String newName) {

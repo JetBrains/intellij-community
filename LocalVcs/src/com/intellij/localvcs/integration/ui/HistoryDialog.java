@@ -28,7 +28,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private void initModel(VirtualFile f) {
-    LocalVcs vcs = LocalVcsComponent.getInstance(myProject).getLocalVcs();
+    LocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myProject);
     myModel = createModelFor(f, vcs);
   }
 

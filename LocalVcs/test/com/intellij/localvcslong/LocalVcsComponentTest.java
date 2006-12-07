@@ -4,6 +4,7 @@ package com.intellij.localvcslong;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -43,7 +44,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
   }
 
   public void testComponentInitialitation() {
-    assertNotNull(getProject().getComponent(LocalVcsComponent.class));
+    assertNotNull(getComponent());
   }
 
   public void testUpdatingOnRootsChanges() {
@@ -54,7 +55,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertTrue(e.isDirectory());
   }
 
-  public void testUpdatingFilesOnRootsChanges() throws IOException {
+  public void testUpdatingFilesOnRootsChanges() throws Exception {
     VirtualFile root = addContentRootWithFile("file.java");
 
     assertNotNull(getLocalVcs().findEntry(root.getPath() + "/file.java"));
@@ -87,9 +88,21 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertNotNull(e);
     assertFalse(e.isDirectory());
   }
+  
+  public void testSaving() throws Exception {
+    VirtualFile f = root.createChildData(null, "file");
+    myProject.save();
+
+    LocalVcs vcs = new LocalVcs(new Storage(getComponent().getStorageDir()));
+    assertTrue(vcs.hasEntry(f.getPath()));
+  }
 
   private LocalVcs getLocalVcs() {
-    return getProject().getComponent(LocalVcsComponent.class).getLocalVcs();
+    return getComponent().getLocalVcs();
+  }
+
+  private LocalVcsComponent getComponent() {
+    return getProject().getComponent(LocalVcsComponent.class);
   }
 
   private VirtualFile addContentRoot() {

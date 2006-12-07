@@ -68,27 +68,36 @@ public class Storage {
       FileInputStream fs = new FileInputStream(f);
       try {
         return loader.load(new Stream(fs));
-      } finally {
+      }
+      finally {
         fs.close();
       }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
   private void store(String fileName, Storer storer) {
+    assureDirExists();
     File f = new File(myDir, fileName);
     try {
       f.createNewFile();
       FileOutputStream fs = new FileOutputStream(f);
       try {
         storer.store(new Stream(fs));
-      } finally {
+      }
+      finally {
         fs.close();
       }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private void assureDirExists() {
+    if (!myDir.exists()) myDir.mkdirs();
   }
 
   private static interface Loader<T> {

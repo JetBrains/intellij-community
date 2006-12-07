@@ -40,7 +40,6 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     assertTrue(result.hasEntry("file"));
   }
 
-  @Ignore
   @Test
   public void testStoringChangeList() {
     vcs.createFile("file", "content", null);

@@ -48,7 +48,6 @@ public class LocalVcsService implements Disposable {
   private void subscribeForRootChanges() {
     myRootManager.registerChangeUpdater(new MyCacheUpdater() {
       public void updatingDone() {
-        //System.out.println("updating roots");
         updateRoots();
       }
     });
@@ -59,14 +58,12 @@ public class LocalVcsService implements Disposable {
       @Override
       public void fileCreated(VirtualFileEvent e) {
         if (notForMe(e)) return;
-        //System.out.println("file created");
         createFile(e.getFile());
       }
 
       @Override
       public void contentsChanged(VirtualFileEvent e) {
         if (notForMe(e)) return;
-        //System.out.println("content changed");
         changeFileContent(e.getFile());
       }
 
@@ -74,21 +71,18 @@ public class LocalVcsService implements Disposable {
       public void beforePropertyChange(VirtualFilePropertyEvent e) {
         if (notForMe(e)) return;
         if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
-        //System.out.println("renamed");
         rename(e.getFile(), (String)e.getNewValue());
       }
 
       @Override
       public void beforeFileMovement(VirtualFileMoveEvent e) {
         if (notForMe(e)) return;
-        //System.out.println("before moved");
         move(e.getFile(), e.getNewParent());
       }
 
       @Override
       public void beforeFileDeletion(VirtualFileEvent e) {
         if (notForMe(e)) return;
-        //System.out.println("before deleted");
         delete(e.getFile());
       }
 
