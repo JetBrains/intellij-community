@@ -91,4 +91,10 @@ public interface ExtensionPoints {
    * @since 5.1
    */
   @NonNls String INDEX_PATTERN_PROVIDER = "com.intellij.indexPatternProvider";
+
+  @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
+
+  @NonNls String INSPECTION_ENRTY_POINT = "com.intellij.entryPoint";
+
+  @NonNls String DEAD_CODE_TOOL = "com.intellij.deadCode";
 }

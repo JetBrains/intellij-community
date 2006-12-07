@@ -9,9 +9,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.javaee.ejb.EjbHelper;
-import com.intellij.javaee.ejb.role.EjbClassRole;
-import com.intellij.javaee.ejb.role.EjbClassRoleEnum;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -34,7 +31,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   private static final int IS_INTERFACE_MASK = 0x20000;
   private static final int IS_UTILITY_MASK   = 0x40000;
   private static final int IS_ABSTRACT_MASK  = 0x80000;
-  private static final int IS_EJB_MASK       = 0x100000;
+
   private static final int IS_APPLET_MASK    = 0x200000;
   private static final int IS_SERVLET_MASK   = 0x400000;
   private static final int IS_TESTCASE_MASK  = 0x800000;
@@ -223,22 +220,6 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
       for (PsiMethod psiMethod : psiMethods) {
         ((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
       }
-
-      EjbClassRole role = EjbHelper.getEjbHelper().getEjbRole(psiClass);
-      if (role != null) {
-        setEjb(true);
-        if (role.getType() == EjbClassRoleEnum.EJB_CLASS_ROLE_HOME_INTERFACE ||
-            role.getType() == EjbClassRoleEnum.EJB_CLASS_ROLE_REMOTE_INTERFACE) {
-          PsiClassType remoteExceptionType = psiClass.getManager().getElementFactory().createTypeByFQClassName("java.rmi.RemoteException", psiClass.getResolveScope());
-          for (PsiMethod psiMethod : psiClass.getAllMethods()) {
-            if (!RefUtil.getInstance().belongsToScope(psiMethod, getRefManager())) continue;
-            RefMethodImpl refMethod = (RefMethodImpl)((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
-            if (refMethod != null) {
-              refMethod.updateThrowsList(remoteExceptionType);
-            }
-          }
-        }
-      }
       ((RefManagerImpl)getRefManager()).fireBuildReferences(this);
     }
   }
@@ -404,10 +385,6 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     return checkFlag(IS_ABSTRACT_MASK);
   }
 
-  public boolean isEjb() {
-    return checkFlag(IS_EJB_MASK);
-  }
-
   public boolean isApplet() {
     return checkFlag(IS_APPLET_MASK);
   }
@@ -471,9 +448,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     setFlag(anAbstract, IS_ABSTRACT_MASK);
   }
 
-  private void setEjb(boolean ejb) {
-    setFlag(ejb, IS_EJB_MASK);
-  }
+
 
   private void setApplet(boolean applet) {
     setFlag(applet, IS_APPLET_MASK);

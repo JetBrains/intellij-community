@@ -9,8 +9,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.javaee.ejb.EjbHelper;
-import com.intellij.javaee.ejb.role.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -39,8 +37,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   private static final int IS_BODY_EMPTY_MASK = 0x100000;
   private static final int IS_ONLY_CALLS_SUPER_MASK = 0x200000;
   private static final int IS_RETURN_VALUE_USED_MASK = 0x400000;
-  private static final int IS_EJB_DECLARATION_MASK = 0x800000;
-  private static final int IS_EJB_IMPLEMENTATION_MASK = 0x1000000;
+
   private static final int IS_TEST_METHOD_MASK = 0x4000000;
   private static final int IS_CALLED_ON_SUBCLASS = 0x8000000;
 
@@ -215,7 +212,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
   }
 
-  private void addSuperMethod(RefMethodImpl refSuperMethod) {
+  public void addSuperMethod(RefMethodImpl refSuperMethod) {
     if (!getSuperMethods().contains(refSuperMethod)) {
       if (mySuperMethods == null){
         mySuperMethods = new ArrayList<RefMethod>(1);
@@ -224,7 +221,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
   }
 
-  private void markExtended(RefMethodImpl method) {
+  public void markExtended(RefMethodImpl method) {
     if (!getDerivedMethods().contains(method)) {
       if (myDerivedMethods == null) {
         myDerivedMethods = new ArrayList<RefMethod>(1);
@@ -250,71 +247,6 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
       setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
-
-      final EjbHelper helper = EjbHelper.getEjbHelper();
-      EjbClassRole classRole = helper.getEjbRole(method.getContainingClass());
-      if (classRole != null) {
-        EjbMethodRole role = helper.getEjbRole(method);
-        if (role != null) {
-          EjbMethodRoleEnum roleType = role.getType();
-          if (role instanceof EjbDeclMethodRole) {
-            setEjbDeclaration(true);
-
-            if (roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_DECL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_SETTER_DECL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_DECL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_GETTER_DECL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_GETTER_DECL) {
-              for (RefParameter refParameter : getParameters()) {
-                refParameter.parameterReferenced(false);
-                refParameter.parameterReferenced(true);
-              }
-            }
-          } else if (role instanceof EjbImplMethodRole) {
-            PsiMethod[] declarations = ((EjbImplMethodRole) role).findAllDeclarations();
-            if (declarations.length != 0) {
-              for (PsiMethod psiDeclaration : declarations) {
-                if (refUtil.belongsToScope(psiDeclaration, getRefManager())) {
-                  RefMethodImpl refDeclaration = (RefMethodImpl)getRefManager().getReference(psiDeclaration);
-
-                  if (refDeclaration != null) {
-                    addSuperMethod(refDeclaration);
-                    refDeclaration.markExtended(this);
-                  }
-                  else {
-                    setLibraryOverride(true);
-                  }
-                }
-                else {
-                  setLibraryOverride(true);
-                }
-              }
-            }
-
-            if (roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_GETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_SETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_GETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CREATE_IMPL) {
-              setBodyEmpty(false);
-            }
-
-            if (roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_GETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMP_SETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_GETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_CMR_SETTER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_FINDER_IMPL ||
-                roleType == EjbMethodRoleEnum.EJB_METHOD_ROLE_SELECTOR_IMPL) {
-              for (RefParameter refParameter : getParameters()) {
-                refParameter.parameterReferenced(false);
-                refParameter.parameterReferenced(true);
-              }
-            }
-
-            setEjbImplementation(true);
-          }
-        }
-      }
 
       PsiType retType = method.getReturnType();
       if (retType != null) {
@@ -345,13 +277,6 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
   }
 
-  private static boolean isEjbException(String qualifiedName) {
-    return "javax.ejb.CreateException".equals(qualifiedName) ||
-           "java.rmi.RemoteException".equals(qualifiedName) ||
-           "javax.ejb.FinderException".equals(qualifiedName) ||
-           "javax.ejb.RemoveException".equals(qualifiedName);
-  }
-
   private void collectUncaughtExceptions(PsiMethod method) {
     if (isExternalOverride()) return;
     @NonNls final String name = method.getName();
@@ -360,11 +285,8 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     if (getSuperMethods().size() == 0) {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
       if (throwsList.length > 0) {
-        EjbClassRole role = EjbHelper.getEjbHelper().getEjbRole(method.getContainingClass());
         myUnThrownExceptions = new ArrayList<PsiClass>(throwsList.length);
         for (final PsiClassType type : throwsList) {
-          String qualifiedName = type.getCanonicalText();
-          if (role != null && isEjbException(qualifiedName)) continue;
           myUnThrownExceptions.add(type.resolve());
         }
       }
@@ -378,6 +300,12 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       for (final PsiClassType exceptionType : exceptionTypes) {
         updateThrowsList(exceptionType);
       }
+    }
+  }
+
+  public void removeUnThrownExceptions(PsiClass unThrownException) {
+    if (myUnThrownExceptions != null) {
+      myUnThrownExceptions.remove(unThrownException);
     }
   }
 
@@ -410,14 +338,6 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
 
   public boolean isAbstract() {
     return checkFlag(IS_ABSTRACT_MASK);
-  }
-
-  public boolean isEjbDeclaration() {
-    return checkFlag(IS_EJB_DECLARATION_MASK);
-  }
-
-  public boolean isEjbImplementation() {
-    return checkFlag(IS_EJB_IMPLEMENTATION_MASK);
   }
 
   public boolean hasSuperMethods() {
@@ -677,7 +597,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
   }
 
 
-  private void setLibraryOverride(boolean libraryOverride) {
+  public void setLibraryOverride(boolean libraryOverride) {
     setFlag(libraryOverride, IS_LIBRARY_OVERRIDE_MASK);
   }
 
@@ -689,7 +609,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     setFlag(anAbstract, IS_ABSTRACT_MASK);
   }
 
-  private void setBodyEmpty(boolean bodyEmpty) {
+  public void setBodyEmpty(boolean bodyEmpty) {
     setFlag(bodyEmpty, IS_BODY_EMPTY_MASK);
   }
 
@@ -697,13 +617,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     setFlag(onlyCallsSuper, IS_ONLY_CALLS_SUPER_MASK);
   }
 
-  private void setEjbDeclaration(boolean ejbDeclaration) {
-    setFlag(ejbDeclaration, IS_EJB_DECLARATION_MASK);
-  }
 
-  private void setEjbImplementation(boolean ejbImplementation) {
-    setFlag(ejbImplementation, IS_EJB_IMPLEMENTATION_MASK);
-  }
 
   private void setConstructor(boolean constructor) {
     setFlag(constructor, IS_CONSTRUCTOR_MASK);

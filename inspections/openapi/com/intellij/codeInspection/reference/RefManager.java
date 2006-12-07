@@ -94,4 +94,6 @@ public abstract class RefManager {
    * a corresponding reference graph node type (is not a field, method, class or file).
    */
   public abstract RefParameter getParameterReference(PsiParameter param, int index);
+
+  public abstract int getLastUsedMask();
 }

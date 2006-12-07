@@ -57,8 +57,6 @@ public interface RefClass extends RefElement {
 
   boolean isAbstract();
 
-  boolean isEjb();
-
   boolean isApplet();
 
   boolean isServlet();

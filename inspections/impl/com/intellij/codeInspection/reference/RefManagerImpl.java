@@ -8,11 +8,13 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -246,6 +248,16 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
+  public void initializeAnnotators() {
+    final Object[] graphAnnotators = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR).getExtensions();
+    for (Object annotator : graphAnnotators) {
+      registerGraphAnnotator((RefGraphAnnotator)annotator);
+      if (annotator instanceof RefGraphAnnotatorEx) {
+        ((RefGraphAnnotatorEx)annotator).initialize(this);
+      }
+    }
+  }
+
   private class ProjectIterator extends PsiElementVisitor {
     private final RefUtilImpl REF_UTIL = (RefUtilImpl)RefUtil.getInstance();
     public void visitElement(PsiElement element) {
@@ -277,7 +289,7 @@ public class RefManagerImpl extends RefManager {
     public void visitClass(PsiClass aClass) {
       if (!(aClass instanceof PsiTypeParameter)) {
         super.visitClass(aClass);
-        RefElement refClass = RefManagerImpl.this.getReference(aClass);
+        RefElement refClass = getReference(aClass);
         if (refClass != null) {
           ((RefClassImpl)refClass).buildReferences();
           List children = refClass.getChildren();
@@ -301,7 +313,7 @@ public class RefManagerImpl extends RefManager {
           if (dataElements != null && dataElements.length > 0){
             final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(comment, PsiModifierListOwner.class);
             if (listOwner != null){
-              final RefElementImpl element = (RefElementImpl)RefManagerImpl.this.getReference(listOwner);
+              final RefElementImpl element = (RefElementImpl)getReference(listOwner);
               if (element != null) {
                 element.addSuppression(dataElements[0].getText());
               }
@@ -316,7 +328,7 @@ public class RefManagerImpl extends RefManager {
       if (Comparing.strEqual(annotation.getQualifiedName(), "java.lang.SuppressWarnings")){
         final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
         if (listOwner != null){
-          final RefElementImpl element = (RefElementImpl)RefManagerImpl.this.getReference(listOwner);
+          final RefElementImpl element = (RefElementImpl)getReference(listOwner);
           if (element != null) {
             StringBuffer buf = new StringBuffer();
             final PsiNameValuePair[] nameValuePairs = annotation.getParameterList().getAttributes();
@@ -351,7 +363,7 @@ public class RefManagerImpl extends RefManager {
         REF_UTIL.addTypeReference(expression, expression.getType(), RefManagerImpl.this);
         RefClass ownerClass = RefUtil.getInstance().getOwnerClass(RefManagerImpl.this, expression);
         if (ownerClass != null) {
-          RefClassImpl refClass = (RefClassImpl)RefManagerImpl.this.getReference(qualifier.resolve());
+          RefClassImpl refClass = (RefClassImpl)getReference(qualifier.resolve());
           if (refClass != null) {
             refClass.addInstanceReference(ownerClass);
           }

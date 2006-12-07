@@ -9,6 +9,7 @@
 
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -21,11 +22,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -42,9 +42,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,7 +55,6 @@ import java.util.List;
 public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean ADD_MAINS_TO_ENTRIES = true;
   public boolean ADD_JUNIT_TO_ENTRIES = true;
-  public boolean ADD_EJB_TO_ENTRIES = true;
   public boolean ADD_APPLET_TO_ENTRIES = true;
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
@@ -75,17 +74,21 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   @NonNls private static final String COMMENT = "comment";
   @NonNls private static final String [] HINTS = new String[] {COMMENT, DELETE};
 
+  public final DeadCodeExtension [] myExtensions;
+
   public DeadCodeInspection() {
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
+    final Object[] deadCodeAddins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL).getExtensions();
+    myExtensions = new DeadCodeExtension[deadCodeAddins.length];
+    System.arraycopy(deadCodeAddins, 0, myExtensions, 0, deadCodeAddins.length);
   }
 
   private class OptionsPanel extends JPanel {
-    private JCheckBox myMainsCheckbox;
-    private JCheckBox myJUnitCheckbox;
-    private JCheckBox myEJBMethodsCheckbox;
-    private JCheckBox myAppletToEntries;
-    private JCheckBox myServletToEntries;
-    private JCheckBox myNonJavaCheckbox;
+    private final JCheckBox myMainsCheckbox;
+    private final JCheckBox myJUnitCheckbox;
+    private final JCheckBox myAppletToEntries;
+    private final JCheckBox myServletToEntries;
+    private final JCheckBox myNonJavaCheckbox;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -97,8 +100,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
       myMainsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option"));
       myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
-      myMainsCheckbox.getModel().addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+      myMainsCheckbox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
           ADD_MAINS_TO_ENTRIES = myMainsCheckbox.isSelected();
         }
       });
@@ -106,20 +109,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       gc.gridy = 0;
       add(myMainsCheckbox, gc);
 
-      myEJBMethodsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option1"));
-      myEJBMethodsCheckbox.setSelected(ADD_EJB_TO_ENTRIES);
-      myEJBMethodsCheckbox.getModel().addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
-          ADD_EJB_TO_ENTRIES = myEJBMethodsCheckbox.isSelected();
-        }
-      });
-      gc.gridy++;
-      add(myEJBMethodsCheckbox, gc);
-
       myJUnitCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option2"));
       myJUnitCheckbox.setSelected(ADD_JUNIT_TO_ENTRIES);
-      myJUnitCheckbox.getModel().addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+      myJUnitCheckbox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
           ADD_JUNIT_TO_ENTRIES = myJUnitCheckbox.isSelected();
         }
       });
@@ -129,8 +122,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
       myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option3"));
       myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
-      myAppletToEntries.getModel().addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+      myAppletToEntries.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
           ADD_APPLET_TO_ENTRIES = myAppletToEntries.isSelected();
         }
       });
@@ -139,19 +132,31 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
       myServletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option4"));
       myServletToEntries.setSelected(ADD_SERVLET_TO_ENTRIES);
-      myServletToEntries.getModel().addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+      myServletToEntries.addActionListener(new ActionListener(){
+        public void actionPerformed(ActionEvent e) {
           ADD_SERVLET_TO_ENTRIES = myServletToEntries.isSelected();
         }
       });
       gc.gridy++;
       add(myServletToEntries, gc);
 
+      for (final DeadCodeExtension extension : myExtensions) {
+        final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
+        extCheckbox.setSelected(extension.isSelected());
+        extCheckbox.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            extension.setSelected(extCheckbox.isSelected());
+          }
+        });
+        gc.gridy++;
+        add(extCheckbox, gc);
+      }
+
       myNonJavaCheckbox =
       new JCheckBox(InspectionsBundle.message("inspection.dead.code.option5"));
       myNonJavaCheckbox.setSelected(ADD_NONJAVA_TO_ENTRIES);
-      myNonJavaCheckbox.getModel().addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+      myNonJavaCheckbox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
           ADD_NONJAVA_TO_ENTRIES = myNonJavaCheckbox.isSelected();
         }
       });
@@ -182,10 +187,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return ADD_SERVLET_TO_ENTRIES;
   }
 
-  private boolean isAddEjbInterfaceMethodsEnabled() {
-    return ADD_EJB_TO_ENTRIES;
-  }
-
   private boolean isAddNonJavaUsedEnabled() {
     return ADD_NONJAVA_TO_ENTRIES;
   }
@@ -203,6 +204,20 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
+  }
+
+  public void readSettings(Element node) throws InvalidDataException {
+    super.readSettings(node);
+    for (DeadCodeExtension extension : myExtensions) {
+      extension.readExternal(node);
+    }
+  }
+
+  public void writeSettings(Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    for (DeadCodeExtension extension : myExtensions) {
+      extension.writeExternal(node);
+    }
   }
 
   private static boolean isSerializationImplicitlyUsedField(PsiField field) {
@@ -277,6 +292,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               if (isAddMainsEnabled() && method.isAppMain()) {
                 getEntryPointsManager().addEntryPoint(method, false);
               }
+              checkExtensions(method);              
             }
 
             public void visitClass(RefClass aClass) {
@@ -287,8 +303,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               else if (
                 isAddAppletEnabled() && aClass.isApplet() ||
                 isAddServletEnabled() && aClass.isServlet() ||
-                aClass.isEjb()) {
+                RefUtil.isEntryPoint(aClass)) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
+              } else {
+                checkExtensions(aClass);
               }
             }
           });
@@ -336,6 +354,15 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
     myProcessedSuspicious = new HashSet<RefElement>();
     myPhase = 1;
+  }
+
+  private void checkExtensions(final RefElement refElement) {
+    for (DeadCodeExtension extension : myExtensions) {
+      if (extension.isEntryPoint(refElement)) {
+        getEntryPointsManager().addEntryPoint(refElement, false);
+        break;
+      }
+    }
   }
 
   private void addTestcaseEntries(PsiClass testClass) {
@@ -432,13 +459,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                     myProcessedSuspicious.add(derivedMethod);
                   }
 
-                  if (isAddEjbInterfaceMethodsEnabled()) {
-                    if (refMethod.isEjbDeclaration() || refMethod.isEjbImplementation()) {
-                      addEjbMethodToEntries(refMethod);
-                      return;
-                    }
-                  }
-
                   enqueueMethodUsages(refMethod);
                   requestAdded[0] = true;
                 }
@@ -447,7 +467,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
             public void visitClass(final RefClass refClass) {
               myProcessedSuspicious.add(refClass);
-              if (refClass.isEjb()) {
+              if (RefUtil.isEntryPoint(refClass)) {
                 getEntryPointsManager().addEntryPoint(refClass, false);
               }
               else if (!refClass.isAnonymous()) {
@@ -490,12 +510,12 @@ public class DeadCodeInspection extends FilteringInspectionTool {
            isWriteReplaceMethod(psiMethod);
   }
 
-  private void addEjbMethodToEntries(RefMethod refMethod) {
+  /*private void addEjbMethodToEntries(RefMethod refMethod) {
     getEntryPointsManager().addEntryPoint(refMethod, false);
     for (RefMethod refSuper : refMethod.getSuperMethods()) {
       addEjbMethodToEntries(refSuper);
     }
-  }
+  }*/
 
   private void enqueueMethodUsages(final RefMethod refMethod) {
     if (refMethod.getSuperMethods().isEmpty()) {
@@ -723,6 +743,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private static class CommentOutIntention implements IntentionAction {
     private PsiElement myElement;
 
+    @SuppressWarnings({"UnusedDeclaration"})
     public CommentOutIntention(final PsiElement element) {
       myElement = element;
     }
@@ -796,7 +817,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               else if (
                 isAddAppletEnabled() && aClass.isApplet() ||
                 isAddServletEnabled() && aClass.isServlet() ||
-                aClass.isEjb()) {
+                RefUtil.isEntryPoint(aClass)) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
               }
             }

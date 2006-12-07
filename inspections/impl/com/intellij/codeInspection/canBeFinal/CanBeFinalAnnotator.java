@@ -2,11 +2,6 @@ package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.javaee.ejb.EjbHelper;
-import com.intellij.javaee.ejb.role.EjbClassRole;
-import com.intellij.javaee.ejb.role.EjbDeclMethodRole;
-import com.intellij.javaee.ejb.role.EjbImplMethodRole;
-import com.intellij.javaee.ejb.role.EjbMethodRole;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 
@@ -19,7 +14,7 @@ import java.util.List;
  * User: anna
  * Date: 27-Dec-2005
  */
-class CanBeFinalAnnotator extends RefGraphAnnotator {
+class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
   private RefManager myManager;
   public static int CAN_BE_FINAL_MASK;
 
@@ -27,13 +22,16 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
     myManager = manager;
   }
 
+  public void initialize(RefManager refManager) {
+    CAN_BE_FINAL_MASK = refManager.getLastUsedMask();
+  }
+
   public void onInitialize(RefElement refElement) {
     ((RefElementImpl)refElement).setFlag(true, CAN_BE_FINAL_MASK);
     if (refElement instanceof RefClass) {
       final RefClass refClass = ((RefClass)refElement);
       final PsiClass psiClass = refClass.getElement();
-      EjbClassRole role = EjbHelper.getEjbHelper().getEjbRole(psiClass);
-      if (role != null) {
+      if (RefUtil.isEntryPoint(refClass)) {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);
         return;
       }
@@ -97,8 +95,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
       final PsiClass psiClass = (PsiClass)refElement.getElement();
       if (psiClass != null) {
 
-        EjbClassRole role = EjbHelper.getEjbHelper().getEjbRole(psiClass);
-        if (role != null) {
+        if (RefUtil.isEntryPoint(refElement)) {
           ((RefClassImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
         }
 
@@ -176,7 +173,10 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
 
         for (PsiField psiField : psiFields) {
           if ((!hasInitializers || !allFields.contains(psiField)) && psiField.getInitializer() == null) {
-            ((RefFieldImpl)myManager.getReference(psiField)).setFlag(false, CAN_BE_FINAL_MASK);
+            final RefFieldImpl refField = ((RefFieldImpl)myManager.getReference(psiField));
+            if (refField != null) {
+              refField.setFlag(false, CAN_BE_FINAL_MASK);
+            }
           }
         }
 
@@ -186,23 +186,10 @@ class CanBeFinalAnnotator extends RefGraphAnnotator {
       final RefMethod refMethod = (RefMethod)refElement;
       final PsiElement element = refMethod.getElement();
       if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
-        final EjbHelper helper = EjbHelper.getEjbHelper();
-        EjbClassRole classRole = helper.getEjbRole(method.getContainingClass());
-        if (classRole != null) {
-          if (!refMethod.hasSuperMethods()) {
-            ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
-          }
-          EjbMethodRole role = helper.getEjbRole(method);
-          if (role instanceof EjbDeclMethodRole || role instanceof EjbImplMethodRole) {
-            ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
-          }
+        if (RefUtil.isEntryPoint(refMethod)) {
+          ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
         }
       }
     }
-  }
-
-  public void setMask(int mask) {
-    CAN_BE_FINAL_MASK = mask;
   }
 }

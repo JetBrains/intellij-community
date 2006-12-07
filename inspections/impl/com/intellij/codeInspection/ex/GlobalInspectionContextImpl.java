@@ -51,6 +51,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -71,11 +72,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private InspectionResultsView myView = null;
   private Content myContent = null;
 
-  private HashMap<PsiElement, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
-  private HashMap<PsiElement, List<DerivedClassesProcessor>> myDerivedClassesRequests;
-  private HashMap<PsiElement, List<UsagesProcessor>> myMethodUsagesRequests;
-  private HashMap<PsiElement, List<UsagesProcessor>> myFieldUsagesRequests;
-  private HashMap<PsiElement, List<UsagesProcessor>> myClassUsagesRequests;
+  private THashMap<PsiElement, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
+  private THashMap<PsiElement, List<DerivedClassesProcessor>> myDerivedClassesRequests;
+  private THashMap<PsiElement, List<UsagesProcessor>> myMethodUsagesRequests;
+  private THashMap<PsiElement, List<UsagesProcessor>> myFieldUsagesRequests;
+  private THashMap<PsiElement, List<UsagesProcessor>> myClassUsagesRequests;
   private ProgressIndicator myProgressIndicator;
 
 
@@ -95,7 +96,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
     Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
 
-  private Map<String, Set<Pair<InspectionTool, InspectionProfile>>> myTools = new java.util.HashMap<String, Set<Pair<InspectionTool, InspectionProfile>>>();
+  private Map<String, Set<Pair<InspectionTool, InspectionProfile>>> myTools = new THashMap<String, Set<Pair<InspectionTool, InspectionProfile>>>();
 
   private UIOptions myUIOptions;
 
@@ -111,7 +112,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         public void contentRemoved(ContentManagerEvent event) {
           if (event.getContent() == myContent){
             if (myView != null) {
-              GlobalInspectionContextImpl.this.close(false);
+              close(false);
             }
             myContent = null;
           }
@@ -203,28 +204,28 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
 
   public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
-    if (myClassUsagesRequests == null) myClassUsagesRequests = new HashMap<PsiElement, List<UsagesProcessor>>();
+    if (myClassUsagesRequests == null) myClassUsagesRequests = new THashMap<PsiElement, List<UsagesProcessor>>();
     enqueueRequestImpl(refClass, myClassUsagesRequests, p);
   }
 
   public void enqueueDerivedClassesProcessor(RefClass refClass, DerivedClassesProcessor p) {
-    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new HashMap<PsiElement, List<DerivedClassesProcessor>>();
+    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new THashMap<PsiElement, List<DerivedClassesProcessor>>();
     enqueueRequestImpl(refClass, myDerivedClassesRequests, p);
   }
 
   public void enqueueDerivedMethodsProcessor(RefMethod refMethod, DerivedMethodsProcessor p) {
     if (refMethod.isConstructor() || refMethod.isStatic()) return;
-    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new HashMap<PsiElement, List<DerivedMethodsProcessor>>();
+    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new THashMap<PsiElement, List<DerivedMethodsProcessor>>();
     enqueueRequestImpl(refMethod, myDerivedMethodsRequests, p);
   }
 
   public void enqueueFieldUsagesProcessor(RefField refField, UsagesProcessor p) {
-    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new HashMap<PsiElement, List<UsagesProcessor>>();
+    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new THashMap<PsiElement, List<UsagesProcessor>>();
     enqueueRequestImpl(refField, myFieldUsagesRequests, p);
   }
 
   public void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p) {
-    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new HashMap<PsiElement, List<UsagesProcessor>>();
+    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<PsiElement, List<UsagesProcessor>>();
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
   }
 
@@ -696,7 +697,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return sum;
   }
 
-  private static int getRequestListSize(HashMap list) {
+  private static int getRequestListSize(THashMap list) {
     if (list == null) return 0;
     return list.size();
   }
@@ -821,6 +822,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void runTools(final List<InspectionTool> needRepeatSearchRequest, final AnalysisScope scope, final InspectionManager manager) {
+    ((RefManagerImpl)getRefManager()).initializeAnnotators();
     final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
     final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
     initializeTools(scope, usedTools, localTools);

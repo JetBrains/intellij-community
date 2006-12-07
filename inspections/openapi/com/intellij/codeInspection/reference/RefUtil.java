@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
@@ -65,4 +67,15 @@ public abstract class RefUtil implements ApplicationComponent {
   public abstract void setIsFinal(RefElement refElement, boolean isFinal);
 
   public abstract boolean isMethodOnlyCallsSuper(final PsiMethod derivedMethod);
+
+  public static boolean isEntryPoint(final RefElement refElement) {
+    final Object[] addins = Extensions.getRootArea()
+      .getExtensionPoint(ExtensionPoints.INSPECTION_ENRTY_POINT).getExtensions();
+    for (Object entryPoint : addins) {
+      if (((EntryPoint)entryPoint).accept(refElement)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

@@ -84,8 +84,6 @@ public interface RefMethod extends RefElement{
    * @return true if the method can be a main function of the application, false otherwise.
    */
   boolean isAppMain();
-  boolean isEjbDeclaration();
-  boolean isEjbImplementation();
 
   /**
    * Checks if the method has super methods either in the analysis scope or outside of it.
