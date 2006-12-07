@@ -481,14 +481,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void clearScopesCaches () {
+    clearScopesCachesForModules();
+    myJdkScopes.clear();
+    myLibraryScopes.clear();
+  }
+
+  public void clearScopesCachesForModules() {
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();
       ((ModuleImpl)module).clearScopesCache();
     }
-
-    myJdkScopes.clear();
-    myLibraryScopes.clear();
   }
 
   public void rootsChanged(boolean filetypes) {

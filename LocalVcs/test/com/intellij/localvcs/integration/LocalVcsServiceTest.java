@@ -283,6 +283,10 @@ public class LocalVcsServiceTest extends Assert {
       myUpdater = u;
     }
 
+    public void clearScopesCachesForModules() {
+      // empty
+    }
+
     public void updateRoots() {
       if (myUpdater != null) myUpdater.updatingDone();
     }

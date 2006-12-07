@@ -36,6 +36,8 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
 
   public abstract GlobalSearchScope getScopeForJdk(final JdkOrderEntry jdkOrderEntry);
 
+  public abstract void clearScopesCachesForModules();
+
 
   public interface ProjectJdkListener extends EventListener {
     void projectJdkChanged();

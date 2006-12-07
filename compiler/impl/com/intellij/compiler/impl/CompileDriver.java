@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -31,6 +32,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
@@ -43,7 +45,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.pom.java.LanguageLevel;
@@ -678,12 +679,22 @@ public class CompileDriver {
           }
         });
       }
-
+      dropScopesCaches();
+      
       clearCompilerSystemDirectory(context);
     }
     finally {
       context.getProgressIndicator().popState();
     }
+  }
+
+  private void dropScopesCaches() {
+    // hack to be sure the classpath will include the output directories
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).clearScopesCachesForModules();
+      }
+    });
   }
 
   private static void pruneEmptyDirectories(final Set<File> directories) {
@@ -1530,6 +1541,7 @@ public class CompileDriver {
       if (!refreshSuccess.booleanValue()) {
         return false;
       }
+      dropScopesCaches();
     }
 
     if (checkOutputAndSourceIntersection) {
