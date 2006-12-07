@@ -235,9 +235,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
       myViewsContentManager.removeContent(content);
     }
 
-
-
-
     content = PeerFactory.getInstance().getContentFactory().createContent(myConsole.getComponent(), DebuggerBundle.message(
       "debugger.session.tab.console.content.name"), false);
     content.setIcon(CONSOLE_ICON);
@@ -372,6 +369,10 @@ public class DebuggerSessionTab implements LogConsoleManager {
     addActionToGroup(group, DebuggerActions.RESUME);
     addActionToGroup(group, DebuggerActions.PAUSE);
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
+
+    addActionToGroup(group, IdeActions.ACTION_PREVIOUS_OCCURENCE);
+    addActionToGroup(group, IdeActions.ACTION_NEXT_OCCURENCE);
+
     addActionToGroup(group, DebuggerActions.EXPORT_THREADS);
     addActionToGroup(group, DebuggerActions.EVALUATE_EXPRESSION);
 

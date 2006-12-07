@@ -45,7 +45,7 @@ import java.util.List;
 public class FramePanel extends DebuggerPanel implements DataProvider{
   private static final Icon VARIABLES_ICON = IconLoader.getIcon("/debugger/value.png");
   private final JComboBox myThreadsCombo;
-  private final JList myFramesList;
+  private final FramesList myFramesList;
   private final ThreadsListener myThreadsListener;
   private final FramesListener myFramesListener;
 
@@ -61,16 +61,14 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     myThreadsListener = new ThreadsListener();
     myThreadsCombo.addItemListener(myThreadsListener);
 
-    myFramesList = new JList(new DefaultListModel());
-    myFramesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myFramesList.setCellRenderer(new DebuggerComboBoxRenderer());
+    myFramesList = new FramesList();
     myFramesListener = new FramesListener();
     myFramesList.addListSelectionListener(myFramesListener);
     registerThreadsPopupMenu(myFramesList);
 
     final JPanel threadsPanel = new JPanel(new BorderLayout());
     threadsPanel.setBorder(null);
-    threadsPanel.add(new ComboPager(myThreadsCombo, this), BorderLayout.NORTH);
+    threadsPanel.add(myThreadsCombo, BorderLayout.NORTH);
     threadsPanel.add(new JScrollPane(myFramesList), BorderLayout.CENTER);
 
     final FrameDebuggerTree frameTree = getFrameTree();
@@ -130,7 +128,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   protected void rebuild() {
     myThreadsCombo.removeAllItems();
-    ((DefaultListModel)myFramesList.getModel()).clear();
+    myFramesList.clear();
 
     getContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramePanelCommand());
 
@@ -143,7 +141,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   protected void showMessage(MessageDescriptor messageDescriptor) {
     myThreadsCombo.removeAllItems();
-    ((DefaultListModel)myFramesList.getModel()).clear();
+    myFramesList.clear();
     super.showMessage(messageDescriptor);
   }
 
@@ -183,11 +181,11 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
   }
 
   private void selectFrame(StackFrameProxy frame) {
-    final ListModel listModel = myFramesList.getModel();
-    final int count = listModel.getSize();
+    final int count = myFramesList.getElementCount();
     final StackFrameDescriptorImpl selectedValue = (StackFrameDescriptorImpl)myFramesList.getSelectedValue();
+    final DefaultListModel model = myFramesList.getModel();
     for (int idx = 0; idx < count; idx++) {
-      StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)listModel.getElementAt(idx);
+      StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)model.getElementAt(idx);
       if (frame.equals(item.getStackFrame())) {
         if (!item.equals(selectedValue)) {
           myFramesList.setSelectedIndex(idx);
@@ -332,8 +330,8 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
         public void run() {
           try {
             myFramesListener.setEnabled(false);
-            final DefaultListModel listModel = (DefaultListModel)myFramesList.getModel();
-            listModel.clear();
+            myFramesList.clear();
+            final DefaultListModel listModel = myFramesList.getModel();
             for (final StackFrameDescriptorImpl frameItem : frameItems) {
               listModel.addElement(frameItem);
             }
