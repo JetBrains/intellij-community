@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import com.intellij.openapi.application.ApplicationManager;
 
 public class RepositoryTreeNode implements TreeNode {
 
@@ -140,7 +141,7 @@ public class RepositoryTreeNode implements TreeNode {
         });
       }
     };
-    new Thread(loader).start();
+    ApplicationManager.getApplication().executeOnPooledThread(loader);
   }
 
   public SVNURL getURL() {
