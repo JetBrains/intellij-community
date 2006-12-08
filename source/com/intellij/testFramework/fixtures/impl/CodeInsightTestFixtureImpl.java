@@ -207,7 +207,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
       protected void run() throws Throwable {
         configureByFiles(filesBefore);
         new CodeCompletionHandler().invoke(getProject(), myEditor, myFile);
-        checkResultByFile(fileAfter, false);
+        checkResultByFile(fileAfter, myFile, false);
       }
     }.execute().throwException();
   }
@@ -223,7 +223,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
         PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
         assert element != null: "element not found at caret position, offset " + myEditor.getCaretModel().getOffset();
         new RenameProcessor(myProjectFixture.getProject(), element, newName, false, false).run();
-        checkResultByFile(fileAfter, false);
+        checkResultByFile(fileAfter, myFile, false);
       }
     }.execute().throwException();
   }
@@ -232,7 +232,22 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
-        checkResultByFile(filePath, false);
+        checkResultByFile(filePath, myFile, false);
+      }
+    }.execute().throwException();
+  }
+
+  public void checkResultByFile(final String filePath, final String expectedFile) throws Throwable {
+
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+
+      protected void run() throws Throwable {
+        String fullPath = getTempDirPath() + "/" + filePath;
+        final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
+        assert copy != null : "file not found: " + fullPath;
+        final PsiFile psiFile = myPsiManager.findFile(copy);
+        assert psiFile != null;
+        checkResultByFile(filePath, psiFile, false);
       }
     }.execute().throwException();
   }
@@ -490,7 +505,9 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     }
 
   }
-  protected void checkResultByFile(@NonNls String filePath, boolean stripTrailingSpaces) throws IOException {
+  protected void checkResultByFile(@NonNls String expectedFile,
+                                   @NotNull PsiFile originalFile,
+                                   boolean stripTrailingSpaces) throws IOException {
 
     Project project = myProjectFixture.getProject();
 
@@ -501,7 +518,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(getTestDataPath() + "/" + filePath);
+    SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(getTestDataPath() + "/" + expectedFile);
     String newFileText1 = loader.newFileText;
     if (stripTrailingSpaces) {
       Document document1 = EditorFactory.getInstance().createDocument(loader.newFileText);
@@ -509,10 +526,10 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
       newFileText1 = document1.getText();
     }
 
-    String text = myFile.getText();
+    String text = originalFile.getText();
     text = StringUtil.convertLineSeparators(text, "\n");
 
-    TestCase.assertEquals( "Text mismatch in file " + filePath, newFileText1, text );
+    TestCase.assertEquals( "Text mismatch in file " + expectedFile, newFileText1, text );
 
     if (loader.caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());

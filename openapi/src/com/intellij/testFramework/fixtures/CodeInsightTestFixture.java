@@ -135,7 +135,22 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   void launchAction(IntentionAction action) throws Throwable;
 
-  void checkResultByFile(String filePath) throws Throwable;
+  /**
+   * Compares current file against the given one.
+   *
+   * @param expectedFile file to check against.
+   * @throws Throwable any exception.
+   */
+  void checkResultByFile(String expectedFile) throws Throwable;
+
+  /**
+   * Compares two files.
+   *
+   * @param filePath file to be checked.
+   * @param expectedFile file to check against.
+   * @throws Throwable any exception.
+   */
+  void checkResultByFile(String filePath, String expectedFile) throws Throwable;
 
   void testCompletion(String[] filesBefore, String fileAfter) throws Throwable;
 
