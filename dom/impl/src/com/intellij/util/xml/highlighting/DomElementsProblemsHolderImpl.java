@@ -8,9 +8,11 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -19,6 +21,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +37,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     new ConcurrentHashMap<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>>();
   private final Map<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>> myCachedChildrenErrors =
     new ConcurrentHashMap<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>>();
+  private final List<Annotation> myAnnotations = new ArrayList<Annotation>();
 
   private final Function<DomElement, List<DomElementProblemDescriptor>> myDomProblemsGetter =
     new Function<DomElement, List<DomElementProblemDescriptor>>() {
@@ -64,7 +68,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
   public final void calculateAllProblems() {
     boolean hasInspections = false;
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myElement.getManager().getProject());
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
     final InspectionProfile profile = profileManager.getInspectionProfile(myElement.getFile());
     for (final InspectionProfileEntry profileEntry : profile.getInspectionTools()) {
       hasInspections |= processProfileEntry(profile.isToolEnabled(HighlightDisplayKey.find(profileEntry.getShortName())), profileEntry);
@@ -72,6 +76,13 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     if (!hasInspections) {
       runInspection(new MockDomInspection(myRootType));
     }
+    else if (DomManagerImpl.getDomManager(getProject()).getDomFileDescription(myElement.getFile()).isAutomaticHighlightingEnabled()) {
+      runInspection(new MockAnnotatingDomInspection(myRootType));
+    }
+  }
+
+  private Project getProject() {
+    return myElement.getManager().getProject();
   }
 
   private boolean processProfileEntry(final boolean isEnabled, final InspectionProfileEntry entry) {
@@ -95,9 +106,15 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     ProgressManager.getInstance().checkCanceled();
     final DomElementAnnotationHolderImpl holder = new DomElementAnnotationHolderImpl();
     inspection.checkFileElement(myElement, holder);
+    final Class<? extends DomElementsInspection> inspectionClass = inspection.getClass();
     for (final DomElementProblemDescriptor descriptor : holder) {
-      addProblem(descriptor, inspection.getClass());
+      addProblem(descriptor, inspectionClass);
     }
+    myAnnotations.addAll(holder.getAnnotations());
+  }
+
+  public final List<Annotation> getAnnotations() {
+    return myAnnotations;
   }
 
   public final void addProblem(final DomElementProblemDescriptor descriptor, final Class<? extends DomElementsInspection> inspection) {

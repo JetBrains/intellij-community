@@ -4,18 +4,25 @@
  */
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
-import com.intellij.util.xml.DomElement;
 
 /**
  * @author peter
  */
-public class MockDomInspection extends BasicDomElementsInspection{
+public class MockAnnotatingDomInspection extends BasicDomElementsInspection<DomElement>{
+  public static final MockAnnotatingDomInspection INSTANCE = new MockAnnotatingDomInspection(DomElement.class);
 
-  public MockDomInspection(final Class<? extends DomElement> domClass) {
+  public MockAnnotatingDomInspection(final Class<? extends DomElement> domClass) {
     super(domClass);
+  }
+
+  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+    for (final Class aClass : getDomClasses()) {
+      helper.runAnnotators(element, holder, aClass);
+    }
   }
 
   @Nls

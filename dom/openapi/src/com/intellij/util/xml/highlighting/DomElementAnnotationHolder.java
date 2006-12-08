@@ -4,6 +4,7 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -24,6 +25,16 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
 
   @NotNull
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);
+
+  /**
+   * Is useful only if called from {@link com.intellij.util.xml.highlighting.DomElementsAnnotator} instance
+   * @param element element
+   * @param severity highlight severity
+   * @param message description
+   * @return annotation
+   */
+  @NotNull
+  Annotation createAnnotation(DomElement element, HighlightSeverity severity, @Nullable String message);
 
   int getSize();
 }

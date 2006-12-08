@@ -4,8 +4,12 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomElement;
@@ -18,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
+  private final SmartList<Annotation> myAnnotations = new SmartList<Annotation>();
 
   @NotNull
   public DomElementProblemDescriptor createProblem(DomElement domElement, @Nullable String message) {
@@ -37,6 +43,22 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   @NotNull
   public DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference) {
     return addProblem(new DomElementResolveProblemDescriptorImpl(element, reference, getQuickFixes(element)));
+  }
+
+  @NotNull
+  public Annotation createAnnotation(DomElement element, HighlightSeverity severity, @Nullable String message) {
+    final XmlElement xmlElement = element.getXmlElement();
+    LOG.assertTrue(xmlElement != null, "No XML element for " + element);
+    final TextRange range = xmlElement.getTextRange();
+    final int startOffset = range.getStartOffset();
+    final int endOffset = message == null ? startOffset : range.getEndOffset();
+    final Annotation annotation = new Annotation(startOffset, endOffset, severity, message, null);
+    myAnnotations.add(annotation);
+    return annotation;
+  }
+
+  public final SmartList<Annotation> getAnnotations() {
+    return myAnnotations;
   }
 
   public int getSize() {

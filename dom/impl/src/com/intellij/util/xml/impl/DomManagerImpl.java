@@ -3,15 +3,29 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -19,25 +33,49 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConverterManager;
+import com.intellij.util.xml.DomChangeAdapter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.DomEventAdapter;
+import com.intellij.util.xml.DomEventListener;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.util.xml.ModelMerger;
+import com.intellij.util.xml.ModelMergerImpl;
+import com.intellij.util.xml.StableElement;
+import com.intellij.util.xml.TypeChooserManager;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
-import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
+import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
+import com.intellij.util.xml.highlighting.MockAnnotatingDomInspection;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolderImpl;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.StdLanguages;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -46,7 +84,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -217,9 +260,11 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
           }
           if (domElement != null) {
             final List<Annotation> list = (List<Annotation>)holder;
-            for (final DomElementProblemDescriptor descriptor : annotationsManager.getProblemHolder(domElement).getProblems(domElement)) {
+            final DomElementsProblemsHolderImpl problemsHolder = (DomElementsProblemsHolderImpl)annotationsManager.getProblemHolder(domElement);
+            for (final DomElementProblemDescriptor descriptor : problemsHolder.getAllProblems(MockAnnotatingDomInspection.INSTANCE)) {
               list.addAll(descriptor.getAnnotations());
             }
+            list.addAll(problemsHolder.getAnnotations());
           }
         }
       }

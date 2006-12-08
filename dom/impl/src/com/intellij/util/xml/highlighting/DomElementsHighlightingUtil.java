@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,16 +75,27 @@ public class DomElementsHighlightingUtil {
 
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, Annotation>() {
       public Annotation fun(final Pair<TextRange, PsiElement> s) {
-        final String text = problemDescriptor.getDescriptionTemplate();
+        String text = problemDescriptor.getDescriptionTemplate();
+        if (StringUtil.isEmpty(text)) text = null;
         final HighlightSeverity severity = problemDescriptor.getHighlightSeverity();
         final AnnotationHolderImpl holder = EMPTY_ANNOTATION_HOLDER;
-        final TextRange range = s.first;
-        if (severity.compareTo(HighlightSeverity.ERROR) >= 0) return holder.createErrorAnnotation(range, text);
-        if (severity.compareTo(HighlightSeverity.WARNING) >= 0) return holder.createWarningAnnotation(range, text);
-        if (severity.compareTo(HighlightSeverity.INFO) >= 0) return holder.createInfoAnnotation(range, text);
-        return holder.createInformationAnnotation(range, text);
+        TextRange range = s.first;
+        if (text == null) range = TextRange.from(range.getStartOffset(), 0);
+        final Annotation annotation = createAnnotation(severity, holder, range, text);
+        if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
+          annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+        }
+        return annotation;
       }
     });
+  }
+
+  private static Annotation createAnnotation(final HighlightSeverity severity, final AnnotationHolderImpl holder, final TextRange range,
+                                             final String text) {
+    if (severity.compareTo(HighlightSeverity.ERROR) >= 0) return holder.createErrorAnnotation(range, text);
+    if (severity.compareTo(HighlightSeverity.WARNING) >= 0) return holder.createWarningAnnotation(range, text);
+    if (severity.compareTo(HighlightSeverity.INFO) >= 0) return holder.createInformationAnnotation(range, text);
+    return holder.createInfoAnnotation(range, text);
   }
 
   private static <T> List<T> createProblemDescriptors(final DomElementProblemDescriptor problemDescriptor, final Function<Pair<TextRange, PsiElement>, T> creator) {

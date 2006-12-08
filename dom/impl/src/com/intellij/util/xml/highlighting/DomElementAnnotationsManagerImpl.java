@@ -32,13 +32,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ProjectComponent {
-  private EventDispatcher<DomHighlightingListener> myDispatcher = EventDispatcher.create(DomHighlightingListener.class);
+  private final EventDispatcher<DomHighlightingListener> myDispatcher = EventDispatcher.create(DomHighlightingListener.class);
 
-  private Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
+  private final Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
 
-  private Map<DomFileElement, CachedValue<Boolean>> myCachedValues = new SoftHashMap<DomFileElement, CachedValue<Boolean>>();
-  private Map<DomFileElement, Boolean> myCalculatingHolders = new SoftHashMap<DomFileElement, Boolean>();
-  private Map<DomFileElement, DomElementsProblemsHolder> myReadyHolders = new SoftHashMap<DomFileElement, DomElementsProblemsHolder>();
+  private final Map<DomFileElement, CachedValue<Boolean>> myCachedValues = new SoftHashMap<DomFileElement, CachedValue<Boolean>>();
+  private final Map<DomFileElement, Boolean> myCalculatingHolders = new SoftHashMap<DomFileElement, Boolean>();
+  private final Map<DomFileElement, DomElementsProblemsHolder> myReadyHolders = new SoftHashMap<DomFileElement, DomElementsProblemsHolder>();
   private static final DomElementsProblemsHolder EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolder() {
     @NotNull
     public List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
@@ -149,12 +149,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
   }
 
-  public List<DomElementProblemDescriptor> getAllProblems(final DomFileElement<?> fileElement, HighlightSeverity minSeverity) {
-    return getProblemHolder(fileElement).getProblems(fileElement, true, true, minSeverity);
-  }
-
   public void annotate(final DomElement element, final DomElementAnnotationHolder holder, final Class rootClass) {
-    final List<DomElementsAnnotator> list = myClass2Annotator.get(rootClass);
+    final List<DomElementsAnnotator> list = getAnnotators(rootClass);
     if (list != null) {
       for (DomElementsAnnotator annotator : list) {
         annotator.annotate(element, holder);
@@ -168,13 +164,17 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   private List<DomElementsAnnotator> getOrCreateAnnotators(final Class aClass) {
-    List<DomElementsAnnotator> annotators = myClass2Annotator.get(aClass);
+    List<DomElementsAnnotator> annotators = getAnnotators(aClass);
     if (annotators == null) {
       myClass2Annotator.put(aClass, annotators = new ArrayList<DomElementsAnnotator>());
     }
     return annotators;
   }
 
+  @Nullable
+  private List<DomElementsAnnotator> getAnnotators(final Class aClass) {
+    return myClass2Annotator.get(aClass);
+  }
 
   public List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
     return DomElementsHighlightingUtil.createProblemDescriptors(manager, problemDescriptor);
