@@ -21,5 +21,5 @@ public interface DebuggerManagerThread {
    *
    * @param command
    */
-  public void invokeCommand       (DebuggerCommand command);
+  void invokeCommand(DebuggerCommand command);
 }

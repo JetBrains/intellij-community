@@ -1,7 +1,7 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.VMDisconnectedException;
 
 import java.util.concurrent.*;
@@ -94,7 +94,7 @@ public abstract class InvokeThread<E> {
 
   protected final EventQueue<E> myEvents;
 
-  private WorkerThreadRequest myCurrentRequest = null;
+  private volatile WorkerThreadRequest myCurrentRequest = null;
 
   public InvokeThread(String name, int countPriorites) {
     myEvents = new EventQueue<E>(countPriorites);
@@ -134,7 +134,9 @@ public abstract class InvokeThread<E> {
 
     for(;;) {
       try {
-        if(current.isInterrupted()) break;
+        if(current.isInterrupted()) {
+          break;
+        }
 
         if(getCurrentRequest() != current) {
           LOG.assertTrue(false, "Expected " + current + " instead of " + getCurrentRequest());

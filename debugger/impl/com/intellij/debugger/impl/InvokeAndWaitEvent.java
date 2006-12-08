@@ -8,8 +8,7 @@ package com.intellij.debugger.impl;
  * To change this template use File | Settings | File Templates.
  */
 public interface InvokeAndWaitEvent {
-  public void release();
-  public void hold   ();
-
-  public void waitFor();
+  void release();
+  void hold();
+  void waitFor();
 }
