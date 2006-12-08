@@ -1,21 +1,23 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.psi.javadoc.*;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
-import com.intellij.structuralsearch.impl.matcher.iterators.*;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
+import com.intellij.structuralsearch.impl.matcher.iterators.*;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 
 import java.util.*;
 
@@ -688,7 +690,7 @@ public class MatchingVisitor extends PsiElementVisitor {
               if (predicate != null) {
                 PsiMethod method = (PsiMethod)mcallRef2.resolve();
                 if (method != null) {
-                  result = predicate.checkClass((PsiClass)method.getParent(),matchContext);
+                  result = predicate.checkClass(method.getContainingClass(),matchContext);
                   if (isnot) result = !result;
                 } else {
                   result = false;

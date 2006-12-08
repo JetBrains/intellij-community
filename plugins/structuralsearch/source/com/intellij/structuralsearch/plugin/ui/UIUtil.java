@@ -132,7 +132,7 @@ public class UIUtil {
 
         if (element instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)element;
-          final PsiClass clazz = (PsiClass)method.getParent();
+          final PsiClass clazz = method.getContainingClass();
 
           if (method.hasModifierProperty(PsiModifier.STATIC)) {
             buf.append(clazz.getName()).append(".");
