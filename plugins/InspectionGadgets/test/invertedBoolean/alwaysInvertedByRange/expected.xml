@@ -5,6 +5,6 @@
     <line>2</line>
     <problem_class>Boolean method is always inverted</problem_class>
     <description>inverted</description>
-    <entry_point TYPE="method" FQNAME="boolean Test.foo()" />
+    <entry_point TYPE="method" FQNAME="Test boolean foo()" />
   </problem>
 </problems>
