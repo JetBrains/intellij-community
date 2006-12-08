@@ -39,9 +39,9 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   @NonNls private static final String SHORT_NAME = "EmptyMethod";
 
-  private BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<Boolean, QuickFix>();
+  private final BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<Boolean, QuickFix>();
 
-  private JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
+  private final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.emptyMethod.EmptyMethodInspection");
 
@@ -70,7 +70,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
 
       String message = null;
       boolean needToDeleteHierarchy = false;
-      if (refMethod.isOnlyCallsSuper()) {
+      if (refMethod.isOnlyCallsSuper() && !refMethod.isFinal()) {
         RefMethod refSuper = findSuperWithBody(refMethod);
         if (refSuper == null || RefUtil.getInstance().compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
           message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
@@ -82,8 +82,8 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
       }
       else if (areAllImplementationsEmpty(refMethod)) {
         if (refMethod.hasBody()) {
-          if (refMethod.getDerivedMethods().size() == 0) {
-            if (refMethod.getSuperMethods().size() == 0) {
+          if (refMethod.getDerivedMethods().isEmpty()) {
+            if (refMethod.getSuperMethods().isEmpty()) {
               message = InspectionsBundle.message("inspection.empty.method.problem.descriptor2");
             }
           }
@@ -93,7 +93,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
           }
         }
         else {
-          if (refMethod.getDerivedMethods().size() > 0) {
+          if (!refMethod.getDerivedMethods().isEmpty()) {
             needToDeleteHierarchy = true;
             message = InspectionsBundle.message("inspection.empty.method.problem.descriptor4");
           }
@@ -234,7 +234,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
   }
 
   private class DeleteMethodIntention implements LocalQuickFix {
-    private String myHint;
+    private final String myHint;
 
     public DeleteMethodIntention(final String hint) {
       myHint = hint;
@@ -278,8 +278,8 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
 
 
   private class DeleteMethodQuickFix implements LocalQuickFix {
-    private ProblemDescriptionsProcessor myProcessor;
-    private boolean myNeedToDEleteHierarchy;
+    private final ProblemDescriptionsProcessor myProcessor;
+    private final boolean myNeedToDEleteHierarchy;
 
     public DeleteMethodQuickFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
       myProcessor = processor;
