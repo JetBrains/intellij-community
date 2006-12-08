@@ -1,6 +1,15 @@
 <components>
   <application-components>
     <component>
+      <interface-class>com.intellij.facet.FacetTypeRegistry</interface-class>
+      <implementation-class>com.intellij.facet.impl.FacetTypeRegistryImpl</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.facet.ui.FacetEditorsFactory</interface-class>
+      <implementation-class>com.intellij.facet.impl.ui.FacetEditorsFactoryImpl</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
     </component>
 
@@ -343,10 +352,18 @@
       <implementation-class>com.intellij.lang.jsp.jspxLike.impl.JspxLikeXmlTextSynchronizer</implementation-class>
     </component>
     -->
+    <component>
+      <interface-class>com.intellij.facet.FacetExistentceListenersRegistry</interface-class>
+      <implementation-class>com.intellij.facet.impl.FacetExistentceListenersRegistryImpl</implementation-class>
+    </component>
   </project-components>
 
 
   <module-components>
+    <component>
+      <interface-class>com.intellij.facet.FacetManager</interface-class>
+      <implementation-class>com.intellij.facet.impl.FacetManagerImpl</implementation-class>
+    </component>
     <component>
       <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerImpl</implementation-class>

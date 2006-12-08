@@ -27,6 +27,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.facet.FacetInfo;
+import com.intellij.facet.FacetManager;
+import com.intellij.util.EventDispatcher;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,8 @@ public abstract class ModuleBuilder {
   private String myModuleFilePath;
   @Nullable
   private AddSupportContext[] myAddSupportContexts;
+  private FacetInfo[] myFacetInfos = FacetInfo.EMPTY_ARRAY;
+  private EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
 
   @Nullable
   protected final String acceptParameter(String param) {
@@ -87,7 +92,13 @@ public abstract class ModuleBuilder {
     modifiableModel.commit();
 
     module.setSavePathsRelative(true); // default setting
+
+    FacetManager.getInstance(module).createAndCommitFacets(myFacetInfos);
     return module;
+  }
+
+  public void onModuleInitialized(final Module module) {
+    myDispatcher.getMulticaster().moduleCreated(module);
   }
 
   public abstract void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException;
@@ -110,6 +121,7 @@ public abstract class ModuleBuilder {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
+            onModuleInitialized(module);
             addSupport(module);
           }
         });
@@ -117,6 +129,7 @@ public abstract class ModuleBuilder {
     });
     }
     else {
+      onModuleInitialized(module);
       addSupport(module);
     }
     return module;
@@ -133,6 +146,19 @@ public abstract class ModuleBuilder {
       }
     }
     rootModel.commit();
+  }
+
+  public void setFacetInfos(final FacetInfo[] facetInfos) {
+    myFacetInfos = facetInfos;
+  }
+
+
+  public void addListener(ModuleBuilderListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  public void removeListener(ModuleBuilderListener listener) {
+    myDispatcher.removeListener(listener);
   }
 
   @Nullable

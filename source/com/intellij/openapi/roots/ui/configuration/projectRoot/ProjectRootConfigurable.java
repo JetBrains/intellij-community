@@ -4,6 +4,8 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.facet.Facet;
+import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.find.FindBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -106,6 +108,8 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   private final ProjectJdksModel myJdksTreeModel = new ProjectJdksModel();
 
   private boolean myDisposed = true;
+
+  private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this);
 
   private final Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
   private final Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
@@ -386,6 +390,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       ModuleConfigurable configurable = new ModuleConfigurable(myModulesConfigurator, module, TREE_UPDATER);
       final MyNode moduleNode = new MyNode(configurable);
       createModuleLibraries(module, moduleNode);
+      myFacetEditorFacade.addFacetsNodes(module, moduleNode);
       final String[] groupPath = myPlainMode ? null : myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
       if (groupPath == null || groupPath.length == 0){
         addNode(moduleNode, myModulesNode);
@@ -422,7 +427,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     final MyNode [] nodes = new MyNode[modules.length];
     int i = 0;
     for (Module module : modules) {
-      MyNode node = findNodeByObject(myModulesNode, module);
+      MyNode node = findModuleNode(module);
       LOG.assertTrue(node != null, "Module " + module.getName() + " is not in project.");
       node.removeFromParent();
       nodes[i ++] = node;
@@ -787,7 +792,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     LOG.assertTrue(module != null);
     final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(module), library, presentableName, myProject, TREE_UPDATER);
     final MyNode node = new MyNode(configurable);
-    addNode(node, findNodeByObject(myModulesNode, module));
+    addNode(node, findModuleNode(module));
     return node;
   }
 
@@ -919,7 +924,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   public void createLibraryNode(final LibraryOrderEntry libraryOrderEntry, final ModifiableRootModel model) {
     final LibraryConfigurable configurable = new LibraryConfigurable(getModifiableModelProvider(model), libraryOrderEntry.getLibrary(), truncateModuleLibraryName(libraryOrderEntry), myProject, TREE_UPDATER);
     final MyNode node = new MyNode(configurable);
-    addNode(node, findNodeByObject(myModulesNode, libraryOrderEntry.getOwnerModule()));
+    addNode(node, findModuleNode(libraryOrderEntry.getOwnerModule()));
   }
 
   public void deleteLibraryNode(LibraryOrderEntry libraryOrderEntry) {
@@ -971,7 +976,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   public void selectModuleTab(@NotNull final String moduleName, final String tabName) {
-    final MyNode node = findNodeByObject(myModulesNode, ModuleManager.getInstance(myProject).findModuleByName(moduleName));
+    final MyNode node = findModuleNode(ModuleManager.getInstance(myProject).findModuleByName(moduleName));
     if (node != null) {
       selectNodeInTree(node);
       SwingUtilities.invokeLater(new Runnable() {
@@ -1054,6 +1059,19 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     myTree.repaint();
   }
 
+  @Nullable
+  public MyNode findModuleNode(final Module module) {
+    return findNodeByObject(myModulesNode, module);
+  }
+
+  public FacetEditorFacadeImpl getFacetEditorFacade() {
+    return myFacetEditorFacade;
+  }
+
+  public ProjectFacetsConfigurator getFacetConfigurator() {
+    return myModulesConfigurator.getFacetsConfigurator();
+  }
+
   public void addModule() {
     final Module module = myModulesConfigurator.addModule(myTree);
     if (module != null) {
@@ -1077,6 +1095,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
       }
       if (parent == null) parent = myModulesNode;
       addNode(node, parent);
+      myFacetEditorFacade.addFacetsNodes(module, node);
       ((DefaultTreeModel)myTree.getModel()).reload(parent);
       selectNodeInTree(node);
       myValidityCache.clear(); //missing modules added
@@ -1158,7 +1177,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
           if (object instanceof MyNode) {
             final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
             final Object editableObject = namedConfigurable.getEditableObject();
-            if (editableObject instanceof ProjectJdk || editableObject instanceof Module) return true;
+            if (editableObject instanceof ProjectJdk || editableObject instanceof Module || editableObject instanceof Facet) return true;
             if (editableObject instanceof Library) {
               final LibraryTable table = ((Library)editableObject).getTable();
               return table == null || table.isEditable();
@@ -1199,6 +1218,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
         myValidityCache.remove(module);
         invalidateModules(myModulesDependencyCache.get(module));
         myModulesDependencyCache.remove(module);
+      }
+      else if (editableObject instanceof Facet) {
+        Facet facet = (Facet)editableObject;
+        getFacetConfigurator().removeFacet(facet);
       }
       else if (editableObject instanceof Library) {
         final Library library = (Library)editableObject;

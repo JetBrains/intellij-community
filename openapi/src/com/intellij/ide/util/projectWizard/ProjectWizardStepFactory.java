@@ -47,6 +47,7 @@ public abstract class ProjectWizardStepFactory {
 
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
 
+  @Deprecated
   public abstract AddSupportStep createLoadJarsStep(AddSupportContext context, String title, String description, Icon icon);
 
   public abstract void registerAddSupportProvider(final ModuleType moduleType, AddSupportStepsProvider provider);

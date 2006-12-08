@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -59,11 +60,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   };
   private ModifiableModuleModel myModuleModel;
+  private ProjectFacetsConfigurator myFacetsConfigurator;
 
   public ModulesConfigurator(Project project, ProjectRootConfigurable configurable) {
     myProject = project;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
     myProjectConfigurable = new ProjectConfigurable(project, this, configurable.getProjectJdksModel());
+    myFacetsConfigurator = new ProjectFacetsConfigurator(myProject);
+  }
+
+  public ProjectFacetsConfigurator getFacetsConfigurator() {
+    return myFacetsConfigurator;
   }
 
   public void disposeUIResources() {
@@ -142,6 +149,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         }
       }
     });
+    myFacetsConfigurator.reset();
     myModified = false;
   }
 
@@ -195,15 +203,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               models.add(model);
             }
           }
+          myFacetsConfigurator.applyAndDispose();
 
           J2EEModuleUtilEx.checkJ2EEModulesAcyclic(models);
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
           projectRootManager.multiCommit(myModuleModel, rootModels);
+          myFacetsConfigurator.commitFacets();
+
         }
         catch (ConfigurationException e) {
           ex[0] = e;
         }
         finally {
+          myFacetsConfigurator = new ProjectFacetsConfigurator(myProject);
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
           for (Module module : myModuleModel.getModules()) {
             if (!module.isDisposed()) {
@@ -211,6 +223,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               if (moduleEditor != null) {
                 final ModuleBuilder builder = moduleEditor.getModuleBuilder();
                 if (builder != null) {
+                  builder.onModuleInitialized(module);
                   builder.addSupport(module);
                 }
               }
@@ -363,7 +376,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return true;
       }
     }
-    return myModified ||
+    return myModified || myFacetsConfigurator.isModified() ||
            !J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), false);
   }
 

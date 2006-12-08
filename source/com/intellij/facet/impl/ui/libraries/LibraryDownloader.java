@@ -2,8 +2,9 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.ide.util.projectWizard;
+package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -201,7 +202,11 @@ public class LibraryDownloader {
     if (url == null) return true;
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    indicator.setText2(IdeBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName(), libraryInfo.getPresentableUrl()));
+    String presentableUrl = libraryInfo.getPresentableUrl();
+    if (presentableUrl == null) {
+      presentableUrl = url;
+    }
+    indicator.setText2(IdeBundle.message("progress.download.jar.text", libraryInfo.getExpectedJarName(), presentableUrl));
     File tempFile = null;
     HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 
