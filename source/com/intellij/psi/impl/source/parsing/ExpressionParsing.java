@@ -7,8 +7,8 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -101,7 +101,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   public CompositeElement parseExpression(Lexer lexer) {
-    return parseConstruct((FilterLexer)lexer, PARSE_ASSIGNMENT);
+    return parseConstruct(lexer, PARSE_ASSIGNMENT);
   }
 
   private static final int PARSE_ASSIGNMENT = 0;
@@ -134,7 +134,7 @@ public class ExpressionParsing extends Parsing {
   private static final TokenSet ADDITIVE_SIGN_BIT_SET = TokenSet.create(PLUS, MINUS);
   private static final TokenSet MULTIPLICATIVE_SIGN_BIT_SET = TokenSet.create(ASTERISK, DIV, PERC);
 
-  private CompositeElement parseConstruct(FilterLexer lexer, int number) {
+  private CompositeElement parseConstruct(Lexer lexer, int number) {
     switch (number) {
       case PARSE_ASSIGNMENT:
         return parseAssignmentExpression(lexer);
@@ -199,7 +199,7 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  private CompositeElement parseBinaryExpression(FilterLexer lexer, int argNumber, TokenSet opSignBitSet) {
+  private CompositeElement parseBinaryExpression(Lexer lexer, int argNumber, TokenSet opSignBitSet) {
     CompositeElement element = parseConstruct(lexer, argNumber);
     if (element == null) return null;
 
@@ -226,7 +226,7 @@ public class ExpressionParsing extends Parsing {
     return element;
   }
 
-  private CompositeElement parseAssignmentExpression(FilterLexer lexer) {
+  private CompositeElement parseAssignmentExpression(Lexer lexer) {
     CompositeElement element1 = parseConditionalExpression(lexer);
     if (element1 == null) return null;
 
@@ -265,7 +265,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   public CompositeElement parseConditionalExpression(Lexer lexer) {
-    CompositeElement element1 = parseConstruct((FilterLexer)lexer, PARSE_COND_OR);
+    CompositeElement element1 = parseConstruct(lexer, PARSE_COND_OR);
     if (element1 == null) return null;
 
     if (lexer.getTokenType() != QUEST) return element1;
@@ -303,7 +303,7 @@ public class ExpressionParsing extends Parsing {
     return element;
   }
 
-  private CompositeElement parseRelationalExpression(FilterLexer lexer) {
+  private CompositeElement parseRelationalExpression(Lexer lexer) {
     CompositeElement element = parseConstruct(lexer, PARSE_SHIFT);
     if (element == null) return null;
 
@@ -347,7 +347,7 @@ public class ExpressionParsing extends Parsing {
     return element;
   }
 
-  private CompositeElement parseUnaryExpression(FilterLexer lexer) {
+  private CompositeElement parseUnaryExpression(Lexer lexer) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == PLUS || tokenType == MINUS || tokenType == PLUSPLUS || tokenType == MINUSMINUS || tokenType == TILDE || tokenType == EXCL) {
       {
@@ -413,7 +413,7 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  private CompositeElement parsePostfixExpression(FilterLexer lexer) {
+  private CompositeElement parsePostfixExpression(Lexer lexer) {
     CompositeElement element = parsePrimaryExpression(lexer);
     if (element == null) return null;
 
@@ -428,7 +428,7 @@ public class ExpressionParsing extends Parsing {
     return element;
   }
 
-  private CompositeElement parsePrimaryExpression(FilterLexer lexer) {
+  private CompositeElement parsePrimaryExpression(Lexer lexer) {
     final LexerPosition startPos = lexer.getCurrentPosition();
 
     CompositeElement element = parsePrimaryExpressionStart(lexer);
@@ -610,7 +610,7 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  private CompositeElement parsePrimaryExpressionStart(FilterLexer lexer) {
+  private CompositeElement parsePrimaryExpressionStart(Lexer lexer) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == TRUE_KEYWORD ||
         tokenType == FALSE_KEYWORD ||
@@ -711,7 +711,7 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  private CompositeElement parseNewExpression(FilterLexer lexer,
+  private CompositeElement parseNewExpression(Lexer lexer,
                                               TreeElement qualifier,
                                               TreeElement dot/*, TreeElement referenceParameterList*/) {
     LOG.assertTrue(lexer.getTokenType() == NEW_KEYWORD);
@@ -811,7 +811,7 @@ public class ExpressionParsing extends Parsing {
     return element;
   }
 
-  private CompositeElement parseClassObjectAccessExpression(FilterLexer lexer) {
+  private CompositeElement parseClassObjectAccessExpression(Lexer lexer) {
     final LexerPosition pos = lexer.getCurrentPosition();
     CompositeElement type = parseType(lexer, false, false); // don't eat last dot before "class"!
     if (type == null) return null;
@@ -880,7 +880,7 @@ public class ExpressionParsing extends Parsing {
     return element;
   }
 
-  private CompositeElement parseArrayInitializerExpression(FilterLexer lexer) {
+  private CompositeElement parseArrayInitializerExpression(Lexer lexer) {
     if (lexer.getTokenType() != LBRACE) return null;
 
     CompositeElement element = Factory.createCompositeElement(ARRAY_INITIALIZER_EXPRESSION);

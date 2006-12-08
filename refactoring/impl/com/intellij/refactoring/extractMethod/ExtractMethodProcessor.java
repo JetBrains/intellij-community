@@ -19,9 +19,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,8 +36,8 @@ import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MatchProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -922,7 +922,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void chooseTargetClass() {
     myNeedChangeContext = false;
-    myTargetClass = (PsiClass)myCodeFragmentMember.getParent();
+    myTargetClass = myCodeFragmentMember instanceof PsiMember
+                    ? ((PsiMember)myCodeFragmentMember).getContainingClass()
+                    : (PsiClass)myCodeFragmentMember.getParent();
     if (myTargetClass instanceof PsiAnonymousClass) {
       PsiElement target = myTargetClass.getParent();
       PsiElement targetMember = myTargetClass;

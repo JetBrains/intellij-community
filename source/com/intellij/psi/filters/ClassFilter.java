@@ -2,7 +2,9 @@ package com.intellij.psi.filters;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -36,14 +38,21 @@ public class ClassFilter implements ElementFilter{
   }
 
   public boolean isClassAcceptable(Class hintClass){
-    return myAcceptableFlag ? myFilter.isAssignableFrom(hintClass) : !myFilter.isAssignableFrom(hintClass);
+    return myAcceptableFlag ? filterMatches(hintClass) : !filterMatches(hintClass);
+  }
+
+  private boolean filterMatches(final Class hintClass) {
+    if (hintClass == PsiClass.class) { // hack for JSP completion
+      return myFilter.isAssignableFrom(hintClass) || myFilter.isAssignableFrom(JspClassLevelDeclarationStatement.class);
+    }
+    return myFilter.isAssignableFrom(hintClass);
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
     if(element == null){
       return false;
     }
-    return myAcceptableFlag ? myFilter.isAssignableFrom(element.getClass()) : !myFilter.isAssignableFrom(element.getClass());
+    return myAcceptableFlag ? filterMatches(element.getClass()) : !filterMatches(element.getClass());
   }
 
   public void readExternal(Element element)

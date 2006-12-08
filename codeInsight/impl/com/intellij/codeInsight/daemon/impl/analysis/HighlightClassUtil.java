@@ -280,7 +280,7 @@ public class HighlightClassUtil {
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
     IntentionAction fix1 = QUICK_FIX_FACTORY.createModifierListFix(field.getModifierList(), PsiModifier.STATIC, false, false);
     QuickFixAction.registerQuickFixAction(errorResult, fix1);
-    PsiModifierList classModifiers = ((PsiClass)field.getParent()).getModifierList();
+    PsiModifierList classModifiers = field.getContainingClass().getModifierList();
     IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(classModifiers, PsiModifier.STATIC, true, false);
     QuickFixAction.registerQuickFixAction(errorResult, fix);
     return errorResult;

@@ -1,14 +1,10 @@
 
 package com.intellij.testFramework;
 
-import com.intellij.lang.jsp.JspxFileViewProviderImpl;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import org.jetbrains.annotations.NonNls;
@@ -47,7 +43,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     else{
       toParseTreeText(myFile);
     }
-    if(myFile instanceof JspFileImpl) ((JspxFileViewProviderImpl)((JspFileImpl)myFile).getViewProvider()).checkAllTreesEqual();
+    if(myFile instanceof JspFileImpl) ((MultiplePsiFilesPerDocumentFileViewProvider)((JspFileImpl)myFile).getViewProvider()).checkAllTreesEqual();
   }
 
   protected void checkResult(@NonNls String targetDataName, final PsiFile file) throws Exception {

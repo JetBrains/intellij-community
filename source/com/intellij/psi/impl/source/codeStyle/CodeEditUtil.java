@@ -40,6 +40,8 @@ public class CodeEditUtil {
   private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENTATION");
   private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT BEFORE THIS ELEMENT");
 
+  public static final Key<Boolean> OUTER_OK = new Key<Boolean>("OUTER_OK");
+
   private CodeEditUtil() {
   }
 
@@ -113,7 +115,7 @@ public class CodeEditUtil {
   }
 
   public static void checkForOuters(final ASTNode element) {
-    if (element instanceof OuterLanguageElement) throw new TooComplexPSIModificationException();
+    if (element instanceof OuterLanguageElement && element.getCopyableUserData(OUTER_OK) == null) throw new TooComplexPSIModificationException();
     if (element instanceof CompositeElement) {
       TreeElement child = ((CompositeElement)element).firstChild;
       while (child != null) {

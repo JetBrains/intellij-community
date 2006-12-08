@@ -1092,7 +1092,7 @@ public class HighlightMethodUtil {
         }
         else if (!result.isApplicable()) {
           String constructorName = HighlightMessageUtil.getSymbolName(constructor, result.getSubstitutor());
-          String containerName = HighlightMessageUtil.getSymbolName(constructor.getParent(), result.getSubstitutor());
+          String containerName = HighlightMessageUtil.getSymbolName(constructor.getContainingClass(), result.getSubstitutor());
           String argTypes = buildArgTypesList(list);
           String description = JavaErrorMessages.message("wrong.method.arguments", constructorName, containerName, argTypes);
           String toolTip = createMismatchedArgumentsHtmlTooltip(result, list);

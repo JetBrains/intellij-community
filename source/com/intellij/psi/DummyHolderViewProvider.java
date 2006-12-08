@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 public class DummyHolderViewProvider extends UserDataHolderBase implements FileViewProvider{
@@ -67,6 +68,10 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   public PsiFile getPsi(Language target) {
     ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     return target == getBaseLanguage() ? myHolder : null;
+  }
+
+  public List<PsiFile> getAllFiles() {
+    return Collections.singletonList(getPsi(getBaseLanguage()));
   }
 
   public void beforeContentsSynchronized() {}

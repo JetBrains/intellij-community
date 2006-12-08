@@ -421,13 +421,13 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     final Language baseLanguage = (PsiUtil.getJspFile(file)).getViewProvider().getTemplateDataLanguage();
     if (baseLanguage == StdLanguages.HTML || baseLanguage == StdLanguages.XHTML) {
       final PsiElement[] psiRoots = file.getPsiRoots();
-      LOG.assertTrue(psiRoots.length == 4);
+      LOG.assertTrue(psiRoots.length == 3);
       final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[0]);
       return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, documentModel), null, null);
     }
     else if (baseLanguage == StdLanguages.XML) {
       final PsiElement[] psiRoots = file.getPsiRoots();
-      LOG.assertTrue(psiRoots.length == 4);
+      LOG.assertTrue(psiRoots.length == 3);
       final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[0]);
       return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, documentModel), null, null);
     }

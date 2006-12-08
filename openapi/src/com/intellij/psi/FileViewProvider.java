@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 public interface FileViewProvider extends Cloneable, UserDataHolder {
@@ -24,6 +25,8 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   Set<Language> getRelevantLanguages();
   Set<Language> getPrimaryLanguages();
   PsiFile getPsi(Language target);
+
+  List<PsiFile> getAllFiles();
 
   boolean isEventSystemEnabled();
   boolean isPhysical();

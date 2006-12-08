@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for breaking a file into a sequence of tokens.
@@ -63,10 +64,11 @@ public interface Lexer {
   int getState();
 
   /**
-   * Returns the token at the current position of the lexer.
+   * Returns the token at the current position of the lexer or <code>null</code> if lexing is finished.
    *
    * @return the current token.
    */
+  @Nullable
   IElementType getTokenType();
 
   /**

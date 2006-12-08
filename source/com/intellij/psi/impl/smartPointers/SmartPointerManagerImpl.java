@@ -57,10 +57,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
   }
 
   public static void fastenBelts(PsiFile file) {
-    final Set<Language> languages = file.getViewProvider().getRelevantLanguages();
-    for (Language language : languages) {
-      fastenBeltsInSingleFile(file.getViewProvider().getPsi(language));
-    }
+    fastenBeltsInSingleFile(file);
   }
 
   private static void fastenBeltsInSingleFile(final PsiFile file) {

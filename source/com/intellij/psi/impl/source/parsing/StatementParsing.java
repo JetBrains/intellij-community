@@ -5,15 +5,40 @@ import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.parsing.jsp.JspJavaLexer;
+import com.intellij.psi.impl.source.parsing.jsp.JspxJavaLexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StatementParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.StatementParsing");
 
+  public static interface StatementParser {
+    @Nullable
+    CompositeElement parseStatement(Lexer lexer);
+  }
+
+  public static interface StatementParsingHandler {
+    @Nullable StatementParser getParserForToken(IElementType token);
+  }
+
+  private List<StatementParsingHandler> myCustomHandlers = null;
+
   public StatementParsing(JavaParsingContext context) {
     super(context);
+  }
+
+  public void registerCustomStatementParser(StatementParsingHandler handler) {
+    if (myCustomHandlers == null) {
+      myCustomHandlers = new ArrayList<StatementParsingHandler>();
+    }
+
+    myCustomHandlers.add(handler);
   }
 
   public CompositeElement parseCodeBlockText(PsiManager manager, char[] buffer) {
@@ -70,8 +95,10 @@ public class StatementParsing extends Parsing {
 
   public TreeElement parseCodeBlock(Lexer lexer, boolean deep) {
     if (lexer.getTokenType() != LBRACE) return null;
-    if (lexer instanceof FilterLexer){
-      if (((FilterLexer)lexer).getOriginal() instanceof JavaWithJspTemplateDataLexer){
+    Lexer badLexer = lexer instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)lexer).getOriginal() : lexer;
+    if (badLexer instanceof FilterLexer){
+      final Lexer original = ((FilterLexer)badLexer).getOriginal();
+      if (original instanceof JavaWithJspTemplateDataLexer || original instanceof JspJavaLexer || original instanceof JspxJavaLexer){
         deep = true; // deep parsing of code blocks in JSP would lead to incorrect parsing on transforming
       }
     }
@@ -123,7 +150,8 @@ public class StatementParsing extends Parsing {
 
     parseStatements(elementToAdd, lexer, parseToEndOfLexer ? LAST_RBRACE_IS_END : RBRACE_IS_END);
 
-    if (elementToAdd.getLastChildNode() == null || elementToAdd.getLastChildNode().getElementType() != RBRACE){
+    final TreeElement lastChild = elementToAdd.getLastChildNode();
+    if (lastChild == null || lastChild.getElementType() != RBRACE){
       CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace"));
       TreeUtil.addChildren(elementToAdd, errorElement);
       elementToAdd.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
@@ -187,6 +215,7 @@ public class StatementParsing extends Parsing {
     }
   }
 
+  @Nullable
   public TreeElement parseStatementText(char[] buffer) {
     Lexer lexer = new JavaLexer(myContext.getLanguageLevel());
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
@@ -201,8 +230,18 @@ public class StatementParsing extends Parsing {
     return statement;
   }
 
+  @Nullable
   public TreeElement parseStatement(Lexer lexer) {
     IElementType tokenType = lexer.getTokenType();
+    if (myCustomHandlers != null) {
+      for (StatementParsingHandler handler : myCustomHandlers) {
+        final StatementParser parser = handler.getParserForToken(tokenType);
+        if (parser != null) {
+          return parser.parseStatement(lexer);
+        }
+      }
+    }
+
     if (tokenType == IF_KEYWORD) {
       return parseIfStatement(lexer);
     }
@@ -246,7 +285,8 @@ public class StatementParsing extends Parsing {
       return parseBlockStatement(lexer);
     }
     else if (tokenType instanceof IChameleonElementType) {
-      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
+      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(),
+                                                          lexer.getState(), myContext.getCharTable());
       lexer.advance();
       return declaration;
     }
@@ -319,8 +359,7 @@ public class StatementParsing extends Parsing {
           lexer.restore(pos);
         }
 
-        TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer,
-                                                                              DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
+        TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer, DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
         if (decl != null) {
           CompositeElement declStatement = Factory.createCompositeElement(DECLARATION_STATEMENT);
           TreeUtil.addChildren(declStatement, decl);
@@ -617,6 +656,7 @@ public class StatementParsing extends Parsing {
     return element;
   }
 
+  @Nullable
   private CompositeElement parseSwitchLabelStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == CASE_KEYWORD || lexer.getTokenType() == DEFAULT_KEYWORD);
     IElementType tokenType = lexer.getTokenType();
@@ -750,7 +790,9 @@ public class StatementParsing extends Parsing {
     while(lexer.getTokenType() == CATCH_KEYWORD){
       CompositeElement catchSection = parseCatchSection(lexer);
       TreeUtil.addChildren(element, catchSection);
-      if (catchSection.getLastChildNode().getElementType() == ERROR_ELEMENT) break;
+      final TreeElement lastChild = catchSection.getLastChildNode();
+      assert lastChild != null;
+      if (lastChild.getElementType() == ERROR_ELEMENT) break;
     }
 
     if (lexer.getTokenType() == FINALLY_KEYWORD){
@@ -892,6 +934,7 @@ public class StatementParsing extends Parsing {
     }
   }
 
+  @Nullable
   public TreeElement parseCatchSectionText(char[] buffer) {
     Lexer lexer = new JavaLexer(myContext.getLanguageLevel());
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.PsiExternalChangeAction;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -113,19 +114,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       document.setReadOnly(!file.isWritable() || fileType.isBinary());
       file.putUserData(DOCUMENT_KEY, new WeakReference<Document>(document));
       document.putUserData(FILE_KEY, file);
-      document.addDocumentListener(
+
+      if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
+        document.addDocumentListener(
         new DocumentAdapter() {
-          public void documentChanged(DocumentEvent e) {
-            final Document document = e.getDocument();
-            myUnsavedDocuments.add(document);
-            final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
-            Project project = currentCommand != null ? CommandProcessor.getInstance().getCurrentCommandProject() : null;
-            String lineSeparator = CodeStyleSettingsManager.getSettings(project).getLineSeparator();
-            document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+            public void documentChanged(DocumentEvent e) {
+              final Document document = e.getDocument();
+              myUnsavedDocuments.add(document);
+              final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
+              Project project = currentCommand != null ? CommandProcessor.getInstance().getCurrentCommandProject() : null;
+              String lineSeparator = CodeStyleSettingsManager.getSettings(project).getLineSeparator();
+              document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+            }
           }
-        }
-      );
-      document.addEditReadOnlyListener(myReadOnlyListener);
+        );
+        document.addEditReadOnlyListener(myReadOnlyListener);
+      }
 
       try {
         fireFileContentLoaded(file, document);

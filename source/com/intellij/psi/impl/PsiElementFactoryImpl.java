@@ -3,13 +3,13 @@ package com.intellij.psi.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -18,20 +18,23 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.*;
+import com.intellij.psi.impl.source.parsing.DeclarationParsing;
+import com.intellij.psi.impl.source.parsing.ExpressionParsing;
+import com.intellij.psi.impl.source.parsing.JavaParsingContext;
+import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -310,6 +313,34 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(language);
+        if(markAsCopy) ((TreeElement)psiFile.getNode()).acceptTree(new GeneratedMarkerVisitor());
+        return psiFile;
+      }
+    }
+    final SingleRootFileViewProvider singleRootFileViewProvider =
+      new SingleRootFileViewProvider(myManager, virtualFile, physical);
+    final PsiPlainTextFileImpl plainTextFile = new PsiPlainTextFileImpl(singleRootFileViewProvider);
+    if(markAsCopy) CodeEditUtil.setNodeGenerated(plainTextFile.getNode(), true);
+    return plainTextFile;
+  }
+
+  @NotNull
+  public PsiFile createFileFromText(@NotNull String name,
+                                    @NotNull FileType fileType,
+                                    @NotNull Language lang,
+                                    @NotNull CharSequence text,
+                                    long modificationStamp,
+                                    final boolean physical,
+                                    boolean markAsCopy) {
+    final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
+
+    if(fileType instanceof LanguageFileType){
+      final Language language = ((LanguageFileType)fileType).getLanguage();
+      final ParserDefinition parserDefinition = language.getParserDefinition();
+      FileViewProvider viewProvider = language.createViewProvider(virtualFile, myManager, physical);
+      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
+      if (parserDefinition != null){
+        final PsiFile psiFile = viewProvider.getPsi(lang);
         if(markAsCopy) ((TreeElement)psiFile.getNode()).acceptTree(new GeneratedMarkerVisitor());
         return psiFile;
       }

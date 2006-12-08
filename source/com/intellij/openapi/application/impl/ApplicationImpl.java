@@ -748,7 +748,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         myWriteActionsStack.push(action);
       }
       final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
-      if(project != null) {
+      if(project != null/* && !(action instanceof PsiExternalChangeAction)*/) {
         // run postprocess formatting inside commands only
         PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Computable<Object>() {
           public Object compute() {

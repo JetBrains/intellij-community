@@ -17,13 +17,11 @@ import java.util.*;
 public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiToDocumentSynchronizer");
 
-  private final SmartPointerManagerImpl mySmartPointerManager;
-  private PsiDocumentManagerImpl myPsiDocumentManager;
+  private final PsiDocumentManagerImpl myPsiDocumentManager;
   private Document mySyncDocument = null;
   private final Object mySyncLock = this;
 
-  public PsiToDocumentSynchronizer(PsiDocumentManagerImpl psiDocumentManager, SmartPointerManagerImpl smartPointerManager) {
-    mySmartPointerManager = smartPointerManager;
+  public PsiToDocumentSynchronizer(PsiDocumentManagerImpl psiDocumentManager) {
     myPsiDocumentManager = psiDocumentManager;
   }
 
@@ -45,29 +43,32 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private void doSync(PsiTreeChangeEvent event, DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
     PsiFile psiFile = event.getFile();
-    if (psiFile == null || psiFile.getLanguage() != psiFile.getViewProvider().getBaseLanguage()) return;
+    if (psiFile == null || psiFile.getNode() == null) return;
+
     DocumentEx document = getCachedDocument(psiFile);
     if (document == null || document instanceof DocumentRange) return;
 
-    TextBlock textBlock = getTextBlock(document);
+    TextBlock textBlock = getTextBlock(document, psiFile);
+
     if (!textBlock.isEmpty()) {
       LOG.error("Attempt to modify PSI for non-commited Document!");
       textBlock.clear();
     }
 
-    myPsiDocumentManager.setProcessDocumentEvents(document, false);
+    textBlock.lock();
     try {
       syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
     }
     finally {
-      myPsiDocumentManager.setProcessDocumentEvents(document, true);
+      textBlock.unlock();
     }
-    
+
+    myPsiDocumentManager.commitOtherFilesAssociatedWithDocument(document, psiFile);
 
     final boolean insideTransaction = myTransactionsMap.containsKey(document);
     if(!insideTransaction){
       document.setModificationStamp(psiFile.getModificationStamp());
-      mySmartPointerManager.synchronizePointers(psiFile);
+      SmartPointerManagerImpl.synchronizePointers(psiFile);
       if (LOG.isDebugEnabled()) {
         PsiDocumentManagerImpl.checkConsistency(psiFile, document);
       }
@@ -113,7 +114,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
 
-  private Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
+  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
 
   public void replaceString(Document document, int startOffset, int endOffset, String s) {
     final DocumentChangeTransaction documentChangeTransaction = getTransaction(document);
@@ -141,15 +142,16 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     return (DocumentEx)myPsiDocumentManager.getCachedDocument(file);
   }
 
-  private TextBlock getTextBlock(Document document) {
-    return myPsiDocumentManager.getTextBlock(document);
+  private TextBlock getTextBlock(Document document, PsiFile file) {
+    return myPsiDocumentManager.getTextBlock(document, file);
   }
 
   public void startTransaction(Document doc, PsiElement scope) {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
-    if(pair == null)
-      pair = new Pair<DocumentChangeTransaction, Integer>(
-        new DocumentChangeTransaction(doc, scope != null ? scope.getContainingFile() : null), 0);
+    if(pair == null) {
+      final PsiFile psiFile = scope != null ? scope.getContainingFile() : null;
+      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, scope != null ? psiFile : null), 0);
+    }
     else pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() + 1);
     myTransactionsMap.put(doc, pair);
   }
@@ -182,7 +184,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     doCommitTransaction(document, getTransaction(document));
   }
 
-  private static void doCommitTransaction(final Document document, final DocumentChangeTransaction documentChangeTransaction) {
+  private void doCommitTransaction(final Document document, final DocumentChangeTransaction documentChangeTransaction) {
     DocumentEx ex = (DocumentEx) document;
     ex.suppressGuardedExceptions();
     try {
@@ -204,6 +206,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
                            replaceBuffer);
         }
       }
+
       ex.setReadOnly(isReadOnly);
       //if(documentChangeTransaction.getChangeScope() != null) {
       //  LOG.assertTrue(document.getText().equals(documentChangeTransaction.getChangeScope().getText()),

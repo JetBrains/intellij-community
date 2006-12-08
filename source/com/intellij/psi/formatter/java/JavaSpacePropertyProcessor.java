@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -188,7 +189,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
                                          mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
     }
-    else if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == ElementType.METHOD || myRole2 == ChildRole.CLASS_INITIALIZER) {
+    else processClassBody();
+  }
+
+  private void processClassBody() {
+    if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == ElementType.METHOD || myRole2 == ChildRole.CLASS_INITIALIZER) {
       if (myRole1 == ChildRole.LBRACE) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
@@ -251,7 +256,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
         ASTNode lastChildNode = myChild1.getLastChildNode();
         if (lastChildNode != null && lastChildNode.getElementType() == ElementType.SEMICOLON) {
           myResult = Spacing
-            .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);                    
+            .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
         } else {
           createSpaceProperty(false, false, 0);
         }
@@ -295,7 +300,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
     }
     else if (myRole2 == ChildRole.RBRACE) {
       myResult = Spacing
-        .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);      
+        .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
     }
   }
 
@@ -1048,6 +1053,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   public void visitStatement(PsiStatement statement) {
     if (myRole2 == ChildRole.CLOSING_SEMICOLON) {
       createSpaceInCode(false);
+    }
+
+    if (statement instanceof JspClassLevelDeclarationStatement) {
+      processClassBody();
     }
   }
 

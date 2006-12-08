@@ -1,9 +1,9 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
-import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -282,8 +282,7 @@ public class HectorComponent extends JPanel {
     if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
       //highlight both java roots
       final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
-      component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), highlightingLevel);
-      component.setHighlightingSettingForRoot(jspClass.getMethodDummyHolder(), highlightingLevel);
+      component.setHighlightingSettingForRoot(jspClass.getContainingFile(), highlightingLevel);
     }
     else {
       component.setHighlightingSettingForRoot(root, highlightingLevel);

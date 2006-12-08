@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +32,7 @@ import com.intellij.psi.impl.source.parsing.tabular.ParsingUtil;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
@@ -108,9 +110,22 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
 
       final FileElement treeFileElement = fileImpl.getTreeElement();
 
+      FileType fileType = file.getFileType();
+      if (file instanceof PsiPlainTextFile) {
+        fileType = StdFileTypes.PLAIN_TEXT;
+      }
+
+      if (treeFileElement.getElementType() == JspElementType.JSP_TEMPLATE ||
+          treeFileElement.getFirstChildNode() instanceof ChameleonElement
+        ) { // Not able to perform incremental reparse for template data in JSP
+        makeFullParse(treeFileElement, newFileText, textLength, fileImpl, fileType);
+        return;
+      }
+
       final ASTNode leafAtStart = treeFileElement.findLeafElementAt(startOffset);
       final ASTNode leafAtEnd = treeFileElement.findLeafElementAt(endOffset);
       ASTNode parent = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
+      Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
       int minErrorLevel = Integer.MAX_VALUE;
       ASTNode bestReparseable = null;
@@ -121,32 +136,35 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
         if (parent.getElementType()instanceof IChameleonElementType) {
           final TextRange textRange = parent.getTextRange();
           final IChameleonElementType reparseable = (IChameleonElementType)parent.getElementType();
-          boolean languageChanged = false;
-          if (prevReparseable != null) {
-            languageChanged = prevReparseable.getElementType().getLanguage() != reparseable.getLanguage();
-          }
 
-          final String newTextStr =
-            StringFactory.createStringFromConstantArray(newFileText, textRange.getStartOffset(), textRange.getLength() + lengthShift);
-          if (reparseable.isParsable(newTextStr, project)) {
-            final ChameleonElement chameleon = (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText,
-                                                                                                 textRange.getStartOffset(),
-                                                                                                 textRange.getEndOffset() + lengthShift,
-                                                                                                 charTable, file.getManager(), fileImpl);
-            mergeTrees(fileImpl, parent, reparseable.parseContents(chameleon).getTreeParent());
-            //ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
-            return;
-          }
-          else if (reparseable instanceof IErrorCounterChameleonElementType) {
-            int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr, project);
-            if (currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR) {
-              prevReparseable = parent;
+          if (reparseable.getLanguage() == baseLanguage) {
+            boolean languageChanged = false;
+            if (prevReparseable != null) {
+              languageChanged = prevReparseable.getElementType().getLanguage() != reparseable.getLanguage();
             }
-            else if (Math.abs(currentErrorLevel) < Math.abs(minErrorLevel)) {
-              theOnlyReparseable = bestReparseable == null;
-              bestReparseable = parent;
-              minErrorLevel = currentErrorLevel;
-              if (languageChanged) break;
+
+            final String newTextStr =
+              StringFactory.createStringFromConstantArray(newFileText, textRange.getStartOffset(), textRange.getLength() + lengthShift);
+            if (reparseable.isParsable(newTextStr, project)) {
+              final ChameleonElement chameleon = (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText,
+                                                                                                   textRange.getStartOffset(),
+                                                                                                   textRange.getEndOffset() + lengthShift,
+                                                                                                   charTable, file.getManager(), fileImpl);
+              mergeTrees(fileImpl, parent, reparseable.parseContents(chameleon).getTreeParent());
+              //ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
+              return;
+            }
+            else if (reparseable instanceof IErrorCounterChameleonElementType) {
+              int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr, project);
+              if (currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR) {
+                prevReparseable = parent;
+              }
+              else if (Math.abs(currentErrorLevel) < Math.abs(minErrorLevel)) {
+                theOnlyReparseable = bestReparseable == null;
+                bestReparseable = parent;
+                minErrorLevel = currentErrorLevel;
+                if (languageChanged) break;
+              }
             }
           }
 
@@ -185,13 +203,11 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
         //}
 
         // file reparse
-        FileType fileType = file.getFileType();
-        if (file instanceof PsiPlainTextFile) {
-          fileType = StdFileTypes.PLAIN_TEXT;
-        }
 
-        final Grammar grammarByFileType = GrammarUtil.getGrammarByFileType(fileType);
-        if (grammarByFileType != null && file.getLanguage() != StdLanguages.JSP && file.getLanguage() != StdLanguages.JSPX) {
+        Language lang = file.getLanguage();
+
+        final Grammar grammarByFileType = GrammarUtil.getGrammarByName(lang.getID());
+        if (lang == baseLanguage /*TODO: reparse HTML in JSP */ && grammarByFileType != null && file.getLanguage() != StdLanguages.JSP && file.getLanguage() != StdLanguages.JSPX ) {
           ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset,
                               lengthShift, file.getViewProvider());
         }
@@ -246,9 +262,11 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     else {
       final PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
       final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
-      final CharArrayCharSequence seq = new CharArrayCharSequence(newFileText, 0, textLength);
+
+      final CharSequence seq = new CharArrayCharSequence(newFileText, 0, textLength);
+
       final PsiFileImpl newFile =
-        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, seq, fileImpl.getModificationStamp(), true, false);
+        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, fileImpl.getLanguage(), seq, fileImpl.getModificationStamp(), true, false);
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();

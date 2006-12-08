@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
@@ -155,9 +156,12 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       endOffset = tmp;
     }
 
-    Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
-    if (clip != null) {
-      clip.setContents(new StringSelection(getSelectedText()), defaultClipboardOwner);
+    if (!GraphicsEnvironment.isHeadless()) {
+      final Toolkit toolkit = myEditor.getComponent().getToolkit();
+      Clipboard clip = toolkit.getSystemSelection();
+      if (clip != null) {
+        clip.setContents(new StringSelection(getSelectedText()), defaultClipboardOwner);
+      }
     }
 
     int oldSelectionStart;

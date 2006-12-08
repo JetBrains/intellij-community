@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.InterfaceFilter;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
@@ -95,6 +96,9 @@ scopes:
           }
         }
         scope = scope.getParent();
+        if (scope instanceof JspClassLevelDeclarationStatement) {
+          scope = scope.getContext();
+        }
         if (scope instanceof PsiDirectory) break;
       }
     }
@@ -127,6 +131,9 @@ scopes:
       || parent instanceof PsiDocComment
       || element.getText().equals(parent.getText()))){
       parent = parent.getParent();
+      if (parent instanceof JspClassLevelDeclarationStatement) {
+        parent = parent.getContext();
+      }
     }
 
     if(parent == null) throw new Exception();

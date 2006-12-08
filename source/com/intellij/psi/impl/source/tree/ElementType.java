@@ -18,8 +18,7 @@ public interface ElementType extends
                              JavaElementType,
                              JavaDocElementType,
                              JspElementType,
-                             XmlElementType
-                             {
+                             XmlElementType {
   IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", StdLanguages.TEXT);
   IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", StdLanguages.TEXT);
   IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);
@@ -28,9 +27,13 @@ public interface ElementType extends
   TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(WHITE_SPACE,
                                                  JspElementType.JSP_TEMPLATE_EXPRESSION);
 
-  TokenSet COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT, JavaTokenType.DOC_COMMENT, JavaDocElementType.DOC_COMMENT, JSP_COMMENT, XML_COMMENT);
+  TokenSet JAVA_WHITESPACE_BIT_SET = TokenSet.create(WHITE_SPACE);
+  TokenSet JAVA_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT, JavaTokenType.DOC_COMMENT, JavaDocElementType.DOC_COMMENT);
+
+  TokenSet COMMENT_BIT_SET = TokenSet.orSet(JAVA_COMMENT_BIT_SET, TokenSet.create(JSP_COMMENT, XML_COMMENT));
 
   TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.orSet(WHITE_SPACE_BIT_SET, COMMENT_BIT_SET);
+  TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(JAVA_WHITESPACE_BIT_SET, JAVA_COMMENT_BIT_SET);
 
   TokenSet KEYWORD_BIT_SET = TokenSet.create(ABSTRACT_KEYWORD, ASSERT_KEYWORD, BOOLEAN_KEYWORD, BREAK_KEYWORD, BYTE_KEYWORD, CASE_KEYWORD, CATCH_KEYWORD, CHAR_KEYWORD, CLASS_KEYWORD,
    CONST_KEYWORD, CONTINUE_KEYWORD, DEFAULT_KEYWORD, DO_KEYWORD, DOUBLE_KEYWORD, ELSE_KEYWORD, EXTENDS_KEYWORD, FINAL_KEYWORD,
@@ -64,7 +67,7 @@ public interface ElementType extends
     CONTINUE_STATEMENT, RETURN_STATEMENT, THROW_STATEMENT, SYNCHRONIZED_STATEMENT,
     TRY_STATEMENT, LABELED_STATEMENT, ASSERT_STATEMENT, JSP_EXPRESSION
   );
-  TokenSet JSP_SYNTHETIC_STATEMENTS = TokenSet.create(JSP_WHILE_STATEMENT, JSP_BLOCK_STATEMENT, JSP_EXPRESSION, JSP_TEMPLATE_STATEMENT);
+  TokenSet JSP_SYNTHETIC_STATEMENTS = TokenSet.create(JSP_WHILE_STATEMENT, JSP_BLOCK_STATEMENT, JSP_EXPRESSION, JSP_TEMPLATE_STATEMENT, JSP_CLASS_LEVEL_DECLARATION_STATEMENT);
   TokenSet STATEMENT_BIT_SET = TokenSet.orSet(JAVA_STATEMENT_BIT_SET, JSP_SYNTHETIC_STATEMENTS);
 
   TokenSet TYPES_BIT_SET = TokenSet.create(TYPE);
@@ -75,10 +78,7 @@ public interface ElementType extends
   };
   TokenSet IMPORT_STATEMENT_BIT_SET = TokenSet.create(IMPORT_STATEMENT);
   TokenSet IMPORT_STATIC_STATEMENT_BIT_SET = TokenSet.create(IMPORT_STATIC_STATEMENT);
-  TokenSet IMPORT_STATEMENT_BASE_BIT_SET = TokenSet.create(IMPORT_STATEMENT,
-                                                           IMPORT_STATIC_STATEMENT);
-  TokenSet CLASS_KEYWORD_BIT_SET = TokenSet.create(CLASS_KEYWORD,
-                                                   INTERFACE_KEYWORD, ENUM_KEYWORD);
-  TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, CLASS_INITIALIZER,
-                                            METHOD);
+  TokenSet IMPORT_STATEMENT_BASE_BIT_SET = TokenSet.create(IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT);
+  TokenSet CLASS_KEYWORD_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD);
+  TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, CLASS_INITIALIZER, METHOD);
 }

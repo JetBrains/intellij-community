@@ -28,7 +28,9 @@ import java.util.*;
 
 public class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
+
   //@top
+  @Nullable
   public static HighlightInfo checkMissingReturnStatement(PsiMethod method) {
     PsiCodeBlock body = method.getBody();
     if (body == null
@@ -230,6 +232,7 @@ public class HighlightControlFlowUtil {
   }
 
   //@top
+  @Nullable
   public static HighlightInfo checkFinalFieldInitialized(PsiField field) {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
     boolean isInitialized = isFinalFieldInitialized(field);
@@ -253,6 +256,7 @@ public class HighlightControlFlowUtil {
   }
 
   //@top
+  @Nullable
   public static HighlightInfo checkVariableInitializedBeforeUsage(PsiReferenceExpression expression,
                                                                   PsiElement element,
                                                                   Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems) {
@@ -267,7 +271,7 @@ public class HighlightControlFlowUtil {
     }
     else {
       final PsiElement scope = variable instanceof PsiField
-                               ? variable.getParent()
+                               ? ((PsiField)variable).getContainingFile()
                                : variable.getParent() != null ? variable.getParent().getParent() : null;
       topBlock = PsiUtil.isInJspFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
       if (variable instanceof PsiField) {
@@ -484,7 +488,7 @@ public class HighlightControlFlowUtil {
         // field can get assigned in class initializers
         final PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
         if (enclosingConstructorOrInitializer == null
-            || !aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getParent(), aClass)) {
+            || !aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getContainingClass(), aClass)) {
           return null;
         }
         final PsiClassInitializer[] initializers = aClass.getInitializers();
@@ -646,7 +650,7 @@ public class HighlightControlFlowUtil {
                                      final PsiField field,
                                      final PsiReferenceExpression reference) {
 
-    if (!variable.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getParent(), field.getContainingClass())) return false;
+    if (!variable.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getContainingClass(), field.getContainingClass())) return false;
     PsiExpression qualifierExpression = reference.getQualifierExpression();
     return qualifierExpression == null || qualifierExpression instanceof PsiThisExpression;
   }

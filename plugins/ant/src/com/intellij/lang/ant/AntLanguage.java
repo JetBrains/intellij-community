@@ -30,7 +30,7 @@ public class AntLanguage extends Language {
   private AntUsagesProvider myUsagesProvider;
 
   public AntLanguage() {
-    super("ANT", "text/xml");
+    super("ANT");
     myXmlLanguage = StdLanguages.XML;
     LOG.assertTrue(myXmlLanguage != null, "AntLanguage should be created after XmlLanguage has created.");
   }

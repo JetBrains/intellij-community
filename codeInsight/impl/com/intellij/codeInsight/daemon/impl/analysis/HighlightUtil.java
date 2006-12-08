@@ -753,7 +753,9 @@ public class HighlightUtil {
     if (incompatibleModifierMap == null) return null;
     Set<String> incompatibles = incompatibleModifierMap.get(modifier);
     boolean isAllowed = true;
-    PsiElement modifierOwnerParent = modifierOwner.getParent();
+    PsiElement modifierOwnerParent = modifierOwner instanceof PsiMember ? ((PsiMember)modifierOwner).getContainingClass() : modifierOwner.getParent();
+    if (modifierOwnerParent == null) modifierOwnerParent = modifierOwner.getParent();
+
     if (modifierOwner instanceof PsiClass) {
       PsiClass aClass = (PsiClass)modifierOwner;
       if (aClass.isInterface()) {
@@ -1933,7 +1935,7 @@ public class HighlightUtil {
   }
 
   public static boolean shouldInspect(final PsiElement psiRoot) {
-    if (!shouldHighlight(psiRoot)) return false;
+    if (!shouldHighlight(psiRoot)) return false;                                                                
     final Project project = psiRoot.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
@@ -1957,8 +1959,7 @@ public class HighlightUtil {
     if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
       //highlight both java roots
       final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
-      component.setHighlightingSettingForRoot(jspClass.getClassDummyHolder(), inspectionLevel);
-      component.setHighlightingSettingForRoot(jspClass.getMethodDummyHolder(), inspectionLevel);
+      component.setHighlightingSettingForRoot(jspClass.getContainingFile(), inspectionLevel);
     }
     else {
       component.setHighlightingSettingForRoot(root, inspectionLevel);

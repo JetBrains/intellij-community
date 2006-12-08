@@ -4,15 +4,19 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.classes.*;
+import com.intellij.psi.filters.classes.AssignableFromContextFilter;
+import com.intellij.psi.filters.classes.EnumOrAnnotationTypeFilter;
+import com.intellij.psi.filters.classes.InterfaceFilter;
+import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.element.ReferenceOnFilter;
 import com.intellij.psi.filters.getters.UpWalkGetter;
 import com.intellij.psi.filters.position.*;
-import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.jsp.JspElementType;
 import org.jetbrains.annotations.NonNls;
 
@@ -52,7 +56,8 @@ public class JavaCompletionData extends CompletionData{
     }
     {
       // Method body
-      final CompletionVariant variant = new CompletionVariant(new InsideElementFilter(new ClassFilter(PsiCodeBlock.class)));
+      final CompletionVariant variant = new CompletionVariant(new AndFilter(new InsideElementFilter(new ClassFilter(PsiCodeBlock.class)),
+                                                                            new NotFilter(new InsideElementFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)))));
       variant.includeScopeClass(PsiMethod.class, true);
       variant.includeScopeClass(PsiClassInitializer.class, true);
       registerVariant(variant);
@@ -644,6 +649,7 @@ public class JavaCompletionData extends CompletionData{
               ),
               new TextFilter("*/"),
               new TokenTypeFilter(JspElementType.HOLDER_TEMPLATE_DATA),
+              new ClassFilter(OuterLanguageElement.class),
               new AndFilter(
                   new TextFilter(")"),
                   new NotFilter(
@@ -667,5 +673,5 @@ public class JavaCompletionData extends CompletionData{
 
   private final static ElementFilter CLASS_BODY = new OrFilter(
     new AfterElementFilter(new TextFilter("{")),
-    new ScopeFilter(new ClassFilter(JspClass.class)));
+    new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
 }

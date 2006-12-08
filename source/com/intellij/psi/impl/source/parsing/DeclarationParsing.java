@@ -13,6 +13,7 @@ import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -326,18 +327,22 @@ public class DeclarationParsing extends Parsing {
     else{
       // special treatment (see testMultiLineUnclosed())
       if (lexer.getTokenType() != null){
-        int spaceStart = ((FilterLexer)lexer).getPrevTokenEnd();
+        int spaceStart = lexer instanceof StoppableLexerAdapter
+                         ? ((StoppableLexerAdapter)lexer).getPrevTokenEnd()
+                         : ((FilterLexer)lexer).getPrevTokenEnd();
         int spaceEnd = lexer.getTokenStart();
         char[] buffer = lexer.getBuffer();
         int lineStart = CharArrayUtil.shiftBackwardUntil(buffer, spaceEnd, "\n\r");
         if (startPos.getOffset() < lineStart && lineStart < spaceStart){
+          final int newBufferEnd = CharArrayUtil.shiftForward(buffer, lineStart, "\n\r \t");
           lexer.restore(startPos);
-          int bufferEnd = lexer.getBufferEnd();
-          int newBufferEnd = CharArrayUtil.shiftForward(buffer, lineStart, "\n\r \t");
-          lexer.start(buffer, startPos.getOffset(), newBufferEnd, ((SimpleLexerState)startPos.getState()).getState());
-          TreeElement result = parseDeclaration(lexer, context);
-          lexer.start(buffer, lexer.getTokenStart(), bufferEnd, lexer.getState());
-          return result;
+          StoppableLexerAdapter stoppableLexer = new StoppableLexerAdapter(new StoppableLexerAdapter.StoppingCondition() {
+            public boolean stopsAt(IElementType token, int start, int end) {
+              return start >= newBufferEnd || end > newBufferEnd;
+            }
+          }, lexer);
+
+          return parseDeclaration(stoppableLexer, context);
         }
       }
 
@@ -399,6 +404,7 @@ public class DeclarationParsing extends Parsing {
     return modifierList;
   }
 
+  @Nullable
   public CompositeElement parseAnnotationFromText(PsiManager manager, String text, final LanguageLevel languageLevel) {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
@@ -577,7 +583,7 @@ public class DeclarationParsing extends Parsing {
     if (lexer.getTokenType() != IDENTIFIER){
       TreeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
       TreeUtil.addChildren(aClass, errorElement);
-      return (TreeElement)aClass.getFirstChildNode();
+      return aClass.getFirstChildNode();
     }
 
     TreeUtil.addChildren(aClass, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -672,6 +678,7 @@ public class DeclarationParsing extends Parsing {
     return result;
   }
 
+  @Nullable
   public TreeElement parseTypeParameterText(char[] buffer) {
     Lexer originalLexer = new JavaLexer(myContext.getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
@@ -684,6 +691,7 @@ public class DeclarationParsing extends Parsing {
     return typeParameter;
   }
 
+  @Nullable
   public CompositeElement parseTypeParameter(Lexer lexer) {
     if (lexer.getTokenType() != IDENTIFIER) return null;
     final CompositeElement result = Factory.createCompositeElement(TYPE_PARAMETER);
@@ -697,51 +705,46 @@ public class DeclarationParsing extends Parsing {
     return result;
   }
 
-  protected ASTNode parseClassBodyWithBraces(CompositeElement root, Lexer lexer, boolean annotationInterface, boolean isEnum) {
+  @Nullable
+  protected ASTNode parseClassBodyWithBraces(CompositeElement root, final Lexer lexer, boolean annotationInterface, boolean isEnum) {
     if (lexer.getTokenType() != LBRACE) return null;
     LeafElement lbrace = (LeafElement)ParseUtil.createTokenElement(lexer, myContext.getCharTable());
     TreeUtil.addChildren(root, lbrace);
     lexer.advance();
-    final int chameleonStart = lexer.getTokenStart();
-    final int state = lexer.getState();
-    LeafElement rbrace = null;
-    int braceCount = 1;
-    int chameleonEnd = chameleonStart;
-    while(braceCount > 0){
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null)
-        break;
-      if (tokenType == LBRACE){
-        braceCount++;
-      }
-      else if (tokenType == RBRACE){
-        braceCount--;
-      }
-      if (braceCount == 0){
-        rbrace = (LeafElement)ParseUtil.createTokenElement(lexer, myContext.getCharTable());
-      }
-      chameleonEnd = lexer.getTokenEnd();
-      lexer.advance();
-    }
-    final int context = annotationInterface ? ClassBodyParsing.ANNOTATION : isEnum ? ClassBodyParsing.ENUM : ClassBodyParsing.CLASS;
-    final int bufferEnd = lexer.getBufferEnd();
-    final int endOffset = rbrace != null ? chameleonEnd - 1: bufferEnd;
 
-    lexer.start(lexer.getBuffer(), chameleonStart, endOffset, state);
-    myContext.getClassBodyParsing().parseClassBody(root, lexer, context);
-    lexer.start(lexer.getBuffer(), chameleonStart, bufferEnd, state);
-    if (rbrace != null){
-      TreeUtil.addChildren(root, rbrace);
-      while(lexer.getTokenStart() < chameleonEnd) lexer.advance();
+    StoppableLexerAdapter classLexer = new StoppableLexerAdapter(new StoppableLexerAdapter.StoppingCondition() {
+      private int braceCount = 1;
+      public boolean stopsAt(IElementType token, int start, int end) {
+        if (token == LBRACE){
+          braceCount++;
+        }
+        else if (token == RBRACE){
+          braceCount--;
+        }
+
+        if (braceCount == 0){
+          return true;
+        }
+
+        return false;
+      }
+    }, lexer);
+
+    final int context = annotationInterface ? ClassBodyParsing.ANNOTATION : isEnum ? ClassBodyParsing.ENUM : ClassBodyParsing.CLASS;
+    myContext.getClassBodyParsing().parseClassBody(root, classLexer, context);
+
+    if (lexer.getTokenType() == RBRACE){
+      TreeUtil.addChildren(root, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      lexer.advance();
     }
     else{
       TreeUtil.addChildren(root, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
-      while(lexer.getTokenStart() < endOffset) lexer.advance();
     }
 
     return lbrace;
   }
 
+  @Nullable
   public TreeElement parseEnumConstant (Lexer lexer) {
     final LexerPosition pos = lexer.getCurrentPosition();
     CompositeElement modifierList = parseModifierList(lexer);
@@ -828,7 +831,7 @@ public class DeclarationParsing extends Parsing {
     }
   }
 
-  public CompositeElement parseParameterList(Lexer lexer) {
+  private CompositeElement parseParameterList(Lexer lexer) {
     CompositeElement paramList = Factory.createCompositeElement(PARAMETER_LIST);
     LOG.assertTrue(lexer.getTokenType() == LPARENTH);
     TreeUtil.addChildren(paramList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -906,18 +909,22 @@ public class DeclarationParsing extends Parsing {
     return paramList;
   }
 
+  @Nullable
   public ASTNode parseExtendsList(Lexer lexer) {
     return parseReferenceList(lexer, EXTENDS_LIST, COMMA, EXTENDS_KEYWORD);
   }
 
+  @Nullable
   public ASTNode parseImplementsList(Lexer lexer) {
     return parseReferenceList(lexer, IMPLEMENTS_LIST, COMMA, IMPLEMENTS_KEYWORD);
   }
 
+  @Nullable
   public ASTNode parseThrowsList(Lexer lexer) {
     return parseReferenceList(lexer, THROWS_LIST, COMMA, THROWS_KEYWORD);
   }
 
+  @Nullable
   public CompositeElement parseReferenceList(Lexer lexer, IElementType elementType, IElementType referenceDelimiter, IElementType keyword) {
     if (lexer.getTokenType() != keyword) return null;
 
@@ -940,6 +947,7 @@ public class DeclarationParsing extends Parsing {
     return list;
   }
 
+  @Nullable
   public CompositeElement parseParameterText(char[] buffer) {
     Lexer originalLexer = new JavaLexer(myContext.getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
@@ -952,6 +960,7 @@ public class DeclarationParsing extends Parsing {
     return (CompositeElement)first;
   }
 
+  @Nullable
   public TreeElement parseParameter(Lexer lexer, boolean allowEllipsis) {
     final LexerPosition pos = lexer.getCurrentPosition();
 

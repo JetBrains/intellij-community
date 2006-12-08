@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
@@ -101,6 +102,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       }
       return getPsiInner(target);
     }
+  }
+
+  public List<PsiFile> getAllFiles() {
+    return Collections.singletonList(getPsi(getBaseLanguage()));
   }
 
   @Nullable

@@ -11,14 +11,13 @@ import com.intellij.psi.tree.IElementType;
  */
 public class EscapedJavaLexer extends LexerBase {
   private char mySurroundingQuote;
-  private JavaLexer myJavaLexer;
+  private final JavaLexer myJavaLexer;
 
   private char[] myBuffer;
   private int myBufferEnd;
   private int myCurOffset;
   private IElementType myTokenType = null;
   private int myTokenEnd;
-  private static final int END_STATE = 10;
 
   public EscapedJavaLexer(char surroundingQuote, LanguageLevel languageLevel) {
     mySurroundingQuote = surroundingQuote;
@@ -46,7 +45,7 @@ public class EscapedJavaLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(buffer, 0, buffer.length);
+    start(buffer, startOffset, endOffset);
   }
 
   public int getState() {

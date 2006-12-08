@@ -10,6 +10,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.ParsingContext;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement2;
+import com.intellij.psi.impl.source.parsing.jsp.JspJavaLexer;
+import com.intellij.psi.impl.source.parsing.jsp.JspxJavaLexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.tree.IChameleonElementType;
@@ -54,6 +57,7 @@ public class ParseUtil implements Constants {
   }
 
   public static interface TokenProcessor {
+    @Nullable
     TreeElement process(Lexer lexer, ParsingContext context);
 
     boolean isTokenValid(IElementType tokenType);
@@ -93,17 +97,23 @@ public class ParseUtil implements Constants {
 
   public static class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
     public static final TokenProcessor INSTANCE = new WhiteSpaceAndCommentsProcessor();
+    private final TokenSet myWhitespaceSet;
 
-    private WhiteSpaceAndCommentsProcessor() {
+    public WhiteSpaceAndCommentsProcessor() {
+      this(WHITE_SPACE_OR_COMMENT_BIT_SET);
+    }
+
+    public WhiteSpaceAndCommentsProcessor(TokenSet whitespaceSet) {
+      myWhitespaceSet = whitespaceSet;
     }
 
     public TreeElement process(Lexer lexer, ParsingContext context) {
       TreeElement first = null;
       TreeElement last = null;
       while (isTokenValid(lexer.getTokenType())) {
-        TreeElement tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());
+        TreeElement tokenElement = createToken(lexer, context);
         IElementType type = lexer.getTokenType();
-        if (!WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type)) {
+        if (!myWhitespaceSet.contains(type)) {
           LOG.error("Missed token should be white space or comment:" + tokenElement);
           throw new RuntimeException();
         }
@@ -120,8 +130,12 @@ public class ParseUtil implements Constants {
       return first;
     }
 
+    protected TreeElement createToken(final Lexer lexer, final ParsingContext context) {
+      return ParseUtil.createTokenElement(lexer, context.getCharTable());
+    }
+
     public boolean isTokenValid(IElementType tokenType) {
-      return tokenType != null && WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
+      return tokenType != null && myWhitespaceSet.contains(tokenType);
     }
   }
 
@@ -154,7 +168,7 @@ public class ParseUtil implements Constants {
       lexer.start(lexer.getBuffer(), startOffset, endOffset, state);
     }
 
-    boolean gt = lexer instanceof JavaLexer || lexer instanceof JavaWithJspTemplateDataLexer;
+    boolean gt = lexer instanceof JavaLexer || lexer instanceof JavaWithJspTemplateDataLexer || lexer instanceof JspJavaLexer || lexer instanceof JspxJavaLexer;
     LeafElement leaf = TreeUtil.findFirstLeaf(root);
     if (leaf == null) {
       final TreeElement firstMissing = processor.process(lexer, context);
@@ -256,7 +270,7 @@ public class ParseUtil implements Constants {
   }
 
   private static void passTokenOrChameleon(final ASTNode next, Lexer lexer, boolean gtUse) {
-    if (next instanceof LeafElement && ((LeafElement)next).isChameleon()) {
+    if (next instanceof LeafElement && (((LeafElement)next).isChameleon() || next instanceof OuterLanguageElement2)) {
       final int endOfChameleon = next.getTextLength() + lexer.getTokenStart();
       while (lexer.getTokenType() != null && lexer.getTokenEnd() < endOfChameleon) {
         lexer.advance();

@@ -136,6 +136,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private static Indent getChildIndent(final ASTNode parent) {
     if (parent.getElementType() == ElementType.MODIFIER_LIST) return Indent.getNoneIndent();
     if (parent.getElementType() == ElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
+    if (parent.getElementType() == ElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT) return Indent.getNormalIndent();
     if (parent.getElementType() == ElementType.DUMMY_HOLDER) return Indent.getNoneIndent();
     if (parent.getElementType() == ElementType.CLASS) return Indent.getNoneIndent();
     if (parent.getElementType() == ElementType.IF_STATEMENT) return Indent.getNoneIndent();

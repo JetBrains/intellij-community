@@ -285,7 +285,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
       psiFile = (PsiFile)fileElement.getPsi();
     }
-    return psiFile.getLanguage() == psiFile.getViewProvider().getBaseLanguage() ? psiFile : null;
+    return psiFile.getNode() != null ? psiFile : null;
   }
 
   private static void sendPsiBeforeEvent(final PsiElement scope) {
