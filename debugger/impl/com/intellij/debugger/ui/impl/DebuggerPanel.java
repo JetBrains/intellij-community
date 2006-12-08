@@ -71,7 +71,7 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
 
   protected void changeEvent(DebuggerContextImpl newContext, int event) {
     if (newContext.getDebuggerSession() != null) {
-      rebuildIfVisible();
+      rebuildIfVisible(event);
     }
   }
 
@@ -85,14 +85,14 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
 
   private final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public final void rebuildIfVisible() {
+  public final void rebuildIfVisible(final int event) {
     if(isUpdateEnabled()) {
       myRefreshNeeded = false;
       myRebuildAlarm.cancelAllRequests();
       myRebuildAlarm.addRequest(new Runnable() {
         public void run() {
           try {
-            rebuild();
+            rebuild(event == DebuggerSession.EVENT_REFRESH || event == DebuggerSession.EVENT_REFRESH_VIEWS_ONLY);
           }
           catch (VMDisconnectedException e) {
             // ignored
@@ -105,7 +105,7 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
     }
   }
 
-  protected void rebuild() {
+  protected void rebuild(final boolean updateOnly) {
     DebuggerSession debuggerSession = getContext().getDebuggerSession();
     if(debuggerSession == null) {
       return;

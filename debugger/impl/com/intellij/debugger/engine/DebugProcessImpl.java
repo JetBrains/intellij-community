@@ -103,7 +103,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private LinkedList<String> myStatusStack = new LinkedList<String>();
   private String myStatusText;
-  private int mySuspendPolicy = DebuggerSettings.getInstance().isSuspendAllThreads()
+  private int mySteppingSuspendPolicy = DebuggerSettings.getInstance().isSuspendAllThreads()
                                 ? EventRequest.SUSPEND_ALL
                                 : EventRequest.SUSPEND_EVENT_THREAD;
 
@@ -136,7 +136,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     myProject = project;
     myRequestManager = new RequestManagerImpl(this);
     myDescriptorHistoryManager = new DescriptorHistoryManagerImpl(project);
-    setSuspendPolicy(DebuggerSettings.getInstance().isSuspendAllThreads());
+    setSteppingSuspendPolicy(DebuggerSettings.getInstance().isSuspendAllThreads());
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
   }
@@ -340,7 +340,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
     }
 
-    stepRequest.setSuspendPolicy(getSuspendPolicy());
+    // todo: seems like this functionality is outdated, always suspend all threads while stepping
+    //stepRequest.setSteppingSuspendPolicy(getSteppingSuspendPolicy());
 
     if (hint != null) {
       //noinspection HardCodedStringLiteral
@@ -1256,17 +1257,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return refType;
   }
 
-  public int getSuspendPolicy() {
-    return mySuspendPolicy;
+  public int getSteppingSuspendPolicy() {
+    return mySteppingSuspendPolicy;
   }
 
-  public void setSuspendPolicy(boolean suspendAll) {
-    mySuspendPolicy = suspendAll ? EventRequest.SUSPEND_ALL : EventRequest.SUSPEND_EVENT_THREAD;
+  public void setSteppingSuspendPolicy(boolean suspendAll) {
+    mySteppingSuspendPolicy = suspendAll ? EventRequest.SUSPEND_ALL : EventRequest.SUSPEND_EVENT_THREAD;
     DebuggerSettings.getInstance().setSuspendPolicy(suspendAll);
   }
 
   public void setSuspendPolicy(int policy) {
-    mySuspendPolicy = policy;
+    mySteppingSuspendPolicy = policy;
     DebuggerSettings.getInstance().setSuspendPolicy(policy == EventRequest.SUSPEND_ALL);
   }
 

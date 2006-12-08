@@ -24,6 +24,9 @@ public class DebuggerComboBoxRenderer extends BasicComboBoxRenderer {
         component.setIcon(icon);
       }
     }
+    else {
+      component.setIcon(null);
+    }
     return component;
   }
 

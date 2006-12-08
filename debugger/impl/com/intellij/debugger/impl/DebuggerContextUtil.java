@@ -2,7 +2,6 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -32,7 +31,7 @@ public class DebuggerContextUtil {
 
     DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(context.getDebuggerSession(), item.getSuspendContext(), item.getThreadReference(), null);
 
-    contextManager.setState(newContext, context.getDebuggerSession().getState(), DebuggerSession.EVENT_REFRESH, null);
+    contextManager.setState(newContext, context.getDebuggerSession().getState(), DebuggerSession.EVENT_CONTEXT, null);
   }
 
   public static DebuggerContextImpl createDebuggerContext(DebuggerSession session, SuspendContextImpl suspendContext){

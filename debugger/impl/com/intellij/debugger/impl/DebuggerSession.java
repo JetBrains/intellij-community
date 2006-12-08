@@ -264,10 +264,10 @@ public class DebuggerSession {
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
           public void run() {
             if (currentContext != null) {
-              getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, currentContext), STATE_PAUSED, EVENT_REFRESH, null);
+              getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, currentContext), STATE_PAUSED, EVENT_CONTEXT, null);
             }
             else {
-              getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_RUNNING, EVENT_REFRESH, null);
+              getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_RUNNING, EVENT_CONTEXT, null);
             }
           }
         });
@@ -336,7 +336,7 @@ public class DebuggerSession {
           public void run() {
             myIsEvaluating = false;
             if (context != getSuspendContext()) {
-              getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, EVENT_REFRESH, null);
+              getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, EVENT_CONTEXT, null);
             }
           }
         });

@@ -141,7 +141,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       return null;
     }
     session.getContextManager().addListener(mySessionListener);
-    getContextManager().setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()), session.getState(), DebuggerSession.EVENT_REFRESH, null);
+    getContextManager().setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
 
     final ProcessHandler processHandler = executionResult.getProcessHandler();
     

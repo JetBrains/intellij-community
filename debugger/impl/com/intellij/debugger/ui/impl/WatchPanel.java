@@ -47,7 +47,7 @@ public abstract class WatchPanel extends DebuggerPanel {
       }
     }
 
-    rebuildIfVisible();
+    rebuildIfVisible(event);
   }
 
   protected ActionPopupMenu createPopupMenu() {

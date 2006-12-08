@@ -196,7 +196,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
           if (component instanceof DebuggerPanel) {
             DebuggerPanel panel = (DebuggerPanel)component;
             if (panel.isRefreshNeeded()) {
-              panel.rebuildIfVisible();
+              panel.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
             }
           }
         }
@@ -337,7 +337,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
   }
   */
 
-  private static ActionToolbar createSecondToolbar() {
+  private ActionToolbar createSecondToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
 
     addActionToGroup(group, DebuggerActions.SHOW_EXECUTION_POINT);
@@ -349,7 +349,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     addActionToGroup(group, DebuggerActions.RUN_TO_CURSOR);
     addActionToGroup(group, DebuggerActions.VIEW_BREAKPOINTS);
     addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
-    addActionToGroup(group, DebuggerActions.TOGGLE_STEP_SUSPEND_POLICY);
+    group.add(new ShowWatchesAction());
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
@@ -378,7 +378,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
     group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
     group.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(myRunner.getInfo().getHelpId()));
-    group.add(new ShowWatchesAction());
+
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
 
@@ -426,7 +426,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     final DebugProcessImpl reuseProcess = reuseSession.getDebugProcess();
     final DebugProcessImpl process = getDebugProcess();
     if (process != null && reuseProcess != null) {
-      process.setSuspendPolicy(reuseProcess.getSuspendPolicy());
+      process.setSuspendPolicy(reuseProcess.getSteppingSuspendPolicy());
     }
     DebuggerTreeNodeImpl[] watches = reuseSession.getWatchPanel().getWatchTree().getWatches();
 
@@ -534,7 +534,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     }
 
     public DebuggerContextImpl getContext() {
-      return myDebuggerSession.getContextManager().getContext();
+      return myDebuggerSession != null? myDebuggerSession.getContextManager().getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
     }
 
     public void setState(DebuggerContextImpl context, int state, int event, String description) {
@@ -568,7 +568,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
       if (show) {
         myFramePanel.setWatchPanel(myWatchPanel);
         if (myWatchPanel.isRefreshNeeded()) {
-          myWatchPanel.rebuildIfVisible();
+          myWatchPanel.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
         }
       }
       else {

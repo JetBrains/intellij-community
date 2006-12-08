@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -22,6 +23,7 @@ import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -51,6 +53,8 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   @NonNls private static final String HELP_ID = "debugging.debugFrame";
   private ThreeComponentsSplitter mySplitter;
+  private static final Icon UNFREEZE_ICON = IconLoader.getIcon("/actions/resumeThread.png");
+  private static final Icon FREEZE_ICON = IconLoader.getIcon("/actions/freezeThread.png");
 
   public FramePanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
@@ -98,6 +102,16 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     });
   }
 
+  private JPanel createThreadComboPanel(JComboBox threadsCombo) {
+    final JPanel panel = new JPanel(new BorderLayout());
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new FreezeThreadAction());
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.COMBO_PAGER, group, true);
+    panel.add(threadsCombo, BorderLayout.CENTER);
+    panel.add(toolbar.getComponent(), BorderLayout.EAST);
+    return panel;
+  }
+
   public void addNotify() {
     super.addNotify();
     final ThreeComponentsSplitter splitter = mySplitter;
@@ -126,13 +140,15 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     });
   }
 
-  protected void rebuild() {
-    myThreadsCombo.removeAllItems();
-    myFramesList.clear();
+  protected void rebuild(final boolean updateOnly) {
+    if (!updateOnly) {
+      myThreadsCombo.removeAllItems();
+      myFramesList.clear();
+    }
 
-    getContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramePanelCommand());
+    getContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramePanelCommand(updateOnly));
 
-    super.rebuild();
+    super.rebuild(updateOnly);
   }
 
   protected DebuggerTree createTreeView() {
@@ -262,12 +278,14 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
   }
 
   private class RefreshFramePanelCommand extends DebuggerContextCommandImpl {
+    private final boolean myRefreshOnly;
 
-    public RefreshFramePanelCommand() {
+    public RefreshFramePanelCommand(final boolean refreshOnly) {
       super(getContext());
+      myRefreshOnly = refreshOnly;
     }
 
-    private List<ThreadDescriptorImpl> getThreadList() {
+    private List<ThreadDescriptorImpl> createThreadDescriptorsList() {
       final List<ThreadReferenceProxyImpl> threads = new ArrayList<ThreadReferenceProxyImpl>(getSuspendContext().getDebugProcess().getVirtualMachineProxy().allThreads());
       Collections.sort(threads, ThreadReferenceProxyImpl.ourComparator);
 
@@ -291,35 +309,111 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
         return;
       }
 
-      final List<ThreadDescriptorImpl>  threadItems = getThreadList();
+      final SuspendContextImpl threadContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), threadToSelect);
+      final ThreadDescriptorImpl currentThreadDescriptor = (ThreadDescriptorImpl)myThreadsCombo.getSelectedItem();
+      final ThreadReferenceProxyImpl currentThread = currentThreadDescriptor != null? currentThreadDescriptor.getThreadReference() : null;
 
-      SuspendContextImpl threadContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), threadToSelect);
-      context.getDebugProcess().getManagerThread().invokeLater(new RefreshFramesListCommand(context, threadContext));
+      if (myRefreshOnly && threadToSelect.equals(currentThread)) {
+        context.getDebugProcess().getManagerThread().invokeLater(new UpdateFramesListCommand(context, threadContext));
+      }
+      else {
+        context.getDebugProcess().getManagerThread().invokeLater(new RebuildFramesListCommand(context, threadContext));
+      }
 
-      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-        public void run() {
-          try {
-            myThreadsListener.setEnabled(false);
-
-            myThreadsCombo.removeAllItems();
-            for (final ThreadDescriptorImpl threadItem : threadItems) {
-              myThreadsCombo.addItem(threadItem);
-            }
-
-            selectThread(threadToSelect);
-          }
-          finally {
-            myThreadsListener.setEnabled(true);
-          }
+      if (myRefreshOnly) {
+        final DefaultComboBoxModel model = (DefaultComboBoxModel)myThreadsCombo.getModel();
+        final int size = model.getSize();
+        final EvaluationContextImpl evaluationContext = context.createEvaluationContext();
+        for (int idx = 0; idx < size; idx++) {
+          final ThreadDescriptorImpl descriptor = (ThreadDescriptorImpl)model.getElementAt(idx);
+          descriptor.setContext(evaluationContext);
+          descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
         }
-      });
+        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+          public void run() {
+            try {
+              myThreadsListener.setEnabled(false);
+              selectThread(threadToSelect);
+            }
+            finally {
+              myThreadsListener.setEnabled(true);
+            }
+          }
+        });
+      }
+      else { // full rebuild
+        final List<ThreadDescriptorImpl> threadItems = createThreadDescriptorsList();
+        DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+          public void run() {
+            try {
+              myThreadsListener.setEnabled(false);
+
+              myThreadsCombo.removeAllItems();
+              for (final ThreadDescriptorImpl threadItem : threadItems) {
+                myThreadsCombo.addItem(threadItem);
+              }
+
+              selectThread(threadToSelect);
+            }
+            finally {
+              myThreadsListener.setEnabled(true);
+            }
+          }
+        });
+      }
     }
   }
 
-  private class RefreshFramesListCommand extends SuspendContextCommandImpl {
+  private class UpdateFramesListCommand extends SuspendContextCommandImpl {
     private final DebuggerContextImpl myDebuggerContext;
 
-    public RefreshFramesListCommand(DebuggerContextImpl debuggerContext, SuspendContextImpl suspendContext) {
+    public UpdateFramesListCommand(DebuggerContextImpl debuggerContext, SuspendContextImpl suspendContext) {
+      super(suspendContext);
+      myDebuggerContext = debuggerContext;
+    }
+
+    public void contextAction() throws Exception {
+      updateFrameList(myDebuggerContext.getThreadProxy());
+      DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+        public void run() {
+          try {
+            myFramesListener.setEnabled(false);
+            final StackFrameProxyImpl contextFrame = getDebuggerContext().getFrameProxy();
+            if(contextFrame != null) {
+              selectFrame(contextFrame);
+            }
+          }
+          finally {
+            myFramesListener.setEnabled(true);
+          }
+        }
+      });
+
+    }
+
+    private void updateFrameList(ThreadReferenceProxyImpl thread) {
+      if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
+        return;
+      }
+      EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
+      final DefaultListModel model = myFramesList.getModel();
+      final int size = model.getSize();
+      for (int i = 0; i < size; i++) {
+        final StackFrameDescriptorImpl descriptor = (StackFrameDescriptorImpl)model.getElementAt(i);
+        descriptor.setContext(evaluationContext);
+        descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+      }
+    }
+
+    public DebuggerContextImpl getDebuggerContext() {
+      return myDebuggerContext;
+    }
+  }
+
+  private class RebuildFramesListCommand extends SuspendContextCommandImpl {
+    private final DebuggerContextImpl myDebuggerContext;
+
+    public RebuildFramesListCommand(DebuggerContextImpl debuggerContext, SuspendContextImpl suspendContext) {
       super(suspendContext);
       myDebuggerContext = debuggerContext;
     }
@@ -379,4 +473,45 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     }
   }
 
+
+  private class FreezeThreadAction extends AnAction {
+
+    public FreezeThreadAction() {
+      super("", "", UNFREEZE_ICON);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final ThreadDescriptorImpl thread = (ThreadDescriptorImpl)myThreadsCombo.getSelectedItem();
+      if(thread != null && thread.isSuspended()) {
+        final ThreadReferenceProxyImpl threadReferenceProxy = thread.getThreadReference();
+        final DebuggerContextImpl debuggerContext = getContext();
+        final DebugProcessImpl process = debuggerContext.getDebugProcess();
+        process.getManagerThread().invokeLater(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
+          public void contextAction() throws Exception {
+            if (thread.isFrozen()) {
+              process.createResumeThreadCommand(getSuspendContext(), threadReferenceProxy).run();
+            }
+            else {
+              process.createFreezeThreadCommand(threadReferenceProxy).run();
+            }
+          }
+        });
+      }
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+
+      final ThreadDescriptorImpl thread = (ThreadDescriptorImpl)myThreadsCombo.getSelectedItem();
+      final boolean isFrozen = thread != null && thread.isFrozen();
+      final String text = isFrozen? DebuggerBundle.message("action.resume.thread.text.unfreeze") : ActionsBundle.message("action.Debugger.FreezeThread.text");
+      final Icon icon = isFrozen? UNFREEZE_ICON : FREEZE_ICON;
+      final boolean enabled = (thread != null && thread.isSuspended());
+
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(enabled);
+      presentation.setText(text);
+      presentation.setIcon(icon);
+    }
+  }
 }
