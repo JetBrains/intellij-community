@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileOutputStream;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -404,12 +404,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     final ModalityState modalityState = VirtualFileManagerImpl.calcModalityStateForRefreshEventsPosting(asynchronous);
 
-    final Runnable endTask = new Runnable() {
-      public void run() {
-        getManager().afterRefreshFinish(asynchronous, modalityState);
-      }
-    };
-
     final Runnable runnable = new Runnable() {
       public void run() {
         getManager().beforeRefreshStart(asynchronous, modalityState, null);
@@ -445,7 +439,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
             }
             else {
-              refresh(rootFile, recursively, false, modalityState, asynchronous, true, false);
+              refresh(rootFile, recursively, false, modalityState, asynchronous, false);
+              if (!recursively && rootFile.areChildrenCached()) {
+                for (VirtualFileImpl child : rootFile.getChildren()) {
+                  refreshInner(child, false, modalityState, asynchronous, false);
+                }
+              }
             }
           } else {
             final String fileSystemPath = request.getFileSystemRootPath();
@@ -472,7 +471,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
 
             } else {
-              refresh(file, true, false, modalityState, asynchronous, false, false);
+              refresh(file, true, false, modalityState, asynchronous, false);
             }
           } else {
             final String vfsPath = entry.getKey();
@@ -482,6 +481,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         }
 
         FileWatcher.resyncedManually();
+
+        getManager().afterRefreshFinish(asynchronous, modalityState);
       }
     };
 
@@ -492,13 +493,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
             LOG.debug("Executing request:" + this);
           }
           runnable.run();
-          endTask.run();
         }
       });
     }
     else {
       runnable.run();
-      endTask.run();
     }
   }
 
@@ -591,12 +590,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  void refresh(VirtualFile file,
+  void refresh(VirtualFileImpl file,
                boolean recursive,
                boolean storeStatus,
                ModalityState modalityState,
                boolean asynchronous,
-               final boolean isRoot,
                final boolean noWatcher) {
     final List<String> manualPaths;
     synchronized (LOCK) {
@@ -608,14 +606,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       for (int i = 0; i < manualPaths.size(); i++) {
         String pathToWatchManual = manualPaths.get(i);
         if (FileUtil.startsWith(filePath, pathToWatchManual)) {
-          ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
-          if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) {
-            VirtualFile[] children = file.getChildren();
-            for (int j = 0; j < children.length; j++) {
-              VirtualFile child = children[j];
-              refreshInner(child, recursive, modalityState, asynchronous, false, true);
-            }
-          }
+          file.refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
           return;
         }
       }
@@ -625,20 +616,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       storeRefreshStatusToFiles();
     }
 
-    refreshInner(file, recursive, modalityState, asynchronous, isRoot, noWatcher);
+    refreshInner(file, recursive, modalityState, asynchronous, noWatcher);
   }
 
-  @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage is produced otherwise in AbstractList.iterator()
-  void refreshInner(VirtualFile file, boolean recursive, ModalityState modalityState, boolean asynchronous, final boolean isRoot, final boolean noWatcher) {
-    if (noWatcher || !FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
-      ((VirtualFileImpl)file).refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
-      if ((isRoot && !recursive) && ((VirtualFileImpl)file).areChildrenCached()) {  //if recursive, then we have already processed children in refreshInternal
-        final VirtualFile[] children = file.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          VirtualFile child = children[i];
-          refreshInner(child, false, modalityState, asynchronous, false, noWatcher);
-        }
-      }
+  void refreshInner(VirtualFileImpl file, boolean recursive, ModalityState modalityState, boolean asynchronous, final boolean noWatcher) {
+    if (noWatcher || !FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh synchronously by means of file watcher.
+      file.refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
     }
     else {
       Key status;
@@ -646,23 +629,20 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         status = myRefreshStatusMap.remove(file);
       }
       if (status == DELETED_STATUS) {
-        if (((VirtualFileImpl)file).getPhysicalFile().exists()) { // file was deleted but later restored - need to rescan the whole subtree
-          ((VirtualFileImpl)file).refreshInternal(true, modalityState, false, asynchronous, noWatcher);
+        if (file.getPhysicalFile().exists()) { // file was deleted but later restored - need to rescan the whole subtree
+          file.refreshInternal(true, modalityState, false, asynchronous, noWatcher);
         }
       }
       else {
         if (status == DIRTY_STATUS) {
-          ((VirtualFileImpl)file).refreshInternal(false, modalityState, false, asynchronous, noWatcher);
+          file.refreshInternal(false, modalityState, false, asynchronous, noWatcher);
         }
-        if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) { //here above refresh was not recursive, so in case of recursive we need to trigger it here
-          VirtualFile[] children = file.getChildren();
-          for (int i = 0; i < children.length; i++) {
-            VirtualFile child = children[i];
-            if (status == DIRTY_STATUS &&
-                !((VirtualFileImpl)child).getPhysicalFile().exists()) {
+        if (recursive && file.areChildrenCached()) { //here above refresh was not recursive, so in case of recursive we need to trigger it here
+          for (VirtualFileImpl child : file.getChildren()) {
+            if (status == DIRTY_STATUS && !child.getPhysicalFile().exists()) {
               continue; // should be already handled above (see SCR6145)
             }
-            refreshInner(child, recursive,  modalityState, asynchronous, false, noWatcher);
+            refreshInner(child, recursive, modalityState, asynchronous, noWatcher);
           }
         }
       }
@@ -850,8 +830,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         }
       );
     }
-
-    myCachedNormalizedRequests = null;
   }
 
   private class StoreRefreshStatusThread extends Thread {
@@ -893,6 +871,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         }
       }
       myRootsToWatch.add(result); //add in any case
+      myCachedNormalizedRequests = null;
       setUpFileWatcher();
       return result;
     }
@@ -924,6 +903,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         myRootsToWatch.add(request); //add in any case, safe to add inplace without copying myRootsToWatch before the loop
       }
 
+      myCachedNormalizedRequests = null;
       setUpFileWatcher();
       if (!filesToSynchronize.isEmpty()) {
         synchronizeFiles(toWatchRecursively, filesToSynchronize.toArray(new VirtualFile[filesToSynchronize.size()]));
@@ -941,7 +921,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public void removeWatchedRoot(final WatchRequest watchRequest) {
     synchronized (LOCK) {
-      if (myRootsToWatch.remove(watchRequest)) setUpFileWatcher();
+      if (myRootsToWatch.remove(watchRequest)) {
+        myCachedNormalizedRequests = null;
+        setUpFileWatcher();
+      }
     }
   }
 
@@ -1022,7 +1005,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public void removeWatchedRoots(final Collection<WatchRequest> rootsToWatch) {
     synchronized (LOCK) {
-      if (myRootsToWatch.removeAll(rootsToWatch)) setUpFileWatcher();
+      if (myRootsToWatch.removeAll(rootsToWatch)) {
+        myCachedNormalizedRequests = null;
+        setUpFileWatcher();
+      }
     }
   }
 

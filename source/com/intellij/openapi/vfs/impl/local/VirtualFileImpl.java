@@ -237,7 +237,7 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
-  public VirtualFile[] getChildren() {
+  public VirtualFileImpl[] getChildren() {
     if (!isDirectory()) return null;
     if (myChildren == null) {
       synchronized (ourFileSystem.LOCK) {
@@ -448,14 +448,9 @@ public class VirtualFileImpl extends VirtualFile {
           ourFileSystem.getManager().addEventToFireByRefresh(runnable, asynchronous, modalityState);
         }
         else {
-          ourFileSystem.refresh(VirtualFileImpl.this, recursive, true, modalityState, asynchronous, false, noFileWatcher);
+          ourFileSystem.refresh(VirtualFileImpl.this, recursive, true, modalityState, asynchronous, noFileWatcher);
         }
 
-      }
-    };
-
-    final Runnable endTask = new Runnable() {
-      public void run() {
         ourFileSystem.getManager().afterRefreshFinish(asynchronous, modalityState);
       }
     };
@@ -468,7 +463,6 @@ public class VirtualFileImpl extends VirtualFile {
           }
 
           runnable.run();
-          endTask.run();
         }
       };
 
@@ -476,7 +470,6 @@ public class VirtualFileImpl extends VirtualFile {
     }
     else {
       runnable.run();
-      endTask.run();
     }
   }
 
@@ -492,6 +485,7 @@ public class VirtualFileImpl extends VirtualFile {
     return (int)getPhysicalFile().length();
   }
 
+  //'this' is already checked to exist
   void refreshInternal(final boolean recursive,
                        final ModalityState modalityState,
                        final boolean forceRefresh,
@@ -608,7 +602,7 @@ public class VirtualFileImpl extends VirtualFile {
             );
           }
           if (recursive) {
-            ourFileSystem.refreshInner(child, true, modalityState, asynchronous, false, noWatcher);
+            ourFileSystem.refreshInner(child, true, modalityState, asynchronous, noWatcher);
           }
         }
         else {
