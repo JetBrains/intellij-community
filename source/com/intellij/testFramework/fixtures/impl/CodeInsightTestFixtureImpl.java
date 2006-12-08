@@ -247,7 +247,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
         assert copy != null : "file not found: " + fullPath;
         final PsiFile psiFile = myPsiManager.findFile(copy);
         assert psiFile != null;
-        checkResultByFile(filePath, psiFile, false);
+        checkResultByFile(expectedFile, psiFile, false);
       }
     }.execute().throwException();
   }
