@@ -1,5 +1,7 @@
 package com.a;
 public class C{
-  public void cc(){  
+  A myA = new A ();
+  public void cc(){
+    myA.aa();
   }
 }

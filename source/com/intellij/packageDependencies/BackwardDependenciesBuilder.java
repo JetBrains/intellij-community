@@ -34,7 +34,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     return AnalysisScopeBundle.message("backward.dependencies.usage.view.initial.text");
   }
 
-  public boolean isBackward(){
+  public boolean isBackward() {
     return true;
   }
 
@@ -54,6 +54,8 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
       builders[i].setTotalFileCount(finalTotalFilesCount);
       builders[i].analyze();
       totalCount += scope.getFileCount();
+
+      subtractScope(builders[i], getScope());
     }
 
     final PsiManager psiManager = PsiManager.getInstance(getProject());
@@ -73,7 +75,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
             }
             final int fileCount = getScope().getFileCount();
             if (fileCount > 0) {
-              indicator.setFraction(((double) ++myFileCount) / fileCount);
+              indicator.setFraction(((double)++myFileCount) / fileCount);
             }
           }
           for (DependenciesBuilder builder : builders) {
@@ -95,6 +97,22 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     }
     finally {
       psiManager.finishBatchFilesProcessingMode();
+    }
+  }
+
+  private static void subtractScope(final DependenciesBuilder builders, final AnalysisScope scope) {
+    final Map<PsiFile, Set<PsiFile>> dependencies = builders.getDependencies();
+
+    Set<PsiFile> excluded = new HashSet<PsiFile>();
+
+    for (final PsiFile psiFile : dependencies.keySet()) {
+      if (scope.contains(psiFile)) {
+        excluded.add(psiFile);
+      }
+    }
+
+    for ( final PsiFile psiFile : excluded ) {
+      dependencies.remove(psiFile);
     }
   }
 }
