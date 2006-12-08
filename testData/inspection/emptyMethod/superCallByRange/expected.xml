@@ -4,7 +4,7 @@
     <file>Base.java</file>
     <line>2</line>
     <description>empty</description>
-    <entry_point TYPE="method" FQNAME="void Base.foo()" />
+    <entry_point TYPE="method" FQNAME="Base void foo()" />
   </problem>
 </problems>
 

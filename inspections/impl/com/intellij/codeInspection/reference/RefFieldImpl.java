@@ -136,10 +136,11 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
     final Runnable runnable = new Runnable() {
       public void run() {
         PsiField psiField = getElement();
-        result[0] = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME |
-          PsiFormatUtil.SHOW_FQ_NAME |
-          PsiFormatUtil.SHOW_CONTAINING_CLASS,
-            PsiSubstitutor.EMPTY);
+        LOG.assertTrue(psiField != null);
+        final PsiClass psiClass = psiField.getContainingClass();
+        final RefClass refClass = (RefClass)getRefManager().getReference(psiClass);
+        LOG.assertTrue(refClass != null);
+        result[0] = refClass.getExternalName() + " " + PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
       }
     };
 
@@ -150,26 +151,21 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
 
   @Nullable
   public static RefField fieldFromExternalName(RefManager manager, String externalName) {
-    RefField refField = null;
+    return (RefField)manager.getReference(findPsiField(PsiManager.getInstance(manager.getProject()), externalName));
+  }
 
-    int lastDotIdx = externalName.lastIndexOf('.');
-    if (lastDotIdx > 0 && lastDotIdx < externalName.length() - 2) {
-      String className = externalName.substring(0, lastDotIdx);
-      String fieldName = externalName.substring(lastDotIdx + 1);
-
-      if (RefClassImpl.classFromExternalName(manager, className) != null) {
-        PsiClass psiClass = PsiManager.getInstance(manager.getProject()).findClass(className);
-        if (psiClass != null) {
-          PsiField psiField = psiClass.findFieldByName(fieldName, false);
-
-          if (psiField != null) {
-              refField = (RefField) manager.getReference(psiField);
-          }
-        }
+  @Nullable
+  public static PsiField findPsiField(PsiManager manager, String externalName) {
+    int classNameDelimeter = externalName.lastIndexOf(' ');
+    if (classNameDelimeter > 0 && classNameDelimeter < externalName.length() - 2) {
+      final String className = externalName.substring(0, classNameDelimeter);
+      final String fieldName = externalName.substring(classNameDelimeter + 1);
+      final PsiClass psiClass = RefClassImpl.findPsiClass(manager, className);
+      if (psiClass != null) {
+        return psiClass.findFieldByName(fieldName, false);
       }
     }
-
-    return refField;
+    return null;
   }
 
   public boolean isSuspicious() {

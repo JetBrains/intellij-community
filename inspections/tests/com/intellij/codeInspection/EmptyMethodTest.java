@@ -32,4 +32,8 @@ public class EmptyMethodTest extends InspectionTestCase {
   public void testSCR8321() throws Exception {
     doTest();
   }
+
+  public void testInAnonymous() throws Exception {
+    doTest(true);
+  }
 }

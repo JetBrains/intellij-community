@@ -65,7 +65,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
 
   protected void initialize() {
     final PsiMethod method = (PsiMethod)getElement();
-
+    LOG.assertTrue(method != null);
     setConstructor(method.isConstructor());
     setFlag(method.getReturnType() == null || PsiType.VOID == method.getReturnType(), IS_RETURN_VALUE_USED_MASK);
 
@@ -415,15 +415,15 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     final String[] result = new String[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        PsiMethod psiMethod = (PsiMethod) getElement();
-        result[0] = PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME |
-                                                                                PsiFormatUtil.SHOW_FQ_NAME |
-                                                                                PsiFormatUtil.SHOW_TYPE |
-                                                                                PsiFormatUtil.SHOW_CONTAINING_CLASS |
-                                                                                PsiFormatUtil.SHOW_PARAMETERS,
-                                               PsiFormatUtil.SHOW_NAME |
-                                               PsiFormatUtil.SHOW_TYPE
-        );
+        final PsiMethod psiMethod = (PsiMethod)getElement();
+        LOG.assertTrue(psiMethod != null);
+        final RefClass refClass = (RefClass)getRefManager().getReference(psiMethod.getContainingClass());
+        LOG.assertTrue(refClass != null);
+        result[0] = refClass.getExternalName() + " " +
+                    PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil
+                      .SHOW_FQ_NAME | PsiFormatUtil
+                      .SHOW_TYPE | PsiFormatUtil
+                      .SHOW_PARAMETERS, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
       }
     };
 
@@ -432,41 +432,26 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     return result[0];
   }
 
+  @Nullable
   public static RefMethod methodFromExternalName(RefManager manager, String externalName) {
-    RefMethod refMethod = null;
+    return (RefMethod) manager.getReference(findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName));
+  }
 
-    int spaceIdx = externalName.indexOf(' ');
-    int lastDotIdx = externalName.lastIndexOf('.');
-    boolean notype = false;
-
-    int parenIndex = externalName.indexOf('(');
-
-    while (lastDotIdx > parenIndex) lastDotIdx = externalName.lastIndexOf('.', lastDotIdx - 1);
-
-    if (spaceIdx < 0 || spaceIdx > lastDotIdx || spaceIdx > parenIndex) {
-      notype = true;
-    }
-
-    String className = externalName.substring(notype ? 0 : spaceIdx + 1, lastDotIdx);
-    String methodSignature = notype ? externalName.substring(lastDotIdx + 1)
-                             : externalName.substring(0, spaceIdx) + ' ' + externalName.substring(lastDotIdx + 1);
-
-    if (RefClassImpl.classFromExternalName(manager, className) == null) return null;
+  @Nullable
+  public static PsiMethod findPsiMethod(PsiManager manager, String externalName) {
+    final int spaceIdx = externalName.indexOf(' ');
+    final String className = externalName.substring(0, spaceIdx);
+    final PsiClass psiClass = RefClassImpl.findPsiClass(manager, className);
+    if (psiClass == null) return null;
     try {
-      PsiClass psiClass = PsiManager.getInstance(manager.getProject()).findClass(className);
       PsiElementFactory factory = psiClass.getManager().getElementFactory();
+      String methodSignature = externalName.substring(spaceIdx + 1);
       PsiMethod patternMethod = factory.createMethodFromText(methodSignature, psiClass);
-      PsiMethod psiMethod = psiClass.findMethodBySignature(patternMethod, false);
-
-      if (psiMethod != null) {
-          refMethod = (RefMethod) manager.getReference(psiMethod);
-      }
+      return psiClass.findMethodBySignature(patternMethod, false);
     } catch (IncorrectOperationException e) {
       // Do nothing. Returning null is acceptable in this case.
       return null;
     }
-
-    return refMethod;
   }
 
   public void referenceRemoved() {

@@ -4,7 +4,7 @@
     <file>Foo.java</file>
     <line>4</line>
     <description>IOException</description>
-    <entry_point TYPE="method" FQNAME="Foo.Foo()" />
+    <entry_point TYPE="method" FQNAME="Foo Foo()" />
   </problem>
 </problems>
 
