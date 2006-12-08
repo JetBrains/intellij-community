@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Icons;
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.io.Writer;
-import java.io.OutputStreamWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 public class CreatePatchCommitExecutor implements CommitExecutor, ProjectComponent {
   private Project myProject;
@@ -98,7 +96,9 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
 
     public void execute(Collection<Change> changes, String commitMessage) {
       try {
-        Writer writer = new OutputStreamWriter(new FileOutputStream(myPanel.getFileName()));
+        final String fileName = myPanel.getFileName();
+        final File file = new File(fileName).getAbsoluteFile();
+        Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
         try {
           List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl());
           UnifiedDiffWriter.write(patches, writer);
@@ -106,9 +106,19 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         finally {
           writer.close();
         }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.success.confirmation", file.getPath()),
+                                     VcsBundle.message("create.patch.commit.action.text"));
+          }
+        });
       }
-      catch (IOException ex) {
-        Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());
+      catch (final IOException ex) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());
+          }
+        });
       }
     }
 
