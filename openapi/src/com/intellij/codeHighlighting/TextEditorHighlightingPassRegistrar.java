@@ -96,7 +96,7 @@ public abstract class TextEditorHighlightingPassRegistrar extends AbstractProjec
 
   public abstract int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory, 
                                                          @Nullable final int[] runAfterCompletionOf,
-                                                         @Nullable int[] runAfterOfStartingOf,
+                                                         @Nullable int[] runAfterStartingOf,
                                                          boolean runIntentionsPassAfter,
                                                          int forcedPassId);
 }

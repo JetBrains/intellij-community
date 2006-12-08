@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class WolfPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public WolfPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.LOCAL_INSPECTIONS}, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, new int[]{Pass.LOCAL_INSPECTIONS}, false, -1);
   }
 
   @NonNls
