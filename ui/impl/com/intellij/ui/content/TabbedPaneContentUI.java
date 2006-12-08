@@ -260,7 +260,10 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         if (index < 0 || !myManager.canCloseContents()) {
           return;
         }
-        myManager.removeContent(myManager.getContent(index));
+        final Content content = myManager.getContent(index);
+        if (content.isCloseable()) {
+          myManager.removeContent(content);
+        }
       }
 
       /**
