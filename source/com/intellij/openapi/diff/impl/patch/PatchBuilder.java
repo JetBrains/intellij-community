@@ -36,6 +36,12 @@ public class PatchBuilder {
     for(Change c: changes) {
       final ContentRevision beforeRevision = c.getBeforeRevision();
       final ContentRevision afterRevision = c.getAfterRevision();
+      if (beforeRevision != null && beforeRevision.getFile().isDirectory()) {
+        continue;
+      }
+      if (afterRevision != null && afterRevision.getFile().isDirectory()) {
+        continue;
+      }
       if (beforeRevision == null) {
         result.add(buildAddedFile(basePath, afterRevision));
         continue;
