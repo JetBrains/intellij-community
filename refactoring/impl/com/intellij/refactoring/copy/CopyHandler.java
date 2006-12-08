@@ -20,7 +20,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -257,34 +256,6 @@ public class CopyHandler {
               classCopy.setName(copyClassName);
               PsiClass newClass = (PsiClass) targetDirectory.add(classCopy);
               ChangeContextUtil.decodeContextInfo(newClass, null, null);
-              final PsiManager psiManager = PsiManager.getInstance(project);
-              PsiReference[] refs = psiManager.getSearchHelper().findReferences(aClass, new LocalSearchScope(newClass), true);
-
-              for (final PsiReference ref : refs) {
-                PsiElement element = ref.getElement();
-                if (!element.isValid()) continue;
-                element = ref.bindToElement(newClass);
-                final PsiElement parent = element.getParent();
-                if (parent instanceof PsiReferenceExpression && element.equals(((PsiReferenceExpression)parent).getQualifierExpression())) {
-                  final PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
-                  final PsiElement resolved = refExpr.resolve();
-                  if (resolved == null) continue;
-                  final PsiReferenceExpression copy;
-                  if (parent.getParent() instanceof PsiMethodCallExpression){
-                    copy = ((PsiMethodCallExpression)parent.getParent().copy()).getMethodExpression();
-                  } else {
-                    copy = (PsiReferenceExpression)refExpr.copy();
-                  }
-
-                  final PsiExpression qualifier = copy.getQualifierExpression();
-                  assert qualifier != null;
-                  qualifier.delete();
-                  if (copy.resolve() == resolved) {
-                    element.delete();
-                  }
-                }
-              }
-
               updateSelectionInActiveProjectView(newClass, project, selectInActivePanel);
               EditorHelper.openInEditor(newClass);
 

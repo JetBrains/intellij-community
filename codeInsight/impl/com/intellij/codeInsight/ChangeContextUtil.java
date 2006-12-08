@@ -6,9 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -27,6 +26,10 @@ public class ChangeContextUtil {
   private ChangeContextUtil() {}
 
   public static void encodeContextInfo(PsiElement scope, boolean includeRefClasses) {
+    encodeContextInfo(scope, scope, includeRefClasses);
+  }
+
+  private static void encodeContextInfo(PsiElement scope, PsiElement topLevelScope, boolean includeRefClasses) {
     if (scope instanceof PsiThisExpression){
       scope.putCopyableUserData(ENCODED_KEY, "");
 
@@ -46,7 +49,7 @@ public class ChangeContextUtil {
       if (qualifier == null){
         final JavaResolveResult resolveResult = refExpr.advancedResolve(false);
         final PsiElement refElement = resolveResult.getElement();
-        if (refElement != null){
+        if (refElement != null && !PsiTreeUtil.isAncestor(topLevelScope, refElement, false)){
           if (refElement instanceof PsiClass){
             if (includeRefClasses){
               refExpr.putCopyableUserData(REF_CLASS_KEY, (PsiClass)refElement);
@@ -55,8 +58,8 @@ public class ChangeContextUtil {
           else if (refElement instanceof PsiMember){
             refExpr.putCopyableUserData(REF_MEMBER_KEY, ( (PsiMember)refElement));
             final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
-            if (resolveScope instanceof PsiClass) {
-              refExpr.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, ((PsiClass)resolveScope));
+            if (resolveScope instanceof PsiClass && !PsiTreeUtil.isAncestor(topLevelScope, resolveScope, false)) {
+              refExpr.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, (PsiClass)resolveScope);
             }
           }
         }
@@ -71,14 +74,14 @@ public class ChangeContextUtil {
         scope.putCopyableUserData(ENCODED_KEY, "");
 
         PsiElement refElement = ref.resolve();
-        if (refElement instanceof PsiClass){
-          scope.putCopyableUserData(REF_CLASS_KEY, ( (PsiClass)refElement));
+        if (refElement instanceof PsiClass && !PsiTreeUtil.isAncestor(topLevelScope, refElement, false)){
+          scope.putCopyableUserData(REF_CLASS_KEY, (PsiClass)refElement);
         }
       }
     }
 
     for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
-      encodeContextInfo(child, includeRefClasses);
+      encodeContextInfo(child, topLevelScope, includeRefClasses);
     }
   }
 
