@@ -212,7 +212,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
   @Nullable
   public QuickFix getQuickFix(final String hint) {
-    return myQuickFixes != null ? myQuickFixes.get(hint) : null;
+    return myQuickFixes != null ? myQuickFixes.get(hint) : new RemoveSuppressWarningAction(hint);
   }
 
 
