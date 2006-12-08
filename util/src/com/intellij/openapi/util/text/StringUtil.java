@@ -825,16 +825,8 @@ public class StringUtil {
   }
 
   @NotNull public static String stripQuotesAroundValue(@NotNull String text) {
-    int start = 0;
-    if (startsWithChar(text, '\"') || startsWithChar(text, '\'')) {
-      start = 1;
-    }
-    if (endsWithChar(text, '\"') || endsWithChar(text, '\'')) {
-      return text.substring(start, text.length() - 1);
-    }
-    if (start > 0) {
-      return text.substring(start);
-    }
+    if (startsWithChar(text, '\"') || startsWithChar(text, '\'')) text = text.substring(1);
+    if (endsWithChar(text, '\"') || endsWithChar(text, '\'')) text = text.substring(0, text.length() - 1);
     return text;
   }
 
