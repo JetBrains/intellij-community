@@ -43,7 +43,7 @@ public class CustomTypesTest extends ParsingTestCase {
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
     PsiFile file = createFile(name + "." + myFileExt, text);
-    final AntFile antFile = (AntFile) file.getViewProvider().getPsi(AntSupport.getLanguage());
+    final AntFile antFile = AntSupport.getAntFile(file);
     antFile.accept(new PsiRecursiveElementVisitor() {
       public void visitElement(PsiElement element) {
         super.visitElement(element);

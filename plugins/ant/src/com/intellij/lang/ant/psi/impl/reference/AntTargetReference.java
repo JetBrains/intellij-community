@@ -82,13 +82,7 @@ public class AntTargetReference extends AntGenericReference {
     if (element instanceof AntAntImpl) {
       final PsiFile psiFile = ((AntAntImpl)element).getCalledAntFile();
       if (psiFile != null) {
-        AntFile antFile;
-        if (psiFile instanceof AntFile) {
-          antFile = (AntFile)psiFile;
-        }
-        else {
-          antFile = (AntFile)psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
-        }
+        AntFile antFile = AntSupport.getAntFile(psiFile);
         if (antFile != null) {
           final AntProject antProject = antFile.getAntProject();
           if (antProject != null) {
@@ -155,7 +149,7 @@ public class AntTargetReference extends AntGenericReference {
           antFile = (AntFile)psiFile;
         }
         else {
-          antFile = (AntFile)psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+          antFile = (AntFile)AntSupport.getAntFile(psiFile);
         }
         final AntProject project = (antFile == null) ? null : antFile.getAntProject();
         if (project != null) {

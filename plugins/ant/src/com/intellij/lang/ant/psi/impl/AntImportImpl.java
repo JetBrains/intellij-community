@@ -6,7 +6,6 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -57,12 +56,11 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
     final PsiFile psiFile = element.findFileByName(name);
     if (psiFile != null) {
       if (psiFile instanceof XmlFile) {
-        final FileViewProvider viewProvider = psiFile.getViewProvider();
         final VirtualFile file = psiFile.getVirtualFile();
         if (file != null) {
-          AntSupport.markFileAsAntFile(file, viewProvider, true);
+          AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
         }
-        return (AntFile)viewProvider.getPsi(AntSupport.getLanguage());
+        return AntSupport.getAntFile(psiFile);
       }
       if (psiFile instanceof AntFile) return (AntFile)psiFile;
     }

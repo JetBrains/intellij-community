@@ -113,7 +113,7 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     int off = text.indexOf("<ren>");
     text = text.replace("<ren>", "");
     configureFromFileText(filename, text);
-    myFile = myFile.getViewProvider().getPsi(AntSupport.getLanguage());
+    myFile = AntSupport.getAntFile(myFile);
     assertNotNull(myFile);
     assertTrue(myFile instanceof AntFile);
     PsiElement element = myFile.findElementAt(off);

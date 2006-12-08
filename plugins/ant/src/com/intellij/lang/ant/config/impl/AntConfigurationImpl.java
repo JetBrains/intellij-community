@@ -412,7 +412,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
       throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
     }
     AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
-    psiFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+    psiFile = AntSupport.getAntFile(psiFile);
     if (psiFile == null) {
       throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
     }
@@ -545,7 +545,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
       PsiFile psiFile = myPsiManager.findFile(file);
       if (psiFile != null) {
         AntSupport.markFileAsAntFile(file, psiFile.getViewProvider(), true);
-        psiFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
+        psiFile = AntSupport.getAntFile(psiFile);
       }
       if (!(psiFile instanceof AntFile)) continue;
       AntBuildFileBase buildFile = new AntBuildFileImpl((AntFile)psiFile, this);

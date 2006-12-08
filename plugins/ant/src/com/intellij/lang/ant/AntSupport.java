@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,6 +112,15 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   private static void checkDependenciesCache() {
     if (ourFileDependencies == null) {
       ourFileDependencies = new WeakHashMap<AntFile, WeakHashMap<AntFile, Boolean>>();
+    }
+  }
+
+  public static AntFile getAntFile ( PsiFile psiFile ) {
+    if (psiFile instanceof AntFile) {
+      return (AntFile)psiFile;
+    }
+    else {
+      return (AntFile)psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
     }
   }
 }

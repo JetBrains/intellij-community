@@ -129,6 +129,6 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   }
 
   private static AntFile getAntFile(final XmlElement el) {
-    return (AntFile)el.getContainingFile().getViewProvider().getPsi(AntSupport.getLanguage());
+    return AntSupport.getAntFile(el.getContainingFile());
   }
 }

@@ -81,11 +81,11 @@ public class AntLanguage extends Language {
   }
 
   public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
-    final PsiFile antFile = psiFile.getViewProvider().getPsi(AntSupport.getLanguage());
-    if (antFile != null && antFile instanceof AntFile) {
+    final AntFile antFile = AntSupport.getAntFile(psiFile);
+    if (antFile != null ) {
       return new TreeBasedStructureViewBuilder() {
         public StructureViewModel createStructureViewModel() {
-          return new AntStructureViewTreeModel((AntFile)antFile);
+          return new AntStructureViewTreeModel(antFile);
         }
       };
     }
