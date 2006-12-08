@@ -149,7 +149,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   }
 
   @NotNull
-  public Collection<IntentionAction> getAvailableIntentions(final String... filePaths) throws Throwable {
+  public List<IntentionAction> getAvailableIntentions(final String... filePaths) throws Throwable {
     final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
     final Project project = myProjectFixture.getProject();
     new WriteCommandAction.Simple(project) {
@@ -237,7 +237,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     }.execute().throwException();
   }
 
-  public void checkResultByFile(final String filePath, final String expectedFile) throws Throwable {
+  public void checkResultByFile(final String filePath, final String expectedFile, final boolean ignoreWhitespaces) throws Throwable {
 
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
@@ -247,7 +247,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
         assert copy != null : "file not found: " + fullPath;
         final PsiFile psiFile = myPsiManager.findFile(copy);
         assert psiFile != null;
-        checkResultByFile(expectedFile, psiFile, false);
+        checkResultByFile(expectedFile, psiFile, ignoreWhitespaces);
       }
     }.execute().throwException();
   }

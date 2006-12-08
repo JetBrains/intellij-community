@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  *
@@ -125,7 +125,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @throws Throwable any exception.
    */
   @NotNull
-  Collection<IntentionAction> getAvailableIntentions(String... filePaths) throws Throwable;
+  List<IntentionAction> getAvailableIntentions(String... filePaths) throws Throwable;
 
   /**
    * Launches the given action. Use {@link #checkResultByFile(String)} to check the result.
@@ -148,9 +148,10 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    *
    * @param filePath file to be checked.
    * @param expectedFile file to check against.
+   * @param ignoreWhitespaces set to true to ignore differences in whitespaces.
    * @throws Throwable any exception.
    */
-  void checkResultByFile(String filePath, String expectedFile) throws Throwable;
+  void checkResultByFile(String filePath, String expectedFile, boolean ignoreWhitespaces) throws Throwable;
 
   void testCompletion(String[] filesBefore, String fileAfter) throws Throwable;
 
