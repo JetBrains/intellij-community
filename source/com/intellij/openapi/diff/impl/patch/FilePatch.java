@@ -87,6 +87,9 @@ public class FilePatch {
 
   public ApplyPatchStatus apply(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
     if (isNewFile()) {
+      if (fileToPatch.findChild(getBeforeFileName()) != null) {
+        throw new ApplyPatchException("File " + getBeforeFileName() + " already exists");
+      }
       VirtualFile newFile = fileToPatch.createChildData(this, getBeforeFileName());
       final Document document = FileDocumentManager.getInstance().getDocument(newFile);
       document.setText(myHunks.get(0).getText());

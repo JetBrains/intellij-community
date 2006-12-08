@@ -143,7 +143,7 @@ public class ApplyPatchAction extends AnAction {
           }
         }
       }
-      Messages.showErrorDialog(project, "Failed to apply patch because of conflicts: " + patch.getBeforeName(),
+      Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", patch.getBeforeName(), ex.getMessage()),
                                VcsBundle.message("patch.apply.dialog.title"));
     }
     catch (Exception ex) {
