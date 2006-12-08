@@ -53,16 +53,12 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
 
-  public LocalInspectionsPass(@NotNull PsiFile file, Document document, int startOffset, int endOffset, @Nullable Executor executorService) {
+  public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset, @Nullable Executor executorService) {
     super(file.getProject(), document);
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myExecutorService = executorService;
-  }
-
-  public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Executor executorService) {
-    this(file, null, 0, file.getTextLength(), executorService);
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
@@ -200,7 +196,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       }
       if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool)) {
         myDescriptors.add(problemDescriptor);
-        HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, tool, severity);
+        HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, severity);
         myLevels.add(type);
         myTools.add(tool);
       }
@@ -208,9 +204,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private static HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor,
-                                                               final LocalInspectionTool tool,
-                                                               final HighlightSeverity severity) {
+  private static HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor, final HighlightSeverity severity) {
     ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
     HighlightInfoType type = null;
     if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING || highlightType == ProblemHighlightType.J2EE_PROBLEM) {
@@ -280,7 +274,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       for (int j = 0; j < result.foundProblems.size(); j++) {
         ProblemDescriptor descriptor = result.foundProblems.get(j);
         if (InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), tool)) continue;
-        HighlightInfoType level = highlightTypeFromDescriptor(descriptor, tool, severity);
+        HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
         HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered);
         if (info == null) continue;
         TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
