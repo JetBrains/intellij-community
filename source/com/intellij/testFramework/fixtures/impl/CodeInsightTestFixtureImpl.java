@@ -354,8 +354,8 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    int offset = -1;
     if (myFile == null) myFile = myPsiManager.findFile(copy);
+    int offset = -1;
     if (myEditor == null) {
       myEditor = createEditor(copy);
       assert myEditor != null;
@@ -431,8 +431,7 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
     Collection<HighlightInfo> highlights3 = null;
     if (myAvailableTools.size() > 0) {
-      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(project, myFile, myEditor.getDocument(), 0, myFile.getTextLength(),null,
-                                                                      null);
+      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myFile, myEditor.getDocument(), 0, myFile.getTextLength(),null);
       inspectionsPass.doCollectInformation(new MockProgressIndicator());
       highlights3 = inspectionsPass.getHighlights();
     }

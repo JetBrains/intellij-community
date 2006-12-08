@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -31,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,45 +45,61 @@ import java.util.concurrent.*;
 public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
   private final PsiFile myFile;
-  private final Document myDocument;
   private final int myStartOffset;
   private final int myEndOffset;
   private final Executor myExecutorService;
-  private final ProgressIndicator myProgressIndicator;
   @NotNull private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
   @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
 
-  public LocalInspectionsPass(@NotNull Project project,
-                              @NotNull PsiFile file,
-                              @NotNull Document document,
-                              int startOffset,
-                              int endOffset,
-                              @Nullable Executor executorService, final ProgressIndicator progressIndicator) {
-    super(project, document);
+  public LocalInspectionsPass(@NotNull PsiFile file, Document document, int startOffset, int endOffset, @Nullable Executor executorService) {
+    super(file.getProject(), document);
     myFile = file;
-    myDocument = document;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myExecutorService = executorService;
-    myProgressIndicator = progressIndicator == null ? ProgressManager.getInstance().getProgressIndicator() : progressIndicator;
+  }
+
+  public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Executor executorService) {
+    this(file, null, 0, file.getTextLength(), executorService);
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
-    inspectRoot();
+    inspectRoot(progress);
   }
 
-  private void inspectRoot() {
+  private void inspectRoot(final ProgressIndicator progress) {
     if (!HighlightUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
 
+    inspect(tools, progress, iManager);
+  }
+
+  public void inspect(final InspectionManagerEx iManager, LocalInspectionToolWrapper[] toolWrappers, final ProgressIndicator progress) {
+    Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper = new THashMap<LocalInspectionTool, LocalInspectionToolWrapper>(toolWrappers.length);
+    for (LocalInspectionToolWrapper toolWrapper : toolWrappers) {
+      tool2Wrapper.put(toolWrapper.getTool(), toolWrapper);
+    }
+    LocalInspectionTool[] tools = tool2Wrapper.keySet().toArray(new LocalInspectionTool[tool2Wrapper.size()]);
+    inspect(tools, progress, iManager);
+    for (int i = 0; i < myTools.size(); i++) {
+      final LocalInspectionTool tool = myTools.get(i);
+      ProblemDescriptor descriptor = myDescriptors.get(i);
+      LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
+      
+      toolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), true);
+    }
+  }
+
+  public void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager) {
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
+
     final int chunkSize = Math.max(10, tools.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some inspections are faster than others
     List<Runnable> inspectionChunks = new ArrayList<Runnable>();
 
@@ -91,12 +107,12 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final int index = v;
       Runnable chunk = new Runnable() {
         public void run() {
-          if (myProgressIndicator != null) {
-            if (myProgressIndicator.isCanceled()) return;
-            ((ProgressManagerImpl)ProgressManager.getInstance()).progressMe(myProgressIndicator);
+          if (progress != null) {
+            if (progress.isCanceled()) return;
+            ((ProgressManagerImpl)ProgressManager.getInstance()).progressMe(progress);
           }
-          @NonNls final String myName = "LocalInspections from " + index + " to " + (index + chunkSize);
-          PassExecutorService.info("Started " + myName, myProgressIndicator);
+          @NonNls final String name = "LocalInspections from " + index + " to " + (index + chunkSize);
+          PassExecutorService.info("Started " + name, progress);
           ApplicationManager.getApplication().runReadAction(new Runnable(){
             public void run() {
               ProblemsHolder holder = new ProblemsHolder(iManager);
@@ -105,23 +121,23 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                   LocalInspectionTool tool = tools[i];
                   PsiElementVisitor elementVisitor = tool.buildVisitor(holder, true);
                   for (PsiElement element : elements) {
-                    if (myProgressIndicator != null) {
-                      myProgressIndicator.checkCanceled();
+                    if (progress != null) {
+                      progress.checkCanceled();
                     }
                     element.accept(elementVisitor);
                   }
                   //System.out.println("tool finished "+tool);
                   if (holder.hasResults()) {
-                    appendDescriptors(holder.getResults(), tool);
+                    appendDescriptors(holder.getResults(), tool, progress);
                   }
                 }
               }
               catch (ProcessCanceledException e) {
-                PassExecutorService.info("Canceled " + myName, myProgressIndicator);
+                PassExecutorService.info("Canceled " + name, progress);
               }
             }
           });
-          PassExecutorService.info("Finished "+ myName, myProgressIndicator);
+          PassExecutorService.info("Finished "+ name, progress);
         }
       };
       inspectionChunks.add(chunk);
@@ -173,13 +189,14 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     return highlightInfo;
   }
 
-  private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool) {
+  private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool,
+                                              final ProgressIndicator progress) {
     if (problemDescriptors == null) return;
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
-      if (myProgressIndicator != null) {
-        myProgressIndicator.checkCanceled();
+      if (progress != null) {
+        progress.checkCanceled();
       }
       if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool)) {
         myDescriptors.add(problemDescriptor);
@@ -227,7 +244,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myLevels = Collections.emptyList();
     myTools = Collections.emptyList();
 
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.LOCAL_INSPECTIONS);
 
     HighlightUtil.addErrorsToWolf(infos, myFile);

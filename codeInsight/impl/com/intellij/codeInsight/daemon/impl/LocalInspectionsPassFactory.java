@@ -40,10 +40,9 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return null;
-    DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ExecutorService executorService = daemonCodeAnalyzer.getDaemonExecutorService();
-    return new LocalInspectionsPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(),executorService,
-                                    daemonCodeAnalyzer.getUpdateProgress());
+    return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(),executorService);
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {

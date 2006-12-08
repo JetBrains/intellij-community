@@ -61,7 +61,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     return JobDescriptor.EMPTY_ARRAY;
   }
 
-  private void addProblemDescriptors(List<ProblemDescriptor> descriptors, final boolean filterSuppressed) {
+  public void addProblemDescriptors(List<ProblemDescriptor> descriptors, final boolean filterSuppressed) {
     if (descriptors == null || descriptors.isEmpty()) return;
 
     Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<RefElement, List<ProblemDescriptor>>();

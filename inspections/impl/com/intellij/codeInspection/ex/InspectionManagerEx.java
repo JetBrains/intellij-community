@@ -41,7 +41,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   @NonNls private String myCurrentProfileName;
   private ContentManager myContentManager = null;
 
-  private Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
+  private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
 
   public InspectionManagerEx(Project project) {
     myProject = project;

@@ -540,7 +540,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     collectErrorsAndWarnings(action2.getHighlights(), result, document);
 
-    LocalInspectionsPass action3 = new LocalInspectionsPass(myProject, psiFile, document, 0, psiFile.getTextLength(),null, null);
+    LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0, psiFile.getTextLength(),null);
     action3.doCollectInformation(progress);
 
     collectErrorsAndWarnings(action3.getHighlights(), result, document);
