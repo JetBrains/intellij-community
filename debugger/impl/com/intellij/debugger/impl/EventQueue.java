@@ -1,9 +1,8 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.LinkedList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -11,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class EventQueue<E> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.EventQueue");
 
-  private final ConcurrentLinkedQueue[] myEvents;
+  private final LinkedList[] myEvents;
   private final ReentrantLock myLock;
   private final Condition myEventsAvailable;
 
@@ -22,9 +21,9 @@ public class EventQueue<E> {
   public EventQueue (int countPriorities) {
     myLock = new ReentrantLock();
     myEventsAvailable = myLock.newCondition();
-    myEvents = new ConcurrentLinkedQueue[countPriorities];
+    myEvents = new LinkedList[countPriorities];
     for (int i = 0; i < myEvents.length; i++) {
-      myEvents[i] = new ConcurrentLinkedQueue<E>();
+      myEvents[i] = new LinkedList<E>();
     }
   }
 
@@ -34,9 +33,9 @@ public class EventQueue<E> {
       LOG.debug("put event " + event);
     }
 
-    myEvents[priority].offer(event);
     myLock.lock();
     try {
+      getEventsList(priority).offer(event);
       myEventsAvailable.signal();
     }
     finally {
@@ -44,10 +43,14 @@ public class EventQueue<E> {
     }
   }
 
+  private LinkedList<E> getEventsList(final int priority) {
+    return (LinkedList<E>)myEvents[priority];
+  }
+
   public void close(){
-    myIsClosed = true;
     myLock.lock();
     try {
+      myIsClosed = true;
       myEventsAvailable.signalAll();
     }
     finally {
@@ -55,39 +58,33 @@ public class EventQueue<E> {
     }
   }
 
-  @Nullable
   private E getEvent() throws EventQueueClosedException {
-    for (int i = 0; i < myEvents.length; i++) {
-      final E event = ((ConcurrentLinkedQueue<E>)myEvents[i]).poll();
-      if(event != null) {
-        return event;
+    myLock.lock();
+    try {
+      while (true) {
+        if(myIsClosed) {
+          throw new EventQueueClosedException();
+        }
+        for (int i = 0; i < myEvents.length; i++) {
+          final E event = getEventsList(i).poll();
+          if (event != null) {
+            return event;
+          }
+        }
+        try {
+          myEventsAvailable.await();
+        }
+        catch (InterruptedException ignored) {
+        }
       }
     }
-
-    if(myIsClosed) {
-      throw new EventQueueClosedException();
+    finally {
+      myLock.unlock();
     }
-
-    return null;
   }
 
   public E get() throws EventQueueClosedException {
-    E event = getEvent();
-    while (event == null) {
-      myLock.lock();
-      try {
-        myEventsAvailable.await();
-      }
-      catch (InterruptedException ignored) {
-      }
-      finally {
-        myLock.unlock();
-      }
-      event = getEvent();
-    }
-
-    myCurrentEvent = event;
-    return event;
+    return myCurrentEvent = getEvent();
   }
 
   public boolean isClosed() {
