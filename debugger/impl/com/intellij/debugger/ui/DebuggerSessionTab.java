@@ -145,7 +145,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
     }
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager(), WATCHES_ICON);
-    //updateWatchTreeTab();
 
     myFramePanel = new FramePanel(getProject(), getContextManager()) {
       protected boolean isUpdateEnabled() {
@@ -156,37 +155,13 @@ public class DebuggerSessionTab implements LogConsoleManager {
       myFramePanel.setWatchPanel(myWatchPanel);
     }
 
-    /*
-    myThreadsPanel = new ThreadsPanel(getProject(), getContextManager()) {
-      protected boolean isUpdateEnabled() {
-        return myViewsContentManager.getSelectedContent().getComponent() == this;
-      }
-    };
-    */
-
-    TabbedPaneContentUI ui = new TabbedPaneContentUI(SwingConstants.TOP);
+    final TabbedPaneContentUI ui = new TabbedPaneContentUI(SwingConstants.TOP);
     myViewsContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(ui, false, getProject());
 
-    Content content;
-    /*
-    content = PeerFactory.getInstance().getContentFactory().createContent(myThreadsPanel, DebuggerBundle.message("debugger.session.tab.threads.title"), false);
-    content.setIcon(THREADS_ICON);
-    content.putUserData(CONTENT_KIND, THREADS_CONTENT);
-    myViewsContentManager.addContent(content);
-    */
-
-    content = PeerFactory.getInstance().getContentFactory().createContent(myFramePanel,
-                                                                          DebuggerBundle.message("debugger.session.tab.frames.title"), false);
+    Content content = PeerFactory.getInstance().getContentFactory().createContent(myFramePanel, DebuggerBundle.message("debugger.session.tab.frames.title"), false);
     content.setIcon(FRAME_ICON);
     content.putUserData(CONTENT_KIND, FRAME_CONTENT);
     myViewsContentManager.addContent(content);
-
-    /*
-    content = PeerFactory.getInstance().getContentFactory().createContent(myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), false);
-    content.setIcon(WATCHES_ICON);
-    content.putUserData(CONTENT_KIND, WATCHES_CONTENT);
-    myViewsContentManager.addContent(content);
-    */
 
     myViewsContentManager.addContentManagerListener(new ContentManagerAdapter() {
       public void selectionChanged(ContentManagerEvent event) {
@@ -397,7 +372,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
   }
 
   public void dispose() {
-    DebuggerSettings.getInstance().WATCHES_VISIBLE = myWatchPanel.isUpdateEnabled();
     disposeSession();
     //myThreadsPanel.dispose();
     myFramePanel.dispose();
@@ -565,6 +539,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     public void setSelected(AnActionEvent e, boolean show) {
       myWatchesShown = show;
       myWatchPanel.setUpdateEnabled(show);
+      DebuggerSettings.getInstance().WATCHES_VISIBLE = show;
       if (show) {
         myFramePanel.setWatchPanel(myWatchPanel);
         if (myWatchPanel.isRefreshNeeded()) {
