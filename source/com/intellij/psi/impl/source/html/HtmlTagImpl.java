@@ -7,11 +7,11 @@ import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -67,9 +67,9 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return super.getAttributeValue(qname);
   }
 
-  protected void cacheOneAttributeValue(String name, String value) {
+  protected void cacheOneAttributeValue(String name, String value, final HashMap<String, String> result) {
     name = name.toLowerCase();
-    super.cacheOneAttributeValue(name, value);
+    super.cacheOneAttributeValue(name, value, result);
   }
 
   public String getAttributeValue(String name, String namespace) {

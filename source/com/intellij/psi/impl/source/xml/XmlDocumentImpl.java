@@ -9,10 +9,7 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
@@ -31,6 +28,7 @@ import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -90,41 +88,43 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
-    final Map<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
-    if(strict) defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
-    else defaultDescriptorsCache = myDefaultDescriptorsCacheNotStrict;
-    if(defaultDescriptorsCache.containsKey(namespace)){
+    synchronized (PsiLock.LOCK) {
+      final Map<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
+      if(strict) defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
+      else defaultDescriptorsCache = myDefaultDescriptorsCacheNotStrict;
+      if(defaultDescriptorsCache.containsKey(namespace)){
       final CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
-      if(cachedValue != null) return cachedValue.getValue();
-      else return null;
-    }
+        if(cachedValue != null) return cachedValue.getValue();
+        else return null;
+      }
 
-    final XmlNSDescriptor defaultNSDescriptor;
-    try {
-      defaultDescriptorsCache.put(namespace, null);
-      final CachedValueImpl<XmlNSDescriptor> value =
-        new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
-          public Result<XmlNSDescriptor> compute() {
-            final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
+      final XmlNSDescriptor defaultNSDescriptor;
+      try {
+        defaultDescriptorsCache.put(namespace, null);
+        final CachedValueImpl<XmlNSDescriptor> value =
+          new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
+            public Result<XmlNSDescriptor> compute() {
+              final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
-            if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
+              if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
+                return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
+                  XmlDocumentImpl.this
+                );
+              }
+
               return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
-                XmlDocumentImpl.this
-              );
+                                                 defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : ArrayUtil.EMPTY_OBJECT_ARRAY);
             }
-
-            return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
-                                               defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : ArrayUtil.EMPTY_OBJECT_ARRAY);
-          }
-        }, false);
-      defaultNSDescriptor = value.getValue();
-      defaultDescriptorsCache.put(namespace, value);
+          }, false);
+        defaultNSDescriptor = value.getValue();
+        defaultDescriptorsCache.put(namespace, value);
+      }
+      catch(ProcessCanceledException ex) {
+        defaultDescriptorsCache.remove(namespace);
+        throw ex;
+      }
+      return defaultNSDescriptor;
     }
-    catch(ProcessCanceledException ex) {
-      defaultDescriptorsCache.remove(namespace);
-      throw ex;
-    }
-    return defaultNSDescriptor;
   }
 
   private boolean isGeneratedFromDtd(XmlNSDescriptor defaultNSDescriptorInner) {
@@ -138,7 +138,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   public XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
     final XmlFile containingFile = XmlUtil.getContainingFile(this);
     final XmlProlog prolog = getProlog();
-    final XmlDoctype doctype = (prolog != null)?prolog.getDoctype():null;
+    final XmlDoctype doctype = prolog != null ? prolog.getDoctype() : null;
     //
     //if (XmlUtil.ANT_URI.equals(namespace)){
     //  final AntDOMNSDescriptor antDOMNSDescriptor = new AntDOMNSDescriptor();
@@ -147,20 +147,17 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     //}
     //else
     if(XmlUtil.HTML_URI.equals(namespace)){
-      XmlNSDescriptor nsDescriptor = (doctype != null)?getNsDescriptorFormDocType(doctype, containingFile):null;
+      XmlNSDescriptor nsDescriptor = doctype != null ? getNsDescriptorFormDocType(doctype, containingFile) : null;
       if (nsDescriptor == null) nsDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
-      final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(nsDescriptor);
-      return htmlDescriptor;
+      return new HtmlNSDescriptorImpl(nsDescriptor);
     }
-    else if(namespace != null && namespace != XmlUtil.EMPTY_URI
-            && (doctype == null || !namespace.equals(doctype.getDtdUri()))){
+    else if(namespace != null && !namespace.equals(XmlUtil.EMPTY_URI) && (doctype == null || !namespace.equals(doctype.getDtdUri()))){
       boolean documentIsSchemaThatDefinesNs = namespace.equals(XmlUtil.getTargetSchemaNsFromTag(getRootTag()));
 
       final XmlFile xmlFile = documentIsSchemaThatDefinesNs ? containingFile:XmlUtil.findXmlFile(containingFile,
                                                   ExternalResourceManager.getInstance().getResourceLocation(namespace));
       if(xmlFile != null){
-        final XmlNSDescriptor descriptor = (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
-        return descriptor;
+        return (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
       }
     }
     if(strict) return null;
@@ -285,7 +282,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       }
     };
 
-    this.accept(psiRecursiveElementVisitor);
+    accept(psiRecursiveElementVisitor);
 
     final Object[] keys = map.keys();
     for (final Object key : keys) {
@@ -309,7 +306,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return holder[0];
   }
 
-  public void deleteChildInternal(final ASTNode child) {
+  public void deleteChildInternal(@NotNull final ASTNode child) {
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{

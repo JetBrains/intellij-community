@@ -12,24 +12,20 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
-import org.xml.sax.SAXParseException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.xml.sax.SAXParseException;
 
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 21.01.2005
- * Time: 0:07:51
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 public class ExternalDocumentValidator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.ExternalDocumentValidator");
@@ -40,19 +36,19 @@ public class ExternalDocumentValidator {
   private long myModificationStamp;
   private PsiFile myFile;
   @NonNls
-  public static final String CANNOT_FIND_DECLARATION_ERROR_PREFIX = "Cannot find the declaration of element";
+  private static final String CANNOT_FIND_DECLARATION_ERROR_PREFIX = "Cannot find the declaration of element";
   @NonNls
-  public static final String ELEMENT_ERROR_PREFIX = "Element";
+  private static final String ELEMENT_ERROR_PREFIX = "Element";
   @NonNls
-  public static final String ROOT_ELEMENT_ERROR_PREFIX = "Document root element";
+  private static final String ROOT_ELEMENT_ERROR_PREFIX = "Document root element";
   @NonNls
-  public static final String CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX = "The content of element type";
+  private static final String CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX = "The content of element type";
   @NonNls
-  public static final String VALUE_ERROR_PREFIX = "Value ";
+  private static final String VALUE_ERROR_PREFIX = "Value ";
   @NonNls
-  public static final String ATTRIBUTE_ERROR_PREFIX = "Attribute ";
+  private static final String ATTRIBUTE_ERROR_PREFIX = "Attribute ";
   @NonNls
-  public static final String STRING_ERROR_PREFIX = "The string";
+  private static final String STRING_ERROR_PREFIX = "The string";
   @NonNls
   private static final String ATTRIBUTE_MESSAGE_PREFIX = "cvc-attribute.";
 
@@ -233,7 +229,7 @@ public class ExternalDocumentValidator {
     myHandler.doValidate(project, element.getContainingFile());
 
     myFile = file;
-    myModificationStamp = myFile == null ? 0 : myFile.getModificationStamp();
+    myModificationStamp = myFile.getModificationStamp();
     myInfos = new WeakReference<List<ValidationInfo>>(results);
 
     addAllInfos(host,results);
@@ -312,9 +308,9 @@ public class ExternalDocumentValidator {
     final XmlTag rootTag = document != null ? document.getRootTag() : null;
     if (rootTag == null) return;
 
-    if (com.intellij.xml.util.XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
-    if (rootTag.getNSDescriptor(com.intellij.xml.util.XmlUtil.JSF_HTML_URI,true) != null ||
-        rootTag.getNSDescriptor(com.intellij.xml.util.XmlUtil.JSF_CORE_URI,true) != null
+    if (XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
+    if (rootTag.getNSDescriptor(XmlUtil.JSF_HTML_URI,true) != null ||
+        rootTag.getNSDescriptor(XmlUtil.JSF_CORE_URI,true) != null
        ) {
       return; // nonschema ns descriptors, not supported by Xerces
     }
