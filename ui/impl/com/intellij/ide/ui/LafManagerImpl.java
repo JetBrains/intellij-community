@@ -177,7 +177,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
    */
   private UIManager.LookAndFeelInfo getDefaultLaf(){
-    if(SystemInfo.isMac){
+    if(SystemInfo.isMac || SystemInfo.isWindowsVista) {
       UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
       LOG.assertTrue(laf!=null);
       return laf;
