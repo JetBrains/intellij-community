@@ -1,10 +1,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +46,7 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
     PsiClass[] targetClasses = getTargetClasses(myMethodCall);
     LOG.assertTrue(targetClasses.length == 1);
 
-    if (shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
+    if (CreateFromUsageUtils.shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
       setText(QuickFixBundle.message("create.constructor.text", targetClasses[0].getName()));
       return true;
     }

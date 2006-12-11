@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -17,11 +18,11 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -53,14 +54,6 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
   protected abstract void invokeImpl(PsiClass targetClass);
 
   protected abstract boolean isValidElement(PsiElement result);
-
-  protected static boolean shouldShowTag(int offset, PsiElement namedElement, PsiElement element) {
-    if (namedElement == null) return false;
-    TextRange range = namedElement.getTextRange();
-    if (range.getLength() == 0) return false;
-    boolean isInNamedElement = range.contains(offset);
-    return isInNamedElement || element.getTextRange().contains(offset-1);
-  }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -94,6 +87,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     invokeImpl(targetClass);
   }
 
+  @Nullable
   abstract protected PsiElement getElement();
 
   protected void chooseTargetClass(PsiClass[] classes, final Editor editor, final PsiFile file) {

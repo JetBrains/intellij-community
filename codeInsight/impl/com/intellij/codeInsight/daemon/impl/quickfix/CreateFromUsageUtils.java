@@ -17,11 +17,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -30,8 +31,8 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -671,6 +672,14 @@ public class CreateFromUsageUtils {
     }
 
     return false;
+  }
+
+  public static boolean shouldShowTag(int offset, PsiElement namedElement, PsiElement element) {
+    if (namedElement == null) return false;
+    TextRange range = namedElement.getTextRange();
+    if (range.getLength() == 0) return false;
+    boolean isInNamedElement = range.contains(offset);
+    return isInNamedElement || element.getTextRange().contains(offset-1);
   }
 
   private static class ParameterNameExpression implements Expression {

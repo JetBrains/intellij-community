@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -196,7 +196,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
       return false;
     }
 
-    if (shouldShowTag(offset, nameElement, getNewExpression())) {
+    if (CreateFromUsageUtils.shouldShowTag(offset, nameElement, getNewExpression())) {
       setText(QuickFixBundle.message("create.class.from.new.text", nameElement.getText()));
       return true;
     }

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -7,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -22,10 +22,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -75,7 +75,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
 
     for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
-        if (shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
+        if (CreateFromUsageUtils.shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
           setText(getterOrSetter);
           return true;
         }

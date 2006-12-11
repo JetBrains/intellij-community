@@ -41,7 +41,7 @@ public abstract class CreateVarFromUsageAction extends CreateFromUsageBaseAction
   }
 
   protected boolean isAvailableImpl(int offset) {
-    if (shouldShowTag(offset, myReferenceExpression.getReferenceNameElement(), myReferenceExpression)) {
+    if (CreateFromUsageUtils.shouldShowTag(offset, myReferenceExpression.getReferenceNameElement(), myReferenceExpression)) {
       setText(getText(myReferenceExpression.getReferenceName()));
       return true;
     }

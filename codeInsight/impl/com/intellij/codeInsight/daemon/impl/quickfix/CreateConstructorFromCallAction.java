@@ -1,10 +1,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -125,7 +125,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
       return false;
     }
 
-    if (shouldShowTag(offset, element, myConstructorCall)) {
+    if (CreateFromUsageUtils.shouldShowTag(offset, element, myConstructorCall)) {
       setText(QuickFixBundle.message("create.constructor.from.new.text"));
       return true;
     }
