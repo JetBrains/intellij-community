@@ -47,7 +47,7 @@ public class RootEntry extends DirectoryEntry {
     if (!path.startsWith(name)) return null;
 
     path = path.substring(name.length());
-    if (path.isEmpty()) return from;
+    if (path.length() == 0) return from;
 
     if (path.charAt(0) != Path.DELIM) return null;
     path = path.substring(1);
