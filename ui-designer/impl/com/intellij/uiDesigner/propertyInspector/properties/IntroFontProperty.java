@@ -82,7 +82,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     }
     if (value.getFontStyle() >= 0) {
       if (value.getFontStyle() == 0) {
-        builder.append(UIDesignerBundle.message("font.chooser.regular"));
+        builder.append(' ').append(UIDesignerBundle.message("font.chooser.regular"));
       }
       else {
         if ((value.getFontStyle() & Font.BOLD) != 0) {
