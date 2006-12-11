@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXParseException;
 
@@ -25,7 +24,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * @author maxim
+ * Created by IntelliJ IDEA.
+ * User: maxim
+ * Date: 21.01.2005
+ * Time: 0:07:51
+ * To change this template use File | Settings | File Templates.
  */
 public class ExternalDocumentValidator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.ExternalDocumentValidator");
@@ -36,19 +39,19 @@ public class ExternalDocumentValidator {
   private long myModificationStamp;
   private PsiFile myFile;
   @NonNls
-  private static final String CANNOT_FIND_DECLARATION_ERROR_PREFIX = "Cannot find the declaration of element";
+  public static final String CANNOT_FIND_DECLARATION_ERROR_PREFIX = "Cannot find the declaration of element";
   @NonNls
-  private static final String ELEMENT_ERROR_PREFIX = "Element";
+  public static final String ELEMENT_ERROR_PREFIX = "Element";
   @NonNls
-  private static final String ROOT_ELEMENT_ERROR_PREFIX = "Document root element";
+  public static final String ROOT_ELEMENT_ERROR_PREFIX = "Document root element";
   @NonNls
-  private static final String CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX = "The content of element type";
+  public static final String CONTENT_OF_ELEMENT_TYPE_ERROR_PREFIX = "The content of element type";
   @NonNls
-  private static final String VALUE_ERROR_PREFIX = "Value ";
+  public static final String VALUE_ERROR_PREFIX = "Value ";
   @NonNls
-  private static final String ATTRIBUTE_ERROR_PREFIX = "Attribute ";
+  public static final String ATTRIBUTE_ERROR_PREFIX = "Attribute ";
   @NonNls
-  private static final String STRING_ERROR_PREFIX = "The string";
+  public static final String STRING_ERROR_PREFIX = "The string";
   @NonNls
   private static final String ATTRIBUTE_MESSAGE_PREFIX = "cvc-attribute.";
 
@@ -103,7 +106,7 @@ public class ExternalDocumentValidator {
            ) {
           return true;
         }
-        
+
         return super.filterValidationException(ex);
       }
 
@@ -114,7 +117,7 @@ public class ExternalDocumentValidator {
               if (e.getPublicId() != null) {
                 return;
               }
-              
+
               if (document.getLineCount() < e.getLineNumber() || e.getLineNumber() <= 0) {
                 return;
               }
@@ -134,7 +137,7 @@ public class ExternalDocumentValidator {
 
               // Cannot find the declaration of element
               String localizedMessage = e.getLocalizedMessage();
-              
+
               // Ideally would be to switch one messageIds
               final int endIndex = localizedMessage.indexOf(':');
               String messageId = endIndex != -1 ? localizedMessage.substring(0, endIndex ):"";
@@ -152,12 +155,12 @@ public class ExternalDocumentValidator {
               } else if (messageId.startsWith(ATTRIBUTE_MESSAGE_PREFIX)) {
                 @NonNls String prefix = "of attribute ";
                 final int i = localizedMessage.indexOf(prefix);
-                
+
                 if (i != -1) {
                   int messagePrefixLength = prefix.length() + i;
                   final int nextQuoteIndex = localizedMessage.indexOf(localizedMessage.charAt(messagePrefixLength), messagePrefixLength + 1);
                   String attrName = nextQuoteIndex == -1 ? null : localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex);
-                  
+
                   XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
                   currentElement = parent.getAttribute(attrName,null);
 
@@ -165,7 +168,7 @@ public class ExternalDocumentValidator {
                     currentElement = ((XmlAttribute)currentElement).getValueElement();
                   }
                 }
-                
+
                 if (currentElement!=null) {
                   assertValidElement(currentElement, originalElement,localizedMessage);
                   myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
@@ -229,7 +232,7 @@ public class ExternalDocumentValidator {
     myHandler.doValidate(project, element.getContainingFile());
 
     myFile = file;
-    myModificationStamp = myFile.getModificationStamp();
+    myModificationStamp = myFile == null ? 0 : myFile.getModificationStamp();
     myInfos = new WeakReference<List<ValidationInfo>>(results);
 
     addAllInfos(host,results);
@@ -308,9 +311,9 @@ public class ExternalDocumentValidator {
     final XmlTag rootTag = document != null ? document.getRootTag() : null;
     if (rootTag == null) return;
 
-    if (XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
-    if (rootTag.getNSDescriptor(XmlUtil.JSF_HTML_URI,true) != null ||
-        rootTag.getNSDescriptor(XmlUtil.JSF_CORE_URI,true) != null
+    if (com.intellij.xml.util.XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
+    if (rootTag.getNSDescriptor(com.intellij.xml.util.XmlUtil.JSF_HTML_URI,true) != null ||
+        rootTag.getNSDescriptor(com.intellij.xml.util.XmlUtil.JSF_CORE_URI,true) != null
        ) {
       return; // nonschema ns descriptors, not supported by Xerces
     }

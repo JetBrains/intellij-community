@@ -1,35 +1,37 @@
 package com.intellij.xml.impl.dtd;
 
-import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentCachedValue;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlNSDescriptorSequence;
+import com.intellij.util.IncorrectOperationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData {
+public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaData, PsiWritableMetaData {
   private XmlElementDecl myElementDecl;
+  private XmlAttlistDecl[] myAttlistDecl;
 
   public XmlElementDescriptorImpl(XmlElementDecl elementDecl) {
     myElementDecl = elementDecl;
@@ -50,19 +52,20 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     }
     if(hint == null || hint.shouldProcess(XmlAttributeDecl.class)){
       final XmlAttlistDecl[] decls = getAttlistDecls();
-      for (XmlAttlistDecl decl : decls) {
-        if (decl.getNameElement() != null && decl.getNameElement().getText().equals(meta.getName())) {
-          final XmlAttributeDecl[] attributes = decl.getAttributeDecls();
-          for (XmlAttributeDecl attribute : attributes) {
-            if (!processor.execute(attribute, substitutor)) return false;
+      for(int i = 0; i < decls.length; i++){
+        if(decls[i].getNameElement() != null && decls[i].getNameElement().getText().equals(meta.getName())){
+          final XmlAttributeDecl[] attributes = decls[i].getAttributeDecls();
+          for(int j = 0; j < attributes.length; j++){
+            if(!processor.execute(attributes[j], substitutor)) return false;
           }
         }
       }
     }
     if(hint == null || hint.shouldProcess(XmlElementDecl.class)){
       final XmlElementDescriptor[] decls = getElementsDescriptors(tag);
-      for (final XmlElementDescriptor decl : decls) {
-        if (!processor.execute(decl.getDeclaration(), substitutor)) return false;
+      for(int i = 0; i < decls.length; i++){
+        final XmlElementDescriptor decl = decls[i];
+        if(!processor.execute(decl.getDeclaration(), substitutor)) return false;
       }
     }
 
@@ -73,14 +76,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return getName();
   }
 
-  private final ConcurrentCachedValue<Void, String> myName = new ConcurrentCachedValue<Void, String>(new Computable<String>() {
-    public String compute() {
-      return myElementDecl.getNameElement().getText();
-    }
-  });
+  private String myName;
 
   public String getName() {
-    return myName.getOrCache();
+    if (myName!=null) return myName;
+    return myName = myElementDecl.getNameElement().getText();
   }
 
   public void init(PsiElement element){
@@ -88,7 +88,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public Object[] getDependences(){
-    return new Object[]{myElementDecl, ExternalResourceManager.getInstance()};
+    return new Object[]{myElementDecl, ExternalResourceManagerImpl.getInstance()};
   }
 
   public XmlNSDescriptor getNSDescriptor() {
@@ -104,52 +104,49 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return descriptor;
   }
 
-  private final ConcurrentCachedValue<XmlTag, XmlElementDescriptor[]> myElementDescriptors = new ConcurrentCachedValue<XmlTag, XmlElementDescriptor[]>(new Function<XmlTag, XmlElementDescriptor[]>() {
-    public XmlElementDescriptor[] fun(final XmlTag xmlTag) {
-      final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
+  private XmlElementDescriptor[] myElementDescriptors = null;
+  public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
+    if(myElementDescriptors != null) return myElementDescriptors;
+    final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
 
-      final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
-      final XmlNSDescriptor nsDescriptor = getNSDescriptor();
-      final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(xmlTag);
+    final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
+    final XmlNSDescriptor nsDescriptor = getNSDescriptor();
+    final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
 
-      contentSpecElement.processElements(new PsiElementProcessor(){
-        public boolean execute(PsiElement child){
-          if (child instanceof XmlToken) {
-            final XmlToken token = (XmlToken)child;
+    contentSpecElement.processElements(new PsiElementProcessor(){
+      public boolean execute(PsiElement child){
+        if (child instanceof XmlToken) {
+          final XmlToken token = (XmlToken)child;
 
-            if (token.getTokenType() == XmlTokenType.XML_NAME) {
-              final String text = child.getText();
-              XmlElementDescriptor element = getElementDescriptor(text, NSDescriptor);
+          if (token.getTokenType() == XmlTokenType.XML_NAME) {
+            final String text = child.getText();
+            XmlElementDescriptor element = getElementDescriptor(text, NSDescriptor);
 
-              if (element != null) {
-                result.add(element);
-              }
+            if (element != null) {
+              result.add(element);
             }
-            else if (token.getTokenType() == XmlTokenType.XML_CONTENT_ANY) {
-              if (NSDescriptor instanceof XmlNSDescriptorImpl) {
-                result.addAll(Arrays.asList(((XmlNSDescriptorImpl) NSDescriptor).getElements()));
-              } else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
+          }
+          else if (token.getTokenType() == XmlTokenType.XML_CONTENT_ANY) {
+            if (NSDescriptor instanceof XmlNSDescriptorImpl) {
+              result.addAll(Arrays.asList(((XmlNSDescriptorImpl) NSDescriptor).getElements()));
+            } else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
 
-                for (XmlNSDescriptor xmlNSDescriptor : ((XmlNSDescriptorSequence)NSDescriptor).getSequence()) {
-                  if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
-                    result.addAll(Arrays.asList(((XmlNSDescriptorImpl) xmlNSDescriptor).getElements()));
-                  }
+              for (XmlNSDescriptor xmlNSDescriptor : ((XmlNSDescriptorSequence)NSDescriptor).getSequence()) {
+                if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
+                  result.addAll(Arrays.asList(((XmlNSDescriptorImpl) xmlNSDescriptor).getElements()));
                 }
               }
             }
           }
-          return true;
         }
-      }, getDeclaration());
+        return true;
+      }
+    }, getDeclaration());
 
-      return result.toArray(new XmlElementDescriptor[result.size()]);
-    }
-  });
-  public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    return myElementDescriptors.getOrCache(context);
+    return myElementDescriptors = result.toArray(new XmlElementDescriptor[result.size()]);
   }
 
-  private static XmlElementDescriptor getElementDescriptor(final String text, final XmlNSDescriptor NSDescriptor) {
+  private XmlElementDescriptor getElementDescriptor(final String text, final XmlNSDescriptor NSDescriptor) {
     XmlElementDescriptor element = null;
     if (NSDescriptor instanceof XmlNSDescriptorImpl) {
       element = ((XmlNSDescriptorImpl)NSDescriptor).getElementDescriptor(text);
@@ -169,41 +166,42 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return element;
   }
 
-  private final ConcurrentCachedValue<Void, XmlAttributeDescriptor[]> myAttributeDescriptors = new ConcurrentCachedValue<Void, XmlAttributeDescriptor[]>(new Computable<XmlAttributeDescriptor[]>() {
-    public XmlAttributeDescriptor[] compute() {
-      final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-      for (XmlAttlistDecl attlistDecl : findAttlistDecls(getName())) {
-        for (XmlAttributeDecl attributeDecl : attlistDecl.getAttributeDecls()) {
-          result.add((XmlAttributeDescriptor)attributeDecl.getMetaData());
-        }
-      }
-      return result.toArray(new XmlAttributeDescriptor[result.size()]);
-    }
-  });
+  private XmlAttributeDescriptor[] myAttributeDescriptors;
 
   public XmlAttributeDescriptor[] getAttributesDescriptors() {
-    return myAttributeDescriptors.getOrCache();
+    if (myAttributeDescriptors!=null) return myAttributeDescriptors;
+
+    final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    for (XmlAttlistDecl attlistDecl : findAttlistDecls(getName())) {
+      for (XmlAttributeDecl attributeDecl : attlistDecl.getAttributeDecls()) {
+        result.add((XmlAttributeDescriptor)attributeDecl.getMetaData());
+      }
+    }
+
+    myAttributeDescriptors = result.toArray(new XmlAttributeDescriptor[result.size()]);
+    return myAttributeDescriptors;
   }
 
-  private final ConcurrentCachedValue<Void, Map<String,XmlAttributeDescriptor>> attributeDescriptorsMap = new ConcurrentCachedValue<Void, Map<String, XmlAttributeDescriptor>>(new Computable<Map<String, XmlAttributeDescriptor>>() {
-    public Map<String, XmlAttributeDescriptor> compute() {
-      final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors();
-      Map<String, XmlAttributeDescriptor> result = new HashMap<String, XmlAttributeDescriptor>(xmlAttributeDescriptors.length);
-      for (final XmlAttributeDescriptor xmlAttributeDescriptor : xmlAttributeDescriptors) {
-        result.put(xmlAttributeDescriptor.getName(), xmlAttributeDescriptor);
-      }
-      return result;
-    }
-  });
+  private HashMap<String,XmlAttributeDescriptor> attributeDescriptorsMap;
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
-    Map<String, XmlAttributeDescriptor> map = attributeDescriptorsMap.getOrCache();
-    return map.get(attributeName);
+    if (attributeDescriptorsMap==null) {
+      final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors();
+      attributeDescriptorsMap = new HashMap<String, XmlAttributeDescriptor>(xmlAttributeDescriptors.length);
+
+      for (int i = 0; i < xmlAttributeDescriptors.length; i++) {
+        final XmlAttributeDescriptor xmlAttributeDescriptor = xmlAttributeDescriptors[i];
+
+        attributeDescriptorsMap.put(xmlAttributeDescriptor.getName(),xmlAttributeDescriptor);
+      }
+    }
+
+    return attributeDescriptorsMap.get(attributeName);
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attr){
     final String name = attr.getName();
-    
+
     return getAttributeDescriptor(name);
   }
 
@@ -212,7 +210,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
     final XmlAttlistDecl[] decls = getAttlistDecls();
 
-    for (final XmlAttlistDecl decl : decls) {
+    for (int i = 0; i < decls.length; i++) {
+      final XmlAttlistDecl decl = decls[i];
       final XmlElement nameElement = decl.getNameElement();
       if (nameElement != null && nameElement.textMatches(elementName)) {
         result.add(decl);
@@ -222,18 +221,16 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return result.toArray(new XmlAttlistDecl[result.size()]);
   }
 
-  private static final Class<XmlElement>[] ourParentClassesToScanAttributes = new Class[] { XmlMarkupDecl.class, XmlDocument.class };
+  private static Class[] ourParentClassesToScanAttributes = new Class[] { XmlMarkupDecl.class, XmlDocument.class };
 
-  private final ConcurrentCachedValue<Void, XmlAttlistDecl[]> myAttlistDecl = new ConcurrentCachedValue<Void, XmlAttlistDecl[]>(new Computable<XmlAttlistDecl[]>() {
-    public XmlAttlistDecl[] compute() {
-      final List<XmlAttlistDecl> result = new ArrayList<XmlAttlistDecl>();
-      final XmlElement xmlElement = PsiTreeUtil.getParentOfType(getDeclaration(),ourParentClassesToScanAttributes);
-      xmlElement.processElements(new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), getDeclaration());
-      return result.toArray(new XmlAttlistDecl[result.size()]);
-    }
-  });
   private XmlAttlistDecl[] getAttlistDecls() {
-    return myAttlistDecl.getOrCache();
+    if (myAttlistDecl != null) return myAttlistDecl;
+
+    final List result = new ArrayList();
+    final XmlElement xmlElement = (XmlElement)PsiTreeUtil.getParentOfType(getDeclaration(),ourParentClassesToScanAttributes);
+    xmlElement.processElements(new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), getDeclaration());
+    myAttlistDecl = (XmlAttlistDecl[])result.toArray(new XmlAttlistDecl[result.size()]);
+    return myAttlistDecl;
   }
 
   public int getContentType() {
@@ -253,22 +250,23 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return CONTENT_TYPE_ANY;
   }
 
-  private final ConcurrentCachedValue<XmlTag, Map<String,XmlElementDescriptor>> elementDescriptorsMap = new ConcurrentCachedValue<XmlTag, Map<String, XmlElementDescriptor>>(new Function<XmlTag, Map<String, XmlElementDescriptor>>() {
-    public Map<String, XmlElementDescriptor> fun(final XmlTag xmlTag) {
-      final XmlElementDescriptor[] descriptors = getElementsDescriptors(xmlTag);
-      Map<String, XmlElementDescriptor> map = new HashMap<String, XmlElementDescriptor>(descriptors.length);
-
-      for (final XmlElementDescriptor descriptor : descriptors) {
-        map.put(descriptor.getName(), descriptor);
-      }
-      return map;
-    }
-  });
+  private HashMap<String,XmlElementDescriptor> elementDescriptorsMap;
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
     String name = element.getName();
-    Map<String, XmlElementDescriptor> map = elementDescriptorsMap.getOrCache(element);
-    return map.get(name);
+    if(name == null) return null;
+
+    if (elementDescriptorsMap==null) {
+      final XmlElementDescriptor[] descriptors = getElementsDescriptors(element);
+      elementDescriptorsMap = new HashMap<String, XmlElementDescriptor>(descriptors.length);
+
+      for (int i = 0; i < descriptors.length; i++) {
+        final XmlElementDescriptor descriptor = descriptors[i];
+        elementDescriptorsMap.put(descriptor.getName(),descriptor);
+      }
+    }
+
+    return elementDescriptorsMap.get(name);
   }
 
   public String getQualifiedName() {
@@ -280,6 +278,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public void setName(final String name) throws IncorrectOperationException {
-    myName.setValue(name);
+    myName = name;
   }
 }

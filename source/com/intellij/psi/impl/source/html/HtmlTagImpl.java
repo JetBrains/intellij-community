@@ -10,7 +10,6 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -67,9 +66,9 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return super.getAttributeValue(qname);
   }
 
-  protected void cacheOneAttributeValue(String name, String value, final HashMap<String, String> result) {
+  protected void cacheOneAttributeValue(String name, String value) {
     name = name.toLowerCase();
-    super.cacheOneAttributeValue(name, value, result);
+    super.cacheOneAttributeValue(name, value);
   }
 
   public String getAttributeValue(String name, String namespace) {

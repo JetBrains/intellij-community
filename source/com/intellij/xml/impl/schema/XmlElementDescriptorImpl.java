@@ -1,20 +1,18 @@
 package com.intellij.xml.impl.schema;
 
-import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentCachedValue;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.openapi.util.Computable;
+import com.intellij.codeInsight.daemon.Validator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData, Validator {
   protected XmlTag myDescriptorTag;
+  protected XmlNSDescriptor NSDescriptor;
   private @Nullable Validator myValidator;
 
   @NonNls
@@ -36,8 +35,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     myDescriptorTag = descriptorTag;
   }
 
-  public XmlElementDescriptorImpl() {
-  }
+  public XmlElementDescriptorImpl() {}
 
   public PsiElement getDeclaration(){
     return myDescriptorTag;
@@ -50,7 +48,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public String getName(PsiElement context){
     String value = myDescriptorTag.getAttributeValue("name");
 
-    if(context instanceof XmlElement) {
+    if(context instanceof XmlElement){
       final String namespace = getNamespaceByContext(context);
       final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
 
@@ -62,8 +60,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
           if (rootTag != null && NONQUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT))) {
             value = XmlUtil.findLocalNameByQualifiedName(value);
-          }
-          else {
+          } else {
             value = namespacePrefix + ":" + XmlUtil.findLocalNameByQualifiedName(value);
           }
         }
@@ -102,7 +99,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public void init(PsiElement element){
     if (myDescriptorTag!=element && myDescriptorTag!=null) {
-      NSDescriptor.clear();
+      NSDescriptor = null;
     }
     myDescriptorTag = (XmlTag) element;
   }
@@ -111,18 +108,16 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return new Object[]{myDescriptorTag};
   }
 
-  private final ConcurrentCachedValue<Void, XmlNSDescriptor> NSDescriptor = new ConcurrentCachedValue<Void, XmlNSDescriptor>(new Computable<XmlNSDescriptor>() {
-    public XmlNSDescriptor compute() {
+  public XmlNSDescriptor getNSDescriptor() {
+    if (NSDescriptor==null) {
       final XmlFile file = XmlUtil.getContainingFile(getDeclaration());
       if(file == null) return null;
       final XmlDocument document = file.getDocument();
       if(document == null) return null;
-      return (XmlNSDescriptor)document.getMetaData();
+      NSDescriptor = (XmlNSDescriptor)document.getMetaData();
     }
-  });
 
-  public XmlNSDescriptor getNSDescriptor() {
-    return NSDescriptor.getOrCache();
+    return NSDescriptor;
   }
 
   public TypeDescriptor getType() {
