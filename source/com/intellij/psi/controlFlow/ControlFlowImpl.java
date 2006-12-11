@@ -82,7 +82,7 @@ class ControlFlowImpl implements ControlFlow {
   }
 
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for(int i = 0; i < myInstructions.size(); i++){
       Instruction instruction = myInstructions.get(i);
       buffer.append(Integer.toString(i));

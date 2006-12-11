@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.lang.ref.Reference;
 
 public class ControlFlowFactory extends AbstractProjectComponent {
-  private final ConcurrentHashMap<ControlFlowContext, ControlFlow> flows = new ConcurrentHashMap<ControlFlowContext, ControlFlow>();
+  private final ConcurrentHashMap<ControlFlowContext, Reference<ControlFlow>> flows = new ConcurrentHashMap<ControlFlowContext, Reference<ControlFlow>>();
 
   public static ControlFlowFactory getInstance(Project project) {
     return project.getComponent(ControlFlowFactory.class);
@@ -71,8 +71,7 @@ public class ControlFlowFactory extends AbstractProjectComponent {
     }
 
     public int hashCode() {
-      int result;
-      result = policy.hashCode();
+      int result = policy.hashCode();
       result = 31 * result + (evaluateConstantIfCondition ? 1 : 0);
       PsiElement psiElement = element.get();
       result = 31 * result + (psiElement != null ? psiElement.hashCode() : 0);
@@ -95,12 +94,13 @@ public class ControlFlowFactory extends AbstractProjectComponent {
                                            boolean enableShortCircuit,
                                            boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     ControlFlowContext context = createContext(element, evaluateConstantIfCondition, policy);
-    ControlFlow flow = flows.get(context);
+    Reference<ControlFlow> reference = flows.get(context);
+    ControlFlow flow = reference == null ? null : reference.get();
     if (flow == null) {
       myLock.lock();
       try {
         flow = new ControlFlowAnalyzer(element, policy, enableShortCircuit, evaluateConstantIfCondition).buildControlFlow();
-        flows.put(context, flow);
+        flows.put(context, new SoftReference<ControlFlow>(flow));
       }
       finally {
         myLock.unlock();
@@ -118,10 +118,12 @@ public class ControlFlowFactory extends AbstractProjectComponent {
     long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     for (ControlFlowContext context : flows.keySet()) {
       PsiElement element = context.element.get();
+      Reference<ControlFlow> reference = flows.get(context);
+      ControlFlow controlFlow = reference == null ? null : reference.get();
       if (context.modificationCount != modificationCount
         || element == null
         || !element.isValid()
-        || flows.get(context) instanceof ControlFlowSubRange
+        || controlFlow instanceof ControlFlowSubRange
         ) {
         flows.remove(context);
       }
@@ -131,11 +133,11 @@ public class ControlFlowFactory extends AbstractProjectComponent {
 
   private void registerControlFlow(@NotNull PsiElement element, @NotNull ControlFlow flow, boolean evaluateConstantIfCondition, @NotNull ControlFlowPolicy policy) {
     ControlFlowContext controlFlowContext = createContext(element, evaluateConstantIfCondition, policy);
-    flows.putIfAbsent(controlFlowContext, flow);
+    flows.putIfAbsent(controlFlowContext, new SoftReference<ControlFlow>(flow));
     if (evaluateConstantIfCondition && !flow.isConstantConditionOccurred()) {
       // optimization: when no constant condition were computed, both control flows are the same
       ControlFlowContext otherContext = createContext(element, false, policy);
-      flows.putIfAbsent(otherContext, flow);
+      flows.putIfAbsent(otherContext, new SoftReference<ControlFlow>(flow));
     }
   }
 }
