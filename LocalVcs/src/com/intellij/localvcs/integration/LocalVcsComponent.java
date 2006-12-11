@@ -47,7 +47,6 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   private void initVcs() {
-    if (isDisabled()) throw new RuntimeException("new local vcs is disabled");
     myVcs = new LocalVcs(new Storage(getStorageDir()));
   }
 
@@ -89,6 +88,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   public LocalVcs getLocalVcs() {
+    if (isDisabled()) throw new RuntimeException("new local vcs is disabled");
     return myVcs;
   }
 

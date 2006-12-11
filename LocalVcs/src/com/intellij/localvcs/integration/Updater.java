@@ -81,7 +81,7 @@ public class Updater {
   private void deleteAbsentFiles(Entry entry, VirtualFile dir) {
     for (Entry e : entry.getChildren()) {
       VirtualFile f = dir.findChild(e.getName());
-      if (!areOfSameKind(e, f)) {
+      if (!areOfTheSameKind(e, f)) {
         myVcs.delete(e.getPath());
       }
       else {
@@ -95,7 +95,7 @@ public class Updater {
   private void createNewFiles(VirtualFile dir) throws IOException {
     for (VirtualFile f : dir.getChildren()) {
       Entry e = myVcs.findEntry(f.getPath());
-      if (!areOfSameKind(e, f)) {
+      if (!areOfTheSameKind(e, f)) {
         if (f.isDirectory()) {
           myVcs.createDirectory(f.getPath(), f.getTimeStamp());
           createNewFiles(f);
@@ -110,7 +110,7 @@ public class Updater {
   private void updateOutdatedFiles(VirtualFile dir) throws IOException {
     for (VirtualFile f : dir.getChildren()) {
       Entry e = myVcs.findEntry(f.getPath());
-      if (areOfSameKind(e, f)) {
+      if (areOfTheSameKind(e, f)) {
         // todo we should update directory and root timestamps too
         // todo should we treat external file change as deletion and creation new one?
         if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
@@ -120,7 +120,7 @@ public class Updater {
     }
   }
 
-  private boolean areOfSameKind(Entry e, VirtualFile f) {
+  private boolean areOfTheSameKind(Entry e, VirtualFile f) {
     if (e == null || f == null) return false;
     return e.isDirectory() == f.isDirectory();
   }

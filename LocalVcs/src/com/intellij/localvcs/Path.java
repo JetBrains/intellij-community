@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import java.io.File;
 
 public class Path {
-  private static final String DELIM = "/";
+  public static final char DELIM = '/';
 
   public static String getNameOf(String path) {
     int i = path.lastIndexOf(DELIM);

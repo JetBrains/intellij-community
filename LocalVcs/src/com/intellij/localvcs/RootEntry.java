@@ -24,6 +24,10 @@ public class RootEntry extends DirectoryEntry {
     return name;
   }
 
+  public List<Entry> getRoots() {
+    return getChildren();
+  }
+
   public boolean hasEntry(String path) {
     return findEntry(path) != null;
   }
@@ -33,7 +37,30 @@ public class RootEntry extends DirectoryEntry {
   }
 
   protected Entry findEntry(String path) {
-    return findEntry(new PathMatcher(path));
+    return findRecursively(this, path);
+  }
+
+  private Entry findRecursively(Entry from, String path) {
+    if (from == this) return searchInChildren(from, path);
+
+    String name = from.getName();
+    if (!path.startsWith(name)) return null;
+
+    path = path.substring(name.length());
+    if (path.isEmpty()) return from;
+
+    if (path.charAt(0) != Path.DELIM) return null;
+    path = path.substring(1);
+
+    return searchInChildren(from, path);
+  }
+
+  private Entry searchInChildren(Entry parent, String path) {
+    for (Entry e : parent.getChildren()) {
+      Entry result = findRecursively(e, path);
+      if (result != null) return result;
+    }
+    return null;
   }
 
   private Entry findEntry(Integer id) {
@@ -41,25 +68,22 @@ public class RootEntry extends DirectoryEntry {
     return findEntry(new IdMatcher(id));
   }
 
-
   public Entry getEntry(String path) {
-    return getEntry(new PathMatcher(path));
+    Entry result = findEntry(path);
+    assert result != null;
+    return result;
   }
 
   public Entry getEntry(Integer id) {
+    // todo it's very slow 
     return getEntry(new IdMatcher(id));
   }
 
   private Entry getEntry(Matcher m) {
     // todo get rid of this method
     Entry result = findEntry(m);
-    // todo should we raise more meaningfull exception here?
     assert result != null;
     return result;
-  }
-
-  public List<Entry> getRoots() {
-    return getChildren();
   }
 
   public void createFile(Integer id, String path, String content, Long timestamp) {
@@ -112,7 +136,7 @@ public class RootEntry extends DirectoryEntry {
 
   private void addEntry(String parentPath, Entry entry) {
     // todo this check is just for testing...
-    assert entry.getId() == null || !hasEntry(entry.getId());
+    //assert entry.getId() == null || !hasEntry(entry.getId());
 
     // todo try to remove this conditional logic
     Entry parent = parentPath == null ? this : getEntry(parentPath);
@@ -135,19 +159,7 @@ public class RootEntry extends DirectoryEntry {
     return new RootEntry(); //  todo test copying!!!
   }
 
-  private static class PathMatcher implements Matcher {
-    // todo optimize it
-    private String myPath;
-
-    public PathMatcher(String path) {
-      myPath = path;
-    }
-
-    public boolean matches(Entry e) {
-      return myPath.equals(e.getPath());
-    }
-  }
-
+  // todo refactor this class out
   private static class IdMatcher implements Matcher {
     private Integer myId;
 

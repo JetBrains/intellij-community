@@ -1,9 +1,6 @@
 package com.intellij.localvcs;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 public class Storage {
   private File myDir;
@@ -65,7 +62,7 @@ public class Storage {
     if (!f.exists()) return def;
 
     try {
-      FileInputStream fs = new FileInputStream(f);
+      InputStream fs = new BufferedInputStream(new FileInputStream(f));
       try {
         return loader.load(new Stream(fs));
       }
@@ -83,7 +80,7 @@ public class Storage {
     File f = new File(myDir, fileName);
     try {
       f.createNewFile();
-      FileOutputStream fs = new FileOutputStream(f);
+      OutputStream fs = new BufferedOutputStream(new FileOutputStream(f));
       try {
         storer.store(new Stream(fs));
       }

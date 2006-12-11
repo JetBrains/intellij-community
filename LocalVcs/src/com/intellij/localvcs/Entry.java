@@ -1,8 +1,8 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 public abstract class Entry {
   // todo maybe make them private
@@ -99,7 +99,7 @@ public abstract class Entry {
       Entry result = child.findEntry(m);
       if (result != null) return result;
     }
-    
+
     return null;
   }
 
