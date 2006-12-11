@@ -15,6 +15,11 @@
  */
 package com.intellij.util.concurrency.readwrite;
 
+import com.intellij.openapi.application.ApplicationManager;
+
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 public class AbstractWaiter implements Runnable {
 
   private boolean myFinishedFlag;
@@ -44,11 +49,11 @@ public class AbstractWaiter implements Runnable {
 
   public void waitForCompletion(long aTimeout) {
     try {
-      Thread waiter = new Thread(this);
-      waiter.start();
-      waiter.join(aTimeout);
+      final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(this);
+      if (aTimeout > 0) future.get(aTimeout, TimeUnit.MILLISECONDS);
+      else future.get();
     }
-    catch (InterruptedException e) {
+    catch (Exception e) {
       return;
     }
   }

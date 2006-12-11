@@ -19,6 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
+
 /**
  * This is the 3rd version of SwingWorker (also known as
  * SwingWorker 3), an abstract class that you subclass to
@@ -43,18 +46,28 @@ public abstract class SwingWorker {
    * under separate synchronization control.
    */
   private static class ThreadVar {
-    private Thread myThread;
+    private Runnable myTask;
+    private Future<?> myTaskFuture;
 
-    ThreadVar(Thread t) {
-      myThread = t;
+    ThreadVar(Runnable task) {
+      myTask = task;
     }
 
-    synchronized Thread get() {
-      return myThread;
+    synchronized Runnable getTask() {
+      return myTask;
+    }
+
+    synchronized Future<?> getFuture() {
+      return myTaskFuture;
+    }
+
+    synchronized void setFuture(Future<?> future) {
+      myTaskFuture = future;
     }
 
     synchronized void clear() {
-      myThread = null;
+      myTask = null;
+      myTaskFuture = null;
     }
   }
 
@@ -103,9 +116,9 @@ public abstract class SwingWorker {
    */
 
   public void interrupt() {
-    Thread t = myThreadVar.get();
-    if (t != null){
-      t.interrupt();
+    Future<?> future = myThreadVar.getFuture();
+    if (future != null){
+      future.cancel(true);
     }
     myThreadVar.clear();
   }
@@ -120,16 +133,19 @@ public abstract class SwingWorker {
 
   public Object get() {
     while(true){
-      Thread t = myThreadVar.get();
+      Future t = myThreadVar.getFuture();
       if (t == null){
         return getValue();
       }
       try{
-        t.join();
+        t.get();
       }
       catch(InterruptedException e){
         Thread.currentThread().interrupt();
         // propagate
+        return null;
+      }
+      catch (ExecutionException e) {
         return null;
       }
     }
@@ -151,31 +167,33 @@ public abstract class SwingWorker {
 
     Runnable doConstruct = new Runnable() {
       public void run() {
-        try{
+        try {
+          try{
           setValue(construct());
           if (LOG.isDebugEnabled()) {
-            LOG.debug("construct() terminated");
+              LOG.debug("construct() terminated");
+            }
           }
+          catch (Throwable e) {
+            LOG.error(e);
+            onThrowable();
+            throw new RuntimeException(e);
+          }
+          finally{
+            myThreadVar.clear();
+          }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("invoking 'finished' action");
+          }
+          ApplicationManager.getApplication().invokeLater(doFinished, myModalityState);
         }
-        catch (Throwable e) {
-          LOG.error(e);
-          onThrowable();
-          throw new RuntimeException(e);
+        finally {
+          Thread.interrupted(); // reset interrupted before returning to pool
         }
-        finally{
-          myThreadVar.clear();
-        }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("invoking 'finished' action");
-        }
-        ApplicationManager.getApplication().invokeLater(doFinished, myModalityState);
       }
     };
 
-    //noinspection HardCodedStringLiteral
-    final Thread workerThread = new Thread(doConstruct, "SwingWorker work thread");
-    workerThread.setPriority(Thread.NORM_PRIORITY);
-    myThreadVar = new ThreadVar(workerThread);
+    myThreadVar = new ThreadVar(doConstruct);
   }
 
   /**
@@ -183,9 +201,9 @@ public abstract class SwingWorker {
    */
 
   public void start() {
-    Thread t = myThreadVar.get();
+    Runnable t = myThreadVar.getTask();
     if (t != null){
-      t.start();
+      myThreadVar.setFuture(ApplicationManager.getApplication().executeOnPooledThread(t));
     }
   }
 }

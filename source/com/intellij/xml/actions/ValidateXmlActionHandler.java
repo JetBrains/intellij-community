@@ -47,6 +47,7 @@ import java.net.NoRouteToHostException;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * @author Mike
@@ -143,53 +144,48 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     private NewErrorTreeViewPanel myErrorsView;
     private final String CONTENT_NAME = XmlBundle.message("xml.validate.tab.content.title");
     private boolean myErrorsDetected = false;
-    @NonNls
-    private static final String VALIDATE_XML_THREAD_NAME = "Validate XML";
 
     StdErrorReporter(Project project) {
       myErrorsView = new NewErrorTreeViewPanel(project, null);
     }
     public void startProcessing() {
-      final Thread thread = new Thread(new Runnable() {
+      final Runnable task = new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              StdErrorReporter.super.startProcessing();
-            }
-          });
+          try {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                StdErrorReporter.super.startProcessing();
+              }
+            });
 
-          SwingUtilities.invokeLater(
+            SwingUtilities.invokeLater(
               new Runnable() {
-                public void run() {
-                  if (!myErrorsDetected) {
-                    SwingUtilities.invokeLater(
-                        new Runnable() {
-                          public void run() {
-                            removeCompileContents(null);
-                            WindowManager.getInstance().getStatusBar(myProject).setInfo(
-                              XmlBundle.message("xml.validate.no.errors.detected.status.message"));
+                  public void run() {
+                    if (!myErrorsDetected) {
+                      SwingUtilities.invokeLater(
+                          new Runnable() {
+                            public void run() {
+                              removeCompileContents(null);
+                              WindowManager.getInstance().getStatusBar(myProject).setInfo(
+                                XmlBundle.message("xml.validate.no.errors.detected.status.message"));
+                            }
                           }
-                        }
-                    );
+                      );
+                    }
                   }
                 }
-              }
-          );
-        }
-      }, VALIDATE_XML_THREAD_NAME);
-      myErrorsView.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
-        public void stopProcess() {
-          if (thread != null) {
-            thread.stop();
+            );
+          }
+          finally {
+            boolean b = Thread.interrupted(); // reset interrupted
           }
         }
+      };
 
-        public boolean isProcessStopped() {
-          return thread == null || !thread.isAlive();
-        }
-      });
+      final MyProcessController processController = new MyProcessController();
+      myErrorsView.setProcessController(processController);
       openMessageView();
-      thread.start();
+      processController.setFuture( ApplicationManager.getApplication().executeOnPooledThread(task) );
 
       ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
     }
@@ -285,6 +281,24 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
             }
           }
         }
+      }
+    }
+
+    private class MyProcessController implements NewErrorTreeViewPanel.ProcessController {
+      private Future<?> myFuture;
+
+      public void setFuture(Future<?> future) {
+        myFuture = future;
+      }
+
+      public void stopProcess() {
+        if (myFuture != null) {
+          myFuture.cancel(true);
+        }
+      }
+
+      public boolean isProcessStopped() {
+        return myFuture != null && myFuture.isDone();
       }
     }
   }
