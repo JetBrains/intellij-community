@@ -32,7 +32,7 @@ public class VirtualFileImpl extends VirtualFile {
 
   private VirtualFileImpl myParent;
   private String myName;
-  private VirtualFileImpl[] myChildren = null;  // null, if not defined yet
+  private volatile VirtualFileImpl[] myChildren = null;  // null, if not defined yet
 
   private static final byte IS_DIRECTORY_FLAG = 0x01;
   private static final byte IS_WRITABLE_INITIALIZED_FLAG = 0x02;
@@ -240,31 +240,35 @@ public class VirtualFileImpl extends VirtualFile {
   public VirtualFileImpl[] getChildren() {
     if (!isDirectory()) return null;
     if (myChildren == null) {
-      synchronized (ourFileSystem.LOCK) {
-        if (myChildren == null) {
-          File file = getPhysicalFile();
-          File[] files = file.listFiles();
-          final int length = files == null ? 0 : files.length;
-          if (length == 0) {
-            myChildren = EMPTY_VIRTUAL_FILE_ARRAY;
-          }
-          else {
-            myChildren = new VirtualFileImpl[ length ];
-            String path = getPath() + "/";
-            for (int i = 0; i < length; ++i) {
-              File f = files[i];
-              String childPath = path + f.getName();
-              VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.remove(childPath);
-              if (child == null || !child.isValid()) {
-                if (SystemInfo.isWindows && FileWatcher.isAvailable()) {
-                  child = new VirtualFileImpl(this, f);
-                } else {
-                  child = new VirtualFileImpl(this, f, f.isDirectory());
-                }
-              }
-              myChildren[i] = child;
+      File file = getPhysicalFile();
+      File[] files = file.listFiles();
+      VirtualFileImpl[] children;
+      final int length = files == null ? 0 : files.length;
+      if (length == 0) {
+        children = EMPTY_VIRTUAL_FILE_ARRAY;
+      }
+      else {
+        children = new VirtualFileImpl[length];
+        String path = getPath() + "/";
+        for (int i = 0; i < length; ++i) {
+          File f = files[i];
+          String childPath = path + f.getName();
+          VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.remove(childPath);
+          if (child == null || !child.isValid()) {
+            if (SystemInfo.isWindows && FileWatcher.isAvailable()) {
+              child = new VirtualFileImpl(this, f);
+            }
+            else {
+              child = new VirtualFileImpl(this, f, f.isDirectory());
             }
           }
+          children[i] = child;
+        }
+      }
+
+      synchronized(ourFileSystem.LOCK) {
+        if (myChildren == null) {
+          myChildren = children;
         }
       }
     }
