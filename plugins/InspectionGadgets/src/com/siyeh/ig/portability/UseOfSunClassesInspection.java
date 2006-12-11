@@ -40,10 +40,10 @@ public class UseOfSunClassesInspection extends VariableInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new ObsoleteCollectionVisitor();
+        return new UseOfSunClassesVisitor();
     }
 
-    private static class ObsoleteCollectionVisitor
+    private static class UseOfSunClassesVisitor
             extends BaseInspectionVisitor {
 
         public void visitVariable(@NotNull PsiVariable variable) {
