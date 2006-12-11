@@ -10,13 +10,16 @@ package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.lang.ref.Reference;
 
 public class ControlFlowFactory extends AbstractProjectComponent {
   private final ConcurrentHashMap<ControlFlowContext, ControlFlow> flows = new ConcurrentHashMap<ControlFlowContext, ControlFlow>();
@@ -43,13 +46,13 @@ public class ControlFlowFactory extends AbstractProjectComponent {
   private static class ControlFlowContext {
     private final ControlFlowPolicy policy;
     private final boolean evaluateConstantIfCondition;
-    private final PsiElement element;
+    private final Reference<PsiElement> element;
     private final long modificationCount;
 
     public ControlFlowContext(boolean evaluateConstantIfCondition, @NotNull ControlFlowPolicy policy, @NotNull PsiElement element, long modificationCount) {
       this.evaluateConstantIfCondition = evaluateConstantIfCondition;
       this.policy = policy;
-      this.element = element;
+      this.element = new SoftReference<PsiElement>(element);
       this.modificationCount = modificationCount;
     }
 
@@ -61,7 +64,7 @@ public class ControlFlowFactory extends AbstractProjectComponent {
 
       if (evaluateConstantIfCondition != that.evaluateConstantIfCondition) return false;
       if (modificationCount != that.modificationCount) return false;
-      if (element != null ? !element.equals(that.element) : that.element != null) return false;
+      if (!Comparing.equal(element.get(), that.element.get())) return false;
       if (!policy.equals(that.policy)) return false;
 
       return true;
@@ -71,7 +74,8 @@ public class ControlFlowFactory extends AbstractProjectComponent {
       int result;
       result = policy.hashCode();
       result = 31 * result + (evaluateConstantIfCondition ? 1 : 0);
-      result = 31 * result + (element != null ? element.hashCode() : 0);
+      PsiElement psiElement = element.get();
+      result = 31 * result + (psiElement != null ? psiElement.hashCode() : 0);
       result = 31 * result + (int)(modificationCount ^ (modificationCount >>> 32));
       return result;
     }
@@ -113,8 +117,10 @@ public class ControlFlowFactory extends AbstractProjectComponent {
   public void flushInvalidControlFlows() {
     long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
     for (ControlFlowContext context : flows.keySet()) {
+      PsiElement element = context.element.get();
       if (context.modificationCount != modificationCount
-        || !context.element.isValid()
+        || element == null
+        || !element.isValid()
         || flows.get(context) instanceof ControlFlowSubRange
         ) {
         flows.remove(context);
