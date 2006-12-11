@@ -18,6 +18,7 @@ import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspWhileStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.OldOuterLanguageElement;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.jsp.jspJava.OldOuterLanguageElement;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -37,6 +38,7 @@ import java.util.*;
 public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.CompositeLanguageFileViewProvider");
   public static final Key<Object> UPDATE_IN_PROGRESS = new Key<Object>("UPDATE_IN_PROGRESS");
+  public static final Key<Object> UPDATE_HOLDER_OUTERS_IN_PROGRESS = new Key<Object>("UPDATE_HOLDER_OUTERS_IN_PROGRESS");
   public static final Key<Object> DO_NOT_UPDATE_AUX_TREES = new Key<Object>("DO_NOT_UPDATE_AUX_TREES");
   public static final Key<Integer> OUTER_LANGUAGE_MERGE_POINT = new Key<Integer>("OUTER_LANGUAGE_MERGE_POINT");
   private final Map<Language, PsiFile> myRoots = new HashMap<Language, PsiFile>();
@@ -253,7 +255,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
           final OldOuterLanguageElement outerElement = i.next();
           XmlText nextText = outerElement.getFollowingText();
 
-          final int start =
+          int start =
             prevText != null ? prevText.getTextRange().getEndOffset() : outerCount != 0 ? outerElement.getTextRange().getStartOffset() : 0;
 
           if (nextText != null && !nextText.isValid()) {
@@ -285,6 +287,18 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
               end = i.hasNext() ? outerElement.getTextRange().getEndOffset() : getContents().length();
             }
 
+            if (getUserData(UPDATE_HOLDER_OUTERS_IN_PROGRESS) != null) {
+              // some texts may change theirs in doHolderToXmlChanges so adjust for this case
+              if (outerElement.getTextRange().getLength() != end - start) {
+                if ((prevText == null && nextText != null) ||
+                    (nextText == null && !i.hasNext())
+                   ) {
+                  start = end - outerElement.getTextLength();
+                } else if (prevText != null && nextText == null && i.hasNext()) {
+                  end = start + outerElement.getTextLength();
+                }
+              }
+            }
             assert start <= end;
             final TextRange textRange = new TextRange(start, end);
 
@@ -506,7 +520,12 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
       LOG.error(e);
     }
     finally {
-      updateOuterLanguageElementsIn(psiFile);
+      try {
+        putUserData(UPDATE_HOLDER_OUTERS_IN_PROGRESS, Boolean.TRUE);
+        updateOuterLanguageElementsIn(psiFile);
+      } finally {
+        putUserData(UPDATE_HOLDER_OUTERS_IN_PROGRESS, null);
+      }
       if (!buffersDiffer) {
         myRootsInUpdate.remove(psiFile);
       }
