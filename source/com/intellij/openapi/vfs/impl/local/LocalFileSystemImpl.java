@@ -924,8 +924,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         } else {
           for (final VirtualFileImpl unaccounted : myUnaccountedFiles.values()) {
             if (VfsUtil.isAncestor(file, unaccounted, true)) {
-              ((VirtualFileImpl)unaccounted).refresh(true, false, true, null);
-              break;
+              unaccounted.refresh(true, false, true, null);
             }
           }
         }
