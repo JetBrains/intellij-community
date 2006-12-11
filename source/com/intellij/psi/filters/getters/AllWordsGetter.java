@@ -19,7 +19,7 @@ public class AllWordsGetter implements ContextGetter {
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor(){
       public void run(final char[] chars, final int start, final int end) {
         final int len = end - start;
-        if (completionContext == null || start > completionContext.offset || completionContext.offset >= end) {
+        if (completionContext == null || start > completionContext.offset || completionContext.offset > end) {
           objs.add(String.valueOf(chars, start, len));
         }
       }
