@@ -1851,6 +1851,7 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.CLASS));
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.INTERFACE));
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.ENUM));
+        QuickFixAction.registerQuickFixAction(info, new CreateInnerClassFromUsageAction(ref, CreateClassKind.CLASS));
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
         if (parent instanceof PsiNewExpression) {
           QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewAction((PsiNewExpression)parent));

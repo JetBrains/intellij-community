@@ -1,0 +1,136 @@
+package com.intellij.codeInsight.daemon.impl.quickfix;
+
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.CLASS;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.INTERFACE;
+import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author ven
+ */
+public class CreateInnerClassFromUsageAction extends CreateClassFromUsageBaseAction {
+
+  public CreateInnerClassFromUsageAction(final PsiJavaCodeReferenceElement refElement, final CreateClassKind kind) {
+    super(kind, refElement);
+  }
+
+  public String getText(String varName) {
+    return QuickFixBundle.message("create.inner.class.from.usage.text", StringUtil.capitalize(myKind.getDescription()), varName);
+  }
+
+  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    final PsiJavaCodeReferenceElement element = getRefElement();
+    assert element != null;
+    final String superClassName = getSuperClassName(element);
+    PsiClass[] targets = getPossibleTargets(element);
+    LOG.assertTrue(targets.length > 0);
+    if (targets.length == 1) {
+      doInvoke(targets[0], superClassName);
+    }
+    else {
+      chooseTargetClass(targets, editor, superClassName);
+    }
+  }
+
+  public boolean isAvailable(final Project project, final Editor editor, final PsiFile file) {
+    return super.isAvailable(project, editor, file) && getPossibleTargets(getRefElement()).length > 0;
+  }
+
+  @NotNull
+  private static PsiClass[] getPossibleTargets(final PsiJavaCodeReferenceElement element) {
+    List<PsiClass> result = new ArrayList<PsiClass>();
+    PsiElement run = element;
+    PsiMember contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
+
+    while (contextMember != null) {
+      if (contextMember instanceof PsiClass) {
+        result.add((PsiClass)contextMember);
+      }
+      run = contextMember;
+      contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
+      if (contextMember != null && contextMember.hasModifierProperty(PsiModifier.STATIC)) {
+        break;
+      }
+    }
+
+    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+  }
+
+  private void chooseTargetClass(PsiClass[] classes, final Editor editor, final String superClassName) {
+    final Project project = classes[0].getProject();
+
+    final JList list = new JList(classes);
+    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
+    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    list.setCellRenderer(renderer);
+    renderer.installSpeedSearch(list);
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        int index = list.getSelectedIndex();
+        if (index < 0) return;
+        final PsiClass aClass = (PsiClass)list.getSelectedValue();
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                try {
+                  doInvoke(aClass, superClassName);
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error(e);
+                }
+              }
+            });
+
+          }
+        }, getText(), null);
+      }
+    };
+
+    new PopupChooserBuilder(list).
+      setTitle(QuickFixBundle.message("target.class.chooser.title")).
+      setItemChoosenCallback(runnable).
+      createPopup().
+      showInBestPositionFor(editor);
+  }
+
+  private void doInvoke(final PsiClass aClass, final String superClassName) throws IncorrectOperationException {
+    PsiJavaCodeReferenceElement ref = getRefElement();
+    assert ref != null;
+    String refName = ref.getReferenceName();
+    LOG.assertTrue(refName != null);
+    PsiElementFactory elementFactory = aClass.getManager().getElementFactory();
+    PsiClass created = myKind == INTERFACE
+                      ? elementFactory.createInterface(refName)
+                      : myKind == CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
+    final PsiModifierList modifierList = created.getModifierList();
+    LOG.assertTrue(modifierList != null);
+    modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+    if (superClassName != null) {
+      PsiJavaCodeReferenceElement superClass =
+        elementFactory.createReferenceElementByFQClassName(superClassName, created.getResolveScope());
+      final PsiReferenceList extendsList = created.getExtendsList();
+      LOG.assertTrue(extendsList != null);
+      extendsList.add(superClass);
+    }
+
+    created = (PsiClass)aClass.add(created);
+    ref.bindToElement(created);
+  }
+}
