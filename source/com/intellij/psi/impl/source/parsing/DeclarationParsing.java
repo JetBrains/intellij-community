@@ -423,6 +423,8 @@ public class DeclarationParsing extends Parsing {
 
   private CompositeElement parseAnnotation(Lexer lexer) {
     CompositeElement annotation = Factory.createCompositeElement(ANNOTATION);
+    if (lexer.getTokenType() == null) return annotation;
+    
     TreeUtil.addChildren(annotation, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
     TreeElement classReference = parseJavaCodeReference(lexer, true, false);
