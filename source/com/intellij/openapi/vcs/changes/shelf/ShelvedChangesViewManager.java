@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -48,7 +47,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private ChangesViewContentManager myContentManager;
   private ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
-  private ChangesViewManager myChangesViewManager;
   private Tree myTree = new ShelfTree();
   private Content myContent = null;
   private ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
@@ -56,9 +54,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
 
   public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,
-                                   final ChangesViewManager changesViewManager, final MessageBus bus) {
+                                   final MessageBus bus) {
     myProject = project;
-    myChangesViewManager = changesViewManager;
     myContentManager = contentManager;
     myShelveChangesManager = shelveChangesManager;
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
