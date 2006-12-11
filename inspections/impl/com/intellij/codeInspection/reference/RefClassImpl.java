@@ -354,18 +354,21 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     return result[0];
   }
 
-  private static void formatClassName(final PsiClass aClass, final StringBuilder buf) {
+  private static void formatClassName(@NotNull final PsiClass aClass, final StringBuilder buf) {
     final String qName = aClass.getQualifiedName();
     if (qName != null) {
       buf.append(qName);
     }
     else {
-      formatClassName(PsiTreeUtil.getParentOfType(aClass, PsiClass.class), buf);
-      buf.append("$");
-      buf.append(getNonQualifiedClassIdx(aClass));
-      final String name = aClass.getName();
-      if (name != null) {
-        buf.append(name);
+      final PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+      if (parentClass != null) {
+        formatClassName(parentClass, buf);
+        buf.append("$");
+        buf.append(getNonQualifiedClassIdx(aClass));
+        final String name = aClass.getName();
+        if (name != null) {
+          buf.append(name);
+        }
       }
     }
   }
