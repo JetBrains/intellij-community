@@ -559,14 +559,16 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       @NotNull
       protected Object[] getSubclassVariants(PsiPackage context, String[] extendClasses) {
         HashSet<Object> lookups = new HashSet<Object>();
-        GlobalSearchScope scope = GlobalSearchScope.packageScope(context, true);
+        GlobalSearchScope packageScope = GlobalSearchScope.packageScope(context, true);
+        final GlobalSearchScope allScope = context.getProject().getAllScope();
         Boolean inst = INSTANTIATABLE.getValue(myOptions);
+
         boolean instantiatable = inst == null || inst.booleanValue();
 
         for (String extendClassName : extendClasses) {
-          PsiClass extendClass = context.getManager().findClass(extendClassName, scope);
+          PsiClass extendClass = context.getManager().findClass(extendClassName, allScope);
           if (extendClass != null) {
-            PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, scope, true);
+            PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, packageScope, true);
             for (final PsiClass clazz : result) {
               Object value = createSubclassLookupValue(context, clazz, instantiatable);
               if (value != null) {
