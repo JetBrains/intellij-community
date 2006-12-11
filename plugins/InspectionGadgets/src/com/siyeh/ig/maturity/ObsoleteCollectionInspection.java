@@ -17,14 +17,16 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +83,8 @@ public class ObsoleteCollectionInspection extends VariableInspection{
             if (typeElement == null) {
                 return;
             }
-            if (ignoreLibraryArguments && isUsedAsParameterForLibraryMethod(variable)) {
+            if (ignoreLibraryArguments &&
+                    isUsedAsParameterForLibraryMethod(variable)) {
                 return;
             }
             registerError(typeElement);
@@ -126,7 +129,6 @@ public class ObsoleteCollectionInspection extends VariableInspection{
             registerError(classNameElement);
         }
 
-        @SuppressWarnings({"HardCodedStringLiteral"})
         private boolean isObsoleteCollectionType(PsiType type) {
             if(type == null){
                 return false;
@@ -136,7 +138,7 @@ public class ObsoleteCollectionInspection extends VariableInspection{
                 return false;
             }
             final PsiClassType classType = (PsiClassType)deepComponentType;
-            final String className = classType.getClassName();
+            @NonNls final String className = classType.getClassName();
             if (!"Vector".equals(className) && !"Hashtable".equals(className)) {
                 return false;
             }
@@ -157,8 +159,9 @@ public class ObsoleteCollectionInspection extends VariableInspection{
                             GlobalSearchScope.fileScope(containingFile));
             for (PsiReference reference : query) {
                 final PsiElement element = reference.getElement();
+                final PsiElement parent = element.getParent();
                 if (isObsoleteCollectionTypeElementArgumentOfLibraryMethod(
-                        element)) {
+                        parent)) {
                     return true;
                 }
             }
@@ -168,15 +171,43 @@ public class ObsoleteCollectionInspection extends VariableInspection{
         private boolean isObsoleteCollectionTypeElementArgumentOfLibraryMethod(
                 PsiElement element) {
             final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiMethodCallExpression)) {
+            if (parent instanceof PsiVariable) {
+                final PsiVariable variable = (PsiVariable)parent;
+                final PsiType variableType = variable.getType();
+                if (isObsoleteCollectionType(variableType)) {
+                    return true;
+                }
+            } else if (parent instanceof PsiReturnStatement) {
+                final PsiMethod method = PsiTreeUtil.getParentOfType(parent,
+                        PsiMethod.class);
+                if (method != null) {
+                    final PsiType returnType = method.getReturnType();
+                    if (isObsoleteCollectionType(returnType)) {
+                        return true;
+                    }
+                }
+            } else if (parent instanceof PsiAssignmentExpression) {
+                final PsiAssignmentExpression assignmentExpression =
+                        (PsiAssignmentExpression)parent;
+                final PsiExpression lhs = assignmentExpression.getLExpression();
+                final PsiType lhsType = lhs.getType();
+                if (isObsoleteCollectionType(lhsType)) {
+                    return true;
+                }
+
+            }
+            if (!(parent instanceof PsiExpressionList)) {
                 return false;
             }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) parent;
-            final PsiExpressionList argumentList =
-                    methodCallExpression.getArgumentList();
+            final PsiExpressionList argumentList = (PsiExpressionList)parent;
+            final PsiElement grandParent = parent.getParent();
+            if (!(grandParent instanceof PsiCallExpression)) {
+                return false;
+            }
+            final PsiCallExpression callExpression =
+                    (PsiCallExpression)grandParent;
             final int index = getIndexOfArgument(argumentList, element);
-            final PsiMethod method = methodCallExpression.resolveMethod();
+            final PsiMethod method = callExpression.resolveMethod();
             if (method == null) {
                 return false;
             }
