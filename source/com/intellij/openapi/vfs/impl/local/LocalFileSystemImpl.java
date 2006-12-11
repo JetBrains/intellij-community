@@ -913,9 +913,23 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return result;
   }
 
-  private static void synchronizeFiles(final boolean recursively, final VirtualFile... files) {
+  private void synchronizeFiles(final boolean recursively, final VirtualFile... files) {
     for (final VirtualFile file : files) {
       ((VirtualFileImpl)file).refresh(true, recursively, true, null);
+      if (!recursively) {
+        if (((VirtualFileImpl)file).areChildrenCached()) {
+          for (final VirtualFile child : file.getChildren()) {
+            ((VirtualFileImpl)child).refresh(true, false, true, null);
+          }
+        } else {
+          for (final VirtualFileImpl unaccounted : myUnaccountedFiles.values()) {
+            if (VfsUtil.isAncestor(file, unaccounted, true)) {
+              ((VirtualFileImpl)unaccounted).refresh(true, false, true, null);
+              break;
+            }
+          }
+        }
+      }
     }
   }
 
