@@ -79,6 +79,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   public void projectOpened() {
+    updateChangesContent();
   }
 
   public void projectClosed() {
