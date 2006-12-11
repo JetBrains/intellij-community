@@ -1721,6 +1721,8 @@
     <group id="ShelvedChangesPopupMenu">
       <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
       <reference ref="ChangesView.Diff"/>
+      <separator/>
+      <reference ref="$Delete"/>
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
