@@ -350,14 +350,14 @@ final class FindDialog extends DialogWrapper {
           pattern = Pattern.compile(toFind, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
         }
 
-        if (pattern.matcher("").matches()) {
-          throw new PatternSyntaxException("Matching empty string",toFind,0);
+        if (pattern.matcher("").matches() && !toFind.endsWith("$") && !toFind.startsWith("^")) {
+          throw new PatternSyntaxException(FindBundle.message("find.empty.match.regular.expression.error"),toFind, -1);
         }
       }
       catch(PatternSyntaxException e){
         Messages.showMessageDialog(
             myProject,
-            FindBundle.message("find.invalid.regular.expression.error", toFind),
+            FindBundle.message("find.invalid.regular.expression.error", toFind, e.getDescription()),
             CommonBundle.getErrorTitle(),
             Messages.getErrorIcon()
         );
