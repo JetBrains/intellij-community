@@ -1,16 +1,16 @@
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.SoftHashMap;
 import gnu.trove.THashSet;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collections;
 
 @SuppressWarnings({"UnnecessaryBoxing"})
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
@@ -19,7 +19,8 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
 
   private Object myValue;
   
-  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_MAP_KEY");
+  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY");
+  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY");
   private static final Object NO_VALUE = new Object();
 
   private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow) {
@@ -363,36 +364,37 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     if (element == null) return null;
 
     Project project = element.getProject();
-    CachedValue<Map<PsiElement,Object>> cachedValue = project.getUserData(CONSTANT_VALUE_MAP_KEY);
-    if (!myThrowExceptionOnOverflow) {
-      if (cachedValue == null) {
-        cachedValue = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
-          public Result<Map<PsiElement,Object>> compute() {
-            Map<PsiElement, Object> value = Collections.synchronizedMap(new SoftHashMap<PsiElement, Object>());
-            return new Result<Map<PsiElement, Object>>(value, PsiModificationTracker.MODIFICATION_COUNT);
-          }
-        }, false);
-        project.putUserData(CONSTANT_VALUE_MAP_KEY, cachedValue);
-      }
-      Map<PsiElement, Object> map = cachedValue.getValue();
-      Object value = map.get(element);
-      if (value == null) {
-        myValue = null;
-        element.accept(this);
-        map.put(element, myValue == null ? NO_VALUE : myValue);
-        return myValue;
-      }
-      else if (value == NO_VALUE) {
-        return null;
-      }
-      else {
-        return value;
-      }
-    } else {
+    final Key<CachedValue<Map<PsiElement, Object>>> key = myThrowExceptionOnOverflow ?
+                                                          CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY :
+                                                          CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY;
+    return calculateWithCaching(project, key, element);
+  }
+
+  private Object calculateWithCaching(final Project project,
+                                      final Key<CachedValue<Map<PsiElement, Object>>> key,
+                                      final PsiElement element) {
+    CachedValue<Map<PsiElement,Object>> cachedValue = project.getUserData(key);
+    if (cachedValue == null) {
+      cachedValue = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<PsiElement,Object>>() {
+        public Result<Map<PsiElement,Object>> compute() {
+          Map<PsiElement, Object> value = Collections.synchronizedMap(new SoftHashMap<PsiElement, Object>());
+          return new Result<Map<PsiElement, Object>>(value, PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      }, false);
+      project.putUserData(key, cachedValue);
+    }
+    Map<PsiElement, Object> map = cachedValue.getValue();
+    Object value = map.get(element);
+    if (value == null) {
       myValue = null;
       element.accept(this);
+      map.put(element, myValue == null ? NO_VALUE : myValue);
       return myValue;
     }
+    else if (value == NO_VALUE) {
+      return null;
+    }
+    return value;
   }
 
   public void visitTypeCastExpression(PsiTypeCastExpression expression) {
