@@ -30,7 +30,6 @@ import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -62,7 +61,7 @@ public class InspectionApplication {
       InspectionMain.printHelp();
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         try {
