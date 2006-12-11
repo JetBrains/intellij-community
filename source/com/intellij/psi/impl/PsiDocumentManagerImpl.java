@@ -470,7 +470,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public TextBlock getTextBlock(Document document, PsiFile file) {
     TextBlock textBlock = file.getUserData(KEY_TEXT_BLOCK);
     if (textBlock == null){
-      textBlock = new TextBlock(document);
+      textBlock = new TextBlock();
       file.putUserData(KEY_TEXT_BLOCK, textBlock);
     }
 

@@ -7,10 +7,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 public class TextBlock extends DocumentAdapter {
   private Document myDocument; // Will hold a document on a hard reference until there's uncommited PSI for this document.
 
-  public TextBlock(final Document document) {
-    myDocument = document;
-  }
-
   private int myStartOffset = -1;
   private int myTextEndOffset = -1;
   private int myPsiEndOffset = -1;
@@ -22,6 +18,7 @@ public class TextBlock extends DocumentAdapter {
 
   public void clear() {
     myStartOffset = -1;
+    myDocument = null;
   }
 
   public int getStartOffset() {
@@ -49,7 +46,8 @@ public class TextBlock extends DocumentAdapter {
   }
 
   public void documentChanged(DocumentEvent e) {
-    assert myDocument == e.getDocument();
+    myDocument = e.getDocument();
+
     assert !myIsLocked;
 
     final int offset = e.getOffset();
@@ -65,8 +63,7 @@ public class TextBlock extends DocumentAdapter {
         myTextEndOffset = offset + e.getNewLength();
       }
       else {
-        int sizeDelta = e.getNewLength() - e.getOldLength();
-        myTextEndOffset += sizeDelta;
+        myTextEndOffset += (e.getNewLength() - e.getOldLength());
       }
 
       myStartOffset = Math.min(myStartOffset, offset);
