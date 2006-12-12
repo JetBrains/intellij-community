@@ -28,6 +28,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -351,6 +352,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     }
 
     protected void paintComponent(Graphics g) {
+      UIUtil.applyRenderingHints(g);
       super.paintComponent(g);
       ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
       look.paintBackground(g, this);
