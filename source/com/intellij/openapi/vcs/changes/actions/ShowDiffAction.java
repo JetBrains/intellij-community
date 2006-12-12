@@ -143,10 +143,10 @@ public class ShowDiffAction extends AnAction {
 
     if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
         (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
-      if (bRev != null && bRev.getFile().getFileType() == StdFileTypes.UNKNOWN) {
+      if (bRev != null && bRev.getFile().getFileType() == StdFileTypes.UNKNOWN && !bRev.getFile().isDirectory()) {
         if (!checkAssociate(project, bRev.getFile())) return null;
       }
-      else if (aRev != null && aRev.getFile().getFileType() == StdFileTypes.UNKNOWN) {
+      else if (aRev != null && aRev.getFile().getFileType() == StdFileTypes.UNKNOWN && !aRev.getFile().isDirectory()) {
         if (!checkAssociate(project, aRev.getFile())) return null;
       }
       else {
