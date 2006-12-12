@@ -84,6 +84,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       changes.addAll(manager.getChangesIn(path));
     }
 
+    commitChanges(project, changes, initialSelection, executor);
+  }
+
+  public static void commitChanges(final Project project, final Collection<Change> changes, final ChangeList initialSelection,
+                                   final CommitExecutor executor) {
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
     if (executor == null) {
       commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true);
     }

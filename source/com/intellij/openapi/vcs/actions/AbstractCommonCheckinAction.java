@@ -47,8 +47,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
@@ -67,10 +66,19 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       ApplicationManager.getApplication().saveAll();
     }
 
-    if (ChangeListManager.getInstance(project).ensureUpToDate(true)) {
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (changeListManager.ensureUpToDate(true)) {
       ChangeList initialSelection = getInitiallySelectedChangeList(context, project);
 
-      CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project));
+      Change[] changes = context.getSelectedChanges();
+      if (changes != null && changes.length > 0) {
+        Collection<Change> changeCollection = new ArrayList<Change>();
+        Collections.addAll(changeCollection, changes);
+        CommitChangeListDialog.commitChanges(project, changeCollection, initialSelection, getExecutor(project));
+      }
+      else {
+        CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project));
+      }
     }
   }
 
@@ -79,6 +87,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return null;
   }
 
+  @Nullable
   protected ChangeList getInitiallySelectedChangeList(final VcsContext context, final Project project) {
     ChangeList initialSelection;
     ChangeList[] selectedChangeLists = context.getSelectedChangeLists();
