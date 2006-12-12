@@ -1,6 +1,5 @@
 package com.intellij.find.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.find.*;
 import com.intellij.navigation.ItemPresentation;
@@ -203,7 +202,13 @@ public class FindInProjectUtil {
             int retCode = showMessage(project, FindBundle.message("find.skip.large.file.prompt",
                                                                   ApplicationNamesInfo.getInstance().getProductName(),
                                                                   getPresentablePath(virtualFile), presentableSize(fileLength)),
-                                      FindBundle.message("find.skip.large.file.title"));
+                                      FindBundle.message("find.skip.large.file.title"),
+                                      new String[] {
+                                        FindBundle.message("find.skip.large.file.skip.file"),
+                                        FindBundle.message("find.skip.large.file.scan.file"),
+                                        FindBundle.message("find.skip.large.file.skip.all"),
+                                        FindBundle.message("find.skip.large.file.scan.all")
+                                      });
             if (retCode == SKIP_ALL) {
               skipAllLarge = true;
               continue;
@@ -320,16 +325,10 @@ public class FindInProjectUtil {
     return answer[0];
   }
 
-  private static int showMessage(final Project project, final String message, final String title) {
+  private static int showMessage(final Project project, final String message, final String title, final String[] buttons) {
     return invokeAndWait(new Computable<Integer>() {
       public Integer compute() {
-        return Messages.showDialog(project, message, title,
-                                          new String[] {
-                                            CommonBundle.message("button.yes"),
-                                            CommonBundle.message("button.no"),
-                                            CommonBundle.message("button.yes.for.all"),
-                                            CommonBundle.message("button.no.for.all")
-                                          }, 0, Messages.getWarningIcon());
+        return Messages.showDialog(project, message, title, buttons, 0, Messages.getWarningIcon());
       }
     });
   }
