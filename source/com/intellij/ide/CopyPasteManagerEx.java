@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -31,6 +32,10 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ExecutionException;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CopyPasteManagerEx");
@@ -101,34 +106,39 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     final boolean[] success = new boolean[] {false};
     Runnable accessor = new Runnable() {
       public void run() {
-        for (int i = 0; i < 3; i++) {
-          try {
-            contents[0] = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(CopyPasteManagerEx.this);
-          } catch (IllegalStateException e) {
+        try {
+          for (int i = 0; i < 3; i++) {
             try {
-              Thread.sleep(50);
-            } catch (InterruptedException e1) {
+              contents[0] = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(CopyPasteManagerEx.this);
+            } catch (IllegalStateException e) {
+              try {
+                Thread.sleep(50);
+              } catch (InterruptedException e1) {
+              }
+              continue;
             }
-            continue;
+            break;
           }
-          break;
-        }
 
-        success[0] = true;
+          success[0] = true;
+        }
+        finally {
+          Thread.interrupted(); // reset interrupted status
+        }
       }
     };
 
     if (Patches.SUN_BUG_ID_4818143) {
       //noinspection HardCodedStringLiteral
-      final Thread worker = new Thread(accessor, "Clipboard accessor");
-      worker.start();
+      final Future<?> accessorFuture = ApplicationManager.getApplication().executeOnPooledThread(accessor);
+
       try {
-        worker.join(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS);
+        accessorFuture.get(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS, TimeUnit.MILLISECONDS);
       }
-      catch (InterruptedException e) { /*  no luck */ }
+      catch (Exception e) { /*  no luck */ }
 
       if (success[0]) return contents[0];
-      worker.interrupt();
+      accessorFuture.cancel(true);
       showWorkaroundMessage();
 
       return null;
@@ -450,37 +460,43 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     final boolean[] success = new boolean[]{false};
     final Runnable accessor = new Runnable() {
       public void run() {
-        for (int i = 0; i < 3; i++) {
-          try {
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, CopyPasteManagerEx.this);
-          }
-          catch (IllegalStateException e) {
+        try {
+          for (int i = 0; i < 3; i++) {
             try {
-              Thread.sleep(50);
+              Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, CopyPasteManagerEx.this);
             }
-            catch (InterruptedException e1) {
+            catch (IllegalStateException e) {
+              try {
+                Thread.sleep(50);
+              }
+              catch (InterruptedException e1) {
+              }
+              continue;
             }
-            continue;
+            break;
           }
-          break;
+          success[0] = true;
         }
-        success[0] = true;
+        finally {
+          Thread.interrupted(); // reset interrupted status
+        }
       }
     };
 
     if (Patches.SUN_BUG_ID_4818143) {
       //noinspection HardCodedStringLiteral
-      Thread worker = new Thread(accessor, "Clipboard accessor");
-      worker.start();
+      Future<?> accessorFuture = ApplicationManager.getApplication().executeOnPooledThread(accessor);
 
       try {
-        worker.join(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS);
+        accessorFuture.get(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException e) { /* no luck */ }
+      catch (TimeoutException e) {}
+      catch (ExecutionException e) {}
 
       if (!success[0]) {
         showWorkaroundMessage();
-        worker.interrupt();
+        accessorFuture.cancel(true);
       }
     }
     else {

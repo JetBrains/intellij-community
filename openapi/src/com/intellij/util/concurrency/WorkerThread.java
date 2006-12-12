@@ -19,15 +19,20 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedList;
 
-public class WorkerThread extends Thread{
+import com.intellij.openapi.application.ApplicationManager;
+
+public class WorkerThread implements Runnable {
   private LinkedList<Runnable> myTasks = new LinkedList<Runnable>();
   private boolean myToDispose = false;
   private boolean myDisposed = false;
 
   public WorkerThread(@NonNls String name) {
-    super(name);
   }
 
+  public void start() {
+    ApplicationManager.getApplication().executeOnPooledThread(this);
+  }
+  
   public boolean addTask(Runnable action) {
     synchronized(myTasks){
       if(myDisposed) return false;

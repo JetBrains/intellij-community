@@ -16,6 +16,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.application.ApplicationManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
@@ -41,7 +42,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if(vm != null) {
       vmAttached();
       myEventThread = new DebuggerEventThread();
-      myEventThread.start();
+      ApplicationManager.getApplication().executeOnPooledThread(myEventThread);
     }
   }
 
@@ -143,12 +144,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
     return text;
   }
 
-  private class DebuggerEventThread extends Thread {
+  private class DebuggerEventThread implements Runnable {
     final VirtualMachineProxyImpl myVmProxy;
 
     DebuggerEventThread () {
-      //noinspection HardCodedStringLiteral
-      super("DebuggerEventThread");
       myVmProxy = getVirtualMachineProxy();
     }
 
@@ -239,6 +238,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       catch (VMDisconnectedException e) {
         invokeVMDeathEvent();
+      } finally {
+        Thread.interrupted(); // reset interrupted status
       }
     }
 
