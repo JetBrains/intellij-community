@@ -96,7 +96,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionText.setText(SVNRevision.HEAD.toString());
     myRevisionText.getTextField().selectAll();
     myRevisionText.setEnabled(myRevisionBox.isSelected());
-    myURLText.setEnabled(false);
+    myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
   }
 
   private void chooseUrl() {
@@ -120,7 +120,8 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionBox.setSelected(rootInfo.isUpdateToRevision());
     myRevisionText.setText(rootInfo.getRevision().getName());
     myUpdateToSpecificUrl.setSelected(false);
-    myURLText.setEnabled(false);
+    myRevisionText.setEnabled(myRevisionBox.isSelected());
+    myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
   }
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
