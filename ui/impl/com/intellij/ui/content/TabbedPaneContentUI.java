@@ -171,7 +171,17 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       Presentation presentation = e.getPresentation();
       presentation.setText(myManager.getCloseAllButThisActionName());
       presentation.setEnabled(myContent != null && myManager.canCloseContents() && myManager.getContentCount() > 1);
-      presentation.setVisible(myManager.canCloseContents());
+      presentation.setVisible(myManager.canCloseContents() && hasCloseableContents());
+    }
+
+    private boolean hasCloseableContents() {
+      Content[] contents = myManager.getContents();
+      for (Content content : contents) {
+        if (myContent != content && content.isCloseable()) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
