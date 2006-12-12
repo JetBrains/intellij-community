@@ -23,6 +23,7 @@ import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -138,6 +139,41 @@ public class MethodSignatureUtil {
     return MethodSignatureUtil.isSubsignature(superSignature, derivedSignature);
   }
 
+  @Nullable
+  public static PsiMethod findMethodInSuperClassBySignatureInDerived(final PsiClass aClass, final MethodSignature signature, final boolean checkDeep) {
+    final PsiClass superClass = aClass.getSuperClass();
+    if (superClass != null) {
+      PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
+      return doFindMethodInSuperClassBySignatureInDerived(superClass, superSubstitutor, signature, checkDeep);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiMethod doFindMethodInSuperClassBySignatureInDerived(final PsiClass superClass,
+                                                                        final PsiSubstitutor superSubstitutor,
+                                                                        final MethodSignature signature,
+                                                                        final boolean checkDeep) {
+    final String name = signature.getName();
+    final PsiMethod[] methods = superClass.findMethodsByName(name, false);
+    for (final PsiMethod method : methods) {
+      if (isSubsignature(method.getSignature(superSubstitutor), signature)) {
+        return method;
+      }
+    }
+
+    if (checkDeep) {
+      final PsiClass clazz = superClass.getSuperClass();
+      if (clazz != null) {
+        PsiSubstitutor substitutor1 = TypeConversionUtil.getSuperClassSubstitutor(clazz, superClass, superSubstitutor);
+        return doFindMethodInSuperClassBySignatureInDerived(clazz, substitutor1, signature, true);
+      }
+    }
+
+    return null;
+  }
+
   public static class MethodSignatureToMethods {
     private Map<MethodSignature, List<MethodSignatureBackedByPsiMethod>> myMap;
 
@@ -173,6 +209,7 @@ public class MethodSignatureUtil {
     return null;
   }
 
+  @Nullable
   public static PsiMethod findMethodBySuperSignature(final PsiClass aClass, MethodSignature methodSignature, final boolean checkBases) {
     List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {

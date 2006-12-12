@@ -31,16 +31,26 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
         PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor,
                                                                                  PsiSubstitutor.EMPTY);
         MethodSignature signature = method.getSignature(substitutor);
-        PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
-        if (method1 == null ||
-            method1.hasModifierProperty(PsiModifier.STATIC) ||
-            (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {
+        PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
+        if (found == null || !isAcceptable(found, method)) {
+          if (parentClass.isInterface() && !inheritor.isInterface() && inheritor.isInheritor(parentClass, false)) {  //check for sibling implementation
+            found = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, signature, true);
+            if (found != null && isAcceptable(found, method)) {
+              return consumer.process(found) && p.isCheckDeep();
+            }
+          }
           return true;
         }
-        return consumer.process(method1) && p.isCheckDeep();
+        return consumer.process(found) && p.isCheckDeep();
       }
     };
 
     return ClassInheritorsSearch.search(parentClass, scope, true).forEach(inheritorsProcessor);
+  }
+
+  private static boolean isAcceptable(final PsiMethod found, final PsiMethod method) {
+    return !found.hasModifierProperty(PsiModifier.STATIC) &&
+           (!method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
+            found.getManager().arePackagesTheSame(method.getContainingClass(), found.getContainingClass()));
   }
 }

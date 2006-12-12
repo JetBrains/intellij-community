@@ -48,6 +48,12 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
           MethodSignature signature = method.getSignature(substitutor);
           PsiMethod inInheritor = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
           if (inInheritor == null || inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
+            if (psiClass.isInterface() && !inheritor.isInterface() && inheritor.isInheritor(psiClass, false)) {  //check for sibling implementation
+              inInheritor = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, signature, true);
+              if (inInheritor != null && !inInheritor.hasModifierProperty(PsiModifier.STATIC)) {
+                if (!consumer.process(new Pair<PsiMethod, PsiMethod>(method, inInheritor))) return false;
+              }
+            }
             continue;
           }
           if (!consumer.process(new Pair<PsiMethod, PsiMethod>(method, inInheritor))) return false;
