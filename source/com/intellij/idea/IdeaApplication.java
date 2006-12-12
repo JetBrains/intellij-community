@@ -38,12 +38,12 @@ public class IdeaApplication {
   @NonNls public static final String IPR_SUFFIX = ".ipr";
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  protected IdeaApplication(String[] args) {
+  public IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
     ourInstance = this;
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
-    if (Main.isHeadless()) {
+    if (Main.isHeadless(args)) {
       new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
     } else {
       ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, "idea");
