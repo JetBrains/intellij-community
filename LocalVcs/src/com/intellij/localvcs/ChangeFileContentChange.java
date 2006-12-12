@@ -3,12 +3,12 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class ChangeFileContentChange extends Change {
-  private String myNewContent;
-  private String myOldContent;
+  private Content myNewContent;
+  private Content myOldContent;
   private Long myNewTimestamp;
   private Long myOldTimestamp;
 
-  public ChangeFileContentChange(String path, String newContent, Long timestamp) {
+  public ChangeFileContentChange(String path, Content newContent, Long timestamp) {
     super(path);
     myNewContent = newContent;
     myNewTimestamp = timestamp;
@@ -16,8 +16,8 @@ public class ChangeFileContentChange extends Change {
 
   public ChangeFileContentChange(Stream s) throws IOException {
     super(s);
-    myNewContent = s.readString();
-    myOldContent = s.readString();
+    myNewContent = s.readContent();
+    myOldContent = s.readContent();
     myNewTimestamp = s.readLong();
     myOldTimestamp = s.readLong();
   }
@@ -25,17 +25,17 @@ public class ChangeFileContentChange extends Change {
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeString(myNewContent);
-    s.writeString(myOldContent);
+    s.writeContent(myNewContent);
+    s.writeContent(myOldContent);
     s.writeLong(myNewTimestamp);
     s.writeLong(myOldTimestamp);
   }
 
-  public String getNewContent() {
+  public Content getNewContent() {
     return myNewContent;
   }
 
-  public String getOldContent() {
+  public Content getOldContent() {
     return myOldContent;
   }
 

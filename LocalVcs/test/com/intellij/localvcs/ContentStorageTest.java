@@ -1,6 +1,5 @@
 package com.intellij.localvcs;
 
-import com.intellij.util.io.SharedCachingStrategy;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,11 +28,11 @@ public class ContentStorageTest extends TempDirTestCase {
     byte[] c1 = new byte[]{1};
     byte[] c2 = new byte[]{2};
 
-    s.storeContent(1, c1);
-    s.storeContent(2, c2);
+    int id1 = s.storeContent(c1);
+    int id2 = s.storeContent(c2);
 
-    assertEquals(c1, s.loadContent(1));
-    assertEquals(c2, s.loadContent(2));
+    assertEquals(c1, s.loadContent(id1));
+    assertEquals(c2, s.loadContent(id2));
   }
 
   @Test(expected = AssertionError.class)
@@ -42,37 +41,26 @@ public class ContentStorageTest extends TempDirTestCase {
   }
 
   @Test
-  public void testChangingContent() throws Exception {
-    byte[] c1 = new byte[]{1, 2, 3};
-    byte[] c2 = new byte[]{4, 5, 6};
-
-    s.storeContent(1, c1);
-    s.storeContent(1, c2);
-
-    assertEquals(c2, s.loadContent(1));
-  }
-
-  @Test
   public void testStoringBetweenSessions() throws Exception {
     byte[] c = new byte[]{1, 2, 3};
 
-    s.storeContent(1, c);
+    int id = s.storeContent(c);
     s.close();
 
     s = createStorage();
-    assertEquals(c, s.loadContent(1));
+    assertEquals(c, s.loadContent(id));
   }
 
   @Test
   public void testSaving() throws Exception {
     byte[] c = new byte[]{1, 2, 3};
 
-    s.storeContent(1, c);
+    int id = s.storeContent(c);
     s.save();
 
     ContentStorage another = createStorage();
     try {
-      assertEquals(c, another.loadContent(1));
+      assertEquals(c, another.loadContent(id));
     }
     finally {
       another.close();
@@ -81,35 +69,28 @@ public class ContentStorageTest extends TempDirTestCase {
 
   @Test
   public void testRemoving() throws Exception {
-    s.storeContent(1, new byte[] {1});
-    assertTrue(s.hasContent(1));
+    int id = s.storeContent(new byte[]{1});
+    assertTrue(s.hasContent(id));
 
-    s.removeContent(1);
-    assertFalse(s.hasContent(1));
+    s.removeContent(id);
+    assertFalse(s.hasContent(id));
   }
 
   @Test(expected = AssertionError.class)
   public void testLoadingRemovedContentThrowsException() throws Exception {
-    s.storeContent(1, new byte[] {1});
-    s.removeContent(1);
+    int id = s.storeContent(new byte[]{1});
+    s.removeContent(id);
 
-    s.loadContent(1);
+    s.loadContent(id);
   }
 
   @Test
-  public void testSavtingWithRemovedContent() throws Exception {
-    s.storeContent(1, new byte[] {1});
-    s.removeContent(1);
+  public void testSavingWithRemovedContent() throws Exception {
+    int id = s.storeContent(new byte[]{1});
+    s.removeContent(id);
     s.close();
 
     s = createStorage();
-    assertFalse(s.hasContent(1));
-  }
-
-  private void assertEquals(byte[] expected, byte[] actual) {
-    assertEquals(expected.length, actual.length);
-    for (int i = 0; i < expected.length; i++) {
-      assertEquals(expected[i], actual[i]);
-    }
+    assertFalse(s.hasContent(id));
   }
 }

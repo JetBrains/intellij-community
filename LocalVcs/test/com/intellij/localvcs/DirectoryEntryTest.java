@@ -206,7 +206,7 @@ public class DirectoryEntryTest extends TestCase {
     Entry e1 = new DirectoryEntry(null, "name", null);
     Entry e2 = new DirectoryEntry(null, "name", null);
 
-    Entry child = new FileEntry(1, "name", "content", null);
+    Entry child = new FileEntry(1, "name", c("content"), null);
     e2.addChild(child);
 
     Difference d = e1.getDifferenceWith(e2);
@@ -292,8 +292,8 @@ public class DirectoryEntryTest extends TestCase {
     Entry e1 = new DirectoryEntry(null, "name", null);
     Entry e2 = new DirectoryEntry(null, "name", null);
 
-    Entry child1 = new FileEntry(1, "name1", "content", null);
-    Entry child2 = new FileEntry(1, "name2", "content", null);
+    Entry child1 = new FileEntry(1, "name1", c("content"), null);
+    Entry child2 = new FileEntry(1, "name2", c("content"), null);
 
     e1.addChild(child1);
     e2.addChild(child2);
@@ -316,10 +316,10 @@ public class DirectoryEntryTest extends TestCase {
     Entry e1 = new DirectoryEntry(null, "name", null);
     Entry e2 = new DirectoryEntry(null, "name", null);
 
-    e1.addChild(new FileEntry(1, "name", "content", null));
-    e2.addChild(new FileEntry(1, "name", "content", null));
+    e1.addChild(new FileEntry(1, "name", c("content"), null));
+    e2.addChild(new FileEntry(1, "name", c("content"), null));
 
-    e1.addChild(new FileEntry(2, "another name", "content", null));
+    e1.addChild(new FileEntry(2, "another name", c("content"), null));
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(1, d.getChildren().size());
@@ -332,8 +332,8 @@ public class DirectoryEntryTest extends TestCase {
     Entry e1 = new DirectoryEntry(null, "name", null);
     Entry e2 = new DirectoryEntry(null, "name", null);
 
-    e1.addChild(new FileEntry(1, "name", "content", null));
-    e2.addChild(new FileEntry(1, "name", "content", null));
+    e1.addChild(new FileEntry(1, "name", c("content"), null));
+    e2.addChild(new FileEntry(1, "name", c("content"), null));
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(NOT_MODIFIED, d.getKind());
@@ -348,8 +348,8 @@ public class DirectoryEntryTest extends TestCase {
     Entry e1 = new DirectoryEntry(null, "name1", null);
     Entry e2 = new DirectoryEntry(null, "name2", null);
 
-    Entry child1 = new FileEntry(1, "name1", "content", null);
-    Entry child2 = new FileEntry(1, "name2", "content", null);
+    Entry child1 = new FileEntry(1, "name1", c("content"), null);
+    Entry child2 = new FileEntry(1, "name2", c("content"), null);
 
     e1.addChild(child1);
     e2.addChild(child2);

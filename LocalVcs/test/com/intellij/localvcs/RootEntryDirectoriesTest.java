@@ -75,11 +75,11 @@ public class RootEntryDirectoriesTest extends TestCase {
   @Test
   public void testChangingFileContentUnderDirectory() {
     root.createDirectory(1, "dir", null);
-    root.createFile(2, "dir/file", "content", null);
+    root.createFile(2, "dir/file", c("content"), null);
 
-    root.changeFileContent("dir/file", "new content", null);
+    root.changeFileContent("dir/file", c("new content"), null);
 
-    assertEquals("new content", root.getEntry("dir/file").getContent());
+    assertEquals(c("new content"), root.getEntry("dir/file").getContent());
   }
 
   @Test
@@ -95,14 +95,14 @@ public class RootEntryDirectoriesTest extends TestCase {
   @Test
   public void testRenamingFilesUnderDirectory() {
     root.createDirectory(1, "dir", null);
-    root.createFile(2, "dir/file", "content", null);
+    root.createFile(2, "dir/file", c("content"), null);
 
     root.rename("dir/file", "new file");
 
     assertFalse(root.hasEntry("dir/file"));
     assertTrue(root.hasEntry("dir/new file"));
 
-    assertEquals("content", root.getEntry("dir/new file").getContent());
+    assertEquals(c("content"), root.getEntry("dir/new file").getContent());
   }
 
   @Test
@@ -162,7 +162,7 @@ public class RootEntryDirectoriesTest extends TestCase {
   public void testMovingFilesBetweenDirectories() {
     root.createDirectory(1, "dir1", null);
     root.createDirectory(2, "dir2", null);
-    root.createFile(3, "dir1/file", "content", null);
+    root.createFile(3, "dir1/file", c("content"), null);
 
     root.move("dir1/file", "dir2");
 
@@ -170,7 +170,7 @@ public class RootEntryDirectoriesTest extends TestCase {
     assertFalse(root.hasEntry("dir1/file"));
 
     Entry e = root.getEntry("dir2/file");
-    assertEquals("content", e.getContent());
+    assertEquals(c("content"), e.getContent());
   }
 
   @Test
@@ -298,7 +298,7 @@ public class RootEntryDirectoriesTest extends TestCase {
   @Test
   public void testDeletingFilesUnderDirectory() {
     root.createDirectory(1, "dir", null);
-    root.createFile(2, "dir/file", "", null);
+    root.createFile(2, "dir/file", null, null);
     assertTrue(root.hasEntry("dir/file"));
 
     root.delete("dir/file");

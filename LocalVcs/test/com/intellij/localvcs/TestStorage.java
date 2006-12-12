@@ -1,14 +1,43 @@
 package com.intellij.localvcs;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TestStorage extends Storage {
-  public TestStorage() { super(null); }
+  private Map<Integer, byte[]> myContents = new HashMap<Integer, byte[]>();
+
+  public TestStorage() {
+    super(null);
+  }
 
   @Override
-  public ChangeList loadChangeList() { return new ChangeList(); }
+  protected void init() {
+  }
 
   @Override
-  public RootEntry loadRootEntry() { return new RootEntry(); }
+  public ChangeList loadChangeList() {
+    return new ChangeList();
+  }
 
   @Override
-  public Integer loadCounter() { return 0; }
+  public RootEntry loadRootEntry() {
+    return new RootEntry();
+  }
+
+  @Override
+  public Integer loadCounter() {
+    return 0;
+  }
+
+  @Override
+  public Content createContent(byte[] bytes) {
+    int id = myContents.size();
+    myContents.put(id, bytes);
+    return new Content(this, id);
+  }
+
+  @Override
+  protected byte[] loadContent(int id) {
+    return myContents.get(id);
+  }
 }

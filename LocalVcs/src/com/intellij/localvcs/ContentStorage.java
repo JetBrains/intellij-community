@@ -8,6 +8,7 @@ import com.intellij.util.io.CachedRandomAccessFile;
 import com.intellij.util.io.CachingStrategy;
 import com.intellij.util.io.SharedCachingStrategy;
 import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntLongHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.ByteArrayInputStream;
@@ -20,26 +21,26 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class ContentStorage {
+  // todo what about reusing removed contents????
   private CachedFile myStore;
 
-  private TIntIntHashMap myIds2Offsets;
+  private TIntLongHashMap myIds2Offsets;
   private IntObjectCache<byte[]> myContentCache;
+  private int myCounter = 0;
 
   public ContentStorage(File f) throws IOException, CouldNotLoadLvcsException {
     // todo why SharedCachingStrategy?
     CachingStrategy s = new SharedCachingStrategy(16 * 1024, 2 * 1024 * 1024);
 
     myStore = new CachedRandomAccessFile(f, s);
-    myIds2Offsets = new TIntIntHashMap(1024);
+    myIds2Offsets = new TIntLongHashMap(1024);
     myContentCache = new IntObjectCache<byte[]>(200);
     load();
   }
 
   private void load() throws IOException, CouldNotLoadLvcsException {
-    myStore.seek(0);
-    final int length = (int)myStore.length();
-    int offset;
-    while ((offset = (int)myStore.getFilePointer()) < length) {
+    long offset;
+    while ((offset = myStore.getFilePointer()) < myStore.length()) {
       final ContentDescriptor cd = new ContentDescriptor(myStore, true);
       if (!cd.isOk()) {
         throw new CouldNotLoadLvcsException(LocalVcsBundle.message("exception.text.local.history.content.store.is.corrupted"));
@@ -58,8 +59,9 @@ public class ContentStorage {
     myStore.flush();
   }
 
-  public void storeContent(int id, byte[] content) throws IOException {
-    int offset = (int)myStore.length();
+  public int storeContent(byte[] content) throws IOException {
+    long offset = myStore.length();
+    int id = (int)offset;
 
     myStore.seek(offset);
     ContentDescriptor d = new ContentDescriptor(id, content);
@@ -68,13 +70,15 @@ public class ContentStorage {
 
     myIds2Offsets.put(id, offset);
     myContentCache.cacheObject(id, content);
+
+    return id;
   }
 
   public byte[] loadContent(int id) throws IOException {
     byte[] content = findContentInCache(id);
     if (content != null) return content;
 
-    int offset = getOffsetFor(id);
+    long offset = getOffsetFor(id);
 
     myStore.seek(offset);
     ContentDescriptor cd = new ContentDescriptor(myStore, false);
@@ -86,7 +90,7 @@ public class ContentStorage {
   }
 
   public void removeContent(int id) throws IOException {
-    int offset = getOffsetFor(id);
+    long offset = getOffsetFor(id);
     myStore.seek(offset);
 
     ContentDescriptor d = new ContentDescriptor(myStore, true);
@@ -103,7 +107,7 @@ public class ContentStorage {
     return myContentCache.tryKey(id);
   }
 
-  private int getOffsetFor(int id) {
+  private long getOffsetFor(int id) {
     assert hasContent(id);
     return myIds2Offsets.get(id);
   }
@@ -166,14 +170,6 @@ public class ContentStorage {
       return myId;
     }
 
-    void setId(int id) {
-      myId = id;
-    }
-
-    int getChecksum() {
-      return myChecksum;
-    }
-
     boolean isRemoved() {
       return (myFlags & ContentDescriptor.REMOVED_MASK) != 0;
     }
@@ -188,10 +184,6 @@ public class ContentStorage {
 
     void markCompressed() {
       myFlags |= ContentDescriptor.COMPRESSED_MASK;
-    }
-
-    int getLength() {
-      return myContent.length;
     }
 
     byte[] getContent() {

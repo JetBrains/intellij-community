@@ -7,10 +7,10 @@ import java.util.List;
 public class CreateFileChange extends Change {
   // todo test storing of all the changes and test it once and for all times 8))
   private Integer myId;
-  private String myContent;
+  private Content myContent;
   private Long myTimestamp;
 
-  public CreateFileChange(Integer id, String path, String content, Long timestamp) {
+  public CreateFileChange(Integer id, String path, Content content, Long timestamp) {
     super(path);
     myId = id;
     myContent = content;
@@ -20,7 +20,7 @@ public class CreateFileChange extends Change {
   public CreateFileChange(Stream s) throws IOException {
     super(s);
     myId = s.readInteger();
-    myContent = s.readString();
+    myContent = s.readContent();
     myTimestamp = s.readLong();
   }
 
@@ -28,7 +28,7 @@ public class CreateFileChange extends Change {
   public void write(Stream s) throws IOException {
     super.write(s);
     s.writeInteger(myId);
-    s.writeString(myContent);
+    s.writeContent(myContent);
     s.writeLong(myTimestamp);
   }
 
@@ -36,7 +36,7 @@ public class CreateFileChange extends Change {
     return myId;
   }
 
-  public String getContent() {
+  public Content getContent() {
     return myContent;
   }
 

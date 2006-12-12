@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.Content;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -68,10 +69,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected abstract void updateDiffs();
 
-  protected SimpleDiffRequest createDiffRequest(String left, String right) {
+  protected SimpleDiffRequest createDiffRequest(Content left, Content right) {
     // todo add timestamps
     SimpleDiffRequest r = new SimpleDiffRequest(null, "title");
-    r.setContents(new SimpleContent(left), new SimpleContent(right));
+    // todo review byte conversion
+    r.setContents(new SimpleContent(new String(left.getData())),
+                  new SimpleContent(new String(right.getData())));
     return r;
   }
 

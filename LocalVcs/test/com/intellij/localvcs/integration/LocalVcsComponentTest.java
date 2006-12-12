@@ -7,11 +7,20 @@ import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.project.Project;
+import org.junit.After;
 import org.junit.Test;
 
 import java.io.File;
 
 public class LocalVcsComponentTest extends TempDirTestCase {
+  private MyStartupManager sm;
+  private LocalVcsComponent c;
+
+  @After
+  public void tearDown() {
+    if (c != null) c.disposeComponent();
+  }
+
   @Test
   public void testStorageLocation() {
     Project p = new MyMockProject("projectName", "c:/projects/projectName.ipr");
@@ -23,44 +32,45 @@ public class LocalVcsComponentTest extends TempDirTestCase {
 
   @Test
   public void testLoadingOnStartup() {
-    Project p = new MyMockProject("a", "b");
-    MyStartupManager sm = new MyStartupManager();
-    LocalVcsComponent c = new MyLocalVcsComponent(tempDir.getPath(), p, sm);
-    c.initComponent();
+    initComponent();
 
-    LocalVcs vcs = new LocalVcs(new Storage(c.getStorageDir()));
+    Storage s = new Storage(c.getStorageDir());
+    LocalVcs vcs = new LocalVcs(s);
     vcs.createFile("file", null, null);
     vcs.apply();
     vcs.store();
+    s.close();
 
     sm.runPreStartupActivity();
 
     assertTrue(c.getLocalVcs().hasEntry("file"));
   }
 
+  private void initComponent() {
+    Project p = new MyMockProject("a", "b");
+    sm = new MyStartupManager();
+    c = new MyLocalVcsComponent(tempDir.getPath(), p, sm);
+    c.initComponent();
+  }
+
   @Test
   public void testSaving() {
-    Project p = new MyMockProject("a", "b");
-    MyStartupManager sm = new MyStartupManager();
-    LocalVcsComponent c = new MyLocalVcsComponent(tempDir.getPath(), p, sm);
-    c.initComponent();
-
+    initComponent();
     sm.runPreStartupActivity();
 
     c.getLocalVcs().createFile("file", null, null);
     c.getLocalVcs().apply();
     c.save();
 
-    LocalVcs vcs = new LocalVcs(new Storage(c.getStorageDir()));
+    Storage s = new Storage(c.getStorageDir());
+    LocalVcs vcs = new LocalVcs(s);
+    s.close();
     assertTrue(vcs.hasEntry("file"));
   }
 
   @Test
-  public void testSavingBeforeStartupDoesnotThrowExceptions() {
-    Project p = new MyMockProject("a", "b");
-    MyStartupManager sm = new MyStartupManager();
-    LocalVcsComponent c = new MyLocalVcsComponent(tempDir.getPath(), p, sm);
-    c.initComponent();
+  public void testSavingBeforeStartupDoesNotThrowExceptions() {
+    initComponent();
 
     try {
       c.save();
@@ -134,6 +144,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
 
   private static class MyLocalVcsComponent extends LocalVcsComponent {
     private String mySystemPath;
+    private boolean isVcsInitialized;
 
     public MyLocalVcsComponent(String systemPath, Project p, MyStartupManager sm) {
       super(p, sm, null, null);
@@ -145,8 +156,24 @@ public class LocalVcsComponentTest extends TempDirTestCase {
       return mySystemPath;
     }
 
+
+    @Override
+    protected void initVcs() {
+      super.initVcs();
+      isVcsInitialized = true;
+    }
+
+    @Override
+    protected void closeVcs() {
+      if(isVcsInitialized) super.closeVcs();
+    }
+
     @Override
     protected void initService() {
+    }
+
+    @Override
+    protected void closeService() {
     }
 
     @Override

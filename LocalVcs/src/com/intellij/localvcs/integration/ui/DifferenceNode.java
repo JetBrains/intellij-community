@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.Difference;
 import com.intellij.localvcs.Entry;
+import com.intellij.localvcs.Content;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vcs.checkin.DiffTreeNode;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
@@ -103,11 +104,11 @@ public class DifferenceNode implements TreeNode, PresentableDiffTreeNode {
     return FileTypeManager.getInstance();
   }
 
-  public String getLeftContent() {
+  public Content getLeftContent() {
     return myDiff.getLeft().getContent();
   }
 
-  public String getRightContent() {
+  public Content getRightContent() {
     return myDiff.getRight().getContent();
   }
 }

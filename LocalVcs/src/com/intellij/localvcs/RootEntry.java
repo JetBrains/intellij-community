@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 
 // todo try to crean up Entry hierarchy
+// todo replace all String.length() == 0 with String.isEmpty()
+// todo maybe get rid of create/delete/remove methods
 public class RootEntry extends DirectoryEntry {
   // todo try to remove different null-checks
   public RootEntry() {
@@ -86,7 +88,7 @@ public class RootEntry extends DirectoryEntry {
     return result;
   }
 
-  public void createFile(Integer id, String path, String content, Long timestamp) {
+  public void createFile(Integer id, String path, Content content, Long timestamp) {
     FileEntry e = new FileEntry(id, Path.getNameOf(path), content, timestamp);
     addEntry(Path.getParentOf(path), e);
   }
@@ -108,7 +110,7 @@ public class RootEntry extends DirectoryEntry {
 
   // todo make entries to be modifiable objects
 
-  public void changeFileContent(String path, String newContent, Long timestamp) {
+  public void changeFileContent(String path, Content newContent, Long timestamp) {
     Entry oldEntry = getEntry(path);
     Entry newEntry = oldEntry.withContent(newContent, timestamp);
 

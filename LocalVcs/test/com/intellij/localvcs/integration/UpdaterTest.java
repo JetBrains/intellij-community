@@ -82,7 +82,7 @@ public class UpdaterTest extends TestCase {
     assertEquals(1L, vcs.getEntry("root/dir").getTimestamp());
 
     Entry e = vcs.getEntry("root/dir/file");
-    assertEquals("content", e.getContent());
+    assertEquals(c("content"), e.getContent());
     assertEquals(2L, e.getTimestamp());
   }
 
@@ -106,7 +106,7 @@ public class UpdaterTest extends TestCase {
   @Test
   public void testDoesNothingWithUpToDateFiles() {
     vcs.createDirectory("root/dir", 1L);
-    vcs.createFile("root/dir/file", "content", 1L);
+    vcs.createFile("root/dir/file", b("content"), 1L);
     vcs.apply();
 
     Entry e1 = vcs.getEntry("root/dir");
@@ -122,12 +122,12 @@ public class UpdaterTest extends TestCase {
 
     assertSame(e1, vcs.getEntry("root/dir"));
     assertSame(e2, vcs.getEntry("root/dir/file"));
-    assertEquals("content", e2.getContent());
+    assertEquals(c("content"), e2.getContent());
   }
 
   @Test
   public void testUpdatingOutdatedFiles() {
-    vcs.createFile("root/file", "content", 111L);
+    vcs.createFile("root/file", b("content"), 111L);
     vcs.apply();
 
     root.addChild(new TestVirtualFile("file", "new content", 222L));
@@ -136,7 +136,7 @@ public class UpdaterTest extends TestCase {
 
     Entry e = vcs.getEntry("root/file");
 
-    assertEquals("new content", e.getContent());
+    assertEquals(c("new content"), e.getContent());
     assertEquals(222L, e.getTimestamp());
   }
 

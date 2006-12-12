@@ -1,8 +1,9 @@
 package com.intellij.localvcs;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 public class LocalVcs {
   private Storage myStorage;
@@ -11,6 +12,7 @@ public class LocalVcs {
   private RootEntry myRoot;
   private Integer myEntryCounter;
 
+  // todo change type to something else (for example to LinkedList)
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs(Storage s) {
@@ -29,6 +31,7 @@ public class LocalVcs {
     myStorage.storeChangeList(myChangeList);
     myStorage.storeRootEntry(myRoot);
     myStorage.storeCounter(myEntryCounter);
+    myStorage.save();
   }
 
   public boolean hasEntry(String path) {
@@ -47,8 +50,20 @@ public class LocalVcs {
     return myRoot.getRoots();
   }
 
-  public void createFile(String path, String content, Long timestamp) {
-    myPendingChanges.add(new CreateFileChange(getNextId(), path, content, timestamp));
+  public void createFile(String path, byte[] content, Long timestamp) {
+    Content c = contentFromString(content);
+    myPendingChanges.add(new CreateFileChange(getNextId(), path, c, timestamp));
+  }
+
+  private Content contentFromString(byte[] data) {
+    try {
+      // todo review: this is only for tests
+      if (data == null) return null;
+      return myStorage.createContent(data);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void createDirectory(String path, Long timestamp) {
@@ -59,8 +74,9 @@ public class LocalVcs {
     return myEntryCounter++;
   }
 
-  public void changeFileContent(String path, String content, Long timestamp) {
-    myPendingChanges.add(new ChangeFileContentChange(path, content, timestamp));
+  public void changeFileContent(String path, byte[] content, Long timestamp) {
+    Content c = contentFromString(content);
+    myPendingChanges.add(new ChangeFileContentChange(path, c, timestamp));
   }
 
   public void rename(String path, String newName) {
@@ -105,7 +121,7 @@ public class LocalVcs {
       result.add(new Label(e, cl, cs, myRoot));
     }
 
-    Collections.reverse(result);    
+    Collections.reverse(result);
     return result;
   }
 }

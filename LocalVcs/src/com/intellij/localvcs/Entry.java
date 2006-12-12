@@ -57,7 +57,7 @@ public abstract class Entry {
     return !myTimestamp.equals(timestamp);
   }
 
-  public String getContent() {
+  public Content getContent() {
     throw new UnsupportedOperationException();
   }
 
@@ -112,7 +112,7 @@ public abstract class Entry {
     return result;
   }
 
-  public Entry withContent(String newContent, Long timestamp) {
+  public Entry withContent(Content newContent, Long timestamp) {
     throw new UnsupportedOperationException();
   }
 

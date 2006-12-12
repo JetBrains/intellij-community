@@ -11,13 +11,19 @@ import java.lang.reflect.InvocationTargetException;
 public class Stream {
   private DataInputStream myIs;
   private DataOutputStream myOs;
+  private Storage myStorage;
 
-  public Stream(InputStream is) {
+  public Stream(InputStream is, Storage s) {
+    myStorage = s;
     myIs = new DataInputStream(is);
   }
 
   public Stream(OutputStream os) {
     myOs = new DataOutputStream(os);
+  }
+
+  public Storage getStorage() {
+    return myStorage;
   }
 
   public IdPath readIdPath() throws IOException {
@@ -29,7 +35,7 @@ public class Stream {
   }
 
   public Entry readEntry() throws IOException {
-    return (Entry)readSubclass(myIs.readUTF());
+    return (Entry)readInstanceOf(myIs.readUTF());
   }
 
   public void writeEntry(Entry e) throws IOException {
@@ -38,7 +44,7 @@ public class Stream {
   }
 
   public Change readChange() throws IOException {
-    return (Change)readSubclass(myIs.readUTF());
+    return (Change)readInstanceOf(myIs.readUTF());
   }
 
   public void writeChange(Change c) throws IOException {
@@ -95,7 +101,17 @@ public class Stream {
     if (l != null) myOs.writeLong(l);
   }
 
-  private Object readSubclass(String className) throws IOException {
+  public Content readContent() throws IOException {
+    if (!myIs.readBoolean()) return null;
+    return new Content(this);
+  }
+
+  public void writeContent(Content c) throws IOException {
+    myOs.writeBoolean(c != null);
+    if (c != null) c.write(this);
+  }
+
+  private Object readInstanceOf(String className) throws IOException {
     try {
       Class clazz = Class.forName(className);
       Constructor constructor = clazz.getConstructor(getClass());

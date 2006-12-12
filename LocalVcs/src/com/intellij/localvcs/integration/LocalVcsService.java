@@ -10,6 +10,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.*;
 
 import java.io.IOException;
+import java.sql.Time;
+import java.util.Date;
 
 public class LocalVcsService implements Disposable {
   // todo test exceptions...
@@ -30,6 +32,7 @@ public class LocalVcsService implements Disposable {
     registerStartupActivity();
   }
 
+  // todo get rid of disposable interface
   public void dispose() {
     myFileManager.removeVirtualFileListener(myFileListener);
   }
@@ -109,8 +112,7 @@ public class LocalVcsService implements Disposable {
         myVcs.createDirectory(f.getPath(), f.getTimeStamp());
       }
       else {
-        String content = new String(f.contentsToByteArray());
-        myVcs.createFile(f.getPath(), content, f.getTimeStamp());
+        myVcs.createFile(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());
       }
       myVcs.apply();
     }
@@ -121,8 +123,7 @@ public class LocalVcsService implements Disposable {
 
   private void changeFileContent(VirtualFile f) {
     try {
-      String content = new String(f.contentsToByteArray());
-      myVcs.changeFileContent(f.getPath(), content, f.getTimeStamp());
+      myVcs.changeFileContent(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());
       myVcs.apply();
     }
     catch (IOException e) {

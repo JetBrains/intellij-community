@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.TestCase;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockFileDocumentManagerImpl;
@@ -12,18 +13,18 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class FileHistoryDialogModelTest {
+public class FileHistoryDialogModelTest extends TestCase {
   private LocalVcs vcs = new LocalVcs(new TestStorage());
   private MyFileDocumentManager dm = new MyFileDocumentManager();
   private FileHistoryDialogModel m;
 
   @Test
   public void testLabelsList() {
-    vcs.createFile("f", "", null);
+    vcs.createFile("f", b(""), null);
     vcs.apply();
     vcs.putLabel("1");
 
-    vcs.changeFileContent("f", "", null);
+    vcs.changeFileContent("f", b(""), null);
     vcs.apply();
     vcs.putLabel("2");
 
@@ -37,7 +38,7 @@ public class FileHistoryDialogModelTest {
 
   @Test
   public void testIncludingCurrentUnsavedVersionInLabels() {
-    vcs.createFile("f", "old", null);
+    vcs.createFile("f", b("old"), null);
     vcs.apply();
     vcs.putLabel("1");
 
@@ -53,35 +54,35 @@ public class FileHistoryDialogModelTest {
 
   @Test
   public void testContentForLabels() {
-    vcs.createFile("f", "old", null);
+    vcs.createFile("f", b("old"), null);
     vcs.apply();
-    vcs.changeFileContent("f", "new", null);
+    vcs.changeFileContent("f", b("new"), null);
     vcs.apply();
 
     initModelFor("f");
     m.selectLabels(0, 1);
 
-    assertEquals("old", m.getLeftContent());
-    assertEquals("new", m.getRightContent());
+    assertEquals(c("old"), m.getLeftContent());
+    assertEquals(c("new"), m.getRightContent());
   }
 
   @Test
   public void testContentWhenOnlyOneLabelSelected() {
-    vcs.createFile("f", "old", null);
+    vcs.createFile("f", b("old"), null);
     vcs.apply();
-    vcs.changeFileContent("f", "new", null);
+    vcs.changeFileContent("f", b("new"), null);
     vcs.apply();
 
     initModelFor("f");
     m.selectLabels(1, 1);
 
-    assertEquals("old", m.getLeftContent());
-    assertEquals("new", m.getRightContent());
+    assertEquals(c("old"), m.getLeftContent());
+    assertEquals(c("new"), m.getRightContent());
   }
 
   @Test
   public void testContentForCurrentUnsavedSavedVersion() {
-    vcs.createFile("f", "old", null);
+    vcs.createFile("f", b("old"), null);
     vcs.apply();
 
     dm.setCurrentContent("new");
@@ -89,8 +90,8 @@ public class FileHistoryDialogModelTest {
 
     m.selectLabels(0, 1);
 
-    assertEquals("old", m.getLeftContent());
-    assertEquals("new", m.getRightContent());
+    assertEquals(c("old"), m.getLeftContent());
+    assertEquals(c("new"), m.getRightContent());
   }
 
   private void initModelFor(String path) {
@@ -116,7 +117,8 @@ public class FileHistoryDialogModelTest {
     }
 
     private String getContent(VirtualFile f) {
-      return vcs.getEntry(f.getPath()).getContent();
+      // todo review conversion
+      return new String(vcs.getEntry(f.getPath()).getContent().getData());
     }
 
     private void setCurrentContent(String s) {

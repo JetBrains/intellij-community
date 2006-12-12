@@ -20,13 +20,13 @@ public class ChangeSetTest extends TestCase {
   @Test
   public void testApplyingIsFIFO() {
     changeSet.applyTo(null);
-    assertElements(new Object[]{1, 2, 3}, log);
+    assertEquals(new Object[]{1, 2, 3}, log);
   }
 
   @Test
   public void testRevertingIsLIFO() {
     changeSet._revertOn(null);
-    assertElements(new Object[]{3, 2, 1}, log);
+    assertEquals(new Object[]{3, 2, 1}, log);
   }
 
   private class LoggingChange extends CreateFileChange {

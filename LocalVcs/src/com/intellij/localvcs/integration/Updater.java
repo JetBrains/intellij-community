@@ -101,7 +101,7 @@ public class Updater {
           createNewFiles(f);
         }
         else {
-          myVcs.createFile(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
+          myVcs.createFile(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());
         }
       }
     }
@@ -114,7 +114,7 @@ public class Updater {
         // todo we should update directory and root timestamps too
         // todo should we treat external file change as deletion and creation new one?
         if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
-          myVcs.changeFileContent(f.getPath(), new String(f.contentsToByteArray()), f.getTimeStamp());
+          myVcs.changeFileContent(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());
         }
       }
     }

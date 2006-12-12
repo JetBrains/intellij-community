@@ -9,13 +9,13 @@ import org.junit.Test;
 public class FileEntryTest extends TestCase {
   @Test
   public void testCopying() {
-    FileEntry file = new FileEntry(33, "name", "content", null);
+    FileEntry file = new FileEntry(33, "name", c("content"), null);
 
     Entry copy = file.copy();
 
     assertEquals(33, copy.getId());
     assertEquals("name", copy.getName());
-    assertEquals("content", copy.getContent());
+    assertEquals(c("content"), copy.getContent());
   }
 
   @Test
@@ -32,7 +32,7 @@ public class FileEntryTest extends TestCase {
   @Test
   public void testRenaming() {
     DirectoryEntry dir = new DirectoryEntry(null, "dir", null);
-    FileEntry file = new FileEntry(33, "name", "content", null);
+    FileEntry file = new FileEntry(33, "name", c("content"), null);
 
     dir.addChild(file);
 
@@ -40,15 +40,15 @@ public class FileEntryTest extends TestCase {
 
     assertEquals(33, renamed.getId());
     assertEquals("new name", renamed.getName());
-    assertEquals("content", renamed.getContent());
+    assertEquals(c("content"), renamed.getContent());
 
     assertNull(renamed.getParent());
   }
 
   @Test
   public void testNoDifference() {
-    FileEntry e1 = new FileEntry(null, "name", "content", null);
-    FileEntry e2 = new FileEntry(null, "name", "content", null);
+    FileEntry e1 = new FileEntry(null, "name", c("content"), null);
+    FileEntry e2 = new FileEntry(null, "name", c("content"), null);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(NOT_MODIFIED, d.getKind());
@@ -58,8 +58,8 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testDifferenceInName() {
-    FileEntry e1 = new FileEntry(null, "name", "content", null);
-    FileEntry e2 = new FileEntry(null, "another name", "content", null);
+    FileEntry e1 = new FileEntry(null, "name", c("content"), null);
+    FileEntry e2 = new FileEntry(null, "another name", c("content"), null);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(MODIFIED, d.getKind());
@@ -69,8 +69,8 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testDifferenceInContent() {
-    FileEntry e1 = new FileEntry(null, "name", "content", null);
-    FileEntry e2 = new FileEntry(null, "name", "another content", null);
+    FileEntry e1 = new FileEntry(null, "name", c("content"), null);
+    FileEntry e2 = new FileEntry(null, "name", c("another content"), null);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(MODIFIED, d.getKind());

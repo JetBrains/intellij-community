@@ -7,13 +7,13 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
   @Test
   public void testCreatingFile() {
-    Change c = new CreateFileChange(1, "file", "content", 123L);
+    Change c = new CreateFileChange(1, "file", c("content"), 123L);
     c.applyTo(root);
 
     assertTrue(root.hasEntry("file"));
 
     Entry e = root.getEntry("file");
-    assertEquals("content", e.getContent());
+    assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
 
     c._revertOn(root);
@@ -48,19 +48,19 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
   @Test
   public void testChangingFileContent() {
-    root.createFile(1, "file", "old content", 11L);
+    root.createFile(1, "file", c("old content"), 11L);
 
-    Change c = new ChangeFileContentChange("file", "new content", 22L);
+    Change c = new ChangeFileContentChange("file", c("new content"), 22L);
     c.applyTo(root);
 
     Entry e = root.getEntry("file");
-    assertEquals("new content", e.getContent());
+    assertEquals(c("new content"), e.getContent());
     assertEquals(22L, e.getTimestamp());
 
     c._revertOn(root);
 
     e = root.getEntry("file");
-    assertEquals("old content", e.getContent());
+    assertEquals(c("old content"), e.getContent());
     assertEquals(11L, e.getTimestamp());
   }
 
@@ -143,7 +143,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
   @Test
   public void testDeletingFile() {
-    root.createFile(1, "file", "content", 18L);
+    root.createFile(1, "file", c("content"), 18L);
 
     Change c = new DeleteChange("file");
     c.applyTo(root);
@@ -155,7 +155,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     Entry e = root.getEntry("file");
 
-    assertEquals("content", e.getContent());
+    assertEquals(c("content"), e.getContent());
     assertEquals(18L, e.getTimestamp());
   }
 
@@ -164,7 +164,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     // todo i dont trust to deletion reverting yet... i need some more tests
     root.createDirectory(1, "dir1", null);
     root.createDirectory(2, "dir1/dir2", null);
-    root.createFile(3, "dir1/dir2/file", "content", null);
+    root.createFile(3, "dir1/dir2/file", c("content"), null);
 
     Change c = new DeleteChange("dir1");
     c.applyTo(root);
@@ -176,7 +176,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     assertTrue(root.hasEntry("dir1/dir2"));
     assertTrue(root.hasEntry("dir1/dir2/file"));
 
-    assertEquals("content", root.getEntry("dir1/dir2/file").getContent());
+    assertEquals(c("content"), root.getEntry("dir1/dir2/file").getContent());
   }
 
   @Test

@@ -11,14 +11,24 @@ import java.util.List;
 public class StreamTest extends TestCase {
   private Stream is;
   private Stream os;
+  private Storage s;
 
   @Before
   public void setUpStreams() throws IOException {
     PipedOutputStream pos = new PipedOutputStream();
     PipedInputStream pis = new PipedInputStream(pos);
 
+    s = new TestStorage();
     os = new Stream(pos);
-    is = new Stream(pis);
+    is = new Stream(pis, s);
+  }
+
+  private void initStreamsFor(Storage s) throws IOException {
+    PipedOutputStream pos = new PipedOutputStream();
+    PipedInputStream pis = new PipedInputStream(pos);
+
+    os = new Stream(pos);
+    is = new Stream(pis, s);
   }
 
   @Test
@@ -49,6 +59,20 @@ public class StreamTest extends TestCase {
   }
 
   @Test
+  public void testContent() throws Exception {
+    Content c = s.createContent(new byte[]{1, 2, 3});
+    os.writeContent(c);
+
+    assertEquals(new byte[]{1, 2, 3}, is.readContent().getData());
+  }
+
+  @Test
+  public void testNullContent() throws Exception {
+    os.writeContent(null);
+    assertNull(is.readContent());
+  }
+
+  @Test
   public void testIdPath() throws Exception {
     IdPath p = new IdPath(1, 2, 3);
     os.writeIdPath(p);
@@ -57,7 +81,8 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testFileEntry() throws Exception {
-    Entry e = new FileEntry(42, "file", "content", 123L);
+    Content c = s.createContent(b("content"));
+    Entry e = new FileEntry(42, "file", c, 123L);
 
     os.writeEntry(e);
     Entry result = is.readEntry();
@@ -66,7 +91,7 @@ public class StreamTest extends TestCase {
 
     assertEquals(42, result.getId());
     assertEquals("file", result.getName());
-    assertEquals("content", result.getContent());
+    assertEquals(b("content"), result.getContent().getData());
     assertEquals(123L, result.getTimestamp());
   }
 
@@ -156,7 +181,7 @@ public class StreamTest extends TestCase {
 
   @Test
   public void testCreateFileChange() throws IOException {
-    Change c = new CreateFileChange(1, "file", "content", 777L);
+    Change c = new CreateFileChange(1, "file", s.createContent(b("content")), 777L);
     c.applyTo(new RootEntry());
 
     os.writeChange(c);
@@ -166,10 +191,10 @@ public class StreamTest extends TestCase {
     CreateFileChange result = (CreateFileChange)read;
 
     assertEquals("file", result.getPath());
-    assertElements(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals(a(idp(1)), result.getAffectedIdPaths());
 
     assertEquals(1, result.getId());
-    assertEquals("content", result.getContent());
+    assertEquals(c("content"), result.getContent());
     assertEquals(777L, result.getTimestamp());
   }
 
@@ -185,7 +210,7 @@ public class StreamTest extends TestCase {
     CreateDirectoryChange result = (CreateDirectoryChange)read;
 
     assertEquals("dir", result.getPath());
-    assertElements(a(idp(2)), result.getAffectedIdPaths());
+    assertEquals(a(idp(2)), result.getAffectedIdPaths());
 
     assertEquals(2, result.getId());
     assertEquals(333L, result.getTimestamp());
@@ -194,9 +219,9 @@ public class StreamTest extends TestCase {
   @Test
   public void testChangeFileContentChange() throws IOException {
     RootEntry root = new RootEntry();
-    root.createFile(1, "file", "old content", 1L);
+    root.createFile(1, "file", s.createContent(b("old content")), 1L);
 
-    Change c = new ChangeFileContentChange("file", "new content", 2L);
+    Change c = new ChangeFileContentChange("file", s.createContent(b("new content")), 2L);
     c.applyTo(root);
 
     os.writeChange(c);
@@ -206,12 +231,12 @@ public class StreamTest extends TestCase {
     ChangeFileContentChange result = (ChangeFileContentChange)read;
 
     assertEquals("file", result.getPath());
-    assertElements(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals(a(idp(1)), result.getAffectedIdPaths());
 
-    assertEquals("new content", result.getNewContent());
+    assertEquals(c("new content"), result.getNewContent());
     assertEquals(2L, result.getNewTimestamp());
 
-    assertEquals("old content", result.getOldContent());
+    assertEquals(c("old content"), result.getOldContent());
     assertEquals(1L, result.getOldTimestamp());
   }
 
@@ -220,7 +245,7 @@ public class StreamTest extends TestCase {
     RootEntry root = new RootEntry();
 
     root.createDirectory(1, "entry", null);
-    root.createFile(2, "entry/file", "", null);
+    root.createFile(2, "entry/file", null, null);
     root.createDirectory(3, "entry/dir", null);
 
     Change c = new DeleteChange("entry");
@@ -232,7 +257,7 @@ public class StreamTest extends TestCase {
     assertEquals(DeleteChange.class, read.getClass());
     DeleteChange result = (DeleteChange)read;
 
-    assertElements(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals(a(idp(1)), result.getAffectedIdPaths());
     assertEquals("entry", result.getPath());
 
     Entry e = result.getAffectedEntry();
@@ -259,7 +284,7 @@ public class StreamTest extends TestCase {
     assertEquals(RenameChange.class, read.getClass());
     RenameChange result = ((RenameChange)read);
 
-    assertElements(a(idp(1)), result.getAffectedIdPaths());
+    assertEquals(a(idp(1)), result.getAffectedIdPaths());
 
     assertEquals("old name", result.getPath());
     assertEquals("new name", result.getNewName());
@@ -282,7 +307,7 @@ public class StreamTest extends TestCase {
     MoveChange result = ((MoveChange)read);
 
     assertEquals("dir1/file", result.getPath());
-    assertElements(a(idp(1, 3), idp(2, 3)), result.getAffectedIdPaths());
+    assertEquals(a(idp(1, 3), idp(2, 3)), result.getAffectedIdPaths());
 
     assertEquals("dir2", result.getNewParentPath());
   }

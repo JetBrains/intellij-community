@@ -3,7 +3,6 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
@@ -21,6 +20,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManager myFileManager;
+  private Storage myStorage;
   private LocalVcs myVcs;
   private LocalVcsService myService;
 
@@ -46,8 +46,9 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
     });
   }
 
-  private void initVcs() {
-    myVcs = new LocalVcs(new Storage(getStorageDir()));
+  protected void initVcs() {
+    myStorage = new Storage(getStorageDir());
+    myVcs = new LocalVcs(myStorage);
   }
 
   protected void initService() {
@@ -73,7 +74,16 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
 
   public void disposeComponent() {
     if (isDisabled()) return;
-    Disposer.dispose(myService);
+    closeVcs();
+    closeService();
+  }
+
+  protected void closeVcs() {
+    myStorage.close();
+  }
+
+  protected void closeService() {
+    myService.dispose();
   }
 
   protected boolean isDisabled() {

@@ -9,13 +9,13 @@ public class RootEntryFilesTest extends TestCase {
   public void testCreatingFiles() {
     assertFalse(root.hasEntry("file"));
 
-    root.createFile(null, "file", "content", 42L);
+    root.createFile(null, "file", c("content"), 42L);
     assertTrue(root.hasEntry("file"));
 
     Entry e = root.getEntry("file");
 
     assertEquals(FileEntry.class, e.getClass());
-    assertEquals("content", e.getContent());
+    assertEquals(c("content"), e.getContent());
     assertEquals(42L, e.getTimestamp());
   }
 
@@ -44,30 +44,30 @@ public class RootEntryFilesTest extends TestCase {
 
   @Test
   public void testChangingFileContent() {
-    root.createFile(1, "file", "content", null);
-    root.changeFileContent("file", "new content", 77L);
+    root.createFile(1, "file", c("content"), null);
+    root.changeFileContent("file", c("new content"), 77L);
 
     Entry e = root.getEntry("file");
 
-    assertEquals("new content", e.getContent());
+    assertEquals(c("new content"), e.getContent());
     assertEquals(77L, e.getTimestamp());
   }
 
   @Test
   public void testChangingFileContentAffectsOnlyOneFile() {
-    root.createFile(1, "file1", "content1", null);
-    root.createFile(2, "file2", "content2", null);
+    root.createFile(1, "file1", c("content1"), null);
+    root.createFile(2, "file2", c("content2"), null);
 
-    root.changeFileContent("file1", "new content", null);
+    root.changeFileContent("file1", c("new content"), null);
 
-    assertEquals("new content", root.getEntry("file1").getContent());
-    assertEquals("content2", root.getEntry("file2").getContent());
+    assertEquals(c("new content"), root.getEntry("file1").getContent());
+    assertEquals(c("content2"), root.getEntry("file2").getContent());
   }
 
   @Test
   public void testChangingContentOfAnNonExistingFileThrowsException() {
     try {
-      root.changeFileContent("unknown file", "content", null);
+      root.changeFileContent("unknown file", c("content"), null);
       fail();
     }
     catch (AssertionError e) {
@@ -76,7 +76,7 @@ public class RootEntryFilesTest extends TestCase {
 
   @Test
   public void testRenamingFiles() {
-    root.createFile(1, "file", "content", null);
+    root.createFile(1, "file", c("content"), null);
 
     root.rename("file", "new file");
 
@@ -85,7 +85,7 @@ public class RootEntryFilesTest extends TestCase {
     Entry e = root.findEntry("new file");
 
     assertNotNull(e);
-    assertEquals("content", e.getContent());
+    assertEquals(c("content"), e.getContent());
   }
 
   @Test
@@ -113,12 +113,12 @@ public class RootEntryFilesTest extends TestCase {
 
   @Test
   public void testRenamingFileToSameNameDoesNothing() {
-    root.createFile(1, "file", "content", null);
+    root.createFile(1, "file", c("content"), null);
 
     root.rename("file", "file");
 
     assertTrue(root.hasEntry("file"));
-    assertEquals("content", root.getEntry("file").getContent());
+    assertEquals(c("content"), root.getEntry("file").getContent());
   }
 
   @Test

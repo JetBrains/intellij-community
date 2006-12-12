@@ -1,8 +1,6 @@
 package com.intellij.localvcs.integration.ui;
 
-import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.Label;
-import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -22,11 +20,13 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     l.add(new CurrentLabel());
   }
 
-  private String getCurrentContent() {
-    return myDocumentManager.getDocument(myFile).getText();
+  private Content getCurrentContent() {
+    // todo review byte conversion
+    byte[] b = myDocumentManager.getDocument(myFile).getText().getBytes();
+    return new ByteContent(b);
   }
 
-  private String getVcsContent() {
+  private Content getVcsContent() {
     return getVcsEntry().getContent();
   }
 
@@ -34,11 +34,11 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     return myVcs.getEntry(myFile.getPath());
   }
 
-  public String getLeftContent() {
+  public Content getLeftContent() {
     return getLeftLabel().getEntry().getContent();
   }
 
-  public String getRightContent() {
+  public Content getRightContent() {
     return getRightLabel().getEntry().getContent();
   }
 
@@ -55,6 +55,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     @Override
     public Entry getEntry() {
       // todo what about timestamp?
+      // todo review content stuff
       return getVcsEntry().withContent(getCurrentContent(), null);
     }
   }

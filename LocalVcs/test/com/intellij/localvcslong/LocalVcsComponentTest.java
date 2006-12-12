@@ -93,7 +93,9 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     VirtualFile f = root.createChildData(null, "file");
     myProject.save();
 
-    LocalVcs vcs = new LocalVcs(new Storage(getComponent().getStorageDir()));
+    Storage s = new Storage(getComponent().getStorageDir());
+    LocalVcs vcs = new LocalVcs(s);
+    s.close();
     assertTrue(vcs.hasEntry(f.getPath()));
   }
 

@@ -17,7 +17,7 @@ public class ChangesTest extends TestCase {
     Change c = new CreateFileChange(1, "dir/name", null, null);
     c.applyTo(root);
 
-    assertElements(a(idp(99, 1)), c.getAffectedIdPaths());
+    assertEquals(a(idp(99, 1)), c.getAffectedIdPaths());
 
     assertTrue(c.affects(root.getEntry(1)));
     assertTrue(c.affects(root.getEntry(99)));
@@ -28,17 +28,17 @@ public class ChangesTest extends TestCase {
     Change c = new CreateDirectoryChange(2, "name", null);
     c.applyTo(root);
 
-    assertElements(a(idp(2)), c.getAffectedIdPaths());
+    assertEquals(a(idp(2)), c.getAffectedIdPaths());
   }
 
   @Test
   public void testAffectedEntryForChangeFileContentChange() {
-    root.createFile(16, "file", "content", null);
+    root.createFile(16, "file", c("content"), null);
 
-    Change c = new ChangeFileContentChange("file", "new content", null);
+    Change c = new ChangeFileContentChange("file", c("new content"), null);
     c.applyTo(root);
 
-    assertElements(a(idp(16)), c.getAffectedIdPaths());
+    assertEquals(a(idp(16)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -48,7 +48,7 @@ public class ChangesTest extends TestCase {
     Change c = new RenameChange("name", "new name");
     c.applyTo(root);
 
-    assertElements(a(idp(42)), c.getAffectedIdPaths());
+    assertEquals(a(idp(42)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -60,7 +60,7 @@ public class ChangesTest extends TestCase {
     Change c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
 
-    assertElements(a(idp(1, 13), idp(2, 13)), c.getAffectedIdPaths());
+    assertEquals(a(idp(1, 13), idp(2, 13)), c.getAffectedIdPaths());
   }
 
   @Test
@@ -71,6 +71,6 @@ public class ChangesTest extends TestCase {
     Change c = new DeleteChange("dir/file");
     c.applyTo(root);
 
-    assertElements(a(idp(99, 7)), c.getAffectedIdPaths());
+    assertEquals(a(idp(99, 7)), c.getAffectedIdPaths());
   }
 }

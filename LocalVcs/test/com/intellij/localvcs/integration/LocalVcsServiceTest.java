@@ -5,6 +5,7 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.TestCase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -27,7 +28,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LocalVcsServiceTest extends Assert {
+public class LocalVcsServiceTest extends TestCase {
   // todo can root changes and  FS changes arrive for the same directory?
   // todo for example when we create new folder and then add it to roots 
   private LocalVcs vcs;
@@ -106,7 +107,7 @@ public class LocalVcsServiceTest extends Assert {
 
     assertFalse(e.isDirectory());
 
-    assertEquals("content", e.getContent());
+    assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
   }
 
@@ -124,14 +125,14 @@ public class LocalVcsServiceTest extends Assert {
 
   @Test
   public void testChangingFileContent() {
-    vcs.createFile("file", "old content", null);
+    vcs.createFile("file", b("old content"), null);
     vcs.apply();
 
     VirtualFile f = new TestVirtualFile("file", "new content", 505L);
     fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
 
     Entry e = vcs.getEntry("file");
-    assertEquals("new content", e.getContent());
+    assertEquals(c("new content"), e.getContent());
     assertEquals(505L, e.getTimestamp());
   }
 
@@ -148,7 +149,7 @@ public class LocalVcsServiceTest extends Assert {
 
   @Test
   public void testRenaming() {
-    vcs.createFile("old name", "old content", null);
+    vcs.createFile("old name", b("old content"), null);
     vcs.apply();
 
     VirtualFile f = new TestVirtualFile("old name", null, null);
@@ -159,7 +160,7 @@ public class LocalVcsServiceTest extends Assert {
     Entry e = vcs.findEntry("new name");
     assertNotNull(e);
 
-    assertEquals("old content", e.getContent());
+    assertEquals(c("old content"), e.getContent());
   }
 
   @Test
@@ -179,7 +180,7 @@ public class LocalVcsServiceTest extends Assert {
   public void testMoving() {
     vcs.createDirectory("dir1", null);
     vcs.createDirectory("dir2", null);
-    vcs.createFile("dir1/file", "content", null);
+    vcs.createFile("dir1/file", b("content"), null);
     vcs.apply();
 
     VirtualFile f = new TestVirtualFile("dir1/file", null, null);
@@ -191,7 +192,7 @@ public class LocalVcsServiceTest extends Assert {
     Entry e = vcs.findEntry("dir2/file");
 
     assertNotNull(e);
-    assertEquals("content", e.getContent());
+    assertEquals(c("content"), e.getContent());
   }
 
   @Test
@@ -505,7 +506,7 @@ public class LocalVcsServiceTest extends Assert {
     }
 
     @Override
-    public void createFile(String path, String content, Long timestamp) {
+    public void createFile(String path, byte[] content, Long timestamp) {
       myIsAnyMethodCalled[0] = true;
     }
 
@@ -515,7 +516,7 @@ public class LocalVcsServiceTest extends Assert {
     }
 
     @Override
-    public void changeFileContent(String path, String content, Long timestamp) {
+    public void changeFileContent(String path, byte[] content, Long timestamp) {
       myIsAnyMethodCalled[0] = true;
     }
 

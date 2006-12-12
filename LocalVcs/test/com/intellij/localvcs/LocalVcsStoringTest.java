@@ -2,82 +2,77 @@ package com.intellij.localvcs;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Ignore;
+import org.junit.After;
 
 public class LocalVcsStoringTest extends TempDirTestCase {
   private LocalVcs vcs;
+  private Storage s;
 
   @Before
-  public void setUp() {
-    vcs = createVcs();
+  public void initVcs() {
+    closeStorage();
+    s = new Storage(tempDir);
+    vcs = new LocalVcs(s);
   }
 
-  private LocalVcs createVcs() {
-    return new LocalVcs(new Storage(tempDir));
-  }
-
-  @Test
-  public void testCleanStorage() {
-    Storage s = new Storage(tempDir);
-
-    ChangeList changeList = s.loadChangeList();
-    RootEntry entry = s.loadRootEntry();
-    Integer counter = s.loadCounter();
-
-    assertTrue(changeList.getChangeSets().isEmpty());
-    assertTrue(entry.getChildren().isEmpty());
-    assertEquals(0, counter);
+  @After
+  public void closeStorage(){
+    if(s != null) s.close();
   }
 
   @Test
   public void testStoringEntries() {
-    vcs.createFile("file", "content", null);
+    vcs.createFile("file", b("content"), 123L);
     vcs.apply();
 
     vcs.store();
-    LocalVcs result = createVcs();
+    initVcs();
 
-    assertTrue(result.hasEntry("file"));
+    Entry e = vcs.findEntry("file");
+    assertNotNull(e);
+    assertEquals(c("content"), e.getContent());
+    assertEquals(123L, e.getTimestamp());
   }
 
   @Test
   public void testStoringChangeList() {
-    vcs.createFile("file", "content", null);
+    vcs.createFile("file", b("content"), null);
     vcs.apply();
-    vcs.changeFileContent("file", "new content", null);
+    vcs.changeFileContent("file", b("new content"), null);
     vcs.apply();
 
     vcs.store();
-    LocalVcs result = createVcs();
+    initVcs();
 
-    assertEquals(2, result.getLabelsFor("file").size());
+    assertEquals(2, vcs.getLabelsFor("file").size());
   }
 
   @Test
   public void testStoringObjectsCounter() {
-    vcs.createFile("file1", "content1", null);
-    vcs.createFile("file2", "content2", null);
+    vcs.createFile("file1", b("content1"), null);
+    vcs.createFile("file2", b("content2"), null);
     vcs.apply();
 
     vcs.store();
-    LocalVcs result = createVcs();
+    initVcs();
 
-    result.createFile("file3", "content3", null);
-    result.apply();
+    vcs.createFile("file3", b("content3"), null);
+    vcs.apply();
 
-    Integer id2 = result.getEntry("file2").getId();
-    Integer id3 = result.getEntry("file3").getId();
+    Integer id2 = vcs.getEntry("file2").getId();
+    Integer id3 = vcs.getEntry("file3").getId();
 
     assertTrue(id2 < id3);
   }
 
   @Test
   public void testDoesNotStoreUnappliedChanges() {
-    vcs.createFile("file", "content", null);
+    vcs.createFile("file", b("content"), null);
     vcs.store();
 
     vcs.store();
-    LocalVcs result = createVcs();
-    assertTrue(result.isClean());
+
+    initVcs();
+    assertTrue(vcs.isClean());
   }
 }

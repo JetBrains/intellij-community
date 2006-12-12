@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.Content;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.SimpleDiffRequest;
@@ -63,8 +64,8 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
   private void showDiff() {
     DifferenceNode n = getSelectedNode();
-    String left = n.getLeftContent();
-    String right = n.getRightContent();
+    Content left = n.getLeftContent();
+    Content right = n.getRightContent();
 
     SimpleDiffRequest r = createDiffRequest(left, right);
     DiffManager.getInstance().getDiffTool().show(r);

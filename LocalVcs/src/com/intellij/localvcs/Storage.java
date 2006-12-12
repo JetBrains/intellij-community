@@ -4,13 +4,43 @@ import java.io.*;
 
 public class Storage {
   private File myDir;
+  private ContentStorage myContentStorage;
 
   public Storage(File dir) {
     myDir = dir;
+    init();
+  }
+
+  protected void init() {
+    myDir.mkdirs();
+    try {
+      myContentStorage = new ContentStorage(new File(myDir, "contents"));
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void close() {
+    try {
+      myContentStorage.close();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void save() {
+    try {
+      myContentStorage.save();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public ChangeList loadChangeList() {
-    return load("list", new ChangeList(), new Loader<ChangeList>() {
+    return load("changes", new ChangeList(), new Loader<ChangeList>() {
       public ChangeList load(Stream s) throws IOException {
         return s.readChangeList();
       }
@@ -18,7 +48,7 @@ public class Storage {
   }
 
   public void storeChangeList(final ChangeList c) {
-    store("list", new Storer() {
+    store("changes", new Storer() {
       public void store(Stream s) throws IOException {
         s.writeChangeList(c);
       }
@@ -26,7 +56,7 @@ public class Storage {
   }
 
   public RootEntry loadRootEntry() {
-    return load("root", new RootEntry(), new Loader<RootEntry>() {
+    return load("entries", new RootEntry(), new Loader<RootEntry>() {
       public RootEntry load(Stream s) throws IOException {
         return (RootEntry)s.readEntry(); // todo cast!!!
       }
@@ -34,7 +64,7 @@ public class Storage {
   }
 
   public void storeRootEntry(final RootEntry e) {
-    store("root", new Storer() {
+    store("entries", new Storer() {
       public void store(Stream s) throws IOException {
         s.writeEntry(e);
       }
@@ -64,7 +94,7 @@ public class Storage {
     try {
       InputStream fs = new BufferedInputStream(new FileInputStream(f));
       try {
-        return loader.load(new Stream(fs));
+        return loader.load(new Stream(fs, this));
       }
       finally {
         fs.close();
@@ -76,7 +106,6 @@ public class Storage {
   }
 
   private void store(String fileName, Storer storer) {
-    assureDirExists();
     File f = new File(myDir, fileName);
     try {
       f.createNewFile();
@@ -93,8 +122,23 @@ public class Storage {
     }
   }
 
-  private void assureDirExists() {
-    if (!myDir.exists()) myDir.mkdirs();
+  public Content createContent(byte[] bytes) {
+    try {
+      int id = myContentStorage.storeContent(bytes);
+      return new Content(this, id);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected byte[] loadContent(int id) {
+    try {
+      return myContentStorage.loadContent(id);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static interface Loader<T> {

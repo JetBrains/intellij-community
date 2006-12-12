@@ -6,26 +6,26 @@ import java.io.IOException;
 
 public class FileEntry extends Entry {
   // todo change String to ByteArray or something else
-  private String myContent;
+  private Content myContent;
 
-  public FileEntry(Integer id, String name, String content, Long timestamp) {
+  public FileEntry(Integer id, String name, Content content, Long timestamp) {
     super(id, name, timestamp);
     myContent = content;
   }
 
   public FileEntry(Stream s) throws IOException {
     super(s);
-    myContent = s.readString();
+    myContent = s.readContent();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
-    s.writeString(myContent);
+    s.writeContent(myContent);
   }
 
   @Override
-  public String getContent() {
+  public Content getContent() {
     return myContent;
   }
 
@@ -35,7 +35,7 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public Entry withContent(String newContent, Long timestamp) {
+  public Entry withContent(Content newContent, Long timestamp) {
     return new FileEntry(myId, myName, newContent, timestamp);
   }
 

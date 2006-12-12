@@ -3,6 +3,7 @@ package com.intellij.localvcsperf;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -11,28 +12,32 @@ import java.util.Random;
 public class PerformanceTest extends TempDirTestCase {
   private LocalVcs vcs;
   private Random random = new Random();
+  private Storage s;
 
   @Before
-  public void setUp() {
-    vcs = createVcs();
+  public void initVcs() {
+    closeStorage();
+    s = new Storage(tempDir);
+    vcs = new LocalVcs(s);
   }
 
-  private LocalVcs createVcs() {
-    return new LocalVcs(new Storage(tempDir));
+  @After
+  public void closeStorage() {
+    if (s != null) s.close();
   }
 
   @Test
   public void testRegisteringChanges() {
     assertExecutionTime(200, new Task() {
       public void execute() {
-        build100kEntriesTree();
+        buildTree();
       }
     });
   }
 
   @Test
   public void testApplyingChanges() {
-    build100kEntriesTree();
+    buildTree();
 
     assertExecutionTime(1000, new Task() {
       public void execute() {
@@ -43,7 +48,7 @@ public class PerformanceTest extends TempDirTestCase {
 
   @Test
   public void testSaving() {
-    build100kEntriesTree();
+    buildTree();
     vcs.apply();
 
     assertExecutionTime(1000, new Task() {
@@ -55,23 +60,23 @@ public class PerformanceTest extends TempDirTestCase {
 
   @Test
   public void testLoading() {
-    build100kEntriesTree();
+    buildTree();
     vcs.apply();
     vcs.store();
 
     assertExecutionTime(1000, new Task() {
       public void execute() {
-        createVcs();
+        initVcs();
       }
     });
   }
 
   @Test
   public void testSearchingEntries() {
-    build100kEntriesTree();
+    buildTree();
     vcs.apply();
 
-    assertExecutionTime(150, new Task() {
+    assertExecutionTime(200, new Task() {
       public void execute() {
         for (int i = 0; i < 10000; i++) {
           vcs.getEntry("root/dir" + rand(10) + "/dir" + rand(10) + "/dir" + rand(10) + "/file" + rand(10));
@@ -84,7 +89,7 @@ public class PerformanceTest extends TempDirTestCase {
     return random.nextInt(max);
   }
 
-  private void build100kEntriesTree() {
+  private void buildTree() {
     vcs.createDirectory("root", null);
     createChildren("root", 5);
   }
@@ -93,19 +98,17 @@ public class PerformanceTest extends TempDirTestCase {
     if (countdown == 0) return;
 
     for (Integer i = 0; i < 10; i++) {
-      vcs.createFile(parent + "/file" + i, null, null);
+      String filePath = parent + "/file" + i;
+      vcs.createFile(filePath, null, null);
 
-      String childPath = parent + "/dir" + i;
-      vcs.createDirectory(childPath, null);
-      createChildren(childPath, countdown - 1);
+      String dirPath = parent + "/dir" + i;
+      vcs.createDirectory(dirPath, null);
+      createChildren(dirPath, countdown - 1);
     }
   }
 
   protected void assertExecutionTime(long expected, final Task task) {
-    long start = System.currentTimeMillis();
-    task.execute();
-
-    long actual = System.currentTimeMillis() - start;
+    long actual = measureExecutionTime(task);
     long delta = ((actual * 100) / expected) - 100;
 
     String message = "delta: " + delta + " expected: " + expected + "ms actual: " + actual + "ms";
@@ -116,6 +119,12 @@ public class PerformanceTest extends TempDirTestCase {
     else {
       fail("failure with " + message);
     }
+  }
+
+  private long measureExecutionTime(Task task) {
+    long start = System.currentTimeMillis();
+    task.execute();
+    return System.currentTimeMillis() - start;
   }
 
   protected interface Task {
