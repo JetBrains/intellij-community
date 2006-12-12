@@ -63,10 +63,18 @@ public class DiffStatusBar extends JPanel {
         int textBaseline = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
         g.drawString(diffType.getDisplayName(), 67, textBaseline);
       }
+
+      @Override
+      public Dimension getPreferredSize() {
+        FontMetrics metrics = getFontMetrics(getFont());
+        return new Dimension((int)(70 + metrics.getStringBounds(diffType.getDisplayName(), getGraphics()).getWidth()), COMP_HEIGHT);
+      }
+
+      @Override
+      public Dimension getMinimumSize() {
+        return getPreferredSize();
+      }
     };
-    component.setMinimumSize(new Dimension(0, COMP_HEIGHT));
-    component.setPreferredSize(new Dimension(0, COMP_HEIGHT));
-    component.setSize(new Dimension(0, COMP_HEIGHT));
     myLabels.add(component);
   }
 
@@ -98,6 +106,7 @@ public class DiffStatusBar extends JPanel {
     for (final JComponent myLabel : myLabels) {
       panel.add(myLabel);
     }
+    panel.setMaximumSize(panel.getPreferredSize());
     box.add(panel);
     box.add(Box.createHorizontalGlue());
 
