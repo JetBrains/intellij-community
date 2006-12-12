@@ -8,6 +8,7 @@ import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -42,57 +43,71 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
-    StringBuffer label = new StringBuffer();
-    Location location = myFrame.location();
-    Method method = location.method();
-    if (method != null) {
-      myName = method.name();
-      label.append(myName);
-      label.append("()");
-    }
-    if (settings.SHOW_LINE_NUMBER) {
-      String lineNumber = null;
-      try {
-        lineNumber = Integer.toString(location.lineNumber());
+    final StringBuilder label = StringBuilderSpinAllocator.alloc();
+    try {
+      Location location = myFrame.location();
+      Method method = location.method();
+      if (method != null) {
+        myName = method.name();
+        label.append(myName);
+        label.append("()");
       }
-      catch (InternalError e) {
-        lineNumber = e.toString();
-      }
-      if (lineNumber != null) {
-        label.append(':');
-        label.append(lineNumber);
-      }
-    }
-    if (settings.SHOW_CLASS_NAME) {
-      String name = null;
-      try {
-        ReferenceType refType = location.declaringType();
-        name = refType != null ? refType.name() : null;
-      }
-      catch (InternalError e) {
-        name = e.toString();
-      }
-      if (name != null) {
-        label.append(", ");
-        label.append(name);
-      }
-    }
-    if (settings.SHOW_SOURCE_NAME) {
-      try {
-        String sourceName;
+      if (settings.SHOW_LINE_NUMBER) {
+        String lineNumber = null;
         try {
-          sourceName = location.sourceName();
+          lineNumber = Integer.toString(location.lineNumber());
         }
         catch (InternalError e) {
-          sourceName = e.toString();
+          lineNumber = e.toString();
         }
-        label.append(", ");
-        label.append(sourceName);
+        if (lineNumber != null) {
+          label.append(':');
+          label.append(lineNumber);
+        }
       }
-      catch (AbsentInformationException exception) {
+      if (settings.SHOW_CLASS_NAME) {
+        String name = null;
+        try {
+          ReferenceType refType = location.declaringType();
+          name = refType != null ? refType.name() : null;
+        }
+        catch (InternalError e) {
+          name = e.toString();
+        }
+        if (name != null) {
+          label.append(", ");
+          int dotIndex = name.lastIndexOf('.');
+          if (dotIndex < 0) {
+            label.append(name);
+          }
+          else {
+            label.append(name.substring(dotIndex + 1));
+            label.append(" {");
+            label.append(name.substring(0, dotIndex));
+            label.append("}");
+          }
+        }
       }
+      if (settings.SHOW_SOURCE_NAME) {
+        try {
+          String sourceName;
+          try {
+            sourceName = location.sourceName();
+          }
+          catch (InternalError e) {
+            sourceName = e.toString();
+          }
+          label.append(", ");
+          label.append(sourceName);
+        }
+        catch (AbsentInformationException exception) {
+        }
+      }
+      return label.toString();
     }
-    return label.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(label);
+    }
   }
 
   public final boolean stackFramesEqual(StackFrameDescriptorImpl d) {

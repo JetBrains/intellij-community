@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ui.ListToolTipHandler;
 
 import javax.swing.*;
 
@@ -18,7 +19,8 @@ public class FramesList extends JList implements OccurenceNavigator {
   public FramesList() {
     super(new DefaultListModel());
     getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    setCellRenderer(new DebuggerComboBoxRenderer());
+    setCellRenderer(new FramesListRenderer());
+    ListToolTipHandler.install(this);
   }
 
   public DefaultListModel getModel() {
