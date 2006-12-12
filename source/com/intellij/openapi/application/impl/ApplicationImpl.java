@@ -92,7 +92,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     15,
     Integer.MAX_VALUE,
-    60L,
+    30 * 60L,
     TimeUnit.SECONDS,
     new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
