@@ -76,7 +76,7 @@ public class FilePatch {
   }
 
   public ApplyPatchStatus apply(final VirtualFile patchedDir, final int skipTopDirs) throws ApplyPatchException, IOException {
-    VirtualFile fileToPatch = findFileToPatch(patchedDir, skipTopDirs);
+    VirtualFile fileToPatch = findFileToPatch(patchedDir, skipTopDirs, false);
 
     if (fileToPatch == null) {
       throw new ApplyPatchException("Cannot find file to patch: " + myBeforeName);
@@ -92,7 +92,7 @@ public class FilePatch {
       }
       VirtualFile newFile = fileToPatch.createChildData(this, getBeforeFileName());
       final Document document = FileDocumentManager.getInstance().getDocument(newFile);
-      document.setText(myHunks.get(0).getText());
+      document.setText(getNewFileText());
       FileDocumentManager.getInstance().saveDocument(document);
     }
     else if (isDeletedFile()) {
@@ -133,30 +133,46 @@ public class FilePatch {
   }
 
   @Nullable
-  public VirtualFile findFileToPatch(@NotNull final VirtualFile patchedDir, final int skipTopDirs) {
-    VirtualFile file = findFileToPatchByName(patchedDir, skipTopDirs, myBeforeName);
+  public VirtualFile findFileToPatch(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final boolean createDirectories) {
+    VirtualFile file = findFileToPatchByName(patchedDir, skipTopDirs, myBeforeName, createDirectories);
     if (file == null) {
-      file = findFileToPatchByName(patchedDir, skipTopDirs, myAfterName);
+      file = findFileToPatchByName(patchedDir, skipTopDirs, myAfterName, createDirectories);
     }
     return file;
   }
 
   @Nullable
-  private VirtualFile findFileToPatchByName(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final String fileName) {
+  private VirtualFile findFileToPatchByName(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final String fileName,
+                                            final boolean createDirectories) {
     String[] pathNameComponents = fileName.split("/");
     VirtualFile fileToPatch = patchedDir;
     int lastComponentToFind = isNewFile() ? pathNameComponents.length-1 : pathNameComponents.length;
     for(int i=skipTopDirs; i<lastComponentToFind; i++) {
-      fileToPatch = fileToPatch.findChild(pathNameComponents [i]);
-      if (fileToPatch == null) {
-        break;
+      VirtualFile nextChild = fileToPatch.findChild(pathNameComponents [i]);
+      if (nextChild == null) {
+        if (createDirectories) {
+          try {
+            nextChild = fileToPatch.createChildDirectory(this, pathNameComponents [i]);
+          }
+          catch (IOException e) {
+            return null;
+          }
+        }
+        else {
+          return null;
+        }
       }
+      fileToPatch = nextChild;
     }
     return fileToPatch;
   }
 
   public boolean isNewFile() {
     return myHunks.size() == 1 && myHunks.get(0).isNewContent();
+  }
+
+  public String getNewFileText() {
+    return myHunks.get(0).getText();
   }
 
   public boolean isDeletedFile() {

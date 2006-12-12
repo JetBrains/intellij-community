@@ -10,23 +10,24 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.CommitSession;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.CommitSession;
 import com.intellij.util.Icons;
-import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.io.IOException;
+import java.util.Collection;
 
 public class ShelveChangesCommitExecutor implements CommitExecutor {
   private final Project myProject;
@@ -67,6 +68,14 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
     }
 
     public void execute(Collection<Change> changes, String commitMessage) {
+      if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action"));
+          }
+        });
+        return;
+      }
       try {
         ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage);
       }

@@ -150,4 +150,14 @@ public class ChangesUtil {
     }
     return ioFiles;
   }
+
+  public static boolean hasFileChanges(final Collection<Change> changes) {
+    for(Change change: changes) {
+      FilePath path = ChangesUtil.getFilePath(change);
+      if (!path.isDirectory()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

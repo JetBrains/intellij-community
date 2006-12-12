@@ -138,7 +138,7 @@ public class ApplyPatchDialog extends DialogWrapper {
                             ? getBaseDirectory()
                             : LocalFileSystem.getInstance().findFileByPath(myDetectedBaseDirectory.replace(File.separatorChar, '/'));
       int skipTopDirs = myDetectedStripLeadingDirs >= 0 ? myDetectedStripLeadingDirs : 0;
-      VirtualFile fileToPatch = patch.findFileToPatch(baseDir, skipTopDirs);
+      VirtualFile fileToPatch = patch.findFileToPatch(baseDir, skipTopDirs, false);
       if (fileToPatch == null) {
         String oldDetectedBaseDirectory = myDetectedBaseDirectory;
         int oldDetectedStripLeadingDirs = myDetectedStripLeadingDirs;

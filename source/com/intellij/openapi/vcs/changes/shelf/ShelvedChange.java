@@ -97,15 +97,18 @@ public class ShelvedChange {
 
     @Nullable
     public String getContent() {
-      final Document doc = FileDocumentManager.getInstance().getDocument(myFilePath.getVirtualFile());
-      String baseContent = doc.getText();
-
       try {
         List<FilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
         for(FilePatch patch: filePatches) {
           if (myPatchedFilePath.equals(patch.getBeforeName())) {
+            if (patch.isNewFile()) {
+              return patch.getNewFileText();
+            }
+            if (patch.isDeletedFile()) {
+              return null;
+            }
             StringBuilder newText = new StringBuilder();
-            patch.applyModifications(baseContent, newText);
+            patch.applyModifications(getBaseContent(), newText);
             return newText.toString();
           }
         }
@@ -115,6 +118,11 @@ public class ShelvedChange {
       }
 
       return null;
+    }
+
+    private String getBaseContent() {
+      final Document doc = FileDocumentManager.getInstance().getDocument(myFilePath.getVirtualFile());
+      return doc.getText();
     }
 
     @NotNull

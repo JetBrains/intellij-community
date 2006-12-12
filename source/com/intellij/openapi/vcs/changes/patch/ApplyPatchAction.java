@@ -51,14 +51,14 @@ public class ApplyPatchAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    applyPatch(project, dialog.getPatches(), dialog.getBaseDirectory(), dialog.getStripLeadingDirectories());
+    applyPatch(project, dialog.getPatches(), dialog.getBaseDirectory(), dialog.getStripLeadingDirectories(), false);
   }
 
   public static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
-                                            final int stripLeadingDirectories) {
+                                            final int stripLeadingDirectories, final boolean createDirectories) {
     List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
     for(FilePatch patch: patches) {
-      VirtualFile fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories);
+      VirtualFile fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, false);
       if (fileToPatch != null && !fileToPatch.isDirectory()) {
         filesToMakeWritable.add(fileToPatch);
         FileType fileType = fileToPatch.getFileType();
@@ -82,7 +82,7 @@ public class ApplyPatchAction extends AnAction {
           public void run() {
             ApplyPatchStatus status = null;
             for(FilePatch patch: patches) {
-              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, baseDirectory, stripLeadingDirectories);
+              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, baseDirectory, stripLeadingDirectories, createDirectories);
               status = ApplyPatchStatus.and(status, patchStatus);
             }
             if (status == ApplyPatchStatus.ALREADY_APPLIED) {
@@ -102,8 +102,8 @@ public class ApplyPatchAction extends AnAction {
   }
 
   private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,
-                                                   final int stripLeadingDirectories) {
-    VirtualFile file = patch.findFileToPatch(baseDirectory, stripLeadingDirectories);
+                                                   final int stripLeadingDirectories, final boolean createDirectories) {
+    VirtualFile file = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, createDirectories);
     if (file == null) {
       Messages.showErrorDialog(project, "Cannot find file to patch: " + patch.getBeforeName(), "Apply Patch");
       return ApplyPatchStatus.FAILURE;
