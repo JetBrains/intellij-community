@@ -194,4 +194,11 @@ public class ProgressIndicatorBase implements ProgressIndicator {
     myIndeterminate = indeterminate;
   }
 
+  public void restart() {
+    if (myRunning) {
+      myRunning = false;
+      exitModality();
+    }
+    start();
+  }
 }

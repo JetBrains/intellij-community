@@ -62,11 +62,10 @@ public class PassExecutorService {
     synchronized(PassExecutorService.class) {LOG.debug("------------------------------------------");}
     cancelAll();
     final ProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
-    if (updateProgress.isRunning()) {
-      updateProgress.stop();
+    if (updateProgress instanceof DaemonProgressIndicator) {
+      ((DaemonProgressIndicator)updateProgress).restart();
     }
 
-    updateProgress.start();
     myThreadsToExecuteCountdown.set(passes.length);
 
     final TextEditorHighlightingPass[] textEditorHighlightingPasses;
