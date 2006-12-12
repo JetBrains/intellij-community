@@ -26,6 +26,7 @@ import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -45,10 +46,25 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests        = new HashMap<Requestor, Set<EventRequest>>();
   private Map<EventRequest, Requestor>      myRequestsToProcessingRequestor     = new HashMap<EventRequest, Requestor>();
   private EventRequestManager myEventRequestManager;
+  private @Nullable ThreadReference myFilterThread;
 
   public RequestManagerImpl(DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
     myDebugProcess.addDebugProcessListener(this);
+  }
+
+
+  public EventRequestManager getVMRequestManager() {
+    return myEventRequestManager;
+  }
+
+  @Nullable
+  public ThreadReference getFilterThread() {
+    return myFilterThread;
+  }
+
+  public void setFilterThread(@Nullable final ThreadReference filterThread) {
+    myFilterThread = filterThread;
   }
 
   public Set findRequests(Requestor requestor) {
@@ -289,6 +305,18 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(findRequestor(request) != null);
     try {
+      final ThreadReference filterThread = myFilterThread;
+      if (filterThread != null) {
+        if (request instanceof BreakpointRequest) {
+          ((BreakpointRequest)request).addThreadFilter(filterThread);
+        }
+        else if (request instanceof MethodEntryRequest) {
+          ((MethodEntryRequest)request).addThreadFilter(filterThread);
+        }
+        else if (request instanceof MethodExitRequest) {
+          ((MethodExitRequest)request).addThreadFilter(filterThread);
+        }
+      }
       request.enable();
     } catch (InternalException e) {
       if(e.errorCode() == 41) {

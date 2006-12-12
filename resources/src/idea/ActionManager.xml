@@ -787,8 +787,6 @@
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.MuteBreakpoints" class="com.intellij.debugger.actions.MuteBreakpointsAction"
               icon="/debugger/muteBreakpoints.png"/>
-      <action id="Debugger.ToggleStepThreadSuspendPolicy" class="com.intellij.debugger.actions.ToggleStepThreadSuspendPolicyAction"
-              icon="/debugger/suspend_all.png"/>
       <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction"/>
     </group>
 

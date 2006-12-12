@@ -397,11 +397,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
   }
 
   public void reuse(DebuggerSessionTab reuseSession) {
-    final DebugProcessImpl reuseProcess = reuseSession.getDebugProcess();
-    final DebugProcessImpl process = getDebugProcess();
-    if (process != null && reuseProcess != null) {
-      process.setSuspendPolicy(reuseProcess.getSteppingSuspendPolicy());
-    }
     DebuggerTreeNodeImpl[] watches = reuseSession.getWatchPanel().getWatchTree().getWatches();
 
     final WatchDebuggerTree watchTree = getWatchPanel().getWatchTree();

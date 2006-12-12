@@ -11,12 +11,13 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.application.ApplicationManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
@@ -32,9 +33,11 @@ import com.sun.jdi.request.MethodExitRequest;
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessEvents");
   private DebuggerEventThread myEventThread;
+  private final BreakpointManager myBreakpointManager;
 
   public DebugProcessEvents(Project project) {
     super(project);
+    myBreakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
   }
 
   protected void commitVM(final VirtualMachine vm) {
@@ -286,7 +289,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     final VirtualMachineProxyImpl machineProxy = getVirtualMachineProxy();
     if (machineProxy.canGetMethodReturnValues()) {
       MethodExitRequest request = machineProxy.eventRequestManager().createMethodExitRequest();
-      request.setSuspendPolicy(EventRequest.SUSPEND_NONE); 
+      request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
       myReturnValueWatcher = new MethodReturnValueWatcher(request);
     }
 
@@ -342,7 +345,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final int nextStepDepth = hint.getNextStepDepth(suspendContext);
       if (nextStepDepth != RequestHint.STOP) {
         final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
-        doStep(threadProxy, nextStepDepth, hint);
+        doStep(suspendContext, threadProxy, nextStepDepth, hint);
         shouldResume = true;
       }
 
@@ -388,12 +391,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
 
-        final boolean requestorAsksResume = (requestor != null)? requestor.processLocatableEvent(this, event): true;
-        final boolean userWantsResume = (requestor instanceof Breakpoint)? DebuggerSettings.SUSPEND_NONE.equals(((Breakpoint)requestor).SUSPEND_POLICY) : false;
+        final boolean requestorAsksResume = (requestor == null) || requestor.processLocatableEvent(this, event);
+        final boolean userWantsResume = (requestor instanceof Breakpoint) && DebuggerSettings.SUSPEND_NONE.equals(((Breakpoint)requestor).SUSPEND_POLICY);
 
         if (requestor instanceof Breakpoint && !requestorAsksResume) {
           // if requestor is a breakpoint and this breakpoint was hit, no matter its suspend policy
-          DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().processBreakpointHit((Breakpoint)requestor);
+          myBreakpointManager.processBreakpointHit((Breakpoint)requestor);
         }
 
         if(requestorAsksResume || userWantsResume) {
@@ -402,6 +405,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
         else {
           if (myReturnValueWatcher != null) {
             myReturnValueWatcher.setTrackingEnabled(false);
+          }
+          if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+            myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           }
           suspendManager.voteSuspend(suspendContext);
           showStatusText(DebugProcessEvents.this, event);

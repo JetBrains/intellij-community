@@ -42,6 +42,8 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.request.*;
 import gnu.trove.TIntHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -751,6 +753,63 @@ public class BreakpointManager implements JDOMExternalizable {
     List<Breakpoint> breakpoints = getBreakpoints();
     for (Breakpoint breakpoint : breakpoints) {
       breakpoint.createRequest(debugProcess);
+    }
+  }
+
+  public void applyThreadFilter(final DebugProcessImpl debugProcess, ThreadReference thread) {
+    final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
+    if (Comparing.equal(thread, requestManager.getFilterThread())) {
+      // the filter already added
+      return;
+    }
+    requestManager.setFilterThread(thread);
+    if (thread == null) {
+      final List<Breakpoint> breakpoints = getBreakpoints();
+      for (Breakpoint breakpoint : breakpoints) {
+        if (LineBreakpoint.CATEGORY.equals(breakpoint.getCategory()) || MethodBreakpoint.CATEGORY.equals(breakpoint.getCategory())) {
+          requestManager.deleteRequest(breakpoint);
+          breakpoint.createRequest(debugProcess);
+        }
+      }
+    }
+    else {
+      // important! need to add filter to _existing_ requests, otherwise Requestor->Request mapping will be lost
+      // and debugger trees will not be restored to original state
+      abstract class FilterSetter <T extends EventRequest> {
+         void applyFilter(final List<T> requests, final ThreadReference thread) {
+          for (T request : requests) {
+            final boolean wasEnabled = request.isEnabled();
+            if (wasEnabled) {
+              request.disable();
+            }
+            addFilter(request, thread);
+            if (wasEnabled) {
+              request.enable();
+            }
+          }
+        }
+        protected abstract void addFilter(final T request, final ThreadReference thread);
+      }
+
+      final EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
+
+      new FilterSetter<BreakpointRequest>() {
+        protected void addFilter(final BreakpointRequest request, final ThreadReference thread) {
+          request.addThreadFilter(thread);
+        }
+      }.applyFilter(eventRequestManager.breakpointRequests(), thread);
+
+      new FilterSetter<MethodEntryRequest>() {
+        protected void addFilter(final MethodEntryRequest request, final ThreadReference thread) {
+          request.addThreadFilter(thread);
+        }
+      }.applyFilter(eventRequestManager.methodEntryRequests(), thread);
+
+      new FilterSetter<MethodExitRequest>() {
+        protected void addFilter(final MethodExitRequest request, final ThreadReference thread) {
+          request.addThreadFilter(thread);
+        }
+      }.applyFilter(eventRequestManager.methodExitRequests(), thread);
     }
   }
 

@@ -2,6 +2,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.*;
@@ -13,6 +14,7 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.ExecutionException;
@@ -442,9 +444,17 @@ public class DebuggerSession {
 
 
   public void resume() {
-    if(getSuspendContext() != null) {
-      mySteppingThroughThreads.remove(getSuspendContext().getThread());
-      resumeAction(myDebugProcess.createResumeCommand(getSuspendContext()), EVENT_RESUME);
+    final SuspendContextImpl suspendContext = getSuspendContext();
+    if(suspendContext != null) {
+      mySteppingThroughThreads.remove(suspendContext.getThread());
+      final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
+      final SuspendContextCommandImpl command = myDebugProcess.createResumeCommand(suspendContext);
+      resumeAction(new SuspendContextCommandImpl(suspendContext) {
+        public void contextAction() throws Exception {
+          breakpointManager.applyThreadFilter(getProcess(), null); // clear the filter on resume
+          command.contextAction();
+        }
+      }, EVENT_RESUME);
     }
   }
 

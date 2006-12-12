@@ -176,16 +176,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
     }
 
     protected void changeEvent(DebuggerContextImpl newContext, int event) {
-      if(event == DebuggerSession.EVENT_REFRESH || event == DebuggerSession.EVENT_REFRESH_VIEWS_ONLY) {
-        // supress the events in order not to spoil the evaluation result
-        return;
-      }
-      final DebuggerSession debuggerSession = newContext.getDebuggerSession();
-      if(debuggerSession != null && debuggerSession.getState() == DebuggerSession.STATE_WAIT_EVALUATION) {
-        return;
-      }
-
-      super.changeEvent(newContext, event);
+      // left empty to supress the events in order not to spoil the evaluation result
     }
   }
 

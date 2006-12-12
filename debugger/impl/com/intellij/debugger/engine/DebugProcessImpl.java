@@ -103,9 +103,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private LinkedList<String> myStatusStack = new LinkedList<String>();
   private String myStatusText;
-  private int mySteppingSuspendPolicy = DebuggerSettings.getInstance().isSuspendAllThreads()
-                                ? EventRequest.SUSPEND_ALL
-                                : EventRequest.SUSPEND_EVENT_THREAD;
 
   private final DescriptorHistoryManager myDescriptorHistoryManager;
 
@@ -136,7 +133,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
     myProject = project;
     myRequestManager = new RequestManagerImpl(this);
     myDescriptorHistoryManager = new DescriptorHistoryManagerImpl(project);
-    setSteppingSuspendPolicy(DebuggerSettings.getInstance().isSuspendAllThreads());
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
   }
@@ -310,11 +306,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   /**
    *
+   * @param suspendContext
    * @param stepThread
    * @param depth
    * @param hint may be null
    */
-  protected void doStep(final ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
+  protected void doStep(final SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
     if (stepThread == null || stepThread.isCollected()) {
       return;
     }
@@ -340,8 +337,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
     }
 
-    // todo: seems like this functionality is outdated, always suspend all threads while stepping
-    //stepRequest.setSteppingSuspendPolicy(getSteppingSuspendPolicy());
+    // suspend policy to match the suspend policy of the context:
+    // if all threads were suspended, then during stepping all the threads must be suspended
+    // if only event thread were suspended, then only this particular thread must be suspended during stepping
+    stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? EventRequest.SUSPEND_EVENT_THREAD : EventRequest.SUSPEND_ALL);
 
     if (hint != null) {
       //noinspection HardCodedStringLiteral
@@ -826,6 +825,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   private static int getInvokePolicy(SuspendContext suspendContext) {
+    //return ThreadReference.INVOKE_SINGLE_THREADED;
     return suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? ThreadReference.INVOKE_SINGLE_THREADED : 0;
   }
 
@@ -853,6 +853,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
           myArgs.add(arg);
         }
       }
+    }
+
+    public String toString() {
+      return "INVOKE: " + super.toString();
     }
 
     protected abstract E invokeMethod(int invokePolicy, final List args) throws InvocationException,
@@ -1257,20 +1261,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return refType;
   }
 
-  public int getSteppingSuspendPolicy() {
-    return mySteppingSuspendPolicy;
-  }
-
-  public void setSteppingSuspendPolicy(boolean suspendAll) {
-    mySteppingSuspendPolicy = suspendAll ? EventRequest.SUSPEND_ALL : EventRequest.SUSPEND_EVENT_THREAD;
-    DebuggerSettings.getInstance().setSuspendPolicy(suspendAll);
-  }
-
-  public void setSuspendPolicy(int policy) {
-    mySteppingSuspendPolicy = policy;
-    DebuggerSettings.getInstance().setSuspendPolicy(policy == EventRequest.SUSPEND_ALL);
-  }
-
   public void logThreads() {
     if (LOG.isDebugEnabled()) {
       try {
@@ -1342,7 +1332,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       if (myReturnValueWatcher != null) {
         myReturnValueWatcher.setTrackingEnabled(true);
       }
-      doStep(thread, StepRequest.STEP_OUT, hint);
+      doStep(suspendContext, thread, StepRequest.STEP_OUT, hint);
       super.contextAction();
     }
   }
@@ -1365,7 +1355,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
                                new RequestHint(stepThread, suspendContext, mySmartStepFilter) :
                                new RequestHint(stepThread, suspendContext, StepRequest.STEP_INTO);
       hint.setIgnoreFilters(myIgnoreFilters);
-      doStep(stepThread, StepRequest.STEP_INTO, hint);
+      doStep(suspendContext, stepThread, StepRequest.STEP_INTO, hint);
       super.contextAction();
     }
   }
@@ -1392,7 +1382,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       if (myReturnValueWatcher != null) {
         myReturnValueWatcher.setTrackingEnabled(true);
       }
-      doStep(steppingThread, StepRequest.STEP_OVER, hint);
+      doStep(suspendContext, steppingThread, StepRequest.STEP_OVER, hint);
 
       if (myIsIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);

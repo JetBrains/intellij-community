@@ -34,7 +34,6 @@ public interface DebuggerActions {
   @NonNls String EDIT_FRAME_SOURCE = "Debugger.EditFrameSource";
   @NonNls String EDIT_NODE_SOURCE = "Debugger.EditNodeSource";
   @NonNls String MUTE_BREAKPOINTS = "Debugger.MuteBreakpoints";
-  @NonNls String TOGGLE_STEP_SUSPEND_POLICY = "Debugger.ToggleStepThreadSuspendPolicy";
   @NonNls String REPRESENTATION_LIST = "Debugger.Representation";
   @NonNls String CUSTOMIZE_VIEWS = "Debugger.CustomizeContextView";
   @NonNls String CUSTOMIZE_THREADS_VIEW = "Debugger.CustomizeThreadsView";
