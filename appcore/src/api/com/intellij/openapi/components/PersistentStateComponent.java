@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.XmlSerializer;
  *
  * todo: describe registration procedures
  */
-public interface PersitentStateComponent {
+public interface PersistentStateComponent {
   /**
    * @return a component state. All properties and public fields are serialized. Only values, which differ
    * from default (i.e. the value of newly instantiated class) are serialized.
