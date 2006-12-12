@@ -179,7 +179,15 @@ public class ShowDiffAction extends AnAction {
       }
     }, "Getting revisions content", false, project);
 
-    diffReq.setContentTitles("Base version", "Your version");
+    String beforeRevisionTitle = (bRev != null) ? bRev.getRevisionNumber().asString() : "";
+    String afterRevisionTitle = (aRev != null) ? aRev.getRevisionNumber().asString() : "";
+    if (beforeRevisionTitle.length() == 0) {
+      beforeRevisionTitle = "Base version";
+    }
+    if (afterRevisionTitle.length() == 0) {
+      afterRevisionTitle = "Your version";
+    }
+    diffReq.setContentTitles(beforeRevisionTitle, afterRevisionTitle);
     return diffReq;
   }
 
