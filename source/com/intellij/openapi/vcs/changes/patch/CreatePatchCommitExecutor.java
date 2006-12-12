@@ -10,33 +10,45 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.CommitSession;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diff.impl.patch.PatchBuilder;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchBuilder;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.CommitSession;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.Icons;
-import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NotNull;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.*;
 import java.util.Collection;
 import java.util.List;
-import java.io.*;
 
-public class CreatePatchCommitExecutor implements CommitExecutor, ProjectComponent {
+public class CreatePatchCommitExecutor implements CommitExecutor, ProjectComponent, JDOMExternalizable {
   private Project myProject;
   private ChangeListManager myChangeListManager;
+
+  public String PATCH_PATH = "";
+
+  public static CreatePatchCommitExecutor getInstance(Project project) {
+    return project.getComponent(CreatePatchCommitExecutor.class);
+  }
 
   public CreatePatchCommitExecutor(final Project project, final ChangeListManager changeListManager) {
     myProject = project;
@@ -82,8 +94,17 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
   public void disposeComponent() {
   }
 
+  public void readExternal(Element element) throws InvalidDataException {
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
   private class CreatePatchCommitSession implements CommitSession {
     private CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel();
+    private boolean myFileNameInitialized = false;
 
     @Nullable
     public JComponent getAdditionalConfigurationUI() {
@@ -91,6 +112,13 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
     }
 
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
+      if (!myFileNameInitialized) {
+        if (PATCH_PATH == "") {
+          PATCH_PATH = myProject.getProjectFile().getParent().getPresentableUrl();
+        }
+        myPanel.setFileName(ShelveChangesManager.suggestPatchName(commitMessage, new File(PATCH_PATH)));
+        myFileNameInitialized = true;
+      }
       return true;
     }
 
@@ -98,6 +126,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
       try {
         final String fileName = myPanel.getFileName();
         final File file = new File(fileName).getAbsoluteFile();
+        PATCH_PATH = file.getParent();
         Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
         try {
           List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl());

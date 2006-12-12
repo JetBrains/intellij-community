@@ -84,6 +84,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor</implementation-class>
+      <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
     <component>

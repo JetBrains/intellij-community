@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.io.File;
 
 public class CreatePatchConfigurationPanel {
   private JPanel myPanel;
@@ -38,5 +39,9 @@ public class CreatePatchConfigurationPanel {
 
   public String getFileName() {
     return myFileNameField.getText();
+  }
+
+  public void setFileName(final File file) {
+    myFileNameField.setText(file.getPath());
   }
 }

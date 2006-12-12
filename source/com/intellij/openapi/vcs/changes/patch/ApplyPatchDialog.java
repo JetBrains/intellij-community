@@ -60,7 +60,7 @@ public class ApplyPatchDialog extends DialogWrapper {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        return file.getFileType() == StdFileTypes.PATCH;
+        return file.getFileType() == StdFileTypes.PATCH || file.getFileType() == StdFileTypes.PLAIN_TEXT;
       }
     };
     myFileNameField.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
