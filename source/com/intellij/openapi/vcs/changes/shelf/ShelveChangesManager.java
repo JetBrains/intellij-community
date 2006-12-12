@@ -82,7 +82,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     for(Element child: children) {
       ShelvedChangeList data = new ShelvedChangeList();
       data.readExternal(child);
-      myShelvedChangeListDatas.add(data);
+      if (new File(data.PATH).exists()) {
+        myShelvedChangeListDatas.add(data);
+      }
     }
   }
 
