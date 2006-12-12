@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
@@ -51,7 +52,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private boolean myPhysical;
   private PsiFile myPsiFile = null;
   private Content myContent;
-  private WeakReference<Document> myDocument;
+  private SoftReference<Document> myDocument;
   private Language myBaseLanguage;
 
   public SingleRootFileViewProvider(PsiManager manager, VirtualFile file) {
@@ -326,7 +327,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     Document document = myDocument != null ? myDocument.get() : null;
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-      myDocument = new WeakReference<Document>(document);
+      myDocument = new SoftReference<Document>(document);
     }
     if (document != null && getContent()instanceof VirtualFileContent) {
       setContent(new DocumentContent());
