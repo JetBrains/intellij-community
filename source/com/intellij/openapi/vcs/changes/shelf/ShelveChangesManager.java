@@ -102,7 +102,14 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
   public void shelveChanges(final Collection<Change> changes, final String commitMessage) throws IOException {
     File patchPath = getPatchPath(commitMessage);
-    Writer writer = new OutputStreamWriter(new FileOutputStream(patchPath));
+    Writer writer;
+    try {
+      writer = new OutputStreamWriter(new FileOutputStream(patchPath));
+    }
+    catch(IOException ex) {
+      patchPath = getPatchPath("shelved_change");
+      writer = new OutputStreamWriter(new FileOutputStream(patchPath));
+    }
     try {
       List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl());
       UnifiedDiffWriter.write(patches, writer);
@@ -113,7 +120,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
     RollbackChangesDialog.doRollback(myProject, changes, true, false);
 
-    myShelvedChangeListDatas.add(new ShelvedChangeList(patchPath.toString(), commitMessage));
+    myShelvedChangeListDatas.add(new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' ')));
     notifyStateChanged();
   }
 
@@ -127,7 +134,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       file.mkdirs();
     }
 
-    @NonNls String defaultPath = commitMessage.replace(' ', ' ').replace('.', '_').replace(File.separatorChar, '_');
+    @NonNls String defaultPath = commitMessage.replace(' ', '_').replace('.', '_').replace(File.separatorChar, '_').replace('\t', '_').replace('\n', '_').replace(':', '_').replace('/', '_');
     if (defaultPath.length() == 0) {
       defaultPath = "unnamed";
     }
