@@ -304,13 +304,16 @@ public class MatcherImpl {
     }
     else {
       final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
+      if (elementsToScan == null) return;
       totalFilesToScan = elementsToScan.length;
 
       for (int i = 0; i < elementsToScan.length; ++i) {
-        final Language language = elementsToScan[i].getLanguage();
+        final PsiElement psiElement = elementsToScan[i];
+        if (psiElement == null) continue;
+        final Language language = psiElement.getLanguage();
 
         if (language != JspxFileViewProvider.JAVA_HOLDER_METHOD_TREE_LANGUAGE && language == ourPatternLanguage) { // prevent duplicated usages
-          scheduler.addOneTask(new MatchOneFile(elementsToScan[i]));
+          scheduler.addOneTask(new MatchOneFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
