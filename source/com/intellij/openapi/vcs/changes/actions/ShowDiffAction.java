@@ -101,6 +101,7 @@ public class ShowDiffAction extends AnAction {
 
     final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
     if (diffReq != null) {
+      diffReq.addHint(DiffTool.HINT_SHOW_FRAME);
       tool.show(diffReq);
     }
   }

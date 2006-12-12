@@ -1,6 +1,5 @@
 package com.intellij.openapi.diff.impl.mergeTool;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.FrameWrapper;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
@@ -18,7 +17,7 @@ public class MergeTool implements DiffTool {
     frameWrapper.setPreferredFocusedComponent(mergePanel.getPreferredFocusedComponent());
     frameWrapper.closeOnEsc();
     frameWrapper.setTitle(data.getWindowTitle());
-    frameWrapper.setData(DataConstants.PROJECT, data.getProject());
+    frameWrapper.setProject(data.getProject());
     frameWrapper.show();
   }
 

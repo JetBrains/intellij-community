@@ -1,6 +1,5 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffContentUtil;
@@ -20,7 +19,7 @@ public class DiffUtil {
   public static FrameWrapper initDiffFrame(FrameWrapper frameWrapper, final DiffPanelImpl diffPanel) {
     Project project = diffPanel.getProject();
     frameWrapper.setComponent(diffPanel.getComponent());
-    frameWrapper.setData(DataConstants.PROJECT, project);
+    frameWrapper.setProject(project);
     frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     frameWrapper.setPreferredFocusedComponent(diffPanel.getPreferredFocusedComponent());
     frameWrapper.closeOnEsc();

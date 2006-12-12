@@ -1,7 +1,11 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.util.ImageLoader;
@@ -13,7 +17,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 
 public class FrameWrapper {
@@ -27,6 +30,8 @@ public class FrameWrapper {
   private JFrame myFrame;
   private final Map myDatas = new HashMap();
   private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
+  private Project myProject;
+  private ProjectManagerListener myProjectListener = new MyProjectManagerListener();
 
   public FrameWrapper(@NonNls String dimensionServiceKey) {
     myDimensionKey = dimensionServiceKey;
@@ -35,6 +40,12 @@ public class FrameWrapper {
   public void setDimensionKey(String dimensionKey) { myDimensionKey = dimensionKey; }
 
   public void setData(String dataId, Object data) { myDatas.put(dataId, data); }
+
+  public void setProject(Project project) {
+    myProject = project;
+    setData(DataConstants.PROJECT, project);
+    ProjectManager.getInstance().addProjectManagerListener(project, myProjectListener);
+  }
 
   public void show() {
     final JFrame frame = getFrame();
@@ -141,11 +152,14 @@ public class FrameWrapper {
 
     public void dispose() {
       saveFrameState(myDimensionKey, this);
-      for (Iterator<Disposable> iterator = myDisposables.iterator(); iterator.hasNext();) {
-        Disposable disposable = iterator.next();
+      for (Disposable disposable : myDisposables) {
         disposable.dispose();
       }
       myDatas.clear();
+      if (myProject != null) {
+        ProjectManager.getInstance().removeProjectManagerListener(myProject, myProjectListener);
+        myProject = null;
+      }
       super.dispose();
     }
 
@@ -157,6 +171,26 @@ public class FrameWrapper {
     public void paint(Graphics g) {
       UIUtil.applyRenderingHints(g);
       super.paint(g);
+    }
+  }
+
+  private class MyProjectManagerListener implements ProjectManagerListener {
+
+    public void projectOpened(Project project) {
+    }
+
+    public boolean canCloseProject(Project project) {
+      return true;
+    }
+
+    public void projectClosed(Project project) {
+    }
+
+    public void projectClosing(Project project) {
+      if (project == myProject) {
+        myFrame.setVisible(false);
+        myFrame.dispose();
+      }
     }
   }
 }
