@@ -20,7 +20,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -112,13 +111,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     options.isOverridingMethods = true;
     options.isUsages = true;
     options.isSearchForTextOccurences = false;
-    final Ref<Integer> usagesFound = new Ref<Integer>(Integer.valueOf(0));
+    final int[] usagesFound = new int[1];
     Runnable runnable = new Runnable() {
       public void run() {
         Processor<UsageInfo> processor = new Processor<UsageInfo>() {
           public boolean process(final UsageInfo t) {
-            usagesFound.set(Integer.valueOf(usagesFound.get().intValue() + 1));
-            return false;
+            return ++usagesFound[0] < 2;
           }
         };
         FindUsagesUtil.processUsages(method, processor, options);
@@ -128,7 +126,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
 
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
-    if (usagesFound.get().intValue() <= 1) {
+    if (usagesFound[0] <= 1) {
       ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
                             project,
                             method,
