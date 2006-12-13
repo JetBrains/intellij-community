@@ -510,11 +510,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myListeners.getMulticaster().changeListRemoved(list);
   }
 
-  private void addChangeToList(final Change change, final LocalChangeList list) {
-    list.addChange(change);
-    myListeners.getMulticaster().changeListChanged(list);
-  }
-
   public void setDefaultChangeList(@NotNull LocalChangeList list) {
     synchronized (myChangeLists) {
       if (myDefaultChangelist != null) myDefaultChangelist.setDefault(false);
@@ -708,7 +703,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
       for (Element changeNode : changeNodes) {
         try {
-          addChangeToList(readChange(changeNode), list);
+          list.addChange(readChange(changeNode));
         }
         catch (OutdatedFakeRevisionException e) {
           // Do nothing. Just skip adding outdated revisions to the list.
