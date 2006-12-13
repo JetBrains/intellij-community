@@ -194,7 +194,7 @@ public class CompilerUtil {
       commandLine.add("1.4");
     }
     else if (applicableLanguageLevel.equals(LanguageLevel.JDK_1_3)) {
-      if (isOfVersion(versionString, "1.4") || isOfVersion(versionString, "1.5")) {
+      if (!(isOfVersion(versionString, "1.3") || isOfVersion(versionString, "1.2") || isOfVersion(versionString, "1.1"))) {
         //noinspection HardCodedStringLiteral
         commandLine.add("-source");
         commandLine.add("1.3");
