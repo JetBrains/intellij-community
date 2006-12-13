@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.lang.ref.SoftReference;
+import java.lang.ref.Reference;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +53,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private boolean myPhysical;
   private PsiFile myPsiFile = null;
   private Content myContent;
-  private SoftReference<Document> myDocument;
+  private WeakReference<Document> myDocument;
   private Language myBaseLanguage;
 
   public SingleRootFileViewProvider(PsiManager manager, VirtualFile file) {
@@ -130,7 +131,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (!(myContent instanceof PsiFileContent)) return;
     final Document cachedDocument = getCachedDocument();
     if (cachedDocument != null) {
-      setContent(new DocumentContent());
+      setContent(new DocumentContent(cachedDocument));
     }
     else {
       setContent(new VirtualFileContent());
@@ -327,10 +328,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     Document document = myDocument != null ? myDocument.get() : null;
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-      myDocument = new SoftReference<Document>(document);
+      myDocument = new WeakReference<Document>(document);
     }
     if (document != null && getContent()instanceof VirtualFileContent) {
-      setContent(new DocumentContent());
+      setContent(new DocumentContent(document));
     }
     return document;
   }
@@ -456,16 +457,17 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private class DocumentContent implements Content {
+    private Document document;
+    DocumentContent(@NotNull Document _document) {
+      document = _document;
+    }
+
     public CharSequence getText() {
-      final Document document = getDocument();
-      assert document != null;
       return document.getCharsSequence().subSequence(0, document.getTextLength());
     }
 
     public long getModificationStamp() {
-      Document document = myDocument != null ? myDocument.get() : null;
-      if (document != null) return document.getModificationStamp();
-      return myFile.getModificationStamp();
+      return document.getModificationStamp();
     }
   }
 
