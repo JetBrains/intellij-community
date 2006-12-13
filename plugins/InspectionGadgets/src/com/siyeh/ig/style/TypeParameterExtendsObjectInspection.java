@@ -143,7 +143,10 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection {
                 return;
             }
             final PsiWildcardType wildcardType = (PsiWildcardType) type;
-            final PsiType extendsBound = wildcardType.getExtendsBound();
+            if (!wildcardType.isExtends()) {
+                return;
+            }
+            final PsiType extendsBound = wildcardType.getBound();
             if (!TypeUtils.isJavaLangObject(extendsBound)) {
                 return;
             }
