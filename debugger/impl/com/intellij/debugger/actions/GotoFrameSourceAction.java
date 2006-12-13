@@ -26,7 +26,7 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
     if(project == null) return;
     StackFrameDescriptorImpl stackFrameDescriptor = getStackFrameDescriptor(dataContext);
     if(stackFrameDescriptor != null) {
-      DebuggerContextUtil.setStackFrame(getContextManager(dataContext), stackFrameDescriptor.getStackFrame());
+      DebuggerContextUtil.setStackFrame(getContextManager(dataContext), stackFrameDescriptor.getFrameProxy());
     }
   }
 

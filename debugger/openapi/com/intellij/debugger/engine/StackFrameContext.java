@@ -25,6 +25,6 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
  * To change this template use Options | File Templates.
  */
 public interface StackFrameContext {
-  StackFrameProxy  getFrameProxy  ();
+  StackFrameProxy  getFrameProxy();
   DebugProcess     getDebugProcess();
 }

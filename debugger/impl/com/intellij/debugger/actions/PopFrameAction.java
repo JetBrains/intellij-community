@@ -53,7 +53,7 @@ public class PopFrameAction extends DebuggerAction {
       if(descriptor instanceof StackFrameDescriptorImpl) {
         if(selectedNode.getNextSibling() != null) {
           StackFrameDescriptorImpl frameDescriptor = ((StackFrameDescriptorImpl)descriptor);
-          return frameDescriptor.getStackFrame();
+          return frameDescriptor.getFrameProxy();
         }
         return null;
       }

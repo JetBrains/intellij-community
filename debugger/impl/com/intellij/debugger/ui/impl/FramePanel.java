@@ -18,10 +18,7 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -202,7 +199,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     final DefaultListModel model = myFramesList.getModel();
     for (int idx = 0; idx < count; idx++) {
       StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)model.getElementAt(idx);
-      if (frame.equals(item.getStackFrame())) {
+      if (frame.equals(item.getFrameProxy())) {
         if (!item.equals(selectedValue)) {
           myFramesList.setSelectedIndex(idx);
         }
@@ -264,7 +261,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
       final JList list = (JList) e.getSource();
       final StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)list.getSelectedValue();
       if(item != null) {
-        DebuggerContextUtil.setStackFrame(getContextManager(), item.getStackFrame());
+        DebuggerContextUtil.setStackFrame(getContextManager(), item.getFrameProxy());
       }
     }
   }
@@ -458,8 +455,9 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
       final List<StackFrameDescriptorImpl> frameItems = new ArrayList<StackFrameDescriptorImpl>(frames.size());
 
       EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
+      final MethodsTracker tracker = new MethodsTracker();
       for (StackFrameProxyImpl stackFrameProxy : frames) {
-        StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy);
+        StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
         descriptor.setContext(evaluationContext);
         descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
         frameItems.add(descriptor);

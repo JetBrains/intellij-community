@@ -1,6 +1,7 @@
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -13,14 +14,16 @@ import com.intellij.openapi.util.Key;
 public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   private static final Key STACK_FRAME = new Key("STACK_FRAME");
   private final StackFrameProxyImpl myFrame;
+  private MethodsTracker myMethodsTracker;
 
   public StackFrameData(StackFrameProxyImpl frame) {
     super();
     myFrame = frame;
+    myMethodsTracker = new MethodsTracker();
   }
 
   protected StackFrameDescriptorImpl createDescriptorImpl(Project project) {
-    return new StackFrameDescriptorImpl(myFrame);
+    return new StackFrameDescriptorImpl(myFrame, myMethodsTracker);
   }
 
   public boolean equals(Object object) {

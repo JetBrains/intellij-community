@@ -2,28 +2,26 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.impl.DebuggerContextUtil;
 import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.impl.DebuggerContextUtil;
-import com.intellij.debugger.impl.DebuggerContextUtil;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ThreadsPanel extends DebuggerPanel implements DataProvider {
   @NonNls private static final String HELP_ID = "debugging.debugThreads";
@@ -68,7 +66,7 @@ public class ThreadsPanel extends DebuggerPanel implements DataProvider {
   }
 
   private void selectFrame(DebuggerTreeNodeImpl node) {
-    StackFrameProxyImpl frame = ((StackFrameDescriptorImpl)node.getDescriptor()).getStackFrame();
+    StackFrameProxyImpl frame = ((StackFrameDescriptorImpl)node.getDescriptor()).getFrameProxy();
     DebuggerContextUtil.setStackFrame(getContextManager(), frame);
   }
 

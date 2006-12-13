@@ -115,7 +115,7 @@ public class PositionManagerImpl implements PositionManager {
       return null;
     }
 
-    int     lineNumber  = calcLineIndex(psiFile, location);
+    int lineNumber  = calcLineIndex(psiFile, location);
 
     return SourcePosition.createFromLine(psiFile, lineNumber);
   }

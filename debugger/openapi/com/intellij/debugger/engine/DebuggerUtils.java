@@ -342,6 +342,14 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
   public abstract String findAvailableDebugAddress(boolean useSockets) throws ExecutionException;
 
+  public static boolean isSynthetic(TypeComponent typeComponent) {
+    if (typeComponent == null) {
+      return false;
+    }
+    VirtualMachine machine = typeComponent.virtualMachine();
+    return machine != null && machine.canGetSyntheticAttribute() && typeComponent.isSynthetic();
+  }
+  
   protected static class ArrayClass {
     public String className;
     public int dims;

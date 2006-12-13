@@ -128,15 +128,8 @@ public class ClassRenderer extends NodeRendererImpl{
     builder.setChildren(children);
   }
 
-  private boolean isSynthetic(TypeComponent typeComponent) {
-    if (typeComponent == null) return false;
-    VirtualMachine machine = typeComponent.virtualMachine();
-    return machine != null && machine.canGetSyntheticAttribute() && typeComponent.isSynthetic();
-  }
-
-
   private boolean shouldDisplay(TypeComponent component) {
-    if (!SHOW_SYNTHETICS && isSynthetic(component)) {
+    if (!SHOW_SYNTHETICS && DebuggerUtils.isSynthetic(component)) {
       return false;
     }
     if (!(component instanceof Field)) {

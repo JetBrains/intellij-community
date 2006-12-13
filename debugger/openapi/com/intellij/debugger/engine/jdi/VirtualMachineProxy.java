@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine.jdi;
 
+import com.intellij.debugger.engine.DebugProcess;
 import com.sun.jdi.ReferenceType;
 
 import java.util.List;
@@ -36,4 +37,6 @@ public interface VirtualMachineProxy {
   boolean canWatchFieldAccess();
 
   boolean canInvokeMethods();
+
+  DebugProcess getDebugProcess();
 }

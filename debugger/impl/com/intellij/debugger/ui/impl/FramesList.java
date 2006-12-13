@@ -5,22 +5,44 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ListToolTipHandler;
+import com.sun.jdi.Method;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 7, 2006
  */
 public class FramesList extends JList implements OccurenceNavigator {
+  private volatile Method mySelectedMethod = null;
 
   public FramesList() {
     super(new DefaultListModel());
     getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setCellRenderer(new FramesListRenderer());
     ListToolTipHandler.install(this);
+    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+          final StackFrameDescriptorImpl descriptor = (StackFrameDescriptorImpl)getSelectedValue();
+          final Method newMethod = descriptor != null? descriptor.getMethod() : null;
+          if (!Comparing.equal(mySelectedMethod, newMethod)) {
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                repaint();
+              }
+            });
+          }
+          mySelectedMethod = newMethod;
+        }
+      }
+    });
   }
 
   public DefaultListModel getModel() {

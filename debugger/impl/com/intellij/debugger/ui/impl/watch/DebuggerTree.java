@@ -404,7 +404,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     public void threadAction() {
       try {
         final StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
-        final StackFrameProxyImpl frame = stackDescriptor.getStackFrame();
+        final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
         final DebuggerContextImpl debuggerContext = getDebuggerContext();
         if(!debuggerContext.getDebugProcess().getSuspendManager().isSuspended(frame.threadProxy())) {
           return;

@@ -43,7 +43,9 @@ public class DebuggerColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return new ColorDescriptor[0];
+    return new ColorDescriptor[] {
+      new ColorDescriptor(OptionsBundle.message("options.java.attribute.descriptor.recursive.call"), DebuggerColors.RECURSIVE_CALL_ATTRIBUTES, ColorDescriptor.Kind.BACKGROUND)
+    };
   }
 
   @NotNull
