@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -190,14 +191,15 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return true;
   }
 
-  protected void findAndInvokeIntentionAction(final Collection<HighlightInfo> infos,String intentionActionName) throws IncorrectOperationException {
-    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>(1);
+  protected void findAndInvokeIntentionAction(final Collection<HighlightInfo> infos, String intentionActionName, final Editor editor,
+                                              final PsiFile file) throws IncorrectOperationException {
+    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
 
     for (HighlightInfo info :infos) {
       if (info.quickFixActionRanges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
           IntentionAction action = pair.first.getAction();
-          availableActions.add(action);
+          if (action.isAvailable(getProject(), editor, file)) availableActions.add(action);
         }
       }
     }
