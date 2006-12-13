@@ -52,8 +52,8 @@ public abstract class DomElementsInspection<T extends DomElement> extends LocalI
       public void visitDomElement(DomElement element) {
         if (element.getXmlElement() != null) {
           element.acceptChildren(this);
-          checkDomElement(element, holder, helper);
         }
+        checkDomElement(element, holder, helper);
       }
     });
   }
