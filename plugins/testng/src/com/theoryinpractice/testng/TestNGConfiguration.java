@@ -15,14 +15,15 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
@@ -60,7 +61,11 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
     @NotNull
     public String getCoverageFileName() {
-        return "testng-coverage.dat";
+        final String name = getGeneratedName();
+        if (name.equals(JUnitConfiguration.DEFAULT_PACKAGE_NAME)) {
+            return JUnitConfiguration.DEFAULT_PACKAGE_CONFIGURATION_NAME;
+        }
+        return name;
     }
 
     protected boolean isMergeDataByDefault() {
@@ -131,7 +136,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         data.TEST_OBJECT = TestType.PACKAGE.getType();
         setGeneratedName();
     }
-    
+
     public void setMethodConfiguration(Location<PsiMethod> location) {
         setModule(data.setTestMethod(location));
         setGeneratedName();
@@ -152,13 +157,14 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
     @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
-        if(data.TEST_OBJECT == TestType.CLASS.getType() || data.TEST_OBJECT == TestType.METHOD.getType()) {
+        if (data.TEST_OBJECT == TestType.CLASS.getType() || data.TEST_OBJECT == TestType.METHOD.getType()) {
             PsiClass psiClass = PsiManager.getInstance(project).findClass(data.getMainClassName(), data.getScope().getSourceScope(this).getGlobalSearchScope());
-            if(psiClass == null) throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
-        }
-        else if(data.TEST_OBJECT == TestType.PACKAGE.getType()) {
+            if (psiClass == null)
+                throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
+        } else if (data.TEST_OBJECT == TestType.PACKAGE.getType()) {
             PsiPackage psiPackage = PsiManager.getInstance(project).findPackage(data.getPackageName());
-            if(psiPackage == null) throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
+            if (psiPackage == null)
+                throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
         }
         //TODO add various checks here
     }
