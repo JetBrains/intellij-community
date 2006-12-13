@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,9 +67,9 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return super.getAttributeValue(qname);
   }
 
-  protected void cacheOneAttributeValue(String name, String value) {
+  protected void cacheOneAttributeValue(String name, String value, final Map<String, String> attributesValueMap) {
     name = name.toLowerCase();
-    super.cacheOneAttributeValue(name, value);
+    super.cacheOneAttributeValue(name, value, attributesValueMap);
   }
 
   public String getAttributeValue(String name, String namespace) {

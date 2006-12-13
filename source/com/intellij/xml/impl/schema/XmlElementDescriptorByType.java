@@ -32,15 +32,16 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
   }
 
   public XmlNSDescriptor getNSDescriptor() {
-    if (NSDescriptor==null) {
-      final XmlFile file = (XmlFile) XmlUtil.getContainingFile(getType().getDeclaration());
+    XmlNSDescriptor nsDescriptor = NSDescriptor;
+    if (nsDescriptor ==null) {
+      final XmlFile file = XmlUtil.getContainingFile(getType().getDeclaration());
       if(file == null) return null;
       final XmlDocument document = file.getDocument();
       if(document == null) return null;
-      NSDescriptor = (XmlNSDescriptor)document.getMetaData();
+      NSDescriptor = nsDescriptor = (XmlNSDescriptor)document.getMetaData();
     }
 
-    return NSDescriptor;
+    return nsDescriptor;
   }
 
   public ComplexTypeDescriptor getType() {

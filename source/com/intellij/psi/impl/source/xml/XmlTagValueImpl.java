@@ -15,9 +15,9 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   private final XmlTag myTag;
   private final XmlTagChild[] myElements;
-  private XmlText[] myTextElements = null;
-  private String myText = null;
-  private String myTrimmedText = null;
+  private volatile XmlText[] myTextElements = null;
+  private volatile String myText = null;
+  private volatile String myTrimmedText = null;
 
   public XmlTagValueImpl(@NotNull XmlTagChild[] bodyElements, @NotNull XmlTag tag) {
     myTag = tag;
@@ -31,22 +31,24 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   @NotNull
   public XmlText[] getTextElements() {
-    if(myTextElements != null) return myTextElements;
-    final List<XmlText> textElements = new ArrayList<XmlText>();
+    XmlText[] textElements = myTextElements;
+    if(textElements != null) return textElements;
+    final List<XmlText> textElementsList = new ArrayList<XmlText>();
     for (final XmlTagChild element : myElements) {
-      if (element instanceof XmlText) textElements.add((XmlText)element);
+      if (element instanceof XmlText) textElementsList.add((XmlText)element);
     }
-    return myTextElements = textElements.toArray(new XmlText[textElements.size()]);
+    return myTextElements = textElementsList.toArray(new XmlText[textElementsList.size()]);
   }
 
   @NotNull
   public String getText() {
-    if(myText != null) return myText;
-    final StringBuffer consolidatedText = new StringBuffer();
+    String text = myText;
+    if(text != null) return text;
+    final StringBuilder consolidatedText = new StringBuilder();
     for (final XmlTagChild element : myElements) {
       consolidatedText.append(element.getText());
     }
-    return consolidatedText.toString();
+    return myText = consolidatedText.toString();
   }
 
   @NotNull
@@ -62,9 +64,10 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   @NotNull
   public String getTrimmedText() {
-    if(myTrimmedText != null) return myTrimmedText;
+    String trimmedText = myTrimmedText;
+    if(trimmedText != null) return trimmedText;
 
-    final StringBuffer consolidatedText = new StringBuffer();
+    final StringBuilder consolidatedText = new StringBuilder();
     final XmlText[] textElements = getTextElements();
     for (final XmlText textElement : textElements) {
       consolidatedText.append(textElement.getValue());

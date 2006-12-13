@@ -20,6 +20,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.javaee.ExternalResourceManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,9 +30,9 @@ import java.util.List;
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaData, PsiWritableMetaData {
+public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData {
   private XmlElementDecl myElementDecl;
-  private XmlAttlistDecl[] myAttlistDecl;
+  private volatile XmlAttlistDecl[] myAttlistDecl;
 
   public XmlElementDescriptorImpl(XmlElementDecl elementDecl) {
     myElementDecl = elementDecl;
@@ -52,20 +53,19 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaDa
     }
     if(hint == null || hint.shouldProcess(XmlAttributeDecl.class)){
       final XmlAttlistDecl[] decls = getAttlistDecls();
-      for(int i = 0; i < decls.length; i++){
-        if(decls[i].getNameElement() != null && decls[i].getNameElement().getText().equals(meta.getName())){
-          final XmlAttributeDecl[] attributes = decls[i].getAttributeDecls();
-          for(int j = 0; j < attributes.length; j++){
-            if(!processor.execute(attributes[j], substitutor)) return false;
+      for (XmlAttlistDecl decl : decls) {
+        if (decl.getNameElement() != null && decl.getNameElement().getText().equals(meta.getName())) {
+          final XmlAttributeDecl[] attributes = decl.getAttributeDecls();
+          for (XmlAttributeDecl attribute : attributes) {
+            if (!processor.execute(attribute, substitutor)) return false;
           }
         }
       }
     }
     if(hint == null || hint.shouldProcess(XmlElementDecl.class)){
       final XmlElementDescriptor[] decls = getElementsDescriptors(tag);
-      for(int i = 0; i < decls.length; i++){
-        final XmlElementDescriptor decl = decls[i];
-        if(!processor.execute(decl.getDeclaration(), substitutor)) return false;
+      for (final XmlElementDescriptor decl : decls) {
+        if (!processor.execute(decl.getDeclaration(), substitutor)) return false;
       }
     }
 
@@ -88,7 +88,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaDa
   }
 
   public Object[] getDependences(){
-    return new Object[]{myElementDecl, ExternalResourceManagerImpl.getInstance()};
+    return new Object[]{myElementDecl, ExternalResourceManager.getInstance()};
   }
 
   public XmlNSDescriptor getNSDescriptor() {
@@ -146,7 +146,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaDa
     return myElementDescriptors = result.toArray(new XmlElementDescriptor[result.size()]);
   }
 
-  private XmlElementDescriptor getElementDescriptor(final String text, final XmlNSDescriptor NSDescriptor) {
+  private static XmlElementDescriptor getElementDescriptor(final String text, final XmlNSDescriptor NSDescriptor) {
     XmlElementDescriptor element = null;
     if (NSDescriptor instanceof XmlNSDescriptorImpl) {
       element = ((XmlNSDescriptorImpl)NSDescriptor).getElementDescriptor(text);
@@ -189,10 +189,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaDa
       final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors();
       attributeDescriptorsMap = new HashMap<String, XmlAttributeDescriptor>(xmlAttributeDescriptors.length);
 
-      for (int i = 0; i < xmlAttributeDescriptors.length; i++) {
-        final XmlAttributeDescriptor xmlAttributeDescriptor = xmlAttributeDescriptors[i];
-
-        attributeDescriptorsMap.put(xmlAttributeDescriptor.getName(),xmlAttributeDescriptor);
+      for (final XmlAttributeDescriptor xmlAttributeDescriptor : xmlAttributeDescriptors) {
+        attributeDescriptorsMap.put(xmlAttributeDescriptor.getName(), xmlAttributeDescriptor);
       }
     }
 
@@ -210,8 +208,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaDa
 
     final XmlAttlistDecl[] decls = getAttlistDecls();
 
-    for (int i = 0; i < decls.length; i++) {
-      final XmlAttlistDecl decl = decls[i];
+    for (final XmlAttlistDecl decl : decls) {
       final XmlElement nameElement = decl.getNameElement();
       if (nameElement != null && nameElement.textMatches(elementName)) {
         result.add(decl);
@@ -224,13 +221,14 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaDa
   private static Class[] ourParentClassesToScanAttributes = new Class[] { XmlMarkupDecl.class, XmlDocument.class };
 
   private XmlAttlistDecl[] getAttlistDecls() {
-    if (myAttlistDecl != null) return myAttlistDecl;
-
-    final List result = new ArrayList();
-    final XmlElement xmlElement = (XmlElement)PsiTreeUtil.getParentOfType(getDeclaration(),ourParentClassesToScanAttributes);
-    xmlElement.processElements(new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), getDeclaration());
-    myAttlistDecl = (XmlAttlistDecl[])result.toArray(new XmlAttlistDecl[result.size()]);
-    return myAttlistDecl;
+    XmlAttlistDecl[] xmlAttlistDecls = myAttlistDecl;
+    if (xmlAttlistDecls == null) {
+      final List result = new ArrayList();
+      final XmlElement xmlElement = (XmlElement)PsiTreeUtil.getParentOfType(getDeclaration(), ourParentClassesToScanAttributes);
+      xmlElement.processElements(new FilterElementProcessor(new ClassFilter(XmlAttlistDecl.class), result), getDeclaration());
+      myAttlistDecl = xmlAttlistDecls = (XmlAttlistDecl[])result.toArray(new XmlAttlistDecl[result.size()]);
+    }
+    return xmlAttlistDecls;
   }
 
   public int getContentType() {
@@ -254,15 +252,13 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiMetaDa
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
     String name = element.getName();
-    if(name == null) return null;
 
     if (elementDescriptorsMap==null) {
       final XmlElementDescriptor[] descriptors = getElementsDescriptors(element);
       elementDescriptorsMap = new HashMap<String, XmlElementDescriptor>(descriptors.length);
 
-      for (int i = 0; i < descriptors.length; i++) {
-        final XmlElementDescriptor descriptor = descriptors[i];
-        elementDescriptorsMap.put(descriptor.getName(),descriptor);
+      for (final XmlElementDescriptor descriptor : descriptors) {
+        elementDescriptorsMap.put(descriptor.getName(), descriptor);
       }
     }
 

@@ -9,10 +9,7 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
@@ -34,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Mike
@@ -80,8 +78,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
   }
 
-  private Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
-  private Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+  private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
+  private ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
+  private static final CachedValue NULL = new CachedValueImpl(null,null,false);
 
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
@@ -90,37 +89,43 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
-    final Map<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
-    if(strict) defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
-    else defaultDescriptorsCache = myDefaultDescriptorsCacheNotStrict;
-    if(defaultDescriptorsCache.containsKey(namespace)){
+    final ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
+    if (strict) {
+      defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
+    }
+    else {
+      defaultDescriptorsCache = myDefaultDescriptorsCacheNotStrict;
+    }
+    if (defaultDescriptorsCache.containsKey(namespace)) {
       final CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
-      if(cachedValue != null) return cachedValue.getValue();
-      else return null;
+      if (cachedValue != NULL) {
+        return cachedValue.getValue();
+      }
+      else {
+        return null;
+      }
     }
 
     final XmlNSDescriptor defaultNSDescriptor;
     try {
-      defaultDescriptorsCache.put(namespace, null);
       final CachedValueImpl<XmlNSDescriptor> value =
         new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>() {
           public Result<XmlNSDescriptor> compute() {
             final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
             if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
-              return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
-                XmlDocumentImpl.this
-              );
+              return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this);
             }
 
-            return new Result<XmlNSDescriptor>(defaultNSDescriptorInner,
-                                               defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : ArrayUtil.EMPTY_OBJECT_ARRAY);
+            return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
+                                                                         ? defaultNSDescriptorInner.getDependences()
+                                                                         : ArrayUtil.EMPTY_OBJECT_ARRAY);
           }
         }, false);
       defaultNSDescriptor = value.getValue();
-      defaultDescriptorsCache.put(namespace, value);
+      defaultDescriptorsCache.put(namespace, value == null ? NULL : value);
     }
-    catch(ProcessCanceledException ex) {
+    catch (ProcessCanceledException ex) {
       defaultDescriptorsCache.remove(namespace);
       throw ex;
     }
@@ -138,7 +143,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   public XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
     final XmlFile containingFile = XmlUtil.getContainingFile(this);
     final XmlProlog prolog = getProlog();
-    final XmlDoctype doctype = (prolog != null)?prolog.getDoctype():null;
+    final XmlDoctype doctype = (prolog != null) ? prolog.getDoctype() : null;
     //
     //if (XmlUtil.ANT_URI.equals(namespace)){
     //  final AntDOMNSDescriptor antDOMNSDescriptor = new AntDOMNSDescriptor();
@@ -146,44 +151,45 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     //  return antDOMNSDescriptor;
     //}
     //else
-    if(XmlUtil.HTML_URI.equals(namespace)){
-      XmlNSDescriptor nsDescriptor = (doctype != null)?getNsDescriptorFormDocType(doctype, containingFile):null;
+    if (XmlUtil.HTML_URI.equals(namespace)) {
+      XmlNSDescriptor nsDescriptor = (doctype != null) ? getNsDescriptorFormDocType(doctype, containingFile) : null;
       if (nsDescriptor == null) nsDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
       final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(nsDescriptor);
       return htmlDescriptor;
     }
-    else if(namespace != null && namespace != XmlUtil.EMPTY_URI
-            && (doctype == null || !namespace.equals(doctype.getDtdUri()))){
+    else if (namespace != null && namespace != XmlUtil.EMPTY_URI && (doctype == null || !namespace.equals(doctype.getDtdUri()))) {
       boolean documentIsSchemaThatDefinesNs = namespace.equals(XmlUtil.getTargetSchemaNsFromTag(getRootTag()));
 
-      final XmlFile xmlFile = documentIsSchemaThatDefinesNs ? containingFile:XmlUtil.findXmlFile(containingFile,
-                                                  ExternalResourceManager.getInstance().getResourceLocation(namespace));
-      if(xmlFile != null){
+      final XmlFile xmlFile = documentIsSchemaThatDefinesNs
+                              ? containingFile
+                              : XmlUtil.findXmlFile(containingFile, ExternalResourceManager.getInstance().getResourceLocation(namespace));
+      if (xmlFile != null) {
         final XmlNSDescriptor descriptor = (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
         return descriptor;
       }
     }
-    if(strict) return null;
+    if (strict) return null;
 
-    if (doctype != null){
+    if (doctype != null) {
       final XmlNSDescriptor descr = getNsDescriptorFormDocType(doctype, containingFile);
 
-      if(descr != null) {
+      if (descr != null) {
         return descr;
       }
     }
 
     try {
-      final PsiFile fileFromText = getManager().getElementFactory().createFileFromText(
-        containingFile.getName() + ".dtd",
-        XmlUtil.generateDocumentDTD(this)
-      );
+      final PsiFile fileFromText =
+        getManager().getElementFactory().createFileFromText(containingFile.getName() + ".dtd", XmlUtil.generateDocumentDTD(this));
       if (fileFromText instanceof XmlFile) {
         return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
       }
-    } catch(ProcessCanceledException ex) {
+    }
+    catch (ProcessCanceledException ex) {
       throw ex;
-    } catch(RuntimeException ex) {} // e.g. dtd isn't mapped to xml type
+    }
+    catch (RuntimeException ex) {
+    } // e.g. dtd isn't mapped to xml type
 
     return null;
   }
@@ -236,8 +242,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
   private void updateSelfDependentDtdDescriptors(XmlDocumentImpl copy, HashMap<String,
     CachedValue<XmlNSDescriptor>> cacheStrict, HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict) {
-    copy.myDefaultDescriptorsCacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
-    copy.myDefaultDescriptorsCacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+    copy.myDefaultDescriptorsCacheNotStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
+    copy.myDefaultDescriptorsCacheStrict = new ConcurrentHashMap<String, CachedValue<XmlNSDescriptor>>();
 
     for(Map.Entry<String, CachedValue<XmlNSDescriptor>> e:cacheStrict.entrySet()) {
       if (e.getValue().hasUpToDateValue()) {
