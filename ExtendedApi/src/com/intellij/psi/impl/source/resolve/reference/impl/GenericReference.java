@@ -28,6 +28,7 @@ import java.util.List;
 public abstract class GenericReference extends CachingReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.GenericReference");
   public static final GenericReference[] EMPTY_ARRAY = new GenericReference[0];
+
   @Nullable
   private final PsiReferenceProvider myProvider;
 
@@ -93,6 +94,11 @@ public abstract class GenericReference extends CachingReference {
       }
     }
     return element;
+  }
+
+  @Nullable
+  public PsiReferenceProvider getProvider() {
+    return myProvider;
   }
 
 
