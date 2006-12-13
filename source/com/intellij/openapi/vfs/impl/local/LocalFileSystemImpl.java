@@ -923,7 +923,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           }
         } else {
           for (final VirtualFileImpl unaccounted : myUnaccountedFiles.values()) {
-            if (file.equals(unaccounted.getParent())) {
+            if (unaccounted != null && file.equals(unaccounted.getParent())) {
               unaccounted.refresh(true, false, true, null);
             }
           }
