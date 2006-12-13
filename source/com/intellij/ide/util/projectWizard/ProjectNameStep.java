@@ -1,20 +1,21 @@
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
-import com.intellij.CommonBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.List;
+import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -32,11 +33,20 @@ public class ProjectNameStep extends ModuleWizardStep {
     myNamePathComponent = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message("label.project.file.location"), 'a', 'l',
                                                 IdeBundle.message("title.select.project.file.directory"), IdeBundle.message("description.select.project.file.directory"));
 
-    final String projectsStorePath = getDefaultProjectsStorePath();
-    //noinspection HardCodedStringLiteral
-    final String initialProjectName = ProjectWizardUtil.findNonExistingFileName(projectsStorePath, "untitled", "");
-    myNamePathComponent.setPath(projectsStorePath + File.separator + initialProjectName);
-    myNamePathComponent.setNameValue(initialProjectName);
+    if (myWizardContext.getProjectFileDirectory() != null) {
+      myNamePathComponent.setPath(myWizardContext.getProjectFileDirectory());
+      List<String> components = StringUtil.split(myWizardContext.getProjectFileDirectory(), File.separator);
+      if (components.size() > 0) {
+        myNamePathComponent.setNameValue(components.get(components.size()-1));
+      }
+    }
+    else {
+      final String projectsStorePath = getDefaultProjectsStorePath();
+      //noinspection HardCodedStringLiteral
+      final String initialProjectName = ProjectWizardUtil.findNonExistingFileName(projectsStorePath, "untitled", "");
+      myNamePathComponent.setPath(projectsStorePath + File.separator + initialProjectName);
+      myNamePathComponent.setNameValue(initialProjectName);
+    }
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());

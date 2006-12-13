@@ -12,6 +12,6 @@ import com.intellij.openapi.project.Project;
  */
 public class NewProjectAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    ProjectUtil.createNewProject((Project)e.getDataContext().getData(DataConstants.PROJECT));
+    ProjectUtil.createNewProject((Project)e.getDataContext().getData(DataConstants.PROJECT), null);
   }
 }

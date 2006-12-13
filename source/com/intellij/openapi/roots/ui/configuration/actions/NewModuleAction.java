@@ -30,7 +30,7 @@ public class NewModuleAction extends AnAction {
     if (project == null) {
       return;
     }
-    final AddModuleWizard wizard = new AddModuleWizard(project, new DefaultModulesProvider(project));
+    final AddModuleWizard wizard = new AddModuleWizard(project, new DefaultModulesProvider(project), null);
 
     wizard.show();
 

@@ -17,12 +17,20 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 /**
  * Implement this interface and register it as ApplicationComponent in order to provide checkout
  */
 
 public interface CheckoutProvider extends ApplicationComponent {
-  void doCheckout();
+  void doCheckout(@Nullable Listener listener);
   @NonNls String getVcsName();
+
+  interface Listener {
+    void directoryCheckedOut(File directory);
+    void checkoutCompleted();
+  }
 }

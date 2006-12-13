@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -48,8 +49,8 @@ public class ProjectUtil {
   private ProjectUtil() {
   }
 
-  public static void createNewProject(Project projectToClose) {
-    AddModuleWizard dialog = new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER);
+  public static void createNewProject(Project projectToClose, @Nullable final String defaultPath) {
+    AddModuleWizard dialog = new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath);
     dialog.show();
     if (!dialog.isOK()) {
       return;

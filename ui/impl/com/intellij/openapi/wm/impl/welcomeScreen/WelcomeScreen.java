@@ -357,7 +357,7 @@ public class WelcomeScreen {
   private void addDefaultQuickStartActions(final ActionGroupDescriptor quickStarts, final ActionManager actionManager) {
     MyActionButton newProject = new MyActionButton(NEW_PROJECT_ICON, null) {
       protected void onPress(InputEvent e) {
-        ProjectUtil.createNewProject(null);
+        ProjectUtil.createNewProject(null, null);
       }
     };
     quickStarts.addButton(newProject, UIBundle.message("welcome.screen.create.new.project.action.name"),
