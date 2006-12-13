@@ -11,8 +11,8 @@ import java.net.*;
 import java.util.*;
 
 import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.coverage.CoverageSuite;
+import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -49,6 +49,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     private IDEARemoteTestRunnerClient client;
     private int port;
     private String debugPort;
+    private CoverageSuite myCurrentCoverageSuite;
 
     public TestNGRunnableState(RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationPerRunnerSettings, TestNGConfiguration config) {
         super(runnerSettings, configurationPerRunnerSettings);
@@ -83,17 +84,9 @@ public class TestNGRunnableState extends JavaCommandLineState
             public void processTerminated(final ProcessEvent event) {
                 client.stopTest();
 
-                if (config.isCoverageEnabled()) {
-                    DefaultCoverageFileProvider fileProvider = new DefaultCoverageFileProvider(config.getCoverageFileName());
-                    LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
-
-                    CoverageSuite coverageSuite = CoverageDataManager.getInstance(config.getProject())
-                            .addCoverageSuite(config.getGeneratedName() + " Coverage Results",
-                                              fileProvider,
-                                              new String[] {},
-                                              new Date().getTime(),
-                                              !config.isMergeDataByDefault());
-                    LOGGER.info("Added coverage data with name '" + coverageSuite.getPresentableName() + "'");
+                if (myCurrentCoverageSuite != null) {
+                    CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(config.getProject());
+                    coverageDataManager.coverageGathered(myCurrentCoverageSuite);
                 }
             }
 
@@ -161,6 +154,15 @@ public class TestNGRunnableState extends JavaCommandLineState
 
         // Append coverage parameters if appropriate
         if (config.isCoverageEnabled()) {
+            final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
+            DefaultCoverageFileProvider fileProvider = new DefaultCoverageFileProvider(config.getCoverageFilePath());
+            LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
+            myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(config.getGeneratedName() + " Coverage Results",
+                                                                          fileProvider,
+                                                                          config.getCoveragePatterns(),
+                                                                          new Date().getTime(),
+                                                                          !config.isMergeDataByDefault());
+            LOGGER.info("Added coverage data with name '" + myCurrentCoverageSuite.getPresentableName() + "'");
             config.appendCoverageArgument(javaParameters);
         }
 
