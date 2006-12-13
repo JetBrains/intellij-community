@@ -510,13 +510,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
            isWriteReplaceMethod(psiMethod);
   }
 
-  /*private void addEjbMethodToEntries(RefMethod refMethod) {
-    getEntryPointsManager().addEntryPoint(refMethod, false);
-    for (RefMethod refSuper : refMethod.getSuperMethods()) {
-      addEjbMethodToEntries(refSuper);
-    }
-  }*/
-
   private void enqueueMethodUsages(final RefMethod refMethod) {
     if (refMethod.getSuperMethods().isEmpty()) {
       getContext().enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
