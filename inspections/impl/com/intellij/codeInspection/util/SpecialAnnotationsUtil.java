@@ -155,13 +155,11 @@ public class SpecialAnnotationsUtil {
     inspectionProfile.save();
   }
 
-  public static boolean isSpecialAnnotationPresent(final PsiModifierListOwner owner, final Collection<String> standardAnnos, final Collection<String> userDefinedAnnos) {
+  public static boolean isSpecialAnnotationPresent(final PsiModifierListOwner owner, final Collection<String> annos) {
     final PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        final String qualifiedName = psiAnnotation.getQualifiedName();
-        if (standardAnnos.contains(qualifiedName)) return true;
-        if (userDefinedAnnos.contains(qualifiedName)) return true;
+        if (annos.contains(psiAnnotation.getQualifiedName())) return true;
       }
     }
     return false;

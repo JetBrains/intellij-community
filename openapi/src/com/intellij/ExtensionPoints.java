@@ -89,7 +89,7 @@ public interface ExtensionPoints {
    *
    * @see com.intellij.psi.search.IndexPatternProvider
    * @since 5.1
-   */
+   */                                     
   @NonNls String INDEX_PATTERN_PROVIDER = "com.intellij.indexPatternProvider";
 
   @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
@@ -101,4 +101,6 @@ public interface ExtensionPoints {
   @NonNls String JAVADOC_LOCAL = "com.intellij.javaDocNotNecessary";
 
   @NonNls String VISIBLITY_TOOL = "com.intellij.visibility";
+
+  @NonNls String EMPTY_METHOD_TOOL = "com.intellij.canBeEmpty";
 }

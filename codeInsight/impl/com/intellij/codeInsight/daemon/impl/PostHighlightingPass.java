@@ -329,7 +329,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       if (!field.hasInitializer()) {
-        final boolean isInjected = SpecialAnnotationsUtil.isSpecialAnnotationPresent(field, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS, unusedSymbolInspection.INJECTION_ANNOS);
+        final boolean isInjected = isInjected(field, unusedSymbolInspection);
         final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
         if (!writeReferenced && !isInjected && !isImplicitWrite(field)) {
           String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.assigned"), identifier.getText());
@@ -348,6 +348,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
 
     return null;
+  }
+
+  private static boolean isInjected(final PsiMember member, final UnusedSymbolLocalInspection unusedSymbolInspection) {
+    return SpecialAnnotationsUtil.isSpecialAnnotationPresent(member, unusedSymbolInspection.INJECTION_ANNOS);
   }
 
   @Nullable
@@ -395,7 +399,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                       final UnusedSymbolLocalInspection unusedSymbolInspection) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       final boolean isSetter = PropertyUtil.isSimplePropertySetter(method);
-      final boolean isInjected = isSetter && SpecialAnnotationsUtil.isSpecialAnnotationPresent(method, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS, unusedSymbolInspection.INJECTION_ANNOS);
+      final boolean isInjected = isSetter && isInjected(method, unusedSymbolInspection);
       if (!myRefCountHolder.isReferenced(method)) {
         if (isInjected || HighlightMethodUtil.isSerializationRelatedMethod(method) ||
             isIntentionalPrivateConstructor(method) ||

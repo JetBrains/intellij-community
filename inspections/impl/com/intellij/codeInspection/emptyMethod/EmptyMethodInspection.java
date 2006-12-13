@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.emptyMethod;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -9,7 +10,9 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiCodeBlock;
@@ -34,8 +37,6 @@ import java.util.List;
  * @author max
  */
 public class EmptyMethodInspection extends GlobalInspectionTool {
-  private static final Collection<String> STANDARD_EXCLUDE_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList("javax.ejb.Remove", "javax.ejb.Init")));
-
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   @NonNls private static final String SHORT_NAME = "EmptyMethod";
 
@@ -65,8 +66,6 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
       for (RefMethod refSuper : refMethod.getSuperMethods()) {
         if (checkElement(refSuper, scope, manager, globalContext, processor) != null) return null;
       }
-
-      if (SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), STANDARD_EXCLUDE_ANNOS, EXCLUDE_ANNOS)) return null;
 
       String message = null;
       boolean needToDeleteHierarchy = false;
@@ -124,8 +123,19 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
   }
 
   private boolean isBodyEmpty(final RefMethod refMethod) {
-    return refMethod.isBodyEmpty() &&
-           !SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), STANDARD_EXCLUDE_ANNOS, EXCLUDE_ANNOS);
+    if (!refMethod.isBodyEmpty()) {
+      return false;
+    }
+    if (SpecialAnnotationsUtil.isSpecialAnnotationPresent(refMethod.getElement(), EXCLUDE_ANNOS)) {
+      return false;
+    }
+    for (final Object extension : Extensions.getExtensions(ExtensionPoints.EMPTY_METHOD_TOOL)) {
+      if (((Condition<RefMethod>) extension).value(refMethod)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Nullable
