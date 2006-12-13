@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -40,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -571,7 +573,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     public void actionPerformed(AnActionEvent e) {
-      doCheckout();
+      doCheckout(null);
     }
   }
 
@@ -712,7 +714,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
 
-  protected void doCheckout() {
+  protected void doCheckout(@Nullable final CheckoutProvider.Listener listener) {
     SVNURL url = getRepositoryBrowser().getSelectedNode().getURL();
     File dir = selectFile("Destination directory", "Select checkout destination directory");
     if (dir == null) {
@@ -723,7 +725,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     dir = dialog.getTarget();
     dialog.show();
     if (dialog.isOK()) {
-      SvnCheckoutProvider.doCheckout(myVCS.getProject(), dir, url.toString(), dialog.isRecursive(), dialog.isIgnoreExternals());
+      SvnCheckoutProvider.doCheckout(myVCS.getProject(), dir, url.toString(), dialog.isRecursive(), dialog.isIgnoreExternals(), listener);
     }
   }
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -35,14 +36,14 @@ import java.io.File;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 
-  public void doCheckout() {
+  public void doCheckout(Listener listener) {
     final Project project = ProjectManager.getInstance().getDefaultProject();
-    CheckoutDialog dialog = new CheckoutDialog(project);
+    CheckoutDialog dialog = new CheckoutDialog(project, listener);
     dialog.show();
   }
 
   public static void doCheckout(final Project project, final File target, final String url, final boolean recursive,
-                                final boolean ignoreExternals) {
+                                final boolean ignoreExternals, @Nullable final Listener listener) {
     try {
       final SVNException[] exception = new SVNException[1];
       final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
@@ -75,7 +76,18 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
       VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);
       if (vf != null) {
-        vf.refresh(true, true);
+        vf.refresh(true, true, new Runnable() {
+          public void run() {
+            if (listener != null) {
+              listener.directoryCheckedOut(target);
+              listener.checkoutCompleted();
+            }
+          }
+        });
+      }
+      else if (listener != null) {
+        listener.directoryCheckedOut(target);
+        listener.checkoutCompleted();
       }
     }
   }

@@ -16,14 +16,17 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.CheckoutProvider;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
 public class CheckoutDialog extends RepositoryBrowserDialog {
+  private final CheckoutProvider.Listener myListener;
 
-  public CheckoutDialog(Project project) {
+  public CheckoutDialog(Project project, final CheckoutProvider.Listener listener) {
     super(project);
+    myListener = listener;
   }
 
   public void init() {
@@ -41,7 +44,7 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
   }
 
   protected void doOKAction() {
-    doCheckout();
+    doCheckout(myListener);
     super.doOKAction();
   }
 }
