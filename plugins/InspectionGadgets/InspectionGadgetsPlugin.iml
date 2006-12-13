@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="inspections-openapi" />
-    <orderEntry type="module" module-name="ejb-openapi" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntryProperties />
   </component>
