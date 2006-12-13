@@ -12,6 +12,7 @@ package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,11 +54,16 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
   }
 
   public List<CvsChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
-    return new ArrayList<CvsChangeList>();
+    List<CvsChangeList> result = new ArrayList<CvsChangeList>();
+    final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(CvsVcs2.getInstance(myProject));
+    for(VirtualFile file: files) {
+      result.addAll(getCommittedChanges(settings, file));
+    }
+    return result;
   }
 
   public ChangeListColumn[] getColumns() {
-    return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME };
+    return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION };
   }
 
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root) throws VcsException {

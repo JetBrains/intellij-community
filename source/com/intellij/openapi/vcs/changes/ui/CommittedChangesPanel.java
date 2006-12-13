@@ -16,11 +16,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommittedChangesPanel extends JPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.CommittedChangesPanel");
+
   private CommittedChangesBrowser myBrowser;
   private final Project myProject;
   private CommittedChangesProvider myProvider;
@@ -74,7 +78,8 @@ public class CommittedChangesPanel extends JPanel {
       }
     }, "Loading changes", true, myProject);
     if (!refEx.isNull()) {
-      Messages.showErrorDialog(myProject, "Error refreshing view: " + refEx.get().getMessages(), "Committed Changes");
+      LOG.error(refEx.get());
+      Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(refEx.get().getMessages(), "\n"), "Committed Changes");
     }
   }
 

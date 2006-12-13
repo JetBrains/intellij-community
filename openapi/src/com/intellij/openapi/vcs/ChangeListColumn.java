@@ -40,6 +40,8 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     return null;
   }
 
+  // TODO: CompositeCommittedChangesProvider.getColumns() needs to be updated if new standard columns are added 
+
   public static ChangeListColumn<CommittedChangeList> DATE = new ChangeListColumn<CommittedChangeList>() {
     public String getTitle() {
       return VcsBundle.message("column.name.revision.list.date");

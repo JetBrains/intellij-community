@@ -15,10 +15,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.module.Module;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.ArrayList;
 
 public class CommittedChangesViewManager implements ProjectComponent {
   private ProjectLevelVcsManager myVcsManager;
@@ -27,6 +33,7 @@ public class CommittedChangesViewManager implements ProjectComponent {
   private Content myContent;
   private Project myProject;
   private CommittedChangesProvider myProvider = null;
+  private VcsListener myVcsListener = new MyVcsListener();
 
   public CommittedChangesViewManager(final Project project, final ChangesViewContentManager contentManager,
                                      final ProjectLevelVcsManager vcsManager) {
@@ -37,9 +44,11 @@ public class CommittedChangesViewManager implements ProjectComponent {
 
   public void projectOpened() {
     updateChangesContent();
+    myVcsManager.addVcsListener(myVcsListener);
   }
 
   public void projectClosed() {
+    myVcsManager.removeVcsListener(myVcsListener);
   }
 
   @NonNls @NotNull
@@ -55,12 +64,22 @@ public class CommittedChangesViewManager implements ProjectComponent {
 
   private void updateChangesContent() {
     final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
+    List<AbstractVcs> vcsWithProviders = new ArrayList<AbstractVcs>();
     for(AbstractVcs vcs: vcss) {
       if (vcs.getCommittedChangesProvider() != null) {
-        myProvider = vcs.getCommittedChangesProvider();
-        break;
+        vcsWithProviders.add(vcs);
       }
     }
+    if (vcsWithProviders.size() == 0) {
+      myProvider = null;
+    }
+    else if (vcsWithProviders.size() == 1) {
+      myProvider = vcsWithProviders.get(0).getCommittedChangesProvider();
+    }
+    else {
+      myProvider = new CompositeCommittedChangesProvider(vcsWithProviders.toArray(new AbstractVcs[vcsWithProviders.size()]));
+    }
+
     if (myProvider == null) {
       if (myContent != null) {
         myContentManager.removeContent(myContent);
@@ -76,6 +95,12 @@ public class CommittedChangesViewManager implements ProjectComponent {
         myContent.setCloseable(false);
         myContentManager.addContent(myContent);
       }
+    }
+  }
+
+  private class MyVcsListener implements VcsListener {
+    public void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs) {
+      updateChangesContent();
     }
   }
 }

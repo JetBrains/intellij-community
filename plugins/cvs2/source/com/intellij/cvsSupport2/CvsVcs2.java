@@ -22,6 +22,7 @@ import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
 import com.intellij.cvsSupport2.fileView.CvsFileViewEnvironment;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
+import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.cvsIntegration.CvsResult;
@@ -70,6 +71,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   private final CvsUpToDateRevisionProvider myUpToDateRevisionProvider;
   private final CvsAnnotationProvider myCvsAnnotationProvider;
   private final CvsDiffProvider myDiffProvider;
+  private final CvsCommittedChangesProvider myCommittedChangesProvider;
   private VcsShowSettingOption myAddOptions;
   private VcsShowSettingOption myRemoveOptions;
   private VcsShowSettingOption myCheckoutOptions;
@@ -95,6 +97,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     myDiffProvider = new CvsDiffProvider(myProject);
     myChangeProvider = new CvsChangeProvider(this, CvsEntriesManager.getInstance());
     myUpToDateRevisionProvider = new CvsUpToDateRevisionProvider(myChangeProvider);
+    myCommittedChangesProvider = new CvsCommittedChangesProvider(myProject);
   }
 
   /* ======================================= ProjectComponent */
@@ -373,5 +376,8 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return new CvsRevisionSelector(myProject);
   }
 
+  public CommittedChangesProvider getCommittedChangesProvider() {
+    return myCommittedChangesProvider;
+  }
 }
 
