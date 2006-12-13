@@ -275,8 +275,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return PluginsFacade.INSTANCE.getPlugins();
   }
 
-  public Future<?> executeOnPooledThread(Runnable action) {
-    return ourThreadExecutorsService.submit(action);
+  public Future<?> executeOnPooledThread(final Runnable action) {
+    return ourThreadExecutorsService.submit(
+      new Runnable() {
+        public void run() {
+          try {
+            action.run();
+          } catch(Throwable t) {
+            LOG.error(t);
+          } finally {
+            Thread.interrupted(); // reset interrupted status
+          }
+        }
+      }
+    );
   }
 
   private static Thread ourDispatchThread = null;
