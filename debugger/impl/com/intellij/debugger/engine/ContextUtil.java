@@ -23,7 +23,7 @@ import java.util.List;
  */
 
 public class ContextUtil {
-  public static final Key IS_JSP_IMPLICIT = new Key("JspImplicit");
+  public static final Key<Boolean> IS_JSP_IMPLICIT = new Key<Boolean>("JspImplicit");
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.PositionUtil");
 
   @Nullable
@@ -38,7 +38,8 @@ public class ContextUtil {
     Location location = null;
     try {
       location = context.getFrameProxy().location();
-    } catch (Throwable th) {
+    }
+    catch (Throwable th) {
       LOG.debug(th);
     }
     return ((DebugProcessImpl)context.getDebugProcess()).getPositionManager().getSourcePosition(location);
@@ -94,7 +95,7 @@ public class ContextUtil {
           PsiDeclarationStatement declStatement = (PsiDeclarationStatement)statement;
           PsiElement[] declaredElements = declStatement.getDeclaredElements();
           for (PsiElement declaredElement : declaredElements) {
-            declaredElement.putUserData(IS_JSP_IMPLICIT, IS_JSP_IMPLICIT);
+            declaredElement.putUserData(IS_JSP_IMPLICIT, Boolean.TRUE);
           }
         }
       }
@@ -167,6 +168,6 @@ public class ContextUtil {
   }
 
   public static boolean isJspImplicit(PsiElement element) {
-    return element.getUserData(IS_JSP_IMPLICIT) != null;
+    return Boolean.TRUE.equals(element.getUserData(IS_JSP_IMPLICIT));
   }
 }
