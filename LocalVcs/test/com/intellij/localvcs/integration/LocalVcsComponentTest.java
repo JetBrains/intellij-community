@@ -1,14 +1,14 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.ide.startup.FileSystemSynchronizer;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
+import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.project.Project;
 import org.junit.After;
 import org.junit.Test;
+import org.easymock.EasyMock;
 
 import java.io.File;
 
@@ -23,7 +23,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
 
   @Test
   public void testStorageLocation() {
-    Project p = new MyMockProject("projectName", "c:/projects/projectName.ipr");
+    Project p = createProject("projectName", "c:/projects/projectName.ipr");
     LocalVcsComponent c = new MyLocalVcsComponent("c:/idea/system", p, null);
 
     File expected = new File("c:/idea/system/vcs/projectName.aabb57c4");
@@ -47,7 +47,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   }
 
   private void initComponent() {
-    Project p = new MyMockProject("a", "b");
+    Project p = createProject("a", "b");
     sm = new MyStartupManager();
     c = new MyLocalVcsComponent(tempDir.getPath(), p, sm);
     c.initComponent();
@@ -82,27 +82,15 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     }
   }
 
-  private static class MyMockProject extends MockProject {
-    private String myName;
-    private String myPath;
-
-    public MyMockProject(String name, String path) {
-      myName = name;
-      myPath = path;
-    }
-
-    @Override
-    public String getName() {
-      return myName;
-    }
-
-    @Override
-    public String getProjectFilePath() {
-      return myPath;
-    }
+  private Project createProject(String name, String filePath) {
+    Project p = EasyMock.createMock(Project.class);
+    EasyMock.expect(p.getName()).andStubReturn(name);
+    EasyMock.expect(p.getProjectFilePath()).andStubReturn(filePath);
+    EasyMock.replay(p);
+    return p;
   }
 
-  private static class MyStartupManager extends StartupManagerEx {
+  private static class MyStartupManager extends StubStartupManagerEx {
     private Runnable myActivity;
 
     public void registerPreStartupActivity(Runnable r) {
@@ -112,34 +100,6 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     public void runPreStartupActivity() {
       myActivity.run();
     }
-
-    public void registerStartupActivity(Runnable runnable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void registerPostStartupActivity(Runnable runnable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void runPostStartup(Runnable runnable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void runWhenProjectIsInitialized(Runnable runnable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public FileSystemSynchronizer getFileSystemSynchronizer() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean startupActivityRunning() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean startupActivityPassed() {
-      throw new UnsupportedOperationException();
-    }
   }
 
   private static class MyLocalVcsComponent extends LocalVcsComponent {
@@ -147,7 +107,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     private boolean isVcsInitialized;
 
     public MyLocalVcsComponent(String systemPath, Project p, MyStartupManager sm) {
-      super(p, sm, null, null);
+      super(p, sm, null, null, null);
       mySystemPath = systemPath;
     }
 

@@ -10,8 +10,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.*;
 
 import java.io.IOException;
-import java.sql.Time;
-import java.util.Date;
 
 public class LocalVcsService implements Disposable {
   // todo test exceptions...
@@ -21,13 +19,15 @@ public class LocalVcsService implements Disposable {
   private StartupManager myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManager myFileManager;
+  private FileFilter myFileFilter;
   private VirtualFileAdapter myFileListener;
 
-  public LocalVcsService(LocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManager fm) {
+  public LocalVcsService(LocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManager fm, FileFilter ff) {
     myVcs = vcs;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
+    myFileFilter = ff;
 
     registerStartupActivity();
   }
@@ -90,7 +90,7 @@ public class LocalVcsService implements Disposable {
       }
 
       private boolean notForMe(VirtualFileEvent e) {
-        return myRootManager.getFileIndex().getModuleForFile(e.getFile()) == null;
+        return !myFileFilter.isFileAllowed(e.getFile());
       }
     };
     myFileManager.addVirtualFileListener(myFileListener);
@@ -99,7 +99,7 @@ public class LocalVcsService implements Disposable {
 
   private void updateRoots() {
     try {
-      Updater.update(myVcs, myRootManager.getContentRoots());
+      Updater.update(myVcs, myFileFilter, myRootManager.getContentRoots());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -108,8 +108,12 @@ public class LocalVcsService implements Disposable {
 
   private void createFile(VirtualFile f) {
     try {
+      // todo apply all changes at once
       if (f.isDirectory()) {
         myVcs.createDirectory(f.getPath(), f.getTimeStamp());
+        for (VirtualFile ch : f.getChildren()) {
+          createFile(ch);
+        }
       }
       else {
         myVcs.createFile(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());

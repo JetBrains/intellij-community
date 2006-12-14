@@ -1,14 +1,13 @@
 package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestStorage;
 import com.intellij.localvcs.TestCase;
+import com.intellij.localvcs.TestStorage;
 import com.intellij.localvcs.integration.TestVirtualFile;
+import com.intellij.localvcs.integration.stubs.StubFileDocumentManager;
 import com.intellij.mock.MockDocument;
-import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import java.util.List;
@@ -103,7 +102,7 @@ public class FileHistoryDialogModelTest extends TestCase {
     return new TestVirtualFile(name, null, null);
   }
 
-  private class MyFileDocumentManager extends MockFileDocumentManagerImpl {
+  private class MyFileDocumentManager extends StubFileDocumentManager {
     private String myContent;
 
     @Override

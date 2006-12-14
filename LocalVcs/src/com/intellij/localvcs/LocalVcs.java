@@ -91,7 +91,7 @@ public class LocalVcs {
     myPendingChanges.add(new DeleteChange(path));
   }
 
-  public Boolean isClean() {
+  protected Boolean isClean() {
     return myPendingChanges.isEmpty();
   }
 

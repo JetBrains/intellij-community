@@ -4,24 +4,15 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestStorage;
 import com.intellij.localvcs.TestCase;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.ProjectRootType;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
+import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
+import com.intellij.localvcs.integration.stubs.StubVirtualFileManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.*;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.easymock.EasyMock;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,8 +26,9 @@ public class LocalVcsServiceTest extends TestCase {
   private LocalVcsService service;
   private List<VirtualFile> roots = new ArrayList<VirtualFile>();
   private MyStartupManager startupManager;
-  private MyProjectRootManager rootManager;
+  private MyProjectRootManagerEx rootManager;
   private MyVirtualFileManager fileManager;
+  private TestFileFilter fileFilter;
 
   @Before
   public void setUp() {
@@ -48,13 +40,14 @@ public class LocalVcsServiceTest extends TestCase {
     startupManager.synchronizeFileSystem();
   }
 
-  private void initWithoutStartup(final LocalVcs v) {
+  private void initWithoutStartup(LocalVcs v) {
     vcs = v;
     startupManager = new MyStartupManager();
-    rootManager = new MyProjectRootManager();
+    rootManager = new MyProjectRootManagerEx();
     fileManager = new MyVirtualFileManager();
+    fileFilter = new TestFileFilter();
 
-    service = new LocalVcsService(vcs, startupManager, rootManager, fileManager);
+    service = new LocalVcsService(vcs, startupManager, rootManager, fileManager, fileFilter);
   }
 
   @Test
@@ -90,11 +83,28 @@ public class LocalVcsServiceTest extends TestCase {
   }
 
   @Test
-  public void testUpdatingRoots() {
-    roots.add(new TestVirtualFile("c:/root", null));
+  public void testUpdatingRootsWithContent() {
+    TestVirtualFile root = new TestVirtualFile("c:/root", null);
+    root.addChild(new TestVirtualFile("file", "", null));
+    roots.add(root);
+
     rootManager.updateRoots();
 
     assertTrue(vcs.hasEntry("c:/root"));
+    assertTrue(vcs.hasEntry("c:/root/file"));
+  }
+
+  @Test
+  public void testUpdatingRootsWithFiltering() {
+    TestVirtualFile root = new TestVirtualFile("c:/root", null);
+    root.addChild(new TestVirtualFile("file", "", null));
+    roots.add(root);
+
+    fileFilter.setAllFilesAllowance(false);
+    rootManager.updateRoots();
+
+    assertTrue(vcs.hasEntry("c:/root"));
+    assertFalse(vcs.hasEntry("c:/root/file"));
   }
 
   @Test
@@ -113,14 +123,29 @@ public class LocalVcsServiceTest extends TestCase {
 
   @Test
   public void testCreatingDirectories() {
-    VirtualFile f = new TestVirtualFile("file", 345L);
+    VirtualFile f = new TestVirtualFile("dir", 345L);
     fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
 
-    Entry e = vcs.findEntry("file");
+    Entry e = vcs.findEntry("dir");
     assertNotNull(e);
 
     assertTrue(e.isDirectory());
     assertEquals(345L, e.getTimestamp());
+  }
+
+  @Test
+  public void testCreatingDirectoriesWithChildren() {
+    TestVirtualFile dir1 = new TestVirtualFile("dir1", null);
+    TestVirtualFile dir2 = new TestVirtualFile("dir2", null);
+    TestVirtualFile file = new TestVirtualFile("file", "", null);
+
+    dir1.addChild(dir2);
+    dir2.addChild(file);
+    fileManager.fireFileCreated(new VirtualFileEvent(null, dir1, null, null));
+
+    assertTrue(vcs.hasEntry("dir1"));
+    assertTrue(vcs.hasEntry("dir1/dir2"));
+    assertTrue(vcs.hasEntry("dir1/dir2/file"));
   }
 
   @Test
@@ -171,7 +196,7 @@ public class LocalVcsServiceTest extends TestCase {
       fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, "another property", null, null));
     }
     catch (Exception e) {
-      // test failed, lets just see what happened
+      // test failed, lets see what's happened
       throw e;
     }
   }
@@ -196,10 +221,10 @@ public class LocalVcsServiceTest extends TestCase {
   }
 
   @Test
-  public void testSkippingEventsFromAnotherProject() {
-    boolean isAnyMethodCalled[] = {false};
-    initAndStartup(new MyLocalVcs(isAnyMethodCalled));
-    rootManager.setModuleForFileToNull();
+  public void testFilteringFiles() {
+    MyLocalVcs mockVcs = new MyLocalVcs();
+    initAndStartup(mockVcs);
+    fileFilter.setAllFilesAllowance(false);
 
     VirtualFile f = new TestVirtualFile(null, null, null);
     fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
@@ -208,7 +233,7 @@ public class LocalVcsServiceTest extends TestCase {
     fileManager.fireBeforeFileMovement(new VirtualFileMoveEvent(null, f, null, null));
     fileManager.fireBeforeFileDeletion(new VirtualFileEvent(null, f, null, null));
 
-    assertFalse(isAnyMethodCalled[0]);
+    assertFalse(mockVcs.isAnyMethodCalled());
   }
 
   @Test
@@ -218,9 +243,10 @@ public class LocalVcsServiceTest extends TestCase {
     assertFalse(fileManager.hasListener());
   }
 
-  private class MyStartupManager extends StartupManager {
+  private class MyStartupManager extends StubStartupManagerEx {
     private CacheUpdater myUpdater;
 
+    @Override
     public FileSystemSynchronizer getFileSystemSynchronizer() {
       return new FileSystemSynchronizer() {
         @Override
@@ -233,181 +259,46 @@ public class LocalVcsServiceTest extends TestCase {
     public void synchronizeFileSystem() {
       myUpdater.updatingDone();
     }
-
-    public void registerStartupActivity(Runnable runnable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void registerPostStartupActivity(Runnable runnable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void runPostStartup(Runnable runnable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void runWhenProjectIsInitialized(Runnable runnable) {
-      throw new UnsupportedOperationException();
-    }
   }
 
-  private class MyProjectRootManager extends ProjectRootManagerEx {
+  private class MyProjectRootManagerEx extends StubProjectRootManagerEx {
     private ProjectFileIndex myFileIndex;
     private CacheUpdater myUpdater;
 
-    public MyProjectRootManager() {
+    public MyProjectRootManagerEx() {
       myFileIndex = EasyMock.createMock(ProjectFileIndex.class);
-      setModuleForFile(EasyMock.createMock(Module.class));
+      setFileIsInContent(true);
     }
 
-    private void setModuleForFile(Module m) {
+    public void setFileIsInContent(boolean result) {
       EasyMock.reset(myFileIndex);
-      EasyMock.expect(myFileIndex.getModuleForFile((VirtualFile)EasyMock.anyObject())).andStubReturn(m);
+      EasyMock.expect(myFileIndex.isInContent((VirtualFile)EasyMock.anyObject())).andStubReturn(result);
       EasyMock.replay(myFileIndex);
     }
 
+    @Override
     @NotNull
     public VirtualFile[] getContentRoots() {
       return roots.toArray(new VirtualFile[0]);
     }
 
+    @Override
     @NotNull
     public ProjectFileIndex getFileIndex() {
       return myFileIndex;
     }
 
-    public void setModuleForFileToNull() {
-      setModuleForFile(null);
-    }
-
+    @Override
     public void registerChangeUpdater(CacheUpdater u) {
       myUpdater = u;
-    }
-
-    public void clearScopesCachesForModules() {
-      // empty
     }
 
     public void updateRoots() {
       if (myUpdater != null) myUpdater.updatingDone();
     }
-
-    public FileSystemSynchronizer getFileSystemSynchronizer() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void addModuleRootListener(ModuleRootListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void addModuleRootListener(ModuleRootListener listener, Disposable parentDisposable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void removeModuleRootListener(ModuleRootListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
-    public VirtualFile[] getRootFiles(ProjectRootType type) {
-      throw new UnsupportedOperationException();
-    }
-
-    public VirtualFile[] getContentSourceRoots() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getCompilerOutputUrl() {
-      throw new UnsupportedOperationException();
-    }
-
-    public VirtualFile getCompilerOutput() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void setCompilerOutputUrl(String compilerOutputUrl) {
-      throw new UnsupportedOperationException();
-    }
-
-    public VirtualFile[] getFullClassPath() {
-      throw new UnsupportedOperationException();
-    }
-
-    public ProjectJdk getJdk() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Nullable
-    public ProjectJdk getProjectJdk() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getProjectJdkName() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void setProjectJdk(@Nullable ProjectJdk jdk) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void setProjectJdkName(String name) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void multiCommit(ModifiableRootModel[] rootModels) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void multiCommit(ModifiableModuleModel moduleModel, ModifiableRootModel[] rootModels) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void checkCircularDependency(ModifiableRootModel[] rootModels, ModifiableModuleModel moduleModel)
-      throws ModuleCircularDependencyException {
-      throw new UnsupportedOperationException();
-    }
-
-    public long getModificationCount() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void setLanguageLevel(LanguageLevel level) {
-      throw new UnsupportedOperationException();
-    }
-
-    public LanguageLevel getLanguageLevel() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void unregisterChangeUpdater(CacheUpdater updater) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void addProjectJdkListener(ProjectJdkListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void removeProjectJdkListener(ProjectJdkListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void beforeRootsChange(boolean filetypes) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void rootsChanged(boolean filetypes) {
-      throw new UnsupportedOperationException();
-    }
-
-    public GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn) {
-      throw new UnsupportedOperationException();
-    }
-
-    public GlobalSearchScope getScopeForJdk(final JdkOrderEntry jdkOrderEntry) {
-      throw new UnsupportedOperationException();
-    }
   }
 
-  private class MyVirtualFileManager extends VirtualFileManager {
+  private class MyVirtualFileManager extends StubVirtualFileManager {
     private VirtualFileListener myListener;
 
     public void addVirtualFileListener(@NotNull VirtualFileListener l) {
@@ -441,98 +332,47 @@ public class LocalVcsServiceTest extends TestCase {
     public void fireBeforeFileMovement(VirtualFileMoveEvent e) {
       if (myListener != null) myListener.beforeFileMovement(e);
     }
-
-    public VirtualFileSystem[] getFileSystems() {
-      throw new UnsupportedOperationException();
-    }
-
-    public VirtualFileSystem getFileSystem(String protocol) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void refresh(boolean asynchronous) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void refresh(boolean asynchronous, @Nullable Runnable postAction) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Nullable
-    public VirtualFile findFileByUrl(@NonNls @NotNull String url) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Nullable
-    public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void dispatchPendingEvent(@NotNull VirtualFileListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void addModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void removeModificationAttemptListener(@NotNull ModificationAttemptListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void fireReadOnlyModificationAttempt(@NotNull VirtualFile... files) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void addVirtualFileManagerListener(VirtualFileManagerListener listener) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void removeVirtualFileManagerListener(VirtualFileManagerListener listener) {
-      throw new UnsupportedOperationException();
-    }
   }
 
   private class MyLocalVcs extends LocalVcs {
-    private boolean[] myIsAnyMethodCalled;
+    private boolean myIsAnyMethodCalled;
 
-    public MyLocalVcs(boolean[] isAnyMethodCalled) {
+    public MyLocalVcs() {
       super(new TestStorage());
-      myIsAnyMethodCalled = isAnyMethodCalled;
     }
 
     @Override
     public void createFile(String path, byte[] content, Long timestamp) {
-      myIsAnyMethodCalled[0] = true;
+      myIsAnyMethodCalled = true;
     }
 
     @Override
     public void createDirectory(String path, Long timestamp) {
-      myIsAnyMethodCalled[0] = true;
+      myIsAnyMethodCalled = true;
     }
 
     @Override
     public void changeFileContent(String path, byte[] content, Long timestamp) {
-      myIsAnyMethodCalled[0] = true;
+      myIsAnyMethodCalled = true;
     }
 
     @Override
     public void rename(String path, String newName) {
-      myIsAnyMethodCalled[0] = true;
+      myIsAnyMethodCalled = true;
     }
 
     @Override
     public void move(String path, String newParentPath) {
-      myIsAnyMethodCalled[0] = true;
+      myIsAnyMethodCalled = true;
     }
 
     @Override
     public void delete(String path) {
-      myIsAnyMethodCalled[0] = true;
+      myIsAnyMethodCalled = true;
+    }
+
+    public boolean isAnyMethodCalled() {
+      return myIsAnyMethodCalled;
     }
   }
 }

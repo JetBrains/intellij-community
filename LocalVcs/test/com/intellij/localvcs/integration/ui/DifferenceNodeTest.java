@@ -4,6 +4,7 @@ import com.intellij.localvcs.Difference;
 import com.intellij.localvcs.DirectoryEntry;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.FileEntry;
+import com.intellij.localvcs.integration.stubs.StubFileTypeManager;
 import com.intellij.mock.MockFileTypeManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -111,7 +112,7 @@ public class DifferenceNodeTest {
     }
   }
 
-  private class MyFileTypeManager extends MockFileTypeManager {
+  private class MyFileTypeManager extends StubFileTypeManager {
     private Map<String, FileType> myTypes = new HashMap<String, FileType>();
 
     @Override

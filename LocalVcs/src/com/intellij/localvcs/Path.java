@@ -1,9 +1,11 @@
 package com.intellij.localvcs;
 
-import java.io.File;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 
 public class Path {
   public static final char DELIM = '/';
+  private static boolean myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
 
   public static String getNameOf(String path) {
     int i = path.lastIndexOf(DELIM);
@@ -22,5 +24,13 @@ public class Path {
   public static String renamed(String path, String newName) {
     String parent = getParentOf(path);
     return parent == null ? newName : appended(parent, newName);
+  }
+
+  public static boolean startsWith(String path, String prefix) {
+    return myIsCaseSensitive ? path.startsWith(prefix) : StringUtil.startsWithIgnoreCase(path, prefix);
+  }
+
+  protected static void setCaseSensitive(boolean b) {
+    myIsCaseSensitive = b;
   }
 }

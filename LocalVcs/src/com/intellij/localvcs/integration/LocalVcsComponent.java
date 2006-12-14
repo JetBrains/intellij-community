@@ -3,12 +3,13 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManager myFileManager;
+  private FileTypeManager myTypeManager;
   private Storage myStorage;
   private LocalVcs myVcs;
   private LocalVcsService myService;
@@ -28,11 +30,12 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
     return p.getComponent(LocalVcsComponent.class).getLocalVcs();
   }
 
-  public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManager fm) {
+  public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManager fm, FileTypeManager tm) {
     myProject = p;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
+    myTypeManager = tm;
   }
 
   public void initComponent() {
@@ -52,7 +55,8 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   protected void initService() {
-    myService = new LocalVcsService(myVcs, myStartupManager, myRootManager, myFileManager);
+    FileFilter f = new FileFilter(myRootManager.getFileIndex(), myTypeManager);
+    myService = new LocalVcsService(myVcs, myStartupManager, myRootManager, myFileManager, f);
   }
 
   public File getStorageDir() {
@@ -87,6 +91,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   protected boolean isDisabled() {
+    //if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     if (System.getProperty("localvcs.enabled") != null) return false;
     return true;
   }

@@ -2,6 +2,7 @@ package com.intellij.localvcslong;
 
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
@@ -18,7 +19,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.idea.Bombed;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,15 +82,20 @@ public class LocalVcsComponentTest extends IdeaTestCase {
   }
 
   public void testWorkingWithFiles() throws Exception {
-    VirtualFile f = root.createChildData(null, "file");
+    VirtualFile f = root.createChildData(null, "file.java");
 
     Entry e = getLocalVcs().findEntry(f.getPath());
     assertNotNull(e);
     assertFalse(e.isDirectory());
   }
-  
+
+  public void testIgnoringFilteredFiles() throws Exception {
+    VirtualFile f = root.createChildData(null, "file.class");
+    assertFalse(getLocalVcs().hasEntry(f.getPath()));
+  }
+
   public void testSaving() throws Exception {
-    VirtualFile f = root.createChildData(null, "file");
+    VirtualFile f = root.createChildData(null, "file.java");
     myProject.save();
 
     Storage s = new Storage(getComponent().getStorageDir());

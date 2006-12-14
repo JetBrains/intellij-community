@@ -13,6 +13,7 @@ import java.io.IOException;
 public class UpdaterTest extends TestCase {
   private LocalVcs vcs;
   private TestVirtualFile root;
+  private TestFileFilter filter;
 
   @Before
   public void setUp() {
@@ -21,6 +22,7 @@ public class UpdaterTest extends TestCase {
     vcs.apply();
 
     root = new TestVirtualFile("root", 1L);
+    filter = new TestFileFilter();
   }
 
   @Test
@@ -84,6 +86,17 @@ public class UpdaterTest extends TestCase {
     Entry e = vcs.getEntry("root/dir/file");
     assertEquals(c("content"), e.getContent());
     assertEquals(2L, e.getTimestamp());
+  }
+
+  @Test
+  public void testFilteringFiles() {
+    TestVirtualFile f = new TestVirtualFile("file", "", null);
+    root.addChild(f);
+
+    filter.setAllFilesAllowance(false);
+    update();
+
+    assertFalse(vcs.hasEntry("root/file"));
   }
 
   @Test
@@ -160,7 +173,7 @@ public class UpdaterTest extends TestCase {
 
   private void update(VirtualFile... roots) {
     try {
-      Updater.update(vcs, roots);
+      Updater.update(vcs, filter, roots);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -13,14 +13,16 @@ public class Updater {
   // todo algorithm could be simplified and improved
 
   private LocalVcs myVcs;
+  private FileFilter myFilter;
   private VirtualFile[] myRoots;
 
-  public static void update(LocalVcs vcs, VirtualFile... roots) throws IOException {
-    new Updater(vcs, roots).update();
+  public static void update(LocalVcs vcs, FileFilter filter, VirtualFile... roots) throws IOException {
+    new Updater(vcs, filter, roots).update();
   }
 
-  public Updater(LocalVcs vcs, VirtualFile... roots) {
+  public Updater(LocalVcs vcs, FileFilter filter, VirtualFile... roots) {
     myVcs = vcs;
+    myFilter = filter;
     myRoots = selectNonNestedRoots(roots);
   }
 
@@ -94,6 +96,8 @@ public class Updater {
 
   private void createNewFiles(VirtualFile dir) throws IOException {
     for (VirtualFile f : dir.getChildren()) {
+      if (!myFilter.isFileAllowed(f)) return;
+
       Entry e = myVcs.findEntry(f.getPath());
       if (!areOfTheSameKind(e, f)) {
         if (f.isDirectory()) {

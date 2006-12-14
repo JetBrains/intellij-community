@@ -30,4 +30,15 @@ public class PathTest extends TestCase {
     assertEquals("dir/file2", Path.renamed("dir/file1", "file2"));
     assertEquals("file2", Path.renamed("file1", "file2"));
   }
+  
+  @Test
+  public void testStartsWith() {
+    assertTrue(Path.startsWith("dir/file1", "dir"));
+
+    Path.setCaseSensitive(true);
+    assertFalse(Path.startsWith("dir/file1", "DiR"));
+
+    Path.setCaseSensitive(false);
+    assertTrue(Path.startsWith("dir/file1", "DiR"));
+  }
 }
