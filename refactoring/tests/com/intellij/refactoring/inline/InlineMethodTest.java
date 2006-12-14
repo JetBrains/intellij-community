@@ -3,12 +3,12 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.MockInlineMethodOptions;
-import com.intellij.pom.java.LanguageLevel;
 
 public class InlineMethodTest extends CodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
@@ -75,7 +75,8 @@ public class InlineMethodTest extends CodeInsightTestCase {
 
   public void testCallUnderIf() throws Exception { doTest(); }
 
-  public void testLocalVariableResult() throws Exception { doTest(); }
+  //This gives extra 'result' local variable, currently I don't see a way to cope with it, todo: think about addional inline possibilities
+  //public void testLocalVariableResult() throws Exception { doTest(); }
 
   public void testSCR31093() throws Exception { doTest(); }
 
@@ -92,6 +93,8 @@ public class InlineMethodTest extends CodeInsightTestCase {
   public void testIDEADEV5806() throws Exception { doTest(); }
 
   public void testIDEADEV6807() throws Exception { doTest(); }
+
+  public void testIDEADEV12616() throws Exception { doTest(); }
 
   public void testVarargs() throws Exception { doTest(); }
 

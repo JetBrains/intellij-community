@@ -29,9 +29,9 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -1387,7 +1387,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   public String suggestUniqueVariableName(String baseName, PsiElement place, boolean lookForward) {
     int index = 0;
-    final PsiStatement enclosingStatement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);
+    final PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class);
     NextName: while (true) {
       String name = baseName;
       if (index > 0) {
@@ -1397,12 +1397,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       if (PsiUtil.isVariableNameUnique(name, place)) {
         if (lookForward) {
           final String name1 = name;
-          PsiElement scope = enclosingStatement;
-          while (scope != null) {
+          PsiElement run = scope;
+          while (run != null) {
             class CancelException extends RuntimeException {
             }
             try {
-              scope.accept(new PsiRecursiveElementVisitor() {
+              run.accept(new PsiRecursiveElementVisitor() {
                 public void visitVariable(PsiVariable variable) {
                   if (name1.equals(variable.getName())) {
                     throw new CancelException();
@@ -1413,7 +1413,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
             catch (CancelException e) {
               continue NextName;
             }
-            scope = scope.getNextSibling();
+            run = run.getNextSibling();
           }
 
         }
