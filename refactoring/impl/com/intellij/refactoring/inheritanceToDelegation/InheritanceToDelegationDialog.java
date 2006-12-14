@@ -7,8 +7,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -18,14 +18,14 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.MemberInfoModel;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 public class InheritanceToDelegationDialog extends RefactoringDialog {
   private PsiClass[] mySuperClasses;
@@ -54,6 +54,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     init();
   }
 
+  @NotNull
   public String getFieldName() {
     return myFieldNameField.getName();
   }
@@ -69,6 +70,17 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
   public boolean isGenerateGetter() {
     return myCbGenerateGetter.isSelected();
+  }
+
+  protected boolean areButtonsValid() {
+    final String fieldName = getFieldName();
+    final PsiNameHelper helper = PsiManager.getInstance(myProject).getNameHelper();
+    if (!helper.isIdentifier(fieldName)) return false;
+    if (myInnerClassNameField != null) {
+      final String className = myInnerClassNameField.getName();
+      if (!helper.isIdentifier(className)) return false;
+    }
+    return true;
   }
 
   public MemberInfo[] getSelectedMemberInfos() {
@@ -218,6 +230,15 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     myInnerClassNameField.getComponent().setEnabled(InheritanceToDelegationUtil.isInnerClassNeeded(myClass, targetClass));
     @NonNls final String suggestion = "My" + targetClass.getName();
     myInnerClassNameField.setSuggestions(new String[]{suggestion});
+
+    final NameSuggestionsField.DataChanged listener = new NameSuggestionsField.DataChanged() {
+      public void dataChanged() {
+        validateButtons();
+      }
+    };
+    myInnerClassNameField.addDataChangedListener(listener);
+    myFieldNameField.addDataChangedListener(listener);
+
     myMemberSelectionPanel.getTable().setMemberInfos(myBasesToMemberInfos.get(targetClass));
     myMemberSelectionPanel.getTable().fireExternalDataChange();
   }
