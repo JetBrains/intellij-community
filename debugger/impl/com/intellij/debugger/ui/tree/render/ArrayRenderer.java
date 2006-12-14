@@ -17,12 +17,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.Type;
@@ -46,7 +45,7 @@ public class ArrayRenderer extends NodeRendererImpl{
 
   public int START_INDEX = 0;
   public int END_INDEX   = 100;
-  public int ENTRIES_LIMIT = 100;
+  public int ENTRIES_LIMIT = 101;
   private final static String MORE_ELEMENTS = "...";
 
   public ArrayRenderer() {
