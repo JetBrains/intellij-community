@@ -314,6 +314,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myDocument.clear();
     myPsiFile = null;
     myBaseLanguage = calcBaseLanguage(file);
+    
+    if (myContent instanceof DocumentContent) {
+      final Document newdocument = FileDocumentManager.getInstance().getCachedDocument(file);
+      assert newdocument != null;
+      ((DocumentContent)myContent).setDocument(newdocument);
+    }
     calcPhysical();
   }
 
@@ -468,6 +474,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     public long getModificationStamp() {
       return document.getModificationStamp();
+    }
+
+    void setDocument(Document _document) {
+      document = _document;
     }
   }
 
