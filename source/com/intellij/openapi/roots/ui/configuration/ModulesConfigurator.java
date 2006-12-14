@@ -66,7 +66,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myProject = project;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
     myProjectConfigurable = new ProjectConfigurable(project, this, configurable.getProjectJdksModel());
-    myFacetsConfigurator = new ProjectFacetsConfigurator(myProject);
+    myFacetsConfigurator = new ProjectFacetsConfigurator();
   }
 
   public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -215,7 +215,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           ex[0] = e;
         }
         finally {
-          myFacetsConfigurator = new ProjectFacetsConfigurator(myProject);
+          myFacetsConfigurator = new ProjectFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
           for (Module module : myModuleModel.getModules()) {
             if (!module.isDisposed()) {

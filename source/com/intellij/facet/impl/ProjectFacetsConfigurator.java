@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +30,9 @@ public class ProjectFacetsConfigurator {
   private Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
   private Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
-  private Project myProject;
 
 
-  public ProjectFacetsConfigurator(final Project project) {
-    myProject = project;
+  public ProjectFacetsConfigurator() {
   }
 
   public void removeFacet(Facet facet) {

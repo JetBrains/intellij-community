@@ -4,22 +4,26 @@
 
 package com.intellij.facet.impl.ui;
 
-import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.module.Module;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public class ProjectConfigurableContext extends FacetEditorContextBase {
   private Module myModule;
-
+  
   public ProjectConfigurableContext(final @NotNull Module module) {
     super(module.getProject());
     myModule = module;
+  }
+
+  public Library[] getLibraries() {
+    return super.getLibraries();
   }
 
   @Nullable

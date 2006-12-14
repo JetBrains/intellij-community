@@ -30,7 +30,8 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     this(id, presentableName, null);
   }
 
-  public FacetTypeId<F> getId() {
+  @NotNull
+  public final FacetTypeId<F> getId() {
     return myId;
   }
 
@@ -39,7 +40,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   @Nullable
-  public FacetTypeId getUnderlyingFacetType() {
+  public final FacetTypeId getUnderlyingFacetType() {
     return myUnderlyingFacetType;
   }
 
