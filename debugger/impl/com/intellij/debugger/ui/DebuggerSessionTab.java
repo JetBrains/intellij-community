@@ -63,7 +63,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
 
   private static final Icon CONSOLE_ICON = IconLoader.getIcon("/debugger/console.png");
-  //private static final Icon THREADS_ICON = IconLoader.getIcon("/debugger/threads.png");
   private static final Icon FRAME_ICON = IconLoader.getIcon("/debugger/frame.png");
   private static final Icon WATCHES_ICON = IconLoader.getIcon("/debugger/watches.png");
 
@@ -82,7 +81,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
   private final JPanel myContentPanel;
   private final FramePanel myFramePanel;
-  //private final ThreadsPanel myThreadsPanel;
   private final MainWatchPanel myWatchPanel;
 
   private ExecutionConsole  myConsole;
@@ -287,31 +285,6 @@ public class DebuggerSessionTab implements LogConsoleManager {
     }
   }
 
-  /*
-  private void updateWatchTreeTab() {
-    class MyContentUpdater extends TreeModelAdapter {
-      public void updateContent() {
-        Content content = findContent(WATCHES_CONTENT);
-        if (content != null) {
-          int count = myWatchPanel.getWatchTree().getWatchCount();
-          String displayName = count > 0
-                               ? DebuggerBundle.message("debugger.session.tab.watches.title.with.size", count)
-                               : DebuggerBundle.message("debugger.session.tab.watches.title");
-          content.setDisplayName(displayName);
-        }
-      }
-      public void treeStructureChanged(TreeModelEvent event) {
-        if(event.getPath().length <= 1) {
-          updateContent();
-        }
-      }
-    }
-    MyContentUpdater updater = new MyContentUpdater();
-    updater.updateContent();
-    myWatchPanel.getWatchTree().getModel().addTreeModelListener(updater);
-  }
-  */
-
   private ActionToolbar createSecondToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
 
@@ -373,9 +346,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
   public void dispose() {
     disposeSession();
-    //myThreadsPanel.dispose();
     myFramePanel.dispose();
-    //myWatchPanel.dispose();
+    myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
     for (AdditionalTabComponent tabComponent : myAdditionalContent.keySet()) {
       tabComponent.dispose();

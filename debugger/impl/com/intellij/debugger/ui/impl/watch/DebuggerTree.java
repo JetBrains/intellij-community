@@ -166,13 +166,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private BuildNodeCommand getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
-    if (node.getDescriptor() instanceof ThreadGroupDescriptorImpl) {
-      return new BuildThreadGroupCommand(node);
-    }
-    else if (node.getDescriptor() instanceof ThreadDescriptorImpl) {
-      return new BuildThreadCommand(node);
-    }
-    else if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
+    if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
       return new BuildStackFrameCommand(node);
     }
     else if (node.getDescriptor() instanceof ValueDescriptorImpl) {
@@ -451,47 +445,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         myChildren.add(myNodeManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
 
-      updateUI(true);
-    }
-  }
-
-  private class BuildThreadCommand extends BuildNodeCommand {
-    public BuildThreadCommand(DebuggerTreeNodeImpl threadNode) {
-      super(threadNode);
-    }
-
-    public void threadAction() {
-      ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)getNode().getDescriptor());
-      ThreadReferenceProxyImpl threadProxy = threadDescriptor.getThreadReference();
-      if (!threadProxy.isCollected() && getDebuggerContext().getDebugProcess().getSuspendManager().isSuspended(threadProxy)) {
-        int status = threadProxy.status();
-        if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) &&
-            !(status == ThreadReference.THREAD_STATUS_NOT_STARTED) &&
-            !(status == ThreadReference.THREAD_STATUS_ZOMBIE)) {
-          try {
-            for (StackFrameProxyImpl stackFrame : threadProxy.frames()) {
-              //Method method = stackFrame.location().method();
-              //ToDo :check whether is synthetic if (shouldDisplay(method)) {
-              myChildren.add(myNodeManager.createNode(myNodeManager.getStackFrameDescriptor(threadDescriptor, stackFrame),
-                                                            getDebuggerContext().createEvaluationContext()));
-            }
-          }
-          catch (EvaluateException e) {
-            myChildren.clear();
-            myChildren.add(myNodeManager.createMessageNode(e.getMessage()));
-            LOG.debug(e);
-            //LOG.assertTrue(false);
-            // if we pause during evaluation of this method the exception is thrown
-            //  private static void longMethod(){
-            //    try {
-            //      Thread.sleep(100000);
-            //    } catch (InterruptedException e) {
-            //      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            //    }
-            //  }
-          }
-        }
-      }
       updateUI(true);
     }
   }
