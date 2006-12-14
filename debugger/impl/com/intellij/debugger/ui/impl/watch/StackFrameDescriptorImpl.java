@@ -50,7 +50,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           final SourcePosition position = ContextUtil.getSourcePosition(StackFrameDescriptorImpl.this);
-          final PsiFile file = position.getFile();
+          final PsiFile file = position != null? position.getFile() : null;
           if (file == null) {
             myIsInLibraryContent = true;
           }

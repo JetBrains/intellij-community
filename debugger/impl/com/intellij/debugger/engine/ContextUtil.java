@@ -10,11 +10,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Location;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.List;
 
 /*
@@ -26,6 +26,7 @@ public class ContextUtil {
   public static final Key IS_JSP_IMPLICIT = new Key("JspImplicit");
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.PositionUtil");
 
+  @Nullable
   public static SourcePosition getSourcePosition(final StackFrameContext context) {
     DebugProcessImpl debugProcess = (DebugProcessImpl)context.getDebugProcess();
     if(debugProcess == null) {
@@ -43,10 +44,12 @@ public class ContextUtil {
     return ((DebugProcessImpl)context.getDebugProcess()).getPositionManager().getSourcePosition(location);
   }
 
+  @Nullable
   public static PsiElement getContextElement(final StackFrameContext context) {
     return getContextElement(context, getSourcePosition(context));
   }
 
+  @Nullable
   protected static PsiElement getContextElement(final StackFrameContext context, final SourcePosition position) {
     if(LOG.isDebugEnabled()) {
       final SourcePosition sourcePosition = getSourcePosition(context);
@@ -55,48 +58,47 @@ public class ContextUtil {
 
     final PsiElement element = getContextElement(position);
 
-    if(element == null) return null;
+    if(element == null) {
+      return null;
+    }
 
     final StackFrameProxyImpl frameProxy = (StackFrameProxyImpl)context.getFrameProxy();
 
-    if(frameProxy == null) return element;
+    if(frameProxy == null) {
+      return element;
+    }
 
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
       List<LocalVariableProxyImpl> list = frameProxy.visibleVariables();
 
-      StringBuffer buf = new StringBuffer();
       PsiResolveHelper resolveHelper = element.getManager().getResolveHelper();
       buf.append('{');
-      for (Iterator<LocalVariableProxyImpl> iterator = list.iterator(); iterator.hasNext();) {
-        LocalVariableProxyImpl localVariable = iterator.next();
-
-        String varName = localVariable.name();
-        if(resolveHelper.resolveReferencedVariable(varName, element) == null) {
-          buf.append(localVariable.getVariable().typeName() + " " + varName + ";");
+      for (LocalVariableProxyImpl localVariable : list) {
+        final String varName = localVariable.name();
+        if (resolveHelper.resolveReferencedVariable(varName, element) == null) {
+          buf.append(localVariable.getVariable().typeName()).append(" ").append(varName).append(";");
         }
       }
       buf.append('}');
 
-      if(buf.length() > 2) {
-        PsiElementFactory elementFactory = element.getManager().getElementFactory();
-        PsiCodeBlock codeBlockFromText = elementFactory.createCodeBlockFromText(buf.toString(), element);
-
-        PsiStatement[] statements = codeBlockFromText.getStatements();
-        for (int i = 0; i < statements.length; i++) {
-          PsiStatement statement = statements[i];
-          if (statement instanceof PsiDeclarationStatement) {
-            PsiDeclarationStatement declStatement = (PsiDeclarationStatement)statement;
-            PsiElement[] declaredElements = declStatement.getDeclaredElements();
-            for (int j = 0; j < declaredElements.length; j++) {
-              declaredElements[j].putUserData(IS_JSP_IMPLICIT, IS_JSP_IMPLICIT);
-            }
-          }
-        }
-        return codeBlockFromText;
-      }
-      else {
+      if (buf.length() <= 2) {
         return element;
       }
+      final PsiElementFactory elementFactory = element.getManager().getElementFactory();
+      final PsiCodeBlock codeBlockFromText = elementFactory.createCodeBlockFromText(buf.toString(), element);
+
+      final PsiStatement[] statements = codeBlockFromText.getStatements();
+      for (PsiStatement statement : statements) {
+        if (statement instanceof PsiDeclarationStatement) {
+          PsiDeclarationStatement declStatement = (PsiDeclarationStatement)statement;
+          PsiElement[] declaredElements = declStatement.getDeclaredElements();
+          for (PsiElement declaredElement : declaredElements) {
+            declaredElement.putUserData(IS_JSP_IMPLICIT, IS_JSP_IMPLICIT);
+          }
+        }
+      }
+      return codeBlockFromText;
     }
     catch (IncorrectOperationException e) {
       return element;
@@ -104,20 +106,30 @@ public class ContextUtil {
     catch (EvaluateException e) {
       return element;
     }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
   }
 
+  @Nullable
   public static PsiElement getContextElement(final SourcePosition position) {
-    if(position == null) return null;
+    if(position == null) {
+      return null;
+    }
 
     return getContextElementInText(position.getFile(), position.getLine());
   }
 
+  @Nullable
   private static PsiElement getContextElementInText(PsiFile psiFile, int lineNumber) {
     if(lineNumber < 0) {
       return psiFile;
     }
 
     final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    if (document == null) {
+      return null;
+    }
     if (lineNumber >= document.getLineCount()) {
       return psiFile;
     }
