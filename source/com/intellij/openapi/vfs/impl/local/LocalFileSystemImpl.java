@@ -50,7 +50,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
 
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
-  public Map<String, VirtualFileImpl> myUnaccountedFiles = SystemInfo.isFileSystemCaseSensitive
+  public final Map<String, VirtualFileImpl> myUnaccountedFiles = SystemInfo.isFileSystemCaseSensitive
                                                            ? new THashMap<String, VirtualFileImpl>()
                                                            : new THashMap<String, VirtualFileImpl>(
                                                                new CaseInsensitiveStringHashingStrategy()

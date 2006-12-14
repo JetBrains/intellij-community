@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -91,13 +92,13 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   public static PsiVariable[] getAllVariables(PsiElement scope, PsiElement place) {
-    final List<PsiVariable> result = new ArrayList<PsiVariable>();
+    final List<PsiVariable> result = new SmartList<PsiVariable>();
     PsiScopesUtil.processScope(scope, new FilterScopeProcessor(new ClassFilter(PsiVariable.class), result), PsiSubstitutor.UNKNOWN, null, place);
     return result.toArray(new PsiVariable[result.size()]);
   }
 
   public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
-    final List<PsiMethod> result = new ArrayList<PsiMethod>();
+    final List<PsiMethod> result = new SmartList<PsiMethod>();
     PsiScopesUtil.processScope(scope, new FilterScopeProcessor(new ClassFilter(PsiMethod.class), result), PsiSubstitutor.UNKNOWN, null, place);
     return result.toArray(new PsiMethod[result.size()]);
   }

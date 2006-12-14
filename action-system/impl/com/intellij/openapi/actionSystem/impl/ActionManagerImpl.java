@@ -47,19 +47,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
 
   private final Object myLock = new Object();
-  private THashMap<String,Object> myId2Action;
-  private THashMap<PluginId, THashSet<String>> myPlugin2Id;
-  private TObjectIntHashMap<String> myId2Index;
-  private THashMap<Object,String> myAction2Id;
-  private ArrayList<String> myNotRegisteredInternalActionIds;
+  private final THashMap<String,Object> myId2Action;
+  private final THashMap<PluginId, THashSet<String>> myPlugin2Id;
+  private final TObjectIntHashMap<String> myId2Index;
+  private final THashMap<Object,String> myAction2Id;
+  private final ArrayList<String> myNotRegisteredInternalActionIds;
   private MyTimer myTimer;
 
   private int myRegisteredActionsCount;
-  private ArrayList<AnActionListener> myActionListeners;
+  private final ArrayList<AnActionListener> myActionListeners;
   private AnActionListener[] myCachedActionListeners;
   private String myLastPreformedActionId;
-  private KeymapManager myKeymapManager;
-  private DataManager myDataManager;
+  private final KeymapManager myKeymapManager;
+  private final DataManager myDataManager;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn = 0;
   @NonNls private static final String ACTION_ELEMENT_NAME = "action";
@@ -171,11 +171,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private AnAction getActionImpl(String id, boolean canReturnStub) {
+    synchronized (myLock) {
     AnAction action = (AnAction)myId2Action.get(id);
     if (!canReturnStub && action instanceof ActionStub) {
       action = convert((ActionStub)action);
     }
     return action;
+    }
   }
 
   /**
@@ -183,7 +185,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   private AnAction convert(ActionStub stub) {
-    synchronized (myLock) {
       LOG.assertTrue(myAction2Id.contains(stub));
       myAction2Id.remove(stub);
 
@@ -237,7 +238,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       myAction2Id.put(obj, stub.getId());
 
       return (AnAction)obj;
-    }
   }
 
   public String getId(@NotNull AnAction action) {
@@ -513,7 +513,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       assertActionIsGroupOrStub(action);
     }
 
-    String actionName = (action instanceof ActionStub) ? ((ActionStub) action).getClassName() : action.getClass().getName();
+    String actionName = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
 
     if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
       LOG.error("unexpected name of element \"" + element.getName() + "\"");
@@ -695,7 +695,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return action;
   }
 
-  public void processActionsElement(Element element, ClassLoader loader, PluginId pluginId) {
+  private void processActionsElement(Element element, ClassLoader loader, PluginId pluginId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processActionsNode(" + element.getName() + ")");
     }

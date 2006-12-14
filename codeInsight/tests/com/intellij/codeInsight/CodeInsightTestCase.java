@@ -143,12 +143,14 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     if (projectRoot != null) {
       FileUtil.copyDir(projectRoot, toDirIO);
       VirtualFile fromDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot);
-      editorInfos = copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(vFiles, String.class, new Function<VirtualFile, String>() {
-        public String fun(final VirtualFile s) {
-          return s.getPath().substring(projectRoot.getPath().length());
-        }
-      }));
-    } else {
+      editorInfos =
+        copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(vFiles, String.class, new Function<VirtualFile, String>() {
+          public String fun(final VirtualFile s) {
+            return s.getPath().substring(projectRoot.getPath().length());
+          }
+        }));
+    }
+    else {
       editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
       for (final VirtualFile vFile : vFiles) {
         editorInfos.putAll(copyFilesFillingEditorInfos(vFile.getParent(), toDir, vFile.getName()));

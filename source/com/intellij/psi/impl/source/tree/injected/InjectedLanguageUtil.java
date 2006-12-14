@@ -266,17 +266,17 @@ public class InjectedLanguageUtil {
 
   @Nullable
   public static PsiLanguageInjectionHost findInjectionHost(PsiElement element) {
-    if (element == null) return null;
+    if (element == null || element instanceof PsiFile) return null;
     if (element instanceof PsiLanguageInjectionHost) {
       return (PsiLanguageInjectionHost)element;
     }
     element = element.getParent();
-    if (element == null) return null;
+    if (element == null || element instanceof PsiFile) return null;
     if (element instanceof PsiLanguageInjectionHost) {
       return (PsiLanguageInjectionHost)element;
     }
     element = element.getParent();
-    if (element == null) return null;
+    if (element == null || element instanceof PsiFile) return null;
     if (element instanceof PsiLanguageInjectionHost) {
       return (PsiLanguageInjectionHost)element;
     }

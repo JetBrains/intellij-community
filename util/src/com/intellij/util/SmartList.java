@@ -102,7 +102,48 @@ public class SmartList<E> extends AbstractList<E> {
     else {
       oldValue = ((List<E>)myElem).set(index, element);
     }
+    return oldValue;
+  }
 
+  public E remove(final int index) {
+    if (index < 0 || index >= mySize) {
+      throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
+    }
+    ArrayList<E> old = new ArrayList<E>(this);
+
+    final E oldValue;
+    if (mySize == 1) {
+      oldValue = (E)myElem;
+      myElem = null;
+    }
+    else if (mySize == 2) {
+      final Object[] array = (Object[])myElem;
+      oldValue = (E)array[index];
+      myElem = array[1 - index];
+    }
+    else if (mySize == 3) {
+      List<E> list = (List<E>)myElem;
+      oldValue = list.get(index);
+      Object[] array = new Object[2];
+      int i0 = index==0 ? 1 : index==1 ? 0 : 0;
+      int i1 = index==0 ? 2 : index==1 ? 2 : 1;
+      array[0] = list.get(i0);
+      array[1] = list.get(i1);
+      myElem = array;
+    }
+    else {
+      List<E> list = (List<E>)myElem;
+      oldValue = list.remove(index);
+    }
+    mySize--;
+    {
+      List<E> list = new ArrayList<E>(subList(0, index));
+      list.add(oldValue);
+      list.addAll(subList(index, mySize));
+      if (!list.equals(old)) {
+        int i = 0;
+      }
+    }
     return oldValue;
   }
 }

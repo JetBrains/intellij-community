@@ -18,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
@@ -55,7 +54,6 @@ public class LookupImpl extends LightweightHint implements Lookup {
   private DocumentListener myDocumentListener;
 
   private ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
-  private HashMap myUserMap = new HashMap();
 
   private boolean myCanceled = true;
   private boolean myDisposed = false;
@@ -499,19 +497,6 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
     if (myCanceled){
       fireLookupCanceled();
-    }
-  }
-
-  public <T> T getUserData(Key<T> key){
-    return (T)myUserMap.get(key);
-  }
-
-  public <T> void putUserData(Key<T> key, T value){
-    if (value != null){
-      myUserMap.put(key, value);
-    }
-    else{
-      myUserMap.remove(key);
     }
   }
 

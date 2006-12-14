@@ -3,12 +3,10 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.JBPopupImpl;
-import gnu.trove.THashMap;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -18,14 +16,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.EventListener;
 import java.util.EventObject;
-import java.util.Map;
 
-public class LightweightHint implements Hint, UserDataHolder {
+public class LightweightHint extends UserDataHolderBase implements Hint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LightweightHint");
 
   private final JComponent myComponent;
   private JComponent myFocusBackComponent;
-  private final Map<Key, Object> myUserMap = new THashMap<Key, Object>(1);
   private final EventListenerList myListenerList = new EventListenerList();
   private MyEscListener myEscListener;
   private JBPopup myPopup;
@@ -192,20 +188,6 @@ public class LightweightHint implements Hint, UserDataHolder {
     return myComponent;
   }
 
-  @SuppressWarnings({"unchecked"})
-  public <T> T getUserData(final Key<T> key) {
-    return (T)myUserMap.get(key);
-  }
-
-  public <T> void putUserData(final Key<T> key, final T value) {
-    if (value != null) {
-      myUserMap.put(key, value);
-    }
-    else {
-      myUserMap.remove(key);
-    }
-  }
-
   public final void addHintListener(final HintListener listener) {
     myListenerList.add(HintListener.class, listener);
   }
@@ -220,7 +202,7 @@ public class LightweightHint implements Hint, UserDataHolder {
 
   private final class MyEscListener implements ActionListener {
     public final void actionPerformed(final ActionEvent e) {
-      LightweightHint.this.hide();
+      hide();
     }
   }
 }
