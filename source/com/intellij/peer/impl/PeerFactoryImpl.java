@@ -57,12 +57,17 @@ import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
+import org.apache.xmlrpc.XmlRpcServer;
+import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
+import org.apache.xmlrpc.WebServer;
+import org.apache.xmlrpc.IdeaAwareWebServer;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.io.File;
+import java.net.InetAddress;
 
 public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent {
   private ProcessProxyFactory myProxyFactory = null;
@@ -309,5 +314,13 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
 
   public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project) {
     return new PsiBuilderImpl(lang, project, SharedImplUtil.findCharTableByTree(tree), seq);
+  }
+
+  public XmlRpcServer createRpcServer() {
+    return new IdeaAwareXmlRpcServer();
+  }
+
+  public WebServer createWebServer(final int port, final InetAddress addr, final XmlRpcServer xmlrpc) {
+    return new IdeaAwareWebServer(port, addr, xmlrpc);
   }
 }

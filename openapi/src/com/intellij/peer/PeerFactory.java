@@ -31,6 +31,10 @@ import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.ui.UIHelper;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.errorView.ErrorViewFactory;
+import org.apache.xmlrpc.XmlRpcServer;
+import org.apache.xmlrpc.WebServer;
+
+import java.net.InetAddress;
 
 public abstract class PeerFactory {
   public static PeerFactory getInstance() {
@@ -59,4 +63,8 @@ public abstract class PeerFactory {
   public abstract StructureViewFactory getStructureViewFactory();
 
   public abstract PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project);
+
+  public abstract XmlRpcServer createRpcServer();
+
+  public abstract WebServer createWebServer(int port, InetAddress addr, XmlRpcServer xmlrpc);
 }
