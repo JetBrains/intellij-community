@@ -36,6 +36,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
     }
     final XmlTag tag = getXmlTag();
     if (tag == null || !tag.isValid()) {
+      detach(true);
       return false;
     }
     return true;

@@ -4,14 +4,25 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.xml.XmlTag;
+import org.apache.xerces.parsers.SAXParser;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +32,7 @@ import java.util.Set;
  */
 public class DomImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomImplUtil");
+  private static final SAXParser ourParser = new SAXParser();
 
   public static boolean isTagValueGetter(final JavaMethod method) {
     if (!isGetter(method)) {
@@ -128,5 +140,52 @@ public class DomImplUtil {
         return isNameSuitable(name, subTag, handler);
       }
     }) != null;
+  }
+
+@NotNull
+  public static Pair<String, String> getRootTagAndNamespace(final InputSource source) throws IOException {
+    synchronized (ourParser) {
+      final Ref<String> localNameRef = new Ref<String>();
+      final Ref<String> nsRef = new Ref<String>("");
+      final DefaultHandler handler = new DefaultHandler() {
+
+        public InputSource resolveEntity(final String publicId, final String systemId) throws IOException, SAXException {
+          nsRef.set(systemId);
+          return super.resolveEntity(publicId, systemId);
+        }
+
+        public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
+          throws SAXException {
+          localNameRef.set(localName);
+          if (StringUtil.isNotEmpty(uri) && StringUtil.isEmpty(nsRef.get())) {
+            nsRef.set(uri);
+          }
+          throw new SAXException();
+        }
+      };
+      ourParser.setContentHandler(handler);
+      ourParser.setEntityResolver(handler);
+      ourParser.setErrorHandler(handler);
+      try {
+        ourParser.parse(source);
+      }
+      catch (SAXException e) {
+      }
+      finally {
+        ourParser.reset();
+        closeStream(source.getByteStream());
+        closeStream(source.getCharacterStream());
+        ourParser.setContentHandler(null);
+        ourParser.setEntityResolver(null);
+        ourParser.setErrorHandler(null);
+      }
+      return Pair.create(localNameRef.get(), nsRef.get());
+    }
+  }
+
+  private static void closeStream(final Closeable stream) throws IOException {
+    if (stream != null) {
+      stream.close();
+    }
   }
 }

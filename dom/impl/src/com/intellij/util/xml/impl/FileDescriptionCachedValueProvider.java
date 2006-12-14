@@ -8,9 +8,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
@@ -19,11 +20,11 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.SmartList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomFileElement;
@@ -33,10 +34,9 @@ import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.InputSource;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -93,13 +93,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       }
 
       final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
-      final NullableLazyValue<String> rootTagName = new NullableLazyValue<String>() {
-        protected String compute() {
-          return getRootTagName();
-        }
-      };
-
-      if (myLastResult != null && myFileDescription.getRootTagName().equals(rootTagName.getValue()) && myFileDescription.isMyFile(myXmlFile, module)) {
+      if (myLastResult != null && myFileDescription.getRootTagName().equals(getRootTagName()) && myFileDescription.isMyFile(myXmlFile, module)) {
         List<DomEvent> list = new SmartList<DomEvent>();
         setInModel(changedRoot, list, myLastResult, fireEvents);
         myCachedValue.getValue();
@@ -110,7 +104,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
       final DomFileDescription<T> description = originalFile != null
                                                 ? myDomManager.getOrCreateCachedValueProvider(originalFile).getFileDescription()
-                                                : findFileDescription(rootTagName, module);
+                                                : findFileDescription(module);
       return saveResult(description, fireEvents, changedRoot);
     }
     finally {
@@ -122,66 +116,35 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     return ((MyCachedValueProvider)myCachedValue.getValueProvider());
   }
 
-  @Nullable
-  private CharSequence getFileStartText() {
+  @NotNull
+  private InputSource getInputStream() throws IOException {
+    final FileViewProvider viewProvider = myXmlFile.getViewProvider();
+    final VirtualFile file = viewProvider.getVirtualFile();
     final Document document = PsiDocumentManager.getInstance(myXmlFile.getProject()).getCachedDocument(myXmlFile);
     if (document != null) {
-      return getSubsequence(document.getCharsSequence());
+      return new InputSource(new CharSequenceReader(document.getCharsSequence()));
     }
 
-    final VirtualFile virtualFile = myXmlFile.getVirtualFile();
-    if (virtualFile != null) {
-      final long l = virtualFile.getLength();
-      if (l > LIMIT) {
-        BufferedReader reader = null;
-        try {
-          reader = new BufferedReader(new InputStreamReader(virtualFile.getInputStream()));
-          final char[] buf = new char[START];
-          final int i = reader.read(buf, 0, START);
-          if (i <= 0) return null;
-          return new CharArrayCharSequence(buf, 0, i);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        } finally{
-          if (reader != null) {
-            try {
-              reader.close();
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-          }
-        }
-      }
+    if (!viewProvider.isPhysical()) {
+      return new InputSource(new CharSequenceReader(myXmlFile.getText()));
     }
-    return null;
-  }
-
-  private static CharSequence getSubsequence(final CharSequence sequence) {
-    return sequence.subSequence(0, Math.min(sequence.length(), START));
-  }
-
-  private boolean containsRootTags(String s) {
-    for (final String string : myDomManager.getRootTagNames()) {
-      if (string != null && s.contains(string)) {
-        return true;
-      }
-    }
-    return false;
+    return new InputSource(file.getInputStream());
   }
 
   @Nullable
-  private DomFileDescription<T> findFileDescription(final NullableLazyValue<String> rootTagName, Module module) {
+  private DomFileDescription<T> findFileDescription(Module module) {
     myCondition.module = module;
-    final CharSequence text = getFileStartText();
-    if (text != null && containsRootTags(text.toString()) || text == null && rootTagName.getValue() != null) {
-      final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName.getValue()), myCondition);
+    try {
+      final Pair<String,String> pair = DomImplUtil.getRootTagAndNamespace(getInputStream());
+      final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(pair.first), myCondition);
       if (description != null) {
         return description;
       }
+      return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
     }
-    return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
+    catch (IOException e) {
+      return null;
+    }
   }
 
   @Nullable
