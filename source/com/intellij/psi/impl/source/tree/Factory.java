@@ -23,6 +23,7 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,6 +74,9 @@ public class Factory implements Constants {
       element = new ChameleonElement(type, buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type instanceof IXmlLeafElementType) {
+      if (type == XmlTokenType.XML_REAL_WHITE_SPACE) {
+        return new PsiWhiteSpaceImpl(buffer, startOffset, endOffset, lexerState, table);
+      }
       element = new XmlTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == PLAIN_TEXT) {
@@ -171,6 +175,9 @@ public class Factory implements Constants {
       element = new XmlFileElement(type);
     }
     else if (type == JSPX_FILE) {
+      element = new XmlFileElement(type);
+    }
+    else if (type == JSP_FILE) {
       element = new XmlFileElement(type);
     }
     else if (type == JspElementType.JSP_ROOT_TAG) {

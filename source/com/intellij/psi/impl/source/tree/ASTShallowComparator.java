@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.util.diff.ShallowNodeComparator;
 
 /**
@@ -26,6 +28,12 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
       return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
     }
 
+    if (oldNode instanceof PsiErrorElement && newNode instanceof PsiErrorElement) {
+      final PsiErrorElement e1 = ((PsiErrorElement)oldNode);
+      final PsiErrorElement e2 = ((PsiErrorElement)newNode);
+      if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return ThreeState.NO;
+    }
+
     return ThreeState.UNSURE;
   }
 
@@ -40,6 +48,12 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   public boolean hashcodesEqual(final ASTNode n1, final ASTNode n2) {
     if (n1 instanceof LeafElement && n2 instanceof LeafElement) {
       return textMatches(n1, n2) == ThreeState.YES;
+    }
+
+    if (n1 instanceof PsiErrorElement && n2 instanceof PsiErrorElement) {
+      final PsiErrorElement e1 = ((PsiErrorElement)n1);
+      final PsiErrorElement e2 = ((PsiErrorElement)n2);
+      if (!Comparing.equal(e1.getErrorDescription(), e2.getErrorDescription())) return false;
     }
 
     return ((TreeElement)n1).hc() == ((TreeElement)n2).hc();

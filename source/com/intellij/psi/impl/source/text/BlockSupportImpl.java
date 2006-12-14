@@ -30,7 +30,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.tabular.ParsingUtil;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
-import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.text.BlockSupport;
@@ -206,7 +205,8 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
 
         Language lang = file.getLanguage();
 
-        final Grammar grammarByFileType = GrammarUtil.getGrammarByName(lang.getID());
+        // TODO: incremental reparse switched off!!!
+        final Grammar grammarByFileType = null; // GrammarUtil.getGrammarByName(lang.getID());
         if (lang == baseLanguage /*TODO: reparse HTML in JSP */ && grammarByFileType != null && file.getLanguage() != StdLanguages.JSP && file.getLanguage() != StdLanguages.JSPX ) {
           ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset,
                               lengthShift, file.getViewProvider());

@@ -10,15 +10,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.parsing.xml.XmlParsing;
+import com.intellij.psi.impl.source.parsing.xml.OldXmlParsing;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -189,7 +189,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
 
   private Lexer getLexer(int context, char[] buffer) {
     Lexer lexer = new XmlPsiLexer();
-    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(XmlParsing.XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
+    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(OldXmlParsing.XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     short state = 0;
 
     switch (context) {

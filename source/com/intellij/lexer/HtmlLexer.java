@@ -1,10 +1,10 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.jsp.el.ELTokenType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -77,6 +77,7 @@ public class HtmlLexer extends BaseHtmlLexer {
   private boolean isStartOfEmbeddmentTagContent(final IElementType tokenType) {
     return (tokenType == XmlTokenType.XML_DATA_CHARACTERS ||
             tokenType == XmlTokenType.XML_COMMENT_START ||
+            tokenType == XmlTokenType.XML_REAL_WHITE_SPACE ||
             tokenType == ElementType.WHITE_SPACE
     );
   }

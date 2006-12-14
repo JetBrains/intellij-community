@@ -1,14 +1,13 @@
 package com.intellij.lexer;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,6 +33,7 @@ abstract class BaseHtmlLexer extends LexerBase {
   static final TokenSet TOKENS_TO_MERGE = TokenSet.create(new IElementType[]{
     XmlTokenType.XML_COMMENT_CHARACTERS,
     XmlTokenType.XML_WHITE_SPACE,
+    XmlTokenType.XML_REAL_WHITE_SPACE,
     XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
     XmlTokenType.XML_DATA_CHARACTERS
   });

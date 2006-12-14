@@ -9,12 +9,12 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.util.XmlUtil;
-import com.intellij.xml.util.ColorSampleLookupValue;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.util.ColorSampleLookupValue;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**

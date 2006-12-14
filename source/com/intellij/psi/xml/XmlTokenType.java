@@ -83,5 +83,5 @@ public interface XmlTokenType {
   IElementType XML_MARKUP_DECL = XmlElementType.XML_MARKUP;
 
   TokenSet COMMENTS = TokenSet.create(new IElementType[] {XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END});
-  TokenSet WHITESPACES = TokenSet.create(new IElementType[] {XML_WHITE_SPACE, XML_REAL_WHITE_SPACE});
+  TokenSet WHITESPACES = TokenSet.create(new IElementType[] {XML_WHITE_SPACE});
 }

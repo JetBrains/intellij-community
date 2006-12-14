@@ -7,14 +7,14 @@ import com.intellij.util.CharTable;
  * @author ven
  */
 public class XmlParsingContext extends ParsingContext {
-  protected final XmlParsing myXmlParsing;
+  protected final OldXmlParsing myXmlParsing;
 
-  public XmlParsing getXmlParsing() {
+  public OldXmlParsing getXmlParsing() {
     return myXmlParsing;
   }
 
   public XmlParsingContext(final CharTable table) {
     super(table);
-    myXmlParsing = new XmlParsing(this);
+    myXmlParsing = new OldXmlParsing(this);
   }
 }

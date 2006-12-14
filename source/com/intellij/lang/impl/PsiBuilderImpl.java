@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.diff.DiffTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
@@ -38,7 +39,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final Lexer myLexer;
   private final boolean myFileLevelParsing;
   private final TokenSet myWhitespaces;
-  private final TokenSet myComments;
+  private TokenSet myComments;
 
   private CharTable myCharTable;
   private int myCurrentLexem;
@@ -75,6 +76,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexer.start(chars, 0, text.length());
   }
 
+  public void enforeCommentTokens(TokenSet tokens) {
+    myComments = tokens;
+  }
+
   private class StartMarker extends ProductionMarker implements Marker {
     public IElementType myType;
     public DoneMarker myDoneMarker = null;
@@ -103,6 +108,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public void done(IElementType type) {
       myType = type;
       PsiBuilderImpl.this.done(this);
+    }
+
+    public void doneBefore(IElementType type, Marker before) {
+      myType = type;
+      PsiBuilderImpl.this.doneBefore(this, before);
+    }
+
+    public void doneBefore(final IElementType type, final Marker before, final String errorMessage) {
+      myProduction.add(myProduction.lastIndexOf(before), new ErrorItem(errorMessage, ((StartMarker)before).myLexemIndex));
+      doneBefore(type, before);
     }
 
     public void error(String message) {
@@ -256,6 +271,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myProduction.removeRange(idx, myProduction.size());
   }
 
+  @SuppressWarnings({"SuspiciousMethodCalls"})
+  public void doneBefore(Marker marker, Marker before) {
+// TODO: there could be not done markers after 'marker' and that's normal
+//     doValidnessChecks(marker);
+    
+    int idx = myProduction.lastIndexOf(before);
+
+    DoneMarker doneMarker = new DoneMarker((StartMarker)marker, ((StartMarker)before).myLexemIndex);
+    ((StartMarker)marker).myDoneMarker = doneMarker;
+    myProduction.add(idx, doneMarker);
+  }
+
+  @SuppressWarnings({"SuspiciousMethodCalls"})
   public void drop(Marker marker) {
     final boolean removed = myProduction.remove(myProduction.lastIndexOf(marker)) == marker;
     LOG.assertTrue(removed, "The marker must be added before it is dropped.");
@@ -314,7 +342,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myCharTable = ((FileElement)rootNode).getCharTable();
     }
     else {
-      rootNode = new CompositeElement(rootMarker.myType);
+      rootNode = createComposite(rootMarker);
       rootNode.putUserData(CharTable.CHAR_TABLE_KEY, myCharTable);
     }
 
@@ -347,7 +375,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         ASTNode childNode;
 
         if (marker.myType != ElementType.ERROR_ELEMENT) {
-          childNode = new CompositeElement(marker.myType);
+          childNode = createComposite(marker);
         } else {
           childNode = new PsiErrorElementImpl();
           if (marker.myDoneMarker instanceof DoneWithErrorMarker) {
@@ -382,6 +410,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     LOG.assertTrue(curNode == null, "Unbalanced tree");
 
     return rootNode;
+  }
+
+  private CompositeElement createComposite(final StartMarker rootMarker) {
+    final IElementType type = rootMarker.myType;
+    if (type instanceof IXmlElementType) { // hack....
+      return Factory.createCompositeElement(type);
+    }
+    return new CompositeElement(type);
   }
 
   private static class MyComparator implements ShallowNodeComparator<ASTNode, Object> {
@@ -465,6 +501,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
     else if (type instanceof IChameleonElementType) {
       return new ChameleonElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+    }
+    else if (type instanceof IXmlElementType) {
+      return Factory.createLeafElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
     return new LeafPsiElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
   }

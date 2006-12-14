@@ -62,23 +62,27 @@ public interface XmlElementType {
   };
 
   IFileElementType XML_FILE = new IFileElementType(StdLanguages.XML){
+    /*
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final FileViewProvider viewProvider = TreeUtil.getFileElement((TreeElement)chameleon).getPsi().getContainingFile().getViewProvider();
       return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, viewProvider);
     }
+    */
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
 
   IElementType XHTML_FILE = new IChameleonElementType("XML_FILE", StdLanguages.XHTML){
+    /*
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XHTML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final FileViewProvider viewProvider = TreeUtil.getFileElement((TreeElement)chameleon).getPsi().getContainingFile().getViewProvider();
       return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, viewProvider);
     }
+    */
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 

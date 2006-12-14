@@ -16,8 +16,9 @@
 
 package com.intellij.lang;
 
-import com.intellij.psi.tree.IElementType;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -99,6 +100,20 @@ public interface PsiBuilder extends UserDataHolder {
     void done(IElementType type);
 
     /**
+     * TODO doc
+     * @param type
+     * @param before
+     */
+    void doneBefore(IElementType type, Marker before);
+
+    /**
+     * TODO doc
+     * @param type
+     * @param before
+     */
+    void doneBefore(IElementType type, Marker before, String errorMessage);
+
+    /**
      * Completes this marker and labels it as error element with specified message. Before calling this method,
      * all markers added after the beginning of this marker must be either dropped or completed.
      *
@@ -142,4 +157,6 @@ public interface PsiBuilder extends UserDataHolder {
    * @param dbgMode the debug mode value.
    */
   void setDebugMode(boolean dbgMode);
+
+  void enforeCommentTokens(TokenSet tokens);
 }
