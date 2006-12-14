@@ -231,7 +231,7 @@ public class AssignmentToMethodParameterInspection
             }
             if (ignoreTransformationOfOriginalParameter) {
                 final PsiExpression rhs = expression.getRExpression();
-                if (VariableAccessUtils.variableIsUsed(parameter, rhs)) {
+                if (rhs != null && VariableAccessUtils.variableIsUsed(parameter, rhs)) {
                     return;
                 }
             }
