@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.lang.ref.SoftReference;
-import java.lang.ref.Reference;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
@@ -53,7 +52,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private boolean myPhysical;
   private PsiFile myPsiFile = null;
   private Content myContent;
-  private WeakReference<Document> myDocument;
+  private SoftReference<Document> myDocument;
   private Language myBaseLanguage;
 
   public SingleRootFileViewProvider(PsiManager manager, VirtualFile file) {
@@ -131,7 +130,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (!(myContent instanceof PsiFileContent)) return;
     final Document cachedDocument = getCachedDocument();
     if (cachedDocument != null) {
-      setContent(new DocumentContent(cachedDocument));
+      setContent(new DocumentContent());
     }
     else {
       setContent(new VirtualFileContent());
@@ -314,12 +313,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myDocument.clear();
     myPsiFile = null;
     myBaseLanguage = calcBaseLanguage(file);
-    
-    if (myContent instanceof DocumentContent) {
-      final Document newdocument = FileDocumentManager.getInstance().getCachedDocument(file);
-      assert newdocument != null;
-      ((DocumentContent)myContent).setDocument(newdocument);
-    }
     calcPhysical();
   }
 
@@ -334,10 +327,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     Document document = myDocument != null ? myDocument.get() : null;
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
-      myDocument = new WeakReference<Document>(document);
+      myDocument = new SoftReference<Document>(document);
     }
     if (document != null && getContent()instanceof VirtualFileContent) {
-      setContent(new DocumentContent(document));
+      setContent(new DocumentContent());
     }
     return document;
   }
@@ -463,21 +456,16 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private class DocumentContent implements Content {
-    private Document document;
-    DocumentContent(@NotNull Document _document) {
-      document = _document;
-    }
-
     public CharSequence getText() {
+      final Document document = getDocument();
+      assert document != null;
       return document.getCharsSequence().subSequence(0, document.getTextLength());
     }
 
     public long getModificationStamp() {
-      return document.getModificationStamp();
-    }
-
-    void setDocument(Document _document) {
-      document = _document;
+      Document document = myDocument != null ? myDocument.get() : null;
+      if (document != null) return document.getModificationStamp();
+      return myFile.getModificationStamp();
     }
   }
 
