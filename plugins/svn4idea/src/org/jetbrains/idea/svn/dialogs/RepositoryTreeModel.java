@@ -1,20 +1,20 @@
 package org.jetbrains.idea.svn.dialogs;
 
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.jetbrains.idea.svn.SvnVcs;
+
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 
 public class RepositoryTreeModel extends DefaultTreeModel {
 
   private SvnVcs myVCS;
   private boolean myIsShowFiles;
 
-  public RepositoryTreeModel(SvnVcs vcs, boolean showFiles) {
+  public RepositoryTreeModel(@NotNull SvnVcs vcs, boolean showFiles) {
     super(null);
     myVCS = vcs;
     myIsShowFiles = showFiles;

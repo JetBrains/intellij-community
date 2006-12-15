@@ -15,36 +15,18 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
-import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 
 /**
  * Created by IntelliJ IDEA.
@@ -58,7 +40,7 @@ public class RepositoryBrowserComponent extends JPanel {
   private JTree myRepositoryTree;
   private SvnVcs myVCS;
 
-  public RepositoryBrowserComponent(SvnVcs vcs) {
+  public RepositoryBrowserComponent(@NotNull SvnVcs vcs) {
     myVCS = vcs;
     createComponent();
   }
@@ -97,6 +79,7 @@ public class RepositoryBrowserComponent extends JPanel {
     }
   }
 
+  @Nullable
   public SVNDirEntry getSelectedEntry() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
@@ -110,6 +93,7 @@ public class RepositoryBrowserComponent extends JPanel {
     return null;
   }
 
+  @Nullable
   public String getSelectedURL() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
@@ -154,6 +138,7 @@ public class RepositoryBrowserComponent extends JPanel {
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
   }
 
+  @Nullable
   public RepositoryTreeNode getSelectedNode() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection != null && selection.getLastPathComponent() instanceof RepositoryTreeNode) {
