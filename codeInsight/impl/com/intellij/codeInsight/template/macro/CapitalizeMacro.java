@@ -33,6 +33,7 @@ public class CapitalizeMacro implements Macro {
   private Result execute(Result result) {
     if (result == null) return null;
     String text = result.toString();
+    if (text == null) return null;
     if (text.length() > 0) {
       text = text.substring(0, 1).toUpperCase() + text.substring(1, text.length());
     }
