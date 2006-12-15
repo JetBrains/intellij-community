@@ -67,8 +67,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NonNls private static final String HEADLESS_IMPLEMENTATION_CLASS_ELEMENT = "headless-implementation-class";
   @NonNls private static final String OPTION_ELEMENT = "option";
   @NonNls private static final String VALUE_ATTR = "value";
-  private boolean myDisposed = false;
-  private boolean myDisposeCompleted = false;
+  private volatile boolean myDisposed = false;
+  private volatile boolean myDisposeCompleted = false;
 
   private MessageBus myMessageBus;
 
