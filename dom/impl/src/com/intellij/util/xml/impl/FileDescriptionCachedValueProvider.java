@@ -3,13 +3,13 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
@@ -20,8 +20,8 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharSequenceReader;
@@ -43,7 +43,7 @@ import java.util.*;
  * @author peter
  */
 class FileDescriptionCachedValueProvider<T extends DomElement> implements ModificationTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FileDescriptionCachedValueProvider");
+  private static final Key<CachedValue<Pair<String,String>>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private final XmlFile myXmlFile;
   private boolean myInModel;
   private boolean myComputing;
@@ -54,8 +54,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   private DomFileDescription<T> myFileDescription;
   private final DomManagerImpl myDomManager;
   private int myModCount;
-  private static final int LIMIT = 17239;
-  private static final int START = 1024;
 
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
@@ -134,17 +132,34 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   @Nullable
   private DomFileDescription<T> findFileDescription(Module module) {
     myCondition.module = module;
-    try {
-      final Pair<String,String> pair = DomImplUtil.getRootTagAndNamespace(getInputStream());
-      final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(pair.first), myCondition);
-      if (description != null) {
-        return description;
-      }
-      return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
+
+    final Pair<String,String> pair = getRootTagAndNamespace();
+    if (pair == null) return null;
+
+    final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(pair.first), myCondition);
+    if (description != null) {
+      return description;
     }
-    catch (IOException e) {
-      return null;
+    return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
+  }
+
+  @Nullable
+  private Pair<String, String> getRootTagAndNamespace() {
+    CachedValue<Pair<String, String>> value = myXmlFile.getUserData(ROOT_TAG_NS_KEY);
+    if (value == null) {
+      myXmlFile.putUserData(ROOT_TAG_NS_KEY, value = myXmlFile.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Pair<String, String>>() {
+        public Result<Pair<String, String>> compute() {
+          Pair<String, String> rootTagAndNs = null;
+          try {
+            rootTagAndNs = DomImplUtil.getRootTagAndNamespace(getInputStream());
+          }
+          catch (IOException e) {
+          }
+          return new Result<Pair<String, String>>(rootTagAndNs, myXmlFile);
+        }
+      }, false));
     }
+    return value.getValue();
   }
 
   @Nullable
@@ -157,6 +172,14 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       }
     }
     return null;
+  }
+
+  final boolean isInModel() {
+    return myInModel;
+  }
+
+  final void setInModel(final boolean inModel) {
+    myInModel = inModel;
   }
 
   private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents, DomFileElement changedRoot) {
@@ -246,4 +269,5 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       return Result.create(Boolean.TRUE, dependencies);
     }
   }
+
 }
