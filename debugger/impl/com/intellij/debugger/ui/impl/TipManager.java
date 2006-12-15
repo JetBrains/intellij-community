@@ -18,6 +18,8 @@ import java.awt.event.*;
  * To change this template use File | Settings | File Templates.
  */
 public class TipManager {
+  private volatile boolean myIsDisposed = false;
+  
   public static interface TipFactory {
     JComponent createToolTip (MouseEvent e);
   }
@@ -80,7 +82,9 @@ public class TipManager {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
       public void run() {
-        showTooltip(e);
+        if (!myIsDisposed) {
+          showTooltip(e);
+        }
       }
     }, DebuggerSettings.getInstance().VALUE_LOOKUP_DELAY);
   }
@@ -133,6 +137,8 @@ public class TipManager {
   }
 
   public void dispose() {
+    myIsDisposed = true;
+    myAlarm.cancelAllRequests();
     myMouseListener = null;
     myMouseMotionListener = null;
   }
