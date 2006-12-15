@@ -112,8 +112,7 @@ public class PsiSuperMethodImplUtil {
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
-      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), substitutor,
-                                                                                aClass);
+      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), substitutor);
       buildMethodHierarchy(superClass, finalSubstitutor, visited, signatures, result, false);
     }
 
@@ -121,9 +120,8 @@ public class PsiSuperMethodImplUtil {
   }
 
   private static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass,
-                                               PsiSubstitutor candidateSubstitutor,
-                                               PsiSubstitutor substitutor,
-                                               final PsiElement place) {
+                                                       PsiSubstitutor candidateSubstitutor,
+                                                       PsiSubstitutor substitutor) {
     final Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(candidateClass);
     if (!it.hasNext()) return PsiSubstitutor.EMPTY;
     final Map<PsiTypeParameter, PsiType> map = candidateSubstitutor.getSubstitutionMap();
