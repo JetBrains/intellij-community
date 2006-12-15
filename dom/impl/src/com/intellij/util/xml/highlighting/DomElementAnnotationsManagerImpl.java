@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ProjectComponent {
@@ -96,41 +97,68 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }, project);
   }
 
+  private boolean isCalculating(DomFileElement fileElement) {
+    synchronized (PsiLock.LOCK) {
+      return myCalculatingHolders.containsKey(fileElement);
+    }
+  }
+
   @NotNull
   public DomElementsProblemsHolder getProblemHolder(DomElement element) {
     if (element == null || !element.isValid()) return EMPTY_PROBLEMS_HOLDER;
     final DomFileElement<DomElement> fileElement = element.getRoot();
-    synchronized (PsiLock.LOCK) {
-      final DomElementsProblemsHolder readyHolder = myReadyHolders.get(fileElement);
-      if (isHighlightingFinished(fileElement)) {
-        return readyHolder;
-      }
-      if (myCalculatingHolders.containsKey(fileElement)) {
-        return readyHolder == null ? EMPTY_PROBLEMS_HOLDER : readyHolder;
-      }
-      myCalculatingHolders.put(fileElement, Boolean.TRUE);
-    }
-    try {
-      final DomElementsProblemsHolderImpl holder = new DomElementsProblemsHolderImpl(fileElement);
-      holder.calculateAllProblems();
+    if (!isCalculating(fileElement) || SwingUtilities.isEventDispatchThread()) {
       synchronized (PsiLock.LOCK) {
-        final Project project = fileElement.getManager().getProject();
-        final CachedValuesManager cachedValuesManager = PsiManager.getInstance(project).getCachedValuesManager();
-        myReadyHolders.put(fileElement, holder);
-        final CachedValue<Boolean> cachedValue = cachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
-          public Result<Boolean> compute() {
-            return new Result<Boolean>(Boolean.FALSE, fileElement, ProjectRootManager.getInstance(project), myModificationTracker);
+        final DomElementsProblemsHolder readyHolder = myReadyHolders.get(fileElement);
+        if (isHighlightingFinished(fileElement)) {
+          return readyHolder;
+        }
+        if (myCalculatingHolders.containsKey(fileElement)) {
+          return readyHolder == null ? EMPTY_PROBLEMS_HOLDER : readyHolder;
+        }
+        myCalculatingHolders.put(fileElement, new Boolean(true));
+      }
+      try {
+        final DomElementsProblemsHolderImpl holder = new DomElementsProblemsHolderImpl(fileElement);
+        holder.calculateAllProblems();
+        synchronized (PsiLock.LOCK) {
+          final Project project = fileElement.getManager().getProject();
+          final CachedValuesManager cachedValuesManager = PsiManager.getInstance(project).getCachedValuesManager();
+          myReadyHolders.put(fileElement, holder);
+          final CachedValue<Boolean> cachedValue = cachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
+            public Result<Boolean> compute() {
+              return new Result<Boolean>(Boolean.FALSE, fileElement, ProjectRootManager.getInstance(project), myModificationTracker);
+            }
+          }, false);
+          myCachedValues.put(fileElement, cachedValue);
+          cachedValue.getValue();
+        }
+        myDispatcher.getMulticaster().highlightingFinished(fileElement);
+        return holder;
+      } finally {
+        final Boolean aBoolean;
+        synchronized (PsiLock.LOCK) {
+          aBoolean = myCalculatingHolders.remove(fileElement);
+        }
+        synchronized (aBoolean) {
+          aBoolean.notifyAll();
+        }
+      }
+    } else {
+      final Boolean value;
+      synchronized (PsiLock.LOCK) {
+        value = myCalculatingHolders.get(fileElement);
+      }
+      if (value != null) {
+        synchronized (value) {
+          try {
+            value.wait();
           }
-        }, false);
-        myCachedValues.put(fileElement, cachedValue);
-        cachedValue.getValue();
+          catch (InterruptedException e) {
+          }
+        }
       }
-      myDispatcher.getMulticaster().highlightingFinished(fileElement);
-      return holder;
-    } finally {
-      synchronized (PsiLock.LOCK) {
-        myCalculatingHolders.remove(fileElement);
-      }
+      return getProblemHolder(fileElement);
     }
   }
 
