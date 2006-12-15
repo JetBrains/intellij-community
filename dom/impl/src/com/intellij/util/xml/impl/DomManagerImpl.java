@@ -215,11 +215,13 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
           }
           if (domElement != null) {
             final List<Annotation> list = (List<Annotation>)holder;
-            final DomElementsProblemsHolderImpl problemsHolder = (DomElementsProblemsHolderImpl)annotationsManager.getProblemHolder(domElement);
+            final DomElementsProblemsHolder problemsHolder = annotationsManager.getProblemHolder(domElement);
             for (final DomElementProblemDescriptor descriptor : problemsHolder.getAllProblems(MockAnnotatingDomInspection.INSTANCE)) {
               list.addAll(descriptor.getAnnotations());
             }
-            list.addAll(problemsHolder.getAnnotations());
+            if (problemsHolder instanceof DomElementsProblemsHolderImpl) {
+              list.addAll(((DomElementsProblemsHolderImpl)problemsHolder).getAnnotations());
+            }
           }
         }
       }
