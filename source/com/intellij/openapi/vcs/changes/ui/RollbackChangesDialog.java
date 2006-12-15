@@ -173,9 +173,11 @@ public class RollbackChangesDialog extends DialogWrapper {
     VirtualFileManager.getInstance().refresh(asynchronous, new Runnable() {
       public void run() {
         lvcsAction.finish();
-        FileStatusManager.getInstance(project).fileStatusesChanged();
-        for (FilePath path : pathsToRefresh) {
-          VcsDirtyScopeManager.getInstance(project).fileDirty(path);
+        if (!project.isDisposed()) {
+          FileStatusManager.getInstance(project).fileStatusesChanged();
+          for (FilePath path : pathsToRefresh) {
+            VcsDirtyScopeManager.getInstance(project).fileDirty(path);
+          }
         }
       }
     });
