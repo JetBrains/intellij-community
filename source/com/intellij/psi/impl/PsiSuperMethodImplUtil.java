@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,11 +124,19 @@ public class PsiSuperMethodImplUtil {
                                                PsiSubstitutor candidateSubstitutor,
                                                PsiSubstitutor substitutor,
                                                final PsiElement place) {
+    final Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(candidateClass);
+    if (!it.hasNext()) return PsiSubstitutor.EMPTY;
+    final Map<PsiTypeParameter, PsiType> map = candidateSubstitutor.getSubstitutionMap();
+    final Map<PsiTypeParameter, PsiType> m1 = new HashMap<PsiTypeParameter, PsiType>();
+    while(it.hasNext()) {
+      final PsiTypeParameter typeParameter = it.next();
+      if (map.containsKey(typeParameter)) { //optimization
+        final PsiType t = substitutor.substitute(candidateSubstitutor.substitute(typeParameter));
+        m1.put(typeParameter, t);
+      }
+    }
     PsiElementFactory elementFactory = candidateClass.getManager().getElementFactory();
-    final PsiType containingType = elementFactory.createType(candidateClass, candidateSubstitutor, PsiUtil.getLanguageLevel(place));
-    PsiType type = substitutor.substitute(containingType);
-    if (!(type instanceof PsiClassType)) return candidateSubstitutor;
-    return ((PsiClassType)type).resolveGenerics().getSubstitutor();
+    return elementFactory.createSubstitutor(m1);
   }
 
   public static Collection<HierarchicalMethodSignature> getVisibleSignatures(PsiClass aClass) {
