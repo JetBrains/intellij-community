@@ -14,11 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Nov 2, 2004
- * Time: 3:52:51 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   public HtmlTagImpl() {
@@ -32,7 +28,6 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     for (final XmlTag subTag : subTags) {
       if (namespace == null) {
         String tagName = subTag.getName();
-        if (tagName == null) continue;
         tagName = tagName.toLowerCase();
 
         if (name == null || name.equals(tagName)) {
