@@ -37,6 +37,7 @@ import java.util.Set;
 public abstract class ResolvingConverter<T> extends Converter<T> {
   @Deprecated
   public static final ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
+    @NotNull
     public Collection getVariants(final ConvertContext context) {
       return Collections.emptyList();
     }
@@ -155,8 +156,23 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     return new LocalQuickFix[0];
   }
 
+
   /**
-   * Adds {@link #getVariants(ConvertContext)} functionality to an existing converter 
+   * Adds {@link #getVariants(ConvertContext)} functionality to a simple String value.
+   */
+  public static abstract class StringConverter extends ResolvingConverter<String> {
+
+    public String fromString(final String s, final ConvertContext context) {
+      return s;
+    }
+
+    public String toString(final String s, final ConvertContext context) {
+      return s;
+    }
+  }
+
+  /**
+   * Adds {@link #getVariants(ConvertContext)} functionality to an existing converter. 
    */
   public static abstract class WrappedResolvingConverter<T> extends ResolvingConverter<T> {
 
