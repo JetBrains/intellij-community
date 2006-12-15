@@ -37,7 +37,12 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
 
   @NotNull
   public final DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message) {
-    return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType));
+    return createProblem(domElement, highlightType, message, LocalQuickFix.EMPTY_ARRAY);
+  }
+
+  public DomElementProblemDescriptor createProblem(final DomElement domElement, final HighlightSeverity highlightType, final String message,
+                                                   final LocalQuickFix[] fixes) {
+    return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType, fixes));
   }
 
   @NotNull

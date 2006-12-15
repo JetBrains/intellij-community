@@ -3,8 +3,9 @@
  */
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -22,6 +23,8 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
 
   @NotNull
   DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message);
+
+  DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message, LocalQuickFix[] fixes);
 
   @NotNull
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);
