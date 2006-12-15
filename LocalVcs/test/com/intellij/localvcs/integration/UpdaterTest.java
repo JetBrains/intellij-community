@@ -29,8 +29,7 @@ public class UpdaterTest extends TestCase {
   public void testAddingRoots() throws IOException {
     vcs = new LocalVcs(new TestStorage());
 
-    update(new TestVirtualFile("c:/root1", 1L),
-           new TestVirtualFile("c:/root2", 2L));
+    update(new TestVirtualFile("c:/root1", 1L), new TestVirtualFile("c:/root2", 2L));
 
     Entry e1 = vcs.findEntry("c:/root1");
     Entry e2 = vcs.findEntry("c:/root2");
@@ -93,10 +92,24 @@ public class UpdaterTest extends TestCase {
     TestVirtualFile f = new TestVirtualFile("file", "", null);
     root.addChild(f);
 
-    filter.setAllFilesAllowance(false);
+    filter.setFilesWithUnallowedTypes(f);
     update();
 
     assertFalse(vcs.hasEntry("root/file"));
+  }
+
+  @Test
+  public void testFilteringOnlyUnallowedFiles() {
+    TestVirtualFile f1 = new TestVirtualFile("file1", "", null);
+    TestVirtualFile f2 = new TestVirtualFile("file2", "", null);
+    root.addChild(f1);
+    root.addChild(f2);
+
+    filter.setFilesWithUnallowedTypes(f1);
+    update();
+
+    assertFalse(vcs.hasEntry("root/file1"));
+    assertTrue(vcs.hasEntry("root/file2"));
   }
 
   @Test

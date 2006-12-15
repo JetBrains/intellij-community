@@ -1,21 +1,19 @@
 package com.intellij.localvcs;
 
-import static com.intellij.localvcs.Difference.Kind.CREATED;
-import static com.intellij.localvcs.Difference.Kind.DELETED;
-import static com.intellij.localvcs.Difference.Kind.MODIFIED;
-import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
+import static com.intellij.localvcs.Difference.Kind.*;
 import org.junit.Test;
 
 public class FileEntryTest extends TestCase {
   @Test
   public void testCopying() {
-    FileEntry file = new FileEntry(33, "name", c("content"), null);
+    FileEntry file = new FileEntry(33, "name", c("content"), 123L);
 
     Entry copy = file.copy();
 
     assertEquals(33, copy.getId());
     assertEquals("name", copy.getName());
     assertEquals(c("content"), copy.getContent());
+    assertEquals(123L, copy.getTimestamp());
   }
 
   @Test
@@ -31,18 +29,9 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testRenaming() {
-    DirectoryEntry dir = new DirectoryEntry(null, "dir", null);
-    FileEntry file = new FileEntry(33, "name", c("content"), null);
-
-    dir.addChild(file);
-
-    Entry renamed = file.renamed("new name");
-
-    assertEquals(33, renamed.getId());
-    assertEquals("new name", renamed.getName());
-    assertEquals(c("content"), renamed.getContent());
-
-    assertNull(renamed.getParent());
+    Entry e = new FileEntry(null, "name", null, null);
+    e.changeName("new name");
+    assertEquals("new name", e.getName());
   }
 
   @Test

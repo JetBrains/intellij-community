@@ -4,14 +4,20 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.Path;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-public class LocalVcsService implements Disposable {
+public class LocalVcsService {
   // todo test exceptions...
   // todo use CacheUpdater to update roots
 
@@ -21,6 +27,7 @@ public class LocalVcsService implements Disposable {
   private VirtualFileManager myFileManager;
   private FileFilter myFileFilter;
   private VirtualFileAdapter myFileListener;
+  private LocalVcsService.CacheUpdaterAdaptor myCacheUpdater;
 
   public LocalVcsService(LocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManager fm, FileFilter ff) {
     myVcs = vcs;
@@ -32,14 +39,14 @@ public class LocalVcsService implements Disposable {
     registerStartupActivity();
   }
 
-  // todo get rid of disposable interface
-  public void dispose() {
+  public void shutdown() {
     myFileManager.removeVirtualFileListener(myFileListener);
+    myRootManager.unregisterChangeUpdater(myCacheUpdater);
   }
 
   private void registerStartupActivity() {
     FileSystemSynchronizer fs = myStartupManager.getFileSystemSynchronizer();
-    fs.registerCacheUpdater(new MyCacheUpdater() {
+    fs.registerCacheUpdater(new CacheUpdaterAdaptor() {
       public void updatingDone() {
         updateRoots();
         subscribeForRootChanges();
@@ -49,53 +56,75 @@ public class LocalVcsService implements Disposable {
   }
 
   private void subscribeForRootChanges() {
-    myRootManager.registerChangeUpdater(new MyCacheUpdater() {
+    myCacheUpdater = new CacheUpdaterAdaptor() {
       public void updatingDone() {
         updateRoots();
       }
-    });
+    };
+    myRootManager.registerChangeUpdater(myCacheUpdater);
   }
 
   private void subscribeForFileChanges() {
     myFileListener = new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent e) {
-        if (notForMe(e)) return;
-        createFile(e.getFile());
+        if (notInteresting(e)) return;
+        create(e.getFile());
       }
 
       @Override
       public void contentsChanged(VirtualFileEvent e) {
-        if (notForMe(e)) return;
+        if (notInteresting(e)) return;
         changeFileContent(e.getFile());
       }
 
       @Override
       public void beforePropertyChange(VirtualFilePropertyEvent e) {
-        if (notForMe(e)) return;
+        if (notInteresting(e)) return;
         if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
         rename(e.getFile(), (String)e.getNewValue());
       }
 
       @Override
-      public void beforeFileMovement(VirtualFileMoveEvent e) {
-        if (notForMe(e)) return;
-        move(e.getFile(), e.getNewParent());
+      public void fileMoved(VirtualFileMoveEvent e) {
+        // todo a bit messy code
+        if (isMovedFromOutside(e) && isMovedToOutside(e)) return;
+
+        if (isMovedFromOutside(e)) {
+          if (notInteresting(e)) return;
+          create(e.getFile());
+        }
+        else {
+          VirtualFile f = new VirtualFileWithParent(e.getOldParent(), e.getFile());
+          if (isMovedToOutside(e)) {
+            delete(f);
+          }
+          else {
+            move(f, e.getNewParent());
+          }
+        }
       }
 
       @Override
       public void beforeFileDeletion(VirtualFileEvent e) {
-        if (notForMe(e)) return;
+        if (notInteresting(e)) return;
         delete(e.getFile());
       }
 
-      private boolean notForMe(VirtualFileEvent e) {
+      private boolean notInteresting(VirtualFileEvent e) {
         return !myFileFilter.isFileAllowed(e.getFile());
+      }
+
+      private boolean isMovedFromOutside(VirtualFileMoveEvent e) {
+        return !myFileFilter.isUnderContentRoots(e.getOldParent());
+      }
+
+      private boolean isMovedToOutside(final VirtualFileMoveEvent e) {
+        return !myFileFilter.isUnderContentRoots(e.getNewParent());
       }
     };
     myFileManager.addVirtualFileListener(myFileListener);
   }
-
 
   private void updateRoots() {
     try {
@@ -106,13 +135,13 @@ public class LocalVcsService implements Disposable {
     }
   }
 
-  private void createFile(VirtualFile f) {
+  private void create(VirtualFile f) {
     try {
       // todo apply all changes at once
       if (f.isDirectory()) {
         myVcs.createDirectory(f.getPath(), f.getTimeStamp());
         for (VirtualFile ch : f.getChildren()) {
-          createFile(ch);
+          create(ch);
         }
       }
       else {
@@ -140,8 +169,8 @@ public class LocalVcsService implements Disposable {
     myVcs.apply();
   }
 
-  private void move(VirtualFile f, VirtualFile newParent) {
-    myVcs.move(f.getPath(), newParent.getPath());
+  private void move(VirtualFile file, VirtualFile newParent) {
+    myVcs.move(file.getPath(), newParent.getPath());
     myVcs.apply();
   }
 
@@ -150,7 +179,7 @@ public class LocalVcsService implements Disposable {
     myVcs.apply();
   }
 
-  private abstract class MyCacheUpdater implements CacheUpdater {
+  private abstract class CacheUpdaterAdaptor implements CacheUpdater {
     public VirtualFile[] queryNeededFiles() {
       return new VirtualFile[0];
     }
@@ -159,6 +188,76 @@ public class LocalVcsService implements Disposable {
     }
 
     public void canceled() {
+    }
+  }
+
+  private class VirtualFileWithParent extends VirtualFile {
+    private VirtualFile myParent;
+    private VirtualFile myChild;
+
+    public VirtualFileWithParent(VirtualFile parent, VirtualFile child) {
+      myChild = child;
+      myParent = parent;
+    }
+
+    public String getPath() {
+      return Path.appended(myParent.getPath(), myChild.getName());
+    }
+
+    @NotNull
+    @NonNls
+    public String getName() {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    public VirtualFileSystem getFileSystem() {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean isWritable() {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean isDirectory() {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean isValid() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Nullable
+    public VirtualFile getParent() {
+      throw new UnsupportedOperationException();
+    }
+
+    public VirtualFile[] getChildren() {
+      throw new UnsupportedOperationException();
+    }
+
+    public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    public byte[] contentsToByteArray() throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    public long getTimeStamp() {
+      throw new UnsupportedOperationException();
+    }
+
+    public long getLength() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
+      throw new UnsupportedOperationException();
+    }
+
+    public InputStream getInputStream() throws IOException {
+      throw new UnsupportedOperationException();
     }
   }
 }

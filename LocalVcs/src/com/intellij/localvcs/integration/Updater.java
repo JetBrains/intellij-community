@@ -96,7 +96,7 @@ public class Updater {
 
   private void createNewFiles(VirtualFile dir) throws IOException {
     for (VirtualFile f : dir.getChildren()) {
-      if (!myFilter.isFileAllowed(f)) return;
+      if (!myFilter.isFileAllowed(f)) continue;
 
       Entry e = myVcs.findEntry(f.getPath());
       if (!areOfTheSameKind(e, f)) {

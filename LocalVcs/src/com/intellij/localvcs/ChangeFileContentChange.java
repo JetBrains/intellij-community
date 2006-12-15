@@ -65,8 +65,8 @@ public class ChangeFileContentChange extends Change {
   }
 
   @Override
-  public Entry revertFile(Entry e) {
-    if (!isFor(e)) return e;
-    return e.withContent(myOldContent, myOldTimestamp); 
+  public void revertFile(Entry e) {
+    if (!isFor(e)) return;
+    e.changeContent(myOldContent, myOldTimestamp);
   }
 }

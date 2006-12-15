@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CreateFileChange extends Change {
-  // todo test storing of all the changes and test it once and for all times 8))
   private Integer myId;
   private Content myContent;
   private Long myTimestamp;

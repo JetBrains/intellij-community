@@ -36,14 +36,17 @@ public abstract class Change {
 
   public abstract void _revertOn(RootEntry root);
 
-  public Entry revertFile(Entry e) {
-    return e;
-  }
+  public void revertFile(Entry e) { }
 
-  public Entry revertOn(Entry e) {
+  public void revertOn(Entry e) {
     // todo replace with polymorphims
-    if (e instanceof FileEntry) return revertFile(e);
-    throw new RuntimeException("under construction");
+    // todo clean up revertion stuffs
+    if (e instanceof FileEntry) {
+      revertFile(e);
+    }
+    else {
+      throw new RuntimeException("under construction");
+    }
   }
 
   public boolean affects(Entry e) {

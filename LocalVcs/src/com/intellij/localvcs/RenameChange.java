@@ -1,8 +1,6 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 public class RenameChange extends Change {
   private String myNewName;
@@ -42,8 +40,8 @@ public class RenameChange extends Change {
   }
 
   @Override
-  public Entry revertFile(Entry e) {
-    if (!isFor(e)) return e;
-    return e.renamed(myPath);
+  public void revertFile(Entry e) {
+    if (!isFor(e)) return;
+    e.changeName(myPath);
   }
 }

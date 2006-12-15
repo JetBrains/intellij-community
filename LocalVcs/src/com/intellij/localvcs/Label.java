@@ -18,8 +18,11 @@ public class Label {
   }
 
   public Entry getEntry() {
+    // todo cleanup this mess
     if (myEntry instanceof FileEntry) {
-      return myChangeList.revertEntryUpToChangeSet(myEntry, myChangeSet);
+      Entry e = myEntry.copy();
+      myChangeList.revertEntryUpToChangeSet(e, myChangeSet);
+      return e;
     }
     RootEntry copy = myRoot.copy();
     myChangeList._revertUpToChangeSetOn(copy, myChangeSet);

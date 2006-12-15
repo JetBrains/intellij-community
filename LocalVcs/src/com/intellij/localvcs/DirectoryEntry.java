@@ -31,7 +31,6 @@ public class DirectoryEntry extends Entry {
   }
 
   protected IdPath getIdPathAppendedWith(Integer id) {
-    // todo test it
     return getIdPath().appendedWith(id);
   }
 
@@ -46,7 +45,6 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public void addChild(Entry child) {
-    // todo move this check to RootEntry class and clean up tests
     assert doesNotExist(child);
 
     myChildren.add(child);
@@ -54,7 +52,6 @@ public class DirectoryEntry extends Entry {
   }
 
   private boolean doesNotExist(Entry child) {
-    // todo replace with existing find/hasEntry methods
     for (Entry e : myChildren) {
       if (e.getName().equals(child.getName())) return false;
     }
@@ -83,7 +80,7 @@ public class DirectoryEntry extends Entry {
   }
 
   protected DirectoryEntry copyEntry() {
-    return new DirectoryEntry(myId, myName, myTimestamp); // todo test it!
+    return new DirectoryEntry(myId, myName, myTimestamp);
   }
 
   @Override
@@ -102,7 +99,7 @@ public class DirectoryEntry extends Entry {
 
   private void addCreatedChildrenDifferences(DirectoryEntry e, Difference d) {
     for (Entry child : e.myChildren) {
-      if (findChild(child.getId()) == null) {
+      if (findDirectChild(child.getId()) == null) {
         d.addChild(child.asCreatedDifference());
       }
     }
@@ -110,7 +107,7 @@ public class DirectoryEntry extends Entry {
 
   private void addDeletedChildrenDifferences(DirectoryEntry e, Difference d) {
     for (Entry child : myChildren) {
-      if (e.findChild(child.getId()) == null) {
+      if (e.findDirectChild(child.getId()) == null) {
         d.addChild(child.asDeletedDifference());
       }
     }
@@ -118,12 +115,19 @@ public class DirectoryEntry extends Entry {
 
   private void addModifiedChildrenDifference(DirectoryEntry e, Difference d) {
     for (Entry myChild : myChildren) {
-      Entry itsChild = e.findChild(myChild.getId());
+      Entry itsChild = e.findDirectChild(myChild.getId());
       if (itsChild != null) {
         Difference childDiff = myChild.getDifferenceWith(itsChild);
         if (childDiff.hasDifference()) d.addChild(childDiff);
       }
     }
+  }
+
+  protected Entry findDirectChild(Integer id) {
+    for (Entry child : getChildren()) {
+      if (child.getId().equals(id)) return child;
+    }
+    return null;
   }
 
   @Override

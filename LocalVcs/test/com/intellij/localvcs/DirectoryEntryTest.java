@@ -48,17 +48,17 @@ public class DirectoryEntryTest extends TestCase {
 
   @Test
   public void testChildById() {
-    Entry dir = new DirectoryEntry(null, null, null);
+    DirectoryEntry dir = new DirectoryEntry(null, null, null);
     Entry file1 = new FileEntry(1, "file1", null, null);
     Entry file2 = new FileEntry(2, "file2", null, null);
 
     dir.addChild(file1);
     dir.addChild(file2);
 
-    assertSame(file1, dir.findChild(1));
-    assertSame(file2, dir.findChild(2));
+    assertSame(file1, dir.findDirectChild(1));
+    assertSame(file2, dir.findDirectChild(2));
 
-    assertNull(dir.findChild(99));
+    assertNull(dir.findDirectChild(99));
   }
 
   @Test
@@ -89,11 +89,12 @@ public class DirectoryEntryTest extends TestCase {
 
   @Test
   public void testCopyingWithContent() {
-    Entry dir = new DirectoryEntry(42, "name", null);
+    Entry dir = new DirectoryEntry(42, "name", 123L);
     Entry copy = dir.copy();
 
     assertEquals(42, copy.getId());
     assertEquals("name", copy.getPath());
+    assertEquals(123L, copy.getTimestamp());
   }
 
   @Test
@@ -156,25 +157,9 @@ public class DirectoryEntryTest extends TestCase {
 
   @Test
   public void testRenaming() {
-    DirectoryEntry root = new DirectoryEntry(null, "root", null);
-    DirectoryEntry dir = new DirectoryEntry(33, "dir", null);
-    FileEntry child = new FileEntry(44, "child", null, null);
-
-    root.addChild(root);
-    dir.addChild(child);
-
-    Entry renamed = dir.renamed("new dir");
-
-    assertNull(renamed.getParent());
-    assertEquals("new dir", renamed.getPath());
-
-    List<Entry> newChildren = renamed.getChildren();
-    assertEquals(1, renamed.getChildren().size());
-
-    assertEquals(44, newChildren.get(0).getId());
-
-    assertSame(dir, child.getParent());
-    assertSame(renamed, newChildren.get(0).getParent());
+    Entry e = new DirectoryEntry(null, "name", null);
+    e.changeName("new name");
+    assertEquals("new name", e.getName());
   }
 
   @Test

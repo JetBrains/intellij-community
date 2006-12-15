@@ -100,7 +100,7 @@ public class LocalVcsServiceTest extends TestCase {
     root.addChild(new TestVirtualFile("file", "", null));
     roots.add(root);
 
-    fileFilter.setAllFilesAllowance(false);
+    fileFilter.setAllAreUnallowed(false);
     rootManager.updateRoots();
 
     assertTrue(vcs.hasEntry("c:/root"));
@@ -208,9 +208,11 @@ public class LocalVcsServiceTest extends TestCase {
     vcs.createFile("dir1/file", b("content"), null);
     vcs.apply();
 
-    VirtualFile f = new TestVirtualFile("dir1/file", null, null);
-    VirtualFile newParent = new TestVirtualFile("dir2", null);
-    fileManager.fireBeforeFileMovement(new VirtualFileMoveEvent(null, f, null, newParent));
+    TestVirtualFile oldParent = new TestVirtualFile("dir1", null);
+    TestVirtualFile newParent = new TestVirtualFile("dir2", null);
+    TestVirtualFile f = new TestVirtualFile("file", null, null);
+    newParent.addChild(f);
+    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
 
     assertFalse(vcs.hasEntry("dir1/file"));
 
@@ -221,26 +223,105 @@ public class LocalVcsServiceTest extends TestCase {
   }
 
   @Test
+  public void testMovingFromOutsideOfTheContentRoots() {
+    vcs.createDirectory("myRoot", null);
+    vcs.apply();
+
+    TestVirtualFile f = new TestVirtualFile("file", "content", null);
+    TestVirtualFile oldParent = new TestVirtualFile("anotherRoot", null);
+    TestVirtualFile newParent = new TestVirtualFile("myRoot", null);
+
+    newParent.addChild(f);
+    fileFilter.setFilesNotUnderContentRoot(oldParent);
+
+    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+
+    Entry e = vcs.findEntry("myRoot/file");
+    assertNotNull(e);
+    assertEquals(c("content"), e.getContent());
+  }
+
+  @Test
+  public void testMovingFromOutsideOfTheContentRootsWithUnallowedType() {
+    vcs.createDirectory("myRoot", null);
+    vcs.apply();
+
+    TestVirtualFile f = new TestVirtualFile("file", "content", null);
+    TestVirtualFile oldParent = new TestVirtualFile("anotherRoot", null);
+    TestVirtualFile newParent = new TestVirtualFile("myRoot", null);
+
+    newParent.addChild(f);
+    fileFilter.setFilesNotUnderContentRoot(oldParent);
+    fileFilter.setFilesWithUnallowedTypes(f);
+
+    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+
+    assertFalse(vcs.hasEntry("myRoot/file"));
+  }
+
+  @Test
+  public void testMovingToOutsideOfTheContentRoots() {
+    vcs.createDirectory("myRoot", null);
+    vcs.createFile("myRoot/file", null, null);
+    vcs.apply();
+
+    TestVirtualFile f = new TestVirtualFile("file", "content", null);
+    TestVirtualFile oldParent = new TestVirtualFile("myRoot", null);
+    TestVirtualFile newParent = new TestVirtualFile("anotherRoot", null);
+
+    newParent.addChild(f);
+    fileFilter.setFilesNotUnderContentRoot(newParent);
+
+    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+
+    assertFalse(vcs.hasEntry("myRoot/file"));
+    assertFalse(vcs.hasEntry("anotherRoot/file"));
+  }
+
+  @Test
+  public void testMovingAroundOutsideContentRoots() {
+    TestVirtualFile f = new TestVirtualFile("file", "content", null);
+    TestVirtualFile oldParent = new TestVirtualFile("root1", null);
+    TestVirtualFile newParent = new TestVirtualFile("root2", null);
+
+    newParent.addChild(f);
+    fileFilter.setFilesNotUnderContentRoot(oldParent, newParent);
+
+    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+
+    assertFalse(vcs.hasEntry("root1/file"));
+    assertFalse(vcs.hasEntry("root2/file"));
+  }
+
+  @Test
   public void testFilteringFiles() {
     MyLocalVcs mockVcs = new MyLocalVcs();
     initAndStartup(mockVcs);
-    fileFilter.setAllFilesAllowance(false);
+    fileFilter.setAllAreUnallowed(false);
 
     VirtualFile f = new TestVirtualFile(null, null, null);
     fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
     fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
     fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, null, null, null));
-    fileManager.fireBeforeFileMovement(new VirtualFileMoveEvent(null, f, null, null));
+    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, f, f));
     fileManager.fireBeforeFileDeletion(new VirtualFileEvent(null, f, null, null));
 
     assertFalse(mockVcs.isAnyMethodCalled());
   }
 
   @Test
-  public void testUnsubscribingFromFileManagerOnDisposal() {
-    assertTrue(fileManager.hasListener());
-    service.dispose();
-    assertFalse(fileManager.hasListener());
+  public void testUnsubscribingFromFileManagerAndRootChangesOnDisposal() {
+    service.shutdown();
+
+    roots.add(new TestVirtualFile("root", null));
+    rootManager.updateRoots();
+
+    assertFalse(vcs.hasEntry("root"));
+
+    VirtualFile f = new TestVirtualFile("file", "content", 123L);
+    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
+
+    assertFalse(vcs.hasEntry("file"));
   }
 
   private class MyStartupManager extends StubStartupManagerEx {
@@ -293,6 +374,12 @@ public class LocalVcsServiceTest extends TestCase {
       myUpdater = u;
     }
 
+
+    @Override
+    public void unregisterChangeUpdater(CacheUpdater u) {
+      if (myUpdater == u) myUpdater = null;
+    }
+
     public void updateRoots() {
       if (myUpdater != null) myUpdater.updatingDone();
     }
@@ -307,10 +394,6 @@ public class LocalVcsServiceTest extends TestCase {
 
     public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
       if (listener == myListener) myListener = null;
-    }
-
-    public boolean hasListener() {
-      return myListener != null;
     }
 
     public void fireFileCreated(VirtualFileEvent e) {
@@ -329,8 +412,8 @@ public class LocalVcsServiceTest extends TestCase {
       if (myListener != null) myListener.beforePropertyChange(e);
     }
 
-    public void fireBeforeFileMovement(VirtualFileMoveEvent e) {
-      if (myListener != null) myListener.beforeFileMovement(e);
+    public void fireFileMoved(VirtualFileMoveEvent e) {
+      if (myListener != null) myListener.fileMoved(e);
     }
   }
 

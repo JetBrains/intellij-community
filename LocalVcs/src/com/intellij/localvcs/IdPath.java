@@ -5,7 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-// todo do something with this class - i dont like it 
+// todo do something with this class - i dont like it
+// todo it also has very poor performance
 public class IdPath {
   private List<Integer> myParts;
 

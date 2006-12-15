@@ -5,7 +5,6 @@ import static com.intellij.localvcs.Difference.Kind.*;
 import java.io.IOException;
 
 public class FileEntry extends Entry {
-  // todo change String to ByteArray or something else
   private Content myContent;
 
   public FileEntry(Integer id, String name, Content content, Long timestamp) {
@@ -31,17 +30,17 @@ public class FileEntry extends Entry {
 
   @Override
   public FileEntry copy() {
-    return new FileEntry(myId, myName, myContent, null); // todo BUG in timestamp copying!!!
+    return new FileEntry(myId, myName, myContent, myTimestamp);
   }
 
   @Override
-  public Entry withContent(Content newContent, Long timestamp) {
-    return new FileEntry(myId, myName, newContent, timestamp);
+  public void changeContent(Content newContent, Long newTimestamp) {
+    myContent = newContent;
+    myTimestamp = newTimestamp;
   }
 
   @Override
   public Difference getDifferenceWith(Entry e) {
-    // todo calculate difference by timestamp;
     boolean modified = !myName.equals(e.getName()) || !myContent.equals(e.getContent());
     return new Difference(true, modified ? MODIFIED : NOT_MODIFIED, this, e);
   }

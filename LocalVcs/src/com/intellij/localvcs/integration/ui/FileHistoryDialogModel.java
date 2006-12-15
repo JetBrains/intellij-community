@@ -56,7 +56,11 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     public Entry getEntry() {
       // todo what about timestamp?
       // todo review content stuff
-      return getVcsEntry().withContent(getCurrentContent(), null);
+      
+      // todo test copying
+      Entry e = getVcsEntry().copy();
+      e.changeContent(getCurrentContent(), null);
+      return e;
     }
   }
 }

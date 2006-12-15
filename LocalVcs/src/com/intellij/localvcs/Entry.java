@@ -5,8 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class Entry {
-  // todo maybe make them private
-  // todo make it basic type
+  // todo make them basic type (quite possible)
   protected Integer myId;
   protected String myName;
   protected Long myTimestamp;
@@ -44,7 +43,6 @@ public abstract class Entry {
   }
 
   public String getPath() {
-    //todo try to remove this check
     if (myParent == null) return myName;
     return myParent.getPathAppendedWith(myName);
   }
@@ -85,18 +83,50 @@ public abstract class Entry {
     return Collections.emptyList();
   }
 
-  protected Entry findChild(Integer id) {
-    for (Entry child : getChildren()) {
-      if (child.getId().equals(id)) return child;
+  public boolean hasEntry(String path) {
+    return findEntry(path) != null;
+  }
+
+  public Entry getEntry(String path) {
+    Entry result = findEntry(path);
+    assert result != null;
+    return result;
+  }
+
+  public Entry findEntry(String path) {
+    String name = getName();
+    if (!path.startsWith(name)) return null;
+
+    path = path.substring(name.length());
+    if (path.length() == 0) return this;
+
+    if (path.charAt(0) != Path.DELIM) return null;
+    path = path.substring(1);
+
+    return searchInChildren(path);
+  }
+
+  protected Entry searchInChildren(String path) {
+    for (Entry e : getChildren()) {
+      Entry result = e.findEntry(path);
+      if (result != null) return result;
     }
     return null;
   }
 
-  protected Entry findEntry(Matcher m) {
-    if (m.matches(this)) return this;
+  public Entry getEntry(Integer id) {
+    // todo it's very slow
+    // todo get rid of this method
+    Entry result = findEntry(id);
+    assert result != null;
+    return result;
+  }
+
+  private Entry findEntry(Integer id) {
+    if (id.equals(myId)) return this;
 
     for (Entry child : getChildren()) {
-      Entry result = child.findEntry(m);
+      Entry result = child.findEntry(id);
       if (result != null) return result;
     }
 
@@ -106,13 +136,11 @@ public abstract class Entry {
   // todo try to get rid of entries copying
   public abstract Entry copy();
 
-  public Entry renamed(String newName) {
-    Entry result = copy();
-    result.myName = newName;
-    return result;
+  public void changeName(String newName) {
+    myName = newName;
   }
 
-  public Entry withContent(Content newContent, Long timestamp) {
+  public void changeContent(Content newContent, Long timestamp) {
     throw new UnsupportedOperationException();
   }
 
@@ -122,7 +150,8 @@ public abstract class Entry {
 
   protected abstract Difference asDeletedDifference();
 
-  protected interface Matcher {
-    boolean matches(Entry entry);
+  @Override
+  public String toString() {
+    return myName;
   }
 }

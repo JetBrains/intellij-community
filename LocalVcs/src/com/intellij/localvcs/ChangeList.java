@@ -52,13 +52,12 @@ public class ChangeList {
     }
   }
 
-  public Entry revertEntryUpToChangeSet(Entry e, ChangeSet cs) {
+  public void revertEntryUpToChangeSet(Entry e, ChangeSet cs) {
     for (int i = myChangeSets.size() - 1; i >= 0; i--) {
       ChangeSet changeSet = myChangeSets.get(i);
-      if (changeSet == cs) return e;
-      e = changeSet.revertOn(e);
+      if (changeSet == cs) return;
+      changeSet.revertOn(e);
     }
-    return e;
   }
 
   public void labelLastChangeSet(String label) {

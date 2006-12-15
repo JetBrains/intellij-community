@@ -14,9 +14,15 @@ public class FileFilter {
   }
 
   public boolean isFileAllowed(VirtualFile f) {
-    if (!myFileIndex.isInContent(f)) return false;
-    if (f.isDirectory()) return true;
+    return isUnderContentRoots(f) && isFileTypeAllowed(f);
+  }
 
+  public boolean isUnderContentRoots(VirtualFile f) {
+    return myFileIndex.isInContent(f);
+  }
+
+  public boolean isFileTypeAllowed(VirtualFile f) {
+    if (f.isDirectory()) return true;
     return !myTypeManager.getFileTypeByFile(f).isBinary();
   }
 }

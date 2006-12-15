@@ -6,6 +6,8 @@ import java.util.List;
 // todo try to crean up Entry hierarchy
 // todo replace all String.length() == 0 with String.isEmpty()
 // todo maybe get rid of create/delete/remove methods
+
+// TODO make entries to be modifiable objects
 public class RootEntry extends DirectoryEntry {
   // todo try to remove different null-checks
   public RootEntry() {
@@ -16,10 +18,8 @@ public class RootEntry extends DirectoryEntry {
     super(s);
   }
 
-  // todo it seems that we can get rid of these two methods
   protected IdPath getIdPathAppendedWith(Integer id) {
-    // todo test it
-    return new IdPath(id);// todo verify this method.
+    return new IdPath(id);
   }
 
   protected String getPathAppendedWith(String name) {
@@ -30,62 +30,9 @@ public class RootEntry extends DirectoryEntry {
     return getChildren();
   }
 
-  public boolean hasEntry(String path) {
-    return findEntry(path) != null;
-  }
-
-  private boolean hasEntry(Integer id) {
-    return findEntry(id) != null;
-  }
-
-  protected Entry findEntry(String path) {
-    return findRecursively(this, path);
-  }
-
-  private Entry findRecursively(Entry from, String path) {
-    if (from == this) return searchInChildren(from, path);
-
-    String name = from.getName();
-    if (!path.startsWith(name)) return null;
-
-    path = path.substring(name.length());
-    if (path.length() == 0) return from;
-
-    if (path.charAt(0) != Path.DELIM) return null;
-    path = path.substring(1);
-
-    return searchInChildren(from, path);
-  }
-
-  private Entry searchInChildren(Entry parent, String path) {
-    for (Entry e : parent.getChildren()) {
-      Entry result = findRecursively(e, path);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  private Entry findEntry(Integer id) {
-    // todo get rid of this method
-    return findEntry(new IdMatcher(id));
-  }
-
-  public Entry getEntry(String path) {
-    Entry result = findEntry(path);
-    assert result != null;
-    return result;
-  }
-
-  public Entry getEntry(Integer id) {
-    // todo it's very slow 
-    return getEntry(new IdMatcher(id));
-  }
-
-  private Entry getEntry(Matcher m) {
-    // todo get rid of this method
-    Entry result = findEntry(m);
-    assert result != null;
-    return result;
+  @Override
+  public Entry findEntry(String path) {
+    return searchInChildren(path);
   }
 
   public void createFile(Integer id, String path, Content content, Long timestamp) {
@@ -108,22 +55,14 @@ public class RootEntry extends DirectoryEntry {
     addEntry(parentPath, e);
   }
 
-  // todo make entries to be modifiable objects
-
-  public void changeFileContent(String path, Content newContent, Long timestamp) {
-    Entry oldEntry = getEntry(path);
-    Entry newEntry = oldEntry.withContent(newContent, timestamp);
-
-    removeEntry(oldEntry);
-    addEntry(Path.getParentOf(path), newEntry);
+  public void changeFileContent(String path, Content newContent, Long newTimestamp) {
+    Entry e = getEntry(path);
+    e.changeContent(newContent, newTimestamp);
   }
 
   public void rename(String path, String newName) {
-    Entry oldEntry = getEntry(path);
-    Entry newEntry = oldEntry.renamed(newName);
-
-    removeEntry(oldEntry);
-    addEntry(Path.getParentOf(path), newEntry);
+    Entry e = getEntry(path);
+    e.changeName(newName);
   }
 
   public void move(String path, String newParentPath) {
@@ -137,9 +76,6 @@ public class RootEntry extends DirectoryEntry {
   }
 
   private void addEntry(String parentPath, Entry entry) {
-    // todo this check is just for testing...
-    //assert entry.getId() == null || !hasEntry(entry.getId());
-
     // todo try to remove this conditional logic
     Entry parent = parentPath == null ? this : getEntry(parentPath);
     parent.addChild(entry);
@@ -158,19 +94,6 @@ public class RootEntry extends DirectoryEntry {
 
   @Override
   protected DirectoryEntry copyEntry() {
-    return new RootEntry(); //  todo test copying!!!
-  }
-
-  // todo refactor this class out
-  private static class IdMatcher implements Matcher {
-    private Integer myId;
-
-    public IdMatcher(Integer id) {
-      myId = id;
-    }
-
-    public boolean matches(Entry e) {
-      return myId.equals(e.myId);
-    }
+    return new RootEntry();
   }
 }

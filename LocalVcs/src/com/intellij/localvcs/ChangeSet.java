@@ -39,7 +39,7 @@ public class ChangeSet {
   }
 
   public List<Change> getChanges() {
-    // todo bad method
+    // todo this method is used only in tests 
     return myChanges;
   }
 
@@ -63,11 +63,10 @@ public class ChangeSet {
     }
   }
 
-  public Entry revertOn(Entry entry) {
+  public void revertOn(Entry e) {
     for (int i = myChanges.size() - 1; i >= 0; i--) {
       Change change = myChanges.get(i);
-      entry = change.revertOn(entry);
+      change.revertOn(e);
     }
-    return entry;
   }
 }
