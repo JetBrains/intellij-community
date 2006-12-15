@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 
@@ -37,12 +38,19 @@ public class UserExpressionDescriptorImpl extends EvaluationDescriptor implement
   }
 
   public String calcValueName() {
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(getName());
-    buffer.append(": ");
-    if(getValue() != null) buffer.append(getValue().type().name());
+    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      buffer.append(getName());
+      buffer.append(": ");
+      if(getValue() != null) {
+        buffer.append(getValue().type().name());
+      }
 
-    return buffer.toString();
+      return buffer.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 
   protected PsiCodeFragment getEvaluationCode(final StackFrameContext context) throws EvaluateException {

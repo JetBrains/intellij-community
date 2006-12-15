@@ -1,20 +1,23 @@
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.PrimitiveType;
 import com.sun.jdi.Value;
@@ -116,10 +119,19 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   }
 
   public String calcValueName() {
-    if (myIsVisible) {
-      return getName() + ": " + myTypeName;
+    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      buf.append(getName());
+      if (classRenderer.SHOW_DECLARED_TYPE) {
+        buf.append(": ");
+        buf.append(myTypeName);
+      }
+      return buf.toString();
     }
-    return getName() + ": " + myTypeName;
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {

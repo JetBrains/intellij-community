@@ -13,7 +13,7 @@ import com.sun.jdi.Value;
 public interface ValueDescriptor extends NodeDescriptor{
   PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
-  public Value getValue();
+  Value getValue();
 
   String setValueLabel(String customLabel);
 

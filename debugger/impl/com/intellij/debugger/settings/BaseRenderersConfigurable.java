@@ -1,13 +1,13 @@
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.classFilter.ClassFilterEditor;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -25,6 +25,9 @@ public class BaseRenderersConfigurable implements Configurable {
   private JCheckBox myCbSort;
   private JCheckBox myCbHideNullArrayElements;
   private JCheckBox myCbShowStatic;
+  private JCheckBox myCbShowDeclaredType;
+  private JCheckBox myCbShowObjectId;
+
   private StateRestoringCheckBox myCbShowStaticFinalFields;
   private ArrayRendererConfigurable myArrayRendererConfigurable;
   private JCheckBox myCbEnableAlternateViews;
@@ -68,6 +71,9 @@ public class BaseRenderersConfigurable implements Configurable {
         }
       }
     });
+    myCbShowDeclaredType = new JCheckBox("Show declared type");
+    myCbShowObjectId = new JCheckBox("Show object id");
+
     myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.tostring"));
     myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overridding"));
     myRbFromList = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.classes.from.list"));
@@ -97,14 +103,17 @@ public class BaseRenderersConfigurable implements Configurable {
     panel.add(myCbShowStaticFinalFields, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 12, 0, 10), 0, 0));
     panel.add(myCbShowSyntheticFields, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 2, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 10), 0, 0));
 
-    panel.add(myArrayRendererConfigurable.createComponent(), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 2, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(2, 8, 0, 0), 0, 0));
-    panel.add(myCbHideNullArrayElements, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
+    panel.add(myCbShowDeclaredType, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 10), 0, 0));
+    panel.add(myCbShowObjectId, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 10), 0, 0));
+
+    panel.add(myArrayRendererConfigurable.createComponent(), new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 2, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(2, 8, 0, 0), 0, 0));
+    panel.add(myCbHideNullArrayElements, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 6, 0, 0), 0, 0));
 
     // starting 4-th row
-    panel.add(myCbEnableToString, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(10, 4, 0, 0), 0, 0));
-    panel.add(myRbAllThatOverride, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 8, 0, 0), 0, 0));
-    panel.add(myRbFromList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 8, 0, 0), 0, 0));
-    panel.add(myToStringFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 16, 0, 0), 0, 0));
+    panel.add(myCbEnableToString, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(10, 4, 0, 0), 0, 0));
+    panel.add(myRbAllThatOverride, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 8, 0, 0), 0, 0));
+    panel.add(myRbFromList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 8, 0, 0), 0, 0));
+    panel.add(myToStringFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 4, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 16, 0, 0), 0, 0));
 
     return panel;
   }
@@ -126,6 +135,8 @@ public class BaseRenderersConfigurable implements Configurable {
     classRenderer.SHOW_STATIC = myCbShowStatic.isSelected();
     classRenderer.SHOW_STATIC_FINAL = myCbShowStaticFinalFields.isSelectedWhenSelectable();
     classRenderer.SHOW_SYNTHETICS = myCbShowSyntheticFields.isSelected();
+    classRenderer.SHOW_DECLARED_TYPE = myCbShowDeclaredType.isSelected();
+    classRenderer.SHOW_OBJECT_ID = myCbShowObjectId.isSelected();
 
     final ToStringRenderer toStringRenderer = rendererSettings.getToStringRenderer();
     toStringRenderer.setEnabled(myCbEnableToString.isSelected());
@@ -152,6 +163,8 @@ public class BaseRenderersConfigurable implements Configurable {
     if(!classRenderer.SHOW_STATIC) {
       myCbShowStaticFinalFields.makeUnselectable(false);
     }
+    myCbShowDeclaredType.setSelected(classRenderer.SHOW_DECLARED_TYPE);
+    myCbShowObjectId.setSelected(classRenderer.SHOW_OBJECT_ID);
 
     final ToStringRenderer toStringRenderer = rendererSettings.getToStringRenderer();
     final boolean toStringEnabled = toStringRenderer.isEnabled();
@@ -189,7 +202,9 @@ public class BaseRenderersConfigurable implements Configurable {
     (classRenderer.SORT_ASCENDING != myCbSort.isSelected()) ||
     (classRenderer.SHOW_STATIC != myCbShowStatic.isSelected()) ||
     (classRenderer.SHOW_STATIC_FINAL != myCbShowStaticFinalFields.isSelectedWhenSelectable()) ||
-    (classRenderer.SHOW_SYNTHETICS != myCbShowSyntheticFields.isSelected());
+    (classRenderer.SHOW_SYNTHETICS != myCbShowSyntheticFields.isSelected()) ||
+    (classRenderer.SHOW_DECLARED_TYPE != myCbShowDeclaredType.isSelected()) ||
+    (classRenderer.SHOW_OBJECT_ID != myCbShowObjectId.isSelected());
     if (isClassRendererModified) {
       return true;
     }

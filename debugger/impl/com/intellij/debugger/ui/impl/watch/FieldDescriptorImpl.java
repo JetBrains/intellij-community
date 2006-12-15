@@ -10,13 +10,16 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -120,7 +123,19 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   }
 
   public String calcValueName() {
-    return getName() + ": " + myField.typeName();
+    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      buf.append(getName());
+      if (classRenderer.SHOW_DECLARED_TYPE) {
+        buf.append(": ");
+        buf.append(myField.typeName());
+      }
+      return buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {

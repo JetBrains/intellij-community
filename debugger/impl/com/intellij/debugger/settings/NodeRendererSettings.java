@@ -329,7 +329,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     return childrenRenderer;
   }
 
-  private LabelRenderer createLabelRenderer(@NonNls final String prefix, @NonNls final String expressionText, final @NonNls String postfix) {
+  private static LabelRenderer createLabelRenderer(@NonNls final String prefix, @NonNls final String expressionText, final @NonNls String postfix) {
     final LabelRenderer labelRenderer = new LabelRenderer() {
       public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) throws EvaluateException {
         final String evaluated = super.calcLabel(descriptor, evaluationContext, labelListener);

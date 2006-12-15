@@ -19,9 +19,11 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,12 +40,14 @@ public class ClassRenderer extends NodeRendererImpl{
   
   public static final @NonNls String UNIQUE_ID = "ClassRenderer";
 
-  public boolean SORT_ASCENDING               = false;
-  public boolean SHOW_SYNTHETICS              = true;
-  public boolean SHOW_STATIC                  = false;
-  public boolean SHOW_STATIC_FINAL            = false;
-  public boolean CHILDREN_PHYSICAL            = true;
+  public boolean SORT_ASCENDING = false;
+  public boolean SHOW_SYNTHETICS = true;
+  public boolean SHOW_STATIC = false;
+  public boolean SHOW_STATIC_FINAL = false;
 
+  public boolean SHOW_DECLARED_TYPE = false;
+  public boolean SHOW_OBJECT_ID = true;
+  
   public ClassRenderer() {
     myProperties.setEnabled(true);
   }
@@ -69,23 +73,41 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   protected static String calcLabel(ValueDescriptor descriptor) {
-    ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-    Value value = valueDescriptor.getValue();
+    final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
+    final Value value = valueDescriptor.getValue();
     if (value instanceof ObjectReference) {
-      StringBuffer buf = new StringBuffer(32);
-      if (value instanceof StringReference) {
-        buf.append('\"');
-        buf.append(((StringReference)value).value());
-        buf.append('\"');
+      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+      try {
+        if (value instanceof StringReference) {
+          buf.append('\"');
+          buf.append(((StringReference)value).value());
+          buf.append('\"');
+        }
+        else if (value instanceof ClassObjectReference) {
+          ReferenceType type = ((ClassObjectReference)value).reflectedType();
+          buf.append((type != null)?type.name():"{...}");
+        }
+        else {
+          final ObjectReference objRef = (ObjectReference)value;
+          final Type type = objRef.type();
+          if (type instanceof ClassType && ((ClassType)type).isEnum()) {
+            final String name = getEnumConstantName(objRef, (ClassType)type);
+            if (name != null) {
+              buf.append(name);
+            }
+            else {
+              buf.append(type.name());
+            }
+          }
+          else {
+            buf.append(ValueDescriptorImpl.getIdLabel(objRef));
+          }
+        }
+        return buf.toString();
       }
-      else if (value instanceof ClassObjectReference) {
-        ReferenceType type = ((ClassObjectReference)value).reflectedType();
-        buf.append((type != null)?type.name():"{...}");
+      finally {
+        StringBuilderSpinAllocator.dispose(buf);
       }
-      else {
-        buf.append(ValueDescriptorImpl.getIdLabel((ObjectReference)value));
-      }
-      return buf.toString();
     }
     else if(value == null) {
       //noinspection HardCodedStringLiteral
@@ -135,11 +157,15 @@ public class ClassRenderer extends NodeRendererImpl{
     if (!(component instanceof Field)) {
       return true;
     }
-    Field field = (Field)component;
+    final Field field = (Field)component;
 
-    if(!SHOW_STATIC && field.isStatic()) return false;
+    if(!SHOW_STATIC && field.isStatic()) {
+      return false;
+    }
 
-    if(!SHOW_STATIC_FINAL && field.isStatic() && field.isFinal()) return false;
+    if(!SHOW_STATIC_FINAL && field.isStatic() && field.isFinal()) {
+      return false;
+    }
 
     return true;
   }
@@ -199,5 +225,29 @@ public class ClassRenderer extends NodeRendererImpl{
 
   public void setName(String text) {
     LOG.assertTrue(false);
+  }
+
+  @Nullable
+  public static String getEnumConstantName(final ObjectReference objRef, ClassType classType) {
+    do {
+      if (!classType.isPrepared()) {
+        return null;
+      }
+      classType = classType.superclass();
+      if (classType == null) {
+        return null;
+      }
+    }
+    while (!("java.lang.Enum".equals(classType.name())));
+    //noinspection HardCodedStringLiteral
+    final Field field = classType.fieldByName("name");
+    if (field == null) {
+      return null;
+    }
+    final Value value = objRef.getValue(field);
+    if (!(value instanceof StringReference)) {
+      return null;
+    }
+    return ((StringReference)value).value();
   }
 }

@@ -10,8 +10,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.Renderer;
@@ -22,7 +24,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.sun.jdi.*;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
   protected final Project myProject;
@@ -155,36 +156,33 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   private String getCustomLabel(String label) {
     //translate only strings in quotes
-    StringBuffer buf = new StringBuffer();
-    if(getValue() instanceof ObjectReference) {
-      String idLabel = makeIdLabel((ObjectReference)getValue());
-      if(!label.startsWith(idLabel)) {
-        buf.append(idLabel);
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      if(getValue() instanceof ObjectReference) {
+        final ObjectReference value = (ObjectReference)getValue();
+        final String idLabel = value != null? getIdLabel(value) : "";
+        if(!label.startsWith(idLabel)) {
+          buf.append(idLabel);
+        }
       }
-    }
-    if(label == null) {
-      //noinspection HardCodedStringLiteral
-      buf.append("null");
-    }
-    else {
-      if(StringUtil.startsWithChar(label, '\"') && StringUtil.endsWithChar(label, '\"')) {
-        buf.append('"');
-        buf.append(DebuggerUtils.translateStringValue(label.substring(1, label.length() - 1)));
-        buf.append('"');
+      if(label == null) {
+        //noinspection HardCodedStringLiteral
+        buf.append("null");
       }
       else {
-        buf.append(DebuggerUtils.translateStringValue(label));
+        if(StringUtil.startsWithChar(label, '\"') && StringUtil.endsWithChar(label, '\"')) {
+          buf.append('"');
+          buf.append(DebuggerUtils.translateStringValue(label.substring(1, label.length() - 1)));
+          buf.append('"');
+        }
+        else {
+          buf.append(DebuggerUtils.translateStringValue(label));
+        }
       }
+      return buf.toString();
     }
-    return buf.toString();
-  }
-
-  private static String makeIdLabel(ObjectReference ref) {
-    if (ref != null) {
-      return getIdLabel(ref);
-    }
-    else {
-      return "";
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
     }
   }
 
@@ -276,29 +274,27 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public static String getIdLabel(ObjectReference objRef) {
     StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
-      final Type type = objRef.type();
-      buf.append('{');
-      if (type instanceof ClassType && ((ClassType)type).isEnum()) {
-        final String name = getEnumConstantName(objRef, (ClassType)type);
-        if (name != null) {
-          buf.append("enum:").append(name);
+      final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+      final boolean showConcreteType =
+        !classRenderer.SHOW_DECLARED_TYPE ||
+        (!(objRef instanceof StringReference) && !(objRef instanceof ClassObjectReference) && !isEnumConstant(objRef));
+      if (showConcreteType || classRenderer.SHOW_OBJECT_ID) {
+        buf.append('{');
+        if (showConcreteType) {
+          buf.append(objRef.type().name());
         }
-        else {
-          buf.append(type.name());
+        if (classRenderer.SHOW_OBJECT_ID) {
+          buf.append('@');
+          if(ApplicationManager.getApplication().isUnitTestMode()) {
+            //noinspection HardCodedStringLiteral
+            buf.append("uniqueID");
+          }
+          else {
+            buf.append(objRef.uniqueID());
+          }
         }
+        buf.append('}');
       }
-      else {
-        buf.append(type.name());
-      }
-      buf.append('@');
-      if(ApplicationManager.getApplication().isUnitTestMode()) {
-        //noinspection HardCodedStringLiteral
-        buf.append("uniqueID");
-      }
-      else {
-        buf.append(objRef.uniqueID());
-      }
-      buf.append('}');
 
       if (objRef instanceof ArrayReference) {
         int idx = buf.indexOf("[");
@@ -314,28 +310,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
   }
 
-  @Nullable
-  private static String getEnumConstantName(final ObjectReference objRef, ClassType classType) {
-    do {
-      if (!classType.isPrepared()) {
-        return null;
-      }
-      classType = classType.superclass();
-      if (classType == null) {
-        return null;
-      }
-    }
-    while (!("java.lang.Enum".equals(classType.name())));
-    //noinspection HardCodedStringLiteral
-    final Field field = classType.fieldByName("name");
-    if (field == null) {
-      return null;
-    }
-    final Value value = objRef.getValue(field);
-    if (!(value instanceof StringReference)) {
-      return null;
-    }
-    return ((StringReference)value).value();
+  private static boolean isEnumConstant(final ObjectReference objRef) {
+    final Type type = objRef.type();
+    return type instanceof ClassType && ((ClassType)type).isEnum();
   }
 
   public boolean canSetValue() {
