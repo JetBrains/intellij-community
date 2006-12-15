@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConfigurable {
   private FacetEditorTab[] myEditorTabs;
   private JLabel myWarningLabel;
-  private final FacetEditor.FacetValidatorsManagerImpl myValidatorsManager;
+  private final FacetValidatorsManagerImpl myValidatorsManager;
 
   public FacetEditor(final FacetEditorContext context, final FacetConfiguration configuration) {
     myValidatorsManager = new FacetValidatorsManagerImpl();

@@ -35,6 +35,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   private FacetManagerModel myModel = new FacetManagerModel();
 
   private boolean myInsideCommit = false;
+  @NonNls private static final String CONFIGURATION_ELEMENT = "configuration";
 
   public FacetManagerImpl(final Module module, final FacetTypeRegistry facetTypeRegistry) {
     myModule = module;
@@ -98,38 +99,57 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
 
   public void readExternal(Element element) throws InvalidDataException {
     List<Facet> facets = new ArrayList<Facet>();
+    addFacets(facets, element, null);
+
+    myModel.setAllFacets(facets.toArray(new Facet[facets.size()]));
+  }
+
+  private void addFacets(final List<Facet> facets, final Element element, final Facet underlyingFacet) throws InvalidDataException {
     List<Element> children = element.getChildren(FACET_ELEMENT);
     for (Element child : children) {
       final String value = child.getAttributeValue(TYPE_ATTRIBUTE);
       if (value != null) {
         final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(value);
         if (type != null) {
-          addFacet(type, child, facets);
+          addFacet(type, child, facets, underlyingFacet);
         }
       }
     }
-
-    myModel.setAllFacets(facets.toArray(new Facet[facets.size()]));
   }
 
-  private <C extends FacetConfiguration> void addFacet(final FacetType<?,C> type, final Element child, final List<Facet> facets) throws InvalidDataException {
+  private <C extends FacetConfiguration> void addFacet(final FacetType<?, C> type, final Element element, final List<Facet> facets,
+                                                       final Facet underlyingFacet) throws InvalidDataException {
     final C configuration = type.createDefaultConfiguration();
-    configuration.readExternal(child);
-    //todo[nik] set underlying facet
-    facets.add(type.createFacet(myModule, configuration, null));
+    final Element config = element.getChild(CONFIGURATION_ELEMENT);
+    if (config != null) {
+      configuration.readExternal(config);
+    }
+    final Facet facet = type.createFacet(myModule, configuration, underlyingFacet);
+    facets.add(facet);
+    addFacets(facets, element, facet);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    final Facet[] facets = getAllFacets();
+    final Facet[] facets = getSortedFacets();
     if (facets.length == 0) {
       throw new WriteExternalException();
     }
 
+    Map<Facet, Element> elements = new HashMap<Facet, Element>();
+    elements.put(null, element);
+
     for (Facet facet : facets) {
-      final Element child = new Element(FACET_ELEMENT);
+      final Facet underlyingFacet = facet.getUnderlyingFacet();
+      final Element parent = elements.get(underlyingFacet);
+
+      Element child = new Element(FACET_ELEMENT);
       child.setAttribute(TYPE_ATTRIBUTE, facet.getTypeId().getId());
-      facet.getConfiguration().writeExternal(child);
-      element.addContent(child);
+      final Element config = new Element(CONFIGURATION_ELEMENT);
+      facet.getConfiguration().writeExternal(config);
+      child.addContent(config);
+
+      parent.addContent(child);
+      elements.put(facet, child);
     }
   }
 
