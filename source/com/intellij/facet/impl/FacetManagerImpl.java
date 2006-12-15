@@ -9,6 +9,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -209,7 +210,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
 
   public void disposeComponent() {
     for (Facet facet : getAllFacets()) {
-      facet.disposeFacet();
+      Disposer.dispose(facet);
     }
   }
 

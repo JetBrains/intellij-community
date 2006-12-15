@@ -27,15 +27,15 @@ public class Facet<C extends FacetConfiguration> implements Disposable {
   }
 
   @NotNull
-  public FacetType getType() {
+  public final FacetType getType() {
     return myFacetType;
   }
 
-  public FacetTypeId getTypeId() {
+  public final FacetTypeId getTypeId() {
     return myFacetType.getId();
   }
 
-  public Facet getUnderlyingFacet() {
+  public final Facet getUnderlyingFacet() {
     return myUnderlyingFacet;
   }
 
@@ -45,7 +45,7 @@ public class Facet<C extends FacetConfiguration> implements Disposable {
   }
 
   @NotNull
-  public Module getModule() {
+  public final Module getModule() {
     return myModule;
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -32,6 +33,7 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.Alarm;
 import com.intellij.util.graph.Graph;
+import com.intellij.facet.impl.ui.ConfigureFacetsStep;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -288,9 +290,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> {
             parentWindow.removeWindowListener(this);
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                final ModuleBuilder moduleBuilder = myModulesConfigurator.runModuleWizard(parentWindow);
+                final Pair<ModuleBuilder,ConfigureFacetsStep> pair = myModulesConfigurator.runModuleWizard(parentWindow);
+                final ModuleBuilder moduleBuilder = pair.getFirst();
                 if (moduleBuilder != null) {
-                  myModulesConfigurator.addModule(moduleBuilder);
+                  myModulesConfigurator.addModule(moduleBuilder, pair.getSecond());
                 }
               }
             });

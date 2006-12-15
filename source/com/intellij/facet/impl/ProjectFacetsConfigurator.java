@@ -9,6 +9,7 @@ import com.intellij.facet.FacetInfo;
 import com.intellij.facet.impl.ui.FacetEditor;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
+import com.intellij.facet.impl.ui.ConfigureFacetsStep;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -153,5 +154,17 @@ public class ProjectFacetsConfigurator {
 
   public Facet getFacet(final FacetInfo facetInfo) {
     return myInfo2Facet.get(facetInfo);
+  }
+
+  public void registerEditors(final Module module, ConfigureFacetsStep facetsStep) {
+    final Map<FacetInfo, FacetEditor> info2EditorMap = facetsStep.getInfo2EditorMap();
+    final Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
+    for (Facet facet : allFacets) {
+      for (Map.Entry<FacetInfo, FacetEditor> entry : info2EditorMap.entrySet()) {
+        if (entry.getKey().getConfiguration() == facet.getConfiguration()) {
+          myEditors.put(facet, entry.getValue());
+        }
+      }
+    }
   }
 }

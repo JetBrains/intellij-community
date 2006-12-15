@@ -97,7 +97,7 @@ public abstract class ModuleBuilder {
     return module;
   }
 
-  public void onModuleInitialized(final Module module) {
+  private void onModuleInitialized(final Module module) {
     myDispatcher.getMulticaster().moduleCreated(module);
   }
 
