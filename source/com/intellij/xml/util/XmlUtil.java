@@ -52,12 +52,7 @@ import java.util.*;
 public class XmlUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
 
-  @NonNls public static final String TAGLIB_1_1_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd";
   @NonNls public static final String TAGLIB_1_2_URI = "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd";
-  @NonNls public static final String TAGLIB_1_2_a_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_2.dtd";
-  @NonNls public static final String TAGLIB_1_2_b_URI = "http://java.sun.com/JSP/TagLibraryDescriptor";
-  @NonNls public static final String TAGLIB_2_0_URI = "http://java.sun.com/xml/ns/j2ee";
-  @NonNls public static final String TAGLIB_2_1_URI = "http://java.sun.com/xml/ns/javaee";
 
   @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
@@ -104,15 +99,9 @@ public class XmlUtil {
   @NonNls public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   public static final @NonNls String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   public static final @NonNls String SCHEMA_LOCATION_ATT = "schemaLocation";
-  private static final @NonNls String JSF_URI = "http://java.sun.com/dtd/web-facesconfig_1_0.dtd";
-  private static final @NonNls String JSF_URI2 = "http://java.sun.com/dtd/web-facesconfig_1_1.dtd";
-  public static final @NonNls String[] JSF_URIS = {JSF_URI, JSF_URI2};
   public static final @NonNls String[] WEB_XML_URIS = {"http://java.sun.com/xml/ns/j2ee", "http://java.sun.com/xml/ns/javaee",
     "http://java.sun.com/dtd/web-app_2_3.dtd", "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
-  public static final @NonNls String[] JSF_CORE_URIS = {JSF_CORE_URI};
   public static final @NonNls String FACELETS_URI = "http://java.sun.com/jsf/facelets";
-  public static final @NonNls String FACELETS_TAGLIB_URI = "http://java.sun.com/dtd/facelet-taglib_1_0.dtd";
-  public static final @NonNls String FACELETS_TAGLIB_URI2 = "http://java.sun.com/JSF/Facelet";
   public static final @NonNls String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
   public static final @NonNls String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
   public static final @NonNls String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";

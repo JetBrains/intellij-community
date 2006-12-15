@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.meta;
 
-import com.intellij.jsp.impl.*;
+import com.intellij.jsp.impl.RelaxedNsXmlNSDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,12 +10,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
-import com.intellij.psi.filters.position.RootTagFilter;
 import com.intellij.psi.filters.position.TargetNamespaceFilter;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.meta.MetaDataRegistrar;
-import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
@@ -40,25 +38,8 @@ import java.util.List;
 public class MetaRegistry extends MetaDataRegistrar implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.meta.MetaRegistry");
   private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
-  public static final @NonNls String[] TAGLIB_URIS = new String[]{
-    "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN",
-    "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN",
-    XmlUtil.TAGLIB_1_1_URI,
-    XmlUtil.TAGLIB_1_2_a_URI,
-    XmlUtil.TAGLIB_1_2_URI,
-    XmlUtil.TAGLIB_2_0_URI,
-    XmlUtil.TAGLIB_1_2_b_URI,
-    XmlUtil.TAGLIB_2_1_URI
-  };
 
   public static final String[] SCHEMA_URIS = { XmlUtil.XML_SCHEMA_URI, XmlUtil.XML_SCHEMA_URI2, XmlUtil.XML_SCHEMA_URI3 };
-  private static final @NonNls String[] JSP_URIS = {
-    XmlUtil.JSP_URI,
-    "http://java.sun.com/products/jsp/dtd/jsp_1_0.dtd",
-    "http://java.sun.com/xml/ns/j2ee/jsp_2_0.xsd",
-    "http://java.sun.com/dtd/jspxml.xsd",
-    "http://java.sun.com/dtd/jspxml.dtd"
-  };
 
   static {
     {
@@ -132,131 +113,9 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
       addMetadataBinding(
           new AndFilter(
               new ClassFilter(XmlDocument.class),
-              new TargetNamespaceFilter(JSP_URIS)
-          ),
-          JspNsDescriptor.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new ClassFilter(XmlDocument.class),
               new TargetNamespaceFilter(XmlUtil.XHTML_URI),
               new NamespaceFilter(SCHEMA_URIS)),
           RelaxedNsXmlNSDescriptor.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new NamespaceFilter(TAGLIB_URIS),
-              new TextFilter("taglib")
-          ),
-          TldDescriptor.class);
-    }
-
-    {
-      addMetadataBinding(
-        new RootTagFilter(
-          new AndFilter(
-            new NamespaceFilter(TAGLIB_URIS),
-            new TextFilter("taglib")
-          )),
-        TldDescriptor.class);
-
-      addMetadataBinding(
-        new RootTagFilter(
-          new AndFilter(
-            new NamespaceFilter(
-              "-//Sun Microsystems, Inc.//DTD Facelet Taglib 1.0//EN",
-              XmlUtil.FACELETS_TAGLIB_URI,
-              XmlUtil.FACELETS_TAGLIB_URI2
-            ),
-            new TextFilter("facelet-taglib")
-          )),
-        FaceletsTldDescriptor.class);
-    }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new NamespaceFilter(TAGLIB_URIS),
-              new TextFilter("tag")
-          ),
-          TldTagDescriptorImpl.class);
-
-      addMetadataBinding(
-          new AndFilter(
-              new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI),
-              new TextFilter("tag")
-          ),
-          FaceletsTagDescriptor.class);
-    }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new NamespaceFilter(TAGLIB_URIS),
-              new TextFilter("tag-file")
-          ),
-          TldTagFileDescriptor.class);
-    }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new OrFilter(
-                new NamespaceFilter(TAGLIB_URIS),
-                new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI)
-              ),
-              new TextFilter("function")
-          ),
-          FunctionDescriptor.class);
-    }
-
-    {
-      addMetadataBinding(
-        new OrFilter(
-          new AndFilter(
-              new NamespaceFilter(TAGLIB_URIS),
-              new TextFilter("attribute")
-          ),
-          new OrFilter(
-            new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter("directive.attribute")
-            ),
-            new AndFilter(
-              new ClassFilter(JspDirective.class),
-              new TextFilter("attribute")
-            )
-          )
-         ),
-        TldAttributeDescriptor.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-        new OrFilter(
-          new AndFilter(
-              new NamespaceFilter(TAGLIB_URIS),
-              new TextFilter("variable")
-          ),
-          new OrFilter(
-            new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter("directive.variable")
-            ),
-            new AndFilter(
-              new ClassFilter(JspDirective.class),
-              new TextFilter("variable")
-            )
-          )
-        ),
-        TldVariableDescriptor.class
       );
     }
 

@@ -18,13 +18,11 @@ import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.i18n.I18nInspection;
-import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection;
+import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
-import com.intellij.codeInspection.jsp.UnhandledExceptionInJSP;
-import com.intellij.codeInspection.jsp.ELValidationInspection;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
@@ -52,7 +50,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.xml.util.CheckEmptyScriptTagInspection;
 import com.intellij.xml.util.CheckImageSizeInspection;
 import com.intellij.xml.util.CheckValidXmlInScriptBodyInspection;
-import com.intellij.jsp.inspections.CheckJsfComponentUnderViewTagInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -109,7 +106,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       DuplicatePropertyInspection.class,
       UnusedMessageFormatParameterInspection.class,
       CheckImageSizeInspection.class,
-      CheckJsfComponentUnderViewTagInspection.class,
       CheckEmptyScriptTagInspection.class,
       CheckValidXmlInScriptBodyInspection.class,
       WrongPackageStatementInspection.class,
@@ -120,8 +116,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       RequiredAttributesInspection.class,
       DefaultFileTemplateUsageInspection.class,
       UnnecessaryModuleDependencyInspection.class,
-      UnhandledExceptionInJSP.class,
-      ELValidationInspection.class,
       RedundantSuppressInspection.class,
       UnusedSymbolLocalInspection.class,
       UnusedImportLocalInspection.class,

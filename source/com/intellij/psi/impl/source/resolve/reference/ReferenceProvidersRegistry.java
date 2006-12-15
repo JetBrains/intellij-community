@@ -9,58 +9,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.ElementManipulator;
-import com.intellij.psi.ElementManipulatorsRegistry;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.filters.AndFilter;
-import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.NotFilter;
-import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.filters.ScopeFilter;
-import com.intellij.psi.filters.TextFilter;
+import com.intellij.psi.*;
+import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.jsp.el.impl.ELLiteralManipulator;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagValueManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.CustomizableReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.CustomizingReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdReferencesProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FilePathReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.HibernateReferencesProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspImportListReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspReferencesProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspUriReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.TaglibReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
-import com.intellij.psi.jsp.el.ELLiteralExpression;
-import com.intellij.psi.xml.XmlAttlistDecl;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlDoctype;
-import com.intellij.psi.xml.XmlElementContentSpec;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlEntityRef;
-import com.intellij.psi.xml.XmlProcessingInstruction;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ReflectionCache;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
@@ -119,7 +78,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     registerManipulator(XmlToken.class, new XmlTokenManipulator());
     registerManipulator(PsiLiteralExpression.class, new StringLiteralManipulator());
     registerManipulator(XmlTag.class, new XmlTagValueManipulator());
-    registerManipulator(ELLiteralExpression.class, new ELLiteralManipulator());
+
     // Binding declarations
 
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
@@ -382,19 +341,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
                               classListProvider);
 
-    registerXmlTagReferenceProvider(
-      new String[] {
-        "function-class", "tag-class", "tei-class", "variable-class", "type", "path",
-        "function-signature", "name", "name-given",
-        "handler-class", "library-class", "tag-name", "function-name", "source"
-      },
-      new OrFilter(
-        new NamespaceFilter(MetaRegistry.TAGLIB_URIS),
-        new NamespaceFilter(XmlUtil.FACELETS_TAGLIB_URI)
-      ),
-      true,
-      new TaglibReferenceProvider( getProviderByType(CLASS_REFERENCE_PROVIDER) )
-    );
+    
 
     final IdReferenceProvider jsfProvider = new IdReferenceProvider();
 

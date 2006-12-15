@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
+import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -30,17 +31,15 @@ import java.util.*;
 public class ExternalResourceManagerImpl extends ExternalResourceManagerEx implements JDOMExternalizable, ApplicationComponent, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
 
-  @NonNls private static final String J2EE_1_3 = "http://java.sun.com/dtd/";
-  @NonNls private static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
-  @NonNls private static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
-  @NonNls private static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
-  @NonNls private static final String IBM_NS = "http://www.ibm.com/webservices/xsd/";
-  @NonNls private static final String PERSISTENCE_NS = "http://java.sun.com/xml/ns/persistence";
-  @NonNls private static final String PERSISTENCE_ORM_NS = "http://java.sun.com/xml/ns/persistence/orm";
+  @NonNls public static final String J2EE_1_3 = "http://java.sun.com/dtd/";
+  @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
+  @NonNls public static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
+  @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
 
-  private Map<String, String> myResources = new com.intellij.util.containers.HashMap<String, String>();
+
+  private Map<String, String> myResources = new HashMap<String, String>();
   private Set<String> myIgnoredResources = new HashSet<String>();
-  private Map<String, String> myStdResources = new com.intellij.util.containers.HashMap<String, String>();
+  private Map<String, String> myStdResources = new HashMap<String, String>();
   private List<ExternalResourceListener> myListeners = new ArrayList<ExternalResourceListener>();
   private long myModificationCount = 0;
   private PathMacrosImpl myPathMacros;
@@ -50,30 +49,6 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls protected static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
-    addInternalResource(J2EE_1_3 + "connector_1_0.dtd", "connector_1_0.dtd");
-    addInternalResource(J2EE_1_3 + "jspxml.xsd", "jspxml.xsd");
-    addInternalResource(J2EE_1_3 + "jspxml.dtd", "jspxml.dtd");
-    addInternalResource(XmlUtil.JSP_URI,"jspxml2.xsd");
-    addInternalResource("http://java.sun.com/products/jsp/dtd/jsp_1_0.dtd","jspxml.dtd");
-
-    addInternalResource(J2EE_1_3 + "web-jsptaglibrary_1_2.dtd", "web-jsptaglibrary_1_2.dtd");
-    addInternalResource(J2EE_1_3 +  "web-app_2_3.dtd", "web-app_2_3.dtd");
-    addInternalResource(J2EE_1_3 +  "application-client_1_3.dtd", "application-client_1_3.dtd");
-    addInternalResource(J2EE_1_3 +  "application_1_3.dtd", "application_1_3.dtd");
-    addInternalResource(J2EE_1_3 +   "ejb-jar_2_0.dtd", "ejb-jar_2_0.dtd");
-    addInternalResource(J2EE_1_3 +   "logger.dtd", "logger.dtd");
-    addInternalResource(J2EE_1_3 +   "web-facesconfig_1_1.dtd", "web-facesconfig_1_1.dtd");
-    addInternalResource(J2EE_1_3 +   "web-facesconfig_1_0.dtd", "web-facesconfig_1_0.dtd");
-
-    addInternalResource(J2EE_1_2 +  "application-client_1_2.dtd", "application-client_1_2.dtd");
-    addInternalResource(J2EE_1_2 +  "application_1_2.dtd", "application_1_2.dtd");
-    addInternalResource(J2EE_1_2 +  "ejb-jar_1_1.dtd","ejb-jar_1_1.dtd");
-    addInternalResource(J2EE_1_2 +  "web-app_2_2.dtd","web-app_2_2.dtd");
-    addInternalResource(J2EE_1_2 +  "web-app_2_3.dtd", "web-app_2_3.dtd");
-    addInternalResource(J2EE_1_2 +  "web-jsptaglibrary_1_1.dtd","web-jsptaglibrary_1_1.dtd");
-
-    addInternalResource(IBM_NS + "j2ee_web_services_client_1_1.xsd","j2ee_web_services_client_1_1.xsd");
-
     addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
     addInternalResource(XmlUtil.XML_SCHEMA_URI, "XMLSchema.xsd");
     addInternalResource(XmlUtil.XML_SCHEMA_INSTANCE_URI, "XMLSchema-instance.xsd");
@@ -88,38 +63,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd","xhtml1-transitional.dtd");
     addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd","xhtml1-frameset.dtd");
 
-    addInternalResource(J2EE_NS + "web-app_2_4.xsd","web-app_2_4.xsd");
-    addInternalResource(J2EE_NS + "ejb-jar_2_1.xsd","ejb-jar_2_1.xsd");
-    addInternalResource(J2EE_NS + "connector_1_5.xsd","connector_1_5.xsd");
-    addInternalResource(J2EE_NS + "jsp_2_0.xsd","jsp_2_0.xsd");
-    addInternalResource(J2EE_NS + "j2ee_1_4.xsd","j2ee_1_4.xsd");
-    addInternalResource(J2EE_NS + "application-client_1_4.xsd","application-client_1_4.xsd");
-    addInternalResource(J2EE_NS + "application_1_4.xsd","application_1_4.xsd");
-    addInternalResource(J2EE_NS + "web-jsptaglibrary_2_0.xsd","web-jsptaglibrary_2_0.xsd");
-
-    addInternalResource(JAVAEE_NS + "javaee_5.xsd","javaee_5.xsd");
-    addInternalResource(JAVAEE_NS + "javaee_web_services_client_1_2.xsd","javaee_web_services_client_1_2.xsd");
-    addInternalResource(JAVAEE_NS + "application_5.xsd","application_5.xsd");
-    addInternalResource(JAVAEE_NS + "ejb-jar_3_0.xsd","ejb-jar_3_0.xsd");
-    addInternalResource(JAVAEE_NS + "web-app_2_5.xsd","web-app_2_5.xsd");
-    addInternalResource(JAVAEE_NS + "application-client_5.xsd","application-client_5.xsd");
-    addInternalResource(JAVAEE_NS + "javaee_web_services_1_2.xsd","javaee_web_services_1_2.xsd");
-    addInternalResource(JAVAEE_NS + "jsp_2_0.xsd","jsp_2_0.xsd");
-    addInternalResource(JAVAEE_NS + "web-jsptaglibrary_2_1.xsd","web-jsptaglibrary_2_1.xsd");
-    addInternalResource(JAVAEE_NS + "web-facesconfig_1_2.xsd","web-facesconfig_1_2.xsd");
-
-    addInternalResource(PERSISTENCE_NS,"persistence.xsd");
-    addInternalResource(PERSISTENCE_ORM_NS,"orm_1_0.xsd");
-    addInternalResource(XmlUtil.JSTL_FN_FACELET_URI,"jstl.fn.facelets.tld");
-    addInternalResource(XmlUtil.JSTL_CORE_FACELET_URI,"jstl.core.facelets.tld");
-
     // Plugins DTDs // stathik
-    addInternalResource("http://plugins.intellij.net/plugin.dtd",
-                        "plugin.dtd");
-    addInternalResource("http://plugins.intellij.net/plugin-repository.dtd",
-                        "plugin-repository.dtd");
-    addInternalResource(XmlUtil.FACELETS_URI,"facelets.xsd");
-    addInternalResource(XmlUtil.FACELETS_TAGLIB_URI,"facelet-taglib_1_0.dtd");
+    addInternalResource("http://plugins.intellij.net/plugin.dtd", "plugin.dtd");
+    addInternalResource("http://plugins.intellij.net/plugin-repository.dtd", "plugin-repository.dtd");
+    
     myPathMacros = pathMacros;
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -152,7 +99,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public void initComponent() { }
 
-  private void addInternalResource(@NonNls String resource, @NonNls String fileName) {
+  public void addInternalResource(@NonNls String resource, @NonNls String fileName) {
     addStdResource(resource, "/standardSchemas/" + fileName);
   }
 
