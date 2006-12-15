@@ -50,17 +50,8 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   private boolean myIsDisposed;
   private EditorFactoryAdapter myEditorFactoryListener;
 
-  public LookupManagerImpl(Project project, EditorFactory editorFactory) {
+  public LookupManagerImpl(Project project) {
     myProject = project;
-
-    myEditorFactoryListener = new EditorFactoryAdapter() {
-      public void editorReleased(EditorFactoryEvent event) {
-        if (event.getEditor() == myActiveLookupEditor){
-          hideActiveLookup();
-        }
-      }
-    };
-    editorFactory.addEditorFactoryListener(myEditorFactoryListener);
   }
 
   @NotNull
@@ -71,14 +62,22 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   public void initComponent() { }
 
   public void disposeComponent(){
-    EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
-    myIsDisposed = true;
   }
 
   public void projectOpened(){
+    myEditorFactoryListener = new EditorFactoryAdapter() {
+      public void editorReleased(EditorFactoryEvent event) {
+        if (event.getEditor() == myActiveLookupEditor){
+          hideActiveLookup();
+        }
+      }
+    };
+    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
   }
 
   public void projectClosed(){
+    EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
+    myIsDisposed = true;
   }
 
   public Lookup showLookup(

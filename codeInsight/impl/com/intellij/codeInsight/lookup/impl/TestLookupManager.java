@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -25,7 +24,7 @@ import java.util.Arrays;
 public class TestLookupManager extends LookupManagerImpl{
   private Project myProject;
   public TestLookupManager(Project project){
-    super(project, EditorFactory.getInstance());
+    super(project);
     myProject = project;
   }
 

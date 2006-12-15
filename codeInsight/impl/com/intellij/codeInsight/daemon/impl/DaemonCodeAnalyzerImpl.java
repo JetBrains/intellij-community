@@ -97,8 +97,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void disposeComponent() {
-    myFileStatusMap.markAllFilesDirty();
-    dispose();
   }
 
   public void projectOpened() {
@@ -108,6 +106,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     reloadScopes();
 
     myInitialized = true;
+  }
+  public void projectClosed() {
+    myFileStatusMap.markAllFilesDirty();
+    dispose();
   }
 
   public void prepareForTest(final Editor editor, final Object stoppedNotify) {
@@ -186,9 +188,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myPassExecutorService.getDaemonExecutorService();
   }
 
-  public void projectClosed() {
-  }
-
   private void dispose() {
     if (myDisposed) return;
     if (myInitialized) {
@@ -222,6 +221,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     BackgroundEditorHighlighter highlighter = textEditor.getBackgroundHighlighter();
     if (highlighter == null) return;
     HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
+    setLastIntentionHint(null);
     myPassExecutorService.submitPasses(textEditor, highlightingPasses);
   }
 
@@ -507,6 +507,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         if (myDisposed) return;
         renewUpdateProgress();
         final FileEditor[] activeEditors = myDaemonListeners.getSelectedEditors();
+        setLastIntentionHint(null);
         for (FileEditor fileEditor : activeEditors) {
           BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
           if (highlighter != null) {

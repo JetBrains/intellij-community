@@ -40,8 +40,8 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
-  private Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
-  private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
+  private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
+  private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -79,6 +79,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     inspectionProfileManager.setRootProfile(profile.getName());
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
   }
+
+  protected void tearDown() throws Exception {
+    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(getProject());
+    codeAnalyzer.projectClosed();
+    codeAnalyzer.disposeComponent();
+    super.tearDown();
+  }
+
   protected void enableInspectionTool(LocalInspectionTool tool){
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
@@ -129,7 +137,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos, myFile);
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    
+
     ((PsiFileImpl)myFile).calcTreeElement(); //to load text
 
     //to initialize caches
