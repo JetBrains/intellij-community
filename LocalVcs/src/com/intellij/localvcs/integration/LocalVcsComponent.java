@@ -91,7 +91,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   protected boolean isDisabled() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    //if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     if (System.getProperty("localvcs.enabled") != null) return false;
     return true;
   }
