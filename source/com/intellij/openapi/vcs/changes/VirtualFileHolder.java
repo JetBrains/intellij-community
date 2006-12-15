@@ -14,11 +14,11 @@ import java.util.Set;
 /**
  * @author max
  */
-public class UnversionedFilesHolder {
+public class VirtualFileHolder {
   private Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
   private Project myProject;
 
-  public UnversionedFilesHolder(Project project) {
+  public VirtualFileHolder(Project project) {
     myProject = project;
   }
 
@@ -52,8 +52,8 @@ public class UnversionedFilesHolder {
     return new ArrayList<VirtualFile>(myFiles);
   }
 
-  public synchronized UnversionedFilesHolder copy() {
-    final UnversionedFilesHolder copyHolder = new UnversionedFilesHolder(myProject);
+  public synchronized VirtualFileHolder copy() {
+    final VirtualFileHolder copyHolder = new VirtualFileHolder(myProject);
     copyHolder.myFiles.addAll(myFiles);
     return copyHolder;
   }

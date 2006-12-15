@@ -177,7 +177,8 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     myView.updateModel(changeListManager.getChangeListsCopy(),
                        changeListManager.getUnversionedFiles(),
-                       changeListManager.getDeletedFiles());
+                       changeListManager.getDeletedFiles(),
+                       changeListManager.getModifiedWithoutEditing());
   }
 
   public void readExternal(Element element) throws InvalidDataException {

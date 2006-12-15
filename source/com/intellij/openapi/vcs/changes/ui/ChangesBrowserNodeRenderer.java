@@ -23,12 +23,14 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
   private ChangeListDecorator[] myDecorators;
   private WolfTheProblemSolver myProblemSolver;
+  private ChangeListManager myChangeListManager;
   private final boolean myHighlightProblems;
 
   public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten, final boolean highlightProblems) {
     myShowFlatten = showFlatten;
     myDecorators = project.getComponents(ChangeListDecorator.class);
     myProblemSolver = WolfTheProblemSolver.getInstance(project);
+    myChangeListManager = ChangeListManager.getInstance(project);
     myHighlightProblems = highlightProblems;
   }
 
@@ -87,7 +89,7 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
     else if (object instanceof VirtualFile) {
       final VirtualFile file = (VirtualFile)object;
-      appendFileName(file, file.getName(), FileStatus.COLOR_UNKNOWN);
+      appendFileName(file, file.getName(), myChangeListManager.isUnversioned(file) ? FileStatus.COLOR_UNKNOWN : FileStatus.COLOR_HIJACKED);
       if (myShowFlatten && file.isValid()) {
         final VirtualFile parentFile = file.getParent();
         assert parentFile != null;
@@ -163,7 +165,7 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  private Color getColor(final Change change) {
+  private static Color getColor(final Change change) {
     return change.getFileStatus().getColor();
   }
 }

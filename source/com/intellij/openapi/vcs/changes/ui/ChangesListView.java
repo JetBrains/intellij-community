@@ -62,8 +62,21 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
   @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create(UNVERSIONED_FILES_KEY);
+  @NonNls public static final DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create(MISSING_FILES_KEY);
   @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
+
+  public static final Object UNVERSIONED_FILES_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.unversioned.files");
+    }
+  };
+
+  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.modified.without.editing");
+    }
+  };
 
   public ChangesListView(final Project project) {
     myProject = project;
@@ -132,11 +145,12 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(List<LocalChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles) {
+  public void updateModel(List<LocalChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles,
+                          List<VirtualFile> modifiedWithoutEditing) {
     storeState();
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
-    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles);
+    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing);
     setModel(model);
     setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
 
@@ -170,6 +184,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     else if (key == UNVERSIONED_FILES_DATA_KEY) {
       sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
     }
+    else if (key == MODIFIED_WITHOUT_EDITING_DATA_KEY) {
+      sink.put(MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing());
+    }
     else if (key == MISSING_FILES_DATA_KEY) {
       sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles());
     }
@@ -179,12 +196,25 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   private List<VirtualFile> getSelectedUnversionedFiles() {
+    return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
+  }
+
+  private List<VirtualFile> getSelectedModifiedWithoutEditing() {
+    return getSelectedVirtualFiles(MODIFIED_WITHOUT_EDITING_TAG);
+  }
+
+  private List<VirtualFile> getSelectedVirtualFiles(final Object tag) {
     List<VirtualFile> files = new ArrayList<VirtualFile>();
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
-        ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-        files.addAll(node.getAllFilesUnder());
+        if (path.getPathCount() > 1) {
+          ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
+          if (tag == null || firstNode.getUserObject() == tag) {
+            ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+            files.addAll(node.getAllFilesUnder());
+          }
+        }
       }
     }
     return files;
@@ -215,7 +245,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
       }
     }
 
-    files.addAll(getSelectedUnversionedFiles());
+    files.addAll(getSelectedVirtualFiles(null));
 
     return files.toArray(new VirtualFile[files.size()]);
   }

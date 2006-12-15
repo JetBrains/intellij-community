@@ -49,7 +49,8 @@ public class TreeModelBuilder {
 
   public DefaultTreeModel buildModel(final List<? extends ChangeList> changeLists,
                                      final List<VirtualFile> unversionedFiles,
-                                     final List<FilePath> locallyDeletedFiles) {
+                                     final List<FilePath> locallyDeletedFiles,
+                                     final List<VirtualFile> modifiedWithoutEditing) {
 
     for (ChangeList list : changeLists) {
       ChangesBrowserNode listNode = new ChangesBrowserNode(myProject, list);
@@ -61,14 +62,11 @@ public class TreeModelBuilder {
       }
     }
 
+    if (!modifiedWithoutEditing.isEmpty()) {
+      buildVirtualFiles(modifiedWithoutEditing, ChangesListView.MODIFIED_WITHOUT_EDITING_TAG);
+    }
     if (!unversionedFiles.isEmpty()) {
-      ChangesBrowserNode unversionedNode = new ChangesBrowserNode(myProject, VcsBundle.message("changes.nodetitle.unversioned.files"));
-      model.insertNodeInto(unversionedNode, root, root.getChildCount());
-      final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
-      final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
-      for (VirtualFile file : unversionedFiles) {
-        insertChangeNode(file, foldersCache, moduleCache, unversionedNode);
-      }
+      buildVirtualFiles(unversionedFiles, ChangesListView.UNVERSIONED_FILES_TAG);
     }
 
     if (!locallyDeletedFiles.isEmpty()) {
@@ -86,6 +84,16 @@ public class TreeModelBuilder {
     sortNodes();
 
     return model;
+  }
+
+  private void buildVirtualFiles(final List<VirtualFile> files, final Object tag) {
+    ChangesBrowserNode filesNode = new ChangesBrowserNode(myProject, tag);
+    model.insertNodeInto(filesNode, root, root.getChildCount());
+    final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
+    final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
+    for (VirtualFile file : files) {
+      insertChangeNode(file, foldersCache, moduleCache, filesNode);
+    }
   }
 
   private void insertChangeNode(final Object change, final HashMap<FilePath, ChangesBrowserNode> foldersCache, final HashMap<Module, ChangesBrowserNode> moduleCache,

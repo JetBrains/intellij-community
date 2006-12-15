@@ -1704,6 +1704,7 @@
               icon="/actions/include.png"/>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
               icon="/actions/exclude.png"/>
+      <action id="ChangesView.Edit" class="com.intellij.openapi.vcs.changes.actions.EditAction"/>
       <separator/>
       <reference ref="ChangesView.NewChangeList"/>
       <reference ref="ChangesView.RemoveChangeList"/>

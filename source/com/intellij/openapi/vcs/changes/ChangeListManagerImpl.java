@@ -60,7 +60,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private boolean myDisposed = false;
 
-  private UnversionedFilesHolder myUnversionedFilesHolder;
+  private VirtualFileHolder myUnversionedFilesHolder;
+  private VirtualFileHolder myModifiedWithoutEditingHolder;
   private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
   private final List<LocalChangeList> myChangeLists = new ArrayList<LocalChangeList>();
 
@@ -101,7 +102,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public ChangeListManagerImpl(final Project project) {
     myProject = project;
-    myUnversionedFilesHolder = new UnversionedFilesHolder(project);
+    myUnversionedFilesHolder = new VirtualFileHolder(project);
+    myModifiedWithoutEditingHolder = new VirtualFileHolder(project);
   }
 
   public void projectOpened() {
@@ -224,21 +226,25 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final boolean wasEverythingDirty = dirtyScopeManager.isEverythingDirty();
       final List<VcsDirtyScope> scopes = dirtyScopeManager.retreiveScopes();
 
-      final UnversionedFilesHolder unversionedHolder;
+      final VirtualFileHolder unversionedHolder;
+      final VirtualFileHolder modifiedWithoutEditingHolder;
       final DeletedFilesHolder deletedHolder;
 
       if (updateUnversionedFiles) {
         unversionedHolder = myUnversionedFilesHolder.copy();
         deletedHolder = myDeletedFilesHolder.copy();
+        modifiedWithoutEditingHolder = myModifiedWithoutEditingHolder.copy();
 
         if (wasEverythingDirty) {
           unversionedHolder.cleanAll();
           deletedHolder.cleanAll();
+          modifiedWithoutEditingHolder.cleanAll();
         }
       }
       else {
         unversionedHolder = myUnversionedFilesHolder;
         deletedHolder = myDeletedFilesHolder;
+        modifiedWithoutEditingHolder = myModifiedWithoutEditingHolder;
       }
 
       for (final VcsDirtyScope scope : scopes) {
@@ -261,6 +267,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         if (updateUnversionedFiles && !wasEverythingDirty) {
           unversionedHolder.cleanScope(scope);
           deletedHolder.cleanScope(scope);
+          modifiedWithoutEditingHolder.cleanScope(scope);
         }
 
         try {
@@ -325,8 +332,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
 
               public void processModifiedWithoutEditing(VirtualFile file) {
+                if (file == null || !updateUnversionedFiles) return;
                 if (myDisposed) throw new DisposedException();
-                //TODO:
+                if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                  modifiedWithoutEditingHolder.addFile(file);
+                  ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                }
               }
 
               public boolean isUpdatingUnversionedFiles() {
@@ -355,6 +367,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         if (updateUnversionedFiles) {
           myUnversionedFilesHolder = unversionedHolder;
           myDeletedFilesHolder = deletedHolder;
+          myModifiedWithoutEditingHolder = modifiedWithoutEditingHolder;
         }
         myListeners.getMulticaster().changeListUpdateDone();
       }
@@ -446,6 +459,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   List<VirtualFile> getUnversionedFiles() {
     return new ArrayList<VirtualFile>(myUnversionedFilesHolder.getFiles());
+  }
+
+  List<VirtualFile> getModifiedWithoutEditing() {
+    return new ArrayList<VirtualFile>(myModifiedWithoutEditingHolder.getFiles());
   }
 
   List<FilePath> getDeletedFiles() {
@@ -566,6 +583,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NotNull
   public FileStatus getStatus(VirtualFile file) {
     if (myUnversionedFilesHolder.containsFile(file)) return FileStatus.UNKNOWN;
+    if (myModifiedWithoutEditingHolder.containsFile(file)) return FileStatus.HIJACKED;
     final Change change = getChange(file);
     return change == null ? FileStatus.NOT_CHANGED : change.getFileStatus();
   }
