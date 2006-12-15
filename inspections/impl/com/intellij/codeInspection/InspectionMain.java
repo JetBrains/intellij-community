@@ -53,6 +53,9 @@ public class InspectionMain implements ApplicationStarter {
         else if ("-e".equals(arg)){
           myApplication.myRunWithEditorSettings = true;
         }
+        else if ("-t".equals(arg)) {
+          myApplication.myErrorCodeRequired = false;
+        }
         else {
           System.err.println("unexpected argument: " + arg);
           printHelp();

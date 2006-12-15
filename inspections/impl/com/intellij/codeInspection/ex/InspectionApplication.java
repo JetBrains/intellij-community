@@ -55,6 +55,8 @@ public class InspectionApplication {
   private Project myProject;
   private int myVerboseLevel = 0;
 
+  public boolean myErrorCodeRequired = true;
+
   public void startup() {
     if (myProjectPath == null || myOutPath == null || myProfileName == null) {
       logError(myProjectPath + myOutPath + myProfileName);
@@ -75,7 +77,7 @@ public class InspectionApplication {
           LOG.error(e);
         }
         finally {
-          application.exit(true);
+          if (myErrorCodeRequired) application.exit(true);
         }
       }
     });
@@ -136,13 +138,13 @@ public class InspectionApplication {
           if (psiObjectClass == null) {
             if (ModuleManager.getInstance(myProject).getModules().length == 0) {
               logError(InspectionsBundle.message("inspection.no.modules.error.message"));
-              System.exit(1);
+              if (myErrorCodeRequired) System.exit(1);
               return;
             }
             logError(InspectionsBundle.message("inspection.no.jdk.error.message"));
             logError(InspectionsBundle.message("offline.inspections.jdk.not.found",
                                                ProjectRootManager.getInstance(myProject).getProjectJdkName()));
-            System.exit(1);
+            if (myErrorCodeRequired) System.exit(1);
             return;
           }
           final Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -156,7 +158,7 @@ public class InspectionApplication {
                   logError(InspectionsBundle.message("offline.inspections.module.jdk.not.found", 
                                                      ((JdkOrderEntry)entry).getJdkName(),
                                                      module.getName()));
-                  System.exit(1);
+                  if (myErrorCodeRequired) System.exit(1);
                   return;
                 }
               }
@@ -219,7 +221,7 @@ public class InspectionApplication {
     catch (Throwable e) {
       LOG.error(e);
       logError(e.getMessage());
-      System.exit(1);
+      if (myErrorCodeRequired) System.exit(1);
     }
   }
 
