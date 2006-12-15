@@ -171,8 +171,7 @@ public class HintManager implements ApplicationComponent {
   public void initComponent() { }
 
   private void updateScrollableHints(VisibleAreaEvent e) {
-    for (int i = 0; i < myHintsStack.size(); i++) {
-      HintInfo info = myHintsStack.get(i);
+    for (HintInfo info : myHintsStack) {
       if (info.hint instanceof LightweightHint && (info.flags & UPDATE_BY_SCROLLING) != 0) {
         updateScrollableHintPosition(e, info.hint, (info.flags & HIDE_IF_OUT_OF_EDITOR) != 0);
       }
@@ -338,8 +337,7 @@ public class HintManager implements ApplicationComponent {
   }
 
   public void hideAllHints() {
-    for (int i = 0; i < myHintsStack.size(); i++) {
-      HintInfo info = myHintsStack.get(i);
+    for (HintInfo info : myHintsStack) {
       if (info.hint.isVisible()) {
         info.hint.hide();
       }
@@ -430,7 +428,7 @@ public class HintManager implements ApplicationComponent {
   /**
    * @return position of hint in layered pane coordinate system
    */
-  public Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos, short constraint) {
+  public static Point getHintPosition(LightweightHint hint, Editor editor, LogicalPosition pos, short constraint) {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 

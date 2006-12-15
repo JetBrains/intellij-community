@@ -271,5 +271,9 @@ public class HighlightInfo {
     public String getDisplayName() {
       return myDisplayName;
     }
+
+    public String toString() {
+      return "descriptor: " + getAction().getText();
+    }
   }
 }

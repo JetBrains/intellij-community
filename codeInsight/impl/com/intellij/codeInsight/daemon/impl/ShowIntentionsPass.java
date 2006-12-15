@@ -180,18 +180,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
 
       if (showBulb) {
-        //if (myIsSecondPass) {
-          IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
-          if (hintComponent != null) {
-            hintComponent.updateIfNotShowingPopup(fixesToShow, intentionsToShow);
-          }
-        //}
-
-        if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
+        IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+        if (hintComponent != null) {
+          hintComponent.updateIfNotShowingPopup(fixesToShow, intentionsToShow);
+        }
+        else if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
           hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow, fixesToShow, false);
-          //if (!myIsSecondPass) {
-            codeAnalyzer.setLastIntentionHint(hintComponent);
-          //}
+          codeAnalyzer.setLastIntentionHint(hintComponent);
         }
       }
     }

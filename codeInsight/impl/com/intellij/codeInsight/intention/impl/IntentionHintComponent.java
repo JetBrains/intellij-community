@@ -28,6 +28,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,6 +40,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -76,16 +78,16 @@ public class IntentionHintComponent extends JPanel {
   private ListPopup myPopup;
 
   private class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching> {
-    private List<IntentionActionWithTextCaching> myActions;
+    private Set<IntentionActionWithTextCaching> myActions;
     private IntentionManagerSettings mySettings;
-    private List<IntentionAction> myQuickFixes;
+    private Set<IntentionAction> myQuickFixes;
 
     public IntentionListStep(List<HighlightInfo.IntentionActionDescriptor> quickFixes,
                              List<HighlightInfo.IntentionActionDescriptor> intentions) {
       mySettings = IntentionManagerSettings.getInstance();
-      ArrayList<HighlightInfo.IntentionActionDescriptor> allActions = new ArrayList<HighlightInfo.IntentionActionDescriptor>(quickFixes);
+      Set<HighlightInfo.IntentionActionDescriptor> allActions = new THashSet<HighlightInfo.IntentionActionDescriptor>(quickFixes);
       allActions.addAll(intentions);
-      List<IntentionAction> actions = new ArrayList<IntentionAction>();
+      Set<IntentionAction> actions = new THashSet<IntentionAction>();
       for (HighlightInfo.IntentionActionDescriptor pair : quickFixes) {
         actions.add(pair.getAction());
         if (pair.getOptions() != null) {
@@ -96,8 +98,8 @@ public class IntentionHintComponent extends JPanel {
       myActions = wrapActions(allActions);
     }
 
-    private List<IntentionActionWithTextCaching> wrapActions(ArrayList<HighlightInfo.IntentionActionDescriptor> actions) {
-      List<IntentionActionWithTextCaching> compositeActions = new ArrayList<IntentionActionWithTextCaching>(actions.size());
+    private Set<IntentionActionWithTextCaching> wrapActions(Set<HighlightInfo.IntentionActionDescriptor> actions) {
+      Set<IntentionActionWithTextCaching> compositeActions = new THashSet<IntentionActionWithTextCaching>(actions.size());
       for (HighlightInfo.IntentionActionDescriptor pair : actions) {
         if (pair.getAction() != null) {
           IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.getAction(), pair.getDisplayName());
@@ -158,7 +160,7 @@ public class IntentionHintComponent extends JPanel {
 
     @NotNull
     public List<IntentionActionWithTextCaching> getValues() {
-      return myActions;
+      return new ArrayList<IntentionActionWithTextCaching>(myActions);
     }
 
     @NotNull
@@ -190,7 +192,7 @@ public class IntentionHintComponent extends JPanel {
     public void canceled() {
       if (myPopup.getListStep() == this) {
         // Root canceled. Create new popup. This one cannot be reused.
-        myPopup = JBPopupFactory.getInstance().createWizardStep(this);
+        myPopup = JBPopupFactory.getInstance().createListPopup(this);
       }
     }
 
@@ -201,6 +203,22 @@ public class IntentionHintComponent extends JPanel {
     public boolean isSpeedSearchEnabled() { return false; }
     public boolean isAutoSelectionEnabled() { return false; }
     public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return null; }
+
+    public void updateActions(final List<HighlightInfo.IntentionActionDescriptor> quickFixes,
+                              final List<HighlightInfo.IntentionActionDescriptor> intentions) {
+      Set<HighlightInfo.IntentionActionDescriptor> allActions = new THashSet<HighlightInfo.IntentionActionDescriptor>(quickFixes);
+      allActions.addAll(intentions);
+      List<IntentionAction> actions = new ArrayList<IntentionAction>();
+      for (HighlightInfo.IntentionActionDescriptor pair : quickFixes) {
+        actions.add(pair.getAction());
+        if (pair.getOptions() != null) {
+          actions.addAll(pair.getOptions());
+        }
+      }
+      myQuickFixes.addAll(actions);
+      myActions.addAll(wrapActions(allActions));
+      myPopup = JBPopupFactory.getInstance().createListPopup(this);
+    }
   }
 
   private static class IntentionActionWithTextCaching {
@@ -214,6 +232,8 @@ public class IntentionHintComponent extends JPanel {
       myOptionIntentions = new ArrayList<IntentionAction>();
       myOptionFixes = new ArrayList<IntentionAction>();
       myText = action.getText();
+      // needed for checking errors in user written actions
+      //noinspection ConstantConditions
       LOG.assertTrue(myText != null, "action "+action.getClass()+" text returned null");
       myAction = action;
       myDisplayName = displayName;
@@ -247,6 +267,10 @@ public class IntentionHintComponent extends JPanel {
     public String getToolName() {
       return myDisplayName;
     }
+
+    public String toString() {
+      return getText();
+    }
   }
 
   public static IntentionHintComponent showIntentionHint(Project project,
@@ -274,7 +298,13 @@ public class IntentionHintComponent extends JPanel {
   public void updateIfNotShowingPopup(List<HighlightInfo.IntentionActionDescriptor> quickfixes,
                                       List<HighlightInfo.IntentionActionDescriptor> intentions) {
     if (!myPopupShown) {
-      myPopup = JBPopupFactory.getInstance().createWizardStep(new IntentionListStep(quickfixes, intentions));
+      if (myPopup.getListStep() instanceof IntentionListStep) {
+        IntentionListStep step = (IntentionListStep)myPopup.getListStep();
+        step.updateActions(quickfixes, intentions);
+      }
+      else {
+       myPopup = JBPopupFactory.getInstance().createListPopup(new IntentionListStep(quickfixes, intentions));
+      }
     }
   }
 
@@ -364,7 +394,7 @@ public class IntentionHintComponent extends JPanel {
     });
 
     myComponentHint = new MyComponentHint(this);
-    myPopup = JBPopupFactory.getInstance().createWizardStep(new IntentionListStep(quickFixes, intentions));
+    myPopup = JBPopupFactory.getInstance().createListPopup(new IntentionListStep(quickFixes, intentions));
   }
 
   private void onMouseExit() {
@@ -504,6 +534,8 @@ public class IntentionHintComponent extends JPanel {
 
     public EnableDisableIntentionAction(IntentionAction action) {
       myActionFamilyName = action.getFamilyName();
+      // needed for checking errors in user written actions
+      //noinspection ConstantConditions
       LOG.assertTrue(myActionFamilyName != null, "action "+action.getClass()+" family returned null");
     }
 
