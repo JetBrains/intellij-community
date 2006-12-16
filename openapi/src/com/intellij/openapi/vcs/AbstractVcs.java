@@ -222,5 +222,9 @@ public abstract class AbstractVcs {
   public CommittedChangesProvider getCommittedChangesProvider() {
     return null;
   }
+
+  public boolean isRollbackOnLastUndo() {
+    return false;
+  }
 }
 

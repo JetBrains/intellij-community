@@ -16,6 +16,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * @author mike
@@ -220,13 +223,37 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
     FileStatus cachedStatus = getCachedStatus(file);
     if (cachedStatus == FileStatus.NOT_CHANGED || file.getModificationStamp() == doc.getModificationStamp()) {
-      fileStatusChanged(file);
       final AbstractVcs vcs = myVcsManager.getVcsFor(file);
       if (vcs == null) return;
+      if (cachedStatus == FileStatus.MODIFIED && file.getModificationStamp() == doc.getModificationStamp()) {
+        if (checkRollbackOnLastUndo(vcs, file)) return;
+      }
+      fileStatusChanged(file);
       ChangeProvider cp = vcs.getChangeProvider();
-      if (cp == null || !cp.isModifiedDocumentTrackingRequired()) return;
-      VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+      if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+      }
     }
+  }
+
+  private boolean checkRollbackOnLastUndo(final AbstractVcs vcs, final VirtualFile file) {
+    final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+    if (vcs.isRollbackOnLastUndo() && checkinEnvironment != null && !((ReadonlyStatusHandlerImpl) ReadonlyStatusHandlerImpl.getInstance(myProject)).SHOW_DIALOG) {
+      Change change = ChangeListManager.getInstance(myProject).getChange(file);
+      if (change != null) {
+        List<VcsException> exceptions = checkinEnvironment.rollbackChanges(Collections.singletonList(change));
+        if (exceptions.isEmpty()) {
+          file.refresh(true, false, new Runnable() {
+            public void run() {
+              fileStatusChanged(file);
+              VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
+            }
+          });
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private class MyDocumentAdapter extends DocumentAdapter {
