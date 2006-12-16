@@ -89,7 +89,13 @@ public class DiffTree<OT, NT> {
         final NT newChild = newChildren.get(i);
 
         if (myComparator.typesEqual(oldChild, newChild)) {
-          build(oldChild, newChild);
+          final ShallowNodeComparator.ThreeState de = myComparator.deepEqual(oldChild, newChild);
+          if (de == ShallowNodeComparator.ThreeState.UNSURE) {
+            build(oldChild, newChild);
+          }
+          else if (de == ShallowNodeComparator.ThreeState.NO) {
+            myConsumer.nodeReplaced(oldChild, newChild);
+          }
         }
         else {
           myConsumer.nodeReplaced(oldChild, newChild);

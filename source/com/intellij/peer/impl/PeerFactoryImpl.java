@@ -41,7 +41,6 @@ import com.intellij.openapi.vcs.impl.FileStatusFactoryImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -56,11 +55,11 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.treetable.TreeTable;
-import org.jetbrains.annotations.NotNull;
-import org.apache.xmlrpc.XmlRpcServer;
+import org.apache.xmlrpc.IdeaAwareWebServer;
 import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
 import org.apache.xmlrpc.WebServer;
-import org.apache.xmlrpc.IdeaAwareWebServer;
+import org.apache.xmlrpc.XmlRpcServer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -313,7 +312,7 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
   }
 
   public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project) {
-    return new PsiBuilderImpl(lang, project, SharedImplUtil.findCharTableByTree(tree), seq);
+    return new PsiBuilderImpl(lang, tree, project, seq);
   }
 
   public XmlRpcServer createRpcServer() {

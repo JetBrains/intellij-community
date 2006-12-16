@@ -7,8 +7,8 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
   private volatile int myState = 0; // 16 bit for type, 15 bit for state and 1 bit for parentFlag
@@ -33,6 +33,20 @@ public abstract class LeafElement extends TreeElement {
 
   public abstract void setText(String text);
   public abstract int textMatches(CharSequence buffer, int start);
+
+  @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
+  public boolean textMatches(char[] buf, int start, int end) {
+    final String text = getText();
+    final int len = text.length();
+
+    if (end - start != len) return false;
+
+    for (int i = 0; i < len; i++) {
+      if (text.charAt(i) != buf[start + i]) return false;
+    }
+
+    return true;
+  }
 
   public void registerInCharTable(CharTable table) { }
 

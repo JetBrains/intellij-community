@@ -7,21 +7,41 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.TreeAspectEvent;
+import com.intellij.pom.tree.events.TreeChangeEvent;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.text.ASTDiffBuilder;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.xml.IXmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.diff.DiffTree;
+import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.DiffTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,16 +65,22 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private int myCurrentLexem;
   private CharSequence myText;
   private boolean myDebugMode = false;
+  private ASTNode myOriginalTree = null;
 
-  public PsiBuilderImpl(Language lang, final Project project, CharTable charTable, CharSequence text) {
+  public PsiBuilderImpl(Language lang, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
     ParserDefinition parserDefinition = lang.getParserDefinition();
     assert parserDefinition != null;
     myLexer = parserDefinition.createLexer(project);
     myWhitespaces = parserDefinition.getWhitespaceTokens();
     myComments = parserDefinition.getCommentTokens();
-    myCharTable = charTable;
-    myFileLevelParsing = myCharTable == null;
+    myCharTable = SharedImplUtil.findCharTableByTree(chameleon);
+
+    if (chameleon instanceof ChameleonElement) { // Shall always be true BTW
+      myOriginalTree = chameleon.getTreeParent().getUserData(BlockSupport.TREE_TO_BE_REPARSED);
+    }
+
+    myFileLevelParsing = myCharTable == null || myOriginalTree != null;
 
     char[] chars = CharArrayUtil.fromSequence(text);
     myLexer.start(chars, 0, text.length());
@@ -80,16 +106,56 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myComments = tokens;
   }
 
+  private static abstract class Node {
+    Node next;
+
+    public abstract IElementType getTokenType();
+    public abstract CharSequence getText();
+
+    public abstract int hc();
+  }
+
   private class StartMarker extends ProductionMarker implements Marker {
     public IElementType myType;
     public DoneMarker myDoneMarker = null;
     public Throwable myDebugAllocationPosition = null;
-    public List<Object> myChildren = null;
+    public Node firstChild;
+    public Node lastChild;
+    private int myHC = -1;
 
     public StartMarker(int idx) {
       super(idx);
       if (myDebugMode) {
         myDebugAllocationPosition = new Throwable("Created at the following trace.");
+      }
+    }
+
+    public int hc() {
+      if (myHC == -1) {
+        int hc = 0;
+        Node child = firstChild;
+        while (child != null) {
+          hc += child.hc();
+          child = child.next;
+        }
+        myHC = hc;
+      }
+
+      return myHC;
+    }
+
+    public CharSequence getText() {
+      return new CharArrayCharSequence(myLexer.getBuffer(), myLexems.get(myLexemIndex).myTokenStart, myLexems.get(myDoneMarker.myLexemIndex).myTokenStart);
+    }
+
+    public void addChild(Node node) {
+      if (firstChild == null) {
+        firstChild = node;
+        lastChild = node;
+      }
+      else {
+        lastChild.next = node;
+        lastChild = node;
       }
     }
 
@@ -124,6 +190,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myType = ElementType.ERROR_ELEMENT;
       PsiBuilderImpl.this.error(this, message);
     }
+
+    public IElementType getTokenType() {
+      return myType;
+    }
   }
 
   private Marker preceed(final StartMarker marker) {
@@ -134,17 +204,30 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return pre;
   }
 
-  public class Token {
+  public class Token extends Node {
     private IElementType myTokenType;
     private int myTokenStart;
     private int myTokenEnd;
     private int myState;
+    private int myHC = -1;
 
     public Token() {
       myTokenType = myLexer.getTokenType();
       myTokenStart = myLexer.getTokenStart();
       myTokenEnd = myLexer.getTokenEnd();
       myState = myLexer.getState();
+    }
+
+    public int hc() {
+      if (myHC == -1) {
+        myHC = StringUtil.stringHashCode(myLexer.getBuffer(), myTokenStart, myTokenEnd - myTokenStart);
+      }
+
+      return myHC;
+    }
+
+    public CharSequence getText() {
+      return new CharArrayCharSequence(myLexer.getBuffer(), myTokenStart, myTokenEnd);
     }
 
     public IElementType getTokenType() {
@@ -156,7 +239,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
-  private static class ProductionMarker {
+  private abstract static class ProductionMarker extends Node {
     public int myLexemIndex;
 
     public ProductionMarker(final int lexemIndex) {
@@ -170,6 +253,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public DoneMarker(final StartMarker marker, int currentLexem) {
       super(currentLexem);
       myStart = marker;
+    }
+
+    public int hc() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
+
+    public IElementType getTokenType() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
+
+
+    public CharSequence getText() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
   }
 
@@ -188,6 +284,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public ErrorItem(final String message, int idx) {
       super(idx);
       myMessage = message;
+    }
+
+    public int hc() {
+      return 0;
+    }
+
+    public CharSequence getText() {
+      return "";
+    }
+
+    public IElementType getTokenType() {
+      return ElementType.ERROR_ELEMENT;
     }
   }
 
@@ -239,7 +347,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @Nullable
   private Token getTokenOrWhitespace() {
-    while(myCurrentLexem >= myLexems.size()) {
+    while (myCurrentLexem >= myLexems.size()) {
       if (myLexer.getTokenType() == null) return null;
       myLexems.add(new Token());
       myLexer.advance();
@@ -275,7 +383,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public void doneBefore(Marker marker, Marker before) {
 // TODO: there could be not done markers after 'marker' and that's normal
 //     doValidnessChecks(marker);
-    
+
     int idx = myProduction.lastIndexOf(before);
 
     DoneMarker doneMarker = new DoneMarker((StartMarker)marker, ((StartMarker)before).myLexemIndex);
@@ -334,8 +442,22 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public ASTNode getTreeBuilt() {
-    StartMarker rootMarker = (StartMarker)myProduction.get(0);
+    StartMarker rootMarker = prepareLightTree();
 
+    if (myOriginalTree != null) {
+      merge(myOriginalTree, rootMarker);
+      throw new BlockSupport.ReparsedSuccessfullyException();
+    }
+    else {
+      final ASTNode rootNode = createRootAST(rootMarker);
+
+      bind((CompositeElement)rootNode, rootMarker);
+
+      return rootNode;
+    }
+  }
+
+  private ASTNode createRootAST(final StartMarker rootMarker) {
     final ASTNode rootNode;
     if (myFileLevelParsing) {
       rootNode = new FileElement(rootMarker.myType);
@@ -345,12 +467,65 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       rootNode = createComposite(rootMarker);
       rootNode.putUserData(CharTable.CHAR_TABLE_KEY, myCharTable);
     }
+    return rootNode;
+  }
+
+  private class MyBuilder implements DiffTreeChangeBuilder<ASTNode, Node> {
+    private ASTDiffBuilder myDelegate;
+    private ASTConvertor myConvertor;
+
+    public MyBuilder(PsiFileImpl file, Node rootNode) {
+      myDelegate = new ASTDiffBuilder(file);
+      myConvertor = new ASTConvertor(rootNode);
+    }
+
+    public void nodeDeleted(final ASTNode oldParent, final ASTNode oldNode) {
+      myDelegate.nodeDeleted(oldParent, oldNode);
+    }
+
+    public void nodeInserted(final ASTNode oldParent, final Node newNode, final int pos) {
+      myDelegate.nodeInserted(oldParent, myConvertor.convert(newNode), pos);
+    }
+
+    public void nodeReplaced(final ASTNode oldChild, final Node newChild) {
+      myDelegate.nodeReplaced(oldChild, myConvertor.convert(newChild));
+    }
+
+    public TreeChangeEvent getEvent() {
+      return myDelegate.getEvent();
+    }
+  }
+
+  private void merge(final ASTNode oldNode, final StartMarker newNode) {
+    final PsiFileImpl file = (PsiFileImpl)oldNode.getPsi().getContainingFile();
+    final PomModel model = file.getProject().getModel();
+
+    try {
+      model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
+        public PomModelEvent runInner() throws IncorrectOperationException {
+          final MyBuilder builder = new MyBuilder(file, newNode);
+          DiffTree.diff(new ASTDiffTreeStructure(oldNode), new MyTreeStructure(newNode), new MyComparator(), builder);
+          file.subtreeChanged();
+
+          return new TreeAspectEvent(model, builder.getEvent());
+        }
+      });
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  private StartMarker prepareLightTree() {
+    StartMarker rootMarker = (StartMarker)myProduction.get(0);
 
     for (int i = 1; i < myProduction.size() - 1; i++) {
       ProductionMarker item = myProduction.get(i);
 
       if (item instanceof StartMarker) {
-        while (item.myLexemIndex < myLexems.size() && myWhitespaces.contains(myLexems.get(item.myLexemIndex).getTokenType())) item.myLexemIndex++;
+        while (item.myLexemIndex < myLexems.size() && myWhitespaces.contains(myLexems.get(item.myLexemIndex).getTokenType())) {
+          item.myLexemIndex++;
+        }
       }
       else if (item instanceof DoneMarker || item instanceof ErrorItem) {
         int prevProductionLexIndex = myProduction.get(i - 1).myLexemIndex;
@@ -361,9 +536,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
 
-    ASTNode curNode = rootNode;
+    StartMarker curNode = rootMarker;
+
     int curToken = 0;
     int lastErrorIndex = -1;
+
+    Stack<StartMarker> nodes = new Stack<StartMarker>();
+    nodes.push(rootMarker);
+
     for (int i = 1; i < myProduction.size(); i++) {
       ProductionMarker item = myProduction.get(i);
 
@@ -372,33 +552,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (item instanceof StartMarker) {
         StartMarker marker = (StartMarker)item;
         curToken = insertLeafs(curToken, lexIndex, curNode);
-        ASTNode childNode;
-
-        if (marker.myType != ElementType.ERROR_ELEMENT) {
-          childNode = createComposite(marker);
-        } else {
-          childNode = new PsiErrorElementImpl();
-          if (marker.myDoneMarker instanceof DoneWithErrorMarker) {
-            ((PsiErrorElementImpl)childNode).setErrorDescription(((DoneWithErrorMarker)marker.myDoneMarker).myMessage);
-          }
-        }
-
-        TreeUtil.addChildren((CompositeElement)curNode, (TreeElement)childNode);
-        curNode = childNode;
+        curNode.addChild(item);
+        nodes.push(curNode);
+        curNode = marker;
       }
       else if (item instanceof DoneMarker) {
-        DoneMarker doneMarker = (DoneMarker)item;
         curToken = insertLeafs(curToken, lexIndex, curNode);
-        LOG.assertTrue(doneMarker.myStart.myType == curNode.getElementType());
-        curNode = curNode.getTreeParent();
+        curNode = nodes.pop();
       }
       else if (item instanceof ErrorItem) {
         curToken = insertLeafs(curToken, lexIndex, curNode);
         if (curToken == lastErrorIndex) continue;
         lastErrorIndex = curToken;
-        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-        errorElement.setErrorDescription(((ErrorItem)item).myMessage);
-        TreeUtil.addChildren((CompositeElement)curNode, errorElement);
+        curNode.addChild(item);
       }
     }
 
@@ -407,69 +573,171 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       LOG.assertTrue(false, "Not all of the tokens inserted to the tree, parsed text:\n" + myText);
     }
 
-    LOG.assertTrue(curNode == null, "Unbalanced tree");
+    myLexems.add(new Token()); // $ terminating token.
 
-    return rootNode;
+    LOG.assertTrue(curNode == rootMarker, "Unbalanced tree");
+    return rootMarker;
   }
 
-  private CompositeElement createComposite(final StartMarker rootMarker) {
-    final IElementType type = rootMarker.myType;
-    if (type instanceof IXmlElementType) { // hack....
+  private void bind(CompositeElement ast, StartMarker marker) {
+    Node child = marker.firstChild;
+    while (child != null) {
+      if (child instanceof StartMarker) {
+        final StartMarker childMarker = (StartMarker)child;
+
+        CompositeElement childNode = createComposite(childMarker);
+
+        TreeUtil.addChildren(ast, childNode);
+        bind(childNode, childMarker);
+      }
+      else if (child instanceof ErrorItem) {
+        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
+        errorElement.setErrorDescription(((ErrorItem)child).myMessage);
+        TreeUtil.addChildren(ast, errorElement);
+      }
+      else if (child instanceof Token) {
+        TreeUtil.addChildren(ast, createLeaf((Token)child));
+      }
+
+      child = child.next;
+    }
+  }
+
+  private CompositeElement createComposite(final StartMarker marker) {
+    final IElementType type = marker.myType;
+    if (type == ElementType.ERROR_ELEMENT) {
+      CompositeElement childNode = new PsiErrorElementImpl();
+      if (marker.myDoneMarker instanceof DoneWithErrorMarker) {
+        ((PsiErrorElementImpl)childNode).setErrorDescription(((DoneWithErrorMarker)marker.myDoneMarker).myMessage);
+      }
+      return childNode;
+    }
+    else if (type instanceof IXmlElementType) { // hack....
       return Factory.createCompositeElement(type);
     }
     return new CompositeElement(type);
   }
 
-  private static class MyComparator implements ShallowNodeComparator<ASTNode, Object> {
-    public ThreeState deepEqual(final ASTNode oldNode, final Object newNode) {
-      return null;
+  private class MyComparator implements ShallowNodeComparator<ASTNode, Node> {
+    public ThreeState deepEqual(final ASTNode oldNode, final Node newNode) {
+      if (!typesEqual(oldNode, newNode)) return ThreeState.NO;
+
+      return textMatches(oldNode, newNode);
     }
 
-    public boolean typesEqual(final ASTNode oldNode, final Object newNode) {
-      return false;
-    }
-
-    public boolean hashcodesEqual(final ASTNode oldNode, final Object newNode) {
-      return false;
-    }
-  }
-
-  private class MyTreeStructure implements DiffTreeStructure<Object> {
-    private List<Object> EMPTY = Collections.emptyList();
-
-    public Object prepareForGetChildren(final Object o) {
-      return o;
-    }
-
-    public Object getRoot() {
-      return myProduction.get(0);
-    }
-
-    public List<Object> getChildren(final Object item) {
-      if (item instanceof Token || item instanceof ErrorItem) return EMPTY;
-      List<Object> childern = new ArrayList<Object>();
-      StartMarker marker = (StartMarker)item;
-      DoneMarker done = marker.myDoneMarker;
-
-      int idx = myProduction.indexOf(marker) + 1;
-      int currentLex = marker.myLexemIndex;
-      while (true) {
-        ProductionMarker childMarker = myProduction.get(idx);
-
-        while (currentLex < childMarker.myLexemIndex) {
-          childern.add(myLexems.get(currentLex++));
-        }
-
-        if (childMarker == done) break;
-
-        childern.add(childMarker);
-        if (childMarker instanceof StartMarker) {
-          DoneMarker doneChild = ((StartMarker)childMarker).myDoneMarker;
-          idx = myProduction.indexOf(doneChild) + 1;
+    private String getErrorMessage(Node node) {
+      if (node instanceof ErrorItem) return ((ErrorItem)node).myMessage;
+      if (node instanceof StartMarker) {
+        final StartMarker marker = (StartMarker)node;
+        if (marker.myType == ElementType.ERROR_ELEMENT && marker.myDoneMarker instanceof DoneWithErrorMarker) {
+          return ((DoneWithErrorMarker)marker.myDoneMarker).myMessage;
         }
       }
 
-      return childern;
+      return null;
+    }
+
+    private ThreeState textMatches(final ASTNode oldNode, final Node newNode) {
+      if (oldNode instanceof ChameleonElement || newNode.getTokenType() instanceof IChameleonElementType) {
+        return ((TreeElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
+      }
+
+      if (oldNode.getElementType() instanceof IChameleonElementType && newNode.getTokenType() instanceof IChameleonElementType) {
+        return ((TreeElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
+      }
+
+      if (oldNode instanceof LeafElement) {
+        if (newNode instanceof Token) {
+          return ((LeafElement)oldNode).textMatches(myLexer.getBuffer(), ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd) ? ThreeState.YES : ThreeState.NO;
+        }
+        return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
+      }
+
+      if (oldNode instanceof PsiErrorElement && newNode.getTokenType() == ElementType.ERROR_ELEMENT) {
+        final String m1 = ((PsiErrorElement)oldNode).getErrorDescription();
+        final String m2 = getErrorMessage(newNode);
+        if (!Comparing.equal(m1, m2)) return ThreeState.NO;
+      }
+
+      return ThreeState.UNSURE;
+    }
+
+    public boolean typesEqual(final ASTNode n1, final Node n2) {
+      if (n1 instanceof PsiWhiteSpaceImpl) {
+        return n2.getTokenType() == XmlTokenType.XML_REAL_WHITE_SPACE || myWhitespaces.contains(n2.getTokenType());
+      }
+
+      return n1.getElementType() == n2.getTokenType();
+    }
+
+    public boolean hashcodesEqual(final ASTNode n1, final Node n2) {
+      if (n1 instanceof LeafElement && n2 instanceof Token) {
+        return textMatches(n1, n2) == ThreeState.YES;
+      }
+
+      if (n1 instanceof PsiErrorElement && n2.getTokenType() == ElementType.ERROR_ELEMENT) {
+        final PsiErrorElement e1 = ((PsiErrorElement)n1);
+        if (!Comparing.equal(e1.getErrorDescription(), getErrorMessage(n2))) return false;
+      }
+
+      return ((TreeElement)n1).hc() == n2.hc();
+    }
+  }
+
+  private class MyTreeStructure implements DiffTreeStructure<Node> {
+    private List<Node> EMPTY = Collections.emptyList();
+    private final StartMarker myRoot;
+
+    public MyTreeStructure(final StartMarker root) {
+      myRoot = root;
+    }
+
+    public Node prepareForGetChildren(final Node o) {
+      return o;
+    }
+
+    public Node getRoot() {
+      return myRoot;
+    }
+
+    public List<Node> getChildren(final Node item) {
+      if (item instanceof Token || item instanceof ErrorItem) return EMPTY;
+      StartMarker marker = (StartMarker)item;
+
+      Node child = marker.firstChild;
+      if (child == null) return EMPTY;
+
+      List<Node> list = new ArrayList<Node>(50);
+      while (child != null) {
+        list.add(child);
+        child = child.next;
+      }
+
+      return list;
+    }
+  }
+
+  private class ASTConvertor implements Convertor<Node, ASTNode> {
+    private Node myRoot;
+
+    public ASTConvertor(final Node root) {
+      myRoot = root;
+    }
+
+    public ASTNode convert(final Node n) {
+      if (n instanceof Token) {
+        return createLeaf((Token)n);
+      }
+      else if (n instanceof ErrorItem) {
+        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
+        errorElement.setErrorDescription(((ErrorItem)n).myMessage);
+        return errorElement;
+      }
+      else {
+        final CompositeElement composite = n == myRoot ? (CompositeElement)createRootAST((StartMarker)myRoot) : createComposite((StartMarker)n);
+        bind(composite, (StartMarker)n);
+        return composite;
+      }
     }
   }
 
@@ -477,21 +745,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myDebugMode = dbgMode;
   }
 
-  private int insertLeafs(int curToken, int lastIdx, final ASTNode curNode) {
+  private int insertLeafs(int curToken, int lastIdx, final StartMarker curNode) {
     lastIdx = Math.min(lastIdx, myLexems.size());
     while (curToken < lastIdx) {
       Token lexem = myLexems.get(curToken++);
-      final LeafElement childNode = createLeaf(lexem);
-      if (childNode != null) {
-        TreeUtil.addChildren((CompositeElement)curNode, childNode);
+      if (lexem.myTokenStart < lexem.myTokenEnd) { // Empty token. Most probably a parser directive like indent/dedent in phyton
+        curNode.addChild(lexem);
       }
     }
+
     return curToken;
   }
 
-  @Nullable
+  @NotNull
   private LeafElement createLeaf(final Token lexem) {
-    if (lexem.myTokenStart == lexem.myTokenEnd) return null; // Empty token. Most probably a parser directive like indent/dedent in phyton
     final IElementType type = lexem.getTokenType();
     if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
