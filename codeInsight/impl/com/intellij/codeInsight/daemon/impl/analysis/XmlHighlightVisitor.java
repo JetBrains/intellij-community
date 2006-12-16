@@ -45,8 +45,10 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
@@ -1063,7 +1065,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   public void addMessage(PsiElement context, String message, int type) {
     if (message != null && message.length() > 0) {
-      if (context instanceof XmlTag) {
+      if (context instanceof XmlTag && !(context instanceof JspXmlTagBase)) {
         addElementsForTag((XmlTag)context, message, type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO, null);
       }
       else {
