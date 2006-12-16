@@ -140,14 +140,12 @@ public class MethodSignatureUtil {
   }
 
   @Nullable
-  public static PsiMethod findMethodInSuperClassBySignatureInDerived(final PsiClass aClass, final MethodSignature signature, final boolean checkDeep) {
-    final PsiClass superClass = aClass.getSuperClass();
-    if (superClass != null) {
-      PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-      return doFindMethodInSuperClassBySignatureInDerived(superClass, superSubstitutor, signature, checkDeep);
-    }
-
-    return null;
+  public static PsiMethod findMethodInSuperClassBySignatureInDerived(final @NotNull PsiClass aClass, 
+                                                                     final @NotNull PsiClass superClass,
+                                                                     final MethodSignature signature,
+                                                                     final boolean checkDeep) {
+    PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
+    return doFindMethodInSuperClassBySignatureInDerived(superClass, superSubstitutor, signature, checkDeep);
   }
 
   @Nullable

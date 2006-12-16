@@ -33,10 +33,13 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
         MethodSignature signature = method.getSignature(substitutor);
         PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
         if (found == null || !isAcceptable(found, method)) {
-          if (parentClass.isInterface() && !inheritor.isInterface() && inheritor.isInheritor(parentClass, false)) {  //check for sibling implementation
-            found = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, signature, true);
-            if (found != null && isAcceptable(found, method)) {
-              return consumer.process(found) && p.isCheckDeep();
+          if (parentClass.isInterface() && !inheritor.isInterface()) {  //check for sibling implementation
+            final PsiClass superClass = inheritor.getSuperClass();
+            if (superClass != null && !superClass.isInheritor(parentClass, true)) {
+              found = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, signature, true);
+              if (found != null && isAcceptable(found, method)) {
+                return consumer.process(found) && p.isCheckDeep();
+              }
             }
           }
           return true;
