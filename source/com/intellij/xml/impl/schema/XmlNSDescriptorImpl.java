@@ -56,8 +56,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return myTargetNamespace != null ? myTargetNamespace : "";
   }
 
-  private final Map<Pair<String, String>, CachedValue<XmlElementDescriptor>> myDescriptorsMap = new HashMap<Pair<String,String>, CachedValue<XmlElementDescriptor>>();
-  private final Map<Pair<String, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = new HashMap<Pair<String,XmlTag>, CachedValue<TypeDescriptor>>();
+  private final Map<Pair<String, String>, CachedValue<XmlElementDescriptor>> myDescriptorsMap = Collections.synchronizedMap(new HashMap<Pair<String,String>, CachedValue<XmlElementDescriptor>>());
+  private final Map<Pair<String, XmlTag>, CachedValue<TypeDescriptor>> myTypesMap = Collections.synchronizedMap(new HashMap<Pair<String,XmlTag>, CachedValue<TypeDescriptor>>());
 
   @Nullable
   public XmlElementDescriptor getElementDescriptor(String localName, String namespace) {
