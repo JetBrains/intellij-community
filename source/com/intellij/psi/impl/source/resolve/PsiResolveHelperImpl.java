@@ -550,7 +550,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         return superType;
       }
     } else {
-       if (forCompletion) guess = PsiWildcardType.createExtends(manager, guess);
+       if (forCompletion && !(guess instanceof PsiWildcardType)) guess = PsiWildcardType.createExtends(manager, guess);
     }
 
     //The following code is the result of deep thought, do not shit it out before discussing with [ven]
