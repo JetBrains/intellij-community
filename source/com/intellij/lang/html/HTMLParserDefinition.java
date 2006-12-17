@@ -6,15 +6,15 @@ import com.intellij.lang.PsiParser;
 import com.intellij.lexer.HtmlLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +48,7 @@ public class HTMLParserDefinition implements ParserDefinition {
   @NotNull
   public PsiParser createParser(final Project project) {
     return PsiUtil.NULL_PARSER;
+    // return new HTMLParser();
   }
 
   @NotNull

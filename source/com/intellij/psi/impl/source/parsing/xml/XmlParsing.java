@@ -17,15 +17,19 @@ import java.util.Stack;
 public class XmlParsing {
   private PsiBuilder myBuilder;
   private Stack<String> myTagNamesStack = new Stack<String>();
+  private final IElementType myTagType;
+  private final IElementType myDocumentType;
 
-  public XmlParsing(final PsiBuilder builder) {
+  public XmlParsing(final PsiBuilder builder, final IElementType tagType, final IElementType documentType) {
     myBuilder = builder;
+    myTagType = tagType;
+    myDocumentType = documentType;
   }
 
   public void parseDocument() {
     final PsiBuilder.Marker document = mark();
 
-    while (token() == XML_COMMENT_START) {
+    while (isCommentToken(token())) {
       parseComment();
     }
 
@@ -40,7 +44,7 @@ public class XmlParsing {
         rootTagCount++;
         parseTag(rootTagCount > 1);
       }
-      else if (tt == XML_COMMENT_START) {
+      else if (isCommentToken(tt)) {
         error = flushError(error);
         parseComment();
       }
@@ -67,10 +71,10 @@ public class XmlParsing {
       final PsiBuilder.Marker rootTag = mark();
       error = mark();
       error.error("Valid XML document must have a root tag");
-      rootTag.done(XML_TAG);
+      rootTag.done(myTagType);
     }
 
-    document.done(XML_DOCUMENT);
+    document.done(myDocumentType);
   }
 
   private PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
@@ -139,7 +143,7 @@ public class XmlParsing {
     if (token() == XML_EMPTY_ELEMENT_END) {
       advance();
       myTagNamesStack.pop();
-      tag.done(XML_TAG);
+      tag.done(myTagType);
       return;
     }
 
@@ -149,7 +153,7 @@ public class XmlParsing {
     else {
       error("Tag start is not closed");
       myTagNamesStack.pop();
-      tag.done(XML_TAG);
+      tag.done(myTagType);
       return;
     }
 
@@ -165,7 +169,7 @@ public class XmlParsing {
         if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
           footer.rollbackTo();
           myTagNamesStack.pop();
-          tag.doneBefore(XML_TAG, headerDone, "Element " + tagName + " is not closed");
+          tag.doneBefore(myTagType, headerDone, "Element " + tagName + " is not closed");
           headerDone.drop();
 
           // TODO: error tag unclosed?
@@ -189,10 +193,10 @@ public class XmlParsing {
 
     headerDone.drop();
     myTagNamesStack.pop();
-    tag.done(XML_TAG);
+    tag.done(myTagType);
   }
 
-  private void parseTagContent() {
+  public void parseTagContent() {
     PsiBuilder.Marker xmlText = null;
     while (token() != XML_END_TAG_START && !eof()) {
       final IElementType tt = token();
@@ -216,7 +220,7 @@ public class XmlParsing {
         xmlText = startText(xmlText);
         parseCData();
       }
-      else if (tt == XML_COMMENT_START) {
+      else if (isCommentToken(tt)) {
         xmlText = terminateText(xmlText);
         parseComment();
       }
@@ -239,6 +243,10 @@ public class XmlParsing {
     terminateText(xmlText);
   }
 
+  protected boolean isCommentToken(final IElementType tt) {
+    return tt == XML_COMMENT_START;
+  }
+
   @NotNull
   private PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText == null) {
@@ -248,7 +256,7 @@ public class XmlParsing {
     return xmlText;
   }
 
-  private PsiBuilder.Marker mark() {
+  protected final PsiBuilder.Marker mark() {
     return myBuilder.mark();
   }
 
@@ -275,8 +283,7 @@ public class XmlParsing {
     cdata.done(XML_CDATA);
   }
 
-  private void parseComment() {
-    assert token() == XML_COMMENT_START;
+  protected void parseComment() {
     final PsiBuilder.Marker comment = mark();
     advance();
     while (true) {
@@ -375,7 +382,7 @@ public class XmlParsing {
       else if (tt == XML_DOCTYPE_START) {
         parseDoctype();
       }
-      else if (tt == XML_COMMENT_START) {
+      else if (isCommentToken(tt)) {
         parseComment();
       }
       else if (tt == XML_REAL_WHITE_SPACE) {
@@ -420,15 +427,15 @@ public class XmlParsing {
     pi.done(XML_PROCESSING_INSTRUCTION);
   }
 
-  private IElementType token() {
+  protected final IElementType token() {
     return myBuilder.getTokenType();
   }
 
-  private boolean eof() {
+  protected final boolean eof() {
     return myBuilder.eof();
   }
 
-  private void advance() {
+  protected final void advance() {
     myBuilder.advanceLexer();
   }
 

@@ -24,6 +24,8 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.jsp.IJspElementType;
+import com.intellij.psi.tree.jsp.el.IELElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
@@ -67,11 +69,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private boolean myDebugMode = false;
   private ASTNode myOriginalTree = null;
 
-  public PsiBuilderImpl(Language lang, final ASTNode chameleon, Project project, CharSequence text) {
+  public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
     ParserDefinition parserDefinition = lang.getParserDefinition();
     assert parserDefinition != null;
-    myLexer = parserDefinition.createLexer(project);
+    myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
     myWhitespaces = parserDefinition.getWhitespaceTokens();
     myComments = parserDefinition.getCommentTokens();
     myCharTable = SharedImplUtil.findCharTableByTree(chameleon);
@@ -612,7 +614,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       return childNode;
     }
-    else if (type instanceof IXmlElementType) { // hack....
+    else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) { // hack....
       return Factory.createCompositeElement(type);
     }
     return new CompositeElement(type);
@@ -769,7 +771,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     else if (type instanceof IChameleonElementType) {
       return new ChameleonElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
-    else if (type instanceof IXmlElementType) {
+    else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) {
       return Factory.createLeafElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
     return new LeafPsiElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);

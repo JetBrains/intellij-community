@@ -20,6 +20,7 @@ import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
@@ -31,8 +32,8 @@ import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.ui.UIHelper;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.errorView.ErrorViewFactory;
-import org.apache.xmlrpc.XmlRpcServer;
 import org.apache.xmlrpc.WebServer;
+import org.apache.xmlrpc.XmlRpcServer;
 
 import java.net.InetAddress;
 
@@ -63,6 +64,8 @@ public abstract class PeerFactory {
   public abstract StructureViewFactory getStructureViewFactory();
 
   public abstract PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project);
+
+  public abstract PsiBuilder createBuilder(ASTNode tree, Lexer lexer, Language lang, CharSequence seq, final Project project);
 
   public abstract XmlRpcServer createRpcServer();
 

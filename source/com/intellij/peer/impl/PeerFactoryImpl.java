@@ -15,6 +15,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -312,7 +313,11 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
   }
 
   public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project) {
-    return new PsiBuilderImpl(lang, tree, project, seq);
+    return new PsiBuilderImpl(lang, null, tree, project, seq);
+  }
+
+  public PsiBuilder createBuilder(final ASTNode tree, final Lexer lexer, final Language lang, final CharSequence seq, final Project project) {
+    return new PsiBuilderImpl(lang, lexer, tree, project, seq);
   }
 
   public XmlRpcServer createRpcServer() {
