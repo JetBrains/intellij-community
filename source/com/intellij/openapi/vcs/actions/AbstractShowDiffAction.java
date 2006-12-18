@@ -2,10 +2,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DocumentContent;
-import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.diff.SimpleDiffRequest;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -123,6 +120,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
           request.setContentTitles(revisionNumber.asString(), VcsBundle.message("diff.title.local"));
         }
 
+        request.addHint(DiffTool.HINT_SHOW_FRAME);
         DiffManager.getInstance().getDiffTool().show(request);
       }
     }
