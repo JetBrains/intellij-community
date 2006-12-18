@@ -2,10 +2,10 @@ import java.io.*;
 
 public class X {
   void f() {
-    try {
+    <spot>try</spot> {
       new FileInputStream("file.txt");
     }
-    catch (<spot>Throwable</spot> e) {
+    catch (Throwable e) {
     }
   }
 }
