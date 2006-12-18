@@ -170,21 +170,32 @@ public class DebugProcessEvents extends DebugProcessImpl {
         while (!isStopped()) {
           try {
             final EventSet eventSet = eventQueue.remove();
-
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("EVENTSET " + eventSet);
+            
+            if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
+              int processed = 0;
+              for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext(); ) {
+                final Event event = eventIterator.nextEvent();
+                if (event instanceof MethodExitEvent) {
+                  if (myReturnValueWatcher.processMethodExitEvent((MethodExitEvent)event)) {
+                    processed++;
+                  }
+                }
+              }
+              if (processed == eventSet.size()) {
+                continue;
+              }
             }
 
-            DebugProcessEvents.this.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+            getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
               protected void action() throws Exception {
                 final SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(eventSet);
 
                 for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext(); ) {
                   final Event event = eventIterator.nextEvent();
 
-                  if (LOG.isDebugEnabled()) {
-                    LOG.debug("EVENT : " + event);
-                  }
+                  //if (LOG.isDebugEnabled()) {
+                  //  LOG.debug("EVENT : " + event);
+                  //}
                   try {
                     if (event instanceof VMStartEvent) {
                       //Sun WTK fails when J2ME when event set is resumed on VMStartEvent

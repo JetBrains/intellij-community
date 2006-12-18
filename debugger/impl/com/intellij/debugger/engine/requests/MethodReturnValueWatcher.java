@@ -24,9 +24,11 @@ public class MethodReturnValueWatcher  {
   private @Nullable Value myLastMethodReturnValue;
   private @NotNull MethodExitRequest myWatchMethodReturnValueRequest;
   private java.lang.reflect.Method myReturnValueMethod;
+  private volatile boolean myIsTrackingEnabled;
 
   public MethodReturnValueWatcher(final MethodExitRequest request) {
     myWatchMethodReturnValueRequest = request;
+    myIsTrackingEnabled = request.isEnabled();
   }
 
   public boolean processMethodExitEvent(MethodExitEvent event) {
@@ -67,7 +69,12 @@ public class MethodReturnValueWatcher  {
     return myLastMethodReturnValue;
   }
 
+  public boolean isTrackingEnabled() {
+    return myIsTrackingEnabled;
+  }
+
   public void setTrackingEnabled(boolean enabled) {
+    myIsTrackingEnabled = enabled;
     if (enabled) {
       myLastExecutedMethod = null;
       myLastMethodReturnValue = null;
