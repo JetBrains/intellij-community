@@ -45,10 +45,9 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
@@ -137,12 +136,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private void checkTag(XmlTag tag) {
     if (ourDoJaxpTesting) return;
-
-    if (!checkTagIsClosed(tag)) return;
-
-    if (!(tag.getParent() instanceof XmlTag)) {
-      checkRootTag(tag);
-    }
 
     if (myResult == null) {
       checkTagByDescriptor(tag);
@@ -353,82 +346,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  private boolean checkTagIsClosed(XmlTag tag) {
-    PsiElement[] children = tag.getChildren();
-    String name = tag.getName();
-
-    boolean insideEndTag = false;
-    XmlToken startTagNameToken = null;
-
-    ProgressManager progressManager = ProgressManager.getInstance();
-    for (PsiElement child : children) {
-      progressManager.checkCanceled();
-      if (child instanceof XmlToken) {
-        final XmlToken xmlToken = (XmlToken)child;
-        if (xmlToken.getTokenType() == XmlTokenType.XML_EMPTY_ELEMENT_END) return true;
-        if (xmlToken.getTokenType() == XmlTokenType.XML_END_TAG_START) {
-          insideEndTag = true;
-        }
-
-        if (xmlToken.getTokenType() == XmlTokenType.XML_NAME) {
-          if (insideEndTag) {
-            String text = xmlToken.getText();
-            if (tag instanceof HtmlTag) {
-              text = text.toLowerCase();
-              name = name.toLowerCase();
-            }
-
-            boolean isExtraHtmlTagEnd = false;
-            if (text.equals(name)) {
-              isExtraHtmlTagEnd = tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name);
-              if (!isExtraHtmlTagEnd) return true;
-            }
-
-            HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-              isExtraHtmlTagEnd ? HighlightInfoType.WARNING : HighlightInfoType.ERROR,
-              xmlToken,
-              isExtraHtmlTagEnd ? XmlErrorMessages.message("extra.closing.tag.for.empty.element") : XmlErrorMessages.message("wrong.closing.tag.name"));
-            addToResults(highlightInfo);
-
-            if (isExtraHtmlTagEnd) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveExtraClosingTagIntentionAction(xmlToken));
-            } else {
-              IntentionAction intentionAction = new RenameTagBeginOrEndIntentionAction(tag, name, false);
-              IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag, text, true);
-
-              QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
-              QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction2);
-
-              final ASTNode endOfTagStart = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
-              final ASTNode startOfTagStart = XmlChildRole.START_TAG_START_FINDER.findChild(tag.getNode());
-              TextRange rangeForActionInStartTagName;
-              if (endOfTagStart != null && startOfTagStart != null) {
-                rangeForActionInStartTagName =
-                  new TextRange(startOfTagStart.getStartOffset() + startOfTagStart.getTextLength(), endOfTagStart.getStartOffset());
-              }
-              else {
-                rangeForActionInStartTagName = startTagNameToken.getTextRange();
-              }
-
-              QuickFixAction.registerQuickFixAction(highlightInfo, rangeForActionInStartTagName, intentionAction, null, null);
-              QuickFixAction.registerQuickFixAction(highlightInfo, rangeForActionInStartTagName, intentionAction2, null, null);
-            }
-
-            return false;
-          }
-          else {
-            startTagNameToken = xmlToken;
-          }
-        }
-      }
-    }
-
-    return tag instanceof HtmlTag &&
-           (HtmlUtil.isOptionalEndForHtmlTag(name) ||
-            HtmlUtil.isSingleHtmlTag(name)
-           );
-  }
-
   private void checkTagByDescriptor(final XmlTag tag) {
     String name = tag.getName();
 
@@ -614,43 +531,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private static HighlightInfoType getTagProblemInfoType(XmlTag tag) {
     return tag instanceof HtmlTag && XmlUtil.HTML_URI.equals(tag.getNamespace()) ? HighlightInfoType.WARNING : HighlightInfoType.WRONG_REF;
-  }
-
-  private void checkRootTag(XmlTag tag) {
-    XmlFile file = (XmlFile)tag.getContainingFile();
-
-    XmlProlog prolog = file.getDocument().getProlog();
-
-    if (prolog == null || prolog.getUserData(DO_NOT_VALIDATE_KEY) != null) {
-      return;
-    }
-
-    XmlDoctype doctype = prolog.getDoctype();
-
-    if (doctype == null) {
-      return;
-    }
-
-    XmlElement nameElement = doctype.getNameElement();
-
-    if (nameElement == null) {
-      return;
-    }
-
-    String name = tag.getName();
-    String text = nameElement.getText();
-    if (tag instanceof HtmlTag) {
-      name = name.toLowerCase();
-      text = text.toLowerCase();
-    }
-
-    if (!name.equals(text)) {
-      name = XmlUtil.findLocalNameByQualifiedName(name);
-      
-      if (!name.equals(text)) {
-        addElementsForTag(tag, XmlErrorMessages.message("wrong.root.element"), HighlightInfoType.WRONG_REF, null);
-      }
-    }
   }
 
   public void visitXmlAttribute(XmlAttribute attribute) {

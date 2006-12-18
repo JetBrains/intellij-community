@@ -15,8 +15,7 @@ import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteral
 import com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
-import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
-import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.codeInspection.htmlInspections.*;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection;
 import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
@@ -123,6 +122,11 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       SuspiciousNameCombinationInspection.class,
       DuplicateThrowsInspection.class,
       InconsistentResourceBundleInspection.class,
+
+      // html
+      HtmlExtraClosingTagInspection.class,
+      HtmlWrongClosingTagNameInspection.class,
+      HtmlWrongRootElementInspection.class,
     };
   }
 }
