@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
@@ -43,6 +44,7 @@ import java.util.*;
  * @author peter
  */
 class FileDescriptionCachedValueProvider<T extends DomElement> implements ModificationTracker {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FileDescriptionCachedValueProvider");
   private static final Key<CachedValue<Pair<String,String>>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private final XmlFile myXmlFile;
   private boolean myInModel;
@@ -154,6 +156,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
             rootTagAndNs = DomImplUtil.getRootTagAndNamespace(getInputStream());
           }
           catch (IOException e) {
+            LOG.info(e);
           }
           return new Result<Pair<String, String>>(rootTagAndNs, myXmlFile);
         }
@@ -172,14 +175,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       }
     }
     return null;
-  }
-
-  final boolean isInModel() {
-    return myInModel;
-  }
-
-  final void setInModel(final boolean inModel) {
-    myInModel = inModel;
   }
 
   private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents, DomFileElement changedRoot) {
@@ -269,5 +264,4 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       return Result.create(Boolean.TRUE, dependencies);
     }
   }
-
 }

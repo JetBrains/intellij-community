@@ -13,12 +13,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.psi.xml.XmlTag;
 import org.apache.xerces.parsers.SAXParser;
+import org.apache.xerces.xni.parser.XMLEntityResolver;
+import org.apache.xerces.xni.parser.XMLInputSource;
+import org.apache.xerces.xni.XMLResourceIdentifier;
+import org.apache.xerces.xni.XNIException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.Closeable;
@@ -166,6 +168,24 @@ public class DomImplUtil {
       ourParser.setContentHandler(handler);
       ourParser.setEntityResolver(handler);
       ourParser.setErrorHandler(handler);
+      try {
+        ourParser.setProperty("http://apache.org/xml/properties/internal/entity-resolver", new XMLEntityResolver() {
+          public XMLInputSource resolveEntity(final XMLResourceIdentifier resourceIdentifier) throws XNIException, IOException {
+            return null;
+          }
+        });
+
+        ourParser.setFeature("http://xml.org/sax/features/namespaces", true);
+        ourParser.setFeature("http://apache.org/xml/features/allow-java-encodings", true);
+
+        ourParser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        ourParser.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        ourParser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      }
+      catch (SAXNotRecognizedException e) {
+      }
+      catch (SAXNotSupportedException e) {
+      }
       try {
         ourParser.parse(source);
       }
