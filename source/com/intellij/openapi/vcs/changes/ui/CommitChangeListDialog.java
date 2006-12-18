@@ -60,6 +60,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NonNls private static final String SPLITTER_PROPORTION_OPTION = "CommitChangeListDialog.SPLITTER_PROPORTION";
   private final Action[] myExecutorActions;
   private boolean myShowVcsCommit;
+  private ChangeList myLastSelectedChangeList = null;
 
   private static void commit(Project project, final List<Change> changes, final ChangeList initialSelection,
                              final List<CommitExecutor> executors, boolean showVcsCommit) {
@@ -355,6 +356,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void updateComment() {
     final LocalChangeList list = (LocalChangeList)myBrowser.getSelectedChangeList();
+    if (list == null || list == myLastSelectedChangeList) {
+      return;
+    }
+    myLastSelectedChangeList = list;
 
     String listComment = list.getComment();
     if (StringUtil.isEmptyOrSpaces(listComment)) {
