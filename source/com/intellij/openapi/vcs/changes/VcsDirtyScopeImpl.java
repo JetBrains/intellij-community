@@ -151,7 +151,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   public boolean belongsTo(final FilePath path) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        synchronized (this) {
+        synchronized (VcsDirtyScopeImpl.this) {
           if (myProject.isDisposed()) return Boolean.FALSE;
           if (!myAffectedContentRoots.contains(getRootFor(myIndex, path))) return Boolean.FALSE;
 
