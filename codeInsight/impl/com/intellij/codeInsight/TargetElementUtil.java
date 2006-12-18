@@ -5,13 +5,10 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
-import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 
@@ -77,16 +74,12 @@ public class TargetElementUtil {
 
     offset = adjustOffset(document, offset);
 
-    /*
-    if (file instanceof PsiCompiledElement) {
-      file = (PsiFile)((PsiCompiledElement) file).getMirror();
-    }
-    */
-
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
     if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
+      if (element instanceof PsiNamedElement) return element;
+
       PsiElement parent = element.getParent();
       if (element instanceof PsiIdentifier) {
         if (parent instanceof PsiClass && element.equals(((PsiClass) parent).getNameIdentifier())) {
@@ -102,9 +95,8 @@ public class TargetElementUtil {
           return parent;
         }
       }
-      else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
-        if (parent.getTextOffset() == element.getTextOffset() &&
-            isParentNameEqualToChildText(parent, element) &&
+      else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overridden
+        if (parent.getTextOffset() == element.getTextRange().getStartOffset() &&
             !(parent instanceof XmlAttribute)) {
           return parent;
         }
@@ -255,13 +247,5 @@ public class TargetElementUtil {
     if (file == null) return false;
     if (file.getOriginalFile() != null) file = file.getOriginalFile();
     return file != null && file.getVirtualFile() != null;
-  }
-
-  private static boolean isParentNameEqualToChildText(final PsiElement parent, final PsiElement element) {
-    String text = element.getText();
-    if (element instanceof PsiAntElement) {
-      text = StringUtil.stripQuotesAroundValue(text);
-    }
-    return Comparing.equal(((PsiNamedElement)parent).getName(), text);
   }
 }
