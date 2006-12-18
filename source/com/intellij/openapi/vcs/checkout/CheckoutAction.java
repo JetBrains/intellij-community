@@ -27,7 +27,7 @@ public class CheckoutAction extends AnAction {
 
   private static boolean processProject(final Project project, final File directory) {
     File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*.ipr"));
-    if (files.length > 0) {
+    if (files != null && files.length > 0) {
       int rc = Messages.showYesNoDialog(project, "You have checked out an IntelliJ IDEA project file:\n" + files [0].getAbsolutePath() +
                                                  "\nWould you like to open it?", "Checkout from Version Control", Messages.getQuestionIcon());
       if (rc == 0) {
