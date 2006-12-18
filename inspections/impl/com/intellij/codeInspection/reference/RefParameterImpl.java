@@ -8,9 +8,11 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class RefParameterImpl extends RefElementImpl implements RefParameter {
@@ -100,9 +102,27 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
     ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
   }
 
+  public String getExternalName() {
+    final String[] result = new String[1];
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        PsiParameter parameter = getElement();
+        LOG.assertTrue(parameter != null);
+        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
+        final RefMethod refMethod = (RefMethod)getRefManager().getReference(psiMethod);
+        LOG.assertTrue(refMethod != null);
+        result[0] = refMethod.getExternalName() + " " + PsiFormatUtil.formatVariable(parameter, PsiFormatUtil.SHOW_NAME, PsiSubstitutor.EMPTY);
+      }
+    };
+
+    ApplicationManager.getApplication().runReadAction(runnable);
+
+    return result[0];
+  }
+
   @Nullable
   public static RefElement parameterFromExternalName(final RefManager manager, final String fqName) {
-    final int idx = fqName.lastIndexOf('.');
+    final int idx = fqName.lastIndexOf(' ');
     if (idx > 0) {
       final String paramName = fqName.substring(idx + 1);
       final String method = fqName.substring(0, idx);
@@ -122,5 +142,26 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
       }
     }
     return null; 
+  }
+
+  @Nullable
+  public static PsiParameter findPsiParameter(String fqName, final PsiManager manager) {
+    final int idx = fqName.lastIndexOf(' ');
+    if (idx > 0) {
+      final String paramName = fqName.substring(idx + 1);
+      final String method = fqName.substring(0, idx);
+      final PsiMethod psiMethod = RefMethodImpl.findPsiMethod(manager, method);
+      if (psiMethod != null) {
+        final PsiParameterList list = psiMethod.getParameterList();
+        final PsiParameter[] parameters = list.getParameters();
+        for (PsiParameter parameter : parameters) {
+          final String name = parameter.getName();
+          if (name != null && name.equals(paramName)) {
+            return parameter;
+          }
+        }
+      }
+    }
+    return null;
   }
 }

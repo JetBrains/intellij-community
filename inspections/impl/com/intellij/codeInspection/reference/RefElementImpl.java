@@ -403,7 +403,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
       if (containingFile == null) return null;
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       if (virtualFile == null) return null;
-      return new URL(virtualFile.getUrl() + "#" + element.getTextRange().getStartOffset());
+      return new URL(virtualFile.getUrl() + "#" + element.getTextOffset());
     } catch (MalformedURLException e) {
       LOG.error(e);
     }
