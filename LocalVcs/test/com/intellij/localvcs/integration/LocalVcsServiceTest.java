@@ -106,6 +106,31 @@ public class LocalVcsServiceTest extends TestCase {
     assertTrue(vcs.hasEntry("c:/root"));
     assertFalse(vcs.hasEntry("c:/root/file"));
   }
+  
+  @Test
+  public void testRenamingContentRoot() {
+    TestVirtualFile root = new TestVirtualFile("c:/dir/rootName", null);
+    root.addChild(new TestVirtualFile("file", "", null));
+    roots.add(root);
+    rootManager.updateRoots();
+
+    fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, root, VirtualFile.PROP_NAME, null, "newName"));
+
+    assertFalse(vcs.hasEntry("c:/dir/rootName"));
+    assertTrue(vcs.hasEntry("c:/dir/newName"));
+    assertTrue(vcs.hasEntry("c:/dir/newName/file"));
+  }
+
+  @Test
+  public void testDeletingContentRootExternally() {
+    TestVirtualFile root = new TestVirtualFile("c:/root", null);
+    roots.add(root);
+    rootManager.updateRoots();
+
+    fileManager.fireBeforeFileDeletion(new VirtualFileEvent(null, root, null, null));
+
+    assertFalse(vcs.hasEntry("c:/root"));
+  }
 
   @Test
   public void testCreatingFiles() {

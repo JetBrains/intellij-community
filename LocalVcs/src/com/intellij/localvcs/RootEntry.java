@@ -8,6 +8,7 @@ import java.util.List;
 // todo maybe get rid of create/delete/remove methods
 
 // TODO make entries to be modifiable objects
+// todo rename this class... to something other then RootEntry
 public class RootEntry extends DirectoryEntry {
   // todo try to remove different null-checks
   public RootEntry() {
@@ -61,8 +62,10 @@ public class RootEntry extends DirectoryEntry {
   }
 
   public void rename(String path, String newName) {
+    // todo one more hack to support roots...
+    // todo i defitilety have to do something with it...
     Entry e = getEntry(path);
-    e.changeName(newName);
+    e.changeName(Path.renamed(e.getName(), newName));
   }
 
   public void move(String path, String newParentPath) {

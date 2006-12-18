@@ -7,13 +7,15 @@ import com.intellij.localvcs.TestStorage;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
+import org.easymock.classextension.EasyMock;
+import static org.easymock.classextension.EasyMock.*;
 
 import java.io.IOException;
 
 public class UpdaterTest extends TestCase {
   private LocalVcs vcs;
   private TestVirtualFile root;
-  private TestFileFilter filter;
+  private FileFilter filter;
 
   @Before
   public void setUp() {
@@ -22,7 +24,9 @@ public class UpdaterTest extends TestCase {
     vcs.apply();
 
     root = new TestVirtualFile("root", 1L);
-    filter = new TestFileFilter();
+    filter = createMock(FileFilter.class);
+    expect(filter.isFileAllowed((VirtualFile)anyObject())).andStubReturn(true);
+    replay(filter);
   }
 
   @Test
@@ -92,7 +96,10 @@ public class UpdaterTest extends TestCase {
     TestVirtualFile f = new TestVirtualFile("file", "", null);
     root.addChild(f);
 
-    filter.setFilesWithUnallowedTypes(f);
+    reset(filter);
+    expect(filter.isFileAllowed(f)).andReturn(false);
+    replay(filter);
+
     update();
 
     assertFalse(vcs.hasEntry("root/file"));
@@ -105,7 +112,11 @@ public class UpdaterTest extends TestCase {
     root.addChild(f1);
     root.addChild(f2);
 
-    filter.setFilesWithUnallowedTypes(f1);
+    reset(filter);
+    expect(filter.isFileAllowed(f1)).andReturn(false);
+    expect(filter.isFileAllowed(f2)).andReturn(true);
+    replay(filter);
+
     update();
 
     assertFalse(vcs.hasEntry("root/file1"));

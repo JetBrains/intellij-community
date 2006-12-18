@@ -46,6 +46,15 @@ public class RootEntryRootsTest extends TestCase {
   }
 
   @Test
+  public void testRenamingRoots() {
+    root.createDirectory(null, "c:/dir/root", null);
+    root.rename("c:/dir/root", "newName");
+    
+    assertTrue(root.hasEntry("c:/dir/newName"));
+    assertFalse(root.hasEntry("c:/dir/root"));
+  }
+
+  @Test
   public void testDeletingRoots() {
     root.createDirectory(null, "c:/dir/root", null);
 

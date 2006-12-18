@@ -24,12 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 
-@Bombed(year = 2007,
-        month = Calendar.NOVEMBER,
-        day = 27,
-        time = 19,
-        user = "Anton.Makeev",
-        description = "localVcs is not yet integrated")
 public class LocalVcsComponentTest extends IdeaTestCase {
   private VirtualFile root;
 
