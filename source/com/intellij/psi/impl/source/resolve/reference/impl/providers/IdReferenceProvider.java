@@ -56,7 +56,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
         return new PsiReference[]{new IdRefReference(element, 1)};
       }
       else if (ID_ATTR_NAME.equals(name)) {
-        return new PsiReference[]{new JspReferencesProvider.SelfReference(element)};
+        return new PsiReference[]{new AttributeValueSelfReference(element)};
       }
     }
     return PsiReference.EMPTY_ARRAY;

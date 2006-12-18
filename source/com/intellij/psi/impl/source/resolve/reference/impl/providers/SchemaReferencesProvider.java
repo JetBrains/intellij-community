@@ -53,8 +53,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   @NonNls private static final String NAME_ATTR_NAME = "name";
   @NonNls private static final String MEMBER_TYPES_ATTR_NAME = "memberTypes";
 
-  static class RegExpReference extends JspReferencesProvider.BasicAttributeValueReference implements
-                                                                                          EmptyResolveMessageProvider  {
+  static class RegExpReference extends BasicAttributeValueReference implements EmptyResolveMessageProvider {
     private String message;
 
     public RegExpReference(final PsiElement element) {

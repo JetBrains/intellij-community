@@ -182,21 +182,6 @@ public class IdTableBuilding {
     }
   }
 
-  static class JspxIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars,
-                      int length,
-                      TIntIntHashMap wordsTable,
-                      IndexPattern[] todoPatterns,
-                      int[] todoCounts,
-                      final PsiManager manager) {
-      Lexer lexer = new JspxHighlightingLexer();
-      JspxFilterLexer filterLexer = new JspxFilterLexer(lexer, wordsTable, todoCounts);
-      lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
-      lexer.start(chars, 0, length);
-      while (lexer.getTokenType() != null) lexer.advance();
-    }
-  }
-
   static class EmptyBuilder implements IdCacheBuilder {
     public void build(char[] chars,
                       int length,
@@ -210,7 +195,7 @@ public class IdTableBuilding {
 
   private static final HashMap<FileType,IdCacheBuilder> cacheBuilders = new HashMap<FileType, IdCacheBuilder>();
 
-  public static void registerCacheBuilder(FileType fileType,IdCacheBuilder idCacheBuilder) {
+  public static void registerCacheBuilder(@NotNull FileType fileType,IdCacheBuilder idCacheBuilder) {
     cacheBuilders.put(fileType, idCacheBuilder);
   }
 
@@ -221,7 +206,6 @@ public class IdTableBuilding {
 
     registerCacheBuilder(StdFileTypes.HTML,new HtmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.XHTML,new XHtmlIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.JSPX,new JspxIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PROPERTIES, new PropertiesIdCacheBuilder());
 
@@ -373,7 +357,7 @@ public class IdTableBuilding {
     return new Result(runnable, wordsTable, todoCounts);
   }
 
-  private static final FilterLexer.Filter TOKEN_FILTER = new FilterLexer.Filter() {
+  public static final FilterLexer.Filter TOKEN_FILTER = new FilterLexer.Filter() {
     public boolean reject(IElementType type) {
       return !(type instanceof IJavaElementType) || ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type);
     }

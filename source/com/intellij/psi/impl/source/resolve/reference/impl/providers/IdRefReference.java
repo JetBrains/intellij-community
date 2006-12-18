@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author peter
 */
-public class IdRefReference extends JspReferencesProvider.BasicAttributeValueReference {
+public class IdRefReference extends BasicAttributeValueReference {
 
   public IdRefReference(final PsiElement element, int offset) {
     super(element, offset);
