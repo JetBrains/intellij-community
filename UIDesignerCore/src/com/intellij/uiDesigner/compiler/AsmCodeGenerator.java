@@ -216,6 +216,7 @@ public class AsmCodeGenerator {
     private Map myFieldDescMap = new HashMap();
     private Map myFieldAccessMap = new HashMap();
     private boolean myHaveCreateComponentsMethod = false;
+    private int myCreateComponentsAccess;
     private final boolean myExplicitSetupCall;
 
     public FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
@@ -251,6 +252,7 @@ public class AsmCodeGenerator {
       }
       if (name.equals(CREATE_COMPONENTS_METHOD_NAME) && desc.equals("()V")) {
         myHaveCreateComponentsMethod = true;
+        myCreateComponentsAccess = access;
       }
 
       final MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
@@ -285,7 +287,8 @@ public class AsmCodeGenerator {
       GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC, method, null, null, cv);
       if (haveCustomCreateComponents && myHaveCreateComponentsMethod) {
         generator.visitVarInsn(Opcodes.ALOAD, 0);
-        generator.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, CREATE_COMPONENTS_METHOD_NAME, "()V");
+        int opcode = myCreateComponentsAccess == Opcodes.ACC_PRIVATE ? Opcodes.INVOKESPECIAL : Opcodes.INVOKEVIRTUAL;
+        generator.visitMethodInsn(opcode, myClassName, CREATE_COMPONENTS_METHOD_NAME, "()V");
       }
       buildSetupMethod(generator);
 
