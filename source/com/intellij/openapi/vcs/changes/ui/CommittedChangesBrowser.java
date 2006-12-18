@@ -16,8 +16,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author max
@@ -85,7 +85,8 @@ public class CommittedChangesBrowser extends JPanel {
 
   private void updateBySelectionChange() {
     final int idx = myChangeListsView.getSelectionModel().getLeadSelectionIndex();
-    CommittedChangeList list = idx >= 0 ? myTableModel.getItems().get(idx) : null;
+    final List<CommittedChangeList> items = myTableModel.getItems();
+    CommittedChangeList list = (idx >= 0 && idx < items.size()) ? items.get(idx) : null;
     if (list != mySelectedChangeList) {
       mySelectedChangeList = list;
       myChangesView.setChangesToDisplay(list != null ? new ArrayList<Change>(list.getChanges()) : Collections.<Change>emptyList());
