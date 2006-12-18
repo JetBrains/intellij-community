@@ -9,6 +9,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -19,6 +20,7 @@ import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -79,7 +81,8 @@ public class CreateFormAction extends AbstractCreateFormAction {
 
       final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewForm.xml",
                                              myLastLayoutManager);
-      final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", formBody);
+      @NonNls final String fileName = newName + ".form";
+      final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(fileName, StdFileTypes.GUI_DESIGNER_FORM, formBody);
       createdFile = directory.add(formFile);
 
       if (myLastClassName != null) {
