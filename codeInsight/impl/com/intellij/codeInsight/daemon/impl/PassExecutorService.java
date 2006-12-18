@@ -8,9 +8,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import gnu.trove.TIntObjectHashMap;
@@ -162,7 +162,7 @@ public class PassExecutorService {
       Future<?> future = myExecutorService.submit(pass);
       mySubmittedPasses.put(pass, future);
     }
-  }                                         
+  }
 
   public ExecutorService getDaemonExecutorService() {
     return myExecutorService;
@@ -188,7 +188,6 @@ public class PassExecutorService {
       Thread.currentThread().setName("Highlighting pass " + myPass);
 
       if (myUpdateProgress.isCanceled()) return;
-      ((ProgressManagerImpl)ProgressManager.getInstance()).progressMe(myUpdateProgress);
 
       for (ScheduledPass successor : mySuccessorsOnSubmit) {
         int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
@@ -197,19 +196,23 @@ public class PassExecutorService {
         }
       }
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
+      ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
         public void run() {
-          try {
-            if (myUpdateProgress.isCanceled()) { // IMPORTANT: to check here directly: to verify that nothing has changed before getting read lock!
-              throw new ProcessCanceledException();
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              try {
+                if (myUpdateProgress.isCanceled()) { // IMPORTANT: to check here directly: to verify that nothing has changed before getting read lock!
+                  throw new ProcessCanceledException();
+                }
+                myPass.doCollectInformation(myUpdateProgress);
+              }
+              catch (ProcessCanceledException e) {
+                info(myUpdateProgress, "Canceled ",myPass);
+              }
             }
-            myPass.doCollectInformation(myUpdateProgress);
-          }
-          catch (ProcessCanceledException e) {
-            info(myUpdateProgress, "Canceled ",myPass);
-          }
+          });
         }
-      });
+      },myUpdateProgress);
 
       if (!myUpdateProgress.isCanceled()) {
         for (ScheduledPass successor : mySuccessorsOnCompletion) {

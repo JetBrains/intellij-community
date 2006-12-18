@@ -15,7 +15,6 @@ import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
@@ -25,11 +24,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
 
 /**
  * @author max
@@ -89,7 +89,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final LocalInspectionTool tool = myTools.get(i);
       ProblemDescriptor descriptor = myDescriptors.get(i);
       LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
-      
+
       toolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), true);
     }
   }
@@ -106,35 +106,38 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         public void run() {
           if (progress != null) {
             if (progress.isCanceled()) return;
-            ((ProgressManagerImpl)ProgressManager.getInstance()).progressMe(progress);
           }
-          @NonNls final String name = "LocalInspections from " + index + " to " + (index + chunkSize);
-          PassExecutorService.info(progress, "Started " , name);
-          ApplicationManager.getApplication().runReadAction(new Runnable(){
+          ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
             public void run() {
-              ProblemsHolder holder = new ProblemsHolder(iManager);
-              try {
-                for (int i = index; i < index + chunkSize && i < tools.length; i++) {
-                  LocalInspectionTool tool = tools[i];
-                  PsiElementVisitor elementVisitor = tool.buildVisitor(holder, true);
-                  for (PsiElement element : elements) {
-                    if (progress != null) {
-                      progress.checkCanceled();
+              @NonNls final String name = "LocalInspections from " + index + " to " + (index + chunkSize);
+              PassExecutorService.info(progress, "Started " , name);
+              ApplicationManager.getApplication().runReadAction(new Runnable(){
+                public void run() {
+                  ProblemsHolder holder = new ProblemsHolder(iManager);
+                  try {
+                    for (int i = index; i < index + chunkSize && i < tools.length; i++) {
+                      LocalInspectionTool tool = tools[i];
+                      PsiElementVisitor elementVisitor = tool.buildVisitor(holder, true);
+                      for (PsiElement element : elements) {
+                        if (progress != null) {
+                          progress.checkCanceled();
+                        }
+                        element.accept(elementVisitor);
+                      }
+                      //System.out.println("tool finished "+tool);
+                      if (holder.hasResults()) {
+                        appendDescriptors(holder.getResults(), tool, progress);
+                      }
                     }
-                    element.accept(elementVisitor);
                   }
-                  //System.out.println("tool finished "+tool);
-                  if (holder.hasResults()) {
-                    appendDescriptors(holder.getResults(), tool, progress);
+                  catch (ProcessCanceledException e) {
+                    PassExecutorService.info(progress, "Canceled " , name);
                   }
                 }
-              }
-              catch (ProcessCanceledException e) {
-                PassExecutorService.info(progress, "Canceled " , name);
-              }
+              });
+              PassExecutorService.info(progress, "Finished ", name);
             }
-          });
-          PassExecutorService.info(progress, "Finished ", name);
+          },progress);
         }
       };
       inspectionChunks.add(chunk);

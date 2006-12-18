@@ -155,10 +155,27 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
       }
     }
   }
+  public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
+    Thread currentThread = Thread.currentThread();
 
-  public void progressMe(ProgressIndicator progress) {
-    final Thread currentThread = Thread.currentThread();
-    myThreadToIndicatorMap.put(currentThread, progress);
+    ProgressIndicator oldIndicator;
+    if (progress == null) {
+      oldIndicator = myThreadToIndicatorMap.remove(currentThread);
+    }
+    else {
+      oldIndicator = myThreadToIndicatorMap.put(currentThread, progress);
+    }
+    try {
+      process.run();
+    }
+    finally {
+      if (oldIndicator == null) {
+        myThreadToIndicatorMap.remove(currentThread);
+      }
+      else {
+        myThreadToIndicatorMap.put(currentThread, oldIndicator);
+      }
+    }
   }
 
   public ProgressIndicator getProgressIndicator() {
