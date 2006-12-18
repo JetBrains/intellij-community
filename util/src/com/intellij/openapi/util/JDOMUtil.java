@@ -44,7 +44,17 @@ import java.util.List;
 public class JDOMUtil {
   //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;
-  private static SAXBuilder ourSaxBuilder = null;
+  private static ThreadLocal<SAXBuilder> ourSaxBuilder = new ThreadLocal<SAXBuilder>(){
+    protected SAXBuilder initialValue() {
+      SAXBuilder saxBuilder = new SAXBuilder();
+      saxBuilder.setEntityResolver(new EntityResolver() {
+        public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+          return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
+        }
+      });
+      return saxBuilder;
+    }
+  };
 
   private static Logger getLogger() {
     if (ourLogger == null) ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
@@ -163,12 +173,12 @@ public class JDOMUtil {
   }
 
   public static Document loadDocument(char[] chars, int length) throws IOException, JDOMException {
-    SAXBuilder builder = createBuilder();
+    SAXBuilder builder = ourSaxBuilder.get();
     return builder.build(new CharArrayReader(chars, 0, length));
   }
 
   public static Document loadDocument(CharSequence seq) throws IOException, JDOMException {
-    SAXBuilder builder = createBuilder();
+    SAXBuilder builder = ourSaxBuilder.get();
     return builder.build(new CharSequenceReader(seq));
   }
 
@@ -177,7 +187,7 @@ public class JDOMUtil {
   }
 
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    SAXBuilder saxBuilder = createBuilder();
+    SAXBuilder saxBuilder = ourSaxBuilder.get();
     InputStreamReader reader = new InputStreamReader(stream, ENCODING);
     try {
       return saxBuilder.build(reader);
@@ -188,7 +198,7 @@ public class JDOMUtil {
   }
 
   public static Document loadDocument(URL url) throws JDOMException, IOException {
-    SAXBuilder saxBuilder = createBuilder();
+    SAXBuilder saxBuilder = ourSaxBuilder.get();
     return saxBuilder.build(url);
   }
 
@@ -200,20 +210,6 @@ public class JDOMUtil {
     finally {
       stream.close();
     }
-  }
-
-  private static SAXBuilder createBuilder() {
-    if (ourSaxBuilder == null) {
-      ourSaxBuilder = new SAXBuilder();
-      ourSaxBuilder.setEntityResolver(new EntityResolver() {
-        public InputSource resolveEntity(String publicId,
-                                         String systemId)
-          throws SAXException, IOException {
-          return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
-        }
-      });
-    }
-    return ourSaxBuilder;
   }
 
   public static void writeDocument(Document document, File file, String lineSeparator) throws IOException {

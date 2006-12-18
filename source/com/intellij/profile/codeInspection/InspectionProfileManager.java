@@ -64,7 +64,11 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
           "inspection");
     myRegistrar = registrar;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      initProfiles();
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+        public void run() {
+          initProfiles();
+        }
+      });
     }
   }
 
