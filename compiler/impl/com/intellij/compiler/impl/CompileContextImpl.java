@@ -64,12 +64,14 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
     final Set<VirtualFile> allDirs = new OrderedSet<VirtualFile>((TObjectHashingStrategy<VirtualFile>)TObjectHashingStrategy.CANONICAL);
     final Set<VirtualFile> testOutputDirs = new java.util.HashSet<VirtualFile>();
+    final Set<VirtualFile> productionOutputDirs = new java.util.HashSet<VirtualFile>();
 
     for (Module module : allModules) {
       final ModuleRootManager manager = ModuleRootManager.getInstance(module);
       final VirtualFile output = manager.getCompilerOutputPath();
       if (output != null && output.isValid()) {
         allDirs.add(output);
+        productionOutputDirs.add(output);
       }
       final VirtualFile testsOutput = manager.getCompilerOutputPathForTests();
       if (testsOutput != null && testsOutput.isValid()) {
@@ -78,6 +80,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       }
     }
     myOutputDirectories = allDirs.toArray(new VirtualFile[allDirs.size()]);
+    // need this to ensure that the sent contains only _dedicated_ test output dirs
+    // Directories that are configured for both test and production classes must not be added in the resulting set
+    testOutputDirs.removeAll(productionOutputDirs);  
     myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
   }
 
