@@ -3,26 +3,24 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.SmartList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharSequenceReader;
@@ -30,9 +28,9 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
+import com.intellij.util.xml.events.ElementChangedEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.InputSource;
@@ -47,7 +45,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FileDescriptionCachedValueProvider");
   private static final Key<CachedValue<Pair<String,String>>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private final XmlFile myXmlFile;
-  private boolean myInModel;
   private boolean myComputing;
   private DomFileElementImpl<T> myLastResult;
   private final CachedValue<Boolean> myCachedValue;
@@ -60,7 +57,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
     myXmlFile = xmlFile;
-    myCachedValue = PsiManager.getInstance(domManager.getProject()).getCachedValuesManager().createCachedValue(new MyCachedValueProvider(), false);
+    myCachedValue = xmlFile.getManager().getCachedValuesManager().createCachedValue(new MyCachedValueProvider(), false);
   }
 
   @Nullable
@@ -95,7 +92,9 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
       if (myLastResult != null && myFileDescription.getRootTagName().equals(getRootTagName()) && myFileDescription.isMyFile(myXmlFile, module)) {
         List<DomEvent> list = new SmartList<DomEvent>();
-        setInModel(changedRoot, list, myLastResult, fireEvents);
+        if (fireEvents) {
+          list.add(new ElementChangedEvent(myLastResult));
+        }
         myCachedValue.getValue();
         return list;
       }
@@ -193,7 +192,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     myFileDescription = description;
     myLastResult = description == null ? null : new DomFileElementImpl<T>(myXmlFile, description.getRootElementClass(),
                                                                           XmlName.create(description.getRootTagName(), description.getRootElementClass()).createEvaluatedXmlName(null), myDomManager);
-    setInModel(changedRoot, events, oldValue, fireEvents);
     if (description == null) {
       computeCachedValue(getAllDependencyItems());
       return events;
@@ -212,16 +210,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     return events;
   }
 
-  private void setInModel(final DomFileElement changedRoot, final List<DomEvent> events, final DomFileElementImpl oldValue, final boolean fireEvents) {
-    boolean wasInModel = oldValue != null && myInModel;
-    myInModel = myFileDescription != null && (changedRoot == null || myFileDescription.getDomModelDependentFiles(changedRoot).contains(myXmlFile));
-    if (fireEvents && oldValue != null && myLastResult != null) {
-      if (oldValue.equals(myLastResult)) events.add(new ElementChangedEvent(myLastResult));
-      else if (!myInModel && wasInModel) events.add(new ElementChangedEvent(oldValue));
-      else if (myInModel && !wasInModel) events.add(new ElementChangedEvent(myLastResult));
-    }
-  }
-
   private void computeCachedValue(final Object[] dependencyItems) {
     assert !myCachedValue.hasUpToDateValue();
     getCachedValueProvider().dependencies = dependencyItems;
@@ -230,7 +218,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   private Object[] getAllDependencyItems() {
     final Set<Object> deps = new LinkedHashSet<Object>();
-    deps.add(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     deps.add(this);
     deps.add(myXmlFile);
     for (final DomFileDescription<?> fileDescription : myDomManager.getFileDescriptions().keySet()) {

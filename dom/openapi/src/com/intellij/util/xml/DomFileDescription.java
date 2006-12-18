@@ -189,7 +189,7 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * @return set of DOM root interfaces, whose changes may cause file of this file description change.
+   * @deprecated not used
    */
   @NotNull
   public Set<Class<? extends DomElement>> getDomModelDependencyItems() {
@@ -197,9 +197,7 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * @param changedRoot Changed DOM file element, that is registered with {@link com.intellij.util.xml.DomFileDescription}, that
-   * mentioned this description in {@link #getDomModelDependencyItems()}. 
-   * @return set of files, whose DOM may change on changedRoot changes
+   * @deprecated not used
    */
   @NotNull
   public Set<XmlFile> getDomModelDependentFiles(@NotNull DomFileElement changedRoot) {

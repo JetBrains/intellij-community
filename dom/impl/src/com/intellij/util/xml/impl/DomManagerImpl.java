@@ -27,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -105,19 +104,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
   };
   private final Set<DomFileDescription> myAcceptingOtherRootTagNamesDescriptions = new THashSet<DomFileDescription>();
-  private final FactoryMap<DomFileDescription,Set<DomFileDescription>> myFileDescriptionDependencies = new FactoryMap<DomFileDescription, Set<DomFileDescription>>() {
-    protected Set<DomFileDescription> create(final DomFileDescription key) {
-      final Class rootElementClass = key.getRootElementClass();
-      final THashSet<DomFileDescription> result = new THashSet<DomFileDescription>();
-      for (final DomFileDescription<?> description : myFileDescriptions.keySet()) {
-        final Set<Class<? extends DomElement>> set = description.getDomModelDependencyItems();
-        if (set.contains(rootElementClass)) {
-          result.add(description);
-        }
-      }
-      return result;
-    }
-  };
   private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
 
@@ -242,7 +228,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   private void processFileChange(final VirtualFile file) {
-    PsiManager.getInstance(myProject).findViewProvider(file);
     processFileChange(PsiManager.getInstance(myProject).findFile(file));
   }
 
@@ -273,18 +258,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (description != null) {
       final DomFileElementImpl<DomElement> fileElement = getCachedFileElement(xmlFile);
       assert fileElement != null;
-      final Set<XmlFile> toUpdate = new THashSet<XmlFile>();
-      for (final DomFileDescription<?> domFileDescription : myFileDescriptionDependencies.get(description)) {
-        toUpdate.addAll(domFileDescription.getDomModelDependentFiles(fileElement));
-        toUpdate.addAll(ContainerUtil.map(myFileDescriptions.get(domFileDescription), new Function<DomFileElementImpl, XmlFile>() {
-          public XmlFile fun(final DomFileElementImpl s) {
-            return s.getFile();
-          }
-        }));
-      }
-      for (final XmlFile file : toUpdate) {
-        updateFileDomness(file, fileElement);
-      }
     }
   }
 
