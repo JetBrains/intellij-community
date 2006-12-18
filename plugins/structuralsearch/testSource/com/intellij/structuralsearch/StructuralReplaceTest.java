@@ -1,9 +1,8 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.LocalSearchScope;
 
 import java.io.IOException;
 
