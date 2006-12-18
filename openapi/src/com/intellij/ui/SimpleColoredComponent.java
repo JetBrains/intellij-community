@@ -27,6 +27,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * This is high performance Swing component which represents an icon
@@ -221,7 +222,8 @@ public class SimpleColoredComponent extends JComponent {
     int xOffset=0;
 
     // Paint icon and its background
-    if(myIcon!=null){
+    final Icon icon = myIcon;   // guard against concurrent modification (IDEADEV-12635)
+    if(icon !=null){
       final Container parent = getParent();
       final Color iconBackgroundColor;
       if(parent!=null && !myFocusBorderAroundIcon && !UIUtil.isUnderQuaquaLookAndFeel()){
@@ -231,16 +233,16 @@ public class SimpleColoredComponent extends JComponent {
         iconBackgroundColor=getBackground();
       }
       g.setColor(iconBackgroundColor);
-      g.fillRect(0,0,myIcon.getIconWidth() + myIpad.left + myIconTextGap,getHeight());
+      g.fillRect(0,0, icon.getIconWidth() + myIpad.left + myIconTextGap,getHeight());
 
-      myIcon.paintIcon(
+      icon.paintIcon(
         this,
         g,
         myIpad.left,
-        (getHeight()-myIcon.getIconHeight())/2
+        (getHeight()- icon.getIconHeight())/2
       );
 
-      xOffset+=myIpad.left+myIcon.getIconWidth() + myIconTextGap;
+      xOffset+=myIpad.left+ icon.getIconWidth() + myIconTextGap;
     }
 
     if (isOpaque()) {
@@ -261,7 +263,7 @@ public class SimpleColoredComponent extends JComponent {
 
     // Paint focus border around the text and icon (if necessary)
     if(myPaintFocusBorder){
-      if(myFocusBorderAroundIcon || myIcon == null){
+      if(myFocusBorderAroundIcon || icon == null){
         myBorder.paintBorder(this,g,0,0,getWidth(),getHeight());
       }
       else{
@@ -363,7 +365,7 @@ public class SimpleColoredComponent extends JComponent {
     return buffer.toString();
   }
 
-  public java.util.List<String> getFragments() {
+  public List<String> getFragments() {
     return Collections.unmodifiableList(myFragments);
   }
 
@@ -371,7 +373,7 @@ public class SimpleColoredComponent extends JComponent {
     return myAttributes;
   }
 
-  private final class MyBorder implements Border{
+  private static final class MyBorder implements Border{
     private final Insets myInsets;
 
     public MyBorder(){
