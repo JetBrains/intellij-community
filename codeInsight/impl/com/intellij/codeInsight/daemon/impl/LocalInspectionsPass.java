@@ -29,6 +29,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -108,7 +109,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
             ((ProgressManagerImpl)ProgressManager.getInstance()).progressMe(progress);
           }
           @NonNls final String name = "LocalInspections from " + index + " to " + (index + chunkSize);
-          PassExecutorService.info("Started " + name, progress);
+          PassExecutorService.info(progress, "Started " , name);
           ApplicationManager.getApplication().runReadAction(new Runnable(){
             public void run() {
               ProblemsHolder holder = new ProblemsHolder(iManager);
@@ -129,18 +130,18 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                 }
               }
               catch (ProcessCanceledException e) {
-                PassExecutorService.info("Canceled " + name, progress);
+                PassExecutorService.info(progress, "Canceled " , name);
               }
             }
           });
-          PassExecutorService.info("Finished "+ name, progress);
+          PassExecutorService.info(progress, "Finished ", name);
         }
       };
       inspectionChunks.add(chunk);
     }
 
     try {
-      invokeAll(inspectionChunks);
+      ConcurrencyUtil.invokeAll(inspectionChunks, myExecutorService);
     }
     catch (ProcessCanceledException e) {
       //ignore
@@ -371,52 +372,5 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       }
     }
     return result.toArray(new PsiElement[result.size()]);
-  }
-
-  /**
-   * invokes and waits all tasks using threadPool, avoiding thread starvation on the way
-   * @lookat http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
-   */
-  private void invokeAll(@NotNull Collection<Runnable> tasks) throws Throwable {
-    if (myExecutorService == null) {
-      for (Runnable task : tasks) {
-        task.run();
-      }
-      return;
-    }
-    List<Future<Object>> futures = new ArrayList<Future<Object>>(tasks.size());
-    boolean done = false;
-    try {
-      for (Runnable t : tasks) {
-        FutureTask<Object> f = new FutureTask<Object>(t,null);
-        futures.add(f);
-        myExecutorService.execute(f);
-      }
-      // force unstarted futures to execute using the current thread
-      for (Future<Object> f : futures) ((FutureTask)f).run();
-      for (Future<Object> f : futures) {
-        if (!f.isDone()) {
-          try {
-            f.get();
-          }
-          catch (CancellationException ignore) {
-          }
-          catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause != null) {
-              throw cause;
-            }
-          }
-        }
-      }
-      done = true;
-    }
-    finally {
-      if (!done) {
-        for (Future<Object> f : futures) {
-          f.cancel(false);
-        }
-      }
-    }
   }
 }

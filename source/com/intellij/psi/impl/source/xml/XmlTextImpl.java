@@ -32,9 +32,9 @@ import java.util.List;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageInjectionHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
-  private String myDisplayText = null;
-  private int[] myGapDisplayStarts = null;
-  private int[] myGapPhysicalStarts = null;
+  private volatile String myDisplayText = null;
+  private volatile int[] myGapDisplayStarts = null;
+  private volatile int[] myGapPhysicalStarts = null;
 
   public XmlTextImpl() {
     super(XmlElementType.XML_TEXT);
@@ -55,7 +55,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   public String getValue() {
-    if (myDisplayText != null) return myDisplayText;
+    String displayText = myDisplayText;
+    if (displayText != null) return displayText;
     StringBuilder buffer = new StringBuilder();
     ASTNode child = getFirstChildNode();
     final TIntArrayList gapsStarts = new TIntArrayList();

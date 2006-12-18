@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl implements PsiAnnotationParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAnnotationParameterListImpl");
-  private PsiNameValuePair[] myCachedMembers = null;
+  private volatile PsiNameValuePair[] myCachedMembers = null;
 
   public PsiAnnotationParameterListImpl() {
     super(ANNOTATION_PARAMETER_LIST, NAME_VALUE_PAIR_BIT_SET);
@@ -28,11 +28,12 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
 
   @NotNull
   public PsiNameValuePair[] getAttributes() {
-    if (myCachedMembers == null) {
-      myCachedMembers = getChildrenAsPsiElements(NAME_VALUE_PAIR_BIT_SET, PSI_NAME_VALUE_PAIR_ARRAY_CONSTRUCTOR);
+    PsiNameValuePair[] cachedMembers = myCachedMembers;
+    if (cachedMembers == null) {
+      myCachedMembers = cachedMembers = getChildrenAsPsiElements(NAME_VALUE_PAIR_BIT_SET, PSI_NAME_VALUE_PAIR_ARRAY_CONSTRUCTOR);
     }
 
-    return myCachedMembers;
+    return cachedMembers;
   }
 
   public int getChildRole(ASTNode child) {
@@ -60,6 +61,7 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
     switch (role) {
       default:
         LOG.assertTrue(false);
+        return null;
       case ChildRole.LPARENTH:
         return TreeUtil.findChild(this, LPARENTH);
 

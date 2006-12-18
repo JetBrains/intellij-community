@@ -30,7 +30,7 @@ import java.util.Set;
 public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiLocalVariableImpl");
 
-  private String myCachedName = null;
+  private volatile String myCachedName = null;
 
   public PsiLocalVariableImpl() {
     super(LOCAL_VARIABLE);
@@ -47,17 +47,18 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public final String getName() {
-    if (myCachedName == null){
-      myCachedName = getNameIdentifier().getText();
+    String cachedName = myCachedName;
+    if (cachedName == null){
+      myCachedName = cachedName = getNameIdentifier().getText();
     }
-    return myCachedName;
+    return cachedName;
   }
 
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
     SharedImplUtil.setInitializer(this, initializer);
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
@@ -78,7 +79,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     return (PsiModifierList)first.findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
@@ -134,13 +135,13 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         CompositeElement statement1 = Factory.createCompositeElement(DECLARATION_STATEMENT, charTableByTree, getManager());
         statement1.addChild(variable, null);
 
-        ASTNode space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
+        ASTNode space = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
         variable.addChild(space, variable.getFirstChildNode());
 
         variable.addChild(typeCopy, variable.getFirstChildNode());
 
         if (modifierListCopy.getTextLength() > 0){
-          space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
+          space = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
           variable.addChild(space, variable.getFirstChildNode());
         }
 
@@ -160,7 +161,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     SharedImplUtil.normalizeBrackets(this);
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.INITIALIZER){
       ASTNode eq = findChildByRole(ChildRole.INITIALIZER_EQ);
       if (eq != null){

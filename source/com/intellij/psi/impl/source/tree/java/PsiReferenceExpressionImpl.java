@@ -41,8 +41,8 @@ import org.jetbrains.annotations.Nullable;
 public class PsiReferenceExpressionImpl extends CompositePsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
-  private String myCachedQName = null;
-  private String myCachedTextSkipWhiteSpaceAndComments = null;
+  private volatile String myCachedQName = null;
+  private volatile String myCachedTextSkipWhiteSpaceAndComments = null;
 
   public PsiReferenceExpressionImpl() {
     super(REFERENCE_EXPRESSION);
@@ -532,10 +532,11 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
 
 
   public String getClassNameText() {
-    if (myCachedQName == null) {
-      myCachedQName = PsiNameHelper.getQualifiedClassName(getCachedTextSkipWhiteSpaceAndComments(), false);
+    String cachedQName = myCachedQName;
+    if (cachedQName == null) {
+      myCachedQName = cachedQName = PsiNameHelper.getQualifiedClassName(getCachedTextSkipWhiteSpaceAndComments(), false);
     }
-    return myCachedQName;
+    return cachedQName;
   }
 
   public void fullyQualify(PsiClass targetClass) {
@@ -551,10 +552,11 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   private String getCachedTextSkipWhiteSpaceAndComments() {
-    if (myCachedTextSkipWhiteSpaceAndComments == null) {
-      myCachedTextSkipWhiteSpaceAndComments = SourceUtil.getTextSkipWhiteSpaceAndComments(this);
+    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
+    if (whiteSpaceAndComments == null) {
+      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = SourceUtil.getTextSkipWhiteSpaceAndComments(this);
     }
-    return myCachedTextSkipWhiteSpaceAndComments;
+    return whiteSpaceAndComments;
   }
 }
 

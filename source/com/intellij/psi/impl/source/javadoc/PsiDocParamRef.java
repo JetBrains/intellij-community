@@ -15,8 +15,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author mike
  */
 public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValue {
-
-  private PsiReference myCachedReference;
+  private volatile PsiReference myCachedReference;
 
   public PsiDocParamRef() {
     super(DOC_PARAMETER_REF);
@@ -28,13 +27,14 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
   }
 
   public PsiReference getReference() {
-    if (myCachedReference != null) return myCachedReference;
+    PsiReference cachedReference = myCachedReference;
+    if (cachedReference != null) return cachedReference;
     final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(this, PsiDocCommentOwner.class);
     if (!(owner instanceof PsiMethod) &&
         !(owner instanceof PsiClass)) return null;
     final ASTNode valueToken = findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
     if (valueToken == null) return null;
-    myCachedReference = new PsiReference() {
+    myCachedReference = cachedReference = new PsiReference() {
       public PsiElement resolve() {
         String name = valueToken.getText();
         final PsiElement firstChild = getFirstChild();
@@ -60,7 +60,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
 
       public PsiElement handleElementRename(String newElementName) {
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(getNode());
-        LeafElement newElement = Factory.createSingleLeafElement(ElementType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, getManager());
+        LeafElement newElement = Factory.createSingleLeafElement(JavaDocTokenType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, getManager());
         replaceChild(valueToken, newElement);
         return PsiDocParamRef.this;
       }
@@ -103,7 +103,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return PsiDocParamRef.this;
       }
     };
-    return myCachedReference;
+    return cachedReference;
   }
 
   public void accept(PsiElementVisitor visitor) {

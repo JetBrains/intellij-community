@@ -32,27 +32,27 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   private ClassFileData myClassFileData; // it's null when repository id exists
 
   // these fields are not used when has repository id
-  private PsiElement myParent;
-  private PsiField[] myFields = null;
-  private PsiMethod[] myMethods = null;
-  private PsiMethod[] myConstructors = null;
-  private PsiClass[] myInnerClasses = null;
+  private volatile PsiElement myParent;
+  private volatile PsiField[] myFields = null;
+  private volatile PsiMethod[] myMethods = null;
+  private volatile PsiMethod[] myConstructors = null;
+  private volatile PsiClass[] myInnerClasses = null;
 
-  private Map<String, PsiField> myCachedFieldsMap = null;
-  private Map<String, PsiMethod[]> myCachedMethodsMap = null;
-  private Map<String, PsiClass> myCachedInnersMap = null;
+  private volatile Map<String, PsiField> myCachedFieldsMap = null;
+  private volatile Map<String, PsiMethod[]> myCachedMethodsMap = null;
+  private volatile Map<String, PsiClass> myCachedInnersMap = null;
 
 
-  private String myQualifiedName = null;
-  private String myName = null;
-  private PsiIdentifier myNameIdentifier = null;
-  private ClsModifierListImpl myModifierList = null;
-  private PsiReferenceList myExtendsList = null;
-  private PsiReferenceList myImplementsList = null;
-  private PsiTypeParameterList myTypeParameters = null;
-  private Boolean myIsDeprecated = null;
-  private PsiDocComment myDocComment = null;
-  private ClsAnnotationImpl[] myAnnotations = null;
+  private volatile String myQualifiedName = null;
+  private volatile String myName = null;
+  private volatile PsiIdentifier myNameIdentifier = null;
+  private volatile ClsModifierListImpl myModifierList = null;
+  private volatile PsiReferenceList myExtendsList = null;
+  private volatile PsiReferenceList myImplementsList = null;
+  private volatile PsiTypeParameterList myTypeParameters = null;
+  private volatile Boolean myIsDeprecated = null;
+  private volatile PsiDocComment myDocComment = null;
+  private volatile ClsAnnotationImpl[] myAnnotations = null;
 
   public ClsClassImpl(PsiManagerImpl manager, ClsElementImpl parent, final ClassFileData classFileData) {
     super(manager, -1);

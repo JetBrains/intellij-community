@@ -20,18 +20,17 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
 public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiImportStaticReferenceElementImpl");
-  private String myCanonicalText;
+  private volatile String myCanonicalText;
 
   public PsiImportStaticReferenceElementImpl() {
     super(IMPORT_STATIC_REFERENCE);
@@ -169,10 +168,11 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   public String getCanonicalText() {
-    if (myCanonicalText == null) {
-      myCanonicalText = calcCanonicalText();
+    String canonicalText = myCanonicalText;
+    if (canonicalText == null) {
+      myCanonicalText = canonicalText = calcCanonicalText();
     }
-    return myCanonicalText;
+    return canonicalText;
   }
 
   private String calcCanonicalText() {

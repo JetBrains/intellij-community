@@ -77,7 +77,7 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     myMirror = element;
 
     PsiJavaCodeReferenceElement[] refs = getReferenceElements();
-    PsiJavaCodeReferenceElement[] refMirrors = ((PsiReferenceList)SourceTreeToPsiMap.treeElementToPsi(myMirror)).getReferenceElements();
+    PsiJavaCodeReferenceElement[] refMirrors = ((PsiReferenceList)SourceTreeToPsiMap.treeElementToPsi(element)).getReferenceElements();
     LOG.assertTrue(refs.length == refMirrors.length);
     if (refs.length == refMirrors.length) {
       for (int i = 0; i < refs.length; i++) {
@@ -86,7 +86,7 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitReferenceList(this);
   }
 

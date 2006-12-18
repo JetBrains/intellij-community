@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -185,7 +184,7 @@ public class PassExecutorService {
     }
 
     public void run() {
-      info("Started " + myPass, myUpdateProgress);
+      info(myUpdateProgress, "Started " , myPass);
       Thread.currentThread().setName("Highlighting pass " + myPass);
 
       if (myUpdateProgress.isCanceled()) return;
@@ -207,7 +206,7 @@ public class PassExecutorService {
             myPass.doCollectInformation(myUpdateProgress);
           }
           catch (ProcessCanceledException e) {
-            info("Canceled "+myPass, myUpdateProgress);
+            info(myUpdateProgress, "Canceled ",myPass);
           }
         }
       });
@@ -234,7 +233,7 @@ public class PassExecutorService {
           //LOG.debug("Pass "+ myPass +" finished but there is the pass in the queue: "+mySubmittedPasses.keySet().iterator().next().myPass+"; toexec="+toexec);
         }
       }
-      info("Finished " + myPass, myUpdateProgress);
+      info(myUpdateProgress, "Finished " , myPass);
     }
   }
 
@@ -261,20 +260,20 @@ public class PassExecutorService {
   }
 
 
-  private static final ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
-  private static int getThreadNum() {
-    int size = threads.size();
-    Integer number = threads.putIfAbsent(Thread.currentThread(), size);
-    if (number == null) number = size;
-    return number;
-  }
+  //private static final ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
+  //private static int getThreadNum() {
+  //  int size = threads.size();
+  //  Integer number = threads.putIfAbsent(Thread.currentThread(), size);
+  //  if (number == null) number = size;
+  //  return number;
+  //}
 
-  public static void info(@NonNls String info, ProgressIndicator progressIndicator) {
-    synchronized (PassExecutorService.class) {
-      LOG.debug(StringUtil.repeatSymbol(' ', getThreadNum() * 4) + info
-                + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
-                + "; canceled=" + (progressIndicator != null && progressIndicator.isCanceled())
-      );
-    }
+  public static void info(ProgressIndicator progressIndicator, @NonNls Object... info) {
+    //synchronized (PassExecutorService.class) {
+    //  LOG.debug(StringUtil.repeatSymbol(' ', getThreadNum() * 4) + info
+    //            + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
+    //            + "; canceled=" + (progressIndicator != null && progressIndicator.isCanceled())
+    //  );
+    //}
   }
 }

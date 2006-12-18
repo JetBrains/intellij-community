@@ -8,14 +8,13 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-import org.jetbrains.annotations.NotNull;
-
 public class PsiTryStatementImpl extends CompositePsiElement implements PsiTryStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTryStatementImpl");
-  private PsiParameter[] myCachedCatchParameters = null;
+  private volatile PsiParameter[] myCachedCatchParameters = null;
 
   public void clearCaches() {
     super.clearCaches();
@@ -48,7 +47,8 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
 
   @NotNull
   public PsiParameter[] getCatchBlockParameters() {
-    if (myCachedCatchParameters == null) {
+    PsiParameter[] catchParameters = myCachedCatchParameters;
+    if (catchParameters == null) {
       PsiCatchSection[] catchSections = getCatchSections();
       if (catchSections.length == 0) return PsiParameter.EMPTY_ARRAY;
       boolean lastIncomplete = catchSections[catchSections.length - 1].getCatchBlock() == null;
@@ -58,9 +58,9 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
         PsiParameter parameter = catchSections[i].getParameter();
         if (parameter != null) parameters.add(parameter);
       }
-      myCachedCatchParameters = parameters.toArray(new PsiParameter[parameters.size()]);
+      myCachedCatchParameters = catchParameters = parameters.toArray(new PsiParameter[parameters.size()]);
     }
-    return myCachedCatchParameters;
+    return catchParameters;
   }
 
   @NotNull

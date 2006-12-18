@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
 
-  private String myCachedQName = null;
-  private String myCachedTextSkipWhiteSpaceAndComments;
+  private volatile String myCachedQName = null;
+  private volatile String myCachedTextSkipWhiteSpaceAndComments;
   private int myKindWhenDummy = CLASS_NAME_KIND;
 
   public static final int CLASS_NAME_KIND = 1;
@@ -654,17 +654,19 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   private String getTextSkipWhiteSpaceAndComments() {
-    if (myCachedTextSkipWhiteSpaceAndComments == null) {
-      myCachedTextSkipWhiteSpaceAndComments = SourceUtil.getTextSkipWhiteSpaceAndComments(this);
+    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
+    if (whiteSpaceAndComments == null) {
+      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = SourceUtil.getTextSkipWhiteSpaceAndComments(this);
     }
-    return myCachedTextSkipWhiteSpaceAndComments;
+    return whiteSpaceAndComments;
   }
 
   public String getClassNameText() {
-    if (myCachedQName == null) {
-      myCachedQName = PsiNameHelper.getQualifiedClassName(getTextSkipWhiteSpaceAndComments(), false);
+    String cachedQName = myCachedQName;
+    if (cachedQName == null) {
+      myCachedQName = cachedQName = PsiNameHelper.getQualifiedClassName(getTextSkipWhiteSpaceAndComments(), false);
     }
-    return myCachedQName;
+    return cachedQName;
   }
 
   public void fullyQualify(final PsiClass targetClass) {

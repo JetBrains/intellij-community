@@ -115,13 +115,14 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return valueElement != null ? valueElement.getValue() : null;
   }
 
-  private String myDisplayText = null;
-  private int[] myGapDisplayStarts = null;
-  private int[] myGapPhysicalStarts = null;
-  private TextRange myValueTextRange; // text inside quotes, if there are any
+  private volatile String myDisplayText = null;
+  private volatile int[] myGapDisplayStarts = null;
+  private volatile int[] myGapPhysicalStarts = null;
+  private volatile TextRange myValueTextRange; // text inside quotes, if there are any
 
   public String getDisplayValue() {
-    if (myDisplayText != null) return myDisplayText;
+    String displayText = myDisplayText;
+    if (displayText != null) return displayText;
     XmlAttributeValue value = getValueElement();
     if (value == null) return null;
     PsiElement firstChild = value.getFirstChild();
@@ -134,7 +135,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
     final TIntArrayList gapsStarts = new TIntArrayList();
     final TIntArrayList gapsShifts = new TIntArrayList();
-    StringBuffer buffer = new StringBuffer(getTextLength());
+    StringBuilder buffer = new StringBuilder(getTextLength());
     while (child != null) {
       final int start = buffer.length();
       IElementType elementType = child.getElementType();

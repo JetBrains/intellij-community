@@ -13,6 +13,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -21,16 +22,16 @@ import com.intellij.lang.ASTNode;
 //Retrieves method reference from this pair, do NOT reuse!!!
 public class PsiNameValuePairImpl extends CompositePsiElement implements PsiNameValuePair {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl");
-  private String myCachedName = null;
-  private PsiIdentifier myCachedNameIdentifier = null;
-  private PsiAnnotationMemberValue myCachedValue = null;
-  private boolean myNameCached = false;
+  private volatile String myCachedName = null;
+  private volatile PsiIdentifier myCachedNameIdentifier = null;
+  private volatile PsiAnnotationMemberValue myCachedValue = null;
+  private volatile boolean myNameCached = false;
 
   public void clearCaches() {
+    myNameCached = false;
     myCachedName = null;
     myCachedNameIdentifier = null;
     myCachedValue = null;
-    myNameCached = false;
     super.clearCaches();
   }
 
@@ -39,37 +40,43 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   }
 
   public PsiIdentifier getNameIdentifier() {
+    PsiIdentifier cachedNameIdentifier = myCachedNameIdentifier;
     if (!myNameCached) {
-      myCachedNameIdentifier = (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.NAME);
-      myCachedName = myCachedNameIdentifier == null ? null : myCachedNameIdentifier.getText();
+      myCachedNameIdentifier = cachedNameIdentifier = (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.NAME);
+      myCachedName = cachedNameIdentifier == null ? null : cachedNameIdentifier.getText();
       myNameCached = true;
     }
-    return myCachedNameIdentifier;
+    return cachedNameIdentifier;
   }
 
   public String getName() {
+    String cachedName = myCachedName;
     if (!myNameCached) {
-      myCachedNameIdentifier = (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.NAME);
-      myCachedName = myCachedNameIdentifier == null ? null : myCachedNameIdentifier.getText();
+      PsiIdentifier identifier;
+      myCachedNameIdentifier = identifier = (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.NAME);
+      myCachedName = cachedName = identifier == null ? null : identifier.getText();
       myNameCached = true;
     }
-    return myCachedName;
+    return cachedName;
   }
 
   public PsiAnnotationMemberValue getValue() {
-    if (myCachedValue == null) {
-      myCachedValue = (PsiAnnotationMemberValue)findChildByRoleAsPsiElement(ChildRole.ANNOTATION_VALUE);
+    PsiAnnotationMemberValue cachedValue = myCachedValue;
+    if (cachedValue == null) {
+      myCachedValue = cachedValue = (PsiAnnotationMemberValue)findChildByRoleAsPsiElement(ChildRole.ANNOTATION_VALUE);
     }
 
-    return myCachedValue;
+    return cachedValue;
   }
 
   public int getChildRole(ASTNode child) {
     if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
       return ChildRole.ANNOTATION_VALUE;
-    } else if (child.getElementType() == IDENTIFIER) {
+    }
+    else if (child.getElementType() == IDENTIFIER) {
       return ChildRole.NAME;
-    } else if (child.getElementType() == EQ) {
+    }
+    else if (child.getElementType() == EQ) {
       return ChildRole.OPERATION_SIGN;
     }
 
@@ -79,9 +86,11 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   public ASTNode findChildByRole(int role) {
     if (role == ChildRole.NAME) {
       return TreeUtil.findChild(this, IDENTIFIER);
-    } else if (role == ChildRole.ANNOTATION_VALUE) {
+    }
+    else if (role == ChildRole.ANNOTATION_VALUE) {
       return TreeUtil.findChild(this, ANNOTATION_MEMBER_VALUE_BIT_SET);
-    } else if (role == ChildRole.OPERATION_SIGN) {
+    }
+    else if (role == ChildRole.OPERATION_SIGN) {
       return TreeUtil.findChild(this, EQ);
     }
 
@@ -161,11 +170,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
       }
 
       public boolean isReferenceTo(PsiElement element) {
-        if (element instanceof PsiMethod) {
-          return element.equals(resolve());
-        }
-
-        return false;
+        return element instanceof PsiMethod && element.equals(resolve());
       }
 
       public Object[] getVariants() {
@@ -191,16 +196,16 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     ChameleonTransforming.transformChildren(this);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     final TreeElement treeElement = super.addInternal(first, last, anchor, before);
-    if (first == last && first.getElementType() == ElementType.IDENTIFIER) {
-      LeafElement eq = Factory.createSingleLeafElement(ElementType.EQ, new char[]{'='}, 0, 1, treeCharTab, getManager());
+    if (first == last && first.getElementType() == JavaTokenType.IDENTIFIER) {
+      LeafElement eq = Factory.createSingleLeafElement(JavaTokenType.EQ, new char[]{'='}, 0, 1, treeCharTab, getManager());
       super.addInternal(eq, eq, first, Boolean.FALSE);
     }
     return treeElement;
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     super.deleteChildInternal(child);
-    if (child.getElementType() == ElementType.IDENTIFIER) {
+    if (child.getElementType() == JavaTokenType.IDENTIFIER) {
       super.deleteChildInternal(findChildByRole(ChildRole.OPERATION_SIGN));
     }
   }
