@@ -3,10 +3,10 @@ package com.intellij.compiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerPaths;
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -33,9 +33,9 @@ import java.util.*;
  * @author Jeka
  */
 public abstract class CompilerTestCase extends ModuleTestCase {
-  private static final String SOURCE = "source";
-  private static final String CLASSES = "classes";
-  private static final String DATA_FILE_NAME = "data.xml";
+  protected static final String SOURCE = "source";
+  protected static final String CLASSES = "classes";
+  protected static final String DATA_FILE_NAME = "data.xml";
   private final String myDataRootPath;
   private final Object LOCK = new Object();
   private int mySemaphore;
@@ -290,7 +290,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     return myRecompiledPaths.contains(path);
   }
 
-  private void setup(final String testName) throws Exception {
+  protected void setup(final String testName) throws Exception {
     Logger.getInstance("#com.intellij.compiler").setLevel(Level.ERROR); // disable debug output from ordinary category
 
     CompilerManagerImpl.testSetup();
