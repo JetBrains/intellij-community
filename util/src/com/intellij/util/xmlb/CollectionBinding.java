@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.List;
 
 class CollectionBinding extends AbstractCollectionBinding  {
-  public CollectionBinding(ParameterizedType type, XmlSerializerImpl xmlSerializer) {
-    super((Class)type.getActualTypeArguments()[0], xmlSerializer, Constants.COLLECTION);
+  public CollectionBinding(ParameterizedType type, XmlSerializerImpl xmlSerializer, final Accessor accessor) {
+    super((Class)type.getActualTypeArguments()[0], xmlSerializer, Constants.COLLECTION, accessor);
   }
 
 
@@ -19,7 +19,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
     return target;
   }
 
-  Collection getCollection(Object o) {
+  Iterable getIterable(Object o) {
     return (Collection)o;
   }
 }

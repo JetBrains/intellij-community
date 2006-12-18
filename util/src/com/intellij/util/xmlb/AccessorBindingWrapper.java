@@ -30,4 +30,7 @@ class AccessorBindingWrapper implements Binding {
   public Class<? extends Node> getBoundNodeType() {
     return myBinding.getBoundNodeType();
   }
+
+  public void init() {
+  }
 }

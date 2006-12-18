@@ -1,5 +1,6 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -7,47 +8,112 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 abstract class AbstractCollectionBinding implements Binding {
-  private Binding myElementBinding;
+  private Map<Class, Binding> myElementBindings;
+
   private Class myElementType;
   private XmlSerializerImpl myXmlSerializer;
   private String myTagName;
+  @Nullable private Accessor myAccessor;
+  private AbstractCollection myAnnotation = null;
+  private boolean myUsingOptionBinding = false;
 
-  public AbstractCollectionBinding(Class elementType, XmlSerializerImpl xmlSerializer, String tagName) {
+  public AbstractCollectionBinding(Class elementType, XmlSerializerImpl xmlSerializer, String tagName,
+                                   @Nullable Accessor accessor) {
     myElementType = elementType;
     myXmlSerializer = xmlSerializer;
     myTagName = tagName;
+    myAccessor = accessor;
+
+    if (accessor != null) {
+      myAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), AbstractCollection.class);
+    }
   }
 
-  protected Binding getElementBinding() {
-    if (myElementBinding == null) {
-      myElementBinding = myXmlSerializer.getBinding(myElementType);
+  public void init() {
+    if (myAnnotation != null) {
+      if (!myAnnotation.surroundWithTag()) {
+        if (myAnnotation.elementTag() == null) {
+          throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
+        }
+        if (myAnnotation.elementTag().equals(Constants.OPTION)) {
+          final Map<Class, Binding> bindings = getElementBindings();
 
-      if (!myElementBinding.getBoundNodeType().isAssignableFrom(Element.class)) {
-        myElementBinding = createElementTagWrapper(myElementBinding);
+          if (myUsingOptionBinding) {
+            throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
+          }
+        }
+      }
+    }
+  }
+
+  protected Binding getElementBinding(Class elementClass) {
+    final Binding binding = getElementBindings().get(elementClass);
+    if (binding == null) throw new XmlSerializationException("Class " + elementClass + " is not bound");
+    return binding;
+  }
+
+  private Map<Class, Binding> getElementBindings() {
+    if (myElementBindings == null) {
+      myElementBindings = new HashMap<Class, Binding>();
+
+      myElementBindings.put(myElementType, getBinding(myElementType));
+
+      if (myAnnotation != null) {
+        for (Class aClass : myAnnotation.elementTypes()) {
+          myElementBindings.put(aClass, getBinding(aClass));
+
+        }
       }
     }
 
-    return myElementBinding;
+    return myElementBindings;
+  }
+
+  protected Binding getElementBinding(Node node) {
+    for (Binding binding : getElementBindings().values()) {
+      if (binding.isBoundTo(node)) return binding;
+    }
+
+    throw new XmlSerializationException("Node " + node + " is not bound");
+  }
+
+  private Binding getBinding(final Class type) {
+    Binding binding;
+    binding = myXmlSerializer.getBinding(type);
+
+    if (!binding.getBoundNodeType().isAssignableFrom(Element.class)) {
+      binding = createElementTagWrapper(binding);
+      myUsingOptionBinding = true;
+    }
+
+    return binding;
   }
 
   protected Binding createElementTagWrapper(final Binding elementBinding) {
-    return new TagBindingWrapper(elementBinding, Constants.OPTION, Constants.VALUE);
+    if (myAnnotation == null) return new TagBindingWrapper(elementBinding, Constants.OPTION, Constants.VALUE);
+
+    return new TagBindingWrapper(elementBinding,
+                                 myAnnotation.elementTag() != null ? myAnnotation.elementTag() : Constants.OPTION,
+                                 myAnnotation.elementValueAttribute() != null ? myAnnotation.elementValueAttribute() : Constants.VALUE);
   }
 
   abstract Object processResult(List result, Object target);
-  abstract Collection getCollection(Object o);
+  abstract Iterable getIterable(Object o);
 
   public Node serialize(Object o, Node context) {
-    Collection collection = getCollection(o);
+    Iterable iterable = getIterable(o);
+    if (iterable == null) return context;
     Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
 
     Node result = getTagName() != null ? ownerDocument.createElement(getTagName()) : ownerDocument.createDocumentFragment();
-    for (Object e : collection) {
-      result.appendChild(getElementBinding().serialize(e, result));
+    for (Object e : iterable) {
+      final Binding binding = getElementBinding(e.getClass());
+      result.appendChild(binding.serialize(e, result));
     }
 
     return result;
@@ -61,14 +127,18 @@ abstract class AbstractCollectionBinding implements Binding {
       Element e = (Element)nodes[0];
       NodeList childNodes = e.getChildNodes();
       for (int i = 0; i < childNodes.getLength(); i++) {
-        Object v = getElementBinding().deserialize(o, childNodes.item(i));
+        final Node n = childNodes.item(i);
+        final Binding elementBinding = getElementBinding(n);
+        Object v = elementBinding.deserialize(o, n);
         //noinspection unchecked
         result.add(v);
       }
     }
     else {
       for (Node node : nodes) {
-        Object v = getElementBinding().deserialize(o, node);
+        if (XmlSerializerImpl.isIgnoredNode(node)) continue;
+        final Binding elementBinding = getElementBinding(node);
+        Object v = elementBinding.deserialize(o, node);
         //noinspection unchecked
         result.add(v);
       }
@@ -83,7 +153,9 @@ abstract class AbstractCollectionBinding implements Binding {
 
     final String tagName = getTagName();
     if (tagName == null) {
-      return getElementBinding().isBoundTo(node);
+      for (Binding binding : getElementBindings().values()) {
+        if (binding.isBoundTo(node)) return true;
+      }
     }
 
     return node.getNodeName().equals(tagName);
@@ -93,13 +165,13 @@ abstract class AbstractCollectionBinding implements Binding {
     return Element.class;
   }
 
-
   public Class getElementType() {
     return myElementType;
   }
 
   @Nullable
   public String getTagName() {
-    return myTagName;
+    if (myAnnotation == null || myAnnotation.surroundWithTag()) return myTagName;
+    return null;
   }
 }

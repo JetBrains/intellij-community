@@ -53,7 +53,7 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   public static final int TABS_NONE = 0;
 
   /** Invoked by reflection */
-  UISettings(){
+  public UISettings(){
     myListenerList=new EventListenerList();
     ANTIALIASING_IN_EDITOR = SystemInfo.isMac;
     setSystemFontFaceAndSize();

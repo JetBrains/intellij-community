@@ -2,7 +2,7 @@ package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NonNls;
 
-interface Constants {
+public interface Constants {
   @NonNls String OPTION = "option";
   @NonNls String VALUE = "value";
   @NonNls String COLLECTION = "collection";

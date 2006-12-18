@@ -1,11 +1,16 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.util.DOMUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Bean;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -31,14 +36,18 @@ class BeanBinding implements Binding {
     filter = serializer.getFilter();
     this.serializer = serializer;
     myTagName = getTagName(beanClass);
-    initPropertyBindings(beanClass);
   }
+
+  public void init() {
+    initPropertyBindings(myBeanClass);
+  }
+
 
   private void initPropertyBindings(Class<?> beanClass) {
     Accessor[] accessors = getAccessors(beanClass);
 
     for (Accessor accessor : accessors) {
-      myPropertyBindings.put(serializer.createBindingByAccessor(accessor), accessor);
+      myPropertyBindings.put(createBindingByAccessor(serializer, accessor), accessor);
     }
   }
 
@@ -63,7 +72,13 @@ class BeanBinding implements Binding {
 
       Node node = binding.serialize(o, element);
       if (node != element) {
-        element.appendChild(node);
+        if (node instanceof Attr) {
+          Attr attr = (Attr)node;
+          element.setAttribute(attr.getName(), attr.getValue());
+        }
+        else {
+          element.appendChild(node);
+        }
       }
     }
 
@@ -79,13 +94,12 @@ class BeanBinding implements Binding {
 
     ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
 
-    NodeList childNodes = e.getChildNodes();
 
     MultiMap<Binding, Node> data = new MultiMap<Binding, Node>();
 
-    nextNode:
-    for (int i = 0; i < childNodes.getLength(); i++) {
-      Node child = childNodes.item(i);
+    final Node[] children = DOMUtil.getChildNodesWithAttrs(e);
+    nextNode: for (Node child : children) {
+      if (XmlSerializerImpl.isIgnoredNode(child)) continue;
 
       for (Binding binding : bindings) {
         if (binding.isBoundTo(child)) {
@@ -94,7 +108,8 @@ class BeanBinding implements Binding {
         }
       }
 
-      throw new XmlSerializationException("Format error: no binding for " + child);
+
+      throw new XmlSerializationException("Format error: no binding for " + child + " : " + child.getNodeValue() + " inside " + this);
     }
 
     for (Object o1 : data.keySet()) {
@@ -129,8 +144,9 @@ class BeanBinding implements Binding {
     return Element.class;
   }
 
+
   private static String getTagName(Class<?> aClass) {
-    Property tag = aClass.getAnnotation(Property.class);
+    Bean tag = aClass.getAnnotation(Bean.class);
     if (tag != null && tag.tagName().length() != 0) return tag.tagName();
 
     return aClass.getSimpleName();
@@ -171,5 +187,39 @@ class BeanBinding implements Binding {
     catch (IntrospectionException e) {
       throw new XmlSerializationException(e);
     }
+  }
+
+
+  public String toString() {
+    return "BeanBinding[" + myBeanClass.getName() + ", tagName=" + myTagName + "]";
+  }
+
+  private static Binding createBindingByAccessor(final XmlSerializerImpl xmlSerializer, Accessor accessor) {
+    final Binding binding = _createBinding(accessor, xmlSerializer);
+    binding.init();
+    return binding;
+  }
+
+  private static Binding _createBinding(final Accessor accessor, final XmlSerializerImpl xmlSerializer) {
+    Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
+    Attribute attribute = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Attribute.class);
+
+    if (attribute != null) {
+      return new AttributeBinding(accessor, attribute, xmlSerializer);
+    }
+
+    if (property != null) {
+
+      if (property.tagName().length() > 0) return new TagBinding(accessor, property, xmlSerializer);
+      if (!property.surroundWithTag()) {
+        final Binding binding = xmlSerializer.getTypeBinding(accessor.getGenericType(), accessor);
+        if (!Element.class.isAssignableFrom(binding.getBoundNodeType())) {
+          throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
+        }
+        return new AccessorBindingWrapper(accessor, binding);
+      }
+    }
+
+    return new OptionTagBinding(accessor, xmlSerializer);
   }
 }

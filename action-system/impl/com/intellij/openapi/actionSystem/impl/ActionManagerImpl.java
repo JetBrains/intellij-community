@@ -62,35 +62,35 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private final DataManager myDataManager;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn = 0;
-  @NonNls private static final String ACTION_ELEMENT_NAME = "action";
-  @NonNls private static final String GROUP_ELEMENT_NAME = "group";
-  @NonNls private static final String ACTIONS_ELEMENT_NAME = "actions";
-  @NonNls private static final String CLASS_ATTR_NAME = "class";
-  @NonNls private static final String ID_ATTR_NAME = "id";
-  @NonNls private static final String INTERNAL_ATTR_NAME = "internal";
-  @NonNls private static final String ICON_ATTR_NAME = "icon";
-  @NonNls private static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
-  @NonNls private static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
-  @NonNls private static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
-  @NonNls private static final String DESCRIPTION = "description";
-  @NonNls private static final String TEXT = "text";
-  @NonNls private static final String POPAP_ATTR_NAME = "popup";
-  @NonNls private static final String SEPARATOR_ELEMENT_NAME = "separator";
-  @NonNls private static final String REFERENCE_ELEMENT_NAME = "reference";
-  @NonNls private static final String GROUPID_ATTR_NAME = "group-id";
-  @NonNls private static final String ANCHOR_ELEMENT_NAME = "anchor";
-  @NonNls private static final String FIRST = "first";
-  @NonNls private static final String LAST = "last";
-  @NonNls private static final String BEFORE = "before";
-  @NonNls private static final String AFTER = "after";
-  @NonNls private static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
-  @NonNls private static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
-  @NonNls private static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
-  @NonNls private static final String KEYMAP_ATTR_NAME = "keymap";
-  @NonNls private static final String KEYSTROKE_ATTR_NAME = "keystroke";
-  @NonNls private static final String REF_ATTR_NAME = "ref";
-  @NonNls private static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
-  @NonNls private static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
+  @NonNls public static final String ACTION_ELEMENT_NAME = "action";
+  @NonNls public static final String GROUP_ELEMENT_NAME = "group";
+  @NonNls public static final String ACTIONS_ELEMENT_NAME = "actions";
+  @NonNls public static final String CLASS_ATTR_NAME = "class";
+  @NonNls public static final String ID_ATTR_NAME = "id";
+  @NonNls public static final String INTERNAL_ATTR_NAME = "internal";
+  @NonNls public static final String ICON_ATTR_NAME = "icon";
+  @NonNls public static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
+  @NonNls public static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
+  @NonNls public static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
+  @NonNls public static final String DESCRIPTION = "description";
+  @NonNls public static final String TEXT_ATTR_NAME = "text";
+  @NonNls public static final String POPUP_ATTR_NAME = "popup";
+  @NonNls public static final String SEPARATOR_ELEMENT_NAME = "separator";
+  @NonNls public static final String REFERENCE_ELEMENT_NAME = "reference";
+  @NonNls public static final String GROUPID_ATTR_NAME = "group-id";
+  @NonNls public static final String ANCHOR_ELEMENT_NAME = "anchor";
+  @NonNls public static final String FIRST = "first";
+  @NonNls public static final String LAST = "last";
+  @NonNls public static final String BEFORE = "before";
+  @NonNls public static final String AFTER = "after";
+  @NonNls public static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
+  @NonNls public static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
+  @NonNls public static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
+  @NonNls public static final String KEYMAP_ATTR_NAME = "keymap";
+  @NonNls public static final String KEYSTROKE_ATTR_NAME = "keystroke";
+  @NonNls public static final String REF_ATTR_NAME = "ref";
+  @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
+  @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
@@ -387,7 +387,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   private static String loadTextForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
-    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT, element.getAttributeValue(TEXT));
+    return CommonBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, element.getAttributeValue(TEXT_ATTR_NAME));
   }
 
   private AnAction processGroupElement(Element element, final ClassLoader loader, PluginId pluginId) {
@@ -450,7 +450,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       // icon
       setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation);
       // popup
-      String popup = element.getAttributeValue(POPAP_ATTR_NAME);
+      String popup = element.getAttributeValue(POPUP_ATTR_NAME);
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }

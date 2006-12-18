@@ -11,8 +11,8 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.xmlb.Array;
-import com.intellij.util.xmlb.Property;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +124,7 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
   @Property(surroundWithTag = false)
-  @Array(
+  @AbstractCollection(
     surroundWithTag = false,
     elementTag = "EXCLUDED_PACKAGE",
     elementValueAttribute = "NAME"

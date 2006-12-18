@@ -1,21 +1,20 @@
 package com.intellij.util.xml.tree;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
-import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
+import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.ide.IdeBundle;
-import com.intellij.lang.annotation.HighlightSeverity;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.*;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
   private DomElement myParentElement;

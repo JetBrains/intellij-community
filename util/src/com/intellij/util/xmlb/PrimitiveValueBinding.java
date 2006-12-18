@@ -32,4 +32,7 @@ class PrimitiveValueBinding implements Binding {
   public Class<? extends Node> getBoundNodeType() {
     return Text.class;
   }
+
+  public void init() {
+  }
 }

@@ -41,4 +41,7 @@ class TagBindingWrapper implements Binding {
   public Class<? extends Node> getBoundNodeType() {
     return Element.class;
   }
+
+  public void init() {
+  }
 }

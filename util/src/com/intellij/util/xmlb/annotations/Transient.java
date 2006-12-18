@@ -1,4 +1,4 @@
-package com.intellij.util.xmlb;
+package com.intellij.util.xmlb.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

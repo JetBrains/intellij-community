@@ -1,5 +1,10 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.util.DOMUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Bean;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import junit.framework.TestCase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -29,7 +34,7 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<EmptyBean/>", new EmptyBean());
   }
 
-  @Property(tagName = "Bean")
+  @Bean(tagName = "Bean")
   public static class EmptyBeanWithCustomName {
   }
 
@@ -263,14 +268,14 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithoutTagName {
-    @Array(surroundWithTag = false)
+    @com.intellij.util.xmlb.annotations.AbstractCollection(surroundWithTag = false)
     public String[] V = new String[]{"a"};
   }
   public void testArrayAnnotationWithoutTagNAmeGivesError() throws Exception {
     final BeanWithArrayWithoutTagName bean = new BeanWithArrayWithoutTagName();
 
     try {
-      doSerializerTest("<BeanWithFieldWithTagAnnotation><name>hello</name></BeanWithFieldWithTagAnnotation>", bean);
+      doSerializerTest("<BeanWithArrayWithoutTagName><option name=\"V\"><option value=\"a\"/></option></BeanWithArrayWithoutTagName>", bean);
     }
     catch (XmlSerializationException e) {
       return;
@@ -280,7 +285,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithElementTagName {
-    @Array(elementTag = "vvalue", elementValueAttribute = "v")
+    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v")
     public String[] V = new String[]{"a", "b"};
   }
   public void testArrayAnnotationWithElementTag() throws Exception {
@@ -294,7 +299,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithoutTag {
-    @Array(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
     public String[] V = new String[]{"a", "b"};
     public int INT_V = 1;
   }
@@ -345,7 +350,7 @@ public class XmlSerializerTest extends TestCase {
 
   public static class BeanWithArrayWithoutAllsTag {
     @Property(surroundWithTag = false)
-    @Array(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
     public String[] V = new String[]{"a", "b"};
     public int INT_V = 1;
   }
@@ -359,6 +364,58 @@ public class XmlSerializerTest extends TestCase {
 
     doSerializerTest("<BeanWithArrayWithoutAllsTag><option name=\"INT_V\" value=\"2\"/><vvalue v=\"1\"/><vvalue v=\"2\"/><vvalue v=\"3\"/></BeanWithArrayWithoutAllsTag>", bean);
   }
+
+  public void testDeserializeFromFormattedXML() throws Exception {
+    String xml = "<BeanWithArrayWithoutAllsTag>\n" + "  <option name=\"INT_V\" value=\"2\"/>\n" + "  <vvalue v=\"1\"/>\n" +
+                 "  <vvalue v=\"2\"/>\n" + "  <vvalue v=\"3\"/>\n" + "</BeanWithArrayWithoutAllsTag>";
+
+    final BeanWithArrayWithoutAllsTag bean =
+      XmlSerializer.deserialize(DOMUtil.loadText(xml).getDocumentElement(), BeanWithArrayWithoutAllsTag.class);
+
+
+    assertEquals(2, bean.INT_V);
+    assertEquals("[1, 2, 3]", Arrays.asList(bean.V).toString());
+  }
+
+
+  public static class BeanWithPolymorphicArray {
+    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTypes = {BeanWithPublicFields.class, BeanWithPublicFieldsDescendant.class})
+    public BeanWithPublicFields[] V = new BeanWithPublicFields[] {};
+  }
+
+  public void testPolymorphicArray() throws Exception {
+    final BeanWithPolymorphicArray bean = new BeanWithPolymorphicArray();
+
+    doSerializerTest("<BeanWithPolymorphicArray><option name=\"V\"><array/></option></BeanWithPolymorphicArray>", bean);
+
+    bean.V = new BeanWithPublicFields[] {new BeanWithPublicFields(), new BeanWithPublicFieldsDescendant(), new BeanWithPublicFields()};
+
+    doSerializerTest("<BeanWithPolymorphicArray><option name=\"V\"><array>" +
+                     "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields>" +
+                     "<BeanWithPublicFieldsDescendant><option name=\"INT_V\" value=\"1\"/><option name=\"NEW_S\" value=\"foo\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFieldsDescendant>" +
+                     "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields>" +
+                     "</array></option></BeanWithPolymorphicArray>", bean);
+  }
+
+
+  public static class BeanWithPropertiesBoundToAttribute {
+    @Attribute(name = "count")
+    public int COUNT = 3;
+    @Attribute(name = "name")
+    public String name = "James";
+  }
+  public void testBeanWithPrimitivePropertyBoundToAttribute() throws Exception {
+    final BeanWithPropertiesBoundToAttribute bean = new BeanWithPropertiesBoundToAttribute();
+
+    doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"3\" name=\"James\"/>", bean);
+
+    bean.COUNT = 10;
+    bean.name = "Bond";
+
+    doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"10\" name=\"Bond\"/>", bean);
+  }
+
+
   //---------------------------------------------------------------------------------------------------
   private void assertSerializer(Object bean, String expected, SerializationFilter filter)
     throws TransformerException, ParserConfigurationException {

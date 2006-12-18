@@ -1,5 +1,7 @@
 package com.intellij.util.xmlb;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
@@ -45,5 +47,10 @@ class FieldAccessor implements Accessor {
 
   public Type getGenericType() {
     return myField.getGenericType();
+  }
+
+  @NonNls
+  public String toString() {
+    return "FieldAccessor[" + myField.getDeclaringClass() + "." + myField.getName() + "]";
   }
 }

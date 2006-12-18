@@ -12,4 +12,6 @@ interface Binding {
   boolean isBoundTo(Node node);
 
   Class<? extends Node> getBoundNodeType();
+
+  void init();
 }

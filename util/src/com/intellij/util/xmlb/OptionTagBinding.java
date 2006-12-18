@@ -1,7 +1,10 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.util.DOMUtil;
+import org.jetbrains.annotations.NonNls;
 import org.w3c.dom.*;
 
+//todo: use TagBinding
 class OptionTagBinding implements Binding {
   private Accessor accessor;
   private String myName;
@@ -44,7 +47,7 @@ class OptionTagBinding implements Binding {
       accessor.write(o, value);
     }
     else {
-      final Node[] children = DomUtil.toArray(element.getChildNodes());
+      final Node[] children = DOMUtil.toArray(element.getChildNodes());
       if (children.length > 0) {
         Object value = myBinding.deserialize(accessor.read(o), children);
         accessor.write(o, value);
@@ -67,5 +70,14 @@ class OptionTagBinding implements Binding {
 
   public Class<? extends Node> getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
+  }
+
+  public void init() {
+  }
+
+
+  @NonNls
+  public String toString() {
+    return "OptionTagBinding[" + myName + ", binding=" + myBinding + "]";
   }
 }

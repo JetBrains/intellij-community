@@ -107,4 +107,7 @@ class MapBinding implements Binding {
   public Class<? extends Node> getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
   }
+
+  public void init() {
+  }
 }
