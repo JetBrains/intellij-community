@@ -197,12 +197,15 @@ public class AsmCodeGenerator {
     codeGen.generatePushValue(generator, value);
   }
 
-  static Class getComponentClass(String className, final ClassLoader classLoader) throws CodeGenerationException{
+  static Class getComponentClass(String className, final ClassLoader classLoader) throws CodeGenerationException {
     try {
       return Class.forName(className, false, classLoader);
     }
     catch (ClassNotFoundException e) {
       throw new CodeGenerationException(null, "Class not found: " + className);
+    }
+    catch(UnsupportedClassVersionError e) {
+      throw new CodeGenerationException(null, "Unsupported class version error: " + className);
     }
   }
 

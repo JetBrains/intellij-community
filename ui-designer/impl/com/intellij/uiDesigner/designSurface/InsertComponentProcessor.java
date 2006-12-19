@@ -480,6 +480,11 @@ public final class InsertComponentProcessor extends EventProcessor {
             result = new RadAtomicComponent(editor.getModule(), aClass, id);
           }
         }
+        catch(final UnsupportedClassVersionError ucve) {
+          result = RadErrorComponent.create(editor.getModule(), id, item.getClassName(), null,
+            UIDesignerBundle.message("unsupported.component.class.version")
+          );
+        }
         catch (final Exception exc) {
           //noinspection NonConstantStringShouldBeStringBuffer
           String errorDescription = Utils.validateJComponentClass(loader, item.getClassName(), true);

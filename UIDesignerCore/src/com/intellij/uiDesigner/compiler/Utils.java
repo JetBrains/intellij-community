@@ -146,6 +146,9 @@ public final class Utils {
     catch(ExceptionInInitializerError exc) {
       return "Cannot initialize class " + className + ": " + exc.getMessage();
     }
+    catch(UnsupportedClassVersionError exc) {
+      return "Unsupported class version error: " + className;
+    }
 
     if (validateConstructor) {
       try {
