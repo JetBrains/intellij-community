@@ -20,7 +20,7 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
 
   private final IElementType myElementType;
 
-  private Reference<PsiClassType[]> myRepositoryTypesRef = null;
+  private volatile Reference<PsiClassType[]> myRepositoryTypesRef = null;
 
   public PsiReferenceListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
@@ -61,59 +61,56 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    PsiClassType[] types;
-    synchronized (PsiLock.LOCK) {
-      types = myRepositoryTypesRef == null ? null : myRepositoryTypesRef.get();
-      if (types == null) {
+    PsiClassType[] types = myRepositoryTypesRef == null ? null : myRepositoryTypesRef.get();
+    if (types == null) {
+      ASTNode treeElement = getTreeElement();
+      final PsiElementFactory factory = getManager().getElementFactory();
+      long repositoryId = getRepositoryId();
+      if (treeElement == null && repositoryId > 0) {
+        RepositoryManager repositoryManager = getRepositoryManager();
         String[] refTexts;
-        ASTNode treeElement = getTreeElement();
-        final PsiElementFactory factory = getManager().getElementFactory();
-        long repositoryId = getRepositoryId();
-        if (treeElement == null && repositoryId > 0) {
-          RepositoryManager repositoryManager = getRepositoryManager();
-          if (myElementType == JavaElementType.EXTENDS_LIST) {
-            refTexts = repositoryManager.getClassView().getExtendsList(repositoryId);
-          }
-          else if (myElementType == JavaElementType.IMPLEMENTS_LIST) {
-            refTexts = repositoryManager.getClassView().getImplementsList(repositoryId);
-          }
-          else if (myElementType == JavaElementType.THROWS_LIST) {
-            refTexts = repositoryManager.getMethodView().getThrowsList(repositoryId);
-          }
-          else {
-            LOG.error("Unknown element type:" + myElementType);
-            return null;
-          }
-
-          types = new PsiClassType[refTexts.length];
-          for (int i = 0; i < types.length; i++) {
-            final PsiElement parent = getParent();
-            PsiElement context = this;
-            if (parent instanceof PsiClass) {
-              context = ((PsiClassImpl)parent).calcBasesResolveContext(PsiNameHelper.getShortClassName(refTexts[i]), this);
-            }
-
-            final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-            final PsiJavaCodeReferenceElementImpl ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(myManager,
-                                                                                                                            refTexts[i].toCharArray(),
-                                                                                                                            holderElement.getCharTable());
-            TreeUtil.addChildren(holderElement, ref);
-            ref.setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
-            types[i] = factory.createType(ref);
-          }
+        if (myElementType == JavaElementType.EXTENDS_LIST) {
+          refTexts = repositoryManager.getClassView().getExtendsList(repositoryId);
+        }
+        else if (myElementType == JavaElementType.IMPLEMENTS_LIST) {
+          refTexts = repositoryManager.getClassView().getImplementsList(repositoryId);
+        }
+        else if (myElementType == JavaElementType.THROWS_LIST) {
+          refTexts = repositoryManager.getMethodView().getThrowsList(repositoryId);
         }
         else {
-          final PsiJavaCodeReferenceElement[] refs = getReferenceElements();
-          types = new PsiClassType[refs.length];
-          for (int i = 0; i < types.length; i++) {
-            types[i] = factory.createType(refs[i]);
-          }
+          LOG.error("Unknown element type:" + myElementType);
+          return null;
         }
 
-        myRepositoryTypesRef = myManager.isBatchFilesProcessingMode()
-                               ? new PatchedWeakReference<PsiClassType[]>(types)
-                               : new PatchedSoftReference<PsiClassType[]>(types);
+        types = new PsiClassType[refTexts.length];
+        for (int i = 0; i < types.length; i++) {
+          final PsiElement parent = getParent();
+          PsiElement context = this;
+          if (parent instanceof PsiClass) {
+            context = ((PsiClassImpl)parent).calcBasesResolveContext(PsiNameHelper.getShortClassName(refTexts[i]), this);
+          }
+
+          final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+          final PsiJavaCodeReferenceElementImpl ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(myManager,
+                                                                                                                          refTexts[i].toCharArray(),
+                                                                                                                          holderElement.getCharTable());
+          TreeUtil.addChildren(holderElement, ref);
+          ref.setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
+          types[i] = factory.createType(ref);
+        }
       }
+      else {
+        final PsiJavaCodeReferenceElement[] refs = getReferenceElements();
+        types = new PsiClassType[refs.length];
+        for (int i = 0; i < types.length; i++) {
+          types[i] = factory.createType(refs[i]);
+        }
+      }
+
+      myRepositoryTypesRef = myManager.isBatchFilesProcessingMode()
+                             ? new PatchedWeakReference<PsiClassType[]>(types)
+                             : new PatchedSoftReference<PsiClassType[]>(types);
     }
     return types;
   }

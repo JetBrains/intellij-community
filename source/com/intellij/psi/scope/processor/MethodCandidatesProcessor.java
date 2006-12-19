@@ -2,12 +2,12 @@ package com.intellij.psi.scope.processor;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
+import com.intellij.util.SmartList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,13 +21,13 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   private PsiElement myPlace;
   protected boolean myHasAccessibleStaticCorrectCandidate = false;
 
-  protected MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, List container){
-    super(null, resolvers, container);
+  protected MethodCandidatesProcessor(PsiElement place, PsiConflictResolver[] resolvers, List<CandidateInfo> container){
+    super(resolvers, container);
     myPlace = place;
   }
 
   public MethodCandidatesProcessor(PsiElement place){
-    super(null, new PsiConflictResolver[]{new DuplicateConflictResolver()}, new ArrayList());
+    super(new PsiConflictResolver[]{new DuplicateConflictResolver()}, new SmartList<CandidateInfo>());
     myPlace = place;
   }
 
@@ -58,7 +58,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  public CandidateInfo[] getCandidates(){
+  public CandidateInfo[] getCandidates() {
     final JavaResolveResult[] resolveResult = getResult();
     CandidateInfo[] infos = new CandidateInfo[resolveResult.length];
     System.arraycopy(resolveResult, 0, infos, 0, resolveResult.length);

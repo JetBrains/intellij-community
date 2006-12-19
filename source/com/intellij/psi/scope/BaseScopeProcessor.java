@@ -1,9 +1,11 @@
 package com.intellij.psi.scope;
 
+import com.intellij.util.ReflectionCache;
+
 public abstract class BaseScopeProcessor implements PsiScopeProcessor{
 
   public <T> T getHint(Class<T> hintClass) {
-    if (hintClass.isAssignableFrom(this.getClass())){
+    if (ReflectionCache.isAssignable(hintClass, this.getClass())){
       return (T)this;
     }
     else{

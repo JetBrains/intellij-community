@@ -48,10 +48,9 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
     return myTypeArguments;
   }
 
-  public MethodsProcessor(PsiElement place, PsiConflictResolver[] resolvers, List container) {
-    super(null, place, ourFilter, resolvers, container);
+  public MethodsProcessor(PsiConflictResolver[] resolvers, List<CandidateInfo> container) {
+    super(null, ourFilter, resolvers, container);
   }
-
 
   public boolean isInStaticScope() {
     return myStaticScopeFlag;

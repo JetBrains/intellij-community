@@ -11,7 +11,7 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
 
   private final PsiElement myParent;
   private PsiJavaCodeReferenceElement[] myReferences;
-  private PsiClassType[] myTypes;
+  private volatile PsiClassType[] myTypes;
   private final String myType;
 
   public ClsReferenceListImpl(PsiElement parent, PsiJavaCodeReferenceElement[] references, String type) {
@@ -27,7 +27,7 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
     myType = type;
   }
 
-  public void setReferences(PsiJavaCodeReferenceElement[] references) {
+  public void setReferences(@NotNull PsiJavaCodeReferenceElement[] references) {
     myReferences = references;
   }
 
@@ -47,17 +47,17 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    synchronized (PsiLock.LOCK) {
-      if (myTypes == null) {
-        final PsiElementFactory factory = getManager().getElementFactory();
-        myTypes = new PsiClassType[myReferences.length];
-        for (int i = 0; i < myReferences.length; i++) {
-          PsiJavaCodeReferenceElement reference = myReferences[i];
-          myTypes[i] = factory.createType(reference);
-        }
+    PsiClassType[] types = myTypes;
+    if (types == null) {
+      final PsiElementFactory factory = getManager().getElementFactory();
+      types = new PsiClassType[myReferences.length];
+      for (int i = 0; i < myReferences.length; i++) {
+        PsiJavaCodeReferenceElement reference = myReferences[i];
+        types[i] = factory.createType(reference);
       }
+      myTypes = types;
     }
-    return myTypes;
+    return types;
   }
 
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {

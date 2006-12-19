@@ -33,15 +33,15 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   private final ClsClassImpl myParent;
   private int myStartOffset;
 
-  private String myName = null;
-  private PsiIdentifier myNameIdentifier = null;
-  private PsiTypeElement myType = null;
-  private ClsModifierListImpl myModifierList = null;
-  private PsiDocComment myDocComment = null;
-  private Boolean myIsDeprecated = null;
-  private PsiExpression myInitializer = null;
+  private volatile String myName = null;
+  private volatile PsiIdentifier myNameIdentifier = null;
+  private volatile PsiTypeElement myType = null;
+  private volatile ClsModifierListImpl myModifierList = null;
+  private volatile PsiDocComment myDocComment = null;
+  private volatile Boolean myIsDeprecated = null;
+  private volatile PsiExpression myInitializer = null;
   private boolean myInitializerInitialized = false;
-  private ClsAnnotationImpl[] myAnnotations = null;
+  private volatile ClsAnnotationImpl[] myAnnotations = null;
 
   public ClsFieldImpl(ClsClassImpl parent, int startOffset) {
     super(parent.myManager, -1);
@@ -103,18 +103,16 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     return (PsiClass)getParent();
   }
 
+  @NotNull
   public PsiIdentifier getNameIdentifier() {
-    synchronized (PsiLock.LOCK) {
-      if (myNameIdentifier == null) {
-        myNameIdentifier = new ClsIdentifierImpl(this, getName());
-      }
+    if (myNameIdentifier == null) {
+      myNameIdentifier = new ClsIdentifierImpl(this, getName());
     }
     return myNameIdentifier;
   }
 
   public @NonNls String getName() {
     if (myName == null) {
-    synchronized (PsiLock.LOCK) {
       long repositoryId = getRepositoryId();
       if (repositoryId < 0) {
         try {
@@ -135,7 +133,6 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
         myName = getRepositoryManager().getFieldView().getName(repositoryId);
       }
     }
-    }
     return myName;
   }
 
@@ -151,31 +148,29 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
 
   public PsiTypeElement getTypeElement() {
     if (myType == null) {
-      synchronized (PsiLock.LOCK) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          if (!parseViaGenericSignature()) {
-            try {
-              ClassFileData classFileData = myParent.getClassFileData();
-              byte[] data = classFileData.getData();
-              int offset = myStartOffset + 4;
-              int b1 = data[offset++] & 0xFF;
-              int b2 = data[offset++] & 0xFF;
-              int index = (b1 << 8) + b2;
-              offset = classFileData.getOffsetInConstantPool(index);
-              offset += 3; // skip tag and length
-              String typeText = ClsUtil.getTypeText(data, offset);
-              myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-            }
-            catch (ClsFormatException e) {
-              myType = null;
-            }
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        if (!parseViaGenericSignature()) {
+          try {
+            ClassFileData classFileData = myParent.getClassFileData();
+            byte[] data = classFileData.getData();
+            int offset = myStartOffset + 4;
+            int b1 = data[offset++] & 0xFF;
+            int b2 = data[offset++] & 0xFF;
+            int index = (b1 << 8) + b2;
+            offset = classFileData.getOffsetInConstantPool(index);
+            offset += 3; // skip tag and length
+            String typeText = ClsUtil.getTypeText(data, offset);
+            myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+          }
+          catch (ClsFormatException e) {
+            myType = null;
           }
         }
-        else {
-          String typeText = getRepositoryManager().getFieldView().getTypeText(repositoryId);
-          myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-        }
+      }
+      else {
+        String typeText = getRepositoryManager().getFieldView().getTypeText(repositoryId);
+        myType = new ClsTypeElementImpl(this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
       }
     }
     return myType;
@@ -207,11 +202,9 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public PsiModifierList getModifierList() {
-    synchronized (PsiLock.LOCK) {
-      if (myModifierList == null) {
-        int flags = getAccessFlags();
-        myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_FIELD_MASK);
-      }
+    if (myModifierList == null) {
+      int flags = getAccessFlags();
+      myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_FIELD_MASK);
     }
     return myModifierList;
   }
@@ -246,21 +239,19 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public PsiExpression getInitializer() {
-    synchronized (PsiLock.LOCK) {
-      if (!myInitializerInitialized) {
-        long repositoryId = getRepositoryId();
-        if (repositoryId < 0) {
-          try {
-            myInitializer = createInitializerFromClassFile();
-          }
-          catch (ClsFormatException e) {
-          }
+    if (!myInitializerInitialized) {
+      long repositoryId = getRepositoryId();
+      if (repositoryId < 0) {
+        try {
+          myInitializer = createInitializerFromClassFile();
         }
-        else {
-          myInitializer = createInitializerFromRepository();
+        catch (ClsFormatException e) {
         }
-        myInitializerInitialized = true;
       }
+      else {
+        myInitializer = createInitializerFromRepository();
+      }
+      myInitializerInitialized = true;
     }
     return myInitializer;
   }
@@ -450,7 +441,6 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public boolean isDeprecated() {
-  synchronized (PsiLock.LOCK) {
     if (myIsDeprecated == null) {
       long repositoryId = getRepositoryId();
       if (repositoryId < 0) {
@@ -467,17 +457,14 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
         myIsDeprecated = isDeprecated ? Boolean.TRUE : Boolean.FALSE;
       }
     }
-  }
-               return myIsDeprecated.booleanValue();
+    return myIsDeprecated.booleanValue();
   }
 
   public PsiDocComment getDocComment() {
     if (!isDeprecated()) return null;
 
-    synchronized (PsiLock.LOCK) {
-      if (myDocComment == null) {
-        myDocComment = new ClsDocCommentImpl(this);
-      }
+    if (myDocComment == null) {
+      myDocComment = new ClsDocCommentImpl(this);
     }
     return myDocComment;
   }

@@ -7,8 +7,9 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.ReflectionCache;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -61,7 +62,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   public boolean shouldProcess(Class elementClass) {
-    return PsiClass.class.isAssignableFrom(elementClass);
+    return ReflectionCache.isAssignable(PsiClass.class, elementClass);
   }
 
   private boolean myStaticContext = false;
@@ -80,7 +81,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       final String name = aClass.getName();
       if (myClassName.equals(name)) {
         if (myCandidates == null) {
-          myCandidates = new ArrayList<ClassCandidateInfo>();
+          myCandidates = new SmartList<ClassCandidateInfo>();
         }
         else {
           String fqName = aClass.getQualifiedName();
@@ -119,8 +120,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       return true;
     }
 
-    boolean accessible = true;
-
     if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
       PsiFile file = ResolveUtil.getContextFile(myPlace);
       if (PsiUtil.isInJspFile(file)) {
@@ -128,8 +127,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       }
     }
 
+    boolean accessible = true;
     if (aClass instanceof PsiTypeParameter) {
-      accessible = !(myStaticContext);
+      accessible = !myStaticContext;
     }
 
     PsiManager manager = aClass.getManager();

@@ -24,7 +24,7 @@ public class DebugUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DebugUtil");
 
   public static /*final*/ boolean CHECK = false;
-  public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = true;
+  public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = false;
   public static final Key<Boolean> TRACK_INVALIDATION = new Key<Boolean>("TRACK_INVALIDATION");
 
   public static String psiTreeToString(PsiElement element, boolean skipWhitespaces) {

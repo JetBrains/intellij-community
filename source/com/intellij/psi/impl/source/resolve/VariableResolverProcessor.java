@@ -10,8 +10,8 @@ import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.util.PsiUtil;
-
-import java.util.ArrayList;
+import com.intellij.util.SmartList;
+import com.intellij.util.ReflectionCache;
 
 /**
  * @author ik, dsl
@@ -25,13 +25,13 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   private PsiElement myCurrentFileContext = null;
 
   public VariableResolverProcessor(String name, PsiElement place, PsiClass accessClass){
-    super(name, null, ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new ArrayList());
+    super(name, ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>());
     myFromElement = place;
     myAccessClass = accessClass;
   }
 
   public VariableResolverProcessor(PsiJavaCodeReferenceElement fromElement) {
-    super(fromElement.getText(), null, ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new ArrayList());
+    super(fromElement.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>());
     myFromElement = fromElement;
 
     PsiElement qualifier = fromElement.getQualifier();
@@ -70,12 +70,12 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   public void add(PsiElement element, PsiSubstitutor substitutor) {
-    final boolean staticProblem = myStaticScopeFlag && !(((PsiVariable)element).hasModifierProperty(PsiModifier.STATIC));
+    final boolean staticProblem = myStaticScopeFlag && !((PsiVariable)element).hasModifierProperty(PsiModifier.STATIC);
     super.add(new CandidateInfo(element, substitutor, myFromElement, myAccessClass, staticProblem, myCurrentFileContext));
   }
 
   public boolean shouldProcess(Class elementClass) {
-    return PsiVariable.class.isAssignableFrom(elementClass);
+    return ReflectionCache.isAssignable(PsiVariable.class, elementClass);
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {

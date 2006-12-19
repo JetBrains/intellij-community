@@ -8,8 +8,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,20 +19,16 @@ import java.util.List;
  * Time: 14:46:31
  * To change this template use Options | File Templates.
  */
-public class ConflictFilterProcessor extends FilterScopeProcessor
+public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
  implements NameHint{
   protected final PsiConflictResolver[] myResolvers;
-  protected JavaResolveResult[] myCachedResult = null;
+  private JavaResolveResult[] myCachedResult = null;
   protected String myName;
 
-  public ConflictFilterProcessor(String name, PsiElement element, ElementFilter filter, PsiConflictResolver[] resolvers, List container){
+  public ConflictFilterProcessor(String name, ElementFilter filter, PsiConflictResolver[] resolvers, List<CandidateInfo> container){
     super(filter, container);
     myResolvers = resolvers;
     myName = name;
-  }
-
-  public PsiConflictResolver[] getResolvers(){
-    return myResolvers;
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor){
@@ -67,11 +63,10 @@ public class ConflictFilterProcessor extends FilterScopeProcessor
 
   public JavaResolveResult[] getResult(){
     if(myCachedResult == null){
-      CandidateInfo candidate;
-
-      final List<CandidateInfo> conflicts = new ArrayList<CandidateInfo>((List<CandidateInfo>)super.getResults());
+      final List<CandidateInfo> conflicts = new SmartList<CandidateInfo>(super.getResults());
       for (PsiConflictResolver myResolver : myResolvers) {
-        if ((candidate = myResolver.resolveConflict(conflicts)) != null) {
+        CandidateInfo candidate = myResolver.resolveConflict(conflicts);
+        if (candidate != null) {
           conflicts.clear();
           conflicts.add(candidate);
           break;

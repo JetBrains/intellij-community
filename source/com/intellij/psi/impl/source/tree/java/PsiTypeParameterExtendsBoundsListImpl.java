@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiElement implements PsiReferenceList {
-  private PsiClassType[] myCachedTypes;
+  private volatile PsiClassType[] myCachedTypes;
 
   public PsiTypeParameterExtendsBoundsListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
@@ -49,18 +49,16 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    synchronized (PsiLock.LOCK) {
-      if (myCachedTypes == null) {
-        long repositoryId = getRepositoryId();
-        if (getTreeElement() == null && repositoryId >= 0) {
-          myCachedTypes = createTypes(getMirrorElement().getReferenceElements());
-        }
-        else {
-          return createTypes(getReferenceElements());
-        }
+    if (myCachedTypes == null) {
+      long repositoryId = getRepositoryId();
+      if (getTreeElement() == null && repositoryId >= 0) {
+        myCachedTypes = createTypes(getMirrorElement().getReferenceElements());
       }
-      return myCachedTypes;
+      else {
+        myCachedTypes = createTypes(getReferenceElements());
+      }
     }
+    return myCachedTypes;
   }
 
   private PsiClassType[] createTypes(final PsiJavaCodeReferenceElement[] refs) {

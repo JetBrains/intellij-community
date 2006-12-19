@@ -5,8 +5,8 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.SmartList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,29 +16,28 @@ import java.util.List;
  * Time: 15:21:27
  * To change this template use Options | File Templates.
  */
-public class FilterScopeProcessor extends BaseScopeProcessor{
-  protected final List myResults;
+public class FilterScopeProcessor<T> extends BaseScopeProcessor{
+  protected final List<T> myResults;
   private PsiElement myCurrentDeclarationHolder;
   private final ElementFilter myFilter;
   private final PsiScopeProcessor myProcessor;
 
-  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor, List container){
+  public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor processor, List<T> container){
     myFilter = filter;
     myProcessor = processor;
     myResults = container;
   }
 
-
-  public FilterScopeProcessor(ElementFilter filter, List container){
+  public FilterScopeProcessor(ElementFilter filter, List<T> container){
     this(filter, null, container);
   }
 
   public FilterScopeProcessor(ElementFilter filter, PsiScopeProcessor proc){
-    this(filter, proc, new ArrayList());
+    this(filter, proc, new SmartList<T>());
   }
 
   public FilterScopeProcessor(ElementFilter filter){
-    this(filter, null, new ArrayList());
+    this(filter, null, new SmartList<T>());
   }
 
   public void handleEvent(Event event, Object associated){
@@ -61,10 +60,10 @@ public class FilterScopeProcessor extends BaseScopeProcessor{
   }
 
   protected void add(PsiElement element, PsiSubstitutor substitutor){
-    myResults.add(element);
+    myResults.add((T)element);
   }
 
-  public List getResults(){
+  public List<T> getResults(){
     return myResults;
   }
 }
