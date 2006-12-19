@@ -62,6 +62,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private VirtualFileHolder myUnversionedFilesHolder;
   private VirtualFileHolder myModifiedWithoutEditingHolder;
+  private VirtualFileHolder myIgnoredFilesHolder;
   private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
   private final List<LocalChangeList> myChangeLists = new ArrayList<LocalChangeList>();
 
@@ -104,6 +105,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myProject = project;
     myUnversionedFilesHolder = new VirtualFileHolder(project);
     myModifiedWithoutEditingHolder = new VirtualFileHolder(project);
+    myIgnoredFilesHolder = new VirtualFileHolder(project);
   }
 
   public void projectOpened() {
@@ -228,23 +230,27 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
       final VirtualFileHolder unversionedHolder;
       final VirtualFileHolder modifiedWithoutEditingHolder;
+      final VirtualFileHolder ignoredHolder;
       final DeletedFilesHolder deletedHolder;
 
       if (updateUnversionedFiles) {
         unversionedHolder = myUnversionedFilesHolder.copy();
         deletedHolder = myDeletedFilesHolder.copy();
         modifiedWithoutEditingHolder = myModifiedWithoutEditingHolder.copy();
+        ignoredHolder = myIgnoredFilesHolder.copy();
 
         if (wasEverythingDirty) {
           unversionedHolder.cleanAll();
           deletedHolder.cleanAll();
           modifiedWithoutEditingHolder.cleanAll();
+          ignoredHolder.cleanAll();
         }
       }
       else {
         unversionedHolder = myUnversionedFilesHolder;
         deletedHolder = myDeletedFilesHolder;
         modifiedWithoutEditingHolder = myModifiedWithoutEditingHolder;
+        ignoredHolder = myIgnoredFilesHolder;
       }
 
       for (final VcsDirtyScope scope : scopes) {
@@ -268,6 +274,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           unversionedHolder.cleanScope(scope);
           deletedHolder.cleanScope(scope);
           modifiedWithoutEditingHolder.cleanScope(scope);
+          ignoredHolder.cleanScope(scope);
         }
 
         try {
@@ -330,13 +337,22 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                 }
               }
 
-
               public void processModifiedWithoutEditing(VirtualFile file) {
                 if (file == null || !updateUnversionedFiles) return;
                 if (myDisposed) throw new DisposedException();
                 if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
                 if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                   modifiedWithoutEditingHolder.addFile(file);
+                  ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                }
+              }
+
+              public void processIgnoredFile(VirtualFile file) {
+                if (file == null || !updateUnversionedFiles) return;
+                if (myDisposed) throw new DisposedException();
+                if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                  ignoredHolder.addFile(file);
                   ChangesViewManager.getInstance(myProject).scheduleRefresh();
                 }
               }
@@ -368,6 +384,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           myUnversionedFilesHolder = unversionedHolder;
           myDeletedFilesHolder = deletedHolder;
           myModifiedWithoutEditingHolder = modifiedWithoutEditingHolder;
+          myIgnoredFilesHolder = ignoredHolder;
         }
         myListeners.getMulticaster().changeListUpdateDone();
       }
@@ -584,6 +601,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public FileStatus getStatus(VirtualFile file) {
     if (myUnversionedFilesHolder.containsFile(file)) return FileStatus.UNKNOWN;
     if (myModifiedWithoutEditingHolder.containsFile(file)) return FileStatus.HIJACKED;
+    if (myIgnoredFilesHolder.containsFile(file)) return FileStatus.IGNORED;
     final Change change = getChange(file);
     return change == null ? FileStatus.NOT_CHANGED : change.getFileStatus();
   }

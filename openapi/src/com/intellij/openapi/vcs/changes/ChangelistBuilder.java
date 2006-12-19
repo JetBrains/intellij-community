@@ -12,6 +12,7 @@ public interface ChangelistBuilder {
   void processUnversionedFile(VirtualFile file);
   void processLocallyDeletedFile(FilePath file);
   void processModifiedWithoutEditing(VirtualFile file);
+  void processIgnoredFile(VirtualFile file);
 
   boolean isUpdatingUnversionedFiles();
 }

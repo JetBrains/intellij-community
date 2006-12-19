@@ -85,6 +85,9 @@ public class CvsChangeProvider implements ChangeProvider {
     for (VirtualFile file : dirContent.getUnknownFiles()) {
       builder.processUnversionedFile(file);
     }
+    for(VirtualFile file: dirContent.getIgnoredFiles()) {
+      builder.processIgnoredFile(file);
+    }
 
     for(Entry entry: dirContent.getDeletedDirectories()) {
       builder.processLocallyDeletedFile(VcsUtil.getFilePath(CvsVfsUtil.getFileFor(dir, entry.getFileName()), true));
@@ -127,9 +130,9 @@ public class CvsChangeProvider implements ChangeProvider {
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
     final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir, entry.getFileName());
-    final FileStatus statis = CvsStatusProvider.getStatus(file, entry);
+    final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
-    processStatus(filePath, file, statis, number, builder);
+    processStatus(filePath, file, status, number, builder);
   }
 
   private void processStatus(final FilePath filePath,
@@ -157,6 +160,9 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     else if (status == FileStatus.UNKNOWN) {
       builder.processUnversionedFile(filePath.getVirtualFile());
+    }
+    else if (status == FileStatus.IGNORED) {
+      builder.processIgnoredFile(filePath.getVirtualFile());
     }
   }
 
