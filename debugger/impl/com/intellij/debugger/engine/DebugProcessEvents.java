@@ -170,7 +170,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
         while (!isStopped()) {
           try {
             final EventSet eventSet = eventQueue.remove();
-            
             if (myReturnValueWatcher != null && myReturnValueWatcher.isTrackingEnabled()) {
               int processed = 0;
               for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext(); ) {
@@ -182,6 +181,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 }
               }
               if (processed == eventSet.size()) {
+                eventSet.resume();
                 continue;
               }
             }

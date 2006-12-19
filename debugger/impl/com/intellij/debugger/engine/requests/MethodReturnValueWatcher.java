@@ -4,6 +4,7 @@
  */
 package com.intellij.debugger.engine.requests;
 
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Method;
 import com.sun.jdi.Value;
@@ -25,10 +26,12 @@ public class MethodReturnValueWatcher  {
   private @NotNull MethodExitRequest myWatchMethodReturnValueRequest;
   private java.lang.reflect.Method myReturnValueMethod;
   private volatile boolean myIsTrackingEnabled;
+  private boolean myFeatureEnabled;
 
   public MethodReturnValueWatcher(final MethodExitRequest request) {
     myWatchMethodReturnValueRequest = request;
     myIsTrackingEnabled = request.isEnabled();
+    myFeatureEnabled = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
   }
 
   public boolean processMethodExitEvent(MethodExitEvent event) {
@@ -69,12 +72,27 @@ public class MethodReturnValueWatcher  {
     return myLastMethodReturnValue;
   }
 
+  public boolean isFeatureEnabled() {
+    return myFeatureEnabled;
+  }
+
   public boolean isTrackingEnabled() {
     return myIsTrackingEnabled;
   }
 
-  public void setTrackingEnabled(boolean enabled) {
-    myIsTrackingEnabled = enabled;
+  public void setFeatureEnabled(final boolean featureEnabled) {
+    myFeatureEnabled = featureEnabled;
+    updateRequestState(featureEnabled && myIsTrackingEnabled);
+    myLastExecutedMethod = null;
+    myLastMethodReturnValue = null;
+  }
+
+  public void setTrackingEnabled(boolean trackingEnabled) {
+    myIsTrackingEnabled = trackingEnabled;
+    updateRequestState(trackingEnabled && myFeatureEnabled);
+  }
+
+  private void updateRequestState(final boolean enabled) {
     if (enabled) {
       myLastExecutedMethod = null;
       myLastMethodReturnValue = null;

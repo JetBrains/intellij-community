@@ -48,6 +48,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public volatile float THREADS_FRAME_SPLITTER_PROPORTION = 0.25f;
   public volatile float FRAME_WATCHES_SPLITTER_PROPORTION = 0.20f;
   public volatile boolean WATCHES_VISIBLE = true;
+  public volatile boolean WATCH_RETURN_VALUES = true;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 

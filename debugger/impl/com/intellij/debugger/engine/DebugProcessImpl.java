@@ -161,7 +161,21 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
     return new Pair<Method, Value>(method, myReturnValueWatcher.getLastMethodReturnValue()); 
   }
+  
+  public void setWatchMethodReturnValuesEnabled(boolean enabled) {
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.setFeatureEnabled(enabled);
+    }
+  }
 
+  public boolean isWatchMethodReturnValuesEnabled() {
+    return myReturnValueWatcher != null && myReturnValueWatcher.isFeatureEnabled();
+  }
+  
+  public boolean canGetMethodReturnValue() {
+    return myReturnValueWatcher != null;
+  }
+  
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final Value value = descriptor.getValue();

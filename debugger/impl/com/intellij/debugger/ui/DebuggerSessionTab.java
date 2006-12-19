@@ -65,6 +65,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private static final Icon CONSOLE_ICON = IconLoader.getIcon("/debugger/console.png");
   private static final Icon FRAME_ICON = IconLoader.getIcon("/debugger/frame.png");
   private static final Icon WATCHES_ICON = IconLoader.getIcon("/debugger/watches.png");
+  private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchReturnValues.png");
 
   private static Key<Key> CONTENT_KIND = Key.create("ContentKind");
   public static Key CONSOLE_CONTENT = Key.create("ConsoleContent");
@@ -298,6 +299,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     addActionToGroup(group, DebuggerActions.VIEW_BREAKPOINTS);
     addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
     group.add(new ShowWatchesAction());
+    group.add(new WatchLastMethodReturnValueAction());
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
@@ -485,18 +487,21 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
   private class ShowWatchesAction extends ToggleAction {
     private volatile boolean myWatchesShown;
+    private final String myTextHide;
+    private final String myTextShow;
 
     public ShowWatchesAction() {
       super("", DebuggerBundle.message("action.show.watches.description"), WATCHES_ICON);
       myWatchesShown = DebuggerSettings.getInstance().WATCHES_VISIBLE;
+      myTextHide = DebuggerBundle.message("action.show.watches.text.hide");
+      myTextShow = DebuggerBundle.message("action.show.watches.text.show");
     }
 
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       final boolean watchesShown = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
-      presentation.setText(watchesShown ? DebuggerBundle.message("action.show.watches.text.hile") : DebuggerBundle
-        .message("action.show.watches.text.show"));
+      presentation.setText(watchesShown ? myTextHide : myTextShow);
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -515,6 +520,50 @@ public class DebuggerSessionTab implements LogConsoleManager {
       }
       else {
         myFramePanel.setWatchPanel(null);
+      }
+    }
+  }
+
+  private class WatchLastMethodReturnValueAction extends ToggleAction {
+    private volatile boolean myWatchesReturnValues;
+    private final String myTextEnable;
+    private final String myTextUnavailable;
+    private final String myMyTextDisable;
+
+    public WatchLastMethodReturnValueAction() {
+      super("", DebuggerBundle.message("action.watch.method.return.value.description"), WATCH_RETURN_VALUES_ICON);
+      myWatchesReturnValues = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
+      myTextEnable = DebuggerBundle.message("action.watches.method.return.value.enable");
+      myMyTextDisable = DebuggerBundle.message("action.watches.method.return.value.disable");
+      myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      final boolean watchValues = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+      final DebugProcessImpl process = getDebugProcess();
+      final String actionText = watchValues ? myMyTextDisable : myTextEnable;
+      if (process != null && process.canGetMethodReturnValue()) {
+        presentation.setEnabled(true);
+        presentation.setText(actionText);
+      }
+      else {
+        presentation.setEnabled(false);
+        presentation.setText(process == null? actionText : myTextUnavailable);
+      }
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return myWatchesReturnValues;
+    }
+
+    public void setSelected(AnActionEvent e, boolean watch) {
+      myWatchesReturnValues = watch;
+      DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;
+      final DebugProcessImpl process = getDebugProcess();
+      if (process != null) {
+        process.setWatchMethodReturnValuesEnabled(watch);
       }
     }
   }

@@ -169,6 +169,7 @@ public class PositionManagerImpl implements PositionManager {
     return lineNumber;
   }
 
+  @Nullable
   private PsiFile getPsiFileByLocation(final Project project, final Location location) {
     if (location == null) {
       return null;
