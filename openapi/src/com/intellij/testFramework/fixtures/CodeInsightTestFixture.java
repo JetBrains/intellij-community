@@ -19,6 +19,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -64,8 +65,17 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * Should be called BEFORE {@link #setUp()}.
    *
    * @param inspections inspections to be enabled in highliting tests.
+   * @see #enableInspections(com.intellij.codeInspection.InspectionToolProvider[])
    */
   void enableInspections(LocalInspectionTool... inspections);
+
+  /**
+   * Enable all inspections provided by given providers.
+   *
+   * @param providers providers to be enabled.
+   * @see #enableInspections(com.intellij.codeInspection.LocalInspectionTool[])
+   */
+  void enableInspections(InspectionToolProvider... providers);
 
   /**
    * Runs highliting test for the given files.

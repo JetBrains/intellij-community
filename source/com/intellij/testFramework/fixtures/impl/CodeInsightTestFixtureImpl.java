@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -105,6 +106,22 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
 
   public void enableInspections(LocalInspectionTool... inspections) {
     myInspections = inspections;
+  }
+
+  public void enableInspections(InspectionToolProvider... providers) {
+    final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
+    for (InspectionToolProvider provider: providers) {
+      for (Class clazz: provider.getInspectionClasses()) {
+        try {
+          LocalInspectionTool inspection = (LocalInspectionTool)clazz.getConstructor().newInstance();
+          tools.add(inspection);
+        }
+        catch (Exception e) {
+          throw new RuntimeException("Cannot instantiate " + clazz);
+        }
+      }
+    }
+    myInspections = tools.toArray(new LocalInspectionTool[tools.size()]);
   }
 
   public long testHighlighting(final boolean checkWarnings,
