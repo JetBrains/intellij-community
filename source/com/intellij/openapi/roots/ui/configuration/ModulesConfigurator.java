@@ -323,9 +323,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       return Pair.create(wizard.getModuleBuilder(), facetEditorsStep);
     }
 
-    if (facetEditorsStep != null) {
-      facetEditorsStep.disposeUIResources();
-    }
     return Pair.create(null, null);
   }
 
