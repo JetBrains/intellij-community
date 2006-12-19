@@ -129,6 +129,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                         ) {
     if (ParameterInfoController.isAlreadyShown(editor, elementStart)) return;
 
+    if (editor.isDisposed()) return;
     final ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor,handler);
     component.setParameterOwner(element);
     if (highlighted != null) {
