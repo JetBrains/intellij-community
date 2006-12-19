@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -65,6 +64,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private CharTable myCharTable;
   private int myCurrentLexem;
+  private Token myCurrentToken = null;
   private CharSequence myText;
   private boolean myDebugMode = false;
   private ASTNode myOriginalTree = null;
@@ -217,12 +217,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myTokenType = myLexer.getTokenType();
       myTokenStart = myLexer.getTokenStart();
       myTokenEnd = myLexer.getTokenEnd();
-      myState = myLexer.getState();
+      //myState = myLexer.getState();
     }
 
     public int hc() {
       if (myHC == -1) {
-        myHC = StringUtil.stringHashCode(myLexer.getBuffer(), myTokenStart, myTokenEnd - myTokenStart);
+        int hc = 0;
+        final int start = myTokenStart;
+        final int end = myTokenEnd;
+        final char[] buf = myLexer.getBuffer();
+        for (int i = start; i < end; i++) {
+          hc += buf[i];
+        }
+
+        myHC = hc;
       }
 
       return myHC;
@@ -309,12 +317,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final Token lex = getCurrentToken();
     if (lex == null) return null;
 
-    final IElementType tokenType = lex.getTokenType();
-    LOG.assertTrue(!whitespaceOrComment(tokenType));
-    return tokenType;
+    return lex.getTokenType();
   }
 
   public void advanceLexer() {
+    myCurrentToken = null;
     myCurrentLexem++;
   }
 
@@ -332,19 +339,22 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @Nullable
   public Token getCurrentToken() {
-    Token lastToken;
-    while (true) {
-      lastToken = getTokenOrWhitespace();
-      if (lastToken == null) return null;
-      if (whitespaceOrComment(lastToken.getTokenType())) {
-        myCurrentLexem++;
+    if (myCurrentToken == null) {
+      Token lastToken;
+      while (true) {
+        lastToken = getTokenOrWhitespace();
+        if (lastToken == null) return null;
+        if (whitespaceOrComment(lastToken.getTokenType())) {
+          myCurrentLexem++;
+        }
+        else {
+          break;
+        }
       }
-      else {
-        break;
-      }
+      myCurrentToken = lastToken;
     }
 
-    return lastToken;
+    return myCurrentToken;
   }
 
   @Nullable
@@ -375,6 +385,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @SuppressWarnings({"SuspiciousMethodCalls"})
   public void rollbackTo(Marker marker) {
     myCurrentLexem = ((StartMarker)marker).myLexemIndex;
+    myCurrentToken = null;
     int idx = myProduction.lastIndexOf(marker);
 
     LOG.assertTrue(idx >= 0, "The marker must be added before rolled back to.");
@@ -709,7 +720,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       Node child = marker.firstChild;
       if (child == null) return EMPTY;
 
-      List<Node> list = new ArrayList<Node>(50);
+      List<Node> list = new ArrayList<Node>(5);
       while (child != null) {
         list.add(child);
         child = child.next;

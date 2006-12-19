@@ -14,6 +14,9 @@ import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class HtmlPolicy extends XmlFormattingPolicy {
   private CodeStyleSettings mySettings;
 
@@ -90,11 +93,21 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   private boolean checkName(XmlTag tag, String option) {
     if (option == null) return false;
-    final String[] names = option.split(",");
-    for (String name : names) {
+    for (String name : getTagNames(option)) {
       if (name.trim().equalsIgnoreCase(tag.getName())) return true;
     }
     return false;
+  }
+
+  private Map<String, String[]> myCachedSplits = new HashMap<String, String[]>();
+
+  private String[] getTagNames(final String option) {
+    String[] splits = myCachedSplits.get(option);
+    if (splits == null) {
+      splits = option.split(",");
+      myCachedSplits.put(option, splits);
+    }
+    return splits;
   }
 
   public boolean keepWhiteSpacesInsideTag(final XmlTag tag) {
