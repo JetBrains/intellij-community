@@ -4,7 +4,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -20,7 +19,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -50,8 +48,8 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   @NonNls private static final String HELP_ID = "debugging.debugFrame";
   private ThreeComponentsSplitter mySplitter;
-  private static final Icon UNFREEZE_ICON = IconLoader.getIcon("/actions/resumeThread.png");
-  private static final Icon FREEZE_ICON = IconLoader.getIcon("/actions/freezeThread.png");
+  //private static final Icon UNFREEZE_ICON = IconLoader.getIcon("/actions/resumeThread.png");
+  //private static final Icon FREEZE_ICON = IconLoader.getIcon("/actions/freezeThread.png");
 
   public FramePanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
@@ -87,7 +85,6 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     mySplitter.setLastComponent(null);
 
     add(mySplitter, BorderLayout.CENTER);
-
     registerDisposable(DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE));
 
     final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
@@ -99,24 +96,14 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     });
   }
 
-  private JPanel createThreadComboPanel(JComboBox threadsCombo) {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new FreezeThreadAction());
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.COMBO_PAGER, group, true);
-    panel.add(threadsCombo, BorderLayout.CENTER);
-    panel.add(toolbar.getComponent(), BorderLayout.EAST);
-    return panel;
-  }
-
   public void addNotify() {
     super.addNotify();
-    final ThreeComponentsSplitter splitter = mySplitter;
     // need invokeLater to be sure the splitter has been assigned with and height
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        setFirstProportion(DebuggerSettings.getInstance().THREADS_FRAME_SPLITTER_PROPORTION);
-        setLastProportion(DebuggerSettings.getInstance().FRAME_WATCHES_SPLITTER_PROPORTION);
+        final DebuggerSettings settings = DebuggerSettings.getInstance();
+        setFirstProportion(settings.THREADS_FRAME_SPLITTER_PROPORTION);
+        setLastProportion(settings.FRAME_WATCHES_SPLITTER_PROPORTION);
       }
     });
   }
@@ -472,6 +459,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
   }
 
 
+  /*
   private class FreezeThreadAction extends AnAction {
 
     public FreezeThreadAction() {
@@ -512,4 +500,5 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
       presentation.setIcon(icon);
     }
   }
+  */
 }
