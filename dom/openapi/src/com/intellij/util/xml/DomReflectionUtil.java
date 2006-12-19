@@ -144,6 +144,10 @@ public class DomReflectionUtil {
     if (type instanceof ParameterizedType) {
       return getRawType(((ParameterizedType)type).getRawType());
     }
+    if (type instanceof GenericArrayType) {
+      //todo[peter] don't create new instance each time
+      return Array.newInstance(getRawType(((GenericArrayType)type).getGenericComponentType()), 0).getClass();
+    }
     assert false : type;
     return null;
   }
