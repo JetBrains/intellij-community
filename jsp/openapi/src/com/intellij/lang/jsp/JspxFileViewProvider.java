@@ -3,6 +3,7 @@ package com.intellij.lang.jsp;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,6 +15,7 @@ import com.intellij.lang.Language;
 public interface JspxFileViewProvider extends FileViewProvider {
   Language JAVA_HOLDER_METHOD_TREE_LANGUAGE = new Language("JAVA_HOLDER_METHOD_TREE", "") {};
 
+  @Nullable
   WebDirectoryElement getContainingWebDirectory();
   Language getTemplateDataLanguage();
 }
