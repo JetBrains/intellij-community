@@ -49,7 +49,7 @@ public class InlineConstantFieldHandler {
     if (!invokedOnReference) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
     }
-    PsiReferenceExpression refExpression = reference != null ? (PsiReferenceExpression)reference.getElement() : null;
+    PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
     dialog.show();
   }
