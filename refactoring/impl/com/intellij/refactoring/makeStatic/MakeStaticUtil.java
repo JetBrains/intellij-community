@@ -63,7 +63,7 @@ public class MakeStaticUtil {
       PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression) element).getQualifier();
       PsiElement refElement = qualifier != null ?
           qualifier.resolve() : PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      if (refElement instanceof PsiClass && isPartOf((PsiClass)refElement, containingClass)) {
+      if (refElement instanceof PsiClass && !refElement.equals(originalMember) && isPartOf((PsiClass)refElement, containingClass)) {
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).isReferenceTo(originalMember)) {
           if (includeSelf) {
