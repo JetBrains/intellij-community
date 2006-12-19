@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +31,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -152,11 +154,12 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false).getComponent();
   }
 
-  void updateProgressText(final String text) {
+  void updateProgressText(final String text, final boolean isError) {
     if (myProgressLabel != null) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myProgressLabel.setText(text);
+          myProgressLabel.setForeground(isError ? Color.red : UIUtil.getLabelForeground());
         }
       });
     }
@@ -235,6 +238,14 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
     public void changeListUpdateDone() {
       scheduleRefresh();
+      ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+      VcsException updateException = changeListManager.getUpdateException();
+      if (updateException == null) {
+        updateProgressText("", false);
+      }
+      else {
+        updateProgressText(VcsBundle.message("error.updating.changes", updateException.getMessage()), true);
+      }
     }
   }
 

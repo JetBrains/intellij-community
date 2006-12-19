@@ -65,6 +65,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private VirtualFileHolder myIgnoredFilesHolder;
   private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
   private final List<LocalChangeList> myChangeLists = new ArrayList<LocalChangeList>();
+  private VcsException myUpdateException = null;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private LocalChangeList myDefaultChangelist;
@@ -233,6 +234,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final VirtualFileHolder ignoredHolder;
       final DeletedFilesHolder deletedHolder;
 
+      if (wasEverythingDirty) {
+        myUpdateException = null;
+      }
+
       if (updateUnversionedFiles) {
         unversionedHolder = myUnversionedFilesHolder.copy();
         deletedHolder = myDeletedFilesHolder.copy();
@@ -258,7 +263,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         if (vcs == null) continue;
 
         myCurrentlyUpdatingScope = scope;
-        ChangesViewManager.getInstance(myProject).updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()));
+        ChangesViewManager.getInstance(myProject).updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             synchronized (myChangeLists) {
@@ -280,87 +285,94 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         try {
           final ChangeProvider changeProvider = vcs.getChangeProvider();
           if (changeProvider != null) {
-            changeProvider.getChanges(scope, new ChangelistBuilder() {
-              public void processChange(final Change change) {
-                processChangeInList(change, null);
-              }
+            try {
+              changeProvider.getChanges(scope, new ChangelistBuilder() {
+                public void processChange(final Change change) {
+                  processChangeInList(change, null);
+                }
 
-              public void processChangeInList(final Change change, final ChangeList changeList) {
-                if (myDisposed) throw new DisposedException();
+                public void processChangeInList(final Change change, final ChangeList changeList) {
+                  if (myDisposed) throw new DisposedException();
 
-                final String fileName = ChangesUtil.getFilePath(change).getName();
-                if (FileTypeManager.getInstance().isFileIgnored(fileName)) return;
+                  final String fileName = ChangesUtil.getFilePath(change).getName();
+                  if (FileTypeManager.getInstance().isFileIgnored(fileName)) return;
 
-                ApplicationManager.getApplication().runReadAction(new Runnable() {
-                  public void run() {
-                    if (isUnder(change, scope)) {
-                      try {
-                        synchronized (myChangeLists) {
-                          if (changeList instanceof LocalChangeList) {
-                            ((LocalChangeList) changeList).addChange(change);
-                          }
-                          else {
-                            for (LocalChangeList list : myChangeLists) {
-                              if (list == myDefaultChangelist) continue;
-                              if (list.processChange(change)) return;
+                  ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    public void run() {
+                      if (isUnder(change, scope)) {
+                        try {
+                          synchronized (myChangeLists) {
+                            if (changeList instanceof LocalChangeList) {
+                              ((LocalChangeList) changeList).addChange(change);
                             }
+                            else {
+                              for (LocalChangeList list : myChangeLists) {
+                                if (list == myDefaultChangelist) continue;
+                                if (list.processChange(change)) return;
+                              }
 
-                            myDefaultChangelist.processChange(change);
+                              myDefaultChangelist.processChange(change);
+                            }
                           }
                         }
-                      }
-                      finally {
-                        ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                        finally {
+                          ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                        }
                       }
                     }
+                  });
+                }
+
+                public void processUnversionedFile(VirtualFile file) {
+                  if (file == null || !updateUnversionedFiles) return;
+                  if (myDisposed) throw new DisposedException();
+                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                    unversionedHolder.addFile(file);
+                    ChangesViewManager.getInstance(myProject).scheduleRefresh();
                   }
-                });
-              }
-
-              public void processUnversionedFile(VirtualFile file) {
-                if (file == null || !updateUnversionedFiles) return;
-                if (myDisposed) throw new DisposedException();
-                if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
-                if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                  unversionedHolder.addFile(file);
-                  ChangesViewManager.getInstance(myProject).scheduleRefresh();
                 }
-              }
 
-              public void processLocallyDeletedFile(FilePath file) {
-                if (!updateUnversionedFiles) return;
-                if (myDisposed) throw new DisposedException();
-                if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
-                if (scope.belongsTo(file)) {
-                  deletedHolder.addFile(file);
-                  ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                public void processLocallyDeletedFile(FilePath file) {
+                  if (!updateUnversionedFiles) return;
+                  if (myDisposed) throw new DisposedException();
+                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (scope.belongsTo(file)) {
+                    deletedHolder.addFile(file);
+                    ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                  }
                 }
-              }
 
-              public void processModifiedWithoutEditing(VirtualFile file) {
-                if (file == null || !updateUnversionedFiles) return;
-                if (myDisposed) throw new DisposedException();
-                if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
-                if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                  modifiedWithoutEditingHolder.addFile(file);
-                  ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                public void processModifiedWithoutEditing(VirtualFile file) {
+                  if (file == null || !updateUnversionedFiles) return;
+                  if (myDisposed) throw new DisposedException();
+                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                    modifiedWithoutEditingHolder.addFile(file);
+                    ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                  }
                 }
-              }
 
-              public void processIgnoredFile(VirtualFile file) {
-                if (file == null || !updateUnversionedFiles) return;
-                if (myDisposed) throw new DisposedException();
-                if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
-                if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                  ignoredHolder.addFile(file);
-                  ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                public void processIgnoredFile(VirtualFile file) {
+                  if (file == null || !updateUnversionedFiles) return;
+                  if (myDisposed) throw new DisposedException();
+                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                    ignoredHolder.addFile(file);
+                    ChangesViewManager.getInstance(myProject).scheduleRefresh();
+                  }
                 }
-              }
 
-              public boolean isUpdatingUnversionedFiles() {
-                return updateUnversionedFiles;
+                public boolean isUpdatingUnversionedFiles() {
+                  return updateUnversionedFiles;
+                }
+              }, null); // TODO: make real indicator
+            }
+            catch (VcsException e) {
+              if (myUpdateException == null) {
+                myUpdateException = e;
               }
-            }, null); // TODO: make real indicator
+            }
           }
         }
         finally {
@@ -386,7 +398,6 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           myModifiedWithoutEditingHolder = modifiedWithoutEditingHolder;
           myIgnoredFilesHolder = ignoredHolder;
         }
-        myListeners.getMulticaster().changeListUpdateDone();
       }
     }
     catch (DisposedException e) {
@@ -396,7 +407,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       LOG.error(ex);
     }
     finally {
-      ChangesViewManager.getInstance(myProject).updateProgressText("");
+      myListeners.getMulticaster().changeListUpdateDone();
       synchronized (myPendingUpdatesLock) {
         myUpdateInProgress = false;
         myPendingUpdatesLock.notifyAll();
@@ -484,6 +495,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   List<FilePath> getDeletedFiles() {
     return new ArrayList<FilePath>(myDeletedFilesHolder.getFiles());
+  }
+
+  VcsException getUpdateException() {
+    return myUpdateException;
   }
 
   public boolean isFileAffected(final VirtualFile file) {
