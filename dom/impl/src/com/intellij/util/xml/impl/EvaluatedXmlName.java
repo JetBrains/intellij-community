@@ -109,13 +109,17 @@ public class EvaluatedXmlName {
 
   @NotNull @NonNls
   public final String getNamespace(@NotNull XmlElement parentElement) {
+    final String xmlElementNamespace = getXmlElementNamespace(parentElement);
     if (myNamespaceKey != null) {
       final List<String> strings = getAllowedNamespaces((XmlFile)parentElement.getContainingFile());
-      if (!strings.isEmpty()) {
+      if (!strings.isEmpty() && !strings.contains(xmlElementNamespace)) {
         return strings.get(0);
       }
     }
+    return xmlElementNamespace;
+  }
 
+  private static String getXmlElementNamespace(final XmlElement parentElement) {
     if (parentElement instanceof XmlTag) {
       return ((XmlTag)parentElement).getNamespace();
     }
