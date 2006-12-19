@@ -17,6 +17,7 @@
 
 package com.intellij.util.xml;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -52,7 +53,8 @@ public class NanoXmlUtil {
         return;
       }
 
-      final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+      final Document document =
+        ApplicationManager.getApplication() == null ? null : FileDocumentManager.getInstance().getCachedDocument(virtualFile);
 
       if (document != null) {
         parse(new CharSequenceReader(document.getCharsSequence()), builder);
@@ -263,6 +265,6 @@ public class NanoXmlUtil {
     }
   }
 
-  private static class ParserStoppedException extends RuntimeException {
+  public static class ParserStoppedException extends RuntimeException {
   }
 }

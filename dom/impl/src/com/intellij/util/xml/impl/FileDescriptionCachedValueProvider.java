@@ -152,7 +152,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
         public Result<Pair<String, String>> compute() {
           Pair<String, String> rootTagAndNs = null;
           try {
-            rootTagAndNs = DomImplUtil.getRootTagAndNamespace(getInputStream());
+            rootTagAndNs = DomImplUtil.getRootTagAndNamespace(myXmlFile);
           }
           catch (IOException e) {
             LOG.info(e);

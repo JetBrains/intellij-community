@@ -4,27 +4,22 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
-import com.intellij.psi.xml.XmlTag;
+import net.n3.nanoxml.IXMLBuilder;
 import org.apache.xerces.parsers.SAXParser;
-import org.apache.xerces.xni.parser.XMLEntityResolver;
-import org.apache.xerces.xni.parser.XMLInputSource;
-import org.apache.xerces.xni.XMLResourceIdentifier;
-import org.apache.xerces.xni.XNIException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-import org.xml.sax.*;
-import org.xml.sax.helpers.DefaultHandler;
 
-import java.io.Closeable;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
@@ -144,68 +139,46 @@ public class DomImplUtil {
     }) != null;
   }
 
-@NotNull
-  public static Pair<String, String> getRootTagAndNamespace(final InputSource source) throws IOException {
-    synchronized (ourParser) {
-      final Ref<String> localNameRef = new Ref<String>();
-      final Ref<String> nsRef = new Ref<String>("");
-      final DefaultHandler handler = new DefaultHandler() {
-
-        public InputSource resolveEntity(final String publicId, final String systemId) throws IOException, SAXException {
-          nsRef.set(systemId);
-          return super.resolveEntity(publicId, systemId);
-        }
-
-        public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
-          throws SAXException {
-          localNameRef.set(localName);
-          if (StringUtil.isNotEmpty(uri) && StringUtil.isEmpty(nsRef.get())) {
-            nsRef.set(uri);
-          }
-          throw new SAXException();
-        }
-      };
-      ourParser.setContentHandler(handler);
-      ourParser.setEntityResolver(handler);
-      ourParser.setErrorHandler(handler);
-      try {
-        ourParser.setProperty("http://apache.org/xml/properties/internal/entity-resolver", new XMLEntityResolver() {
-          public XMLInputSource resolveEntity(final XMLResourceIdentifier resourceIdentifier) throws XNIException, IOException {
-            return null;
-          }
-        });
-
-        ourParser.setFeature("http://xml.org/sax/features/namespaces", true);
-        ourParser.setFeature("http://apache.org/xml/features/allow-java-encodings", true);
-
-        ourParser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        ourParser.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        ourParser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-      }
-      catch (SAXNotRecognizedException e) {
-      }
-      catch (SAXNotSupportedException e) {
-      }
-      try {
-        ourParser.parse(source);
-      }
-      catch (SAXException e) {
-      }
-      finally {
-        ourParser.reset();
-        closeStream(source.getByteStream());
-        closeStream(source.getCharacterStream());
-        ourParser.setContentHandler(null);
-        ourParser.setEntityResolver(null);
-        ourParser.setErrorHandler(null);
-      }
-      return Pair.create(localNameRef.get(), nsRef.get());
-    }
+  @NotNull
+  public static Pair<String, String> getRootTagAndNamespace(final PsiFile file) throws IOException {
+    final Ref<String> localNameRef = new Ref<String>();
+    final Ref<String> nsRef = new Ref<String>("");
+    NanoXmlUtil.parseFile(file, new RootTagParametersGettingBuilder(localNameRef));
+    return Pair.create(localNameRef.get(), nsRef.get());
   }
 
-  private static void closeStream(final Closeable stream) throws IOException {
-    if (stream != null) {
-      stream.close();
+  private static class RootTagParametersGettingBuilder implements IXMLBuilder {
+    private final Ref<String> myLocalNameRef;
+
+    public RootTagParametersGettingBuilder(final Ref<String> localNameRef) {
+      myLocalNameRef = localNameRef;
+    }
+
+    public void startBuilding(final String systemID, final int lineNr) throws Exception {
+    }
+
+    public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
+    }
+
+    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
+      myLocalNameRef.set(name);
+      throw new NanoXmlUtil.ParserStoppedException();
+    }
+
+    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
+    }
+
+    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    }
+
+    public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    }
+
+    public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
+    }
+
+    public Object getResult() throws Exception {
+      return null;
     }
   }
 }
