@@ -1,16 +1,11 @@
 package com.intellij.compiler.ant;
 
-import com.intellij.compiler.ant.j2ee.J2EEBuildTarget;
-import com.intellij.compiler.ant.j2ee.BuildExplodedTarget;
-import com.intellij.compiler.ant.j2ee.BuildJarTarget;
 import com.intellij.compiler.ant.taskdefs.Path;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 
 import java.io.File;
 
@@ -22,11 +17,7 @@ public class ChunkBuild extends CompositeGenerator{
 
   public ChunkBuild(Project project, ModuleChunk chunk, GenerationOptions genOptions) {
     final File chunkBaseDir = chunk.getBaseDir();
-    if (chunk.isJ2EEApplication()) {
-      add(new CompileModuleChunkTarget(project, chunk, VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY, chunkBaseDir, genOptions), 1);
-    }
-    else {
-
+    if (ChunkBuildExtension.hasSelfOutput(chunk)) {
       if (genOptions.forceTargetJdk) {
         if (chunk.isJdkInherited()) {
           add(new Property(BuildProperties.getModuleChunkJdkHomeProperty(chunk.getName()), BuildProperties.propertyRef(BuildProperties.PROPERTY_PROJECT_JDK_HOME)));
@@ -61,21 +52,10 @@ public class ChunkBuild extends CompositeGenerator{
       final ModuleChunkSourcepath moduleSources = new ModuleChunkSourcepath(project, chunk, genOptions);
       add(moduleSources, 1);
       add(new CompileModuleChunkTarget(project, chunk, moduleSources.getSourceRoots(), moduleSources.getTestSourceRoots(), chunkBaseDir, genOptions), 1);
+      add(new CleanModule(chunk), 1);
     }
 
-    add(new CleanModule(chunk), 1);
-
-    if (chunk.isJ2EE()) {
-      final ModuleBuildProperties moduleBuildProperties = ModuleBuildProperties.getInstance(chunk.getModules()[0]);
-      assert moduleBuildProperties != null;
-      add(new J2EEBuildTarget(chunk, chunkBaseDir, genOptions, moduleBuildProperties));
-      add(new Comment(CompilerBundle.message("generated.ant.build.exploded.target.comment", chunk.getName(),
-                                             BuildProperties.getJ2EEExplodedPathProperty())), 1);
-      add(new BuildExplodedTarget(chunk, chunkBaseDir, genOptions, moduleBuildProperties));
-      add(new Comment(CompilerBundle.message("generated.ant.build.jar.target.comment", moduleBuildProperties.getArchiveExtension(), chunk.getName(),
-                                             BuildProperties.getJ2EEJarPathProperty())), 1);
-      add(new BuildJarTarget(chunk, chunkBaseDir, genOptions, moduleBuildProperties));
-    }
+    ChunkBuildExtension.process(this, chunk, genOptions);
   }
 
   private static Generator createBootclasspath(ModuleChunk chunk) {

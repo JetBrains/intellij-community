@@ -38,14 +38,7 @@ public abstract class ProjectBuild extends Generator {
         if (alltargetNames.length() > 0) {
           alltargetNames.append(", ");
         }
-        final String chunkName = chunk.getName();
-
-        if (chunk.isJ2EE()) {
-          alltargetNames.append(BuildProperties.getJ2EEBuildTargetName(chunkName));
-        }
-        else {
-          alltargetNames.append(BuildProperties.getCompileTargetName(chunkName));
-        }
+        alltargetNames.append(ChunkBuildExtension.getAssemblingName(chunk));
       }
     }
 

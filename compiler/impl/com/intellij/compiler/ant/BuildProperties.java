@@ -283,46 +283,13 @@ public class BuildProperties extends CompositeGenerator {
     return new File(project.getProjectFilePath()).getParentFile();
   }
 
-  private static @NonNls String convertName(@NonNls final String name) {
+  public static @NonNls String convertName(@NonNls final String name) {
     //noinspection HardCodedStringLiteral
     return JDOMUtil.escapeText(name.replaceAll("\"", "").replaceAll("\\s+", "_").toLowerCase());
   }
 
   public static @NonNls String getPathMacroProperty(@NonNls String pathMacro) {
     return "path.variable." + convertName(pathMacro);
-  }
-
-  // J2EE
-  public static @NonNls String getJ2EEExplodedPathProperty(@NonNls String moduleName) {
-    return convertName(moduleName) + ".dir.exploded";
-  }
-
-  public static @NonNls String getJ2EEExplodedPathProperty() {
-    return "j2ee.dir.exploded";
-  }
-
-  public static @NonNls String getJ2EEJarPathProperty() {
-    return "j2ee.path.jar";
-  }
-
-  public static @NonNls String getJ2EEJarPathProperty(@NonNls String moduleName) {
-    return convertName(moduleName) + ".path.jar";
-  }
-
-  public static @NonNls String getJ2EEBuildTargetName(@NonNls String moduleName) {
-    return "j2ee.build."+convertName(moduleName);
-  }
-
-  public static @NonNls String getJ2EEExplodedBuildTargetName(@NonNls String moduleName) {
-    return "j2ee.build.exploded."+convertName(moduleName);
-  }
-
-  public static @NonNls String getJ2EEJarBuildTargetName(@NonNls String moduleName) {
-    return "j2ee.build.jar."+convertName(moduleName);
-  }
-
-  public static @NonNls String getTempDirForModuleProperty(@NonNls String moduleName) {
-    return "tmp.dir."+convertName(moduleName);
   }
 
   public static @NonNls String propertyRef(@NonNls String propertyName) {

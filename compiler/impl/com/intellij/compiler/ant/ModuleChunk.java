@@ -6,8 +6,10 @@ package com.intellij.compiler.ant;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.ModuleRootManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -34,6 +36,7 @@ public class ModuleChunk {
     return myModules;
   }
 
+  @Nullable
   public String getOutputDirUrl() {
     return ModuleRootManager.getInstance(myMainModule).getCompilerOutputPathUrl();
   }
@@ -42,6 +45,7 @@ public class ModuleChunk {
     return ModuleRootManager.getInstance(myMainModule).getCompilerOutputPathForTestsUrl();
   }
 
+  @Deprecated
   public boolean isJ2EE() {
     // assuming that j2ee modules cannot be found inside cycles
     return myModules.length == 1 && myModules[0].getModuleType().isJ2EE();
@@ -51,6 +55,7 @@ public class ModuleChunk {
     return myMainModule.isSavePathsRelative();
   }
 
+  @Deprecated
   public boolean isJ2EEApplication() {
     return myModules.length == 1 && ModuleType.J2EE_APPLICATION.equals(myModules[0].getModuleType());
   }
@@ -59,6 +64,7 @@ public class ModuleChunk {
     return ModuleRootManager.getInstance(myMainModule).isJdkInherited();
   }
 
+  @Nullable
   public ProjectJdk getJdk() {
     return ModuleRootManager.getInstance(myMainModule).getJdk();
   }
@@ -84,5 +90,9 @@ public class ModuleChunk {
 
   public void setMainModule(Module module) {
     myMainModule = module;
+  }
+
+  public Project getProject() {
+    return myMainModule.getProject();
   }
 }

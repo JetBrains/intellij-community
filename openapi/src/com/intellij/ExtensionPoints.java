@@ -103,4 +103,6 @@ public interface ExtensionPoints {
   @NonNls String VISIBLITY_TOOL = "com.intellij.visibility";
 
   @NonNls String EMPTY_METHOD_TOOL = "com.intellij.canBeEmpty";
+
+  @NonNls String ANT_BUILD_GEN = "com.intellij.antBuildGen";
 }

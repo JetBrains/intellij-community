@@ -7,15 +7,9 @@ import com.intellij.compiler.ant.*;
 import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.compiler.make.BuildInstruction;
-import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
-import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +19,7 @@ import java.util.ArrayList;
 public class BuildExplodedTarget extends Target {
   public BuildExplodedTarget(final ModuleChunk chunk, final File moduleBaseDir,
                                  final GenerationOptions genOptions, @NotNull final ModuleBuildProperties moduleBuildProperties) {
-    super(BuildProperties.getJ2EEExplodedBuildTargetName(chunk.getName()), null,
+    super(J2EEBuildProperties.getJ2EEExplodedBuildTargetName(chunk.getName()), null,
           CompilerBundle.message("generated.ant.build.build.exploded.dir.for.module.description", chunk.getName()), null);
     final Module module = chunk.getModules()[0];
 
@@ -38,7 +32,7 @@ public class BuildExplodedTarget extends Target {
         if (instruction.isExternalDependencyInstruction()) return true;
         final File sourceFile = instruction.getFile();
         final String outputRelativePath = "/"+instruction.getOutputRelativePath();
-        final String explodedPathProperty = BuildProperties.getJ2EEExplodedPathProperty();
+        final String explodedPathProperty = J2EEBuildProperties.getJ2EEExplodedPathProperty();
 
         final String sourceLocation = GenerationUtils.toRelativePath(sourceFile.getPath(), moduleBaseDir, BuildProperties.getModuleBasedirProperty(instruction.getModule()), genOptions, !module.isSavePathsRelative());
 
@@ -58,7 +52,7 @@ public class BuildExplodedTarget extends Target {
       public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = instruction.getOutputRelativePath();
-        final String explodedPathProperty = BuildProperties.getJ2EEExplodedPathProperty();
+        final String explodedPathProperty = J2EEBuildProperties.getJ2EEExplodedPathProperty();
         final String destFile = BuildProperties.propertyRef(explodedPathProperty)+outputRelativePath;
         final @NonNls String jarDirProperty = "jar.dir";
         tags.add(new Dirname(jarDirProperty, destFile));
@@ -70,18 +64,18 @@ public class BuildExplodedTarget extends Target {
       public boolean visitJ2EEModuleBuildInstruction(JavaeeModuleBuildInstruction instruction) throws RuntimeException {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = "/"+instruction.getOutputRelativePath();
-        final String explodedPathProperty = BuildProperties.getJ2EEExplodedPathProperty();
+        final String explodedPathProperty = J2EEBuildProperties.getJ2EEExplodedPathProperty();
         final String outputPath = BuildProperties.propertyRef(explodedPathProperty)+outputRelativePath;
         final String moduleName = instruction.getBuildProperties().getModule().getName();
 
         final Tag tag;
         if (instruction.getBuildProperties().isExplodedEnabled()) {
           tag = new Copy(outputPath);
-          tag.add(new FileSet(BuildProperties.propertyRef(BuildProperties.getJ2EEExplodedPathProperty(moduleName))));
+          tag.add(new FileSet(BuildProperties.propertyRef(J2EEBuildProperties.getJ2EEExplodedPathProperty(moduleName))));
         }
         else {
-          tag = new AntCall(BuildProperties.getJ2EEExplodedBuildTargetName(moduleName));
-          tag.add(new Param(BuildProperties.getJ2EEExplodedPathProperty(), outputPath));
+          tag = new AntCall(J2EEBuildProperties.getJ2EEExplodedBuildTargetName(moduleName));
+          tag.add(new Param(J2EEBuildProperties.getJ2EEExplodedPathProperty(), outputPath));
         }
         tags.add(tag);
         return true;

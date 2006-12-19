@@ -3,35 +3,12 @@
  */
 package com.intellij.compiler.ant.j2ee;
 
-import com.intellij.compiler.ant.BuildProperties;
-import com.intellij.compiler.ant.GenerationOptions;
-import com.intellij.compiler.ant.GenerationUtils;
-import com.intellij.compiler.ant.ModuleChunk;
-import com.intellij.compiler.ant.Tag;
-import com.intellij.compiler.ant.taskdefs.AntCall;
-import com.intellij.compiler.ant.taskdefs.Attribute;
-import com.intellij.compiler.ant.taskdefs.Copy;
-import com.intellij.compiler.ant.taskdefs.Delete;
-import com.intellij.compiler.ant.taskdefs.Dirname;
-import com.intellij.compiler.ant.taskdefs.FileSet;
-import com.intellij.compiler.ant.taskdefs.Jar;
-import com.intellij.compiler.ant.taskdefs.Manifest;
-import com.intellij.compiler.ant.taskdefs.Mkdir;
-import com.intellij.compiler.ant.taskdefs.Param;
-import com.intellij.compiler.ant.taskdefs.Property;
-import com.intellij.compiler.ant.taskdefs.Target;
-import com.intellij.compiler.ant.taskdefs.ZipFileSet;
+import com.intellij.compiler.ant.*;
+import com.intellij.compiler.ant.taskdefs.*;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.DummyCompileContext;
-import com.intellij.openapi.compiler.make.BuildInstruction;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
-import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
-import com.intellij.openapi.compiler.make.ManifestBuilder;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -48,7 +25,7 @@ public class BuildJarTarget extends Target {
 
   public BuildJarTarget(final ModuleChunk chunk, final File moduleBaseDir, final GenerationOptions genOptions,
                             @NotNull final ModuleBuildProperties moduleBuildProperties) {
-    super(BuildProperties.getJ2EEJarBuildTargetName(chunk.getName()), null,
+    super(J2EEBuildProperties.getJ2EEJarBuildTargetName(chunk.getName()), null,
           CompilerBundle.message("generated.ant.build.build.j2ee.archive.for.module.description", chunk.getName()), null);
     final Module module = chunk.getModules()[0];
     final String moduleName = module.getName();
@@ -56,7 +33,7 @@ public class BuildJarTarget extends Target {
     //noinspection HardCodedStringLiteral
     final File jarDir = new File(moduleBuildProperties.isJarEnabled() ? new File(moduleBuildProperties.getJarPath()).getParentFile() : moduleBaseDir, "/temp");
     String tempDir = GenerationUtils.toRelativePath(jarDir.getPath(), moduleBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions, !chunk.isSavePathsRelative());
-    final String tempDirProperty = BuildProperties.getTempDirForModuleProperty(moduleName);
+    final String tempDirProperty = J2EEBuildProperties.getTempDirForModuleProperty(moduleName);
     final boolean[] tempDirUsed = new boolean[] { false };
 
     BuildRecipe buildRecipe = DeploymentUtil.getInstance().getModuleItems(moduleBuildProperties.getModule());
@@ -112,16 +89,16 @@ public class BuildJarTarget extends Target {
         }, false);
 
         if (instruction.getBuildProperties().isJarEnabled()) {
-          final ZipFileSet zipFileSet = new ZipFileSet(BuildProperties.propertyRef(BuildProperties.getJ2EEJarPathProperty(moduleName)), instruction.getOutputRelativePath(), false);
+          final ZipFileSet zipFileSet = new ZipFileSet(BuildProperties.propertyRef(J2EEBuildProperties.getJ2EEJarPathProperty(moduleName)), instruction.getOutputRelativePath(), false);
           zipFileSetTags.add(zipFileSet);
         }
         else {
           final String jarName = new File(instruction.getOutputRelativePath()).getName();
           final String destJarPath = BuildProperties.propertyRef(tempDirProperty)+"/"+jarName;
           tempDirUsed[0] = true;
-          final AntCall makeJar = new AntCall(BuildProperties.getJ2EEJarBuildTargetName(moduleName));
+          final AntCall makeJar = new AntCall(J2EEBuildProperties.getJ2EEJarBuildTargetName(moduleName));
           prepareTags.add(makeJar);
-          makeJar.add(new Param(BuildProperties.getJ2EEJarPathProperty(), destJarPath));
+          makeJar.add(new Param(J2EEBuildProperties.getJ2EEJarPathProperty(), destJarPath));
           zipFileSetTags.add(new ZipFileSet(destJarPath, instruction.getOutputRelativePath(), false));
         }
         return true;
@@ -134,7 +111,7 @@ public class BuildJarTarget extends Target {
     for (Tag tag : prepareTags) {
       add(tag);
     }
-    final String destFile = BuildProperties.propertyRef(BuildProperties.getJ2EEJarPathProperty());
+    final String destFile = BuildProperties.propertyRef(J2EEBuildProperties.getJ2EEJarPathProperty());
     final @NonNls String jarDirProperty = "jar.dir";
     add(new Dirname(jarDirProperty, destFile));
     add(new Mkdir(BuildProperties.propertyRef(jarDirProperty)));
@@ -165,7 +142,7 @@ public class BuildJarTarget extends Target {
         final String outputRelativePath = DeploymentUtil.appendToPath("/",instruction.getOutputRelativePath());
         final Module instructionModule = instruction.getModule();
         String sourceLocation = GenerationUtils.toRelativePath(sourceFile.getPath(), moduleBaseDir, BuildProperties.getModuleBasedirProperty(instructionModule), genOptions, !instructionModule.isSavePathsRelative());
-        String jarPathPropertyRef = BuildProperties.propertyRef(BuildProperties.getJ2EEJarPathProperty());
+        String jarPathPropertyRef = BuildProperties.propertyRef(J2EEBuildProperties.getJ2EEJarPathProperty());
 
         final Copy copy;
         if (instruction.isDirectory()) {
@@ -183,7 +160,7 @@ public class BuildJarTarget extends Target {
 
       public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws Exception {
         if (!instruction.isExternalDependencyInstruction()) return true;
-        String jarPathPropertyRef = BuildProperties.propertyRef(BuildProperties.getJ2EEJarPathProperty());
+        String jarPathPropertyRef = BuildProperties.propertyRef(J2EEBuildProperties.getJ2EEJarPathProperty());
         String pathToCreateJar = jarPathPropertyRef + DeploymentUtil.appendToPath("/",instruction.getOutputRelativePath());
         @NonNls final String jarDir = "jar.dir" + myJarDirCount++;
         add(new Dirname(jarDir, pathToCreateJar));
