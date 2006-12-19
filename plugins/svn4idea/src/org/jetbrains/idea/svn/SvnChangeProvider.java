@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -36,7 +37,7 @@ public class SvnChangeProvider implements ChangeProvider {
     myVcs = vcs;
   }
 
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress) {
+  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
     try {
       final SVNStatusClient client = myVcs.createStatusClient();
       for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
@@ -48,7 +49,7 @@ public class SvnChangeProvider implements ChangeProvider {
       }
     }
     catch (SVNException e) {
-      // Ignore
+      throw new VcsException(e);
     }
   }
 
@@ -56,7 +57,8 @@ public class SvnChangeProvider implements ChangeProvider {
     return true;
   }
 
-  private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, final boolean recursively) {
+  private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, final boolean recursively)
+    throws SVNException {
     try {
       if (path.isDirectory()) {
         stClient.doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
@@ -92,7 +94,9 @@ public class SvnChangeProvider implements ChangeProvider {
           }
         }
       }
-        //
+      else {
+        throw e;
+      }
     }
   }
 
@@ -101,7 +105,7 @@ public class SvnChangeProvider implements ChangeProvider {
     processStatus(filePath, status, builder);
   }
 
-  private static void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) {
+  private static void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) throws SVNException {
     loadEntriesFile(filePath);
     if (status != null) {
       FileStatus fStatus = convertStatus(status, filePath.getIOFile());
@@ -161,7 +165,7 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  public static FileStatus convertStatus(final SVNStatus status, final File file) {
+  private static FileStatus convertStatus(final SVNStatus status, final File file) throws SVNException {
     if (status == null) {
       return FileStatus.UNKNOWN;
     }
@@ -217,9 +221,7 @@ public class SvnChangeProvider implements ChangeProvider {
           parentURL = parentDir.getEntry("", false).getURL();
         }
       }
-      catch (SVNException e) {
-        //
-      } finally {
+      finally {
         try {
           wcAccess.close();
         } catch (SVNException e) {
