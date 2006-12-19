@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,8 +224,7 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public boolean isRollbackOnLastUndo() {
-    return false;
+  public void rollbackIfUnchanged(VirtualFile file) {
   }
 }
 
