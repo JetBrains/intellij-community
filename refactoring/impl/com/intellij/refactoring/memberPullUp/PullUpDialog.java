@@ -197,6 +197,9 @@ public class PullUpDialog extends DialogWrapper {
       if (element instanceof PsiField) {
         return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
       }
+      if (element instanceof PsiMethod) {
+        return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+      }
       return true;
     }
 
