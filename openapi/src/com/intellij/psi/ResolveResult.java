@@ -18,7 +18,9 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents the result of resolving a reference.
+ * Represents the result of resolving a {@link com.intellij.psi.PsiPolyVariantReference}.
+ *
+ * @see com.intellij.psi.PsiElementResolveResult
  */
 public interface ResolveResult {
   /**
