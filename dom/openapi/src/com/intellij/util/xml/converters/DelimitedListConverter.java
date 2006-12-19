@@ -21,13 +21,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<T>> implements CustomReferenceConverter<List<T>> {
 
+  protected final static Object[] EMPTY_ARRAY = new Object[0];
+  
   private final String myDelimiters;
 
   public DelimitedListConverter(@NonNls @NotNull String delimiters) {
@@ -45,13 +44,28 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   protected abstract Object[] getReferenceVariants(final ConvertContext context, GenericDomValue<List<T>> genericDomValue);
 
   @Nullable
-  protected abstract PsiElement resolveReference(final T t);
+  protected abstract PsiElement resolveReference(@Nullable final T t);
 
   protected abstract String getUnresolvedMessage(String value);
 
   @NotNull
   public Collection<? extends List<T>> getVariants(final ConvertContext context) {
     return Collections.emptyList();
+  }
+
+  public static <T> void filterVariants(List<T> variants, GenericDomValue<List<T>> genericDomValue) {
+    final List<T> list = genericDomValue.getValue();
+    if (list != null) {
+      for (Iterator<T> i = variants.iterator(); i.hasNext();) {
+        final T variant = i.next();
+        for (T existing: list) {
+          if (existing.equals(variant)) {
+            i.remove();
+            break;
+          }
+        }
+      }
+    }
   }
 
   protected char getDefaultDelimiter() {
@@ -62,7 +76,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     List<T> values = new ArrayList<T>();
 
     for (String s : StringUtil.tokenize(str, myDelimiters)) {
-      final T t = convertString(s, context);
+      final T t = convertString(s.trim(), context);
       if (t != null) {
         values.add(t);
       }
@@ -97,7 +111,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   }
 
   protected boolean isDelimiter(char ch) {
-    return myDelimiters.indexOf(ch) != -1;
+    return ch <= ' ' || myDelimiters.indexOf(ch) != -1;
   }
 
   @NotNull
@@ -125,6 +139,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       }
       start = pos;
       while (++pos < text.length() && !isDelimiter(text.charAt(pos))) {}
+      String s = text.substring(start, pos);
       references.add(createPsiReference(element, start + shift, pos + shift, context, genericDomValue));
       pos++;
     } while(pos < text.length());
