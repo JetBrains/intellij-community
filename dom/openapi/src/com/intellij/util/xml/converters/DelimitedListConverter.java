@@ -139,7 +139,6 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       }
       start = pos;
       while (++pos < text.length() && !isDelimiter(text.charAt(pos))) {}
-      String s = text.substring(start, pos);
       references.add(createPsiReference(element, start + shift, pos + shift, context, genericDomValue));
       pos++;
     } while(pos < text.length());
