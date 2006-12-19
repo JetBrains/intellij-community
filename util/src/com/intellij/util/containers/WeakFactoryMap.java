@@ -16,13 +16,13 @@
 package com.intellij.util.containers;
 
 import java.lang.ref.SoftReference;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
 public abstract class WeakFactoryMap<T,V> {
-  private final Map<T, SoftReference<V>> myMap = new WeakHashMap<T, SoftReference<V>>();
+  private final ConcurrentMap<T, SoftReference<V>> myMap = new ConcurrentWeakHashMap<T, SoftReference<V>>();
 
   protected abstract V create(T key);
 
@@ -36,8 +36,9 @@ public abstract class WeakFactoryMap<T,V> {
     }
 
     final V v1 = create(key);
-    myMap.put(key, new SoftReference<V>(v1 == null ? (V)FactoryMap.NULL : v1));
-    return v1;
+    SoftReference<V> prevRef = myMap.putIfAbsent(key, new SoftReference<V>(v1 == null ? (V)FactoryMap.NULL : v1));
+    V prev = prevRef == null ? null : prevRef.get();
+    return prev == null ? v1 : prev;
   }
 
   public final boolean containsKey(T key) {

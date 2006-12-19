@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.WeakFactoryMap;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
@@ -42,17 +43,12 @@ public class ReflectionCache {
       return key.getMethods();
     }
   };
-  private static final WeakFactoryMap<Class,WeakFactoryMap<Class,Boolean>> ourAssignables = new WeakFactoryMap<Class, WeakFactoryMap<Class, Boolean>>() {
-    @NotNull
-    protected WeakFactoryMap<Class, Boolean> create(final Class key1) {
-      return new WeakFactoryMap<Class, Boolean>() {
-        @NotNull
-        protected Boolean create(final Class key2) {
-          return key1.isAssignableFrom(key2);
-        }
-      };
+  private static final WeakFactoryMap<Pair<Class,Class>,Boolean> ourAssignables = new WeakFactoryMap<Pair<Class, Class>, Boolean>() {
+    protected Boolean create(final Pair<Class, Class> key) {
+      return key.getFirst().isAssignableFrom(key.getSecond());
     }
   };
+
   private static final WeakFactoryMap<Class,Boolean> ourIsInterfaces = new WeakFactoryMap<Class, Boolean>() {
     @NotNull
     protected Boolean create(final Class key) {
@@ -87,46 +83,32 @@ public class ReflectionCache {
   }
 
   public static Class[] getInterfaces(Class aClass) {
-    synchronized (ourInterfaces) {
-      return ourInterfaces.get(aClass);
-    }
+    return ourInterfaces.get(aClass);
   }
 
   public static Method[] getMethods(Class aClass) {
-    synchronized (ourMethods) {
-      return ourMethods.get(aClass);
-    }
+    return ourMethods.get(aClass);
   }
 
   public static boolean isAssignable(Class ancestor, Class descendant) {
     if (ancestor == descendant) return true;
-    synchronized (ourAssignables) {
-      return ourAssignables.get(ancestor).get(descendant);
-    }
+    return ourAssignables.get(Pair.create(ancestor,descendant));
   }
 
   public static boolean isInterface(Class aClass) {
-    synchronized (ourIsInterfaces) {
-      return ourIsInterfaces.get(aClass);
-    }
+    return ourIsInterfaces.get(aClass);
   }
 
   public static <T> TypeVariable<Class<T>>[] getTypeParameters(Class<T> aClass) {
-    synchronized (ourTypeParameters) {
-      return ourTypeParameters.get(aClass);
-    }
+    return ourTypeParameters.get(aClass);
   }
 
   public static Type[] getGenericInterfaces(Class aClass) {
-    synchronized (ourGenericInterfaces) {
-      return ourGenericInterfaces.get(aClass);
-    }
+    return ourGenericInterfaces.get(aClass);
   }
 
   public static Type[] getActualTypeArguments(ParameterizedType type) {
-    synchronized (ourActualTypeArguments) {
-      return ourActualTypeArguments.get(type);
-    }
+    return ourActualTypeArguments.get(type);
   }
 
 }
