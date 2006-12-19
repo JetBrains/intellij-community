@@ -59,7 +59,7 @@ public class SvnChangeProvider implements ChangeProvider {
   private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, final boolean recursively) {
     try {
       if (path.isDirectory()) {
-        stClient.doStatus(path.getIOFile(), recursively, false, false, false, new ISVNStatusHandler() {
+        stClient.doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
             FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
             processStatus(path, status, builder);
@@ -125,6 +125,9 @@ public class SvnChangeProvider implements ChangeProvider {
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(filePath);
+      }
+      else if (statusType == SVNStatusType.STATUS_IGNORED) {
+        builder.processIgnoredFile(filePath.getVirtualFile());
       }
       else if (fStatus == FileStatus.NOT_CHANGED) {
         VirtualFile file = filePath.getVirtualFile();
