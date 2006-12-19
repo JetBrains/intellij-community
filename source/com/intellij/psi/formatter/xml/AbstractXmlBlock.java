@@ -414,28 +414,6 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractXmlBlock");
 
-  public static Block createJspRoot(final PsiElement element,
-                                    final CodeStyleSettings settings,
-                                    final FormattingDocumentModel documentModel) {
-    final PsiFile file = element.getContainingFile();
-    final Language baseLanguage = (PsiUtil.getJspFile(file)).getViewProvider().getTemplateDataLanguage();
-    if (baseLanguage == StdLanguages.HTML || baseLanguage == StdLanguages.XHTML) {
-      final PsiElement[] psiRoots = file.getPsiRoots();
-      LOG.assertTrue(psiRoots.length == 3);
-      final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[0]);
-      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, documentModel), null, null);
-    }
-    else if (baseLanguage == StdLanguages.XML) {
-      final PsiElement[] psiRoots = file.getPsiRoots();
-      LOG.assertTrue(psiRoots.length == 3);
-      final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[0]);
-      return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, documentModel), null, null);
-    }
-    else {
-      return new ReadOnlyBlock(file.getNode());
-    }
-  }
-
   public static Block creareJspxRoot(final PsiElement element,
                                      final CodeStyleSettings settings,
                                      final FormattingDocumentModel documentModel) {
