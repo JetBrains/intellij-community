@@ -137,40 +137,58 @@ class BinaryExpressionEvaluator implements Evaluator {
     }
     else if (opType == JavaTokenType.LTLT) {
       if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
-        long v1 = ((PrimitiveValue)leftResult).longValue();
-        long v2 = ((PrimitiveValue)rightResult).longValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 << v2);
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        if (leftResult instanceof ByteValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((ByteValue)leftResult).byteValue() << v2);
+        }
+        else if (leftResult instanceof ShortValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((ShortValue)leftResult).shortValue() << v2);
+        }
+        else if (leftResult instanceof IntegerValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((IntegerValue)leftResult).intValue() << v2);
+        }
+        return DebuggerUtilsEx.createValue(vm, expectedType, ((PrimitiveValue)leftResult).longValue() << v2);
       }
       if (leftResult instanceof CharValue && rightResult instanceof CharValue) {
-        char v1 = ((CharValue)leftResult).charValue();
-        char v2 = ((CharValue)rightResult).charValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 << v2);
+        return DebuggerUtilsEx.createValue(vm, expectedType, ((CharValue)leftResult).charValue() << ((CharValue)rightResult).charValue());
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", "<<"));
     }
     else if (opType == JavaTokenType.GTGT) {
       if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
-        long v1 = ((PrimitiveValue)leftResult).longValue();
-        long v2 = ((PrimitiveValue)rightResult).longValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 >> v2);
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        if (leftResult instanceof ByteValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((ByteValue)leftResult).byteValue() >> v2);
+        }
+        else if (leftResult instanceof ShortValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((ShortValue)leftResult).shortValue() >> v2);
+        }
+        else if (leftResult instanceof IntegerValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((IntegerValue)leftResult).intValue() >> v2);
+        }
+        return DebuggerUtilsEx.createValue(vm, expectedType, ((PrimitiveValue)leftResult).longValue() >> v2);
       }
       if (leftResult instanceof CharValue && rightResult instanceof CharValue) {
-        char v1 = ((CharValue)leftResult).charValue();
-        char v2 = ((CharValue)rightResult).charValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 >> v2);
+        return DebuggerUtilsEx.createValue(vm, expectedType, ((CharValue)leftResult).charValue() >> ((CharValue)rightResult).charValue());
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", ">>"));
     }
     else if (opType == JavaTokenType.GTGTGT) {
       if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
-        long v1 = ((PrimitiveValue)leftResult).longValue();
-        long v2 = ((PrimitiveValue)rightResult).longValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 >>> v2);
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        if (leftResult instanceof ByteValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((ByteValue)leftResult).byteValue() >>> v2);
+        }
+        else if (leftResult instanceof ShortValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((ShortValue)leftResult).shortValue() >>> v2);
+        }
+        else if (leftResult instanceof IntegerValue) {
+          return DebuggerUtilsEx.createValue(vm, expectedType, ((IntegerValue)leftResult).intValue() >>> v2);
+        }
+        return DebuggerUtilsEx.createValue(vm, expectedType, ((PrimitiveValue)leftResult).longValue() >>> v2);
       }
       if (leftResult instanceof CharValue && rightResult instanceof CharValue) {
-        char v1 = ((CharValue)leftResult).charValue();
-        char v2 = ((CharValue)rightResult).charValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 >>> v2);
+        return DebuggerUtilsEx.createValue(vm, expectedType, ((CharValue)leftResult).charValue() >>> ((CharValue)rightResult).charValue());
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", ">>>"));
     }
