@@ -15,35 +15,32 @@ public class ConcurrencyUtil {
    * invokes and waits all tasks using threadPool, avoiding thread starvation on the way
    * @lookat http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
    */
-  public static void invokeAll(@NotNull Collection<Runnable> tasks, Executor executorService) throws Throwable {
-    if (executorService == null) {
+  public static void invokeAll(@NotNull Collection<Runnable> tasks, ExecutorService executorService) throws Throwable {
+    if (executorService == null) { 
       for (Runnable task : tasks) {
         task.run();
       }
       return;
     }
-    List<Future<Object>> futures = new ArrayList<Future<Object>>(tasks.size());
+    List<Future> futures = new ArrayList<Future>(tasks.size());
     boolean done = false;
     try {
       for (Runnable t : tasks) {
-        FutureTask<Object> f = new FutureTask<Object>(t,null);
-        futures.add(f);
-        executorService.execute(f);
+        Future future = executorService.submit(t);
+        futures.add(future);
       }
       // force unstarted futures to execute using the current thread
-      for (Future<Object> f : futures) ((FutureTask)f).run();
-      for (Future<Object> f : futures) {
-        if (!f.isDone()) {
-          try {
-            f.get();
-          }
-          catch (CancellationException ignore) {
-          }
-          catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause != null) {
-              throw cause;
-            }
+      for (Future f : futures) ((FutureTask)f).run();
+      for (Future f : futures) {
+        try {
+          f.get();
+        }
+        catch (CancellationException ignore) {
+        }
+        catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          if (cause != null) {
+            throw cause;
           }
         }
       }
@@ -51,7 +48,7 @@ public class ConcurrencyUtil {
     }
     finally {
       if (!done) {
-        for (Future<Object> f : futures) {
+        for (Future f : futures) {
           f.cancel(false);
         }
       }

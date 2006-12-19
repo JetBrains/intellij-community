@@ -35,7 +35,13 @@ public class PassExecutorService {
       t.setPriority(Thread.MIN_PRIORITY);
       return t;
     }
-  });
+  }){
+    public Future<?> submit(final Runnable runnable) {
+      MyFutureTask task = new MyFutureTask(runnable);
+      execute(task);
+      return task;
+    }
+  };
 
   private final Map<ScheduledPass, Future<?>> mySubmittedPasses = new ConcurrentHashMap<ScheduledPass, Future<?>>();
   private final Project myProject;
@@ -58,7 +64,6 @@ public class PassExecutorService {
   }
 
   public void submitPasses(final FileEditor fileEditor, final HighlightingPass[] passes) {
-    synchronized(PassExecutorService.class) {LOG.debug("------------------------------------------");}
     cancelAll();
     final ProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
     if (updateProgress instanceof DaemonProgressIndicator) {
@@ -156,6 +161,27 @@ public class PassExecutorService {
     return textEditorPass;
   }
 
+  private static class MyFutureTask extends FutureTask {
+    public MyFutureTask(Runnable runnable) {
+      super(runnable, null);
+    }
+
+    protected void done() {
+      try {
+        //allow exceptions to manifest themselves
+        get();
+      }
+      catch (CancellationException e) {
+        //ok
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+  }
   private void submit(ScheduledPass pass) {
     if (!myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) {
       //LOG.debug(pass.myPass + " submitted at " + System.currentTimeMillis());

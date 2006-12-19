@@ -15,6 +15,7 @@ import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
@@ -24,7 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author max
@@ -48,13 +48,13 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
-  private final Executor myExecutorService;
+  private final ExecutorService myExecutorService;
   @NotNull private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
   @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
 
-  public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset, @Nullable Executor executorService) {
+  public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset, @Nullable ExecutorService executorService) {
     super(file.getProject(), document);
     myFile = file;
     myStartOffset = startOffset;
@@ -107,7 +107,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           if (progress != null) {
             if (progress.isCanceled()) return;
           }
-          ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
+          final ProgressManager progressManager = ProgressManager.getInstance();
+          ((ProgressManagerImpl)progressManager).executeProcessUnderProgress(new Runnable(){
             public void run() {
               @NonNls final String name = "LocalInspections from " + index + " to " + (index + chunkSize);
               PassExecutorService.info(progress, "Started " , name);
@@ -119,9 +120,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                       LocalInspectionTool tool = tools[i];
                       PsiElementVisitor elementVisitor = tool.buildVisitor(holder, true);
                       for (PsiElement element : elements) {
-                        if (progress != null) {
-                          progress.checkCanceled();
-                        }
+                        progressManager.checkCanceled();
                         element.accept(elementVisitor);
                       }
                       //System.out.println("tool finished "+tool);
