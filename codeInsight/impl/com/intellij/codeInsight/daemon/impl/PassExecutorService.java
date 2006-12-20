@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class PassExecutorService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService");
-  public static int PROCESSORS = Runtime.getRuntime().availableProcessors();
+  public static int PROCESSORS = /*10;//*/Runtime.getRuntime().availableProcessors();
   private final ThreadPoolExecutor myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
     public Thread newThread(Runnable r) {
       Thread t = new Thread(r,"Highlighting thread");
@@ -178,7 +178,7 @@ public class PassExecutorService {
         LOG.error(e);
       }
       catch (ExecutionException e) {
-        LOG.error(e);
+        LOG.error(e.getCause());
       }
     }
   }

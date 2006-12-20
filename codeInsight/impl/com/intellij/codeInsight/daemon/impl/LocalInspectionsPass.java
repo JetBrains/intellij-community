@@ -125,7 +125,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                       }
                       //System.out.println("tool finished "+tool);
                       if (holder.hasResults()) {
-                        appendDescriptors(holder.getResults(), tool, progress);
+                        appendDescriptors(holder.getResults(), tool);
                       }
                     }
                   }
@@ -188,15 +188,13 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     return highlightInfo;
   }
 
-  private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool,
-                                              final ProgressIndicator progress) {
+  private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool) {
     if (problemDescriptors == null) return;
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
+    ProgressManager progressManager = ProgressManager.getInstance();
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
-      if (progress != null) {
-        progress.checkCanceled();
-      }
+      progressManager.checkCanceled();
       if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool)) {
         myDescriptors.add(problemDescriptor);
         HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, severity);

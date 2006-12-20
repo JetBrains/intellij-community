@@ -479,6 +479,7 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkAssignability(@Nullable PsiType lType, @Nullable PsiType rType, @Nullable PsiExpression expression, TextRange textRange) {
+    if (lType == rType) return null;
     if (expression == null) {
       if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return null;
     }
