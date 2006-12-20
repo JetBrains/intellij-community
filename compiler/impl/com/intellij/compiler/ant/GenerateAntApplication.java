@@ -75,7 +75,7 @@ public class GenerateAntApplication {
       logMessageLn(0, " done");
 
       GenerateAntBuildAction.generateSingleFileBuild(myProject,
-                                                     new GenerationOptions(myProject, true, true, false, false, new String[] {}),
+                                                     new GenerationOptionsImpl(myProject, true, true, false, false, new String[] {}),
                                                      new File("/Users/max/build/build.xml"),
                                                      new File("/Users/max/build/build.properties"));
 

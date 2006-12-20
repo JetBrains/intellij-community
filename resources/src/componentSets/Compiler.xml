@@ -4,6 +4,10 @@
       <interface-class>com.intellij.openapi.deployment.DeploymentUtil</interface-class>
       <implementation-class>com.intellij.openapi.deployment.DeploymentUtilImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.compiler.ant.BuildTargetsFactory</interface-class>
+      <implementation-class>com.intellij.compiler.ant.BuildTargetsFactoryImpl</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>

@@ -33,7 +33,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     dialog.show();
     if (dialog.isOK()) {
       String[] names = dialog.getRepresentativeModuleNames();
-      final GenerationOptions genOptions = new GenerationOptions(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(), dialog.isForceTargetJdk(), names);
+      final GenerationOptions genOptions = new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(), dialog.isForceTargetJdk(), names);
       generate(project, genOptions);
     }
   }

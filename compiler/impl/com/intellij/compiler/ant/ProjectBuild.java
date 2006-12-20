@@ -20,7 +20,7 @@ public abstract class ProjectBuild extends Generator {
     myProject = project;
     myAntProject = new AntProject(BuildProperties.getProjectBuildFileName(myProject), BuildProperties.DEFAULT_TARGET);
 
-    myAntProject.add(new BuildProperties(myProject, genOptions), 1);
+    myAntProject.add(new BuildPropertiesImpl(myProject, genOptions), 1);
 
     // the sequence in which modules are imported is important cause output path properties for dependent modules should be defined first
 
