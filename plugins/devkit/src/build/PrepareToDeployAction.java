@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.openapi.compiler.make.ManifestBuilder;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.compiler.make.ManifestBuilder;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -292,7 +292,7 @@ public class PrepareToDeployAction extends AnAction {
     return jarFile;
   }
 
-  private static Manifest createOrFindManifest(final PluginModuleBuildProperties pluginModuleBuildProperties) throws IOException {
+  public static Manifest createOrFindManifest(final PluginModuleBuildProperties pluginModuleBuildProperties) throws IOException {
     final Manifest manifest = new Manifest();
     final VirtualFile vManifest = pluginModuleBuildProperties.getManifest();
     if (pluginModuleBuildProperties.isUseUserManifest() && vManifest != null) {
