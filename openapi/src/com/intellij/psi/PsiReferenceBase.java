@@ -119,4 +119,17 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   public boolean isSoft() {
     return mySoft;
   }
+
+  public static abstract class Poly<T extends PsiElement> extends PsiReferenceBase<T> implements PsiPolyVariantReference {
+
+  public Poly(final T psiElement) {
+    super(psiElement);
+  }
+
+  @Nullable
+  public PsiElement resolve() {
+    ResolveResult[] resolveResults = multiResolve(false);
+    return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
+  }
+}
 }
