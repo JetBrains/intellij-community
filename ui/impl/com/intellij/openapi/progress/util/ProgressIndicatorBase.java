@@ -171,6 +171,10 @@ public class ProgressIndicatorBase implements ProgressIndicator {
     myNonCancelableCount--;
   }
 
+  protected boolean isCancelable() {
+    return myNonCancelableCount == 0;
+  }
+
   public final boolean isModal(){
     return myModalityProgress != null;
   }
