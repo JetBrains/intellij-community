@@ -36,7 +36,7 @@ public class IgnoreUnversionedAction extends AnAction {
     }
     final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
     if (ignoredFiles.length > 0) {
-      ChangeListManager.getInstance(project).addIgnoredFiles(ignoredFiles);
+      ChangeListManager.getInstance(project).addFilesToIgnore(ignoredFiles);
     }
   }
 

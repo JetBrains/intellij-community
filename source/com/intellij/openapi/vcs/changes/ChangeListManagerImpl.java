@@ -93,7 +93,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_PATH = "path";
   @NonNls private static final String ATT_MASK = "mask";
   private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
-  private List<IgnoredFileBean> myFilesToIgnore = new ArrayList<IgnoredFileBean>();
+  private final List<IgnoredFileBean> myFilesToIgnore = new ArrayList<IgnoredFileBean>();
 
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
 
@@ -906,33 +906,63 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return Collections.unmodifiableList(myExecutors);
   }
 
-  public void addIgnoredFiles(final IgnoredFileBean... ignoredFiles) {
-    Collections.addAll(myFilesToIgnore, ignoredFiles);
-    for(VirtualFile file: myUnversionedFilesHolder.getFiles()) {
+  public void addFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
+    synchronized(myFilesToIgnore) {
+      Collections.addAll(myFilesToIgnore, filesToIgnore);
+    }
+    updateIgnoredFiles();
+  }
+
+  public void setFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
+    synchronized(myFilesToIgnore) {
+      myFilesToIgnore.clear();
+      Collections.addAll(myFilesToIgnore, filesToIgnore);
+    }
+    updateIgnoredFiles();
+  }
+
+  private void updateIgnoredFiles() {
+    List<VirtualFile> unversionedFiles = myUnversionedFilesHolder.getFiles();
+    List<VirtualFile> ignoredFiles = myIgnoredFilesHolder.getFiles();
+    for(VirtualFile file: unversionedFiles) {
       if (isIgnoredFile(file)) {
         myUnversionedFilesHolder.removeFile(file);
         myIgnoredFilesHolder.addFile(file);
       }
     }
+    for(VirtualFile file: ignoredFiles) {
+      if (!isIgnoredFile(file)) {
+        myUnversionedFilesHolder.addFile(file);
+        myIgnoredFilesHolder.removeFile(file);
+      }
+    }
     ChangesViewManager.getInstance(myProject).scheduleRefresh();
   }
 
+  public IgnoredFileBean[] getFilesToIgnore() {
+    synchronized(myFilesToIgnore) {
+      return myFilesToIgnore.toArray(new IgnoredFileBean[myFilesToIgnore.size()]);
+    }
+  }
+
   private boolean isIgnoredFile(VirtualFile file) {
-    if (myFilesToIgnore.size() == 0) {
+    synchronized(myFilesToIgnore) {
+      if (myFilesToIgnore.size() == 0) {
+        return false;
+      }
+      String filePath = VfsUtil.getRelativePath(file, myProject.getProjectFile().getParent(), '/');
+      for(IgnoredFileBean bean: myFilesToIgnore) {
+        final String prefix = bean.getPath();
+        if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, prefix)) {
+          return true;
+        }
+        final Pattern pattern = bean.getPattern();
+        if (pattern != null && pattern.matcher(file.getName()).matches()) {
+          return true;
+        }
+      }
       return false;
     }
-    String filePath = VfsUtil.getRelativePath(file, myProject.getProjectFile().getParent(), '/');
-    for(IgnoredFileBean bean: myFilesToIgnore) {
-      final String prefix = bean.getPath();
-      if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, prefix)) {
-        return true;
-      }
-      final Pattern pattern = bean.getPattern();
-      if (pattern != null && pattern.matcher(file.getName()).matches()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static VirtualFile[] collectFiles(final List<FilePath> paths) {

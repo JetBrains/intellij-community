@@ -69,5 +69,7 @@ public abstract class ChangeListManager {
 
   public abstract List<CommitExecutor> getRegisteredExecutors();
 
-  public abstract void addIgnoredFiles(final IgnoredFileBean... ignoredFiles);
+  public abstract void addFilesToIgnore(final IgnoredFileBean... ignoredFiles);
+  public abstract void setFilesToIgnore(final IgnoredFileBean... ignoredFiles);
+  public abstract IgnoredFileBean[] getFilesToIgnore();
 }

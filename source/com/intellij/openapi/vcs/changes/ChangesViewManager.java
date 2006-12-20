@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -134,6 +135,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
                                                 panel);
     visualActionsGroup.add(showFlattenAction);
     visualActionsGroup.add(new ToggleShowIgnoredAction());
+    visualActionsGroup.add(new IgnoredSettingsAction());
     visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
     toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
 
