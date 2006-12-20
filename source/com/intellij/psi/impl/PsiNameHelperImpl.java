@@ -34,7 +34,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
 
     synchronized (PsiLock.LOCK) {
       updateLexer(myManager.getEffectiveLanguageLevel());
-      myLexer.start(text.toCharArray());
+      myLexer.start(text,0,text.length(),0);
       if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
       myLexer.advance();
       return myLexer.getTokenType() == null;
@@ -46,7 +46,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
 
     synchronized (PsiLock.LOCK) {
       updateLexer(languageLevel);
-      myLexer.start(text.toCharArray());
+      myLexer.start(text,0,text.length(),0);
       if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
       myLexer.advance();
       return myLexer.getTokenType() == null;
@@ -58,7 +58,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
 
     synchronized (PsiLock.LOCK) {
       updateLexer(myManager.getEffectiveLanguageLevel());
-      myLexer.start(text.toCharArray());
+      myLexer.start(text,0,text.length(),0);
       if (myLexer.getTokenType() == null || !JavaTokenType.KEYWORD_BIT_SET.contains(myLexer.getTokenType())) return false;
       myLexer.advance();
       return myLexer.getTokenType() == null;

@@ -127,10 +127,10 @@ public class FormatterUtil {
 
     if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
         textRange.getEndOffset() < leafElement.getTextRange().getEndOffset()) {
-      char[] newText = createNewLeafChars(leafElement, textRange, whiteSpace);
+      StringBuffer newText = createNewLeafChars(leafElement, textRange, whiteSpace);
       LeafElement newElement = Factory.createSingleLeafElement(leafElement.getElementType(),
                                                                newText,
-                                                               0, newText.length, charTable, leafElement.getPsi().getManager());
+                                                               0, newText.length(), charTable, leafElement.getPsi().getManager());
 
       leafElement.getTreeParent().replaceChild(leafElement, newElement);
       return whiteSpace;
@@ -147,14 +147,14 @@ public class FormatterUtil {
         treePrev.getTextLength() > 0 &&
         whiteSpace.length() >
         0) {
-      LeafElement whiteSpaceElement = Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace.toCharArray(), 0, whiteSpace.length(),
+      LeafElement whiteSpaceElement = Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace, 0, whiteSpace.length(),
                                                                       charTable, SharedImplUtil.getManagerByTree(leafElement));
 
       ASTNode treeParent = treePrev.getTreeParent();
       treeParent.replaceChild(treePrev, whiteSpaceElement);
     }
     else {
-      LeafElement whiteSpaceElement = Factory.createSingleLeafElement(whiteSpaceToken, whiteSpace.toCharArray(), 0, whiteSpace.length(),
+      LeafElement whiteSpaceElement = Factory.createSingleLeafElement(whiteSpaceToken, whiteSpace, 0, whiteSpace.length(),
                                                                       charTable, SharedImplUtil.getManagerByTree(leafElement));
 
       if (treePrev == null) {
@@ -186,7 +186,7 @@ public class FormatterUtil {
     return getWhiteSpaceBefore(leafElement);
   }
 
-  private static char[] createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {
+  private static StringBuffer createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {
     final TextRange elementRange = leafElement.getTextRange();
     final String elementText = leafElement.getText();
 
@@ -202,7 +202,7 @@ public class FormatterUtil {
       result.append(elementText.substring(textRange.getEndOffset() - elementRange.getStartOffset()));
     }
 
-    return result.toString().toCharArray();
+    return result;
   }
 
   private static void addWhiteSpace(final ASTNode treePrev, final LeafElement whiteSpaceElement,
@@ -232,7 +232,7 @@ public class FormatterUtil {
       else {
         final String text = before ? whiteSpaceElement.getText() + anchorInText.getText() : anchorInText.getText() +
                                                                                             whiteSpaceElement.getText();
-        final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, text.toCharArray(), 0,
+        final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, text, 0,
                                                                               text.length(), charTable, xmlText.getManager());
         node.replaceChild(anchorInText, singleLeafElement);
       }
@@ -360,7 +360,7 @@ public class FormatterUtil {
       return;
     }
     LeafElement whiteSpaceElement = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
-                                                                    whiteSpace.toCharArray(), 0, whiteSpace.length(),
+                                                                    whiteSpace, 0, whiteSpace.length(),
                                                                     SharedImplUtil.findCharTableByTree(astNode), SharedImplUtil.getManagerByTree(astNode));
 
     if (lastWS == null) {

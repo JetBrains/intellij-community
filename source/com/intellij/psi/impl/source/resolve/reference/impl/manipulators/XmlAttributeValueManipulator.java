@@ -48,7 +48,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(compositeElement);
     final LeafElement newValueElement = Factory.createSingleLeafElement(
       XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
-      text.toCharArray(),
+      text,
       0,
       text.length(), charTableByTree, element.getManager());
 

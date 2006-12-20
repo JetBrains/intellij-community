@@ -69,7 +69,7 @@ public class ClassElement extends RepositoryTreeElement {
       if (!ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET.contains(first.getElementType())) {
         ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
         if (semicolonPlace == null || semicolonPlace.getElementType() != SEMICOLON) {
-            final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1,
+            final LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1,
                                                                           SharedImplUtil.findCharTableByTree(this), getManager());
             addInternal(semicolon, semicolon, semicolonPlace, Boolean.FALSE);
             semicolonPlace = semicolon;
@@ -130,7 +130,7 @@ public class ClassElement extends RepositoryTreeElement {
         final IElementType elementType = child.getElementType();
         if (elementType == COMMA || elementType == SEMICOLON) break;
         if (elementType == ENUM_CONSTANT) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, first, Boolean.FALSE);
           break;
         }
@@ -140,7 +140,7 @@ public class ClassElement extends RepositoryTreeElement {
         final IElementType elementType = child.getElementType();
         if (elementType == COMMA || elementType == SEMICOLON) break;
         if (elementType == ENUM_CONSTANT) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
         }

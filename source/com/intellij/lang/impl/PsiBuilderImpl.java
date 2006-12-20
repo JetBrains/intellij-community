@@ -84,8 +84,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     myFileLevelParsing = myCharTable == null || myOriginalTree != null;
 
-    char[] chars = CharArrayUtil.fromSequence(text);
-    myLexer.start(chars, 0, text.length());
+    myLexer.start(myText, 0, text.length(), 0);
   }
 
   /**
@@ -100,8 +99,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     myFileLevelParsing = myCharTable == null;
 
-    char[] chars = CharArrayUtil.fromSequence(text);
-    myLexer.start(chars, 0, text.length());
+    myLexer.start(myText, 0, text.length(), 0);
   }
 
   public void enforeCommentTokens(TokenSet tokens) {
@@ -147,7 +145,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public CharSequence getText() {
-      return new CharArrayCharSequence(myLexer.getBuffer(), myLexems.get(myLexemIndex).myTokenStart, myLexems.get(myDoneMarker.myLexemIndex).myTokenStart);
+      return myLexer.getBufferSequence().subSequence(myLexems.get(myLexemIndex).myTokenStart, myLexems.get(myDoneMarker.myLexemIndex).myTokenStart);
     }
 
     public void addChild(Node node) {
@@ -225,9 +223,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         int hc = 0;
         final int start = myTokenStart;
         final int end = myTokenEnd;
-        final char[] buf = myLexer.getBuffer();
+        final CharSequence buf = myLexer.getBufferSequence();
         for (int i = start; i < end; i++) {
-          hc += buf[i];
+          hc += buf.charAt(i);
         }
 
         myHC = hc;
@@ -237,15 +235,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public CharSequence getText() {
-      return new CharArrayCharSequence(myLexer.getBuffer(), myTokenStart, myTokenEnd);
+      return myLexer.getBufferSequence().subSequence(myTokenStart, myTokenEnd);
     }
 
     public IElementType getTokenType() {
       return myTokenType;
-    }
-
-    public String getTokenText() {
-      return new String(myLexer.getBuffer(), myTokenStart, myTokenEnd - myTokenStart);
     }
   }
 
@@ -334,7 +328,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Nullable
   public String getTokenText() {
     final PsiBuilderImpl.Token token = getCurrentToken();
-    return token != null ? token.getTokenText() : null;
+    return token != null ? token.getText().toString() : null;
   }
 
   @Nullable
@@ -661,7 +655,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
       if (oldNode instanceof LeafElement) {
         if (newNode instanceof Token) {
-          return ((LeafElement)oldNode).textMatches(myLexer.getBuffer(), ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd) ? ThreeState.YES : ThreeState.NO;
+          return ((LeafElement)oldNode).textMatches(myLexer.getBufferSequence(), ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd) ? ThreeState.YES : ThreeState.NO;
         }
         return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
       }
@@ -774,18 +768,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private LeafElement createLeaf(final Token lexem) {
     final IElementType type = lexem.getTokenType();
     if (myWhitespaces.contains(type)) {
-      return new PsiWhiteSpaceImpl(myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+      return new PsiWhiteSpaceImpl(myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
     else if (myComments.contains(type)) {
-      return new PsiCommentImpl(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+      return new PsiCommentImpl(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
     else if (type instanceof IChameleonElementType) {
-      return new ChameleonElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+      return new ChameleonElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
     else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) {
-      return Factory.createLeafElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+      return Factory.createLeafElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
     }
-    return new LeafPsiElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+    return new LeafPsiElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
   }
 
   /**

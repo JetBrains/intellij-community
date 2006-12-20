@@ -10,7 +10,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.CharTable;
 
 public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, PsiJavaToken {
-  public PsiIdentifierImpl(char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+  public PsiIdentifierImpl(CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(IDENTIFIER, buffer, startOffset, endOffset, lexerState, table);
   }
 

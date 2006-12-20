@@ -37,6 +37,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -385,7 +386,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return offset;
     }
     if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
-      return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
+      return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
     }
     final Language fileLanguage = file.getLanguage();
     final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
@@ -456,7 +457,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return offset;
     }
     if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
-      return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
+      return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
     }
     final Language fileLanguage = file.getLanguage();
     final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
@@ -610,13 +611,13 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       return false;
     }
     Helper helper = new Helper(file.getFileType(), myProject);
-    char[] chars = file.textToCharArray();
+    CharSequence chars = file.getViewProvider().getContents();
     int start = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
-    if (start > 0 && chars[start] != '\n' && chars[start] != '\r') {
+    if (start > 0 && chars.charAt(start) != '\n' && chars.charAt(start) != '\r') {
       return false;
     }
     int end = CharArrayUtil.shiftForward(chars, offset, " \t");
-    if (end >= chars.length) {
+    if (end >= chars.length()) {
       return false;
     }
     ASTNode element = SourceTreeToPsiMap.psiElementToTree(findElementInTreeWithFormatterEnabled(file, end));
@@ -667,7 +668,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
 
     ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER.toCharArray(), 0,
+    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, 0,
                                                      DUMMY_IDENTIFIER.length(), charTable, file.getManager());
     parent.addChild(marker, space1.getTreeNext());
     return SourceTreeToPsiMap.treeElementToPsi(marker);
@@ -1046,9 +1047,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
   private static ASTNode splitSpaceElement(TreeElement space, int offset, CharTable charTable) {
     LOG.assertTrue(space.getElementType() == ElementType.WHITE_SPACE);
-    char[] chars = space.textToCharArray();
+    CharSequence chars = ((CharTableBasedLeafElementImpl)space).getInternedText();
     LeafElement space1 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, 0, offset, charTable, SharedImplUtil.getManagerByTree(space));
-    LeafElement space2 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, offset, chars.length, charTable, SharedImplUtil.getManagerByTree(space));
+    LeafElement space2 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, offset, chars.length(), charTable, SharedImplUtil.getManagerByTree(space));
     ASTNode parent = space.getTreeParent();
     parent.replaceChild(space, space1);
     parent.addChild(space2, space1.getTreeNext());

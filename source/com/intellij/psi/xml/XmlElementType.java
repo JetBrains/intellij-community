@@ -12,10 +12,7 @@ import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
 import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
 import com.intellij.psi.impl.source.parsing.xml.DTDMarkupParser;
 import com.intellij.psi.impl.source.parsing.xml.DTDParser;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -54,7 +51,7 @@ public interface XmlElementType {
   IFileElementType HTML_FILE = new IFileElementType(StdLanguages.HTML){
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.HTML.getName());
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final FileViewProvider viewProvider = TreeUtil.getFileElement((TreeElement)chameleon).getPsi().getContainingFile().getViewProvider();
       return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, viewProvider);
     }
@@ -89,10 +86,10 @@ public interface XmlElementType {
 
   IElementType DTD_FILE = new IChameleonElementType("DTD_FILE", StdLanguages.DTD){
     public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final DTDParser parser = new DTDParser();
       try {
-        return parser.parse(chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
+        return parser.parse(chars, 0, chars.length(), SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
       }
       catch (ParsingException e) {}
       return null;
@@ -102,10 +99,10 @@ public interface XmlElementType {
 
   IElementType XML_MARKUP = new IChameleonElementType("XML_MARKUP_DECL", StdLanguages.XML){
     public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final DTDMarkupParser parser = new DTDMarkupParser();
       try {
-        return parser.parse(chars, 0, chars.length, SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
+        return parser.parse(chars, 0, chars.length(), SharedImplUtil.findCharTableByTree(chameleon), SharedImplUtil.getManagerByTree(chameleon));
       }
       catch (ParsingException e) {}
       return null;
@@ -113,9 +110,8 @@ public interface XmlElementType {
 
     public boolean isParsable(CharSequence buffer, final Project project) {
       final OldXmlLexer oldXmlLexer = new OldXmlLexer();
-      final char[] chars = CharArrayUtil.fromSequence(buffer);
+      oldXmlLexer.start(buffer, 0, buffer.length(),0);
 
-      oldXmlLexer.start(chars, 0, buffer.length());
       while(oldXmlLexer.getTokenType() != null && oldXmlLexer.getTokenEnd() != buffer.length()){
         if(oldXmlLexer.getTokenType() == XmlTokenType.XML_MARKUP_END) return false;
         oldXmlLexer.advance();

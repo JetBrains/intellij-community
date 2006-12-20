@@ -90,7 +90,7 @@ public class ClsAnnotationsUtil {
     final FileElement holderElement = new DummyHolder(manager, dummyJavaFile).getTreeElement();
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(parent);
     JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), languageLevel);
-    TreeElement element = context.getDeclarationParsing().parseMemberValueText(manager, text.toCharArray(), languageLevel);
+    TreeElement element = context.getDeclarationParsing().parseMemberValueText(manager, text, languageLevel);
     if (element == null) {
       LOG.error("Could not parse initializer:'" + text + "'");
       return null;

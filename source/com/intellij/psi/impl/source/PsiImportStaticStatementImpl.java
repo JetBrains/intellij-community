@@ -89,7 +89,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
           final JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), PsiUtil.getLanguageLevel(this));
           final String refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
           if (refText == null) return null;
-          CompositeElement parsedRef = Parsing.parseJavaCodeReferenceText(myManager, refText.toCharArray(), context.getCharTable());
+          CompositeElement parsedRef = Parsing.parseJavaCodeReferenceText(myManager, refText, context.getCharTable());
           refElement = (PsiJavaCodeReferenceElement)parsedRef;
           final boolean onDemand = isOnDemand();
           if (onDemand) {

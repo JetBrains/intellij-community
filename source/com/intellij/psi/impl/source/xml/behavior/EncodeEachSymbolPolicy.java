@@ -44,37 +44,37 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
       case '<':
         return Factory.createLeafElement(
           XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&lt;".toCharArray(),
+          "&lt;",
           0, 4, -1,
           charTable);
       case '\'':
         return Factory.createLeafElement(
           XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&apos;".toCharArray(),
+          "&apos;",
           0, 6, -1,
           charTable);
       case '"':
         return Factory.createLeafElement(
           XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&quot;".toCharArray(),
+          "&quot;",
           0, 6, -1,
           charTable);
       case '>':
         return Factory.createLeafElement(
           XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&gt;".toCharArray(),
+          "&gt;",
           0, 4, -1,
           charTable);
       case '&':
         return Factory.createLeafElement(
           XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&amp;".toCharArray(),
+          "&amp;",
           0, 5, -1,
           charTable);
       case '\u00a0':
         return Factory.createLeafElement(
           XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&nbsp;".toCharArray(),
+          "&nbsp;",
           0, 6, -1,
           charTable);
 
@@ -82,7 +82,7 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
         final String charEncoding = "&#" + (int)ch + ";";
         return Factory.createLeafElement(
           XmlTokenType.XML_CHAR_ENTITY_REF,
-          charEncoding.toCharArray(),
+          charEncoding,
           0, charEncoding.length(), -1,
           charTable);
     }

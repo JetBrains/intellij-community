@@ -18,8 +18,8 @@ public class QuotedStringParser extends PrefixedTokenParser {
 
   protected int getTokenEnd(int position) {
     for(; position < myEndOffset; position++) {
-      if(myBuffer[position] == myQuote) return position + 1;
-      if(myBuffer[position] == '\n') return position;
+      if(myBuffer.charAt(position) == myQuote) return position + 1;
+      if(myBuffer.charAt(position) == '\n') return position;
     }
     return position;
   }

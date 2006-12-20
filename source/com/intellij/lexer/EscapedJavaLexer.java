@@ -4,6 +4,8 @@ package com.intellij.lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 
 /**
  * Used to process scriptlet code in JSP attribute values like this:
@@ -13,7 +15,7 @@ public class EscapedJavaLexer extends LexerBase {
   private char mySurroundingQuote;
   private final JavaLexer myJavaLexer;
 
-  private char[] myBuffer;
+  private CharSequence myBuffer;
   private int myBufferEnd;
   private int myCurOffset;
   private IElementType myTokenType = null;
@@ -37,11 +39,19 @@ public class EscapedJavaLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset) {
+    start(new CharArrayCharSequence(buffer),startOffset,endOffset,0);
+  }
+
+  public void start(CharSequence buffer, int startOffset, int endOffset, int state) {
     myBuffer = buffer;
     myCurOffset = startOffset;
     myTokenEnd = startOffset;
     myBufferEnd = endOffset;
     myTokenType = null;
+  }
+
+  public CharSequence getBufferSequence() {
+    return myBuffer;
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
@@ -74,7 +84,7 @@ public class EscapedJavaLexer extends LexerBase {
   }
 
   public final char[] getBuffer(){
-    return myBuffer;
+    return CharArrayUtil.fromSequence(myBuffer);
   }
 
   public final int getBufferEnd(){
@@ -92,7 +102,7 @@ public class EscapedJavaLexer extends LexerBase {
                    // 4 -- error
     int offset = myCurOffset;
     do{
-      char c = myBuffer[offset];
+      final char c = myBuffer.charAt(offset);
       switch(c){
         case '\\':
           state += state % 2 == 0 ? 1 : -1;
@@ -117,7 +127,7 @@ public class EscapedJavaLexer extends LexerBase {
       switch (state){
         case 0:
           if(offset == myCurOffset){
-            myJavaLexer.start(myBuffer, myCurOffset, myBufferEnd);
+            myJavaLexer.start(myBuffer, myCurOffset, myBufferEnd,0);
             myTokenType = myJavaLexer.getTokenType();
             myTokenEnd = myJavaLexer.getTokenEnd();
           }

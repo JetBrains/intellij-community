@@ -21,15 +21,15 @@ public class FileTextParsing extends Parsing {
     super(context);
   }
 
-  public static TreeElement parseFileText(PsiManager manager, Lexer lexer, char[] buffer, int startOffset, int endOffset, CharTable table) {
+  public static TreeElement parseFileText(PsiManager manager, Lexer lexer, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     return parseFileText(manager, lexer, buffer, startOffset, endOffset, false, table);
   }
 
   private static final TokenSet IMPORT_LIST_STOPPER_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, AT);
 
-  public static TreeElement parseFileText(PsiManager manager, @NotNull Lexer lexer, char[] buffer, int startOffset, int endOffset, boolean skipHeader, CharTable table) {
+  public static TreeElement parseFileText(PsiManager manager, @NotNull Lexer lexer, CharSequence buffer, int startOffset, int endOffset, boolean skipHeader, CharTable table) {
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    filterLexer.start(buffer, startOffset, endOffset);
+    filterLexer.start(buffer, startOffset, endOffset,0);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
     JavaParsingContext context = new JavaParsingContext(dummyRoot.getCharTable(), manager.getEffectiveLanguageLevel());
 
@@ -94,7 +94,7 @@ public class FileTextParsing extends Parsing {
         lastPos = lexer.getTokenEnd();
         lexer.advance();
       }
-      return Factory.createLeafElement(IMPORT_LIST, lexer.getBuffer(), startPos, lastPos, lexer.getState(), myContext.getCharTable());
+      return Factory.createLeafElement(IMPORT_LIST, lexer.getBufferSequence(), startPos, lastPos, lexer.getState(), myContext.getCharTable());
     }
 
     return importList;

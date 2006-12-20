@@ -22,20 +22,20 @@ public class JavaFilterLexer extends BaseFilterLexer {
         || tokenType == JavaTokenType.CHARACTER_LITERAL) {
       int start = getTokenStart();
       int end = getTokenEnd();
-      IdCacheUtil.addOccurrence(myTable, getBuffer(), start, end, UsageSearchContext.IN_CODE);
+      IdCacheUtil.addOccurrence(myTable, getBufferSequence(), start, end, UsageSearchContext.IN_CODE);
     }
     else if (tokenType == JavaTokenType.STRING_LITERAL) {
-      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES);
+      IdTableBuilding.scanWords(myTable, getBufferSequence(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES);
     }
     else if (tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT ||
              tokenType == JavaTokenType.DOC_COMMENT) {
-      IdTableBuilding.scanWords(myTable, getBuffer(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_COMMENTS);
-      advanceTodoItemCounts(getBuffer(), getTokenStart(), getTokenEnd());
+      IdTableBuilding.scanWords(myTable, getBufferSequence(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_COMMENTS);
+      advanceTodoItemCounts(getBufferSequence(), getTokenStart(), getTokenEnd());
     }
     else if (JavaTokenType.KEYWORD_BIT_SET.contains(tokenType)) {
       int start = getTokenStart();
       int end = getTokenEnd();
-      IdCacheUtil.addOccurrence(myTable, getBuffer(), start, end, UsageSearchContext.IN_PLAIN_TEXT);
+      IdCacheUtil.addOccurrence(myTable, getBufferSequence(), start, end, UsageSearchContext.IN_PLAIN_TEXT);
     }
 
     myOriginalLexer.advance();

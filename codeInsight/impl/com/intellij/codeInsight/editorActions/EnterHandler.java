@@ -123,8 +123,8 @@ public class EnterHandler extends EditorWriteActionHandler {
       if (token.getTokenType() == JavaTokenType.STRING_LITERAL) {
         TextRange range = token.getTextRange();
         final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
-        char[] chars = CharArrayUtil.fromSequence(text);
-        lexer.start(chars, range.getStartOffset(), range.getEndOffset());
+        lexer.start(text, range.getStartOffset(), range.getEndOffset(),0);
+
         while (lexer.getTokenType() != null) {
           if (lexer.getTokenStart() < caretOffset && caretOffset < lexer.getTokenEnd()) {
             if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
@@ -295,7 +295,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     if (!commentText.endsWith(DOC_COMMENT_SUFFIX)) return false;
 
     Lexer lexer = new JavaLexer(PsiUtil.getLanguageLevel(comment));
-    lexer.start(commentText.toCharArray(), DOC_COMMENT_PREFIX.length(), commentText.length());
+    lexer.start(commentText, DOC_COMMENT_PREFIX.length(), commentText.length(),0);
     while (true) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) {

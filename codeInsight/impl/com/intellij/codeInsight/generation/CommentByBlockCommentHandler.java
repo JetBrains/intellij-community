@@ -114,8 +114,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       final int caretOffset = myEditor.getCaretModel().getOffset();
       int commentStart = CharArrayUtil.lastIndexOf(text, commenter.getBlockCommentPrefix(), caretOffset);
       if (commentStart == -1) return null;
-      char[] chars = CharArrayUtil.fromSequence(text);
-      lexer.start(chars, commentStart, text.length());
+
+      lexer.start(text, commentStart, text.length(),0);
       if (lexer.getTokenType() == CustomHighlighterTokenType.MULTI_LINE_COMMENT && lexer.getTokenEnd() >= caretOffset) {
         return new TextRange(commentStart, lexer.getTokenEnd());
       }

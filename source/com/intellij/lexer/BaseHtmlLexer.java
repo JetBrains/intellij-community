@@ -48,8 +48,8 @@ abstract class BaseHtmlLexer extends LexerBase {
     @NonNls private static final String TOKEN_ON = "on";
 
     public void handleElement(Lexer lexer) {
-      final char[] buffer = lexer.getBuffer();
-      final char firstCh = buffer[lexer.getTokenStart()];
+      final CharSequence buffer = lexer.getBufferSequence();
+      final char firstCh = buffer.charAt(lexer.getTokenStart());
       // support for style in any attribute that ends with style
       //final int i = lexer.getTokenEnd() - "style".length();
       //final char ch = i > lexer.getTokenStart() ? buffer[i]:firstCh;
@@ -151,18 +151,29 @@ abstract class BaseHtmlLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+    initState(initialState);
+
+    baseLexer.start(buffer, startOffset, endOffset, initialState & BASE_STATE_MASK);
+  }
+
+  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+    initState(initialState);
+    baseLexer.start(buffer, startOffset, endOffset, initialState & BASE_STATE_MASK);
+  }
+
+  private void initState(final int initialState) {
     seenScript = (initialState & SEEN_SCRIPT)!=0;
     seenStyle = (initialState & SEEN_STYLE)!=0;
     seenTag = (initialState & SEEN_TAG)!=0;
     seenAttribute = (initialState & SEEN_ATTRIBUTE)!=0;
-
-    baseLexer.start(buffer, startOffset, endOffset, initialState & BASE_STATE_MASK);
   }
 
   protected int skipToTheEndOfTheEmbeddment() {
     int myTokenEnd = baseLexer.getTokenEnd();
     int lastState = 0;
     int lastStart = 0;
+
+    final CharSequence buf = baseLexer.getBufferSequence();
 
     if (seenTag) {
       FoundEnd:
@@ -171,11 +182,10 @@ abstract class BaseHtmlLexer extends LexerBase {
         while(baseLexer.getTokenType() != XmlTokenType.XML_END_TAG_START) {
           if (baseLexer.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
             // we should terminate on first occurence of </
-            final char[] buf = baseLexer.getBuffer();
             final int end = baseLexer.getTokenEnd();
 
             for(int i = baseLexer.getTokenStart(); i < end; ++i) {
-              if (buf[i] == '<' && i + 1 < end && buf[i+1] == '/') {
+              if (buf.charAt(i) == '<' && i + 1 < end && buf.charAt(i+1) == '/') {
                 myTokenEnd = i;
                 lastStart = i - 1;
                 lastState = 0;
@@ -194,7 +204,7 @@ abstract class BaseHtmlLexer extends LexerBase {
 
         // check if next is script
         if (baseLexer.getTokenType() != XmlTokenType.XML_END_TAG_START) { // we are inside comment
-          baseLexer.start(getBuffer(),lastStart+1,getBufferEnd(),lastState);
+          baseLexer.start(buf,lastStart+1,getBufferEnd(),lastState);
           baseLexer.getTokenType();
           baseLexer.advance();
         } else {
@@ -217,7 +227,7 @@ abstract class BaseHtmlLexer extends LexerBase {
         }
       }
 
-      baseLexer.start(getBuffer(),lastStart,getBufferEnd(),lastState);
+      baseLexer.start(buf,lastStart,getBufferEnd(),lastState);
       baseLexer.getTokenType();
     } else if (seenAttribute) {
       while(true) {
@@ -231,7 +241,7 @@ abstract class BaseHtmlLexer extends LexerBase {
         baseLexer.advance();
       }
 
-      baseLexer.start(getBuffer(),lastStart,getBufferEnd(),lastState);
+      baseLexer.start(buf,lastStart,getBufferEnd(),lastState);
       baseLexer.getTokenType();
     }
     return myTokenEnd;
@@ -300,5 +310,9 @@ abstract class BaseHtmlLexer extends LexerBase {
 
   protected Lexer getBaseLexer() {
     return baseLexer;
+  }
+
+  public CharSequence getBufferSequence() {
+    return baseLexer.getBufferSequence();
   }
 }

@@ -36,21 +36,21 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
       cdata,
       Factory.createLeafElement(
         XmlTokenType.XML_CDATA_START,
-        "<![CDATA[".toCharArray(),
+        "<![CDATA[",
         0, 9, -1,
         dummyParent.getCharTable()));
     TreeUtil.addChildren(
       cdata,
       Factory.createLeafElement(
         XmlTokenType.XML_DATA_CHARACTERS,
-        displayText.toCharArray(),
+        displayText,
         0, displayText.length(), -1,
         dummyParent.getCharTable()));
     TreeUtil.addChildren(
       cdata,
       Factory.createLeafElement(
         XmlTokenType.XML_CDATA_END,
-        "]]>".toCharArray(),
+        "]]>",
         0, 3, -1,
         dummyParent.getCharTable()));
     dummyParent.acceptTree(new GeneratedMarkerVisitor());

@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.util.text.CharArrayCharSequence;
 
 import java.util.List;
 
@@ -41,9 +42,9 @@ public class LowLevelSearchUtil {
                                                                PsiElement scope,
                                                                StringSearcher searcher) {
     ProgressManager.getInstance().checkCanceled();
-    char[] buffer = scope.textToCharArray();
+    final CharSequence buffer = scope instanceof PsiFile ? ((PsiFile)scope).getViewProvider().getContents():new CharArrayCharSequence(scope.textToCharArray());
     int startOffset = 0;
-    int endOffset = buffer.length;
+    int endOffset = buffer.length();
     final int patternLength = searcher.getPatternLength();
 
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
@@ -126,13 +127,13 @@ public class LowLevelSearchUtil {
   }
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
-  public static int searchWord(char[] text, int startOffset, int endOffset, StringSearcher searcher) {
+  public static int searchWord(CharSequence text, int startOffset, int endOffset, StringSearcher searcher) {
     for (int index = startOffset; index < endOffset; index++) {
       index = searcher.scan(text, index, endOffset);
       if (index < 0) return -1;
 
       if (index > startOffset) {
-        char c = text[index - 1];
+        char c = text.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
           continue;
         }
@@ -140,7 +141,7 @@ public class LowLevelSearchUtil {
 
       String pattern = searcher.getPattern();
       if (index + pattern.length() < endOffset) {
-        char c = text[index + pattern.length()];
+        char c = text.charAt(index + pattern.length());
         if (Character.isJavaIdentifierPart(c) && c != '$') {
           continue;
         }

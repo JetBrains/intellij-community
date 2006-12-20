@@ -35,8 +35,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
 
   private static class AsteriskStripperLexer extends LexerBase {
     private _JavaDocLexer myFlex;
-    private char[] myBuffer;
-    private int myBufferStart;
+    private CharSequence myBuffer;
     private int myBufferIndex;
     private int myBufferEndOffset;
     private int myTokenEndOffset;
@@ -54,12 +53,16 @@ public class JavaDocLexer extends MergingLexerAdapter {
     }
 
     public final void start(char[] buffer, int startOffset, int endOffset) {
+      start(new CharArrayCharSequence(buffer), startOffset,endOffset,0);
+    }
+
+    public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
       myBuffer = buffer;
-      myBufferIndex = myBufferStart = startOffset;
+      myBufferIndex =  startOffset;
       myBufferEndOffset = endOffset;
       myTokenType = null;
       myTokenEndOffset = startOffset;
-      myFlex.reset(new CharArrayCharSequence(myBuffer, startOffset, endOffset), 0);
+      myFlex.reset(myBuffer, startOffset, endOffset, initialState);
     }
 
     public final void start(char[] buffer, int startOffset, int endOffset, int initialState) {
@@ -70,8 +73,11 @@ public class JavaDocLexer extends MergingLexerAdapter {
       return myState;
     }
 
-
     public char[] getBuffer() {
+      return CharArrayUtil.fromSequence(myBuffer);
+    }
+
+    public CharSequence getBufferSequence() {
       return myBuffer;
     }
 
@@ -105,7 +111,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
       _locateToken();
 
       if (myTokenType == JavaDocTokenType.DOC_SPACE) {
-        myAfterLineBreak = CharArrayUtil.containLineBreaks(new CharArrayCharSequence(myBuffer, getTokenStart(), getTokenEnd()));
+        myAfterLineBreak = CharArrayUtil.containLineBreaks(myBuffer, getTokenStart(), getTokenEnd());
       }
     }
 
@@ -120,8 +126,8 @@ public class JavaDocLexer extends MergingLexerAdapter {
 
       if (myAfterLineBreak) {
         myAfterLineBreak = false;
-        while (myTokenEndOffset < myBufferEndOffset && myBuffer[myTokenEndOffset] == '*' &&
-               (myTokenEndOffset + 1 >= myBufferEndOffset || myBuffer[myTokenEndOffset + 1] != '/')) {
+        while (myTokenEndOffset < myBufferEndOffset && myBuffer.charAt(myTokenEndOffset) == '*' &&
+               (myTokenEndOffset + 1 >= myBufferEndOffset || myBuffer.charAt(myTokenEndOffset + 1) != '/')) {
           myTokenEndOffset++;
         }
 
@@ -135,17 +141,17 @@ public class JavaDocLexer extends MergingLexerAdapter {
       if (myInLeadingSpace) {
         myInLeadingSpace = false;
         boolean lf = false;
-        while (myTokenEndOffset < myBufferEndOffset && Character.isWhitespace(myBuffer[myTokenEndOffset])) {
-          if (myBuffer[myTokenEndOffset] == '\n') lf = true;
+        while (myTokenEndOffset < myBufferEndOffset && Character.isWhitespace(myBuffer.charAt(myTokenEndOffset))) {
+          if (myBuffer.charAt(myTokenEndOffset) == '\n') lf = true;
           myTokenEndOffset++;
         }
 
         final int state = myFlex.yystate();
         if (state == _JavaDocLexer.COMMENT_DATA ||
-            myTokenEndOffset < myBufferEndOffset && (myBuffer[myTokenEndOffset] == '@' ||
-                                                     myBuffer[myTokenEndOffset] == '{' ||
-                                                     myBuffer[myTokenEndOffset] == '\"' ||
-                                                     myBuffer[myTokenEndOffset] == '<')) {
+            myTokenEndOffset < myBufferEndOffset && (myBuffer.charAt(myTokenEndOffset) == '@' ||
+                                                     myBuffer.charAt(myTokenEndOffset) == '{' ||
+                                                     myBuffer.charAt(myTokenEndOffset) == '\"' ||
+                                                     myBuffer.charAt(myTokenEndOffset) == '<')) {
           myFlex.yybegin(_JavaDocLexer.COMMENT_DATA_START);
         }
 
@@ -164,9 +170,9 @@ public class JavaDocLexer extends MergingLexerAdapter {
     private void flexLocateToken() {
       try {
         myState = myFlex.yystate();
-        myFlex.goTo(myBufferIndex - myBufferStart);
+        myFlex.goTo(myBufferIndex);
         myTokenType = myFlex.advance();
-        myTokenEndOffset = myFlex.getTokenEnd() + myBufferStart;
+        myTokenEndOffset = myFlex.getTokenEnd();
       }
       catch (IOException e) {
         // Can't be

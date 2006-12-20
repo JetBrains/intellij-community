@@ -31,6 +31,8 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharSequenceSubSequence;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntArrayList;
 
 import java.util.regex.Matcher;
@@ -60,7 +62,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
 
     TIntArrayList commentStarts = new TIntArrayList();
     TIntArrayList commentEnds = new TIntArrayList();
-    char[] chars = file.textToCharArray();
+
+    final CharSequence chars = file.getViewProvider().getContents();
     findCommentTokenRanges(file, chars, queryParameters.getRange(), commentStarts, commentEnds);
 
     for (int i = 0; i < commentStarts.size(); i++) {
@@ -88,7 +91,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
   private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
 
   private static void findCommentTokenRanges(final PsiFile file,
-                                             final char[] chars,
+                                             final CharSequence chars,
                                              final TextRange range,
                                              final TIntArrayList commentStarts,
                                              final TIntArrayList commentEnds) {
@@ -145,11 +148,11 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
   }
 
   private static void findComments(final Lexer lexer,
-                                   final char[] chars,
+                                   final CharSequence chars,
                                    final TextRange range,
                                    final TokenSet commentTokens,
                                    final TIntArrayList commentStarts, final TIntArrayList commentEnds) {
-    for (lexer.start(chars); ; lexer.advance()) {
+    for (lexer.start(chars,0,chars.length(),0); ; lexer.advance()) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
 
@@ -180,7 +183,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
   }
 
   private static boolean collectPatternMatches(IndexPattern indexPattern,
-                                               char[] chars,
+                                               CharSequence chars,
                                                int commentStart,
                                                int commentEnd,
                                                PsiFile file,
@@ -190,7 +193,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     if (pattern != null) {
       ProgressManager.getInstance().checkCanceled();
 
-      CharSequence input = new CharArrayCharSequence(chars, commentStart, commentEnd);
+      CharSequence input = new CharSequenceSubSequence(chars, commentStart, commentEnd);
       Matcher matcher = pattern.matcher(input);
       while (true) {
         //long time1 = System.currentTimeMillis();
@@ -217,7 +220,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
 
   private static class LexerEditorHighlighterLexer extends LexerBase {
     HighlighterIterator iterator;
-    char[] buffer;
+    CharSequence buffer;
     int start;
     int end;
     private final LexerEditorHighlighter myHighlighter;
@@ -231,7 +234,11 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     }
 
     public void start(char[] buffer, int startOffset, int endOffset) {
-      myHighlighter.setText(new CharArrayCharSequence(this.buffer = buffer, start = startOffset, end = endOffset));
+      start(new CharArrayCharSequence(buffer), startOffset, endOffset, 0);
+    }
+
+    public void start(CharSequence buffer, int startOffset, int endOffset, int state) {
+      myHighlighter.setText(new CharSequenceSubSequence(this.buffer = buffer, start = startOffset, end = endOffset));
       iterator = myHighlighter.createIterator(0);
     }
 
@@ -261,6 +268,10 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     }
 
     public char[] getBuffer() {
+      return CharArrayUtil.fromSequence(buffer);
+    }
+
+    public CharSequence getBufferSequence() {
       return buffer;
     }
 

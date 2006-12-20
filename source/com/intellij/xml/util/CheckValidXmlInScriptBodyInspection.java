@@ -71,7 +71,7 @@ public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
               final String tagBodyText = tagValue.getText();
 
               if (tagBodyText.length() > 0) {
-                myXmlLexer.start(tagBodyText.toCharArray());
+                myXmlLexer.start(tagBodyText, 0, tagBodyText.length(),0);
 
                 while(myXmlLexer.getTokenType() != null) {
                   IElementType tokenType = myXmlLexer.getTokenType();

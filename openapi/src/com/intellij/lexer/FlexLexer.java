@@ -30,5 +30,5 @@ import org.jetbrains.annotations.NonNls;
   int getTokenStart();
   int getTokenEnd();
   IElementType advance() throws IOException;
-  void reset(CharSequence buf, int initialState);
+  void reset(CharSequence buf, int start, int end, int initialState);
 }

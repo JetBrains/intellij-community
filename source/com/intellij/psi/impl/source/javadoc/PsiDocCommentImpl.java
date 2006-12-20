@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,15 +62,13 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       if (getFirstChildNode().getText().indexOf(name) < 0) return null;
     }
 
-    char[] tagChars = new char[name.length() + 1];
-    tagChars[0] = '@';
-    name.getChars(0, name.length(), tagChars, 1);
-
     ChameleonTransforming.transformChildren(this);
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == DOC_TAG) {
         PsiDocTag tag = (PsiDocTag)SourceTreeToPsiMap.treeElementToPsi(child);
-        if (tag.getNameElement().textMatches(new CharArrayCharSequence(tagChars))) {
+        final CharSequence nameText = ((LeafElement)tag.getNameElement()).getInternedText();
+
+        if (nameText.length() > 0 && nameText.charAt(0) == '@' && CharArrayUtil.regionMatches(nameText, 1, name)) {
           return tag;
         }
       }
@@ -126,18 +125,18 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) return;
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(tag);
-    final ASTNode newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
+    final ASTNode newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, "\n", 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
     tag.addChild(newLine, null);
 
     ASTNode leadingWhitespaceAnchor = null;
     if (CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
-      final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, treeCharTab,
+      final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", 0, 1, treeCharTab,
                                                                           SharedImplUtil.getManagerByTree(tag));
 
       leadingWhitespaceAnchor = tag.addInternal(leadingAsterisk, leadingAsterisk, null, Boolean.TRUE);
     }
 
-    final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
+    final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
     tag.addInternal(commentData, commentData, leadingWhitespaceAnchor, Boolean.TRUE);
   }
 
@@ -158,10 +157,10 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
       }
       if (anchor.getElementType() != DOC_TAG) {
         final CharTable charTable = SharedImplUtil.findCharTableByTree(this);
-        final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, charTable, getManager());
-        final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, charTable, getManager());
-        final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, charTable, getManager());
-        final TreeElement indentWS = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, charTable, getManager());
+        final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, "\n", 0, 1, charTable, getManager());
+        final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", 0, 1, charTable, getManager());
+        final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, getManager());
+        final TreeElement indentWS = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, getManager());
         newLine.getTreeParent().addChild(indentWS);
         newLine.getTreeParent().addChild(leadingAsterisk);
         newLine.getTreeParent().addChild(commentData);

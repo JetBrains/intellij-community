@@ -11,10 +11,10 @@ public class IdentifierParser extends BaseTokenParser {
   }
 
   public boolean hasToken(int position) {
-    if (!Character.isJavaIdentifierStart(myBuffer[position])) return false;
+    if (!Character.isJavaIdentifierStart(myBuffer.charAt(position))) return false;
     final int start = position;
     for (position++; position < myEndOffset; position++) {
-      final char c = myBuffer[position];
+      final char c = myBuffer.charAt(position);
       if (!isIdentifierPart(c)) break;
     }
     IElementType tokenType = CustomHighlighterTokenType.IDENTIFIER;

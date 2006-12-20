@@ -68,7 +68,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         if (qualifiedName != null) {
           PsiReferenceExpression classRef = getManager().getElementFactory().createReferenceExpression(qualifierClass);
           final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-          LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, new char[]{'.'}, 0, 1, treeCharTab, getManager());
+          LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, treeCharTab, getManager());
           addInternal(dot, dot, SourceTreeToPsiMap.psiElementToTree(getParameterList()), Boolean.TRUE);
           addBefore(classRef, SourceTreeToPsiMap.treeElementToPsi(dot));
           return this;
@@ -96,7 +96,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
         TreeElement dot = (TreeElement)findChildByRole(ChildRole.DOT);
         if (dot == null) {
-          dot = Factory.createSingleLeafElement(DOT, new char[]{'.'}, 0, 1, treeCharTab, getManager());
+          dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, treeCharTab, getManager());
           dot = addInternal(dot, dot, getFirstChildNode(), Boolean.TRUE);
         }
         addBefore(newQualifier, dot.getPsi());
@@ -411,7 +411,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES &&
                                       isFullyQualified(this);
       final CharTable table = SharedImplUtil.findCharTableByTree(getTreeParent());
-      TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName.toCharArray(), 0, qName.toCharArray().length, table);
+      TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName, 0, qName.length(), table);
       getTreeParent().replaceChildInternal(this, ref);
       CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)manager.getCodeStyleManager();
       if (!preserveQualification) {
@@ -427,7 +427,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         throw new IncorrectOperationException();
       }
       final CharTable table = SharedImplUtil.findCharTableByTree(getTreeParent());
-      TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName.toCharArray(), 0, qName.length(), table);
+      TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName, 0, qName.length(), table);
       getTreeParent().replaceChildInternal(this, ref);
       return SourceTreeToPsiMap.treeElementToPsi(ref);
     }

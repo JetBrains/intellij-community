@@ -7,6 +7,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,14 +36,14 @@ public abstract class LeafElement extends TreeElement {
   public abstract int textMatches(CharSequence buffer, int start);
 
   @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
-  public boolean textMatches(char[] buf, int start, int end) {
-    final String text = getText();
+  public boolean textMatches(final CharSequence buf, int start, int end) {
+    final CharSequence text = getInternedText();
     final int len = text.length();
 
     if (end - start != len) return false;
-
+    if (buf == text) return true;
     for (int i = 0; i < len; i++) {
-      if (text.charAt(i) != buf[start + i]) return false;
+      if (text.charAt(i) != buf.charAt(start + i)) return false;
     }
 
     return true;

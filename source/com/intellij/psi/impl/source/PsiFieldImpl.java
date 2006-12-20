@@ -250,7 +250,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
           String initializerText = getInitializerText();
           if (initializerText == null) return null;
           final FileElement holderElement = new DummyHolder(myManager, this).getTreeElement();
-          CompositeElement exprElement = ExpressionParsing.parseExpressionText(myManager, initializerText.toCharArray(), 0, initializerText.length(), holderElement.getCharTable());
+          CompositeElement exprElement = ExpressionParsing.parseExpressionText(myManager, initializerText, 0, initializerText.length(), holderElement.getCharTable());
           TreeUtil.addChildren(holderElement, exprElement);
           initializer = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprElement);
         }
@@ -345,7 +345,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       ASTNode nextField = TreeUtil.skipElements(comma.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (nextField == null || nextField.getElementType() != JavaElementType.FIELD) break;
 
-      TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, null, getManager());
+      TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, null, getManager());
       CodeEditUtil.addChild((CompositeElement)field, semicolon, null);
 
       CodeEditUtil.removeChild((CompositeElement)comma.getTreeParent(), comma);

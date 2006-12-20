@@ -218,7 +218,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
       }
 
       if (TreeUtil.findChild(treeElement, type) == null){
-        TreeElement keyword = Factory.createSingleLeafElement(type, name.toCharArray(), 0, name.length(), null, getManager());
+        TreeElement keyword = Factory.createSingleLeafElement(type, name, 0, name.length(), null, getManager());
         treeElement.addInternal(keyword, keyword, null, null);
       }
       if ((type == ABSTRACT_KEYWORD || type == NATIVE_KEYWORD) && parentTreeElement.getElementType() == METHOD){

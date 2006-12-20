@@ -13,7 +13,7 @@ public class LineCommentParser extends PrefixedTokenParser {
 
   protected int getTokenEnd(int position) {
     for (; position < myEndOffset; position++) {
-      if (myBuffer[position] == '\n') break;
+      if (myBuffer.charAt(position) == '\n') break;
     }
     return position;
   }

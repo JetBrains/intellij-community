@@ -47,6 +47,16 @@ public abstract class CompositeLexer extends LexerBase {
     myCurOffset = startOffset;
   }
 
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    myLexer1.start(buffer, startOffset, endOffset, (initialState >> 16) & 0xFFFF);
+    myLexer2.start(buffer, startOffset, endOffset, initialState & 0xFFFF);
+    myCurOffset = startOffset;
+  }
+
+  public CharSequence getBufferSequence() {
+    return myLexer1.getBufferSequence();
+  }
+
   public int getState() {
     final int state = myLexer1.getState();
     final int state2 = myLexer2.getState();

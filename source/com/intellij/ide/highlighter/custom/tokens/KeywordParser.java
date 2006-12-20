@@ -68,17 +68,17 @@ public class KeywordParser extends BaseTokenParser {
 
 
   public boolean hasToken(int position) {
-    if (!myFirstCharacters.get(myBuffer[position])) return false;
+    if (!myFirstCharacters.get(myBuffer.charAt(position))) return false;
     final int start = position;
     for (position++; position < myEndOffset; position++) {
-      final char c = myBuffer[position];
+      final char c = myBuffer.charAt(position);
       if (!myCharacters.get(c)) {
         if (Character.isJavaIdentifierPart(c)) return false;
         break;
       }
     }
 
-    final String keyword = new String(myBuffer, start, position - start);
+    final String keyword = myBuffer.subSequence(start, position).toString();
     String testKeyword = myIgnoreCase ? keyword.toUpperCase() : keyword;
     for (int i = 0; i < myKeywordSets.length; i++) {
       HashSet keywordSet = myKeywordSets[i];

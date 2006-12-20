@@ -19,7 +19,7 @@ public class MultilineCommentParser extends PrefixedTokenParser {
       int pos = position;
       int i;
       for (i = 0; i < myEndDelimiter.length && pos < myEndOffset; i++, pos++) {
-        if (myBuffer[pos] != myEndDelimiter[i]) break;
+        if (myBuffer.charAt(pos) != myEndDelimiter[i]) break;
       }
       if (i == myEndDelimiter.length) return pos;
     }

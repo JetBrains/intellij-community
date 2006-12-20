@@ -22,21 +22,21 @@ public class Parsing implements Constants{
     myContext = context;
   }
 
-  public static CompositeElement parseJavaCodeReferenceText(PsiManager manager, char[] buffer, CharTable table) {
-    return (CompositeElement)parseJavaCodeReferenceText(manager, buffer, 0, buffer.length, table, false);
+  public static CompositeElement parseJavaCodeReferenceText(PsiManager manager, CharSequence buffer, CharTable table) {
+    return (CompositeElement)parseJavaCodeReferenceText(manager, buffer, 0, buffer.length(), table, false);
   }
 
   //Since we are to parse greedily (up to the end) in case eatAll=true,
   //  we are not guaranteed to return reference actually
   public static TreeElement parseJavaCodeReferenceText(PsiManager manager,
-                                                       char[] buffer,
+                                                       CharSequence buffer,
                                                        int startOffset,
                                                        int endOffset,
                                                        CharTable table,
                                                        boolean eatAll) {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset);
+    lexer.start(buffer, startOffset, endOffset,0);
 
     JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
     CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false, true);
@@ -144,10 +144,10 @@ public class Parsing implements Constants{
     }
   }
 
-  public static CompositeElement parseTypeText(PsiManager manager, char[] buffer, int startOffset, int endOffset, CharTable table) {
+  public static CompositeElement parseTypeText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset);
+    lexer.start(buffer, startOffset, endOffset, 0);
     final JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
     CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
     if (type == null) return null;
@@ -241,7 +241,7 @@ public class Parsing implements Constants{
 
   public static TreeElement parseTypeText(PsiManager manager,
                                           Lexer lexer,
-                                          char[] buffer,
+                                          CharSequence buffer,
                                           int startOffset,
                                           int endOffset,
                                           int state,
@@ -250,11 +250,12 @@ public class Parsing implements Constants{
       lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     }
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
+    if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
     final JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
     final FileElement dummyRoot = new DummyHolder(manager, null, context.getCharTable()).getTreeElement();
     final CompositeElement root = context.getStatementParsing().parseType(filterLexer);
+
     if (root != null) {
       TreeUtil.addChildren(dummyRoot, root);
     }

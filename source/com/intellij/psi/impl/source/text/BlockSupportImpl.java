@@ -55,7 +55,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   public void projectClosed() {
   }
 
-  public void reparseRange(PsiFile file, int startOffset, int endOffset, String newTextS) throws IncorrectOperationException {
+  public void reparseRange(PsiFile file, int startOffset, int endOffset, CharSequence newTextS) throws IncorrectOperationException {
     LOG.assertTrue(file.isValid());
     final PsiFileImpl psiFile = (PsiFileImpl)file;
     final Document document = psiFile.getViewProvider().getDocument();
@@ -84,7 +84,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
                            final int startOffset,
                            final int endOffset,
                            final int lengthShift,
-                           final char[] newFileText) {
+                           final CharSequence newFileText) {
     // adjust editor offsets to damage area markers
     file.getManager().performActionWithFormatterDisabled(new Runnable() {
       public void run() {
@@ -93,7 +93,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     });
   }
 
-  private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newFileText) {
+  private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, CharSequence newFileText) {
     try {
       file.getViewProvider().beforeContentsSynchronized();
       final PsiFileImpl fileImpl = (PsiFileImpl)file;
@@ -137,8 +137,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
               languageChanged = prevReparseable.getElementType().getLanguage() != reparseable.getLanguage();
             }
 
-            final String newTextStr =
-              StringFactory.createStringFromConstantArray(newFileText, textRange.getStartOffset(), textRange.getLength() + lengthShift);
+            final String newTextStr = newFileText.subSequence(textRange.getStartOffset(), textRange.getStartOffset() + textRange.getLength() + lengthShift).toString();
             if (reparseable.isParsable(newTextStr, project)) {
               final ChameleonElement chameleon = (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText,
                                                                                                    textRange.getStartOffset(),
@@ -248,7 +247,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     return true;
   }
 
-  private static void makeFullParse(ASTNode parent, char[] newFileText, int textLength, final PsiFileImpl fileImpl, FileType fileType) {
+  private static void makeFullParse(ASTNode parent, CharSequence newFileText, int textLength, final PsiFileImpl fileImpl, FileType fileType) {
     if (parent instanceof CodeFragmentElement) {
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
       TreeUtil.addChildren(holderElement, fileImpl.createContentLeafElement(newFileText, 0, textLength, holderElement.getCharTable()));
@@ -258,10 +257,9 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
       final PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
       final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
 
-      final CharSequence seq = new CharArrayCharSequence(newFileText, 0, textLength);
 
       final PsiFileImpl newFile =
-        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, fileImpl.getLanguage(), seq, fileImpl.getModificationStamp(), true, false);
+        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, fileImpl.getLanguage(), newFileText, fileImpl.getModificationStamp(), true, false);
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();

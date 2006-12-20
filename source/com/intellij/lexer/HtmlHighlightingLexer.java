@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.text.CharArrayCharSequence;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.HtmlHighlightingLexer");
@@ -32,7 +33,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
         setEmbeddedLexer();
         
         if (embeddedLexer!=null) {
-          embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
+          embeddedLexer.start(getBufferSequence(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment(),0);
           
           if (embeddedLexer.getTokenType() == null) {
             // no content for embeddment
@@ -47,7 +48,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     public void handleElement(Lexer lexer) {
       setEmbeddedLexer();
       if (embeddedLexer != null) {
-        embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),HtmlHighlightingLexer.super.getTokenEnd());
+        embeddedLexer.start(getBufferSequence(),HtmlHighlightingLexer.super.getTokenStart(),HtmlHighlightingLexer.super.getTokenEnd(), 0);
       }
     }
   }
@@ -86,6 +87,10 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+    start(new CharArrayCharSequence(buffer),startOffset, endOffset, initialState);
+  }
+
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
 
     if ((initialState & EMBEDDED_LEXER_ON)!=0) {

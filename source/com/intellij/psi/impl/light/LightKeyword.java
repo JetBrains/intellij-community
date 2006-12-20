@@ -23,7 +23,7 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
 
   public IElementType getTokenType(){
     Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
-    lexer.start(myText.toCharArray());
+    lexer.start(myText,0,myText.length(),0);
     return lexer.getTokenType();
   }
 

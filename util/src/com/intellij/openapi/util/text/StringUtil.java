@@ -552,6 +552,14 @@ public class StringUtil {
     return h;
   }
 
+  public static int stringHashCode(CharSequence chars, int from, int to) {
+    int h = 0;
+    for (int off = from; off < to; off++) {
+      h = 31 * h + chars.charAt(off);
+    }
+    return h;
+  }
+
   public static int stringHashCode(char[] chars, int from, int len) {
     int h = 0;
     int to = from + len;
@@ -566,6 +574,14 @@ public class StringUtil {
     int to = from + len;
     for (int off = from; off < to; off++) {
       h = 31 * h + Character.toLowerCase(chars[off]);
+    }
+    return h;
+  }
+
+  public static int stringHashCodeInsensitive(CharSequence chars, int from, int to) {
+    int h = 0;
+    for (int off = from; off < to; off++) {
+      h = 31 * h + Character.toLowerCase(chars.charAt(off));
     }
     return h;
   }

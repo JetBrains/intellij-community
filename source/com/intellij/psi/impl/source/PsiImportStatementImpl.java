@@ -45,7 +45,7 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
           final FileElement holderElement = new DummyHolder(myManager, this).getTreeElement();
           final String refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
           if (refText == null) return null;
-          PsiJavaCodeReferenceElementImpl mirrorRef = (PsiJavaCodeReferenceElementImpl) Parsing.parseJavaCodeReferenceText(myManager, refText.toCharArray(), holderElement.getCharTable());
+          PsiJavaCodeReferenceElementImpl mirrorRef = (PsiJavaCodeReferenceElementImpl) Parsing.parseJavaCodeReferenceText(myManager, refText, holderElement.getCharTable());
           if(mirrorRef == null) return null;
           setCachedMirrorReference(mirrorRef);
           TreeUtil.addChildren(holderElement, mirrorRef);

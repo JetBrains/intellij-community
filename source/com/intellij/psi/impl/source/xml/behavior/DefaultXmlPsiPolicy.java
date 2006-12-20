@@ -14,10 +14,10 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     boolean wsChars = false;
     final FileElement dummyParent = new DummyHolder(text.getManager(), null, table).getTreeElement();
     int fragmentStart = 0;
-    final char[] chars = displayText.toCharArray();
+
     for(int i = 0; i < displayText.length(); i++){
       if(wsChars != Character.isWhitespace(displayText.charAt(i))){
-        final ASTNode next = createNextToken(fragmentStart, i, wsChars, dummyParent, chars);
+        final ASTNode next = createNextToken(fragmentStart, i, wsChars, dummyParent, displayText);
         if(next != null){
           TreeUtil.addChildren(dummyParent, (TreeElement)next);
           fragmentStart = i;
@@ -25,7 +25,7 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
         wsChars = Character.isWhitespace(displayText.charAt(i));
       }
     }
-    final ASTNode next = createNextToken(fragmentStart, displayText.length(), wsChars, dummyParent, chars);
+    final ASTNode next = createNextToken(fragmentStart, displayText.length(), wsChars, dummyParent, displayText);
     if(next != null) TreeUtil.addChildren(dummyParent, (TreeElement)next);
     dummyParent.acceptTree(new GeneratedMarkerVisitor());
     return dummyParent.getFirstChildNode();
@@ -35,7 +35,7 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
                                       final int endOffset,
                                       final boolean isWhitespace,
                                       final FileElement dummyParent,
-                                      final char[] chars) {
+                                      final CharSequence chars) {
     if(startOffset != endOffset){
       if(isWhitespace){
         return Factory.createLeafElement(

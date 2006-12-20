@@ -516,6 +516,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         ProgressManager.getInstance().checkCanceled();
 
         PsiFile file = files[i];
+        files[i] = null; // prevent strong ref
+
         PsiElement[] psiRoots = file.getPsiRoots();
         Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
         for (PsiElement psiRoot : psiRoots) {
@@ -588,8 +590,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       ProgressManager.getInstance().checkCanceled();
 
       PsiFile psiFile = files[i];
-      char[] text = psiFile.textToCharArray();
-      for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length, searcher); index >= 0;) {
+      CharSequence text = psiFile.getViewProvider().getContents();
+      for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher); index >= 0;) {
         PsiReference referenceAt = psiFile.findReferenceAt(index);
         if (referenceAt == null ||
             originalElement == null ||
@@ -597,7 +599,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           if (!processor.process(psiFile, index, index + searcher.getPattern().length())) break AllFilesLoop;
         }
 
-        index = LowLevelSearchUtil.searchWord(text, index + searcher.getPattern().length(), text.length, searcher);
+        index = LowLevelSearchUtil.searchWord(text, index + searcher.getPattern().length(), text.length(), searcher);
       }
 
       if (progress != null) {

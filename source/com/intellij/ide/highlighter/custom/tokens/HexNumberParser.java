@@ -12,7 +12,7 @@ public class HexNumberParser extends PrefixedTokenParser {
 
   protected int getTokenEnd(int position) {
     for (; position < myEndOffset; position++) {
-      if (!isHexDigit(myBuffer[position])) break;
+      if (!isHexDigit(myBuffer.charAt(position))) break;
     }
     return position;
   }

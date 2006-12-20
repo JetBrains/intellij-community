@@ -241,7 +241,7 @@ public class TemplateImpl implements Template {
     mySegments = new ArrayList<Segment>();
     StringBuffer buffer = new StringBuffer("");
     TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(myString.toCharArray());
+    lexer.start(myString,0,myString.length(),0);
 
     while(true){
       IElementType tokenType = lexer.getTokenType();

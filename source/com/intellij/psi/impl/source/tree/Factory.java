@@ -25,6 +25,7 @@ import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,7 +43,12 @@ public class Factory implements Constants {
     ourElementFactories.add(factory);
   }
 
+  @Deprecated
   public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, PsiFile originalFile) {
+    return createSingleLeafElement(type, new CharArrayCharSequence(buffer), startOffset, endOffset, table, manager, originalFile);
+  }
+
+  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, PsiFile originalFile) {
     final LeafElement newElement;
     final DummyHolder dummyHolder = new DummyHolder(manager, table, type.getLanguage());
     dummyHolder.setOriginalFile(originalFile);
@@ -54,7 +60,12 @@ public class Factory implements Constants {
     return newElement;
   }
 
-  public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
+  @Deprecated
+  public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
+    return createSingleLeafElement(type, new CharArrayCharSequence(buffer),startOffset, endOffset, table, manager);
+  }
+
+  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
     final LeafElement newElement;
     final FileElement holderElement = new DummyHolder(manager, table, type.getLanguage()).getTreeElement();
     newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
@@ -63,12 +74,16 @@ public class Factory implements Constants {
     return newElement;
   }
 
-  public static LeafElement createSingleLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
+  public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager) {
     return createSingleLeafElement(type, buffer, startOffset, endOffset, table, manager, true);
   }
 
-
+  @Deprecated
   public static LeafElement createLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+    return createLeafElement(type, new CharArrayCharSequence(buffer), startOffset, endOffset, lexerState, table);
+  }
+
+  public static LeafElement createLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     LeafElement element = null;
     if (type instanceof IChameleonElementType) {
       element = new ChameleonElement(type, buffer, startOffset, endOffset, lexerState, table);

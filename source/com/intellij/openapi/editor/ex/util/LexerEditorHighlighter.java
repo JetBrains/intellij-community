@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ArrayUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public LexerEditorHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme scheme) {
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
-    myLexer.start("".toCharArray());
+    myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE,0,0,0);
     myInitialState = myLexer.getState();
     myAttributesMap = new HashMap<IElementType, TextAttributes>();
     myHighlighter = highlighter;
@@ -111,7 +112,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     int startOffset = mySegments.getSegmentStart(startIndex);
     int newEndOffset = e.getOffset() + e.getNewLength();
 
-    myLexer.start(CharArrayUtil.fromSequence(text), startOffset, text.length(), myInitialState);
+    myLexer.start(text, startOffset, text.length(), myInitialState);
 
     int lastTokenStart = -1;
     int lastLexerState = -1;
@@ -267,9 +268,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public void setText(CharSequence text) {
-    char[] chars = CharArrayUtil.fromSequence(text);
-
-    myLexer.start(chars, 0, text.length());
+    myLexer.start(text, 0, text.length(),myInitialState);
     mySegments.removeAll();
     int i = 0;
     while(myLexer.getTokenType() != null) {

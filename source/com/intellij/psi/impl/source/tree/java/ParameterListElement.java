@@ -35,7 +35,7 @@ public class ParameterListElement extends RepositoryTreeElement {
       for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == PARAMETER) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, element, Boolean.FALSE);
           break;
         }
@@ -43,7 +43,7 @@ public class ParameterListElement extends RepositoryTreeElement {
       for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == PARAMETER) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
         }

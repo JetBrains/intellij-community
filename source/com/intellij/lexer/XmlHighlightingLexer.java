@@ -96,4 +96,12 @@ public class XmlHighlightingLexer extends LexerBase {
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     myLexer.start(buffer, startOffset, endOffset, initialState);
   }
+
+  public CharSequence getBufferSequence() {
+    return myLexer.getBufferSequence();
+  }
+
+  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+    myLexer.start(buffer, startOffset, endOffset, initialState);
+  }
 }

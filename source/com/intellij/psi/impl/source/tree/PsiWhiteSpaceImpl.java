@@ -9,7 +9,7 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
-  public PsiWhiteSpaceImpl(char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+  public PsiWhiteSpaceImpl(CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(TokenTypeEx.WHITE_SPACE, buffer, startOffset, endOffset, lexerState, table);
   }
 

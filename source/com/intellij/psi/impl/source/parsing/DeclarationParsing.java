@@ -32,20 +32,20 @@ public class DeclarationParsing extends Parsing {
     super(context);
   }
 
-  public TreeElement parseEnumConstantText(PsiManager manager, char[] buffer) {
+  public TreeElement parseEnumConstantText(PsiManager manager, CharSequence buffer) {
     Lexer originalLexer = new JavaLexer(LanguageLevel.JDK_1_5);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length);
+    lexer.start(buffer, 0, buffer.length(),0);
     return parseEnumConstant(lexer);
   }
 
   public TreeElement parseDeclarationText(PsiManager manager,
                                           LanguageLevel languageLevel,
-                                          char[] buffer,
+                                          CharSequence buffer,
                                           Context context) {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length);
+    lexer.start(buffer, 0, buffer.length(), 0);
     TreeElement first = parseDeclaration(lexer, context);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -53,14 +53,14 @@ public class DeclarationParsing extends Parsing {
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return first;
   }
 
-  public TreeElement parseMemberValueText(PsiManager manager, char[] buffer, final LanguageLevel languageLevel) {
+  public TreeElement parseMemberValueText(PsiManager manager, CharSequence buffer, final LanguageLevel languageLevel) {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length);
+    lexer.start(buffer, 0, buffer.length(), 0);
     TreeElement first = parseAnnotationMemberValue(lexer);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -69,7 +69,7 @@ public class DeclarationParsing extends Parsing {
 
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return first;
   }
 
@@ -84,7 +84,7 @@ public class DeclarationParsing extends Parsing {
       if (context == FILE_CONTEXT) return null;
     }
     else if (tokenType instanceof IChameleonElementType) {
-      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
+      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
       lexer.advance();
       return declaration;
     }
@@ -331,8 +331,9 @@ public class DeclarationParsing extends Parsing {
                          ? ((StoppableLexerAdapter)lexer).getPrevTokenEnd()
                          : ((FilterLexer)lexer).getPrevTokenEnd();
         int spaceEnd = lexer.getTokenStart();
-        char[] buffer = lexer.getBuffer();
+        final CharSequence buffer = lexer.getBufferSequence();
         int lineStart = CharArrayUtil.shiftBackwardUntil(buffer, spaceEnd, "\n\r");
+
         if (startPos.getOffset() < lineStart && lineStart < spaceStart){
           final int newBufferEnd = CharArrayUtil.shiftForward(buffer, lineStart, "\n\r \t");
           lexer.restore(startPos);
@@ -408,8 +409,7 @@ public class DeclarationParsing extends Parsing {
   public CompositeElement parseAnnotationFromText(PsiManager manager, String text, final LanguageLevel languageLevel) {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    char[] buffer = text.toCharArray();
-    lexer.start(buffer, 0, buffer.length);
+    lexer.start(text, 0, text.length(),0);
     CompositeElement first = parseAnnotation(lexer);
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -417,7 +417,7 @@ public class DeclarationParsing extends Parsing {
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     TreeUtil.addChildren(dummyRoot, first);
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, text.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return first;
   }
 
@@ -681,15 +681,15 @@ public class DeclarationParsing extends Parsing {
   }
 
   @Nullable
-  public TreeElement parseTypeParameterText(char[] buffer) {
+  public TreeElement parseTypeParameterText(CharSequence buffer) {
     Lexer originalLexer = new JavaLexer(myContext.getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length);
+    lexer.start(buffer, 0, buffer.length(),0);
     CompositeElement typeParameter = parseTypeParameter(lexer);
     if (typeParameter == null) return null;
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(typeParameter, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(typeParameter, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return typeParameter;
   }
 
@@ -806,11 +806,11 @@ public class DeclarationParsing extends Parsing {
 
           // Heuristic. Going to next line obviously means method signature is over, starting new method.
           // Necessary for correct CompleteStatementTest operation.
-          char[] buf = lexer.getBuffer();
+          final CharSequence buf = lexer.getBufferSequence();
           int start = lexer.getTokenStart();
           for (int i = start - 1; i >= 0; i--) {
-            if (buf[i] == '\n') break Loop;
-            if (buf[i] != ' ' && buf[i] != '\t') break;
+            if (buf.charAt(i) == '\n') break Loop;
+            if (buf.charAt(i) != ' ' && buf.charAt(i) != '\t') break;
           }
 
           if (tokenType == IDENTIFIER || tokenType == COMMA || tokenType == THROWS_KEYWORD) {
@@ -950,15 +950,15 @@ public class DeclarationParsing extends Parsing {
   }
 
   @Nullable
-  public CompositeElement parseParameterText(char[] buffer) {
+  public CompositeElement parseParameterText(CharSequence buffer) {
     Lexer originalLexer = new JavaLexer(myContext.getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, 0, buffer.length);
+    lexer.start(buffer, 0, buffer.length(), 0);
     ASTNode first = parseParameter(lexer, true);
     if (first == null || first.getElementType() != PARAMETER) return null;
     if (lexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens((CompositeElement)first, originalLexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens((CompositeElement)first, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (CompositeElement)first;
   }
 

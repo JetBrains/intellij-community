@@ -23,12 +23,12 @@ public class ImportsTextParsing extends Parsing {
   /**
    * @stereotype chameleon transforming
    */
-  public TreeElement parseImportsText(PsiManager manager, Lexer lexer, char[] buffer, int startOffset, int endOffset, int state) {
+  public TreeElement parseImportsText(PsiManager manager, Lexer lexer, CharSequence buffer, int startOffset, int endOffset, int state) {
     if (lexer == null){
       lexer = new JavaLexer(manager.getEffectiveLanguageLevel());
     }
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
+    if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();

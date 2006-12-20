@@ -15,7 +15,7 @@
  */
 package com.intellij.util.text;
 
-public class CharArrayCharSequence implements CharSequence {
+public class CharArrayCharSequence implements CharSequenceBackedByArray {
   private final char[] myChars;
   private final int myStart;
   private final int myEnd;
@@ -35,11 +35,11 @@ public class CharArrayCharSequence implements CharSequence {
     myEnd = end;
   }
 
-  public int length() {
+  public final int length() {
     return myEnd - myStart;
   }
 
-  public char charAt(int index) {
+  public final char charAt(int index) {
     return myChars[index + myStart];
   }
 
@@ -66,7 +66,7 @@ public class CharArrayCharSequence implements CharSequence {
     }
     return h;
   }
-  
+
   public void getChars(char[] dst, int dstOffset) {
     System.arraycopy(myChars, myStart, dst, dstOffset, length());
   }

@@ -239,7 +239,7 @@ public class CodeEditUtil {
       else text = left.getText();
       if(leaveRightText || forceReformat){
         final LeafElement merged =
-          Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(), null, left.getPsi().getManager());
+          Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text, 0, text.length(), null, left.getPsi().getManager());
         if(!leaveRightText){
           left.getTreeParent().replaceChild(left, merged);
           right.getTreeParent().removeChild(right);
@@ -266,7 +266,7 @@ public class CodeEditUtil {
 
   private static void markWhitespaceForReformat(final ASTNode right) {
     final String text = right.getText();
-    final LeafElement merged = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text.toCharArray(), 0, text.length(), null,
+    final LeafElement merged = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, text, 0, text.length(), null,
                                                                right.getPsi().getManager());
     right.getTreeParent().replaceChild(right, merged);
   }
@@ -280,10 +280,10 @@ public class CodeEditUtil {
       //noinspection EnumSwitchStatementWhichMissesCases
       switch(parserDefinition.spaceExistanceTypeBetweenTokens(left, right)){
         case MUST:
-          generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, new char[]{' '}, 0, 1, null, manager);
+          generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, " ", 0, 1, null, manager);
           break;
         case MUST_LINE_BREAK:
-          generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, new char[]{'\n'}, 0, 1, null, manager);
+          generatedWhitespace = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, "\n", 0, 1, null, manager);
           break;
         default:
           generatedWhitespace = null;
@@ -342,7 +342,7 @@ public class CodeEditUtil {
       if (!checkToken(token1) || !checkToken(token2)) return true;
       String text = token1.getText() + token2.getText();
       Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
-      lexer.start(text.toCharArray(), 0, text.length());
+      lexer.start(text, 0, text.length(),0);
       boolean canMerge = lexer.getTokenType() == type1;
       lexer.advance();
       canMerge &= lexer.getTokenType() == type2;
@@ -355,7 +355,7 @@ public class CodeEditUtil {
   private static boolean checkToken(final PsiJavaToken token1) {
     Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
     final String text = token1.getText();
-    lexer.start(text.toCharArray(), 0, text.length());
+    lexer.start(text, 0, text.length(),0);
     if (lexer.getTokenType() != token1.getTokenType()) return false;
     lexer.advance();
     return lexer.getTokenType() == null;

@@ -9,9 +9,9 @@ import com.intellij.psi.CustomHighlighterTokenType;
 public class WhitespaceParser extends BaseTokenParser {
 
   public boolean hasToken(int position) {
-    if (!Character.isWhitespace(myBuffer[position])) return false;
+    if (!Character.isWhitespace(myBuffer.charAt(position))) return false;
     int start = position;
-    for (position++; position < myEndOffset && Character.isWhitespace(myBuffer[position]); position++) ;
+    for (position++; position < myEndOffset && Character.isWhitespace(myBuffer.charAt(position)); position++) ;
     myTokenInfo.updateData(start, position, CustomHighlighterTokenType.WHITESPACE);
     return true;
   }

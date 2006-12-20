@@ -9,10 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
@@ -60,8 +57,8 @@ public class PlainTextLanguage extends Language {
         public IFileElementType getFileNodeType() {
           return new IFileElementType(PlainTextLanguage.this) {
             public ASTNode parseContents(ASTNode chameleon) {
-              final char[] chars = ((LeafElement)chameleon).textToCharArray();
-              return Factory.createLeafElement(ElementType.PLAIN_TEXT, chars,0,chars.length,0, SharedImplUtil.findCharTableByTree(chameleon));
+              final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
+              return Factory.createLeafElement(ElementType.PLAIN_TEXT, chars,0,chars.length(),0, SharedImplUtil.findCharTableByTree(chameleon));
             }
           };
         }

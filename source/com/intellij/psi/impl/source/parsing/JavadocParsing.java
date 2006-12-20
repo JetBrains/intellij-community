@@ -44,14 +44,14 @@ public class JavadocParsing extends Parsing {
     super(context);
   }
 
-  public TreeElement parseJavaDocReference(char[] myBuffer,
+  public TreeElement parseJavaDocReference(CharSequence myBuffer,
                                            CharTable charTable,
                                            Lexer originalLexer,
                                            int state,
                                            boolean isType,
                                            PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(myBuffer, 0, myBuffer.length, state);
+    lexer.start(myBuffer, 0, myBuffer.length(), state);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     final CompositeElement element;
@@ -71,15 +71,15 @@ public class JavadocParsing extends Parsing {
       lexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length, state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length(), state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return dummyRoot.getFirstChildNode();
   }
 
-  public TreeElement parseDocCommentText(PsiManager manager, char[] buffer, int startOffset, int endOffset) {
+  public TreeElement parseDocCommentText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset) {
     Lexer originalLexer = new JavaDocLexer(manager.getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()); // we need caching lexer because the lexer has states
 
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(TOKEN_FILTER));
-    lexer.start(buffer, startOffset, endOffset);
+    lexer.start(buffer, startOffset, endOffset, 0);
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
     while (true) {
@@ -103,7 +103,7 @@ public class JavadocParsing extends Parsing {
     if (lexer.getTokenType() != JavaDocTokenType.DOC_TAG_NAME) return null;
     CompositeElement tag = Factory.createCompositeElement(DOC_TAG);
     TreeUtil.addChildren(tag, createTokenElement(lexer));
-    String tagName = StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
+    String tagName = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
     lexer.advance();
     while (true) {
       IElementType tokenType = lexer.getTokenType();
@@ -117,12 +117,12 @@ public class JavadocParsing extends Parsing {
   private TreeElement parseDataItem(PsiManager manager, Lexer lexer, String tagName, boolean isInlineItem) {
     if (lexer.getTokenType() == JavaDocTokenType.DOC_INLINE_TAG_START) {
       LeafElement justABrace = Factory.createLeafElement(JavaDocTokenType.DOC_COMMENT_DATA,
-                                                         lexer.getBuffer(),
+                                                         lexer.getBufferSequence(),
                                                          lexer.getTokenStart(),
                                                          lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
       justABrace.setState(lexer.getState());
       CompositeElement tag = Factory.createCompositeElement(DOC_INLINE_TAG);
-      final LeafElement leafElement = Factory.createLeafElement(JavaDocTokenType.DOC_INLINE_TAG_START, lexer.getBuffer(),
+      final LeafElement leafElement = Factory.createLeafElement(JavaDocTokenType.DOC_INLINE_TAG_START, lexer.getBufferSequence(),
                                                                 lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(),
                                                                 myContext.getCharTable());
       leafElement.setState(lexer.getState());
@@ -147,7 +147,7 @@ public class JavadocParsing extends Parsing {
       while (true) {
         IElementType tokenType = lexer.getTokenType();
         if (tokenType == JavaDocTokenType.DOC_TAG_NAME) {
-          inlineTagName = StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
+          inlineTagName = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
         }
 
         if (tokenType == null || tokenType == JavaDocTokenType.DOC_COMMENT_END) break;
@@ -172,7 +172,7 @@ public class JavadocParsing extends Parsing {
         return parseSeeTagValue(lexer);
       }
       else if (!isInlineItem && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
-        final LeafElement element = parseReferenceOrType(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
+        final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
                                                          lexer.getState());
         element.setState(lexer.getState());
         lexer.advance();
@@ -244,7 +244,7 @@ public class JavadocParsing extends Parsing {
 
       while (TAG_VALUE.contains(lexer.getTokenType())) {
         if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
-          final LeafElement reference = parseReferenceOrType(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), true,
+          final LeafElement reference = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), true,
                                                              lexer.getState());
           reference.setState(lexer.getState());
           lexer.advance();
@@ -281,7 +281,7 @@ public class JavadocParsing extends Parsing {
       return (TreeElement)parseMethodRef(lexer);
     }
     else if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
-      final LeafElement element = parseReferenceOrType(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
+      final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
                                                        lexer.getState());
       element.setState(lexer.getState());
       lexer.advance();
@@ -304,7 +304,7 @@ public class JavadocParsing extends Parsing {
     }
   }
 
-  private LeafElement parseReferenceOrType(char[] buffer, int startOffset, int endOffset, boolean isType, int lexerState) {
+  private LeafElement parseReferenceOrType(CharSequence buffer, int startOffset, int endOffset, boolean isType, int lexerState) {
     return Factory.createLeafElement(isType ? JavaDocElementType.DOC_TYPE_HOLDER : JavaDocElementType.DOC_REFERENCE_HOLDER, buffer, startOffset,
                                      endOffset, lexerState, myContext.getCharTable());
   }
@@ -318,7 +318,7 @@ public class JavadocParsing extends Parsing {
       tokenType = JavaDocTokenType.DOC_COMMENT_DATA;
     }
 
-    final LeafElement leafElement = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(),
+    final LeafElement leafElement = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
                                                               lexer.getState(), myContext.getCharTable());
     leafElement.setState(lexer.getState());
     return leafElement;

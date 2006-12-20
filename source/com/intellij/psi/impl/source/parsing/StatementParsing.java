@@ -41,13 +41,13 @@ public class StatementParsing extends Parsing {
     myCustomHandlers.add(handler);
   }
 
-  public CompositeElement parseCodeBlockText(PsiManager manager, char[] buffer) {
-    return parseCodeBlockText(manager, null, buffer, 0, buffer.length, -1);
+  public CompositeElement parseCodeBlockText(PsiManager manager, CharSequence buffer) {
+    return parseCodeBlockText(manager, null, buffer, 0, buffer.length(), -1);
   }
 
   public CompositeElement parseCodeBlockText(PsiManager manager,
                                              Lexer lexer,
-                                             char[] buffer,
+                                             CharSequence buffer,
                                              int startOffset,
                                              int endOffset,
                                              int state) {
@@ -55,7 +55,7 @@ public class StatementParsing extends Parsing {
       lexer = new JavaLexer(myContext.getLanguageLevel());
     }
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
+    if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
@@ -70,7 +70,7 @@ public class StatementParsing extends Parsing {
 
   public TreeElement parseStatements(PsiManager manager,
                                      Lexer lexer,
-                                     char[] buffer,
+                                     CharSequence buffer,
                                      int startOffset,
                                      int endOffset,
                                      int state) {
@@ -78,7 +78,7 @@ public class StatementParsing extends Parsing {
       lexer = new JavaLexer(myContext.getLanguageLevel());
     }
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
+    if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
@@ -127,7 +127,7 @@ public class StatementParsing extends Parsing {
         }
         lexer.advance();
       }
-      final TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK, lexer.getBuffer(), start, end, lexer.getState(), myContext.getCharTable());
+      final TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK, lexer.getBufferSequence(), start, end, lexer.getState(), myContext.getCharTable());
       if (braceCount != 0){
         chameleon.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
       }
@@ -216,17 +216,17 @@ public class StatementParsing extends Parsing {
   }
 
   @Nullable
-  public TreeElement parseStatementText(char[] buffer) {
+  public TreeElement parseStatementText(CharSequence buffer) {
     Lexer lexer = new JavaLexer(myContext.getLanguageLevel());
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    filterLexer.start(buffer, 0, buffer.length);
+    filterLexer.start(buffer, 0, buffer.length(), 0);
 
     TreeElement statement = parseStatement(filterLexer);
     if (statement == null) return null;
     if (filterLexer.getTokenType() != null) return null;
 
     if(statement instanceof CompositeElement)
-      ParseUtil.insertMissingTokens((CompositeElement)statement, lexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+      ParseUtil.insertMissingTokens((CompositeElement)statement, lexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return statement;
   }
 
@@ -285,7 +285,7 @@ public class StatementParsing extends Parsing {
       return parseBlockStatement(lexer);
     }
     else if (tokenType instanceof IChameleonElementType) {
-      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(),
+      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
                                                           lexer.getState(), myContext.getCharTable());
       lexer.advance();
       return declaration;
@@ -935,16 +935,16 @@ public class StatementParsing extends Parsing {
   }
 
   @Nullable
-  public TreeElement parseCatchSectionText(char[] buffer) {
+  public TreeElement parseCatchSectionText(CharSequence buffer) {
     Lexer lexer = new JavaLexer(myContext.getLanguageLevel());
     final FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    filterLexer.start(buffer, 0, buffer.length);
+    filterLexer.start(buffer, 0, buffer.length(),0);
 
     CompositeElement catchSection = parseCatchSection(filterLexer);
     if (catchSection == null) return null;
     if (filterLexer.getTokenType() != null) return null;
 
-    ParseUtil.insertMissingTokens(catchSection, lexer, 0, buffer.length, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(catchSection, lexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return catchSection;
   }
 }

@@ -18,7 +18,7 @@ public class ClsParsingUtil {
   public static PsiExpression createExpressionFromText(String exprText, PsiManager manager, ClsElementImpl parent) {
     PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)manager.getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
     final FileElement holderElement = new DummyHolder(manager, dummyJavaFile).getTreeElement();
-    CompositeElement _expr = ExpressionParsing.parseExpressionText(manager, exprText.toCharArray(), 0, exprText.toCharArray().length, holderElement.getCharTable());
+    CompositeElement _expr = ExpressionParsing.parseExpressionText(manager, exprText, 0, exprText.length(), holderElement.getCharTable());
     if (_expr == null){
       LOG.error("Could not parse expression:'" + exprText + "'");
       return null;

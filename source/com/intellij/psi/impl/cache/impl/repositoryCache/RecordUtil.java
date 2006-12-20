@@ -43,7 +43,7 @@ public class RecordUtil {
   private static final String[][] ourEmptyStringStringArray = new String[0][];
   private static final TypeInfo[] ourEmptyTypeArray = new TypeInfo[0];
 
-  public static List<PsiClass> getInnerClasses(PsiElement psiElement, final char[] fileBuffer) {
+  public static List<PsiClass> getInnerClasses(PsiElement psiElement, final CharSequence fileBuffer) {
     ourList.set(null);
 
     if (psiElement != null && mayContainClassesInside(psiElement, fileBuffer)) {
@@ -62,7 +62,7 @@ public class RecordUtil {
     return ourList.get();
   }
 
-  private static boolean mayContainClassesInside(PsiElement psiElement, final char[] fileBuffer) {
+  private static boolean mayContainClassesInside(PsiElement psiElement, final CharSequence fileBuffer) {
     PsiFile psiFile = psiElement.getContainingFile();
 
     boolean mayHaveClassesInside = false;
@@ -71,7 +71,7 @@ public class RecordUtil {
       Lexer originalLexer = impl.createLexer();
       FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
       final TextRange range = psiElement.getTextRange();
-      lexer.start(fileBuffer, range.getStartOffset(), range.getEndOffset());
+      lexer.start(fileBuffer, range.getStartOffset(), range.getEndOffset(),0);
       boolean isInNewExpression = false;
       boolean isRightAfterNewExpression = false;
       int angleLevel = 0;

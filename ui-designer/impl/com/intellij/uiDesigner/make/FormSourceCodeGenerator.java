@@ -262,10 +262,10 @@ public final class FormSourceCodeGenerator {
   private static boolean lexemsEqual(final PsiClass classToBind, final PsiClass newClass) {
     JavaLexer oldTextLexer = new JavaLexer(LanguageLevel.HIGHEST);
     JavaLexer newTextLexer = new JavaLexer(LanguageLevel.HIGHEST);
-    final char[] oldBuffer = classToBind.getText().toCharArray();
-    final char[] newBuffer = newClass.getText().toCharArray();
-    oldTextLexer.start(oldBuffer);
-    newTextLexer.start(newBuffer);
+    final String oldBuffer = classToBind.getText();
+    final String newBuffer = newClass.getText();
+    oldTextLexer.start(oldBuffer,0,oldBuffer.length(),0);
+    newTextLexer.start(newBuffer,0,newBuffer.length(),0);
 
     while(true) {
       IElementType oldLexem = oldTextLexer.getTokenType();
@@ -286,7 +286,7 @@ public final class FormSourceCodeGenerator {
           return false;
         }
         for(int i=0; i<oldLength; i++) {
-          if (oldBuffer [oldStart+i] != newBuffer [newStart+i]) {
+          if (oldBuffer.charAt(oldStart+i) != newBuffer.charAt(newStart+i)) {
             return false;
           }
         }

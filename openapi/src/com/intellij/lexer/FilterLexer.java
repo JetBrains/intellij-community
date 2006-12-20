@@ -75,6 +75,16 @@ public class FilterLexer extends LexerBase {
     locateToken();
   }
 
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    myOriginal.start(buffer, startOffset, endOffset, initialState);
+    myPrevTokenEnd = -1;
+    locateToken();
+  }
+
+  public CharSequence getBufferSequence() {
+    return myOriginal.getBufferSequence();
+  }
+
   public int getState() {
     return myOriginal.getState();
   }

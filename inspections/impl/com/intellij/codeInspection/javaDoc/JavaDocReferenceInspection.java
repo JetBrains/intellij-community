@@ -138,7 +138,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         if (textOffset != value.getTextRange().getEndOffset()) {
           final PsiDocTagValue valueElement = tag.getValueElement();
           if (valueElement != null) {
-            @NonNls String params = "<code>" + new String(value.getContainingFile().textToCharArray(), textOffset, value.getTextRange().getEndOffset() - textOffset) + "</code>";
+            @NonNls String params = "<code>" + value.getContainingFile().getViewProvider().getContents().subSequence(textOffset, value.getTextRange().getEndOffset()) + "</code>";
             problems.add(createDescriptor(valueElement, InspectionsBundle.message("inspection.javadoc.problem.cannot.resolve", params), inspectionManager));
           }
         }

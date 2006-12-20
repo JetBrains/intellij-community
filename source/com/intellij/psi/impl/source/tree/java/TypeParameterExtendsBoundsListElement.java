@@ -33,7 +33,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
       for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == AND) break;
         if (child.getElementType() == JAVA_CODE_REFERENCE){
-          TreeElement comma = Factory.createSingleLeafElement(AND, new char[]{'&'}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(AND, "&", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, element, Boolean.FALSE);
           break;
         }
@@ -41,7 +41,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
       for(ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()){
         if (child.getElementType() == AND) break;
         if (child.getElementType() == JAVA_CODE_REFERENCE){
-          TreeElement comma = Factory.createSingleLeafElement(AND, new char[]{'&'}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(AND, "&", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
         }
@@ -51,7 +51,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
     final IElementType keywordType = JavaTokenType.EXTENDS_KEYWORD;
     final String keywordText = PsiKeyword.EXTENDS;
     if (TreeUtil.findChild(this, keywordType) == null && TreeUtil.findChild(this, JAVA_CODE_REFERENCE) != null){
-      LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText.toCharArray(), 0, keywordText.length(), treeCharTab, getManager());
+      LeafElement keyword = Factory.createSingleLeafElement(keywordType, keywordText, 0, keywordText.length(), treeCharTab, getManager());
       super.addInternal(keyword, keyword, getFirstChildNode(), Boolean.TRUE);
     }
     return firstAdded;

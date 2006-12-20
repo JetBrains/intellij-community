@@ -60,7 +60,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
 
       public PsiElement handleElementRename(String newElementName) {
         final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(getNode());
-        LeafElement newElement = Factory.createSingleLeafElement(JavaDocTokenType.DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, getManager());
+        LeafElement newElement = Factory.createSingleLeafElement(JavaDocTokenType.DOC_TAG_VALUE_TOKEN, newElementName, 0, newElementName.length(), charTableByTree, getManager());
         replaceChild(valueToken, newElement);
         return PsiDocParamRef.this;
       }

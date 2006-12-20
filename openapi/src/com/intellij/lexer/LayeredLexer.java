@@ -18,6 +18,8 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -29,7 +31,7 @@ public class LayeredLexer extends LexerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
   private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
 
-  private char[] myBuffer;
+  private CharSequence myBuffer;
   private int myBufferEnd;
   private int myState;
 
@@ -60,7 +62,7 @@ public class LayeredLexer extends LexerBase {
   private void activateLayerIfNecessary() {
     myCurrentLayerLexer = myStartTokenToLayerLexer.get(myBaseLexer.getTokenType());
     if (myCurrentLayerLexer != null) {
-      myCurrentLayerLexer.start(myBaseLexer.getBuffer(), myBaseLexer.getTokenStart(), myBaseLexer.getTokenEnd());
+      myCurrentLayerLexer.start(myBaseLexer.getBufferSequence(), myBaseLexer.getTokenStart(), myBaseLexer.getTokenEnd(),0);
       if (mySelfStoppingLexers.contains(myCurrentLayerLexer)) {
         myBaseLexer.advance();
       }
@@ -76,6 +78,10 @@ public class LayeredLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+    start(new CharArrayCharSequence(buffer),startOffset, endOffset, initialState);
+  }
+
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     LOG.assertTrue(initialState != IN_LAYER_STATE, "Restoring to layer is not supported.");
     myState = initialState;
     myCurrentLayerLexer = null;
@@ -136,7 +142,7 @@ public class LayeredLexer extends LexerBase {
   }
 
   public void restore(LexerPosition position) {
-    start(getBuffer(), position.getOffset(), getBufferEnd(), ((SimpleLexerState)position.getState()).getState());
+    start(getBufferSequence(), position.getOffset(), getBufferEnd(), ((SimpleLexerState)position.getState()).getState());
   }
 
   private boolean isStopToken(Lexer lexer, IElementType tokenType) {
@@ -149,6 +155,10 @@ public class LayeredLexer extends LexerBase {
   }
 
   public char[] getBuffer() {
+    return CharArrayUtil.fromSequence(myBuffer);
+  }
+
+  public CharSequence getBufferSequence() {
     return myBuffer;
   }
 

@@ -39,21 +39,20 @@ public class ParseUtil implements Constants {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
     if (tokenType == JavaTokenType.DOC_COMMENT) {
-      LeafElement chameleon = Factory.createLeafElement(JavaDocElementType.DOC_COMMENT, lexer.getBuffer(), lexer.getTokenStart(),
+      LeafElement chameleon = Factory.createLeafElement(JavaDocElementType.DOC_COMMENT, lexer.getBufferSequence(), lexer.getTokenStart(),
                                                         lexer.getTokenEnd(), lexer.getState(), table);
       return chameleon;
     }
     else {
       final LeafElement leafElement =
-        Factory.createLeafElement(tokenType, lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), table);
+        Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), table);
       leafElement.setState(lexer.getState());
       return leafElement;
     }
   }
 
   public static String getTokenText(Lexer lexer) {
-    return StringFactory
-      .createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
+    return lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
   }
 
   public static interface TokenProcessor {
@@ -162,10 +161,10 @@ public class ParseUtil implements Constants {
                                          TokenProcessor processor,
                                          ParsingContext context) {
     if (state < 0) {
-      lexer.start(lexer.getBuffer(), startOffset, endOffset);
+      lexer.start(lexer.getBufferSequence(), startOffset, endOffset,0);
     }
     else {
-      lexer.start(lexer.getBuffer(), startOffset, endOffset, state);
+      lexer.start(lexer.getBufferSequence(), startOffset, endOffset, state);
     }
 
     boolean gt = lexer instanceof JavaLexer || lexer instanceof JavaWithJspTemplateDataLexer || lexer instanceof JspJavaLexer || lexer instanceof JspxJavaLexer;

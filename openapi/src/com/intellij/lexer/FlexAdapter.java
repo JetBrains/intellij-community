@@ -17,6 +17,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.io.IOException;
 
@@ -26,11 +27,9 @@ import java.io.IOException;
 public class FlexAdapter extends LexerBase {
   private FlexLexer myFlex = null;
   private IElementType myTokenType = null;
-  private CharArrayCharSequence myText;
+  private CharSequence myText;
 
-  private int myStart;
   private int myEnd;
-  private char[] myBuffer;
   private int myState;
 
   public FlexAdapter(final FlexLexer flex) {
@@ -50,11 +49,14 @@ public class FlexAdapter extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myBuffer = buffer;
-    myText = new CharArrayCharSequence(myBuffer, startOffset, endOffset);
-    myStart = startOffset;
+    final CharArrayCharSequence arrayCharSequence = new CharArrayCharSequence(buffer);
+    start(arrayCharSequence, startOffset, endOffset, initialState);
+  }
+
+  public void start(final CharSequence buffer, int startOffset, int endOffset, final int initialState) {
+    myText = buffer;
     myEnd = endOffset;
-    myFlex.reset(myText, initialState);
+    myFlex.reset(myText, startOffset, endOffset, initialState);
     myTokenType = null;
   }
 
@@ -70,12 +72,12 @@ public class FlexAdapter extends LexerBase {
 
   public int getTokenStart() {
     locateToken();
-    return myFlex.getTokenStart() + myStart;
+    return myFlex.getTokenStart();
   }
 
   public int getTokenEnd() {
     locateToken();
-    return myFlex.getTokenEnd() + myStart;
+    return myFlex.getTokenEnd();
   }
 
   public void advance() {
@@ -84,7 +86,11 @@ public class FlexAdapter extends LexerBase {
   }
 
   public char[] getBuffer() {
-    return myBuffer;
+    return CharArrayUtil.fromSequence(myText);
+  }
+
+  public CharSequence getBufferSequence() {
+    return myText;
   }
 
   public int getBufferEnd() {

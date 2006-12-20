@@ -23,7 +23,7 @@ public interface JavaDocElementType {
 
   IElementType DOC_REFERENCE_HOLDER = new IChameleonElementType("DOC_REFERENCE_HOLDER", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       //no language features from higher java language versions are present in javadoc
@@ -36,7 +36,7 @@ public interface JavaDocElementType {
 
   IElementType DOC_TYPE_HOLDER = new IChameleonElementType("DOC_TYPE_HOLDER", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       //no language features from higher java language versions are present in javadoc
@@ -49,16 +49,16 @@ public interface JavaDocElementType {
 
   IElementType DOC_COMMENT = new IChameleonElementType("DOC_COMMENT", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
-      final char[] chars = ((LeafElement)chameleon).textToCharArray();
+      final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       //no higher java language level features are allowed in javadoc
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), LanguageLevel.JDK_1_3);
-      return context.getJavadocParsing().parseDocCommentText(manager, chars, 0, chars.length);
+      return context.getJavadocParsing().parseDocCommentText(manager, chars, 0, chars.length());
     }
     public boolean isParsable(CharSequence buffer, final Project project) {
       final JavaLexer lexer = new JavaLexer(LanguageLevel.JDK_1_5);
 
-      lexer.start(CharArrayUtil.fromSequence(buffer), 0, buffer.length());
+      lexer.start(buffer, 0, buffer.length(),0);
       if(lexer.getTokenType() != DOC_COMMENT) return false;
       lexer.advance();
       if(lexer.getTokenType() != null) return false;

@@ -365,7 +365,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         if (textBlock.isEmpty()) return false ; // if tree was just loaded above textBlock will be cleared by contentsLoaded
 
         textBlock.lock();
-        char[] chars = CharArrayUtil.fromSequence(document.getCharsSequence());
+        final CharSequence chars = document.getCharsSequence();
 
         if (file.getViewProvider().getBaseLanguage() == StdLanguages.JSPX && file.getLanguage() == StdLanguages.JAVA) {
           myBlockSupport.reparseRange(file, 0, document.getTextLength(), document.getTextLength() - file.getTextLength(), chars); // hack

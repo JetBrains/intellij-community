@@ -162,7 +162,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       }
       if (!isInScope) return true;
     }
-    char[] chars = file.textToCharArray();
+    CharSequence chars = file.getViewProvider().getContents();
     int index = 0;
     final int offset = name.lastIndexOf('.');
     while(true){

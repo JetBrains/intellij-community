@@ -5,6 +5,7 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntIntHashMap;
 
 import java.util.regex.Matcher;
@@ -35,6 +36,14 @@ public abstract class BaseFilterLexer extends LexerBase {
     myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
   }
 
+  public CharSequence getBufferSequence() {
+    return myOriginalLexer.getBufferSequence();
+  }
+
+  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+    myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
+  }
+
   public int getState() {
     return myOriginalLexer.getState();
   }
@@ -60,11 +69,15 @@ public abstract class BaseFilterLexer extends LexerBase {
   }
 
   protected final void advanceTodoItemCounts(char[] chars, int start, int end) {
+    advanceTodoItemCounts(new CharArrayCharSequence(chars),start, end);
+  }
+
+  protected final void advanceTodoItemCounts(CharSequence chars, int start, int end) {
     if (myTodoCounts != null){
       start = Math.max(start, myTodoScannedBound);
       if (start >= end) return; // this prevents scanning of the same comment twice
 
-      CharSequence input = new CharArrayCharSequence(chars, start, end);
+      CharSequence input = new CharSequenceSubSequence(chars, start, end);
       advanceTodoItemsCount(input, myTodoCounts);
 
       myTodoScannedBound = end;

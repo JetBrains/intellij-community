@@ -21,6 +21,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceSubSequence;
 
 /**
  * The default implementation of a words scanner based on a custom language lexer.
@@ -51,33 +52,39 @@ public class DefaultWordsScanner implements WordsScanner {
   }
 
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
-    char[] chars = CharArrayUtil.fromSequence(fileText);
-    myLexer.start(chars, 0, fileText.length());
+    myLexer.start(fileText, 0, fileText.length(),0);
+    WordOccurrence occurence = null; // shared occurence
+
     while (myLexer.getTokenType() != null) {
       final IElementType type = myLexer.getTokenType();
       if (myIdentifierTokenSet.contains(type)) {
-        if (!processor.process(new WordOccurrence(currentTokenText(chars), WordOccurrence.Kind.CODE))) return;
+        if (occurence == null) occurence = new WordOccurrence(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+        else occurence.init(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+        if (!processor.process(occurence)) return;
       }
       else if (myCommentTokenSet.contains(type)) {
-        if (!stripWords(processor, currentTokenText(chars), WordOccurrence.Kind.COMMENTS)) return;
+        if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS,occurence)) return;
       }
       else if (myLiteralTokenSet.contains(type)) {
-        if (!stripWords(processor, currentTokenText(chars), WordOccurrence.Kind.LITERALS)) return;
+        if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS,occurence)) return;
       }
       myLexer.advance();
     }
   }
 
   private static boolean stripWords(final Processor<WordOccurrence> processor,
-                                    final CharArrayCharSequence tokenText,
-                                    final WordOccurrence.Kind kind) {
+                                    final CharSequence tokenText,
+                                    int from,
+                                    int to,
+                                    final WordOccurrence.Kind kind,
+                                    WordOccurrence occurence) {
     // This code seems strange but it is more effective as Character.isJavaIdentifier_xxx_ is quite costly operation due to unicode
-    int index = 0;
+    int index = from;
 
     ScanWordsLoop:
     while (true) {
       while (true) {
-        if (index == tokenText.length()) break ScanWordsLoop;
+        if (index == to) break ScanWordsLoop;
         char c = tokenText.charAt(index);
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
             (Character.isJavaIdentifierStart(c) && c != '$')) {
@@ -88,18 +95,16 @@ public class DefaultWordsScanner implements WordsScanner {
       int index1 = index;
       while (true) {
         index++;
-        if (index == tokenText.length()) break;
+        if (index == to) break;
         char c = tokenText.charAt(index);
         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
         if (!Character.isJavaIdentifierPart(c) || c == '$') break;
       }
 
-      if (!processor.process(new WordOccurrence(tokenText.subSequence(index1, index), kind))) return false;
+      if (occurence == null) occurence = new WordOccurrence(tokenText,index1, index, kind);
+      else occurence.init(tokenText,index1, index, kind);
+      if (!processor.process(occurence)) return false;
     }
     return true;
-  }
-
-  private CharArrayCharSequence currentTokenText(final char[] chars) {
-    return new CharArrayCharSequence(chars, myLexer.getTokenStart(), myLexer.getTokenEnd());
   }
 }

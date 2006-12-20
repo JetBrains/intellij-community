@@ -558,7 +558,7 @@ public class ChangeUtil {
         @NonNls String text = typeElement.getText();
         if (text.equals("null")) return null;
         Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
-        lexer.start(text.toCharArray());
+        lexer.start(text,0, text.length(),0);
         TreeElement keyword = ParseUtil.createTokenElement(lexer, table);
         CodeEditUtil.setNodeGenerated(keyword, generated);
         CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
@@ -567,8 +567,8 @@ public class ChangeUtil {
         return element;
       }
       else if (type instanceof PsiWildcardType) {
-        char[] buffer = original.getText().toCharArray();
-        final CompositeElement element = Parsing.parseTypeText(original.getManager(), buffer, 0, buffer.length, table);
+        String originalText = original.getText();
+        final CompositeElement element = Parsing.parseTypeText(original.getManager(), originalText, 0, originalText.length(), table);
         if(generated) element.getTreeParent().acceptTree(new GeneratedMarkerVisitor());
         return element;
       }
@@ -604,17 +604,17 @@ public class ChangeUtil {
                                                 final PsiManager manager,
                                                 final PsiElement original,
                                                 final IElementType type) {
-    return Factory.createSingleLeafElement(type, text.toCharArray(), 0, text.length(), table, manager, CodeEditUtil.isNodeGenerated(original.getNode()));
+    return Factory.createSingleLeafElement(type, text, 0, text.length(), table, manager, CodeEditUtil.isNodeGenerated(original.getNode()));
   }
 
   private static CompositeElement createReference(PsiManager manager, String text, CharTable table, boolean generatedFlag) {
-    final CompositeElement element = Parsing.parseJavaCodeReferenceText(manager, text.toCharArray(), table);
+    final CompositeElement element = Parsing.parseJavaCodeReferenceText(manager, text, table);
     if(generatedFlag) element.acceptTree(new GeneratedMarkerVisitor());
     return element;
   }
 
   private static TreeElement createReferenceExpression(PsiManager manager, String text, CharTable table) {
-    return ExpressionParsing.parseExpressionText(manager, text.toCharArray(), 0, text.toCharArray().length, table);
+    return ExpressionParsing.parseExpressionText(manager, text, 0, text.length(), table);
   }
 
 

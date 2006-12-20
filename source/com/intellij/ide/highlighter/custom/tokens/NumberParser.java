@@ -20,32 +20,32 @@ public final class NumberParser extends BaseTokenParser {
 
   public boolean hasToken(int position) {
     final int start = position;
-    final char startChar = myBuffer[start];
+    final char startChar = myBuffer.charAt(start);
     if(!isDigit(startChar)) return false;
     for (position++; position < myEndOffset; position++) {
-      if (!isDigit(myBuffer[position])) break;
+      if (!isDigit(myBuffer.charAt(position))) break;
     }
 
-    if (position < myEndOffset && myBuffer[position] == '.') {
+    if (position < myEndOffset && myBuffer.charAt(position) == '.') {
       final int dotPosition = position;
       position++;
 
-      if (position < myEndOffset && !isDigit(myBuffer[position])) {
+      if (position < myEndOffset && !isDigit(myBuffer.charAt(position))) {
         position = dotPosition;
       } else {
         // after decimal point
         for (; position < myEndOffset; position++) {
-          if (!isDigit(myBuffer[position])) break;
+          if (!isDigit(myBuffer.charAt(position))) break;
         }
         if (position < myEndOffset) {
-          final char finalChar = myBuffer[position];
+          final char finalChar = myBuffer.charAt(position);
           if (!isNumberTail(finalChar) && !isDelimiter(finalChar)) {
             position = dotPosition;
           }
         }
       }
     }
-    while(position < myEndOffset && isNumberTail(myBuffer[position])) {
+    while(position < myEndOffset && isNumberTail(myBuffer.charAt(position))) {
       position++;
     }
 

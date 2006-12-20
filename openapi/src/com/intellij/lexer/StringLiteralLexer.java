@@ -18,6 +18,8 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 
 /**
  * @author max
@@ -32,7 +34,7 @@ public class StringLiteralLexer extends LexerBase {
 
   public static final char NO_QUOTE_CHAR = (char)-1;
 
-  private char[] myBuffer;
+  private CharSequence myBuffer;
   private int myStart;
   private int myEnd;
   private int myState;
@@ -65,19 +67,23 @@ public class StringLiteralLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myBuffer = buffer;
-    myStart = startOffset;
-    if (myQuoteChar == NO_QUOTE_CHAR) {
-      myState = AFTER_FIRST_QUOTE;
-    }
-    else {
-      myState = initialState;
-    }
-    myLastState = initialState;
-    myBufferEnd = endOffset;
-    myEnd = locateToken(myStart);
-    mySeenEscapedSpacesOnly = true;
+    start(new CharArrayCharSequence(buffer),startOffset,endOffset,initialState);
   }
+
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+      myBuffer = buffer;
+      myStart = startOffset;
+      if (myQuoteChar == NO_QUOTE_CHAR) {
+        myState = AFTER_FIRST_QUOTE;
+      }
+      else {
+        myState = initialState;
+      }
+      myLastState = initialState;
+      myBufferEnd = endOffset;
+      myEnd = locateToken(myStart);
+      mySeenEscapedSpacesOnly = true;
+    }
 
   public void start(char[] buffer, int startOffset, int endOffset) {
     start(buffer, startOffset, endOffset, BEFORE_FIRST_QUOTE);
@@ -94,13 +100,13 @@ public class StringLiteralLexer extends LexerBase {
   public IElementType getTokenType() {
     if (myStart >= myEnd) return null;
 
-    if (myBuffer[myStart] != '\\') {
+    if (myBuffer.charAt(myStart) != '\\') {
       mySeenEscapedSpacesOnly = false;
       return myOriginalLiteralToken;
     }
 
     if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
-    char nextChar = myBuffer[myStart + 1];
+    char nextChar = myBuffer.charAt(myStart + 1);
     mySeenEscapedSpacesOnly &= nextChar == ' ';
     if (myCanEscapeEolOrFramingSpaces &&
         (nextChar == '\n' || nextChar == ' ' && (mySeenEscapedSpacesOnly || isTrailingSpace(myStart+2)))
@@ -109,7 +115,7 @@ public class StringLiteralLexer extends LexerBase {
     }
     if (nextChar == 'u') {
       for(int i = myStart + 2; i < myStart + 6; i++) {
-        if (i >= myEnd || !isHexDigit(myBuffer[i])) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+        if (i >= myEnd || !isHexDigit(myBuffer.charAt(i))) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
       }
       return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
     }
@@ -143,10 +149,10 @@ public class StringLiteralLexer extends LexerBase {
   // all subsequent chars are escaped spaces
   private boolean isTrailingSpace(final int start) {
     for (int i=start;i<myBufferEnd;i+=2) {
-      char c = myBuffer[i];
+      final char c = myBuffer.charAt(i);
       if (c != '\\') return false;
       if (i==myBufferEnd-1) return false;
-      if (myBuffer[i+1] != ' ') return false;
+      if (myBuffer.charAt(i+1) != ' ') return false;
     }
     return true;
   }
@@ -165,32 +171,30 @@ public class StringLiteralLexer extends LexerBase {
     }
     if (myState == AFTER_LAST_QUOTE) return start;
     int i = start;
-    if (myBuffer[i] == '\\') {
+    if (myBuffer.charAt(i) == '\\') {
       LOG.assertTrue(myState == AFTER_FIRST_QUOTE);
       i++;
-      if (i == myBufferEnd || myBuffer[i] == '\n' && !myCanEscapeEolOrFramingSpaces) {
+      if (i == myBufferEnd || myBuffer.charAt(i) == '\n' && !myCanEscapeEolOrFramingSpaces) {
         myState = AFTER_LAST_QUOTE;
         return i;
       }
 
-      if (myBuffer[i] >= '0' && myBuffer[i] <= '7') {
-        char first = myBuffer[i];
+      if (myBuffer.charAt(i) >= '0' && myBuffer.charAt(i) <= '7') {
+        char first = myBuffer.charAt(i);
         i++;
-        if (i < myBufferEnd && myBuffer[i] >= '0' && myBuffer[i] <= '7') {
+        if (i < myBufferEnd && myBuffer.charAt(i) >= '0' && myBuffer.charAt(i) <= '7') {
           i++;
-          if (i < myBufferEnd && first <= '3' && myBuffer[i] >= '0' && myBuffer[i] <= '7') {
+          if (i < myBufferEnd && first <= '3' && myBuffer.charAt(i) >= '0' && myBuffer.charAt(i) <= '7') {
             i++;
           }
         }
         return i;
       }
 
-      if (myBuffer[i] == 'u') {
+      if (myBuffer.charAt(i) == 'u') {
         i++;
         for (; i < start + 6; i++) {
-          if (i == myBufferEnd ||
-              myBuffer[i] == '\n' ||
-              myBuffer[i] == myQuoteChar) {
+          if (i == myBufferEnd || myBuffer.charAt(i) == '\n' || myBuffer.charAt(i) == myQuoteChar) {
             return i;
           }
         }
@@ -201,16 +205,16 @@ public class StringLiteralLexer extends LexerBase {
       }
     }
     else {
-      LOG.assertTrue(myState == AFTER_FIRST_QUOTE || myBuffer[i] == myQuoteChar);
+      LOG.assertTrue(myState == AFTER_FIRST_QUOTE || myBuffer.charAt(i) == myQuoteChar);
       while (i < myBufferEnd) {
-        if (myBuffer[i] == '\\') {
+        if (myBuffer.charAt(i) == '\\') {
           return i;
         }
         //if (myBuffer[i] == '\n') {
         //  myState = AFTER_LAST_QUOTE;
         //  return i;
         //}
-        if (myState == AFTER_FIRST_QUOTE && myBuffer[i] == myQuoteChar) {
+        if (myState == AFTER_FIRST_QUOTE && myBuffer.charAt(i) == myQuoteChar) {
           myState = AFTER_LAST_QUOTE;
           return i + 1;
         }
@@ -229,6 +233,10 @@ public class StringLiteralLexer extends LexerBase {
   }
 
   public char[] getBuffer() {
+    return CharArrayUtil.fromSequence(myBuffer);
+  }
+
+  public CharSequence getBufferSequence() {
     return myBuffer;
   }
 

@@ -1178,8 +1178,8 @@ public class HighlightUtil {
       int end = statement.getTextRange().getEndOffset() + 1;
       HighlightInfo highlightInfo = HighlightInfo
         .createHighlightInfo(HighlightInfoType.ERROR, start, end, JavaErrorMessages.message("switch.colon.expected.after.case.label"));
-      char[] chars = statement.getContainingFile().textToCharArray();
-      highlightInfo.isAfterEndOfLine = end >= chars.length || chars[start] == '\n' || chars[start] == '\r';
+      CharSequence chars = statement.getContainingFile().getViewProvider().getContents();
+      highlightInfo.isAfterEndOfLine = end >= chars.length() || chars.charAt(start) == '\n' || chars.charAt(start) == '\r';
       return highlightInfo;
     }
     return null;

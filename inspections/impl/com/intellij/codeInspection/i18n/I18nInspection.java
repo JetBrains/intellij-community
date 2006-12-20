@@ -511,7 +511,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       Project project = expression.getProject();
       Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getContainingFile());
       int line = document.getLineNumber(expression.getTextRange().getStartOffset());
-      String lineText = document.getText().substring(document.getLineStartOffset(line), document.getLineEndOffset(line));
+      CharSequence lineText = document.getCharsSequence().subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line));
       if (pattern.matcher(lineText).matches()) {
         return false;
       }

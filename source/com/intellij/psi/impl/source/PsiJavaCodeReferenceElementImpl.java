@@ -505,7 +505,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
             throw new IncorrectOperationException();
           }
           final TreeElement ref =
-            Parsing.parseJavaCodeReferenceText(aClass.getManager(), name.toCharArray(), SharedImplUtil.findCharTableByTree(this));
+            Parsing.parseJavaCodeReferenceText(aClass.getManager(), name, SharedImplUtil.findCharTableByTree(this));
           getTreeParent().replaceChildInternal(this, ref);
           return SourceTreeToPsiMap.treeElementToPsi(ref);
         }
@@ -537,7 +537,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
     final PsiManager manager = aClass.getManager();
     ASTNode ref =
-    Parsing.parseJavaCodeReferenceText(manager, (qName + getParameterList().getText()).toCharArray(),
+    Parsing.parseJavaCodeReferenceText(manager, (qName + getParameterList().getText()),
                                        SharedImplUtil.findCharTableByTree(this));
     getTreeParent().replaceChildInternal(this, (TreeElement)ref);
     if (!preserveQualification /*&& (TreeUtil.findParent(ref, ElementType.DOC_COMMENT) == null)*/) {
@@ -581,7 +581,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (qName.length() == 0) {
       throw new IncorrectOperationException();
     }
-    final TreeElement ref = Parsing.parseJavaCodeReferenceText(getManager(), qName.toCharArray(), SharedImplUtil.findCharTableByTree(this));
+    final TreeElement ref = Parsing.parseJavaCodeReferenceText(getManager(), qName, SharedImplUtil.findCharTableByTree(this));
     getTreeParent().replaceChildInternal(this, ref);
     return SourceTreeToPsiMap.treeElementToPsi(ref);
   }

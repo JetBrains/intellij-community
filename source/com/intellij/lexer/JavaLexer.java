@@ -5,6 +5,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -24,10 +25,10 @@ public class JavaLexer extends LexerBase {
     this(level.hasAssertKeyword(), level.hasEnumKeywordAndAutoboxing());
   }
 
-  private char[] myBuffer;
+  private CharSequence myBuffer;
   private int myBufferIndex;
   private int myBufferEndOffset;
-  private int myBufferStart;
+
   IElementType myTokenType;
   private _JavaLexer myFlexlexer;
 
@@ -54,12 +55,12 @@ public class JavaLexer extends LexerBase {
       myKeywords[modHashCode] = tokenType;
     }
 
-    boolean contains(int hashCode, char[] buffer, int offset, int len) {
+    boolean contains(int hashCode, CharSequence buffer, int offset, int len) {
       int modHashCode = hashCode % NUM_ENTRIES;
       char[] kwd = myTable[modHashCode];
       if (kwd == null) return false;
       for (int j = 0; j < kwd.length; j++) {
-        if (buffer[j + offset] != kwd[j]) return false;
+        if (buffer.charAt(j + offset) != kwd[j]) return false;
       }
       return true;
     }
@@ -141,12 +142,16 @@ public class JavaLexer extends LexerBase {
   }
 
   public final void start(char[] buffer, int startOffset, int endOffset) {
+    start(new CharArrayCharSequence(buffer), startOffset, endOffset, 0);
+  }
+
+  public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
-    myBufferIndex = myBufferStart = startOffset;
+    myBufferIndex = startOffset;
     myBufferEndOffset = endOffset;
     myTokenType = null;
     myTokenEndOffset = startOffset;
-    myFlexlexer.reset(new CharArrayCharSequence(myBuffer, startOffset, endOffset), 0);
+    myFlexlexer.reset(myBuffer, startOffset, endOffset, 0);
   }
 
   public final void start(char[] buffer, int startOffset, int endOffset, int initialState) {
@@ -193,7 +198,7 @@ public class JavaLexer extends LexerBase {
 
     myBufferIndex = myTokenEndOffset;
 
-    char c = myBuffer[myBufferIndex];
+    char c = myBuffer.charAt(myBufferIndex);
     switch (c) {
       default:
         flexLocateToken();
@@ -213,12 +218,12 @@ public class JavaLexer extends LexerBase {
           myTokenType = JavaTokenType.DIV;
           myTokenEndOffset = myBufferEndOffset;
         }
-        else if (myBuffer[myBufferIndex + 1] == '/') {
+        else if (myBuffer.charAt(myBufferIndex + 1) == '/') {
           myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
           myTokenEndOffset = getLineTerminator(myBufferIndex + 2);
         }
-        else if (myBuffer[myBufferIndex + 1] == '*') {
-          if (myBufferIndex + 2 >= myBufferEndOffset || myBuffer[myBufferIndex + 2] != '*') {
+        else if (myBuffer.charAt(myBufferIndex + 1) == '*') {
+          if (myBufferIndex + 2 >= myBufferEndOffset || myBuffer.charAt(myBufferIndex + 2) != '*') {
             myTokenType = JavaTokenType.C_STYLE_COMMENT;
             myTokenEndOffset = getClosingComment(myBufferIndex + 2);
           }
@@ -249,12 +254,12 @@ public class JavaLexer extends LexerBase {
 
   private int getWhitespaces(int pos) {
     if (pos >= myBufferEndOffset) return myBufferEndOffset;
-    char c = myBuffer[pos];
+    char c = myBuffer.charAt(pos);
 
     while (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f') {
       pos++;
       if (pos == myBufferEndOffset) return pos;
-      c = myBuffer[pos];
+      c = myBuffer.charAt(pos);
     }
 
     return pos;
@@ -262,9 +267,9 @@ public class JavaLexer extends LexerBase {
 
   private void flexLocateToken() {
     try {
-      myFlexlexer.goTo(myBufferIndex - myBufferStart);
+      myFlexlexer.goTo(myBufferIndex);
       myTokenType = myFlexlexer.advance();
-      myTokenEndOffset = myFlexlexer.getTokenEnd() + myBufferStart;
+      myTokenEndOffset = myFlexlexer.getTokenEnd();
     }
     catch (IOException e) {
       // Can't be
@@ -276,23 +281,23 @@ public class JavaLexer extends LexerBase {
     int pos = offset;
     final int lBufferEnd = myBufferEndOffset;
     if (pos >= lBufferEnd) return lBufferEnd;
-    final char[] lBuffer = myBuffer;
-    char cur = lBuffer[pos];
+    final CharSequence lBuffer = myBuffer;
+    char cur = lBuffer.charAt(pos);
     while (true) {
       while (cur != c && cur != '\n' && cur != '\r' && cur != '\\') {
         pos++;
         if (pos >= lBufferEnd) return lBufferEnd;
-        cur = lBuffer[pos];
+        cur = lBuffer.charAt(pos);
       }
 
       if (cur == '\\') {
         pos++;
         if (pos >= lBufferEnd) return lBufferEnd;
-        cur = lBuffer[pos];
+        cur = lBuffer.charAt(pos);
         if (cur == '\n' || cur == '\r') continue;
         pos ++;
         if (pos >= lBufferEnd) return lBufferEnd;
-        cur = lBuffer[pos];
+        cur = lBuffer.charAt(pos);
       } else if (cur == c) {
         break;
       } else {
@@ -306,10 +311,10 @@ public class JavaLexer extends LexerBase {
 
   private int getDocClosingComment(int offset) {
     final int lBufferEnd = myBufferEndOffset;
-    final char[] lBuffer = myBuffer;
-    if (offset < lBufferEnd && lBuffer[offset] == '/') return offset + 1;
+    final CharSequence lBuffer = myBuffer;
+    if (offset < lBufferEnd && lBuffer.charAt(offset) == '/') return offset + 1;
     int pos = offset;
-    while (pos < lBufferEnd - 1 && (lBuffer[pos] != '*' || lBuffer[pos + 1] != '/')) {
+    while (pos < lBufferEnd - 1 && (lBuffer.charAt(pos) != '*' || lBuffer.charAt(pos + 1) != '/')) {
       pos++;
     }
     return pos + 2;
@@ -319,8 +324,8 @@ public class JavaLexer extends LexerBase {
     int pos = offset;
 
     final int lBufferEnd = myBufferEndOffset;
-    final char[] lBuffer = myBuffer;
-    while (pos < lBufferEnd - 1 && (lBuffer[pos] != '*' || lBuffer[pos + 1] != '/')) pos++;
+    final CharSequence lBuffer = myBuffer;
+    while (pos < lBufferEnd - 1 && (lBuffer.charAt(pos) != '*' || lBuffer.charAt(pos + 1) != '/')) pos++;
 
     return pos + 2;
   }
@@ -328,8 +333,8 @@ public class JavaLexer extends LexerBase {
   private int getLineTerminator(int offset) {
     int pos = offset;
     final int lBufferEnd = myBufferEndOffset;
-    final char[] lBuffer = myBuffer;
-    while (pos < lBufferEnd && lBuffer[pos] != '\n' && lBuffer[pos] != '\r') {
+    final CharSequence lBuffer = myBuffer;
+    while (pos < lBufferEnd && lBuffer.charAt(pos) != '\n' && lBuffer.charAt(pos) != '\r') {
       pos++;
     }
 
@@ -338,20 +343,19 @@ public class JavaLexer extends LexerBase {
 
   private int getIdentifier(int offset) {
     int len = 0;
-    final char[] lBuffer = myBuffer;
-    int hashCode = lBuffer[offset - 1] * 2;
-
+    final CharSequence lBuffer = myBuffer;
+    int hashCode = lBuffer.charAt(offset - 1) * 2;
 
     final int lBufferEnd = myBufferEndOffset;
     if (offset + len < lBufferEnd) {
-      char c = lBuffer[offset + len];
+      char c = lBuffer.charAt(offset + len);
       while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
               || c == '_' || c == '$' || ((c > 127) && Character.isJavaIdentifierPart(c))) {
         len++;
         hashCode += c;
 
         if (offset + len == lBufferEnd) break;
-        c = lBuffer[offset + len];
+        c = lBuffer.charAt(offset + len);
       }
     }
 
@@ -365,6 +369,10 @@ public class JavaLexer extends LexerBase {
   }
 
   public final char[] getBuffer() {
+    return CharArrayUtil.fromSequence(myBuffer);
+  }
+
+  public CharSequence getBufferSequence() {
     return myBuffer;
   }
 

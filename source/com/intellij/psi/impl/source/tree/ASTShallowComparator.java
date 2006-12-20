@@ -25,6 +25,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     }
 
     if (oldNode instanceof LeafElement) {
+      if (newNode instanceof LeafElement) return ((LeafElement)oldNode).textMatches(((LeafElement)newNode).getInternedText()) ? ThreeState.YES : ThreeState.NO;
       return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
     }
 

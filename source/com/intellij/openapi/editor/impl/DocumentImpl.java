@@ -87,7 +87,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public char[] getRawChars() {
-    return myText.getRawChars();
+    return myText.getChars();
   }
 
   public char[] getChars() {

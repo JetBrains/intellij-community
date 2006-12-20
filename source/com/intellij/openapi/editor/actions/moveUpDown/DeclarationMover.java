@@ -33,7 +33,7 @@ class DeclarationMover extends LineMover {
   protected void beforeMove(final Editor editor) {
     super.beforeMove(editor);
     if (myEnumToInsertSemicolonAfter != null) {
-      TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, null, myEnumToInsertSemicolonAfter.getManager());
+      TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, null, myEnumToInsertSemicolonAfter.getManager());
 
       try {
         PsiElement inserted = myEnumToInsertSemicolonAfter.getParent().addAfter(semicolon.getPsi(), myEnumToInsertSemicolonAfter);
@@ -83,7 +83,7 @@ class DeclarationMover extends LineMover {
     PsiElement element2 = whitespace.getNextSibling();
     if (element2 == null || element1 == null) return;
     String ws = CodeEditUtil.getStringWhiteSpaceBetweenTokens(whitespace.getNode(), element2.getNode(), element1.getContainingFile());
-    LeafElement node = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, ws.toCharArray(), 0, ws.length(), SharedImplUtil.findCharTableByTree(whitespace.getNode()), whitespace.getManager());
+    LeafElement node = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, ws, 0, ws.length(), SharedImplUtil.findCharTableByTree(whitespace.getNode()), whitespace.getManager());
     whitespace.getParent().getNode().replaceChild(whitespace.getNode(), node);
   }
 

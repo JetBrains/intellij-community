@@ -13,7 +13,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
   public PackageSet compile(String text) throws ParsingException {
     Lexer lexer = new ScopesLexer();
-    lexer.start(text.toCharArray());
+    lexer.start(text,0,text.length(),0);
     return new Parser(lexer).parse();
   }
 
@@ -57,7 +57,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       }
 
       if (myLexer.getTokenType() == TokenTypeEx.LPARENTH) return parseParenthesized();
-      if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER && myLexer.getBuffer()[myLexer.getTokenStart()] == '$') {
+      if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER && myLexer.getBufferSequence().charAt(myLexer.getTokenStart()) == '$') {
         NamedPackageSetReference namedPackageSetReference = new NamedPackageSetReference(getTokenText());
         myLexer.advance();
         return namedPackageSetReference;
@@ -140,11 +140,11 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       if (PatternPackageSet.SCOPE_FILE.equals(id)){
         scope = PatternPackageSet.SCOPE_FILE;
       }
-      char[] buf = myLexer.getBuffer();
+      final CharSequence buf = myLexer.getBufferSequence();
       int end = myLexer.getTokenEnd();
       int bufferEnd = myLexer.getBufferEnd();
 
-      if (scope == PatternPackageSet.SCOPE_ANY || end >= bufferEnd || buf[end] != ':' && buf[end] != '[') {
+      if (scope == PatternPackageSet.SCOPE_ANY || end >= bufferEnd || buf.charAt(end) != ':' && buf.charAt(end) != '[') {
         return PatternPackageSet.SCOPE_ANY;
       }
 
@@ -186,7 +186,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     private String getTokenText() {
       int start = myLexer.getTokenStart();
       int end = myLexer.getTokenEnd();
-      return new String(myLexer.getBuffer(), start, end - start);
+      return myLexer.getBufferSequence().subSequence(start, end).toString();
     }
 
     @Nullable

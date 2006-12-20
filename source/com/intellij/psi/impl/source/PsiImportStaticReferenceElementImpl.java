@@ -120,13 +120,13 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   public PsiImportStaticStatement bindToTargetClass(PsiClass aClass) throws IncorrectOperationException {
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) throw new IncorrectOperationException();
-    final CompositeElement newRef = Parsing.parseJavaCodeReferenceText(getManager(), qualifiedName.toCharArray(), SharedImplUtil.findCharTableByTree(this));
+    final CompositeElement newRef = Parsing.parseJavaCodeReferenceText(getManager(), qualifiedName, SharedImplUtil.findCharTableByTree(this));
     if (getQualifier() != null) {
       replaceChildInternal(findChildByRole(ChildRole.QUALIFIER), newRef);
       return (PsiImportStaticStatement)getParent();
     }
     else {
-      final LeafElement dot = Factory.createSingleLeafElement(ElementType.DOT, new char[]{'.'}, 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
+      final LeafElement dot = Factory.createSingleLeafElement(ElementType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
       TreeUtil.insertAfter(newRef, dot);
       final CompositeElement errorElement =
         Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));

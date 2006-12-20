@@ -45,6 +45,15 @@ public class MergingLexerAdapter extends LexerBase {
     myTokenType = null;
   }
 
+  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+    myOriginal.start(buffer, startOffset, endOffset, initialState);
+    myTokenType = null;
+  }
+
+  public CharSequence getBufferSequence() {
+    return myOriginal.getBufferSequence();
+  }
+
   public int getState(){
     locateToken();
     return myState;

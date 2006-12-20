@@ -2,7 +2,7 @@ package com.intellij.ide.highlighter.custom;
 
 
 public class PosBufferTokenizer {
-  private char buffer[];
+  private CharSequence buffer;
 
   // Temp buffer.
   private char buf[] = new char[20];
@@ -53,7 +53,7 @@ public class PosBufferTokenizer {
     parseNumbers();
   }
 
-  public void start(char[] buffer, int from, int to) {
+  public void start(CharSequence buffer, int from, int to) {
     if (buffer == null) {
       throw new NullPointerException();
     }
@@ -145,7 +145,7 @@ public class PosBufferTokenizer {
         if (pos == bufferEnd) pos++;
         return -1;
       } else {
-        return buffer[pos++];
+        return buffer.charAt(pos++);
       }
     }
   }

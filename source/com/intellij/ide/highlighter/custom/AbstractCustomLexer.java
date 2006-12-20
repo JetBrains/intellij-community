@@ -6,12 +6,14 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 
 /**
  * @author dsl
  */
 public abstract class AbstractCustomLexer extends LexerBase {
-  protected char[] myBuffer = ArrayUtil.EMPTY_CHAR_ARRAY;
+  protected CharSequence myBuffer = ArrayUtil.EMPTY_CHAR_SEQUENCE;
   protected int myStartOffset = 0;
   protected int myEndOffset = 0;
   private static final short START_STATE = (short) 0;
@@ -40,13 +42,16 @@ public abstract class AbstractCustomLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+   start(new CharArrayCharSequence(buffer), startOffset, endOffset, initialState);
+  }
+
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPosition = myStartOffset;
     myCurrentToken = new TokenInfo();
-    for (int i = 0; i < myTokenParsers.length; i++) {
-      TokenParser tokenParser = myTokenParsers[i];
+    for (TokenParser tokenParser : myTokenParsers) {
       tokenParser.setBuffer(myBuffer, myStartOffset, myEndOffset);
     }
     advance();
@@ -90,6 +95,10 @@ public abstract class AbstractCustomLexer extends LexerBase {
   }
 
   public char[] getBuffer() {
+    return CharArrayUtil.fromSequence(myBuffer);
+  }
+
+  public CharSequence getBufferSequence() {
     return myBuffer;
   }
 

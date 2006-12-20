@@ -201,7 +201,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       final PsiElement element = getNameElement();
       final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
       final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(treeElement);
-      LeafElement newToken = Factory.createSingleLeafElement(DOC_TAG_VALUE_TOKEN, newElementName.toCharArray(), 0, newElementName.length(), charTableByTree, getManager());
+      LeafElement newToken = Factory.createSingleLeafElement(DOC_TAG_VALUE_TOKEN, newElementName, 0, newElementName.length(), charTableByTree, getManager());
       ((CompositeElement)treeElement.getTreeParent()).replaceChildInternal(SourceTreeToPsiMap.psiElementToTree(element), newToken);
       return SourceTreeToPsiMap.treeElementToPsi(newToken);
     }

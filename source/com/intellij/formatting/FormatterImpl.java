@@ -319,6 +319,7 @@ public class FormatterImpl extends FormatterEx
 
     lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, lineStartOffset, " \t\n");
     if (lineStartOffset > whiteSpace.getTextRange().getStartOffset()) {
+      if (lineStartOffset >= text.length()) lineStartOffset = text.length() - 1;
       if (text.charAt(lineStartOffset) == '\n'
           && whiteSpace.getTextRange().getStartOffset() <= documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) {
         lineStartOffset--;

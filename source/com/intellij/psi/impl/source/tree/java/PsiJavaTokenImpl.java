@@ -8,7 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 
 public class PsiJavaTokenImpl extends LeafPsiElement implements PsiJavaToken, JavaTokenType{
-  public PsiJavaTokenImpl(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+  public PsiJavaTokenImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(type, buffer, startOffset, endOffset, lexerState, table);
   }
 

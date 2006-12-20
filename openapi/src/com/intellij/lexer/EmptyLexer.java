@@ -16,9 +16,11 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 
 public class EmptyLexer extends LexerBase {
-  private char[] myBuffer;
+  private CharSequence myBuffer;
   private int myStartOffset;
   private int myEndOffset;
 
@@ -27,13 +29,22 @@ public class EmptyLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset) {
+    start(new CharArrayCharSequence(buffer), startOffset, endOffset,0);
+  }
+
+  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+    start(buffer, startOffset, endOffset);
+  }
+
+
+  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     myBuffer = buffer;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
   }
 
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(buffer, startOffset, endOffset);
+  public CharSequence getBufferSequence() {
+    return myBuffer;
   }
 
   public int getState() {
@@ -63,7 +74,7 @@ public class EmptyLexer extends LexerBase {
   public void restore(LexerPosition position) {}
 
   public char[] getBuffer() {
-    return myBuffer;
+    return CharArrayUtil.fromSequence(myBuffer);
   }
 
   public int getBufferEnd() {

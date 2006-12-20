@@ -27,16 +27,36 @@ import org.jetbrains.annotations.NonNls;
 public class WordOccurrence {
   private Kind myKind;
   private CharSequence myText;
+  private int myStart;
+  private int myEnd;
 
   /**
-   * Creates a new occurrence with the specified text and kind.
-   * @param text The text of the word.
+   * Creates a new occurrence with the specified text fragment and kind.
+   * @param text initial charsequence.
+   * @param start start offset in initial char sequence.
+   * @param end end offset in initial char sequence.
    * @param kind The type of text where the word was encountered (code, comments or literals).
    */
 
-  public WordOccurrence(final CharSequence text, @Nullable final Kind kind) {
+  public WordOccurrence(final CharSequence text, int start, int end, @Nullable final Kind kind) {
     myKind = kind;
     myText = text;
+    myStart = start;
+    myEnd = end;
+  }
+
+  /**
+   * Updates occurrence with the specified text fragment and kind.
+   * @param text initial charsequence.
+   * @param start start offset in initial char sequence.
+   * @param end end offset in initial char sequence.
+   * @param kind The type of text where the word was encountered (code, comments or literals).
+   */
+  public final void init(final CharSequence text, int start, int end, @Nullable final Kind kind) {
+    myKind = kind;
+    myText = text;
+    myStart = start;
+    myEnd = end;
   }
 
   /**
@@ -50,11 +70,19 @@ public class WordOccurrence {
   }
 
   /**
-   * Returns the text of the occurred word.
+   * Returns the char sequence of the occurred word.
    * @return the text of the word.
    */
-  public CharSequence getText() {
+  public CharSequence getBaseText() {
     return myText;
+  }
+
+  public int getStart() {
+    return myStart;
+  }
+
+  public int getEnd() {
+    return myEnd;
   }
 
   /**

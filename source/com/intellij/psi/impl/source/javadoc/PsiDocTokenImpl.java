@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 
 public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
-  public PsiDocTokenImpl(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+  public PsiDocTokenImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(type, buffer, startOffset, endOffset, lexerState, table);
   }
 

@@ -68,9 +68,9 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
       if (before == null || before.booleanValue()) {
         anchor = findChildByRole(ChildRole.RPARENTH);
         if (anchor == null) {
-          LeafElement lparenth = Factory.createSingleLeafElement(LPARENTH, new char[]{'('}, 0, 1, treeCharTab, getManager());
+          LeafElement lparenth = Factory.createSingleLeafElement(LPARENTH, "(", 0, 1, treeCharTab, getManager());
           super.addInternal(lparenth, lparenth, null, Boolean.FALSE);
-          LeafElement rparenth = Factory.createSingleLeafElement(RPARENTH, new char[]{')'}, 0, 1, treeCharTab, getManager());
+          LeafElement rparenth = Factory.createSingleLeafElement(RPARENTH, ")", 0, 1, treeCharTab, getManager());
           super.addInternal(rparenth, rparenth, null, Boolean.TRUE);
           anchor = findChildByRole(ChildRole.RPARENTH);
           LOG.assertTrue(anchor != null);
@@ -80,9 +80,9 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
       else {
         anchor = findChildByRole(ChildRole.LPARENTH);
         if (anchor == null) {
-          LeafElement lparenth = Factory.createSingleLeafElement(LPARENTH, new char[]{'('}, 0, 1, treeCharTab, getManager());
+          LeafElement lparenth = Factory.createSingleLeafElement(LPARENTH, "(", 0, 1, treeCharTab, getManager());
           super.addInternal(lparenth, lparenth, null, Boolean.FALSE);
-          LeafElement rparenth = Factory.createSingleLeafElement(RPARENTH, new char[]{')'}, 0, 1, treeCharTab, getManager());
+          LeafElement rparenth = Factory.createSingleLeafElement(RPARENTH, ")", 0, 1, treeCharTab, getManager());
           super.addInternal(rparenth, rparenth, null, Boolean.TRUE);
           anchor = findChildByRole(ChildRole.LPARENTH);
           LOG.assertTrue(anchor != null);
@@ -96,7 +96,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
       for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == COMMA) break;
         if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, element, Boolean.FALSE);
           break;
         }
@@ -104,7 +104,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
       for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
         if (child.getElementType() == COMMA) break;
         if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
         }

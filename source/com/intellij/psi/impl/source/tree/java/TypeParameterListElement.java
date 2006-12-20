@@ -42,13 +42,13 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     TreeElement lt = (TreeElement)findChildByRole(ChildRole.LT_IN_TYPE_LIST);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     if (lt == null) {
-      lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
+      lt = Factory.createSingleLeafElement(LT, "<", 0, 1, treeCharTab, getManager());
       super.addInternal(lt, lt, getFirstChildNode(), Boolean.TRUE);
     }
 
     TreeElement gt = (TreeElement)findChildByRole(ChildRole.GT_IN_TYPE_LIST);
     if (gt == null) {
-      gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
+      gt = Factory.createSingleLeafElement(GT, ">", 0, 1, treeCharTab, getManager());
       super.addInternal(gt, gt, getLastChildNode(), Boolean.FALSE);
     }
 
@@ -70,7 +70,7 @@ public class TypeParameterListElement extends RepositoryTreeElement {
       for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE_PARAMETER){
-          final TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          final TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, element, Boolean.FALSE);
           break;
         }
@@ -78,7 +78,7 @@ public class TypeParameterListElement extends RepositoryTreeElement {
       for(ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE_PARAMETER){
-          final TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          final TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
         }

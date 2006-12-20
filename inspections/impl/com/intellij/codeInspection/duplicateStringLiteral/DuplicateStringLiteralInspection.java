@@ -116,11 +116,11 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     if (resultFiles == null || resultFiles.size() == 0) return;
     final List<PsiExpression> foundExpr = new ArrayList<PsiExpression>();
     for (PsiFile file : resultFiles) {
-      char[] text = file.textToCharArray();
+      CharSequence text = file.getViewProvider().getContents();
       StringSearcher searcher = new StringSearcher(stringToFind);
-      for (int offset = LowLevelSearchUtil.searchWord(text, 0, text.length, searcher);
+      for (int offset = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher);
            offset >= 0;
-           offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length, searcher)
+           offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length(), searcher)
         ) {
         PsiElement element = file.findElementAt(offset);
         if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) continue;

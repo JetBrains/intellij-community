@@ -93,7 +93,7 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
 
           final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
           final PsiJavaCodeReferenceElementImpl ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(myManager,
-                                                                                                                          refTexts[i].toCharArray(),
+                                                                                                                          refTexts[i],
                                                                                                                           holderElement.getCharTable());
           TreeUtil.addChildren(holderElement, ref);
           ref.setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);

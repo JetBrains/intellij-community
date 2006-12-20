@@ -27,10 +27,10 @@ public interface Lexer {
    * Prepare for lexing character data from <code>buffer</code> passed. Lexing should be performed starting from offset 0 and
    * terminated (EOFed) at offset <code>buffer.length</code>. Internal lexer state is supposed to be initial.
    * YY_INITIAL for JLex and JFlex generated lexer.
-   *
+   * @deprecated Use start(CharSequence, startOffset,endOffset, state);
    * @param buffer character data for lexing.
    */
-  void start(char[] buffer);
+  @Deprecated void start(char[] buffer);
 
   /**
    * Prepare for lexing character data from <code>buffer</code> passed. Lexing should be performed starting from offset <code>startOffset</code> and
@@ -40,8 +40,9 @@ public interface Lexer {
    * @param buffer      character data for lexing.
    * @param startOffset offset to start lexing from
    * @param endOffset   offset to stop lexing at
+   * @deprecated Use start(CharSequence, startOffset,endOffset, state);
    */
-  void start(char[] buffer, int startOffset, int endOffset);
+  @Deprecated void start(char[] buffer, int startOffset, int endOffset);
 
   /**
    * Prepare for lexing character data from <code>buffer</code> passed. Lexing should be performed starting from offset <code>startOffset> and
@@ -53,8 +54,21 @@ public interface Lexer {
    * @param startOffset  offset to start lexing from
    * @param endOffset    offset to stop lexing at
    * @param initialState the initial state of the lexer.
+   * @deprecated Use start(CharSequence, startOffset,endOffset, state);
    */
-  void start(char[] buffer, int startOffset, int endOffset, int initialState);
+  @Deprecated void start(char[] buffer, int startOffset, int endOffset, int initialState);
+
+  /**
+   * Prepare for lexing character data from <code>buffer</code> passed. Internal lexer state is supposed to be <code>initialState</code>. It is guaranteed
+   * that the value of initialState has been returned by {@link #getState()} method of this <code>Lexer</code> at condition <code>startOffset=getTokenStart()</code>
+   * This method is used to incrementally relex changed characters using lexing data acquired from this particular lexer sometime in the past.
+   *
+   * @param buffer       character data for lexing.
+   * @param startOffset  offset to start lexing from
+   * @param endOffset    offset to stop lexing at
+   * @param initialState the initial state of the lexer.
+   */
+  void start(CharSequence buffer, int startOffset, int endOffset, int initialState);
 
   /**
    * Returns the current state of the lexer.
@@ -108,11 +122,19 @@ public interface Lexer {
   /**
    * Returns the buffer over which the lexer is running. This method should return the
    * same buffer instance which was passed to the <code>start()</code> method.
-   *
+   * @deprecated Use getBufferSequence
    * @return the lexer buffer.
    */
 
-  char[] getBuffer();
+  @Deprecated char[] getBuffer();
+
+  /**
+   * Returns the buffer sequence over which the lexer is running. This method should return the
+   * same buffer instance which was passed to the <code>start()</code> method.
+   * @return the lexer buffer.
+   */
+
+  CharSequence getBufferSequence();
 
   /**
    * Returns the offset at which the lexer will stop lexing. This method should return

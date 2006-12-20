@@ -49,7 +49,7 @@ public class IdTableBuilding {
   private IdTableBuilding() {
   }
 
-  public static void processPossibleComplexFileName(char[] chars, int startOffset, int endOffset, TIntIntHashMap table) {
+  public static void processPossibleComplexFileName(CharSequence chars, int startOffset, int endOffset, TIntIntHashMap table) {
     int offset = findCharsWithinRange(chars, startOffset, endOffset, "/\\");
     offset = Math.min(offset, endOffset);
     int start = startOffset;
@@ -60,9 +60,9 @@ public class IdTableBuilding {
     }
   }
 
-  private static int findCharsWithinRange(char[] chars, int startOffset, int endOffset, String charsToFind) {
+  private static int findCharsWithinRange(CharSequence chars, int startOffset, int endOffset, String charsToFind) {
     while(startOffset < endOffset) {
-      if (charsToFind.indexOf(chars[startOffset]) != -1) return startOffset;
+      if (charsToFind.indexOf(chars.charAt(startOffset)) != -1) return startOffset;
       ++startOffset;
     }
 
@@ -82,16 +82,16 @@ public class IdTableBuilding {
   }
 
   public interface IdCacheBuilder {
-    void build(char[] chars, int length, TIntIntHashMap wordsTable, IndexPattern[] todoPatterns, int[] todoCounts, final PsiManager manager
+    void build(CharSequence chars, int length, TIntIntHashMap wordsTable, IndexPattern[] todoPatterns, int[] todoCounts, final PsiManager manager
     );
   }
 
   public interface ScanWordProcessor {
-    void run (char[] chars, int start, int end);
+    void run (CharSequence chars, int start, int end);
   }
 
   static class TextIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars,
+    public void build(CharSequence chars,
                       int length,
                       TIntIntHashMap wordsTable,
                       IndexPattern[] todoPatterns,
@@ -103,8 +103,7 @@ public class IdTableBuilding {
         for (int index = 0; index < todoPatterns.length; index++) {
           Pattern pattern = todoPatterns[index].getPattern();
           if (pattern != null) {
-            CharSequence input = new CharArrayCharSequence(chars, 0, length);
-            Matcher matcher = pattern.matcher(input);
+            Matcher matcher = pattern.matcher(chars);
             while (matcher.find()) {
               if (matcher.start() != matcher.end()) {
                 todoCounts[index]++;
@@ -117,7 +116,7 @@ public class IdTableBuilding {
   }
 
   private static class PropertiesIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars,
+    public void build(CharSequence chars,
                       int length,
                       TIntIntHashMap wordsTable,
                       IndexPattern[] todoPatterns,
@@ -125,7 +124,7 @@ public class IdTableBuilding {
                       final PsiManager manager) {
       Lexer lexer = new PropertiesFilterLexer(new PropertiesLexer(), wordsTable, todoCounts);
       lexer = new FilterLexer(lexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      lexer.start(chars, 0, length);
+      lexer.start(chars, 0, length,0);
       while (lexer.getTokenType() != null) lexer.advance();
     }
   }
@@ -135,7 +134,7 @@ public class IdTableBuilding {
       return new JavaLexer(LanguageLevel.JDK_1_3);
     }
 
-    public void build(char[] chars,
+    public void build(CharSequence chars,
                       int length,
                       TIntIntHashMap wordsTable,
                       IndexPattern[] todoPatterns,
@@ -144,21 +143,21 @@ public class IdTableBuilding {
       Lexer lexer = createLexer();
       JavaFilterLexer filterLexer = new JavaFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      lexer.start(chars, 0, length);
+      lexer.start(chars, 0, length,0);
       while (lexer.getTokenType() != null) lexer.advance();
     }
   }
 
 
   static class XmlIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars,
+    public void build(CharSequence chars,
                       int length,
                       TIntIntHashMap wordsTable,
                       IndexPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
       BaseFilterLexer filterLexer = createLexer(wordsTable, todoCounts);
-      filterLexer.start(chars, 0, length);
+      filterLexer.start(chars, 0, length,0);
       while (filterLexer.getTokenType() != null) {
         filterLexer.advance();
       }
@@ -183,7 +182,7 @@ public class IdTableBuilding {
   }
 
   static class EmptyBuilder implements IdCacheBuilder {
-    public void build(char[] chars,
+    public void build(CharSequence chars,
                       int length,
                       TIntIntHashMap wordsTable,
                       IndexPattern[] todoPatterns,
@@ -195,7 +194,7 @@ public class IdTableBuilding {
 
   private static final HashMap<FileType,IdCacheBuilder> cacheBuilders = new HashMap<FileType, IdCacheBuilder>();
 
-  public static void registerCacheBuilder(@NotNull FileType fileType,IdCacheBuilder idCacheBuilder) {
+  public static void registerCacheBuilder(FileType fileType,IdCacheBuilder idCacheBuilder) {
     cacheBuilders.put(fileType, idCacheBuilder);
   }
 
@@ -265,16 +264,15 @@ public class IdTableBuilding {
       myFile = file;
     }
 
-    public void build(char[] chars,
+    public void build(CharSequence chars,
                       int length,
                       final TIntIntHashMap wordsTable,
                       final IndexPattern[] todoPatterns,
                       final int[] todoCounts,
                       final PsiManager manager) {
-      final CharArrayCharSequence text = new CharArrayCharSequence(chars, 0, length);
-      myScanner.processWords(text, new Processor<WordOccurrence>() {
+      myScanner.processWords(chars, new Processor<WordOccurrence>() {
         public boolean process(final WordOccurrence t) {
-          IdCacheUtil.addOccurrence(wordsTable, t.getText(), convertToMask(t.getKind()));
+          IdCacheUtil.addOccurrence(wordsTable, t.getBaseText(), t.getStart(),t.getEnd(),convertToMask(t.getKind()));
           return true;
         }
 
@@ -290,13 +288,13 @@ public class IdTableBuilding {
 
       if (myHighlighter != null && myCommentTokens != null && todoCounts != null) {
         final LexerEditorHighlighter highlighter = HighlighterFactory.createHighlighter(manager.getProject(), myFile);
-        highlighter.setText(text);
+        highlighter.setText(chars);
 
         final HighlighterIterator iterator = highlighter.createIterator(0);
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
           if (IdCacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
-            BaseFilterLexer.advanceTodoItemsCount(text.subSequence(iterator.getStart(), iterator.getEnd()), todoCounts);
+            BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(iterator.getStart(), iterator.getEnd()), todoCounts);
           }
 
           iterator.advance();
@@ -340,7 +338,6 @@ public class IdTableBuilding {
     }
 
     final CharSequence text = CacheUtil.getContentText(fileContent);
-    final char[] chars = CharArrayUtil.fromSequence(text);
 
     final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType, manager.getProject(), virtualFile);
 
@@ -349,7 +346,7 @@ public class IdTableBuilding {
     Runnable runnable = new Runnable() {
       public void run() {
         synchronized (PsiLock.LOCK) {
-          cacheBuilder.build(chars, text.length(), wordsTable, todoPatterns, todoCounts, manager);
+          cacheBuilder.build(text, text.length(), wordsTable, todoPatterns, todoCounts, manager);
         }
       }
     };
@@ -363,13 +360,13 @@ public class IdTableBuilding {
     }
   };
 
-  public static void scanWords(final ScanWordProcessor processor, final char[] chars, final int startOffset, final int endOffset) {
+  public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {
     int index = startOffset;
     ScanWordsLoop:
       while(true){
         while(true){
           if (index == endOffset) break ScanWordsLoop;
-          char c = chars[index];
+          final char c = chars.charAt(index);
           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (Character.isJavaIdentifierStart(c) && c != '$')) break;
           index++;
         }
@@ -377,7 +374,7 @@ public class IdTableBuilding {
         while(true){
           index++;
           if (index == endOffset) break;
-          char c = chars[index];
+          final char c = chars.charAt(index);
           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
           if (!Character.isJavaIdentifierPart(c) || c == '$') break;
         }
@@ -388,18 +385,18 @@ public class IdTableBuilding {
   }
 
   public static void scanWords(final TIntIntHashMap table,
-                               final char[] chars,
+                               final CharSequence chars,
                                final int start,
                                final int end,
                                final int occurrenceMask) {
     scanWords(new ScanWordProcessor(){
-      public void run(final char[] chars, final int start, final int end) {
+      public void run(final CharSequence chars, final int start, final int end) {
         registerOccurence(chars, start, end, table, occurrenceMask);
       }
     }, chars, start, end);
   }
 
-  private static void registerOccurence(final char[] chars,
+  private static void registerOccurence(final CharSequence chars,
                                         final int start,
                                         final int end,
                                         final TIntIntHashMap table,

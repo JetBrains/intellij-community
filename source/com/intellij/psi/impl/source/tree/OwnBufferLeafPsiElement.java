@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl implements PsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
 
-  public OwnBufferLeafPsiElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+  public OwnBufferLeafPsiElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(type, buffer, startOffset, endOffset, table);
     setState(lexerState);
   }

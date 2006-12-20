@@ -28,14 +28,14 @@ public class ClassBodyParsing extends Parsing {
 
 
   public TreeElement parseClassBodyText(Lexer lexer,
-                                        char[] buffer,
+                                        CharSequence buffer,
                                         int startOffset,
                                         int endOffset,
                                         int lexerState,
                                         int context,
                                         PsiManager manager){
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (lexerState < 0) filterLexer.start(buffer, startOffset, endOffset);
+    if (lexerState < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, lexerState);
 
     CharTable table = myContext.getCharTable();

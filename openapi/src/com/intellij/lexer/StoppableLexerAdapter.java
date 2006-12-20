@@ -81,4 +81,12 @@ public class StoppableLexerAdapter implements Lexer {
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     myOriginal.start(buffer, startOffset, endOffset, initialState);
   }
+
+  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+    myOriginal.start(buffer, startOffset, endOffset, initialState);
+  }
+
+  public CharSequence getBufferSequence() {
+    return myOriginal.getBufferSequence();
+  }
 }

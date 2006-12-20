@@ -17,7 +17,7 @@ import java.util.Set;
 public class TemplateImplUtil {
   public static boolean validateTemplateText(String s) {
     TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(s.toCharArray());
+    lexer.start(s,0,s.length(),0);
     int end = -1;
     while(true){
       IElementType tokenType = lexer.getTokenType();
@@ -36,8 +36,8 @@ public class TemplateImplUtil {
 
   public static void parseVariables(CharSequence text, ArrayList variables, Set predefinedVars) {
     TemplateTextLexer lexer = new TemplateTextLexer();
-    char[] chars = CharArrayUtil.fromSequence(text);
-    lexer.start(chars, 0, text.length());
+    lexer.start(text, 0, text.length(),0);
+
     while(true){
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;

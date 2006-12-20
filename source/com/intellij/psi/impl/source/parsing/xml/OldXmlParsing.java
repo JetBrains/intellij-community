@@ -40,9 +40,9 @@ public class OldXmlParsing implements ElementType {
   }
 
 
-  public TreeElement parse(Lexer originalLexer, char[] buffer, int startOffset, int endOffset, PsiManager manager) {
+  public TreeElement parse(Lexer originalLexer, CharSequence buffer, int startOffset, int endOffset, PsiManager manager) {
     final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset);
+    lexer.start(buffer, startOffset, endOffset, 0);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
@@ -247,8 +247,7 @@ public class OldXmlParsing implements ElementType {
       return true;
     }
 
-    String openedName = StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(),
-                                                                      lexer.getTokenEnd() - lexer.getTokenStart());
+    final String openedName = lexer.getBufferSequence().subSequence(lexer.getTokenStart(),lexer.getTokenEnd()).toString();
     addToken(tag, lexer);
 
     parseAttributeList(tag, lexer);
@@ -314,8 +313,8 @@ public class OldXmlParsing implements ElementType {
         return true;
       }
 
-      String closingName = StringFactory.createStringFromConstantArray(lexer.getBuffer(), lexer.getTokenStart(),
-                                                                         lexer.getTokenEnd() - lexer.getTokenStart());
+      final String closingName = lexer.getBufferSequence().subSequence(lexer.getTokenStart(),
+                                                                         lexer.getTokenEnd()).toString();
 
       if (!closingName.equals(openedName) && names.contains(closingName)) {
         lexer.restore(pos);
@@ -770,7 +769,7 @@ public class OldXmlParsing implements ElementType {
     return element;
   }
 
-  public TreeElement parseMarkupDecl(Lexer originalLexer, char[] text, int start, int end, PsiManager manager) {
+  public TreeElement parseMarkupDecl(Lexer originalLexer, CharSequence text, int start, int end, PsiManager manager) {
     final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
 

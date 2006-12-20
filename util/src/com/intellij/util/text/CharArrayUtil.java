@@ -26,8 +26,8 @@ import java.util.List;
 
 public class CharArrayUtil {
   public static void getChars(CharSequence src, char[] dst, int dstOffset) {
-    if (src instanceof CharArrayCharSequence) {
-      ((CharArrayCharSequence)src).getChars(dst, dstOffset);
+    if (src instanceof CharSequenceBackedByArray) {
+      ((CharSequenceBackedByArray)src).getChars(dst, dstOffset);
     }
     else if (src instanceof StringBuffer) {
       ((StringBuffer)src).getChars(0, src.length(), dst, dstOffset);
@@ -51,8 +51,8 @@ public class CharArrayUtil {
   }
 
   public static char[] fromSequence(CharSequence seq) {
-    if (seq instanceof CharArrayCharSequence) {
-      return ((CharArrayCharSequence)seq).getChars();
+    if (seq instanceof CharSequenceBackedByArray) {
+      return ((CharSequenceBackedByArray)seq).getChars();
     }
 
     if (seq instanceof CharBuffer) {
@@ -166,6 +166,7 @@ public class CharArrayUtil {
   }
 
   public static int shiftBackwardUntil(CharSequence buffer, int offset, String chars) {
+    if (offset >= buffer.length()) return offset;
     while (true) {
       if (offset < 0) break;
       char c = buffer.charAt(offset);
@@ -185,6 +186,16 @@ public class CharArrayUtil {
     if (offset < 0) return false;
     for (int i = 0; i < len; i++) {
       if (buffer[offset + i] != s.charAt(i)) return false;
+    }
+    return true;
+  }
+
+  public static boolean regionMatches(CharSequence buffer, int offset, int bufferEnd, CharSequence s) {
+    final int len = s.length();
+    if (offset + len > bufferEnd) return false;
+    if (offset < 0) return false;
+    for (int i = 0; i < len; i++) {
+      if (buffer.charAt(offset + i) != s.charAt(i)) return false;
     }
     return true;
   }
@@ -216,6 +227,22 @@ public class CharArrayUtil {
     for (int i = fromIndex; i < limit; i++) {
       for (int j = 0; j < chars.length; j++) {
         if (chars[j] != buffer[i + j]) continue SearchLoop;
+      }
+      return i;
+    }
+    return -1;
+  }
+
+  public static int indexOf(final CharSequence buffer, final CharSequence pattern, int fromIndex) {
+    final int patternLength = pattern.length();
+    int limit = buffer.length() - patternLength;
+    if (fromIndex < 0) {
+      fromIndex = 0;
+    }
+    SearchLoop:
+    for (int i = fromIndex; i < limit; i++) {
+      for (int j = 0; j < patternLength; j++) {
+        if (pattern.charAt(j) != buffer.charAt(i + j)) continue SearchLoop;
       }
       return i;
     }
@@ -303,8 +330,12 @@ public class CharArrayUtil {
   }
 
   public static boolean containLineBreaks(CharSequence seq) {
+    return containLineBreaks(seq, 0, seq.length());
+  }
+
+  public static boolean containLineBreaks(CharSequence seq, int fromOffset, int endOffset) {
     if (seq == null) return false;
-    for (int i = 0; i < seq.length(); i++) {
+    for (int i = fromOffset; i < endOffset; i++) {
       final char c = seq.charAt(i);
       if (c == '\n' || c == '\r') return true;
     }

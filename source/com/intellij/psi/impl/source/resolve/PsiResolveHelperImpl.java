@@ -70,7 +70,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
   public PsiClass resolveReferencedClass(String referenceText, PsiElement context) {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    CompositeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText.toCharArray(), holderElement.getCharTable());
+    CompositeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;
     TreeUtil.addChildren(holderElement, ref);
 
@@ -79,7 +79,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
   public PsiVariable resolveReferencedVariable(String referenceText, PsiElement context) {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    TreeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText.toCharArray(), holderElement.getCharTable());
+    TreeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;
     TreeUtil.addChildren(holderElement, ref);
     PsiJavaCodeReferenceElement psiRef = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(ref);

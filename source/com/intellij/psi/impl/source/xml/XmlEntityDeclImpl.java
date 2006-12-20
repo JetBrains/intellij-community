@@ -96,8 +96,8 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
 
     if (value == null) return null;
     final FileElement holderElement = new DummyHolder(originalElement.getManager(), originalElement).getTreeElement();
-    char[] buffer = value.toCharArray();
-    Lexer lexer = getLexer(context, buffer);
+
+    Lexer lexer = getLexer(context, value);
     final XmlParsingContext parsingContext = new XmlParsingContext(holderElement.getCharTable());
     final CompositeElement element = Factory.createCompositeElement(XML_ELEMENT_DECL);
     TreeUtil.addChildren(holderElement, element);
@@ -187,7 +187,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
     return element;
   }
 
-  private Lexer getLexer(int context, char[] buffer) {
+  private Lexer getLexer(int context, CharSequence buffer) {
     Lexer lexer = new XmlPsiLexer();
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(OldXmlParsing.XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     short state = 0;
@@ -211,7 +211,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
       default: LOG.error("context: " + context);
     }
 
-    filterLexer.start(buffer, 0, buffer.length, state);
+    filterLexer.start(buffer, 0, buffer.length(), state);
     return filterLexer;
   }
 

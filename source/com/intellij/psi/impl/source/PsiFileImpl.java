@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,8 +69,12 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     myContentElementType = contentElementType;
   }
 
-
+  @Deprecated
   public TreeElement createContentLeafElement(final char[] text, final int startOffset, final int endOffset, final CharTable table) {
+    return createContentLeafElement(new CharArrayCharSequence(text),startOffset, endOffset, table);
+  }
+
+  public TreeElement createContentLeafElement(final CharSequence text, final int startOffset, final int endOffset, final CharTable table) {
     return Factory.createLeafElement(myContentElementType, text, startOffset, endOffset, -1, table);
   }
 
@@ -166,9 +171,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     if (getUserData(CacheUtil.CACHE_COPY_KEY) == Boolean.TRUE) {
       treeElement.setCharTable(new IdentityCharTable());
     }
-    
-    char[] chars = CharArrayUtil.fromSequence(docText);
-    TreeElement contentElement = createContentLeafElement(chars, 0, docText.length(), treeElement.getCharTable());
+
+    TreeElement contentElement = createContentLeafElement(docText, 0, docText.length(), treeElement.getCharTable());
     TreeUtil.addChildren(treeElement, contentElement);
     return treeElement;
   }

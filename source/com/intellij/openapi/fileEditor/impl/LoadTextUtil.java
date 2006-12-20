@@ -179,7 +179,7 @@ public final class LoadTextUtil {
     final FileType fileType = file.getFileType();
 
     if (fileType.equals(StdFileTypes.CLASS)){
-      return new CharArrayCharSequence(decompile(file));
+      return decompile(file);
     }
     assert !fileType.isBinary() : file.getPresentableUrl() + "is binary";
 
@@ -192,7 +192,7 @@ public final class LoadTextUtil {
     }
   }
 
-  private static char[] decompile(VirtualFile file) {
+  private static CharSequence decompile(VirtualFile file) {
     //try {
       final ProjectEx dummyProject = ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).getDummyProject();
       PsiManager manager = PsiManager.getInstance(dummyProject);
@@ -208,7 +208,7 @@ public final class LoadTextUtil {
       //codeStyleManager.reformat(mirror);
       //settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = saved;
 
-      return mirror.textToCharArray();
+      return mirror.getViewProvider().getContents();
     //}
     //catch(IncorrectOperationException e){
     //  LOG.error(e);

@@ -796,12 +796,12 @@ class _JavaLexer implements FlexLexer {
     zzAtEOF = offset < zzEndRead;
   }
 
-  public void reset(CharSequence buffer, int initialState){
+  public void reset(CharSequence buffer, int start, int end, int initialState){
     zzBuffer = buffer;
-    zzCurrentPos = zzMarkedPos = zzStartRead = 0;
+    zzCurrentPos = zzMarkedPos = zzStartRead = start;
     zzPushbackPos = 0;
     zzAtEOF  = false;
-    zzEndRead = buffer.length();
+    zzEndRead = end;
     yybegin(initialState);
   }
 

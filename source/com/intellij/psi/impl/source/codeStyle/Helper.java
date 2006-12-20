@@ -236,7 +236,7 @@ public class Helper {
           }
           else {
             if (newSpace.length() > 0) {
-              LeafElement newLeaf = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, newSpace.toCharArray(), 0,
+              LeafElement newLeaf = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, newSpace, 0,
                                                                     newSpace.length(), charTableByTree, SharedImplUtil.getManagerByTree(next));
               next.getTreeParent().addChild(newLeaf, next);
             }
@@ -253,7 +253,7 @@ public class Helper {
         String leafText = leaf.getText();
         String newLeafText = leafText.substring(0, startOffset) + newSpace + leafText.substring(endOffset);
         if (newLeafText.length() > 0) {
-          LeafElement newLeaf = Factory.createSingleLeafElement(leaf.getElementType(), newLeafText.toCharArray(), 0,
+          LeafElement newLeaf = Factory.createSingleLeafElement(leaf.getElementType(), newLeafText, 0,
                                                                 newLeafText.length(), charTableByTree, SharedImplUtil.getManagerByTree(leaf));
           if (leaf.getTreeParent() != null) {
             leaf.getTreeParent().replaceChild(leaf, newLeaf);

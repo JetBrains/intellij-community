@@ -135,7 +135,7 @@ public class StackTraceLine {
   }
 
   private static int offsetOfLine(final PsiFile psiFile, final int lineNumber) {
-    final LineTokenizer lineTokenizer = new LineTokenizer(psiFile.textToCharArray(), 0, psiFile.getTextLength());
+    final LineTokenizer lineTokenizer = new LineTokenizer(psiFile.getViewProvider().getContents());
     for (int i = 0; i < lineNumber; i++) lineTokenizer.advance();
     final int offset = lineTokenizer.getOffset();
     return offset;

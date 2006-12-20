@@ -52,7 +52,9 @@ class PropertiesAnnotator implements Annotator {
 
   private static void highlightTokens(final Property property, final ASTNode node, final AnnotationHolder holder, PropertiesHighlighter highlighter) {
     Lexer lexer = highlighter.getHighlightingLexer();
-    lexer.start(node.getText().toCharArray());
+    final String s = node.getText();
+    lexer.start(s,0,s.length(),0);
+    
     while (lexer.getTokenType() != null) {
       IElementType elementType = lexer.getTokenType();
       TextAttributesKey[] keys = highlighter.getTokenHighlights(elementType);

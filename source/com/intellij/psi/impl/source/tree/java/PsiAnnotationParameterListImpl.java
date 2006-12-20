@@ -83,12 +83,12 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       ASTNode lparenth = findChildByRole(ChildRole.LPARENTH);
       if (lparenth == null) {
-        LeafElement created = Factory.createSingleLeafElement(LPARENTH, new char[]{'('}, 0, 1, treeCharTab, getManager());
+        LeafElement created = Factory.createSingleLeafElement(LPARENTH, "(", 0, 1, treeCharTab, getManager());
         super.addInternal(created, created, getFirstChildNode(), true);
       }
       ASTNode rparenth = findChildByRole(ChildRole.RPARENTH);
       if (rparenth == null) {
-        LeafElement created = Factory.createSingleLeafElement(RPARENTH, new char[]{')'}, 0, 1, treeCharTab, getManager());
+        LeafElement created = Factory.createSingleLeafElement(RPARENTH, ")", 0, 1, treeCharTab, getManager());
         super.addInternal(created, created, getLastChildNode(), false);
       }
 

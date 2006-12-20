@@ -37,10 +37,19 @@ public class _XmlLexer extends FlexAdapter implements ELHostLexer {
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
+    handleState(initialState);
+  }
+
+  private void handleState(final int initialState) {
     final __XmlLexer flex = (__XmlLexer)getFlex();
     flex.yybegin(initialState & 15);
     flex.pushState((initialState >> 4) & 15);
     packState();
+  }
+
+  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+    super.start(buffer, startOffset, endOffset, initialState);
+    handleState(initialState);
   }
 
   public int getState() {

@@ -2,91 +2,151 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharSequenceHashingStrategy;
+import com.intellij.psi.PsiKeyword;
 import gnu.trove.THashSet;
+
+import java.lang.reflect.Field;
 
 /**
  * @author max
  */
-public class CharTableImpl extends THashSet<CharSequence> implements CharTable {
+public class CharTableImpl implements CharTable {
   private final static int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
   private final static CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
+  private final static MyTHashSet staticEntries = new MyTHashSet();
+  private final MyTHashSet entries = new MyTHashSet();
 
-  //private char[] myCurrentPage = null;
-  //private int bufferEnd = 0;
-
-  public CharTableImpl() {
-    super(10, 0.9f, HASHER);
-
-    //bufferEnd = PAGE_SIZE;
-  }
-
-  public synchronized CharSequence intern(final CharSequence text) {
+  public CharSequence intern(final CharSequence text) {
     if (text.length() > INTERN_THRESHOLD) return text.toString();
+    int idx;
 
-    int idx = index(text);
-    if (idx >= 0) {
-      //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      return (CharSequence)_set[idx];
+    synchronized(staticEntries) {
+      idx = staticEntries.index(text);
+      if (idx >= 0) {
+        //noinspection NonPrivateFieldAccessedInSynchronizedContext
+        return staticEntries.get(idx);
+      }
     }
 
-    final CharSequence entry = text.toString();
-    boolean added = add(entry);
-    assert added;
+    synchronized(this) {
+      idx = entries.index(text);
+      if (idx >= 0) {
+        //noinspection NonPrivateFieldAccessedInSynchronizedContext
+        return entries.get(idx);
+      }
 
-    return entry;
+      final CharSequence entry = text.toString();
+      boolean added = entries.add(entry);
+      assert added;
+
+      return entry;
+    }
   }
 
-  //private CharSequence createEntry(CharSequence text) {
-  //  final int length = text.length();
-  //  if (length > PAGE_SIZE) {
-  //    // creating new page in case of long (>PAGE_SIZE) token
-  //    final char[] page = new char[length];
-  //    CharArrayUtil.getChars(text, page, 0);
-  //    return new CharTableEntry(page, 0, length);
-  //  }
-  //
-  //  if (myCurrentPage == null || PAGE_SIZE - bufferEnd < length) {
-  //    // append to buffer
-  //    myCurrentPage = new char[PAGE_SIZE];
-  //    bufferEnd = 0;
-  //  }
-  //  CharArrayUtil.getChars(text, myCurrentPage, bufferEnd);
-  //  bufferEnd += length;
-  //  return new CharTableEntry(myCurrentPage, bufferEnd - length, length);
-  //}
-  //
-  //private static final class CharTableEntry implements CharSequenceWithStringHash {
-  //  char[] buffer;
-  //  int offset;
-  //  int length;
-  //  int hashCode;
-  //
-  //  public CharTableEntry(char[] buffer, int offset, int length) {
-  //    if (length < 0 || offset + length > buffer.length) throw new IndexOutOfBoundsException("");
-  //    this.buffer = buffer;
-  //    this.offset = offset;
-  //    this.length = length;
-  //    hashCode = StringUtil.stringHashCode(buffer, offset, length);
-  //  }
-  //
-  //  public int length() {
-  //    return length;
-  //  }
-  //
-  //  public char charAt(int index) {
-  //    return buffer[index + offset];
-  //  }
-  //
-  //  public CharSequence subSequence(int start, int end) {
-  //    return new CharTableEntry(buffer, offset + start, offset + end);
-  //  }
-  //
-  //  public String toString() {
-  //    return StringFactory.createStringFromConstantArray(buffer, offset, length);
-  //  }
-  //
-  //  public int hashCode() {
-  //    return hashCode;
-  //  }
-  //}
+  public static void staticIntern(final String text) {
+    synchronized(staticEntries) {
+      staticEntries.add(text);
+    }
+  }
+  
+  private final static class MyTHashSet extends THashSet<CharSequence> {
+    public MyTHashSet() {
+      super(10, 0.9f, CharTableImpl.HASHER);
+    }
+
+    public int index(final CharSequence obj) {
+      return super.index(obj);
+    }
+
+    public CharSequence get(int index) {
+      return (CharSequence)_set[index];
+    }
+  }
+
+  static {
+    for(Field field: PsiKeyword.class.getFields()) {
+      CharTableImpl.staticIntern(field.getName().toLowerCase());
+    }
+
+    CharTableImpl.staticIntern("==" );
+    CharTableImpl.staticIntern("!=" );
+    CharTableImpl.staticIntern("||" );
+    CharTableImpl.staticIntern("++" );
+    CharTableImpl.staticIntern("--" );
+
+    CharTableImpl.staticIntern("<" );
+    CharTableImpl.staticIntern("<=" );
+    CharTableImpl.staticIntern("<<=" );
+    CharTableImpl.staticIntern("<<" );
+    CharTableImpl.staticIntern(">" );
+    CharTableImpl.staticIntern("&" );
+    CharTableImpl.staticIntern("&&" );
+
+    CharTableImpl.staticIntern("+=" );
+    CharTableImpl.staticIntern("-=" );
+    CharTableImpl.staticIntern("*=" );
+    CharTableImpl.staticIntern("/=" );
+    CharTableImpl.staticIntern("&=" );
+    CharTableImpl.staticIntern("|=" );
+    CharTableImpl.staticIntern("^=" );
+    CharTableImpl.staticIntern("%=" );
+
+    CharTableImpl.staticIntern("("   );
+    CharTableImpl.staticIntern(")"   );
+    CharTableImpl.staticIntern("{"   );
+    CharTableImpl.staticIntern("}"   );
+    CharTableImpl.staticIntern("["   );
+    CharTableImpl.staticIntern("]"   );
+    CharTableImpl.staticIntern(";"   );
+    CharTableImpl.staticIntern(","   );
+    CharTableImpl.staticIntern("..." );
+    CharTableImpl.staticIntern("."   );
+
+    CharTableImpl.staticIntern("=" );
+    CharTableImpl.staticIntern("!" );
+    CharTableImpl.staticIntern("~" );
+    CharTableImpl.staticIntern("?" );
+    CharTableImpl.staticIntern(":" );
+    CharTableImpl.staticIntern("+" );
+    CharTableImpl.staticIntern("-" );
+    CharTableImpl.staticIntern("*" );
+    CharTableImpl.staticIntern("/" );
+    CharTableImpl.staticIntern("|" );
+    CharTableImpl.staticIntern("^" );
+    CharTableImpl.staticIntern("%" );
+    CharTableImpl.staticIntern("@" );
+
+    CharTableImpl.staticIntern(" " );
+    CharTableImpl.staticIntern("\n" );
+    CharTableImpl.staticIntern("\n  " );
+    CharTableImpl.staticIntern("\n    " );
+    CharTableImpl.staticIntern("\n      " );
+    CharTableImpl.staticIntern("\n        " );
+    CharTableImpl.staticIntern("\n          " );
+    CharTableImpl.staticIntern("\n            " );
+    CharTableImpl.staticIntern("\n              " );
+    CharTableImpl.staticIntern("\n                " );
+
+    CharTableImpl.staticIntern("<");
+    CharTableImpl.staticIntern(">");
+    CharTableImpl.staticIntern("</");
+    CharTableImpl.staticIntern("/>");
+    CharTableImpl.staticIntern("\"");
+    CharTableImpl.staticIntern("\'");
+    CharTableImpl.staticIntern("<![CDATA[");
+    CharTableImpl.staticIntern("]]>");
+    CharTableImpl.staticIntern("<!--");
+    CharTableImpl.staticIntern("-->");
+    CharTableImpl.staticIntern("<!DOCTYPE");
+    CharTableImpl.staticIntern("SYSTEM");
+    CharTableImpl.staticIntern("PUBLIC");
+    CharTableImpl.staticIntern("<?");
+    CharTableImpl.staticIntern("?>");
+
+    CharTableImpl.staticIntern("<%");
+    CharTableImpl.staticIntern("%>");
+    CharTableImpl.staticIntern("<%=");
+    CharTableImpl.staticIntern("<%@");
+    CharTableImpl.staticIntern("${");
+  }
 }

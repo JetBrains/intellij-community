@@ -16,9 +16,10 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
 
   public void advance() {
     IElementType tokenType = myOriginalLexer.getTokenType();
-    final char[] buffer = getBuffer();
+    final CharSequence buffer = getBufferSequence();
     final int tokenStart = getTokenStart();
     final int tokenEnd = getTokenEnd();
+
     if (tokenType == ElementType.XML_COMMENT_CHARACTERS) {
       IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd, UsageSearchContext.IN_COMMENTS);
       advanceTodoItemCounts(buffer, tokenStart, tokenEnd);

@@ -24,6 +24,10 @@ public class DtdHighlightingLexer extends LexerBase {
     return myLexer.getBuffer();
   }
 
+  public CharSequence getBufferSequence() {
+    return myLexer.getBufferSequence();
+  }
+
   public int getBufferEnd() {
     return myLexer.getBufferEnd();
   }
@@ -70,6 +74,10 @@ public class DtdHighlightingLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
+    myLexer.start(buffer, startOffset, endOffset, initialState);
+  }
+
+  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myLexer.start(buffer, startOffset, endOffset, initialState);
   }
 }

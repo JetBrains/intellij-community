@@ -35,12 +35,15 @@ public class FormWordsScanner extends SimpleWordsScanner {
 
       FormEditingUtil.iterate(container,
                               new FormEditingUtil.ComponentVisitor() {
+                                WordOccurrence occurence;
                                 public boolean visit(IComponent iComponent) {
                                   String componentClassName = iComponent.getComponentClassName();
                                   processClassAndPackagesNames(componentClassName, processor);
                                   final String binding = iComponent.getBinding();
                                   if (binding != null) {
-                                    processor.process(new WordOccurrence(binding, WordOccurrence.Kind.FOREIGN_LANGUAGE));
+                                    if (occurence == null) occurence = new WordOccurrence(binding, 0, binding.length(),WordOccurrence.Kind.FOREIGN_LANGUAGE);
+                                    else occurence.init(binding, 0, binding.length(),WordOccurrence.Kind.FOREIGN_LANGUAGE);
+                                    processor.process(occurence);
                                   }
                                   return true;
                                 }
@@ -61,11 +64,14 @@ public class FormWordsScanner extends SimpleWordsScanner {
   }
 
   private static void processClassAndPackagesNames(String qName, final Processor<WordOccurrence> processor) {
-    processor.process(new WordOccurrence(qName, WordOccurrence.Kind.FOREIGN_LANGUAGE));
+    WordOccurrence occurrence = new WordOccurrence(qName, 0, qName.length(), WordOccurrence.Kind.FOREIGN_LANGUAGE);
+    processor.process(occurrence);
     int idx = qName.lastIndexOf('.');
+    
     while (idx > 0) {
       qName = qName.substring(0, idx);
-      processor.process(new WordOccurrence(qName, WordOccurrence.Kind.FOREIGN_LANGUAGE));
+      occurrence.init(qName, 0,qName.length(),WordOccurrence.Kind.FOREIGN_LANGUAGE);
+      processor.process(occurrence);
       idx = qName.lastIndexOf('.');
     }
   }

@@ -196,8 +196,8 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
     ChameleonTransforming.transformChildren(this);
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     final TreeElement treeElement = super.addInternal(first, last, anchor, before);
-    if (first == last && first.getElementType() == JavaTokenType.IDENTIFIER) {
-      LeafElement eq = Factory.createSingleLeafElement(JavaTokenType.EQ, new char[]{'='}, 0, 1, treeCharTab, getManager());
+    if (first == last && first.getElementType() == ElementType.IDENTIFIER) {
+      LeafElement eq = Factory.createSingleLeafElement(ElementType.EQ, "=", 0, 1, treeCharTab, getManager());
       super.addInternal(eq, eq, first, Boolean.FALSE);
     }
     return treeElement;

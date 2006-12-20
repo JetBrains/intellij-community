@@ -116,7 +116,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   public PsiElement addProperty(@NotNull Property property) throws IncorrectOperationException {
     if (haveToAddNewLine()) {
       String text = "\n";
-      LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text.toCharArray(), 0, text.length(), getTreeElement().getCharTable(), myManager);
+      LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text, 0, text.length(), getTreeElement().getCharTable(), myManager);
       ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, null);
     }
     final TreeElement copy = ChangeUtil.copyToElement(property);

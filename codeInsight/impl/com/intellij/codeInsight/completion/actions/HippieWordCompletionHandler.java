@@ -167,17 +167,17 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   }
 
   private static List<CompletionVariant> computeVariants(final Editor editor, final String prefix) {
-    final char[] chars = editor.getDocument().getText().toCharArray();
+    final CharSequence chars = editor.getDocument().getCharsSequence();
 
     final ArrayList<CompletionVariant> words = new ArrayList<CompletionVariant>();
     final List<CompletionVariant> afterWords = new ArrayList<CompletionVariant>();
 
     IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
-      public void run(final char[] chars, final int start, final int end) {
+      public void run(final CharSequence chars, final int start, final int end) {
         final int caretOffset = editor.getCaretModel().getOffset();
         if (start <= caretOffset && end >= caretOffset) return; //skip prefix itself
 
-        final String word = new String(chars, start, end - start);
+        final String word = chars.subSequence(start, end).toString();
         if (prefix != null && !word.startsWith(prefix)) return;
         final CompletionVariant v = new CompletionVariant(word, start);
 
@@ -188,7 +188,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
           words.add(v);
         }
       }
-    }, chars, 0, chars.length);
+    }, chars, 0, chars.length());
 
 
     Set<String> allWords = new HashSet<String>();

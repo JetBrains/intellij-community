@@ -23,7 +23,7 @@ public class XmlElementChangeUtil {
 
       if (nameElement!=null) {
         nameElement.replace(
-          SourceTreeToPsiMap.treeElementToPsi(Factory.createSingleLeafElement(XmlTokenType.XML_NAME,name.toCharArray(),0, name.length(),null,
+          SourceTreeToPsiMap.treeElementToPsi(Factory.createSingleLeafElement(XmlTokenType.XML_NAME,name,0, name.length(),null,
                                                                               xmlElementDecl.getManager()))
         );
       }

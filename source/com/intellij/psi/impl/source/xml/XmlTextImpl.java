@@ -385,11 +385,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           String rightText = childElement.getText().substring(splitOffset);
 
 
-          LeafElement rightElement = Factory.createLeafElement(XmlTokenType.XML_DATA_CHARACTERS, rightText.toCharArray(), 0, rightText.length(), -1,
+          LeafElement rightElement = Factory.createLeafElement(XmlTokenType.XML_DATA_CHARACTERS, rightText, 0, rightText.length(), -1,
                                                                holder.getCharTable());
           CodeEditUtil.setNodeGenerated(rightElement, true);
 
-          LeafElement leftElement = Factory.createLeafElement(XmlTokenType.XML_DATA_CHARACTERS, leftText.toCharArray(), 0, leftText.length(), -1,
+          LeafElement leftElement = Factory.createLeafElement(XmlTokenType.XML_DATA_CHARACTERS, leftText, 0, leftText.length(), -1,
                                                               holder.getCharTable());
           CodeEditUtil.setNodeGenerated(leftElement, true);
 

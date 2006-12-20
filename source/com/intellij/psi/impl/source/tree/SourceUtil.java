@@ -57,9 +57,9 @@ public class SourceUtil implements Constants {
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(newChild);
     new DummyHolder(manager, parenthExpr, null, charTableByTree);
     parenthExpr.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.LPARENTH, new char[]{'('}, 0, 1, -1, charTableByTree));
+    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, -1, charTableByTree));
     TreeUtil.addChildren(parenthExpr, dummyExpr);
-    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.RPARENTH, new char[]{')'}, 0, 1, -1, charTableByTree));
+    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, -1, charTableByTree));
 
     try {
       CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
@@ -98,18 +98,18 @@ public class SourceUtil implements Constants {
       if (i > 0) {
         final String prefix = qName.substring(0, i);
         PsiManager manager = reference.getManager();
-        char[] chars = prefix.toCharArray();
+
         final CharTable table = SharedImplUtil.findCharTableByTree(reference);
         final CompositeElement qualifier;
         if (reference instanceof PsiReferenceExpression) {
-          qualifier = ExpressionParsing.parseExpressionText(manager, chars, 0, chars.length, table);
+          qualifier = ExpressionParsing.parseExpressionText(manager, prefix, 0, prefix.length(), table);
         }
         else {
-          qualifier = Parsing.parseJavaCodeReferenceText(manager, chars, table);
+          qualifier = Parsing.parseJavaCodeReferenceText(manager, prefix, table);
         }
         if (qualifier != null) {
           final CharTable systemCharTab = SharedImplUtil.findCharTableByTree(qualifier);
-          final LeafElement dot = Factory.createSingleLeafElement(DOT, new char[]{'.'}, 0, 1, systemCharTab, SharedImplUtil.getManagerByTree(qualifier));
+          final LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, systemCharTab, SharedImplUtil.getManagerByTree(qualifier));
           TreeUtil.insertAfter(qualifier, dot);
           reference.addInternal(qualifier, dot, null, Boolean.FALSE);
         }

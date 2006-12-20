@@ -188,8 +188,8 @@ public class SharedImplUtil {
         CompositeElement newType1 = Factory.createCompositeElement(ElementType.TYPE);
         TreeUtil.addChildren(newType1, newType);
 
-        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.LBRACKET, new char[]{'['}, 0, 1, -1, treeCharTable));
-        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.RBRACKET, new char[]{']'}, 0, 1, -1, treeCharTable));
+        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.LBRACKET, "[", 0, 1, -1, treeCharTable));
+        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.RBRACKET, "]", 0, 1, -1, treeCharTable));
         newType = newType1;
         newType.acceptTree(new GeneratedMarkerVisitor());
       }
@@ -215,7 +215,7 @@ public class SharedImplUtil {
     ASTNode eq = variableElement.findChildByRole(ChildRole.INITIALIZER_EQ);
     if (eq == null) {
       final CharTable charTable = findCharTableByTree(variableElement);
-      eq = Factory.createSingleLeafElement(JavaTokenType.EQ, "=".toCharArray(), 0, 1, charTable, variable.getManager());
+      eq = Factory.createSingleLeafElement(JavaTokenType.EQ, "=", 0, 1, charTable, variable.getManager());
       variableElement.addInternal((TreeElement)eq, eq, variable.getNameIdentifier().getNode(), Boolean.FALSE);
       eq = variableElement.findChildByRole(ChildRole.INITIALIZER_EQ);
     }

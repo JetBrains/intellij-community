@@ -475,8 +475,8 @@ public class SelectWordUtil {
 
       TextRange range = e.getTextRange();
       final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
-      char[] chars = CharArrayUtil.fromSequence(editorText);
-      lexer.start(chars, range.getStartOffset(), range.getEndOffset());
+      lexer.start(editorText, range.getStartOffset(), range.getEndOffset(),0);
+      
       while (lexer.getTokenType() != null) {
         if (lexer.getTokenStart() <= cursorOffset && cursorOffset < lexer.getTokenEnd()) {
           if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {

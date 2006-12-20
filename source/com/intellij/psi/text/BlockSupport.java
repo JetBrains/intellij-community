@@ -12,8 +12,8 @@ public abstract class BlockSupport {
     return project.getComponent(BlockSupport.class);
   }
 
-  public abstract void reparseRange(PsiFile file, int startOffset, int endOffset, @NonNls String newText) throws IncorrectOperationException;
-  public abstract void reparseRange(PsiFile file, int startOffset, int endOffset, int lengthShift, char[] newText) throws IncorrectOperationException;
+  public abstract void reparseRange(PsiFile file, int startOffset, int endOffset, @NonNls CharSequence newText) throws IncorrectOperationException;
+  public abstract void reparseRange(PsiFile file, int startOffset, int endOffset, int lengthShift, CharSequence newText) throws IncorrectOperationException;
 
   public static final Key<ASTNode> TREE_TO_BE_REPARSED = new Key<ASTNode>("TREE_TO_BE_REPARSED");
 

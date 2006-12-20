@@ -28,7 +28,7 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
       String expectedTokenType = expectedTokens[idx++];
       String expectedTokenText = expectedTokens[idx++];
       assertEquals(expectedTokenType, tokenName);
-      String tokenText = new String(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd() - lexer.getTokenStart());
+      String tokenText = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
       assertEquals(expectedTokenText, tokenText);
       lexer.advance();
     }

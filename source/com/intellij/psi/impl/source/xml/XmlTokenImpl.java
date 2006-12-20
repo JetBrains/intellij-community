@@ -25,7 +25,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTokenImpl");
   private static final Class<XmlToken> ourHintClazz = XmlToken.class;
 
-  public XmlTokenImpl(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+  public XmlTokenImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(type, buffer, startOffset, endOffset, lexerState, table);
   }
 

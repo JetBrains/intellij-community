@@ -110,7 +110,7 @@ class GTTokens implements JavaTokenType {
       lexer.advance();
     }
     final int tokenEnd = lexer.getTokenEnd();
-    final LeafElement leafElement = Factory.createLeafElement(tokenType, lexer.getBuffer(), tokenStart, tokenEnd, lexer.getState(), table);
+    final LeafElement leafElement = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), tokenStart, tokenEnd, lexer.getState(), table);
     leafElement.setState(lexer.getState());
     return leafElement;
   }

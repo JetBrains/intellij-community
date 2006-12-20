@@ -15,6 +15,9 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
+
 /**
  *
  */
@@ -27,6 +30,14 @@ public abstract class LexerBase implements Lexer{
   }
 
   public void restore(LexerPosition position) {
-    start(getBuffer(), position.getOffset(), getBufferEnd(), ((SimpleLexerState)position.getState()).getState());
+    start(getBufferSequence(), position.getOffset(), getBufferEnd(), ((SimpleLexerState)position.getState()).getState());
+  }
+
+  public CharSequence getBufferSequence() {
+    return new CharArrayCharSequence(getBuffer());
+  }
+
+  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+    start(CharArrayUtil.fromSequence(buffer), startOffset, endOffset, initialState);
   }
 }

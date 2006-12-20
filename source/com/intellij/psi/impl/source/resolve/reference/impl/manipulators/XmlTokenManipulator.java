@@ -19,9 +19,9 @@ public class XmlTokenManipulator extends AbstractElementManipulator<XmlToken> {
     String oldText = xmlToken.getText();
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
     IElementType tokenType = xmlToken.getTokenType();
-    char[] buffer = newText.toCharArray();
+
     FileElement holder = new DummyHolder(xmlToken.getManager(), null).getTreeElement();
-    LeafElement leaf = Factory.createLeafElement(tokenType, buffer, 0, buffer.length, -1, holder.getCharTable());
+    LeafElement leaf = Factory.createLeafElement(tokenType, newText, 0, newText.length(), -1, holder.getCharTable());
     TreeUtil.addChildren(holder, leaf);
     return (XmlToken)xmlToken.replace(leaf.getPsi());
   }

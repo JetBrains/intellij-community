@@ -27,6 +27,8 @@ import com.intellij.util.Processor;
 public class SimpleWordsScanner implements WordsScanner {
   public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
     int index = 0;
+    WordOccurrence occurrence = null;
+
     ScanWordsLoop:
     while (true) {
       while (true) {
@@ -48,8 +50,9 @@ public class SimpleWordsScanner implements WordsScanner {
       }
       if (index - index1 > 100) continue; // Strange limit but we should have some!
 
-      final CharSequence text = fileText.subSequence(index1, index);
-      processor.process(new WordOccurrence(text, null));
+      if (occurrence == null) occurrence = new WordOccurrence(fileText, index1, index, null);
+      else occurrence.init(fileText, index1, index, null);
+      processor.process(occurrence);
     }
   }
 }

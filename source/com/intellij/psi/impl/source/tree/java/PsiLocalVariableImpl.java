@@ -135,19 +135,19 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         CompositeElement statement1 = Factory.createCompositeElement(DECLARATION_STATEMENT, charTableByTree, getManager());
         statement1.addChild(variable, null);
 
-        ASTNode space = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
+        ASTNode space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
         variable.addChild(space, variable.getFirstChildNode());
 
         variable.addChild(typeCopy, variable.getFirstChildNode());
 
         if (modifierListCopy.getTextLength() > 0){
-          space = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, new char[]{' '}, 0, 1, treeCharTab, getManager());
+          space = Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
           variable.addChild(space, variable.getFirstChildNode());
         }
 
         variable.addChild(modifierListCopy, variable.getFirstChildNode());
 
-        ASTNode semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, new char[]{';'}, 0, 1, treeCharTab, getManager());
+        ASTNode semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, treeCharTab, getManager());
         SourceTreeToPsiMap.psiElementToTree(variables[i - 1]).addChild(semicolon, null);
 
         CodeEditUtil.addChild(statement.getTreeParent(), statement1, last.getTreeNext());
@@ -161,7 +161,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     SharedImplUtil.normalizeBrackets(this);
   }
 
-  public void deleteChildInternal(@NotNull ASTNode child) {
+  public void deleteChildInternal(ASTNode child) {
     if (getChildRole(child) == ChildRole.INITIALIZER){
       ASTNode eq = findChildByRole(ChildRole.INITIALIZER_EQ);
       if (eq != null){

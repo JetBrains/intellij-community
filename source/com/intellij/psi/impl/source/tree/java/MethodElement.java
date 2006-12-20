@@ -42,7 +42,7 @@ public class MethodElement extends RepositoryTreeElement{
       }
       super.deleteChildInternal(child);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-      LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1, treeCharTab, getManager());
+      LeafElement semicolon = Factory.createSingleLeafElement(SEMICOLON, ";", 0, 1, treeCharTab, getManager());
       addInternal(semicolon, semicolon, null, Boolean.TRUE);
     }
     else {

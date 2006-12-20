@@ -87,11 +87,11 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
 
     if (getFirstChildNode()== null || getFirstChildNode().getElementType() != LT){
-      TreeElement lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
+      TreeElement lt = Factory.createSingleLeafElement(LT, "<", 0, 1, treeCharTab, getManager());
       super.addInternal(lt, lt, getFirstChildNode(), Boolean.TRUE);
     }
     if (getLastChildNode() == null || getLastChildNode().getElementType() != GT){
-      TreeElement gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
+      TreeElement gt = Factory.createSingleLeafElement(GT, ">", 0, 1, treeCharTab, getManager());
       super.addInternal(gt, gt, getLastChildNode(), Boolean.FALSE);
     }
 
@@ -113,7 +113,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
       for(ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE){
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, element, Boolean.FALSE);
           break;
         }
@@ -121,7 +121,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
       for(ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()){
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == TYPE){
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, new char[]{','}, 0, 1, treeCharTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
         }

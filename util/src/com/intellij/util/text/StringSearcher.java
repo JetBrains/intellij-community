@@ -70,9 +70,14 @@ public class StringSearcher {
   }
 
   public int scan(CharSequence text) {
+    return scan(text,0,text.length());
+  }
+  
+  public int scan(CharSequence text, int _start, int _end) {
     if (myForwardDirection){
-      int start = 0;
-      int end = text.length() - myPatternLength;
+      int start = _start;
+      int end = _end - myPatternLength;
+
       while(start <= end){
         int i = myPatternLength - 1;
         char lastChar = text.charAt(start + i);
@@ -167,7 +172,7 @@ public class StringSearcher {
    * @return
    */
   public int scan(char[] text, int startOffset, int endOffset){
-    final int res = scan(new CharArrayCharSequence(text, startOffset, endOffset));
-    return res >= 0 ? res + startOffset : -1;
+    final int res = scan(new CharArrayCharSequence(text),startOffset, endOffset);
+    return res >= 0 ? res: -1;
   }
 }

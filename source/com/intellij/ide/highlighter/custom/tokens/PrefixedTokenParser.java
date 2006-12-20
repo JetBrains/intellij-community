@@ -18,7 +18,7 @@ public abstract class PrefixedTokenParser extends BaseTokenParser {
     final int start = position;
     int i;
     for (i = 0; i < myPrefix.length && position < myEndOffset; i++, position++) {
-      if (myPrefix[i] != myBuffer[position]) break;
+      if (myPrefix[i] != myBuffer.charAt(position)) break;
     }
     if (i < myPrefix.length) return false;
     int end = getTokenEnd(position);

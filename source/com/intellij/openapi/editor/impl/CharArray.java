@@ -4,15 +4,18 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceBackedByArray;
+
+import java.lang.ref.SoftReference;
 
 /**
  * @author cdr
  */
-abstract class CharArray {
+abstract class CharArray implements CharSequenceBackedByArray {
   protected int myCount = 0;
   private CharSequence myOriginalSequence;
   private char[] myArray = null;
-  private String myString = null; // buffers String value - for not to generate it every time
+  private SoftReference<String> myStringRef = null; // buffers String value - for not to generate it every time
 
   public CharArray(CharSequence chars) {
     myOriginalSequence = chars;
@@ -30,7 +33,7 @@ abstract class CharArray {
     myOriginalSequence = chars;
     myArray = null;
     myCount = chars.length();
-    myString = null;
+    myStringRef = null;
   }
 
   public void replace(int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp) {
@@ -80,7 +83,7 @@ abstract class CharArray {
       CharArrayUtil.getChars(myOriginalSequence, myArray, 0);
       myOriginalSequence = null;
     }
-    myString = null;
+    myStringRef = null;
   }
 
   public int getLength() {
@@ -89,26 +92,50 @@ abstract class CharArray {
 
   public CharSequence getCharArray() {
     if (myOriginalSequence != null) return myOriginalSequence;
-    return new CharArrayCharSequence(myArray, 0, myCount);
+    return this;
   }
 
   public String toString() {
-    if (myString == null) {
+    String str = myStringRef != null ? myStringRef.get() : null;
+    if (str == null) {
       if (myOriginalSequence != null) {
-        myString = myOriginalSequence.toString();
+        str = myOriginalSequence.toString();
       }
       else {
-        myString = new String(myArray, 0, myCount);
+        str = new String(myArray, 0, myCount);
       }
+      myStringRef = new SoftReference<String>(str);
     }
-    return myString;
+    return str;
   }
 
-  public char charAt(int i) {
+  public final int length() {
+    return myCount;
+  }
+
+  public final char charAt(int i) {
     if (i < 0 || i >= myCount) {
       throw new IndexOutOfBoundsException("Wrong offset: " + i);
     }
+    if (myOriginalSequence != null) return myOriginalSequence.charAt(i);
     return myArray[i];
+  }
+
+  public CharSequence subSequence(int start, int end) {
+    if (start == 0 && end == myCount) return this;
+    if (myOriginalSequence != null) {
+      return myOriginalSequence.subSequence(start, end);
+    }
+    return new CharArrayCharSequence(myArray, start, end);
+  }
+
+  public char[] getChars() {
+    if (myOriginalSequence != null) return CharArrayUtil.fromSequence(myOriginalSequence);
+    return myArray;
+  }
+
+  public void getChars(final char[] dst, final int dstOffset) {
+    System.arraycopy(myArray, 0, dst, dstOffset, length());
   }
 
   public CharSequence substring(int start, int end) {
@@ -133,10 +160,5 @@ abstract class CharArray {
     char[] newArray = new char[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
-  }
-
-  public char[] getRawChars() {
-    if (myOriginalSequence != null) return CharArrayUtil.fromSequence(myOriginalSequence);
-    return myArray;
   }
 }
