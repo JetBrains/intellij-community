@@ -75,7 +75,7 @@ public class ShowDiffAction extends AnAction {
   }
 
   public static void showDiffForChange(final Change[] changes, final int index, final Project project) {
-    showDiffForChange(changes, index, project, AdditionalToolbarActionsFactory.NONE);
+    showDiffForChange(changes, index, project, AdditionalToolbarActionsFactory.NONE, true);
   }
 
   public interface AdditionalToolbarActionsFactory {
@@ -87,7 +87,8 @@ public class ShowDiffAction extends AnAction {
     List<? extends AnAction> createActions(Change change);
   }
 
-  public static void showDiffForChange(Change[] changes, int index, final Project project, @Nullable AdditionalToolbarActionsFactory actionsFactory) {
+  public static void showDiffForChange(Change[] changes, int index, final Project project, @Nullable AdditionalToolbarActionsFactory actionsFactory,
+                                       final boolean showFrame) {
     Change selectedChange = changes [index];
     changes = filterDirectoryChanges(changes);
     index = 0;
@@ -101,7 +102,9 @@ public class ShowDiffAction extends AnAction {
 
     final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
     if (diffReq != null) {
-      diffReq.addHint(DiffTool.HINT_SHOW_FRAME);
+      if (showFrame) {
+        diffReq.addHint(DiffTool.HINT_SHOW_FRAME);
+      }
       tool.show(diffReq);
     }
   }

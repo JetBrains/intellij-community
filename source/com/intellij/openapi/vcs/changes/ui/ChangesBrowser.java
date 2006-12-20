@@ -148,10 +148,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
     int indexInSelection = Arrays.asList(changes).indexOf(leadSelection);
     if (indexInSelection >= 0) {
-      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, new DiffToolbarActionsFactory());
+      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, new DiffToolbarActionsFactory(), false);
     }
     else {
-      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory());
+      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory(), false);
     }
   }
 
