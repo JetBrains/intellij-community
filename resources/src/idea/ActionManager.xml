@@ -122,7 +122,7 @@
 
     <group id="JavaeeMigrationGroup">
       <action id="ApplyJavaeeStyle" class="com.intellij.javaee.module.view.ApplyJavaeeStyleAction"/>
-      <group id="GeneratePersistenceMapping" class="com.intellij.javaee.persistence.view.GeneratePersistenceMappingActionGroup"
+      <group id="GeneratePersistenceMapping" class="com.intellij.jpa.actions.GenerateJpaMappingActionGroup"
              popup="true"/>
     </group>
     <group id="JavaeeEditorGenerateGroup">
@@ -131,22 +131,22 @@
       <action id="GeneratePersistenceContextReference"
               class="com.intellij.codeInsight.generation.actions.GeneratePersistenceContextReference"/>
       <action id="GenerateInterceptorMethods" class="com.intellij.codeInsight.generation.actions.GenerateInterceptorMethods"/>
-      <action id="GenerateEntityListenerMethods" class="com.intellij.codeInsight.generation.actions.GenerateEntityListenerMethods"/>
+      <action id="GenerateEntityListenerMethods" class="com.intellij.jpa.actions.GenerateEntityListenerMethods"/>
 
       <action id="GenerateEJBFinderOrSelectorMethod" class="com.intellij.codeInsight.generation.actions.GenerateEJBFinderOrSelectorMethod"/>
     </group>
 
     <group id="J2EEGenerateGroup">
-      <action id="CreatePersistenceUnit" class="com.intellij.javaee.persistence.view.CreatePersistenceUnitAction"
+      <action id="CreatePersistenceUnit" class="com.intellij.jpa.actions.CreatePersistenceUnitAction"
               icon="/javaee/persistenceUnit.png"/>
-      <action id="CreateEntityListener" class="com.intellij.javaee.persistence.view.actions.CreateEntityListenerAction"
+      <action id="CreateEntityListener" class="com.intellij.jpa.actions.CreateEntityListenerAction"
               icon="/javaee/persistenceEntityListener.png"/>
 
-      <action id="CreatePersistentEntity" class="com.intellij.javaee.persistence.view.actions.CreatePersistentEntity"
+      <action id="CreatePersistentEntity" class="com.intellij.jpa.actions.CreatePersistentEntity"
               icon="/javaee/persistenceEntity.png"/>
-      <action id="CreateMappedSuperclass" class="com.intellij.javaee.persistence.view.actions.CreateMappedSuperclass"
+      <action id="CreateMappedSuperclass" class="com.intellij.jpa.actions.CreateMappedSuperclass"
               icon="/javaee/persistenceMappedSuperclass.png"/>
-      <action id="CreateEmbeddable" class="com.intellij.javaee.persistence.view.actions.CreateEmbeddable"
+      <action id="CreateEmbeddable" class="com.intellij.jpa.actions.CreateEmbeddable"
               icon="/javaee/persistenceEmbeddable.png"/>
 
       <action id="CreateSessionBean" class="com.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction"
@@ -933,8 +933,8 @@
 
     <group id="J2EEViewPopupMenu">
       <action id="OpenCustomEditor" class="com.intellij.ide.actions.EditSourceAction"/>
-      <action id="OpenPersistenceERDiagramAction" class="com.intellij.javaee.persistence.view.actions.OpenPersistenceERDiagramAction"/>
-      <action id="EditEntityListenerBindingsAction" class="com.intellij.javaee.persistence.view.actions.EditEntityListenerBindingsAction"/>
+      <action id="OpenPersistenceERDiagramAction" class="com.intellij.jpa.actions.OpenJpaERDiagramAction"/>
+      <action id="EditEntityListenerBindingsAction" class="com.intellij.jpa.actions.EditEntityListenerBindingsAction"/>
       <action id="EditInterceptorBindingsAction" class="com.intellij.javaee.module.view.ejb.actions.EditInterceptorBindingsAction"/>
       <reference ref="NewGroup"/>
       <reference ref="CutCopyPasteGroup"/>

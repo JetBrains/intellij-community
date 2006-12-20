@@ -27,7 +27,7 @@ import java.util.List;
 /**
  *
  */
-abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
+public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
 
   private String myChooserTitle;
