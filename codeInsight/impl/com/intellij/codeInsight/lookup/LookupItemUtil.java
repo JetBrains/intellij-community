@@ -182,6 +182,9 @@ public class LookupItemUtil{
     if (s == null) {
       LOG.assertTrue(false, "Null string for object: " + object + " of class " + (object != null ?object.getClass():null));
     }
+    if (object instanceof LookupValueWithTail) {
+      item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + ((LookupValueWithTail)object).getTailText());
+    }
     item.setLookupString(s);
     item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, tailType);
     return item;

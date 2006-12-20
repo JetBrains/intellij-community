@@ -5,12 +5,10 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Iconable;
-
-import javax.swing.*;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -29,6 +27,10 @@ public class LookupValueFactory {
   @NotNull
   public static Object createLookupValueWithHint(@NotNull String name, @Nullable Icon icon, String hint) {
     return new LookupValueWithIconAndHint(name, icon, hint);
+  }
+
+  public static Object createLookupValueWithHintAndTail(@NotNull String name, @Nullable Icon icon, String hint, final String tail) {
+    return new LookupValueWithHintAndTail(name, icon, hint, tail);
   }
 
   public static class LookupValueWithIcon implements PresentableLookupValue, Iconable {
@@ -75,4 +77,18 @@ public class LookupValueFactory {
       return false;
     }
   }
+
+  public static class LookupValueWithHintAndTail extends LookupValueWithIconAndHint implements LookupValueWithTail {
+    private final String myTail;
+
+    protected LookupValueWithHintAndTail(final String name, final Icon icon, final String hint, String tail) {
+      super(name, icon, hint);
+      myTail = tail;
+    }
+
+    public String getTailText() {
+      return myTail;
+    }
+  }
+
 }
