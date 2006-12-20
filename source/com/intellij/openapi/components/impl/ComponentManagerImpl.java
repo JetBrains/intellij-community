@@ -19,7 +19,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.Messages;
+import com.intellij.util.messages.MessageBusFactory;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -75,7 +75,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected void initComponents() {
     final ComponentManagerImpl parent = getParentComponentManager();
-    myMessageBus = Messages.newMessageBus(parent != null ? parent.getMessageBus() : null);
+    myMessageBus = MessageBusFactory.newMessageBus(parent != null ? parent.getMessageBus() : null);
     getPicoContainer().registerComponentInstance(MessageBus.class, myMessageBus);
 
     createComponents();

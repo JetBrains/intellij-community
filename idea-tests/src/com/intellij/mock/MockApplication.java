@@ -12,7 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.Messages;
+import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoContainer;
 
@@ -22,7 +22,7 @@ import java.lang.reflect.Array;
 import java.util.concurrent.Future;
 
 public class MockApplication extends UserDataHolderBase implements ApplicationEx {
-  private final MessageBus myMessageBus = Messages.newMessageBus();
+  private final MessageBus myMessageBus = MessageBusFactory.newMessageBus();
 
   public String getName() {
     return "mock";
