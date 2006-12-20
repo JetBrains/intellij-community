@@ -78,6 +78,12 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     }
   };
 
+  public static final Object IGNORED_FILES_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.ignored.files");
+    }
+  };
+
   public ChangesListView(final Project project) {
     myProject = project;
 
@@ -146,11 +152,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   public void updateModel(List<LocalChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles,
-                          List<VirtualFile> modifiedWithoutEditing) {
+                          List<VirtualFile> modifiedWithoutEditing, @Nullable List<VirtualFile> ignoredFiles) {
     storeState();
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
-    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing);
+    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing, ignoredFiles);
     setModel(model);
     setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
 

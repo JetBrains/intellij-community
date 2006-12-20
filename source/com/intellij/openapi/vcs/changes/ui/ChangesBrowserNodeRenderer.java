@@ -3,14 +3,13 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
-import com.intellij.problems.WolfTheProblemSolver;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,7 +88,7 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
     else if (object instanceof VirtualFile) {
       final VirtualFile file = (VirtualFile)object;
-      appendFileName(file, file.getName(), myChangeListManager.isUnversioned(file) ? FileStatus.COLOR_UNKNOWN : FileStatus.COLOR_HIJACKED);
+      appendFileName(file, file.getName(), myChangeListManager.getStatus(file).getColor());
       if (myShowFlatten && file.isValid()) {
         final VirtualFile parentFile = file.getParent();
         assert parentFile != null;

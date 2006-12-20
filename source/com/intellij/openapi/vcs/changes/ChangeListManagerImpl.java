@@ -504,6 +504,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return new ArrayList<VirtualFile>(myModifiedWithoutEditingHolder.getFiles());
   }
 
+  List<VirtualFile> getIgnoredFiles() {
+    return new ArrayList<VirtualFile>(myIgnoredFilesHolder.getFiles());
+  }
+
   List<FilePath> getDeletedFiles() {
     return new ArrayList<FilePath>(myDeletedFilesHolder.getFiles());
   }

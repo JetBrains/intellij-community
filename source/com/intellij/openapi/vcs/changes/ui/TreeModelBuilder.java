@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -50,7 +51,8 @@ public class TreeModelBuilder {
   public DefaultTreeModel buildModel(final List<? extends ChangeList> changeLists,
                                      final List<VirtualFile> unversionedFiles,
                                      final List<FilePath> locallyDeletedFiles,
-                                     final List<VirtualFile> modifiedWithoutEditing) {
+                                     final List<VirtualFile> modifiedWithoutEditing,
+                                     @Nullable final List<VirtualFile> ignoredFiles) {
 
     for (ChangeList list : changeLists) {
       ChangesBrowserNode listNode = new ChangesBrowserNode(myProject, list);
@@ -67,6 +69,9 @@ public class TreeModelBuilder {
     }
     if (!unversionedFiles.isEmpty()) {
       buildVirtualFiles(unversionedFiles, ChangesListView.UNVERSIONED_FILES_TAG);
+    }
+    if (ignoredFiles != null && !ignoredFiles.isEmpty()) {
+      buildVirtualFiles(ignoredFiles, ChangesListView.IGNORED_FILES_TAG);
     }
 
     if (!locallyDeletedFiles.isEmpty()) {

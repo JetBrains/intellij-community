@@ -44,6 +44,7 @@ import java.util.Collection;
 
 public class ChangesViewManager implements ProjectComponent, JDOMExternalizable {
   private boolean SHOW_FLATTEN_MODE = true;
+  private boolean SHOW_IGNORED_MODE = false;
 
   private ChangesListView myView;
   private JLabel myProgressLabel;
@@ -58,6 +59,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   private ChangesViewContentManager myContentManager;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
+  @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
 
   public static ChangesViewManager getInstance(Project project) {
     return project.getComponent(ChangesViewManager.class);
@@ -131,6 +133,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
                                                                                              : KeyEvent.CTRL_DOWN_MASK)),
                                                 panel);
     visualActionsGroup.add(showFlattenAction);
+    visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
     toolbarPanel.add(createToolbarComponent(visualActionsGroup), BorderLayout.CENTER);
 
@@ -181,15 +184,18 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     myView.updateModel(changeListManager.getChangeListsCopy(),
                        changeListManager.getUnversionedFiles(),
                        changeListManager.getDeletedFiles(),
-                       changeListManager.getModifiedWithoutEditing());
+                       changeListManager.getModifiedWithoutEditing(),
+                       SHOW_IGNORED_MODE ? changeListManager.getIgnoredFiles() : null);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
     SHOW_FLATTEN_MODE = Boolean.valueOf(element.getAttributeValue(ATT_FLATTENED_VIEW)).booleanValue();
+    SHOW_IGNORED_MODE = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IGNORED)).booleanValue();
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ATT_FLATTENED_VIEW, String.valueOf(SHOW_FLATTEN_MODE));
+    element.setAttribute(ATT_SHOW_IGNORED, String.valueOf(SHOW_IGNORED_MODE));
   }
 
   public void selectFile(final VirtualFile vFile) {
@@ -282,6 +288,23 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     public void setSelected(AnActionEvent e, boolean state) {
       SHOW_FLATTEN_MODE = !state;
       myView.setShowFlatten(SHOW_FLATTEN_MODE);
+      refreshView();
+    }
+  }
+
+  public class ToggleShowIgnoredAction extends ToggleAction {
+    public ToggleShowIgnoredAction() {
+      super(VcsBundle.message("changes.action.show.ignored.text"),
+            VcsBundle.message("changes.action.show.ignored.description"),
+            IconLoader.getIcon("/actions/showHiddens.png"));
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return SHOW_IGNORED_MODE;
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      SHOW_IGNORED_MODE = state;
       refreshView();
     }
   }
