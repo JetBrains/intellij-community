@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -46,17 +45,7 @@ public class DomElementsHighlightingUtil {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, ProblemDescriptor>() {
       public ProblemDescriptor fun(final Pair<TextRange, PsiElement> s) {
-        final PsiElement element = s.second;
-        return new ProblemDescriptorImpl(element, element, problemDescriptor.getDescriptionTemplate(), problemDescriptor.getFixes(), type, false, null) {
-
-          public final PsiElement getPsiElement() {
-            return getStartElement();
-          }
-
-          public TextRange getTextRange() {
-            return s.first;
-          }
-        };
+        return manager.createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, problemDescriptor.getFixes());
       }
     });
   }
@@ -104,18 +93,17 @@ public class DomElementsHighlightingUtil {
     if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
       final PsiReference reference = ((DomElementResolveProblemDescriptor)problemDescriptor).getPsiReference();
       final PsiElement element = reference.getElement();
-      final int startOffset = element.getTextRange().getStartOffset();
       final TextRange referenceRange = reference.getRangeInElement();
       final TextRange errorRange;
       if (referenceRange.getStartOffset() == referenceRange.getEndOffset()) {
         if (element instanceof XmlAttributeValue) {
-          errorRange = TextRange.from(referenceRange.getStartOffset() + startOffset - 1, 2);
+          errorRange = TextRange.from(referenceRange.getStartOffset() - 1, 2);
         }
         else {
-          errorRange = TextRange.from(referenceRange.getStartOffset() + startOffset, 1);
+          errorRange = TextRange.from(referenceRange.getStartOffset(), 1);
         }
       } else {
-        errorRange = referenceRange.shiftRight(startOffset);
+        errorRange = referenceRange;
       }
       descritors.add(creator.fun(Pair.create(errorRange, element)));
       return descritors;
@@ -131,7 +119,7 @@ public class DomElementsHighlightingUtil {
           return descritors;
         }
       }
-      return Arrays.asList(creator.fun(Pair.create(psiElement.getTextRange(), psiElement)));
+      return Arrays.asList(creator.fun(Pair.create(TextRange.from(0, psiElement.getTextRange().getLength()), psiElement)));
     }
 
     final XmlTag tag = getParentXmlTag(domElement);
@@ -147,10 +135,11 @@ public class DomElementsHighlightingUtil {
     final ASTNode startNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
     final ASTNode endNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(node);
 
-    descritors.add(creator.fun(Pair.create(startNode.getTextRange(), (PsiElement)tag)));
+    final int startOffset = tag.getTextRange().getStartOffset();
+    descritors.add(creator.fun(Pair.create(startNode.getTextRange().shiftRight(-startOffset), (PsiElement)tag)));
 
     if (endNode != null && !startNode.equals(endNode)) {
-      descritors.add(creator.fun(Pair.create(endNode.getTextRange(), (PsiElement)tag)));
+      descritors.add(creator.fun(Pair.create(endNode.getTextRange().shiftRight(-startOffset), (PsiElement)tag)));
     }
   }
 
