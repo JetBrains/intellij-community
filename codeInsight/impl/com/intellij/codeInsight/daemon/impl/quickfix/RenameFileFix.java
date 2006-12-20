@@ -6,12 +6,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -20,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class RenameFileFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix");
+public class RenameFileFix implements IntentionAction, LocalQuickFix {
   private final String myNewName;
 
   public RenameFileFix(String newName) {
@@ -34,11 +37,27 @@ public class RenameFileFix implements IntentionAction {
   }
 
   @NotNull
+  public String getName() {
+    return getText();
+  }
+
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("rename.file.fix");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public void applyFix(@NotNull final Project project, ProblemDescriptor descriptor) {
+    final PsiFile file = descriptor.getPsiElement().getContainingFile();
+    if (isAvailable(project, null, file)) {
+      new WriteCommandAction(project) {
+        protected void run(Result result) throws Throwable {
+          invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file);
+        }
+      }.execute();
+    }
+  }
+
+  public final boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!file.isValid()) return false;
     PsiDirectory directory = file.getContainingDirectory();
     VirtualFile vFile = file.getVirtualFile();
@@ -51,14 +70,16 @@ public class RenameFileFix implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     VirtualFile vFile = file.getVirtualFile();
     String newName = myNewName + "." + vFile.getExtension();
-    FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(file.getProject()).getDocument(file));
+    FileDocumentManager.getInstance().saveDocument(PsiDocumentManager.getInstance(project).getDocument(file));
     try{
       vFile.rename(file.getManager(), newName);
     }
     catch(IOException e){
       MessagesEx.error(project, e.getMessage()).showNow();
     }
-    DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
+    if (editor != null) {
+      DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
+    }
   }
 
   public boolean startInWriteAction() {

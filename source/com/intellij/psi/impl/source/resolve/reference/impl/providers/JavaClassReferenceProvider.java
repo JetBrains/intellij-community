@@ -32,6 +32,9 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.codeInspection.LocalQuickFix;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,7 +295,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       return myType;
     }
 
-    public class JavaReference extends GenericReference implements PsiJavaReference, QuickFixProvider {
+    public class JavaReference extends GenericReference implements PsiJavaReference, QuickFixProvider, LocalQuickFixProvider {
       private final int myIndex;
       private TextRange myRange;
       private final String myText;
@@ -548,12 +551,18 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       }
 
       public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+        registerFixes(info, reference);
+      }
+
+      private List<LocalQuickFix> registerFixes(final HighlightInfo info, final PsiReference reference) {
+        final List<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
         final String[] extendClasses = EXTEND_CLASS_NAMES.getValue(myOptions);
         if (extendClasses != null && extendClasses.length > 0) {
-          JavaClassReferenceQuickFixProvider.registerQuickFix(info, reference, extendClasses[0]);
+          fixes.addAll(JavaClassReferenceQuickFixProvider.registerQuickFix(info, reference, extendClasses[0]));
         } else {
-          JavaClassReferenceQuickFixProvider.registerQuickFix(info, reference);
+          fixes.addAll(JavaClassReferenceQuickFixProvider.registerQuickFix(info, reference));
         }
+        return fixes;
       }
 
       @NotNull
@@ -598,8 +607,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         }
         return LookupValueFactory.createLookupValue(name, clazz.getIcon(Iconable.ICON_FLAG_READ_STATUS));
        }
-    }
 
+      public LocalQuickFix[] getQuickFixes() {
+        final List<LocalQuickFix> list = registerFixes(null, this);
+        return list.toArray(new LocalQuickFix[list.size()]);
+      }
+    }
 
     protected boolean isSoft() {
       return mySoft;

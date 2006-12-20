@@ -22,9 +22,12 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.codeInspection.LocalQuickFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -56,8 +59,8 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
     return element;
   }
 
-  public void registerQuickfix(HighlightInfo info, FileReference reference) {
-    FileReferenceQuickFixProvider.registerQuickFix(info, reference);
+  public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
+    return FileReferenceQuickFixProvider.registerQuickFix(info, reference);
   }
 
   @Nullable
@@ -119,4 +122,5 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
     }
     return true;
   }
+
 }

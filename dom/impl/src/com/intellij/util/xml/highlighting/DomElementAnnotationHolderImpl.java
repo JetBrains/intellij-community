@@ -4,6 +4,7 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +21,9 @@ import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Arrays;
 
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
@@ -47,7 +51,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
 
   @NotNull
   public DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference) {
-    return addProblem(new DomElementResolveProblemDescriptorImpl(element, reference, getQuickFixes(element)));
+    return addProblem(new DomElementResolveProblemDescriptorImpl(element, reference, getQuickFixes(element, reference)));
   }
 
   @NotNull
@@ -70,13 +74,17 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return size();
   }
 
-  private static LocalQuickFix[] getQuickFixes(final GenericDomValue element) {
+  private static LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
+    final List<LocalQuickFix> result = new SmartList<LocalQuickFix>();
     final Converter converter = element.getConverter();
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
-      return resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
+      result.addAll(Arrays.asList(resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)))));
     }
-    return new LocalQuickFix[0];
+    if (reference instanceof LocalQuickFixProvider) {
+      result.addAll(Arrays.asList(((LocalQuickFixProvider)reference).getQuickFixes()));
+    }
+    return result.toArray(new LocalQuickFix[result.size()]);
   }
 
   public <T extends DomElementProblemDescriptor> T addProblem(final T problemDescriptor) {

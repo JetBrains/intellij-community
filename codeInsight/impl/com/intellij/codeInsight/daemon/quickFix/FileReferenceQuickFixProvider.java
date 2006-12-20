@@ -1,38 +1,25 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.UnknownFileType;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInspection.LocalQuickFix;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Collections;
+import java.util.Arrays;
 
 /**
  * @author Maxim.Mossienko
@@ -40,11 +27,11 @@ import java.util.Collection;
 public class FileReferenceQuickFixProvider {
   private FileReferenceQuickFixProvider() {}
 
-  public static void registerQuickFix(final HighlightInfo info, final FileReference reference) {
+  public static List<? extends LocalQuickFix> registerQuickFix(final HighlightInfo info, final FileReference reference) {
     final FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
     int index = reference.getIndex();
 
-    if (index < 0) return;
+    if (index < 0) return Collections.emptyList();
     final String newFileName = reference.getCanonicalText();
 
     // check if we could create file
@@ -53,7 +40,7 @@ public class FileReferenceQuickFixProvider {
         newFileName.indexOf('*') != -1 ||
         newFileName.indexOf('?') != -1 ||
         SystemInfo.isWindows && newFileName.indexOf(':') != -1) {
-      return;
+      return Collections.emptyList();
     }
 
     final PsiFileSystemItem context;
@@ -62,15 +49,15 @@ public class FileReferenceQuickFixProvider {
     } else { // index == 0
       final Collection<PsiFileSystemItem> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
       if (defaultContexts.isEmpty()) {
-        return;
+        return Collections.emptyList();
       }
       context = defaultContexts.iterator().next();
     }
-    if (context == null) return;
+    if (context == null) return Collections.emptyList();
 
     final PsiDirectory directory = reference.getPsiDirectory(context);
 
-    if (directory == null) return;
+    if (directory == null) return Collections.emptyList();
 
     boolean differentCase = false;
 
@@ -84,22 +71,19 @@ public class FileReferenceQuickFixProvider {
           final String existingElementName = ((PsiNamedElement)psiElement).getName();
 
           differentCase = true;
-          QuickFixAction.registerQuickFixAction(
-            info,
-            new RenameFileReferenceIntentionAction(existingElementName, reference)
-          );
+          final RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
+          QuickFixAction.registerQuickFixAction(info, renameRefAction);
 
-          QuickFixAction.registerQuickFixAction(
-            info,
-            new RenameFileFix(newFileName)
-          );
+          final RenameFileFix renameFileFix = new RenameFileFix(newFileName);
+          QuickFixAction.registerQuickFixAction(info, renameFileFix);
+          return Arrays.asList(renameRefAction, renameFileFix);
         }
       } finally {
         fileReferenceSet.setCaseSensitive(original);
       }
     }
 
-    if (differentCase && SystemInfo.isWindows) return;
+    if (differentCase && SystemInfo.isWindows) return Collections.emptyList();
 
     final boolean isdirectory;
 
@@ -108,157 +92,25 @@ public class FileReferenceQuickFixProvider {
       try {
         directory.checkCreateSubdirectory(newFileName);
       } catch(IncorrectOperationException ex) {
-        return;
+        return Collections.emptyList();
       }
       isdirectory = true;
     } else {
       FileType ft = FileTypeManager.getInstance().getFileTypeByFileName(newFileName);
-      if (ft instanceof UnknownFileType) return;
+      if (ft instanceof UnknownFileType) return Collections.emptyList();
 
       try {
         directory.checkCreateFile(newFileName);
       } catch(IncorrectOperationException ex) {
-        return;
+        return Collections.emptyList();
       }
 
       isdirectory = false;
     }
 
-    QuickFixAction.registerQuickFixAction(
-      info,
-      new CreateFileIntentionAction(isdirectory, newFileName, directory)
-    );
+    final CreateFileIntentionAction action = new CreateFileIntentionAction(isdirectory, newFileName, directory);
+    QuickFixAction.registerQuickFixAction(info, action);
+    return Arrays.asList(action);
   }
 
-  private static class RenameFileReferenceIntentionAction implements IntentionAction {
-    private final String myExistingElementName;
-    private final FileReference myFileReference;
-
-    public RenameFileReferenceIntentionAction(final String existingElementName, final FileReference fileReference) {
-      myExistingElementName = existingElementName;
-      myFileReference = fileReference;
-    }
-
-    @NotNull
-    public String getText() {
-      return QuickFixBundle.message("rename.file.reference.text", myExistingElementName);
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return QuickFixBundle.message("rename.file.reference.family");
-    }
-
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-      myFileReference.handleElementRename(myExistingElementName);
-    }
-
-    public boolean startInWriteAction() {
-      return true;
-    }
-  }
-
-  static class CreateFileIntentionAction implements IntentionAction {
-    private final boolean myIsdirectory;
-    private final String myNewFileName;
-    private final PsiDirectory myDirectory;
-    private final @Nullable String myText;
-    private @NotNull String myKey;
-    private boolean myIsAvailable;
-    private long myIsAvailableTimeStamp;
-    private static final int REFRESH_INTERVAL = 1000;
-
-    public CreateFileIntentionAction(final boolean isdirectory,
-                                     final String newFileName,
-                                     final PsiDirectory directory,
-                                     @Nullable String text,
-                                     @NotNull String key) {
-      myIsdirectory = isdirectory;
-      myNewFileName = newFileName;
-      myDirectory = directory;
-      myText = text;
-      myKey = key;
-      myIsAvailable = true;
-      myIsAvailableTimeStamp = System.currentTimeMillis();
-    }
-
-    public CreateFileIntentionAction(final boolean isdirectory,
-                                     final String newFileName,
-                                     final PsiDirectory directory) {
-      this(isdirectory,newFileName,directory,null,isdirectory ? "create.directory.text":"create.file.text" );
-    }
-
-    @NotNull
-    public String getText() {
-      return QuickFixBundle.message(myKey, myNewFileName);
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return QuickFixBundle.message("create.file.family");
-    }
-
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      long current = System.currentTimeMillis();
-
-      if (current - myIsAvailableTimeStamp > REFRESH_INTERVAL) {
-        myIsAvailable = myDirectory.getVirtualFile().findChild(myNewFileName) == null;
-        myIsAvailableTimeStamp = current;
-      }
-
-      return myIsAvailable;
-    }
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myIsAvailableTimeStamp = 0; // to revalidate applicability
-
-      try {
-        if (myIsdirectory) {
-          myDirectory.createSubdirectory(myNewFileName);
-        }
-        else {
-          final PsiFile newfile = myDirectory.createFile(myNewFileName);
-          String text = null;
-
-          if (myText != null) {
-            final PsiManager psiManager = file.getManager();
-            final PsiFile psiFile = psiManager.getElementFactory().createFileFromText("_" + myNewFileName, myText);
-            final PsiElement psiElement = CodeStyleManager.getInstance(file.getProject()).reformat(psiFile);
-
-            text = psiElement.getText();
-          }
-
-          final FileEditorManager editorManager = FileEditorManager.getInstance(myDirectory.getProject());
-          final FileEditor[] fileEditors = editorManager.openFile(newfile.getVirtualFile(), true);
-
-          if (text != null) {
-            for(FileEditor feditor:fileEditors) {
-              if (feditor instanceof TextEditor) { // JSP is not safe to edit via Psi
-                final Document document = ((TextEditor)feditor).getEditor().getDocument();
-                document.setText(text);
-
-                if (ApplicationManager.getApplication().isUnitTestMode()) {
-                  FileDocumentManager.getInstance().saveDocument(document);
-                }
-                PsiDocumentManager.getInstance(project).commitDocument(document);
-                break;
-              }
-            }
-          }
-        }
-      }
-      catch (IncorrectOperationException e) {
-        myIsAvailable = false;
-      }
-    }
-
-    public boolean startInWriteAction() {
-      return true;
-    }
-  }
 }
