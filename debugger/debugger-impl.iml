@@ -21,8 +21,6 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
-    <orderEntry type="module" module-name="web-openapi" />
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntryProperties />

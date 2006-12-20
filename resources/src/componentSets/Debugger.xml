@@ -1,11 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.debugger.engine.PositionManagersFactory</interface-class>
-      <implementation-class>com.intellij.debugger.engine.PositionManagersFactoryImpl</implementation-class>
-    </component>
-    
-    <component>
       <interface-class>com.intellij.debugger.engine.DebuggerUtils</interface-class>
       <implementation-class>com.intellij.debugger.impl.DebuggerUtilsImpl</implementation-class>
     </component>
@@ -20,10 +15,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.debugger.settings.DebuggerSettings</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.javaee.deployment.JspDeploymentManager</interface-class>
-      <implementation-class>com.intellij.debugger.impl.JspDeploymentManagerImpl</implementation-class>
     </component>
     <!--standard breakpoint factories -->
     <component>
