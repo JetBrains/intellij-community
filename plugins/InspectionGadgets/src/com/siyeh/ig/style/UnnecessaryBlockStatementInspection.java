@@ -78,19 +78,11 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             final PsiCodeBlock block = (PsiCodeBlock)parent;
             final PsiBlockStatement blockStatement =
                     (PsiBlockStatement)block.getParent();
-            assert blockStatement != null;
-            final PsiElement containingElement = blockStatement.getParent();
-            final PsiElement[] statements = block.getStatements();
-            if (statements.length > 0) {
-                assert containingElement != null;
-                final PsiElement added =
-                        containingElement.addRangeBefore(
-                                statements[0],
-                                statements[statements.length - 1],
-                                blockStatement);
-                final CodeStyleManager codeStyleManager =
-                        CodeStyleManager.getInstance(project);
-                codeStyleManager.reformat(added);
+            final PsiElement[] children = block.getChildren();
+            if (children.length > 2) {
+                final PsiElement element = blockStatement.getParent();
+                element.addRangeBefore(children[1],
+                        children[children.length - 2], blockStatement);
             }
             blockStatement.delete();
         }
