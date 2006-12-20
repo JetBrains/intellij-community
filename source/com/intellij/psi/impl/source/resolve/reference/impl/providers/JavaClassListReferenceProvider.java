@@ -4,7 +4,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +37,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider{
     while(matcher.find()){
       final String identifier = matcher.group().trim();
       if(knownTopLevelPackages.contains(identifier.substring(0, identifier.indexOf('.')))){
-        results.addAll(Arrays.asList(new ReferenceSet(identifier, position, offsetInPosition + matcher.start(), type, false){
+        results.addAll(Arrays.asList(new JavaClassReferenceSet(identifier, position, offsetInPosition + matcher.start(), type, false, this){
           protected boolean isSoft(){
             return true;
           }

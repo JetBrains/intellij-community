@@ -69,7 +69,7 @@ public class FileReference
   }
 
   @Nullable
-  public static PsiDirectory getPsiDirectory(PsiFileSystemItem element) {
+  public static PsiDirectory getPsiDirectory(@NotNull PsiFileSystemItem element) {
     final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(element);
     return helper != null ? helper.getPsiDirectory(element) : null;
   }
@@ -121,7 +121,7 @@ public class FileReference
       final List ret = new ArrayList();
       final List<Class> allowedClasses = new ArrayList<Class>();
       allowedClasses.add(PsiFile.class);
-      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      for (final FileReferenceHelper helper : getHelpers()) {
         allowedClasses.add(helper.getDirectoryClass());
       }
       final PsiScopeProcessor proc =
@@ -164,6 +164,8 @@ public class FileReference
     if (!(element instanceof PsiFileSystemItem)) return false;
 
     final PsiFileSystemItem resolveResult = resolve();
+    if (resolveResult == null) return false;
+
     final PsiManager manager = element.getManager();
     return element instanceof PsiDirectory && manager.areElementsEquivalent(element, getPsiDirectory(resolveResult)) ||
            manager.areElementsEquivalent(element, resolveResult);
@@ -209,7 +211,7 @@ public class FileReference
     final PsiFile file = getElement().getContainingFile();
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
 
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+    for (final FileReferenceHelper helper : getHelpers()) {
       if (helper.isDoNothingOnBind(file, this)) {
         return element;
       }
@@ -219,7 +221,7 @@ public class FileReference
     LOG.assertTrue(currentFile != null);
 
     String newName = null;
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+    for (final FileReferenceHelper helper : getHelpers()) {
       final String s = helper.getRelativePath(file.getProject(), currentFile, dstVFile);
       if (s != null) {
         newName = s;
@@ -241,9 +243,13 @@ public class FileReference
   }
 
   public void registerQuickfix(HighlightInfo info, FileReference reference) {
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+    for (final FileReferenceHelper helper : getHelpers()) {
       helper.registerFixes(info, reference);
     }
+  }
+
+  protected List<FileReferenceHelper> getHelpers() {
+    return FileReferenceHelperRegistrar.getHelpers();
   }
 
   public int getIndex() {
@@ -254,7 +260,7 @@ public class FileReference
     final StringBuffer builder = new StringBuffer(JavaErrorMessages.message("error.cannot.resolve"));
     builder.append(" ").append(myFileReferenceSet.getTypeName());
     if (!isLast()) {
-      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      for (final FileReferenceHelper helper : getHelpers()) {
         builder.append(" ").append(JavaErrorMessages.message("error.cannot.resolve.infix")).append(" ")
           .append(helper.getDirectoryTypeName());
       }
@@ -281,7 +287,7 @@ public class FileReference
 
   public LocalQuickFix[] getQuickFixes() {
     final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
-    for (final FileReferenceHelper<?> helper : FileReferenceHelperRegistrar.getHelpers()) {
+    for (final FileReferenceHelper<?> helper : getHelpers()) {
       result.addAll(helper.registerFixes(null, this));
     }
     return result.toArray(new LocalQuickFix[result.size()]);

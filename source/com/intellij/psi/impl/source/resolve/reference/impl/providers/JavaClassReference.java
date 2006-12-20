@@ -1,0 +1,424 @@
+/*
+ * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
+ */
+package com.intellij.psi.impl.source.resolve.reference.impl.providers;
+
+import com.intellij.codeInsight.completion.scope.CompletionProcessor;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageIntentionAction;
+import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspxStaticImportStatement;
+import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.ClassCandidateInfo;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+
+/**
+ * @author peter
+*/
+public class JavaClassReference extends GenericReference implements PsiJavaReference, QuickFixProvider, LocalQuickFixProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference");
+  private final int myIndex;
+  private TextRange myRange;
+  private final String myText;
+  private final boolean myInStaticImport;
+  private final JavaClassReferenceSet myJavaClassReferenceSet;
+  private final Map<CustomizableReferenceProvider.CustomizationKey,Object> myOptions;
+
+  public JavaClassReference(final JavaClassReferenceSet referenceSet, TextRange range, int index, String text, final boolean staticImport) {
+    super(referenceSet.getProvider());
+    myInStaticImport = staticImport;
+    LOG.assertTrue(range.getEndOffset() <= referenceSet.getElement().getTextLength());
+    myIndex = index;
+    myRange = range;
+    myText = text;
+    myJavaClassReferenceSet = referenceSet;
+    myOptions = myJavaClassReferenceSet.getOptions();
+  }
+
+  @Nullable
+  public PsiElement getContext() {
+    final PsiReference contextRef = getContextReference();
+    return contextRef != null ? contextRef.resolve() : null;
+  }
+
+  public void processVariants(final PsiScopeProcessor processor) {
+
+    if (processor instanceof CompletionProcessor && JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions()) != null) {
+      ((CompletionProcessor)processor).setCompletionElements(getVariants());
+      return;
+    }
+    PsiScopeProcessor processorToUse = processor;
+
+    if (myInStaticImport) {
+      // allows to complete members
+      processor.handleEvent(PsiScopeProcessor.Event.CHANGE_LEVEL, null);
+    }
+    else if (isStaticClassReference()) {
+      processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
+      processorToUse = new PsiScopeProcessor() {
+        public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+          if (element instanceof PsiClass) processor.execute(element, substitutor);
+          return true;
+        }
+
+        public <V> V getHint(Class<V> hintClass) {
+          return processor.getHint(hintClass);
+        }
+
+        public void handleEvent(Event event, Object associated) {
+          processor.handleEvent(event, associated);
+        }
+      };
+    }
+    super.processVariants(processorToUse);
+  }
+
+  private boolean isStaticClassReference() {
+    final String s = getElement().getText();
+    return isStaticClassReference(s);
+  }
+
+  private boolean isStaticClassReference(final String s) {
+    return myIndex > 0 && s.charAt(getRangeInElement().getStartOffset() - 1) == JavaClassReferenceSet.SEPARATOR2;
+  }
+
+  @Nullable
+  public PsiReference getContextReference() {
+    return myIndex > 0 ? myJavaClassReferenceSet.getReference(myIndex - 1) : null;
+  }
+
+  public ReferenceType getType() {
+    return myJavaClassReferenceSet.getType(myIndex);
+  }
+
+  public ReferenceType getSoftenType() {
+    return new ReferenceType(ReferenceType.JAVA_CLASS, ReferenceType.JAVA_PACKAGE);
+  }
+
+  public boolean needToCheckAccessibility() {
+    return false;
+  }
+
+  public PsiElement getElement() {
+    return myJavaClassReferenceSet.getElement();
+  }
+
+  public boolean isReferenceTo(PsiElement element) {
+    return (element instanceof PsiClass || element instanceof PsiPackage) && super.isReferenceTo(element);
+  }
+
+  public TextRange getRangeInElement() {
+    return myRange;
+  }
+
+  public String getCanonicalText() {
+    return myText;
+  }
+
+  public boolean isSoft() {
+    return myJavaClassReferenceSet.isSoft();
+  }
+
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
+    if (manipulator != null) {
+      final PsiElement element = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
+      myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
+      return element;
+    }
+    throw new IncorrectOperationException("Manipulator for this element is not defined");
+  }
+
+  public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
+    if (isReferenceTo(element)) return getElement();
+
+    final String qualifiedName;
+    if (element instanceof PsiClass) {
+      PsiClass psiClass = (PsiClass)element;
+      qualifiedName = psiClass.getQualifiedName();
+    }
+    else if (element instanceof PsiPackage) {
+      PsiPackage psiPackage = (PsiPackage)element;
+      qualifiedName = psiPackage.getQualifiedName();
+    }
+    else {
+      throw new IncorrectOperationException("Cannot bind to " + element);
+    }
+
+    final String newName = qualifiedName;
+    TextRange range = new TextRange(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+    final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
+    range = new TextRange(range.getStartOffset(), range.getStartOffset() + newName.length());
+    myJavaClassReferenceSet.reparse(finalElement, range);
+    return finalElement;
+  }
+
+  public PsiElement resolveInner() {
+    return advancedResolve(true).getElement();
+  }
+
+  public Object[] getVariants() {
+    PsiElement context = getContext();
+    if (context == null) {
+      context = myJavaClassReferenceSet.getElement().getManager().findPackage("");
+    }
+    if (context instanceof PsiPackage) {
+      final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
+      if (extendClasses != null) {
+        return getSubclassVariants((PsiPackage)context, extendClasses);
+      }
+      return processPackage((PsiPackage)context);
+    }
+    if (context instanceof PsiClass) {
+      final PsiClass aClass = (PsiClass)context;
+
+      if (myInStaticImport) {
+        return ArrayUtil.mergeArrays(aClass.getInnerClasses(), aClass.getFields(), Object.class);
+      }
+      else if (isStaticClassReference()) {
+        final PsiClass[] psiClasses = aClass.getInnerClasses();
+        final List<PsiClass> staticClasses = new ArrayList<PsiClass>(psiClasses.length);
+
+        for (PsiClass c : psiClasses) {
+          if (c.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+            staticClasses.add(c);
+          }
+        }
+        return staticClasses.size() > 0 ? staticClasses.toArray(new PsiClass[staticClasses.size()]) : PsiClass.EMPTY_ARRAY;
+      }
+    }
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  private Object[] processPackage(final PsiPackage aPackage) {
+    final PsiPackage[] subPackages = aPackage.getSubPackages();
+    final PsiClass[] classes = aPackage.getClasses();
+    return ArrayUtil.mergeArrays(subPackages, classes, Object.class);
+  }
+
+  @NotNull
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    if (!myJavaClassReferenceSet.getElement().isValid()) return JavaResolveResult.EMPTY;
+
+    final String elementText = getElement().getText();
+
+    if (isStaticClassReference(elementText)) {
+      final PsiElement psiElement = myJavaClassReferenceSet.getReferences()[myIndex - 1].resolve();
+
+      if (psiElement instanceof PsiClass) {
+        final PsiClass psiClass = ((PsiClass)psiElement).findInnerClassByName(getCanonicalText(), false);
+        if (psiClass != null) return new ClassCandidateInfo(psiClass, PsiSubstitutor.EMPTY, false, myJavaClassReferenceSet.getElement());
+        return JavaResolveResult.EMPTY;
+      }
+    }
+
+    String qName = elementText.substring(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+
+    PsiManager manager = myJavaClassReferenceSet.getElement().getManager();
+    if (myIndex == myJavaClassReferenceSet.getReferences().length - 1) {
+      final PsiClass aClass = manager.findClass(qName, GlobalSearchScope.allScope(myJavaClassReferenceSet.getElement().getProject()));
+      if (aClass != null) {
+        return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, myJavaClassReferenceSet.getElement());
+      } else {
+        final Boolean value = JavaClassReferenceProvider.RESOLVE_ONLY_CLASSES.getValue(getOptions());
+        if (value != null && value.booleanValue()) {
+          return JavaResolveResult.EMPTY;
+        }
+      }
+    }
+    PsiElement resolveResult = manager.findPackage(qName);
+    if (resolveResult == null) {
+      resolveResult = manager.findClass(qName, GlobalSearchScope.allScope(myJavaClassReferenceSet.getElement().getProject()));
+    }
+    if (myInStaticImport && resolveResult == null) {
+      resolveResult = JspxStaticImportStatement.resolveMember(qName, manager, getElement().getResolveScope());
+    }
+    if (resolveResult == null) {
+      PsiFile containingFile = myJavaClassReferenceSet.getElement().getContainingFile();
+
+      if (containingFile instanceof PsiJavaFile) {
+        if (containingFile instanceof JspFile) {
+          containingFile = containingFile.getViewProvider().getPsi(StdLanguages.JAVA);
+          if (containingFile == null) return JavaResolveResult.EMPTY;
+        }
+
+        final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), myJavaClassReferenceSet.getElement());
+        containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, myJavaClassReferenceSet.getElement());
+
+        if (processor.getResult().length == 1) {
+          final JavaResolveResult javaResolveResult = processor.getResult()[0];
+
+          if (javaResolveResult != JavaResolveResult.EMPTY && getOptions() != null) {
+            final Boolean value = JavaClassReferenceProvider.RESOLVE_QUALIFIED_CLASS_NAME.getValue(getOptions());
+            if (value != null && value.booleanValue()) {
+              final String qualifiedName = ((PsiClass)javaResolveResult.getElement()).getQualifiedName();
+
+              if (!qName.equals(qualifiedName)) {
+                return JavaResolveResult.EMPTY;
+              }
+            }
+          }
+
+          return javaResolveResult;
+        }
+      }
+    }
+    return resolveResult != null
+           ? new CandidateInfo(resolveResult, PsiSubstitutor.EMPTY, false, false, myJavaClassReferenceSet.getElement())
+           : JavaResolveResult.EMPTY;
+  }
+
+  private Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
+    return myOptions;
+  }
+
+  @NotNull
+  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+    final JavaResolveResult javaResolveResult = advancedResolve(incompleteCode);
+    if (javaResolveResult.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;
+    return new JavaResolveResult[]{javaResolveResult};
+  }
+
+  public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+    registerFixes(info);
+  }
+
+  private List<? extends LocalQuickFix> registerFixes(final HighlightInfo info) {
+    final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
+    final String extendClass = extendClasses != null && extendClasses.length > 0 ? extendClasses[0] : null;
+    final PsiReference contextReference = getContextReference();
+
+    PsiElement context = contextReference != null ? contextReference.resolve() : null;
+
+    if (context != null || contextReference == null) {
+      final int[] primitives = getType().getPrimitives();
+      boolean createJavaClass = JavaClassReferenceProvider.CLASS_REFERENCE_TYPE.getPrimitives().length == primitives.length &&
+                                JavaClassReferenceProvider.CLASS_REFERENCE_TYPE.isAssignableTo(primitives[0]);
+      final List<PsiDirectory> writableDirectoryList = getWritableDirectoryList(context);
+      if (writableDirectoryList.size() != 0 && checkCreateClassOrPackage(writableDirectoryList, createJavaClass)) {
+        return Arrays.asList(doRegisterQuickFix(info, writableDirectoryList, createJavaClass, extendClass));
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  protected CreateClassOrPackageIntentionAction doRegisterQuickFix(final HighlightInfo info, final List<PsiDirectory> writableDirectoryList,
+                                                                 final boolean createJavaClass,
+                                                                 final String extendClass) {
+    final CreateClassOrPackageIntentionAction action =
+      new CreateClassOrPackageIntentionAction(writableDirectoryList, this, createJavaClass, extendClass);
+    QuickFixAction.registerQuickFixAction(info, action);
+    return action;
+  }
+
+  @NotNull
+  protected Object[] getSubclassVariants(PsiPackage context, String[] extendClasses) {
+    HashSet<Object> lookups = new HashSet<Object>();
+    GlobalSearchScope packageScope = GlobalSearchScope.packageScope(context, true);
+    final GlobalSearchScope allScope = context.getProject().getAllScope();
+    Boolean inst = JavaClassReferenceProvider.INSTANTIATABLE.getValue(getOptions());
+
+    boolean instantiatable = inst == null || inst.booleanValue();
+
+    for (String extendClassName : extendClasses) {
+      PsiClass extendClass = context.getManager().findClass(extendClassName, allScope);
+      if (extendClass != null) {
+        PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, packageScope, true);
+        for (final PsiClass clazz : result) {
+          Object value = createSubclassLookupValue(context, clazz, instantiatable);
+          if (value != null) {
+            lookups.add(value);
+          }
+        }
+        // add itself
+        Object value = createSubclassLookupValue(context, extendClass, instantiatable);
+        if (value != null) {
+          lookups.add(value);
+        }
+      }
+    }
+    return lookups.toArray();
+  }
+
+  @Nullable
+  protected Object createSubclassLookupValue(final PsiPackage context, final PsiClass clazz, boolean instantiatable) {
+    if (instantiatable && !PsiUtil.isInstantiatable(clazz)) {
+      return null;
+    }
+    String name = clazz.getQualifiedName();
+    if (name == null) return null;
+    final String pack = context.getQualifiedName();
+    if (pack.length() > 0) {
+      name = name.substring(pack.length() + 1);
+    }
+    return LookupValueFactory.createLookupValue(name, clazz.getIcon(Iconable.ICON_FLAG_READ_STATUS));
+   }
+
+  public LocalQuickFix[] getQuickFixes() {
+    final List<? extends LocalQuickFix> list = registerFixes(null);
+    return list.toArray(new LocalQuickFix[list.size()]);
+  }
+
+  private boolean checkCreateClassOrPackage(final List<PsiDirectory> writableDirectoryList, final boolean createJavaClass) {
+    final PsiDirectory directory = writableDirectoryList.get(0);
+    final String canonicalText = getCanonicalText();
+
+    if (createJavaClass) {
+      try {
+        directory.checkCreateClass(canonicalText);
+      } catch(IncorrectOperationException ex) {
+        return false;
+      }
+    } else {
+      try {
+        directory.checkCreateSubdirectory(canonicalText);
+      } catch(IncorrectOperationException ex) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  protected List<PsiDirectory> getWritableDirectoryList(final PsiElement context) {
+    final List<PsiDirectory> writableDirectoryList = new ArrayList<PsiDirectory>();
+    if (context instanceof PsiPackage) {
+      for (PsiDirectory directory : ((PsiPackage)context).getDirectories()) {
+        if (directory.isWritable()) {
+          writableDirectoryList.add(directory);
+        }
+      }
+    } else if (context == null) {
+      PsiManager manager = getElement().getManager();
+      for (VirtualFile root : ProjectRootManager.getInstance(manager.getProject()).getContentSourceRoots()) {
+        PsiDirectory directory = manager.findDirectory(root);
+        if (directory != null && directory.isWritable()) {
+          writableDirectoryList.add(directory);
+        }
+      }
+    }
+    return writableDirectoryList;
+  }
+}

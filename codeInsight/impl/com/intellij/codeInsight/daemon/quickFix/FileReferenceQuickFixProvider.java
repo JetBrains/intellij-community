@@ -55,7 +55,7 @@ public class FileReferenceQuickFixProvider {
     }
     if (context == null) return Collections.emptyList();
 
-    final PsiDirectory directory = reference.getPsiDirectory(context);
+    final PsiDirectory directory = FileReference.getPsiDirectory(context);
 
     if (directory == null) return Collections.emptyList();
 
