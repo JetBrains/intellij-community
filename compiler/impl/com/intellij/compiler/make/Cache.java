@@ -17,12 +17,13 @@ import java.util.Collection;
  * Date: Aug 8, 2003
  * Time: 7:03:56 PM
  */
+@SuppressWarnings({"SynchronizeOnThis"})
 public class Cache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.Cache");
 
   private final ViewPool myViewPool;
-  private TIntIntHashMap myQNameToClassInfoIdMap;
-  private TIntIntHashMap myQNameToClassDeclarationIdMap;
+  private volatile TIntIntHashMap myQNameToClassInfoIdMap;
+  private volatile TIntIntHashMap myQNameToClassDeclarationIdMap;
   public static final int UNKNOWN = -1;
 
   private final File myDeclarationsIndexFile;
@@ -853,7 +854,7 @@ public class Cache {
     final int classDeclarationId = getClassDeclarationId(classQName);
     final int[] fieldIds = getFieldIds(classDeclarationId);
     final int[] methodIds = getMethodIds(classDeclarationId);
-    MemberDeclarationInfo[] infos = new MemberDeclarationInfo[fieldIds.length + methodIds.length];
+    final MemberDeclarationInfo[] infos = new MemberDeclarationInfo[fieldIds.length + methodIds.length];
     int index = 0;
     for (int fieldId : fieldIds) {
       infos[index++] = new MemberDeclarationInfo(classQName, createFieldInfo(fieldId));
@@ -917,8 +918,8 @@ public class Cache {
         currentMembers.put(createMethodInfo(methodId), methodId);
       }
 
-      TIntHashSet fieldsToRemove = new TIntHashSet(fieldIds);
-      TIntHashSet methodsToRemove = new TIntHashSet(methodIds);
+      final TIntHashSet fieldsToRemove = new TIntHashSet(fieldIds);
+      final TIntHashSet methodsToRemove = new TIntHashSet(methodIds);
 
       for (final MemberInfo classMember : classMembers) {
         if (currentMembers.containsKey(classMember)) { // changed
@@ -966,7 +967,6 @@ public class Cache {
     final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
     classDeclarationView.removeFieldId(fieldId);
     final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
-    //fieldDeclarationView.removeRecord();
     myViewPool.removeFieldDeclarationRecord(fieldDeclarationView);
   }
 
@@ -1045,24 +1045,22 @@ public class Cache {
   }
 
   private static void readIndexMap(TIntIntHashMap map, File indexFile) throws IOException {
-    byte[] bytes;
     try {
-      bytes = FileUtil.loadFileBytes(indexFile);
-    }
-    catch (FileNotFoundException e) {
-      return;
-    }
-    DataInputStream stream = new DataInputStream(new ByteArrayInputStream(bytes));
-    try {
-      int size = stream.readInt();
-      while (size-- > 0) {
-        final int qName = stream.readInt();
-        final int id = stream.readInt();
-        map.put(qName, id);
+      final byte[] bytes = FileUtil.loadFileBytes(indexFile);
+      DataInputStream stream = new DataInputStream(new ByteArrayInputStream(bytes));
+      try {
+        int size = stream.readInt();
+        while (size-- > 0) {
+          final int qName = stream.readInt();
+          final int id = stream.readInt();
+          map.put(qName, id);
+        }
+      }
+      finally {
+        stream.close();
       }
     }
-    finally {
-      stream.close();
+    catch (FileNotFoundException ignored) {
     }
   }
 
@@ -1074,7 +1072,7 @@ public class Cache {
     myDeclarationsIndexFile.delete();
   }
 
-  private synchronized TIntIntHashMap getQNameToClassInfoIdMap() throws IOException {
+  private TIntIntHashMap getQNameToClassInfoIdMap() throws IOException {
     if (myQNameToClassInfoIdMap == null) {
       myQNameToClassInfoIdMap = new TIntIntHashMap();
       readIndexMap(myQNameToClassInfoIdMap, myClassInfosIndexFile);
@@ -1082,7 +1080,7 @@ public class Cache {
     return myQNameToClassInfoIdMap;
   }
 
-  private synchronized TIntIntHashMap getQNameToClassDeclarationIdMap() throws IOException {
+  private TIntIntHashMap getQNameToClassDeclarationIdMap() throws IOException {
     if (myQNameToClassDeclarationIdMap == null) {
       myQNameToClassDeclarationIdMap = new TIntIntHashMap();
       readIndexMap(myQNameToClassDeclarationIdMap, myDeclarationsIndexFile);
@@ -1097,7 +1095,6 @@ public class Cache {
         final int[] fieldIds = getFieldIds(classDeclarationId);
         for (int fieldId : fieldIds) {
           final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
-          //fieldDeclarationView.removeRecord();
           myViewPool.removeFieldDeclarationRecord(fieldDeclarationView);
         }
         final int[] methodIds = getMethodIds(classDeclarationId);
