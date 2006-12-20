@@ -11,20 +11,4 @@ import org.jetbrains.annotations.NonNls;
  * @author nik
  */
 public final class FacetTypeId<F extends Facet> {
-  private @NotNull @NonNls String myId;
-
-
-  public FacetTypeId(@NotNull @NonNls final String id) {
-    myId = id;
-  }
-
-  @NotNull
-  public String getId() {
-    return myId;
-  }
-
-
-  public String toString() {
-    return myId;
-  }
 }

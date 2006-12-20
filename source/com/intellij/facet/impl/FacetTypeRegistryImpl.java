@@ -24,7 +24,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
 
   public void registerFacetType(FacetType facetType) {
     final FacetTypeId typeId = facetType.getId();
-    String id = typeId.getId();
+    String id = facetType.getStringId();
     LOG.assertTrue(!myFacetTypes.containsKey(typeId), "Facet type '" + id + "' is already registered");
     myFacetTypes.put(typeId, facetType);
 
@@ -34,9 +34,10 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
 
   public void unregisterFacetType(FacetType facetType) {
     final FacetTypeId id = facetType.getId();
-    LOG.assertTrue(myFacetTypes.remove(id) != null, "Facet type '" + id.getId() + "' is not registered");
+    final String stringId = facetType.getStringId();
+    LOG.assertTrue(myFacetTypes.remove(id) != null, "Facet type '" + stringId + "' is not registered");
     myFacetTypes.remove(id);
-    myTypeIds.remove(id.getId());
+    myTypeIds.remove(stringId);
   }
 
   public FacetType[] getFacetTypes() {
