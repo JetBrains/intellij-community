@@ -99,8 +99,6 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
 
   private ReferenceQueue myReferenceQueue = new ReferenceQueue();
 
-  private HardKey myHardKeyInstance = new HardKey(""); // "singleton"
-
   private void processQueue() {
     WeakKey wk;
     while((wk = (WeakKey)myReferenceQueue.poll()) != null){
@@ -139,9 +137,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       return myMap.containsKey(null);
     }
     else{
-      myHardKeyInstance.set(key);
-      boolean result = myMap.containsKey(myHardKeyInstance);
-      myHardKeyInstance.set(null);
+      boolean result = myMap.containsKey(new HardKey(key));
       return result;
     }
     //return myMap.containsKey(WeakKey.create(key));
@@ -154,9 +150,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       return (V)myMap.get(null);
     }
     else{
-      myHardKeyInstance.set(key);
-      Object result = myMap.get(myHardKeyInstance);
-      myHardKeyInstance.set(null);
+      Object result = myMap.get(new HardKey(key));
       return (V)result;
     }
   }
@@ -174,9 +168,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       return (V)myMap.remove(null);
     }
     else{
-      myHardKeyInstance.set(key);
-      Object result = myMap.remove(myHardKeyInstance);
-      myHardKeyInstance.set(null);
+      Object result = myMap.remove(new HardKey(key));
       return (V)result;
     }
     //return myMap.remove(WeakKey.create(key));
@@ -286,8 +278,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       Object ev = e.getValue();
 
       // optimization:
-      myHardKeyInstance.set(o);
-      Object key = myHardKeyInstance;
+      Object key = new HardKey(o);
       //WeakKey key = WeakKey.create(e.getKey());
 
       Object hv = myMap.get(key);
@@ -295,7 +286,6 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       if (toRemove){
         myMap.remove(key);
       }
-      myHardKeyInstance.set(null);
       return toRemove;
     }
 

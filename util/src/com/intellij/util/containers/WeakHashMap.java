@@ -94,8 +94,8 @@ public final class WeakHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
       if (!(o instanceof Key)) return false;
       Object t = this.get();
       Object u = ((Key)o).get();
-      if ((t == null) || (u == null)) return false;
       if (t == u) return true;
+      if ((t == null) || (u == null)) return false;
       return t.equals(u);
     }
 
