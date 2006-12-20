@@ -1,58 +1,40 @@
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.reference.SoftReference;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
-public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V> {
-  private final ConcurrentHashMap<K,MyReference<K,V>> myMap = new ConcurrentHashMap<K, MyReference<K,V>>();
-  private ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+public final class ConcurrentSoftValueHashMap<K,V> implements ConcurrentMap<K,V> {
+  private final ConcurrentMap<K,MyReference<K,V>> myMap = new ConcurrentHashMap<K, MyReference<K,V>>();
+  private final ReferenceQueue<MyReference<K,V>> myQueue = new ReferenceQueue<MyReference<K,V>>();
 
-  public ConcurrentWeakValueHashMap(final Map<K, V> map) {
-    this();
-    putAll(map);
-  }
-
-  public ConcurrentWeakValueHashMap() {
-  }
-
-  private static class MyReference<K,T> extends WeakReference<T> {
-    private final K key;
-    public MyReference(K key, T referent, ReferenceQueue<? super T> q) {
-      super(referent, q);
+  private static class MyReference<K,V> extends SoftReference<V> {
+    final K key;
+    public MyReference(K key, V referent, ReferenceQueue q) {
+      super(referent, (ReferenceQueue<? super V>)q);
       this.key = key;
     }
+  }
 
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final MyReference that = (MyReference)o;
-
-      if (!key.equals(that.key)) return false;
-      if (!Comparing.equal(get(), that.get())) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      return key.hashCode();
-    }
+  public ConcurrentSoftValueHashMap() {
   }
 
   private void processQueue() {
+    //int count = 0;
     while(true){
       MyReference<K,V> ref = (MyReference<K,V>)myQueue.poll();
       if (ref == null) {
+        //if (count > 0){
+        //  System.out.println("SoftValueHashMap: " + count + " references have been collected");
+        //}
         return;
       }
       if (myMap.get(ref.key) == ref){
         myMap.remove(ref.key);
       }
+      //count++;
     }
   }
 
@@ -68,7 +50,47 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     return oldRef != null ? oldRef.get() : null;
   }
 
-  public V putIfAbsent(K key, V value) {
+  public void clear() {
+    myMap.clear();
+  }
+
+  public int size() {
+    return myMap.size(); //?
+  }
+
+  public boolean isEmpty() {
+    return myMap.isEmpty(); //?
+  }
+
+  public boolean containsKey(Object key) {
+    return get(key) != null;
+  }
+
+  public boolean containsValue(Object value) {
+    throw new RuntimeException("method not implemented");
+  }
+
+  public Set<K> keySet() {
+    return myMap.keySet();
+  }
+
+  public Collection<V> values() {
+    List<V> result = new ArrayList<V>();
+    final Collection<MyReference<K, V>> refs = myMap.values();
+    for (MyReference<K, V> ref : refs) {
+      final V value = ref.get();
+      if (value != null) {
+        result.add(value);
+      }
+    }
+    return result;
+  }
+
+  public Set<Entry<K, V>> entrySet() {
+    throw new RuntimeException("method not implemented");
+  }
+
+  public V putIfAbsent(final K key, final V value) {
     while (true) {
       processQueue();
       MyReference<K, V> newRef = new MyReference<K, V>(key, value, myQueue);
@@ -117,45 +139,5 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
         put(k, v);
       }
     }
-  }
-
-  public void clear() {
-    myMap.clear();
-  }
-
-  public int size() {
-    return myMap.size(); //?
-  }
-
-  public boolean isEmpty() {
-    return myMap.isEmpty(); //?
-  }
-
-  public boolean containsKey(Object key) {
-    return get(key) != null;
-  }
-
-  public boolean containsValue(Object value) {
-    throw new RuntimeException("method not implemented");
-  }
-
-  public Set<K> keySet() {
-    return myMap.keySet();
-  }
-
-  public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
-    final Collection<MyReference<K, V>> refs = myMap.values();
-    for (MyReference<K, V> ref : refs) {
-      final V value = ref.get();
-      if (value != null) {
-        result.add(value);
-      }
-    }
-    return result;
-  }
-
-  public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
   }
 }
