@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharSequenceHashingStrategy;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.psi.PsiKeyword;
 import gnu.trove.THashSet;
 
@@ -35,7 +36,10 @@ public class CharTableImpl implements CharTable {
         return entries.get(idx);
       }
 
-      final CharSequence entry = text.toString();
+      // We need to create separate string just to prevent referencing all character data when original is string or char sequence over string
+      final char[] buf = new char[text.length()];
+      CharArrayUtil.getChars(text, buf, 0);
+      final CharSequence entry = new String(buf);
       boolean added = entries.add(entry);
       assert added;
 
