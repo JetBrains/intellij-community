@@ -15,4 +15,6 @@ public interface ModifiableFacetModel extends FacetModel {
   void commit();
 
   boolean isModified();
+
+  boolean isNewFacet(Facet facet);
 }

@@ -16,9 +16,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ProjectConfigurableContext extends FacetEditorContextBase {
   private Module myModule;
-  
-  public ProjectConfigurableContext(final @NotNull Module module) {
+  private boolean myNewFacet;
+
+  public ProjectConfigurableContext(final @NotNull Module module, final boolean newFacet) {
     super(module.getProject());
+    myNewFacet = newFacet;
     myModule = module;
   }
 
@@ -31,8 +33,8 @@ public class ProjectConfigurableContext extends FacetEditorContextBase {
     return null;
   }
 
-  public boolean isFacetCreating() {
-    return false;
+  public boolean isNewFacet() {
+    return myNewFacet;
   }
 
   public Module getModule() {

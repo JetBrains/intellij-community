@@ -13,8 +13,6 @@ import com.intellij.facet.impl.ui.ConfigureFacetsStep;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +65,11 @@ public class ProjectFacetsConfigurator {
     return type.createFacet(module, type.createDefaultConfiguration(), underlyingFacet);
   }
 
+  private boolean isNewFacet(Facet facet) {
+    final ModifiableFacetModel model = myModels.get(facet.getModule());
+    return model != null && model.isNewFacet(facet);
+  }
+
   @NotNull
   public ModifiableFacetModel getOrCreateModifiableModel(Module module) {
     ModifiableFacetModel model = myModels.get(module);
@@ -81,7 +84,7 @@ public class ProjectFacetsConfigurator {
   public FacetEditor getOrCreateEditor(Facet facet) {
     FacetEditor editor = myEditors.get(facet);
     if (editor == null) {
-      editor = new FacetEditor(new ProjectConfigurableContext(facet.getModule()), facet.getConfiguration());
+      editor = new FacetEditor(new ProjectConfigurableContext(facet.getModule(), isNewFacet(facet)), facet.getConfiguration());
       editor.createComponent();
       editor.reset();
       myEditors.put(facet, editor);

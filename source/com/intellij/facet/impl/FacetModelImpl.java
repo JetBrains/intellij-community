@@ -8,6 +8,7 @@ import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.Facet;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 
 import java.util.*;
 
@@ -51,6 +52,10 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
   public boolean isModified() {
     return !new HashSet<Facet>(myFacets).equals(new HashSet<Facet>(Arrays.asList(myManager.getAllFacets())));
+  }
+
+  public boolean isNewFacet(final Facet facet) {
+    return myFacets.contains(facet) && ArrayUtil.find(myManager.getAllFacets(), facet) == -1;
   }
 
   @NotNull

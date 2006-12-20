@@ -35,7 +35,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return myId;
   }
 
-  public String getPresentableName() {
+  public final String getPresentableName() {
     return myPresentableName;
   }
 

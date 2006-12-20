@@ -39,7 +39,7 @@ public interface FacetEditorContext {
   @Nullable
   ModuleBuilder getModuleBuilder();
 
-  boolean isFacetCreating();
+  boolean isNewFacet();
 
   @Nullable
   Module getModule();

@@ -200,6 +200,12 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
         }
       }
 
+      for (Facet facet : toAdd) {
+        facet.initFacet();
+      }
+      for (Facet facet : toRemove) {
+        Disposer.dispose(facet);
+      }
     }
     finally {
       myInsideCommit = false;
