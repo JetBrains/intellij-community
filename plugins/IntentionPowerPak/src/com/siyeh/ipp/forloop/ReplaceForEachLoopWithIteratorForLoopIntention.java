@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,23 @@
  */
 package com.siyeh.ipp.forloop;
 
-import com.intellij.openapi.project.Project;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class ReplaceForEachLoopWithForLoopIntention extends Intention {
+public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
 
     @NotNull
     public PsiElementPredicate getElementPredicate() {
-        return new ForEachLoopPredicate();
+        return new IterableForEachLoopPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiForeachStatement statement =
                 (PsiForeachStatement)element.getParent();
@@ -46,55 +46,53 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention {
         if (iteratedValue == null) {
             return;
         }
+        final PsiType type = iteratedValue.getType();
+        final PsiType iteratedValueParameterType;
+        if (type instanceof PsiClassType) {
+            final PsiClassType classType = (PsiClassType) type;
+            final PsiType[] parameterTypes = classType.getParameters();
+            if(parameterTypes.length == 0) {
+                iteratedValueParameterType = null;
+            } else {
+                iteratedValueParameterType = parameterTypes[0];
+            }
+        } else {
+            iteratedValueParameterType = null;
+        }
         @NonNls final StringBuilder newStatement = new StringBuilder();
         final PsiParameter iterationParameter =
                 statement.getIterationParameter();
-        final PsiType type = iterationParameter.getType();
-        if (iteratedValue.getType() instanceof PsiArrayType) {
-            final String index =
-                    codeStyleManager.suggestUniqueVariableName(
-                            "i", statement, true);
-            newStatement.append("for(int ");
-            newStatement.append(index);
-            newStatement.append(" = 0;");
-            newStatement.append(index);
-            newStatement.append('<');
-            newStatement.append(iteratedValue.getText());
-            newStatement.append(".length;");
-            newStatement.append(index);
-            newStatement.append("++)");
-            newStatement.append("{ ");
-            newStatement.append(type.getPresentableText());
+        final PsiType parameterType = iterationParameter.getType();
+        final String iterator =
+                codeStyleManager.suggestUniqueVariableName(
+                        "it", statement, true);
+        final String typeText = parameterType.getCanonicalText();
+        newStatement.append("for(java.util.Iterator");
+        if (iteratedValueParameterType == null) {
             newStatement.append(' ');
-            newStatement.append(iterationParameter.getName());
-            newStatement.append(" = ");
-            newStatement.append(iteratedValue.getText());
-            newStatement.append('[');
-            newStatement.append(index);
-            newStatement.append("];");
         } else {
-            final String iterator =
-                    codeStyleManager.suggestUniqueVariableName(
-                            "it", statement, true);
-            final String typeText = type.getPresentableText();
-            newStatement.append("for(java.util.Iterator ");
-            newStatement.append(iterator);
-            newStatement.append(" = ");
-            newStatement.append(iteratedValue.getText());
-            newStatement.append(".iterator();");
-            newStatement.append(iterator);
-            newStatement.append(".hasNext();)");
-            newStatement.append('{');
-            newStatement.append(typeText);
-            newStatement.append(' ');
-            newStatement.append(iterationParameter.getName());
-            newStatement.append(" = ");
+            newStatement.append('<');
+            newStatement.append(iteratedValueParameterType.getCanonicalText());
+            newStatement.append("> ");
+        }
+        newStatement.append(iterator);
+        newStatement.append(" = ");
+        newStatement.append(iteratedValue.getText());
+        newStatement.append(".iterator();");
+        newStatement.append(iterator);
+        newStatement.append(".hasNext();) {");
+        newStatement.append(typeText);
+        newStatement.append(' ');
+        newStatement.append(iterationParameter.getName());
+        newStatement.append(" = ");
+        if (iteratedValueParameterType == null &&
+                !"java.lang.Object".equals(typeText)) {
             newStatement.append('(');
             newStatement.append(typeText);
             newStatement.append(')');
-            newStatement.append(iterator);
-            newStatement.append(".next();");
         }
+        newStatement.append(iterator);
+        newStatement.append(".next();");
         final PsiStatement body = statement.getBody();
         if (body == null) {
             return;
@@ -111,6 +109,6 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention {
             newStatement.append(body.getText());
         }
         newStatement.append('}');
-        replaceStatement(newStatement.toString(), statement);
+        replaceStatementAndShorten(newStatement.toString(), statement);
     }
 }

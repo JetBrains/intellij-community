@@ -1,0 +1,9 @@
+public class X {
+  private boolean flag;
+
+  void f(String[] as) {
+    <spot>while</spot>(flag) {
+       System.out.println("looping");
+    }
+  }
+}

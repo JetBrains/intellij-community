@@ -17,13 +17,13 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class ForLoopPredicate implements PsiElementPredicate {
+class WhileLoopPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(PsiElement element) {
         if(!(element instanceof PsiJavaToken)){
@@ -31,11 +31,11 @@ class ForLoopPredicate implements PsiElementPredicate {
         }
         final PsiJavaToken token = (PsiJavaToken) element;
         final IElementType tokenType = token.getTokenType();
-        if(!JavaTokenType.FOR_KEYWORD.equals(tokenType)){
+        if(!JavaTokenType.WHILE_KEYWORD.equals(tokenType)){
             return false;
         }
         final PsiElement parent = element.getParent();
-        return parent instanceof PsiForStatement &&
+        return parent instanceof PsiWhileStatement &&
                !ErrorUtil.containsError(parent);
     }
 }
