@@ -66,19 +66,4 @@ public class ReplaceWhileLoopWithDoWhileLoopIntention extends Intention {
         doWhileStatementText.append(");\n}");
         replaceStatement(doWhileStatementText.toString(), whileStatement);
     }
-
-    public static void main(String[] args) {
-        System.out.println(KeyEvent.CTRL_MASK);
-        int i = 0;
-        while (i < 10) {
-            i++;
-        }
-        i = 0;
-        if (i < 10) {
-            do {
-                i++;
-                System.out.println(i);
-            } while (i < 10);
-        }
-    }
 }

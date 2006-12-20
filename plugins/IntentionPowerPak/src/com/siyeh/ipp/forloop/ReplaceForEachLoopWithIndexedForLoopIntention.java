@@ -102,10 +102,4 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         newStatement.append('}');
         replaceStatementAndShorten(newStatement.toString(), statement);
     }
-
-    void foo(List<String> as) {
-        for (String s : as) {
-
-        }
-    }
 }
