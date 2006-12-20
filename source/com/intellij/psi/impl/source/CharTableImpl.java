@@ -152,5 +152,6 @@ public class CharTableImpl implements CharTable {
     CharTableImpl.staticIntern("<%=");
     CharTableImpl.staticIntern("<%@");
     CharTableImpl.staticIntern("${");
+    CharTableImpl.staticIntern("");
   }
 }

@@ -15,27 +15,28 @@ public class JavaFilterLexer extends BaseFilterLexer {
   }
 
   public void advance() {
-    IElementType tokenType = myOriginalLexer.getTokenType();
+    final IElementType tokenType = myOriginalLexer.getTokenType();
+
     if (tokenType == JavaTokenType.IDENTIFIER
         || tokenType == JavaTokenType.LONG_LITERAL 
         || tokenType == JavaTokenType.INTEGER_LITERAL
         || tokenType == JavaTokenType.CHARACTER_LITERAL) {
       int start = getTokenStart();
       int end = getTokenEnd();
-      IdCacheUtil.addOccurrence(myTable, getBufferSequence(), start, end, UsageSearchContext.IN_CODE);
+      IdCacheUtil.addOccurrence(myTable, myBuffer, start, end, UsageSearchContext.IN_CODE);
     }
     else if (tokenType == JavaTokenType.STRING_LITERAL) {
-      IdTableBuilding.scanWords(myTable, getBufferSequence(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES);
+      scanWordsInToken(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES);
     }
     else if (tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT ||
              tokenType == JavaTokenType.DOC_COMMENT) {
-      IdTableBuilding.scanWords(myTable, getBufferSequence(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_COMMENTS);
-      advanceTodoItemCounts(getBufferSequence(), getTokenStart(), getTokenEnd());
+      scanWordsInToken(UsageSearchContext.IN_COMMENTS);
+      advanceTodoItemCountsInToken();
     }
     else if (JavaTokenType.KEYWORD_BIT_SET.contains(tokenType)) {
       int start = getTokenStart();
       int end = getTokenEnd();
-      IdCacheUtil.addOccurrence(myTable, getBufferSequence(), start, end, UsageSearchContext.IN_PLAIN_TEXT);
+      IdCacheUtil.addOccurrence(myTable, myBuffer, start, end, UsageSearchContext.IN_PLAIN_TEXT);
     }
 
     myOriginalLexer.advance();

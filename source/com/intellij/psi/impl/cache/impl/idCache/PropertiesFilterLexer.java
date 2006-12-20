@@ -17,14 +17,14 @@ public class PropertiesFilterLexer extends BaseFilterLexer {
   public void advance() {
     IElementType tokenType = myOriginalLexer.getTokenType();
     if (tokenType == PropertiesTokenTypes.KEY_CHARACTERS) {
-      IdTableBuilding.scanWords(myTable, getBufferSequence(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT);
+      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT);
     }
     else if (PropertiesTokenTypes.COMMENTS.contains(tokenType)) {
-      IdTableBuilding.scanWords(myTable, getBufferSequence(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_PLAIN_TEXT);
-      advanceTodoItemCounts(getBufferSequence(), getTokenStart(), getTokenEnd());
+      scanWordsInToken(UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_PLAIN_TEXT);
+      advanceTodoItemCountsInToken();
     }
     else {
-      IdTableBuilding.scanWords(myTable, getBufferSequence(), getTokenStart(), getTokenEnd(), UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT);
+      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT);
     }
 
     myOriginalLexer.advance();

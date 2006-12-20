@@ -50,6 +50,21 @@ public class CharArrayUtil {
     return strictchars;
   }
 
+  public static char[] fromSequenceWithoutCopying(CharSequence seq) {
+    if (seq instanceof CharSequenceBackedByArray) {
+      return ((CharSequenceBackedByArray)seq).getChars();
+    }
+
+    if (seq instanceof CharBuffer) {
+      final CharBuffer buffer = (CharBuffer)seq;
+      if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0) {
+        return buffer.array();
+      }
+    }
+
+    return null;
+  }
+
   public static char[] fromSequence(CharSequence seq) {
     if (seq instanceof CharSequenceBackedByArray) {
       return ((CharSequenceBackedByArray)seq).getChars();
@@ -57,13 +72,14 @@ public class CharArrayUtil {
 
     if (seq instanceof CharBuffer) {
       final CharBuffer buffer = (CharBuffer)seq;
-      if (buffer.hasArray() && buffer.arrayOffset() == 0 && !buffer.isReadOnly()) {
+      if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0) {
         final char[] bufArray = buffer.array();
         /* return larger array. Clients may use seq.length() to calculate correct processing range.
         if (bufArray.length == seq.length())
         */ return bufArray;
       }
 
+      new Throwable("allocating chars 1").printStackTrace();
       char[] chars = new char[seq.length()];
       buffer.position(0);
       buffer.get(chars);
@@ -72,16 +88,20 @@ public class CharArrayUtil {
     }
 
     if (seq instanceof StringBuffer) {
+      new Throwable("allocating chars 2").printStackTrace();
       char[] chars = new char[seq.length()];
       ((StringBuffer)seq).getChars(0, seq.length(), chars, 0);
       return chars;
     }
 
     if (seq instanceof String) {
+      new Throwable("allocating chars 3" + seq).printStackTrace();
       char[] chars = new char[seq.length()];
       ((String)seq).getChars(0, seq.length(), chars, 0);
       return chars;
     }
+
+    new Throwable("allocating chars 4:"+seq).printStackTrace();
     return seq.toString().toCharArray();
   }
 

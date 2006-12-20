@@ -4,19 +4,20 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntIntHashMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class BaseFilterLexer extends LexerBase {
+public abstract class BaseFilterLexer extends LexerBase implements IdTableBuilding.ScanWordProcessor {
   protected final Lexer myOriginalLexer;
   protected final TIntIntHashMap myTable;
   protected final int[] myTodoCounts;
 
   private int myTodoScannedBound = 0;
+  private int myOccurenceMask;
+  protected CharSequence myBuffer;
 
   protected BaseFilterLexer(Lexer originalLexer, TIntIntHashMap table, int[] todoCounts) {
     myOriginalLexer = originalLexer;
@@ -36,11 +37,12 @@ public abstract class BaseFilterLexer extends LexerBase {
     myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
   }
 
-  public CharSequence getBufferSequence() {
-    return myOriginalLexer.getBufferSequence();
+  public final CharSequence getBufferSequence() {
+    return myBuffer;
   }
 
   public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+    myBuffer = buffer;
     myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
   }
 
@@ -48,19 +50,19 @@ public abstract class BaseFilterLexer extends LexerBase {
     return myOriginalLexer.getState();
   }
 
-  public IElementType getTokenType() {
+  public final IElementType getTokenType() {
     return myOriginalLexer.getTokenType();
   }
 
-  public int getTokenStart() {
+  public final int getTokenStart() {
     return myOriginalLexer.getTokenStart();
   }
 
-  public int getTokenEnd() {
+  public final int getTokenEnd() {
     return myOriginalLexer.getTokenEnd();
   }
 
-  public char[] getBuffer() {
+  public final char[] getBuffer() {
     return myOriginalLexer.getBuffer();
   }
 
@@ -68,16 +70,14 @@ public abstract class BaseFilterLexer extends LexerBase {
     return myOriginalLexer.getBufferEnd();
   }
 
-  protected final void advanceTodoItemCounts(char[] chars, int start, int end) {
-    advanceTodoItemCounts(new CharArrayCharSequence(chars),start, end);
-  }
-
-  protected final void advanceTodoItemCounts(CharSequence chars, int start, int end) {
+  protected final void advanceTodoItemCountsInToken() {
     if (myTodoCounts != null){
+      int start = getTokenStart();
+      int end = getTokenEnd();
       start = Math.max(start, myTodoScannedBound);
       if (start >= end) return; // this prevents scanning of the same comment twice
 
-      CharSequence input = new CharSequenceSubSequence(chars, start, end);
+      CharSequence input = new CharSequenceSubSequence(myBuffer, start, end);
       advanceTodoItemsCount(input, myTodoCounts);
 
       myTodoScannedBound = end;
@@ -99,4 +99,12 @@ public abstract class BaseFilterLexer extends LexerBase {
     }
   }
 
+  public void run(CharSequence chars, int start, int end) {
+    IdCacheUtil.addOccurrence(myTable, chars, start, end, myOccurenceMask);
+  }
+
+  protected final void scanWordsInToken(final int occurrenceMask) {
+    myOccurenceMask = occurrenceMask;
+    IdTableBuilding.scanWords(this, getBufferSequence(), getTokenStart(), getTokenEnd());
+  }
 }

@@ -15,33 +15,29 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
   }
 
   public void advance() {
-    IElementType tokenType = myOriginalLexer.getTokenType();
-    final CharSequence buffer = getBufferSequence();
-    final int tokenStart = getTokenStart();
-    final int tokenEnd = getTokenEnd();
+    final IElementType tokenType = myOriginalLexer.getTokenType();
 
     if (tokenType == ElementType.XML_COMMENT_CHARACTERS) {
-      IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd, UsageSearchContext.IN_COMMENTS);
-      advanceTodoItemCounts(buffer, tokenStart, tokenEnd);
+      scanWordsInToken(UsageSearchContext.IN_COMMENTS);
+      advanceTodoItemCountsInToken();
     } else if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN || 
         tokenType == ElementType.XML_NAME ||
         tokenType == ElementType.XML_TAG_NAME
        ) {
-      IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
-                                UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
-      IdTableBuilding.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
+      if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN) IdTableBuilding.processPossibleComplexFileName(myBuffer, getTokenStart(),
+                                                                                                             getTokenEnd(), myTable);
     } else if (tokenType.getLanguage() != StdLanguages.XML &&
       tokenType.getLanguage() != Language.ANY         
     ) {
       boolean inComments = IdCacheUtil.isInComments(tokenType);
 
-      IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
-                                (inComments)?UsageSearchContext.IN_COMMENTS:UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
-      IdTableBuilding.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);
+      scanWordsInToken((inComments)?UsageSearchContext.IN_COMMENTS:UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
+      IdTableBuilding.processPossibleComplexFileName(myBuffer, getTokenStart(), getTokenEnd(), myTable);
       
-      if (inComments) advanceTodoItemCounts(buffer, tokenStart, tokenEnd);
+      if (inComments) advanceTodoItemCountsInToken();
     } else {
-      IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd, UsageSearchContext.IN_PLAIN_TEXT);
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT);
     }
 
     myOriginalLexer.advance();
