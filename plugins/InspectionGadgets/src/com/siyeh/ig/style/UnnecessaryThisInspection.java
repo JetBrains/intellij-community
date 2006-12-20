@@ -21,11 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.VariableSearchUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryThisInspection extends ExpressionInspection {
@@ -121,16 +121,19 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
                     if (calledMethod == null) {
                         return;
                     }
+
+                    String methodName = calledMethod.getName();
                     PsiClass parentClass = PsiTreeUtil.getParentOfType(
                             expression, PsiClass.class);
                     while (parentClass != null) {
                         if (qualifierName.equals(parentClass.getName())) {
                             registerError(thisExpression);
                         }
-                        final PsiMethod method =
-                                parentClass.findMethodBySignature(calledMethod,
+
+                        final PsiMethod[] methods =
+                                parentClass.findMethodsByName(methodName,  //resolve will point to any _accessible_ method with the same name
                                         true);
-                        if (method != null) {
+                        if (methods.length > 0) {  //todo: filter only accessible methods
                             return;
                         }
                         parentClass =
