@@ -48,6 +48,10 @@ public class VirtualFileHolder {
     myFiles.add(file);
   }
 
+  public synchronized void removeFile(VirtualFile file) {
+    myFiles.remove(file);
+  }
+
   public synchronized List<VirtualFile> getFiles() {
     return new ArrayList<VirtualFile>(myFiles);
   }

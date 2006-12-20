@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -78,6 +80,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private VcsDirtyScope myCurrentlyUpdatingScope = null;
 
   @NonNls private static final String NODE_LIST = "list";
+  @NonNls private static final String NODE_IGNORED = "ignored";
   @NonNls private static final String ATT_NAME = "name";
   @NonNls private static final String ATT_COMMENT = "comment";
   @NonNls private static final String NODE_CHANGE = "change";
@@ -87,7 +90,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NonNls private static final String ATT_CHANGE_TYPE = "type";
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
+  @NonNls private static final String ATT_PATH = "path";
+  @NonNls private static final String ATT_MASK = "mask";
   private List<CommitExecutor> myExecutors = new ArrayList<CommitExecutor>();
+  private List<IgnoredFileBean> myFilesToIgnore = new ArrayList<IgnoredFileBean>();
 
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
 
@@ -328,7 +334,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                   if (myDisposed) throw new DisposedException();
                   if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
                   if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
-                    unversionedHolder.addFile(file);
+                    if (isIgnoredFile(file)) {
+                      ignoredHolder.addFile(file);
+                    }
+                    else {
+                      unversionedHolder.addFile(file);
+                    }
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
                   }
                 }
@@ -745,33 +756,55 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void readExternal(Element element) throws InvalidDataException {
     final List<Element> listNodes = (List<Element>)element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
-      // workaround for loading incorrect settings (with duplicate changelist names)
-      final String changeListName = listNode.getAttributeValue(ATT_NAME);
-      LocalChangeList list = findChangeList(changeListName);
-      if (list == null) {
-        list = addChangeList(changeListName, listNode.getAttributeValue(ATT_COMMENT));
-      }
-      final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
-      for (Element changeNode : changeNodes) {
-        try {
-          list.addChange(readChange(changeNode));
-        }
-        catch (OutdatedFakeRevisionException e) {
-          // Do nothing. Just skip adding outdated revisions to the list.
-        }
-      }
-
-      if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
-        setDefaultChangeList(list);
-      }
-      if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
-        list.setReadOnly(true);
-      }
+      readChangeList(listNode);
+    }
+    final List<Element> ignoredNodes = (List<Element>)element.getChildren(NODE_IGNORED);
+    for (Element ignoredNode: ignoredNodes) {
+      readFileToIgnore(ignoredNode);
     }
 
     if (myChangeLists.size() > 0 && myDefaultChangelist == null) {
       setDefaultChangeList(myChangeLists.get(0));
     }
+  }
+
+  private void readChangeList(final Element listNode) {
+    // workaround for loading incorrect settings (with duplicate changelist names)
+    final String changeListName = listNode.getAttributeValue(ATT_NAME);
+    LocalChangeList list = findChangeList(changeListName);
+    if (list == null) {
+      list = addChangeList(changeListName, listNode.getAttributeValue(ATT_COMMENT));
+    }
+    //noinspection unchecked
+    final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
+    for (Element changeNode : changeNodes) {
+      try {
+        list.addChange(readChange(changeNode));
+      }
+      catch (OutdatedFakeRevisionException e) {
+        // Do nothing. Just skip adding outdated revisions to the list.
+      }
+    }
+
+    if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
+      setDefaultChangeList(list);
+    }
+    if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
+      list.setReadOnly(true);
+    }
+  }
+
+  private void readFileToIgnore(final Element ignoredNode) {
+    IgnoredFileBean bean = new IgnoredFileBean();
+    String path = ignoredNode.getAttributeValue(ATT_PATH);
+    if (path != null) {
+      bean.setPath(path);
+    }
+    String mask = ignoredNode.getAttributeValue(ATT_MASK);
+    if (mask != null) {
+      bean.setMask(mask);
+    }
+    myFilesToIgnore.add(bean);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -790,6 +823,20 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         listNode.setAttribute(ATT_COMMENT, list.getComment());
         for (Change change : list.getChanges()) {
           writeChange(listNode, change);
+        }
+      }
+    }
+    synchronized(myFilesToIgnore) {
+      for(IgnoredFileBean bean: myFilesToIgnore) {
+        Element fileNode = new Element(NODE_IGNORED);
+        element.addContent(fileNode);
+        String path = bean.getPath();
+        if (path != null) {
+          fileNode.setAttribute("path", path);
+        }
+        String mask = bean.getMask();
+        if (mask != null) {
+          fileNode.setAttribute("mask", mask);
         }
       }
     }
@@ -853,6 +900,35 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public List<CommitExecutor> getRegisteredExecutors() {
     return Collections.unmodifiableList(myExecutors);
+  }
+
+  public void addIgnoredFiles(final IgnoredFileBean... ignoredFiles) {
+    Collections.addAll(myFilesToIgnore, ignoredFiles);
+    for(VirtualFile file: myUnversionedFilesHolder.getFiles()) {
+      if (isIgnoredFile(file)) {
+        myUnversionedFilesHolder.removeFile(file);
+        myIgnoredFilesHolder.addFile(file);
+      }
+    }
+    ChangesViewManager.getInstance(myProject).scheduleRefresh();
+  }
+
+  private boolean isIgnoredFile(VirtualFile file) {
+    if (myFilesToIgnore.size() == 0) {
+      return false;
+    }
+    String filePath = VfsUtil.getRelativePath(file, myProject.getProjectFile().getParent(), '/');
+    for(IgnoredFileBean bean: myFilesToIgnore) {
+      final String prefix = bean.getPath();
+      if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, prefix)) {
+        return true;
+      }
+      final Pattern pattern = bean.getPattern();
+      if (pattern != null && pattern.matcher(file.getName()).matches()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static VirtualFile[] collectFiles(final List<FilePath> paths) {

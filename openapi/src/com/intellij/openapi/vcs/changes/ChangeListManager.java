@@ -68,4 +68,6 @@ public abstract class ChangeListManager {
   public abstract void reopenFiles(List<FilePath> paths);
 
   public abstract List<CommitExecutor> getRegisteredExecutors();
+
+  public abstract void addIgnoredFiles(final IgnoredFileBean... ignoredFiles);
 }
