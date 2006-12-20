@@ -52,6 +52,10 @@
       <implementation-class>com.intellij.openapi.vfs.impl.VirtualFileManagerImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.openapi.vfs.watcher.FileSystemTracker</interface-class>
+      <implementation-class>com.intellij.openapi.vfs.impl.watcher.FileSystemTrackerImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.vfs.CharsetSettings</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.CharsetSettingsImpl</implementation-class>
     </component>
