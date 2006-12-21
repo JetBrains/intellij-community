@@ -6,6 +6,7 @@ import com.intellij.lang.ant.psi.AntProperty;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiLock;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,44 +39,52 @@ public class AntCallImpl extends AntTaskImpl implements AntCall {
 
   @Nullable
   public AntTarget getTarget() {
-    final String target = getSourceElement().getAttributeValue("target");
-    final AntTarget result = (target == null) ? null : getAntProject().getTarget(target);
-    if (result != null) {
-      result.setDependsTargets(getDependsTargets());
+    synchronized (PsiLock.LOCK) {
+      final String target = getSourceElement().getAttributeValue("target");
+      final AntTarget result = (target == null) ? null : getAntProject().getTarget(target);
+      if (result != null) {
+        result.setDependsTargets(getDependsTargets());
+      }
+      return result;
     }
-    return result;
   }
 
   @NotNull
   public AntProperty[] getParams() {
-    if (myParams == null) {
-      final List<AntProperty> properties = new ArrayList<AntProperty>();
-      for (AntElement element : getChildren()) {
-        if (element instanceof AntProperty) {
-          properties.add((AntProperty)element);
+    synchronized (PsiLock.LOCK) {
+      if (myParams == null) {
+        final List<AntProperty> properties = new ArrayList<AntProperty>();
+        for (AntElement element : getChildren()) {
+          if (element instanceof AntProperty) {
+            properties.add((AntProperty)element);
+          }
         }
+        myParams = properties.toArray(new AntProperty[properties.size()]);
       }
-      myParams = properties.toArray(new AntProperty[properties.size()]);
+      return myParams;
     }
-    return myParams;
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    myDependsTargets = null;
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      myDependsTargets = null;
+    }
   }
 
   @NotNull
   private AntTarget[] getDependsTargets() {
-    if (myDependsTargets == null) {
-      final List<AntTarget> targets = new ArrayList<AntTarget>();
-      for (AntElement element : getChildren()) {
-        if (element instanceof AntTarget) {
-          targets.add((AntTarget)element);
+    synchronized (PsiLock.LOCK) {
+      if (myDependsTargets == null) {
+        final List<AntTarget> targets = new ArrayList<AntTarget>();
+        for (AntElement element : getChildren()) {
+          if (element instanceof AntTarget) {
+            targets.add((AntTarget)element);
+          }
         }
+        myDependsTargets = targets.toArray(new AntTarget[targets.size()]);
       }
-      myDependsTargets = targets.toArray(new AntTarget[targets.size()]);
+      return myDependsTargets;
     }
-    return myDependsTargets;
   }
 }

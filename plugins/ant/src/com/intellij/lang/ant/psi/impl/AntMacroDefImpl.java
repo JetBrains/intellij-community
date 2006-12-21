@@ -11,6 +11,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiLock;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
@@ -52,20 +53,22 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    final AntFile file = getAntFile();
-    if (myMacroDefinition != null) {
-      for (AntTypeId id : myMacroDefinition.getNestedElements()) {
-        final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
-        file.unregisterCustomType(nestedDef);
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      final AntFile file = getAntFile();
+      if (myMacroDefinition != null) {
+        for (AntTypeId id : myMacroDefinition.getNestedElements()) {
+          final AntTypeDefinition nestedDef = file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id));
+          file.unregisterCustomType(nestedDef);
+        }
+        final AntStructuredElement parent = getAntParent();
+        if (parent != null) {
+          parent.unregisterCustomType(myMacroDefinition);
+        }
+        myMacroDefinition = null;
       }
-      final AntStructuredElement parent = getAntParent();
-      if (parent != null) {
-        parent.unregisterCustomType(myMacroDefinition);
-      }
-      myMacroDefinition = null;
+      file.clearCaches();
     }
-    file.clearCaches();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

@@ -6,6 +6,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -131,18 +132,20 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public String getValue(final String propName) {
-    final XmlTag se = getSourceElement();
-    final String tagName = se.getName();
-    if (AntFileImpl.PROPERTY.equals(tagName) || "param".equals(tagName)) {
-      return getPropertyValue();
+    synchronized (PsiLock.LOCK) {
+      final XmlTag se = getSourceElement();
+      final String tagName = se.getName();
+      if (AntFileImpl.PROPERTY.equals(tagName) || "param".equals(tagName)) {
+        return getPropertyValue();
+      }
+      else if ("dirname".equals(tagName)) {
+        return getDirnameValue();
+      }
+      else if (isTstamp()) {
+        return getTstampValue(propName);
+      }
+      return null;
     }
-    else if ("dirname".equals(tagName)) {
-      return getDirnameValue();
-    }
-    else if (isTstamp()) {
-      return getTstampValue(propName);
-    }
-    return null;
   }
 
   @Nullable
@@ -152,17 +155,19 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   @Nullable
   public PropertiesFile getPropertiesFile() {
-    if (myPropertiesFile == null) {
-      myPropertiesFile = AntElementImpl.ourNull;
-      final String name = getFileName();
-      if (name != null) {
-        final PsiFile psiFile = findFileByName(name, null);
-        if (psiFile instanceof PropertiesFile) {
-          myPropertiesFile = psiFile;
+    synchronized (PsiLock.LOCK) {
+      if (myPropertiesFile == null) {
+        myPropertiesFile = AntElementImpl.ourNull;
+        final String name = getFileName();
+        if (name != null) {
+          final PsiFile psiFile = findFileByName(name, null);
+          if (psiFile instanceof PropertiesFile) {
+            myPropertiesFile = psiFile;
+          }
         }
       }
+      return (myPropertiesFile == AntElementImpl.ourNull) ? null : (PropertiesFile)myPropertiesFile;
     }
-    return (myPropertiesFile == AntElementImpl.ourNull) ? null : (PropertiesFile)myPropertiesFile;
   }
 
   @Nullable
@@ -191,9 +196,11 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    myPropHolder.clearCaches();
-    myPropertiesFile = null;
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      myPropHolder.clearCaches();
+      myPropertiesFile = null;
+    }
   }
 
   public int getTextOffset() {

@@ -6,6 +6,7 @@ import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,10 +84,12 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   }
 
   public final String[] getAttributes() {
-    if (myAttributesArray == null || myAttributesArray.length != myAttributes.size()) {
-      myAttributesArray = myAttributes.keySet().toArray(new String[myAttributes.size()]);
+    synchronized (PsiLock.LOCK) {
+      if (myAttributesArray == null || myAttributesArray.length != myAttributes.size()) {
+        myAttributesArray = myAttributes.keySet().toArray(new String[myAttributes.size()]);
+      }
+      return myAttributesArray;
     }
-    return myAttributesArray;
   }
 
   public final AntAttributeType getAttributeType(final String attr) {
@@ -104,10 +107,12 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
 
   @SuppressWarnings({"unchecked"})
   public final AntTypeId[] getNestedElements() {
-    if (myNestedElementsArray == null || myNestedElementsArray.length != myNestedClassNames.size()) {
-      myNestedElementsArray = myNestedClassNames.keySet().toArray(new AntTypeId[myNestedClassNames.size()]);
+    synchronized (PsiLock.LOCK) {
+      if (myNestedElementsArray == null || myNestedElementsArray.length != myNestedClassNames.size()) {
+        myNestedElementsArray = myNestedClassNames.keySet().toArray(new AntTypeId[myNestedClassNames.size()]);
+      }
+      return myNestedElementsArray;
     }
-    return myNestedElementsArray;
   }
 
   public final Map<AntTypeId, String> getNestedElementsMap() {

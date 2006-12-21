@@ -8,6 +8,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiLock;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
@@ -43,15 +44,17 @@ public class AntPresetDefImpl extends AntAllTasksContainerImpl implements AntPre
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    if (myPresetDefinition != null) {
-      final AntStructuredElement parent = getAntParent();
-      if (parent != null) {
-        parent.unregisterCustomType(myPresetDefinition);
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      if (myPresetDefinition != null) {
+        final AntStructuredElement parent = getAntParent();
+        if (parent != null) {
+          parent.unregisterCustomType(myPresetDefinition);
+        }
+        myPresetDefinition = null;
       }
-      myPresetDefinition = null;
+      getAntFile().clearCaches();
     }
-    getAntFile().clearCaches();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

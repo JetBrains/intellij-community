@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.AntImport;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -46,8 +47,10 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    getAntFile().clearCaches();
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      getAntFile().clearCaches();
+    }
   }
 
   @Nullable

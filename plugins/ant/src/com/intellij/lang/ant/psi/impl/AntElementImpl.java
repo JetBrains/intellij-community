@@ -42,12 +42,12 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   };
 
   private final AntElement myParent;
-  private AntElement[] myChildren;
-  private PsiReference[] myReferences;
-  private PsiElement myPrev;
-  private PsiElement myNext;
-  protected Map<String, AntProperty> myProperties;
-  private AntProperty[] myPropertiesArray;
+  private volatile AntElement[] myChildren;
+  private volatile PsiReference[] myReferences;
+  private volatile PsiElement myPrev;
+  private volatile PsiElement myNext;
+  protected volatile Map<String, AntProperty> myProperties;
+  private volatile AntProperty[] myPropertiesArray;
 
   public AntElementImpl(final AntElement parent, final XmlElement sourceElement) {
     super(sourceElement);
@@ -159,13 +159,13 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       myChildren = null;
-    }
     myReferences = null;
     myProperties = null;
     myPropertiesArray = null;
     myPrev = null;
     myNext = null;
     incModificationCount();
+    }
   }
 
   public void incModificationCount() {
@@ -178,12 +178,14 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public void setProperty(final String name, final AntProperty element) {
-    if (name == null || name.length() == 0) return;
-    if (myProperties == null) {
-      myProperties = new HashMap<String, AntProperty>();
+    synchronized (PsiLock.LOCK) {
+      if (name == null || name.length() == 0) return;
+      if (myProperties == null) {
+        myProperties = new HashMap<String, AntProperty>();
+      }
+      myProperties.put(name, element);
+      myPropertiesArray = null;
     }
-    myProperties.put(name, element);
-    myPropertiesArray = null;
   }
 
   @NotNull

@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -29,16 +30,16 @@ import java.util.Set;
 
 public class AntStructuredElementImpl extends AntElementImpl implements AntStructuredElement {
 
-  protected AntTypeDefinition myDefinition;
+  protected volatile AntTypeDefinition myDefinition;
   private boolean myDefinitionCloned;
-  private AntElement myIdElement;
-  private AntElement myNameElement;
-  @NonNls private String myNameElementAttribute;
-  private int myLastFoundElementOffset = -1;
-  private AntElement myLastFoundElement;
-  private boolean myIsImported;
-  private boolean myComputingAttrValue;
-  protected boolean myInGettingChildren;
+  private volatile AntElement myIdElement;
+  private volatile AntElement myNameElement;
+  @NonNls private volatile String myNameElementAttribute;
+  private volatile int myLastFoundElementOffset = -1;
+  private volatile AntElement myLastFoundElement;
+  private volatile boolean myIsImported;
+  private volatile boolean myComputingAttrValue;
+  protected volatile boolean myInGettingChildren;
   @NonNls private static final String ANTLIB_NS_PREFIX = "antlib:";
   @NonNls private static final String ANTLIB_XML = "antlib.xml";
 
@@ -134,15 +135,17 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public PsiElement findElementAt(int offset) {
-    if (offset == myLastFoundElementOffset) {
-      return myLastFoundElement;
+    synchronized (PsiLock.LOCK) {
+      if (offset == myLastFoundElementOffset) {
+        return myLastFoundElement;
+      }
+      final PsiElement foundElement = super.findElementAt(offset);
+      if (foundElement != null) {
+        myLastFoundElement = (AntElement)foundElement;
+        myLastFoundElementOffset = offset;
+      }
+      return foundElement;
     }
-    final PsiElement foundElement = super.findElementAt(offset);
-    if (foundElement != null) {
-      myLastFoundElement = (AntElement)foundElement;
-      myLastFoundElementOffset = offset;
-    }
-    return foundElement;
   }
 
   public AntTypeDefinition getTypeDefinition() {
@@ -150,21 +153,25 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public void registerCustomType(final AntTypeDefinition def) {
-    if (myDefinition != null) {
-      if (!myDefinitionCloned) {
-        myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
-        myDefinitionCloned = true;
+    synchronized (PsiLock.LOCK) {
+      if (myDefinition != null) {
+        if (!myDefinitionCloned) {
+          myDefinition = new AntTypeDefinitionImpl((AntTypeDefinitionImpl)myDefinition);
+          myDefinitionCloned = true;
+        }
+        myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
       }
-      myDefinition.registerNestedType(def.getTypeId(), def.getClassName());
+      getAntFile().registerCustomType(def);
     }
-    getAntFile().registerCustomType(def);
   }
 
   public void unregisterCustomType(final AntTypeDefinition def) {
-    if (myDefinition != null && myDefinitionCloned) {
-      myDefinition.unregisterNestedType(def.getTypeId());
+    synchronized (PsiLock.LOCK) {
+      if (myDefinition != null && myDefinitionCloned) {
+        myDefinition.unregisterNestedType(def.getTypeId());
+      }
+      getAntFile().unregisterCustomType(def);
     }
-    getAntFile().unregisterCustomType(def);
   }
 
   public boolean hasImportedTypeDefinition() {
@@ -208,18 +215,20 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   @Nullable
   public String computeAttributeValue(final String value) {
-    if (value != null && !myComputingAttrValue) {
-      myComputingAttrValue = true;
-      final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
-      try {
-        return computeAttributeValue(value, set);
+    synchronized (PsiLock.LOCK) {
+      if (value != null && !myComputingAttrValue) {
+        myComputingAttrValue = true;
+        final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
+        try {
+          return computeAttributeValue(value, set);
+        }
+        finally {
+          PsiElementSetSpinAllocator.dispose(set);
+          myComputingAttrValue = false;
+        }
       }
-      finally {
-        PsiElementSetSpinAllocator.dispose(set);
-        myComputingAttrValue = false;
-      }
+      return null;
     }
-    return null;
   }
 
   public boolean hasNameElement() {
@@ -243,12 +252,14 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    myIdElement = null;
-    myNameElement = null;
-    myLastFoundElementOffset = -1;
-    myLastFoundElement = null;
-    invalidateAntlibNamespace();
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      myIdElement = null;
+      myNameElement = null;
+      myLastFoundElementOffset = -1;
+      myLastFoundElement = null;
+      invalidateAntlibNamespace();
+    }
   }
 
   public AntElement lightFindElementAt(int offset) {
@@ -269,72 +280,78 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   }
 
   protected AntElement[] getChildrenInner() {
-    if (!myInGettingChildren) {
-      myInGettingChildren = true;
-      try {
-        final List<AntElement> children = new ArrayList<AntElement>();
-        if (hasIdElement()) {
-          children.add(getIdElement());
-        }
-        if (hasNameElement()) {
-          children.add(getNameElement());
-        }
-        for (final PsiElement element : getSourceElement().getChildren()) {
-          if (element instanceof XmlElement) {
-            final AntElement antElement = AntElementFactory.createAntElement(this, (XmlElement)element);
-            if (antElement != null) {
-              children.add(antElement);
-              if (antElement instanceof AntStructuredElement) {
-                antElement.getChildren();
+    synchronized (PsiLock.LOCK) {
+      if (!myInGettingChildren) {
+        myInGettingChildren = true;
+        try {
+          final List<AntElement> children = new ArrayList<AntElement>();
+          if (hasIdElement()) {
+            children.add(getIdElement());
+          }
+          if (hasNameElement()) {
+            children.add(getNameElement());
+          }
+          for (final PsiElement element : getSourceElement().getChildren()) {
+            if (element instanceof XmlElement) {
+              final AntElement antElement = AntElementFactory.createAntElement(this, (XmlElement)element);
+              if (antElement != null) {
+                children.add(antElement);
+                if (antElement instanceof AntStructuredElement) {
+                  antElement.getChildren();
+                }
               }
             }
           }
+          final int count = children.size();
+          return (count > 0) ? children.toArray(new AntElement[count]) : AntElement.EMPTY_ARRAY;
         }
-        final int count = children.size();
-        return (count > 0) ? children.toArray(new AntElement[count]) : AntElement.EMPTY_ARRAY;
-      }
-      finally {
-        myInGettingChildren = false;
+        finally {
+          myInGettingChildren = false;
+        }
       }
     }
     return AntElement.EMPTY_ARRAY;
   }
 
   @NotNull
-  protected AntElement getIdElement() {
-    if (myIdElement == null) {
-      myIdElement = ourNull;
-      final XmlTag se = getSourceElement();
-      if (se.isValid()) {
-        final XmlAttribute idAttr = se.getAttribute(AntFileImpl.ID_ATTR, null);
-        if (idAttr != null) {
-          final XmlAttributeValue valueElement = idAttr.getValueElement();
-          if (valueElement != null) {
-            myIdElement = new AntNameElementImpl(this, valueElement);
-            getAntProject().registerRefId(myIdElement.getName(), this);
+  private AntElement getIdElement() {
+    synchronized (PsiLock.LOCK) {
+      if (myIdElement == null) {
+        myIdElement = ourNull;
+        final XmlTag se = getSourceElement();
+        if (se.isValid()) {
+          final XmlAttribute idAttr = se.getAttribute(AntFileImpl.ID_ATTR, null);
+          if (idAttr != null) {
+            final XmlAttributeValue valueElement = idAttr.getValueElement();
+            if (valueElement != null) {
+              myIdElement = new AntNameElementImpl(this, valueElement);
+              getAntProject().registerRefId(myIdElement.getName(), this);
+            }
           }
         }
       }
+      return myIdElement;
     }
-    return myIdElement;
   }
 
   @NotNull
-  protected AntElement getNameElement() {
-    if (myNameElement == null) {
-      myNameElement = ourNull;
-      final XmlTag se = getSourceElement();
-      if (se.isValid()) {
-        final XmlAttribute nameAttr = se.getAttribute(myNameElementAttribute, null);
-        if (nameAttr != null) {
-          final XmlAttributeValue valueElement = nameAttr.getValueElement();
-          if (valueElement != null) {
-            myNameElement = new AntNameElementImpl(this, valueElement);
+  private AntElement getNameElement() {
+    synchronized (PsiLock.LOCK) {
+      if (myNameElement == null) {
+        myNameElement = ourNull;
+        final XmlTag se = getSourceElement();
+        if (se.isValid()) {
+          final XmlAttribute nameAttr = se.getAttribute(myNameElementAttribute, null);
+          if (nameAttr != null) {
+            final XmlAttributeValue valueElement = nameAttr.getValueElement();
+            if (valueElement != null) {
+              myNameElement = new AntNameElementImpl(this, valueElement);
+            }
           }
         }
       }
+      return myNameElement;
     }
-    return myNameElement;
   }
 
   @NonNls
@@ -349,7 +366,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
    * @param elementStack
    * @return
    */
-  protected String computeAttributeValue(String value, final Set<PsiElement> elementStack) {
+  private String computeAttributeValue(String value, final Set<PsiElement> elementStack) {
     elementStack.add(this);
     int startProp = 0;
     while ((startProp = value.indexOf("${", startProp)) >= 0) {

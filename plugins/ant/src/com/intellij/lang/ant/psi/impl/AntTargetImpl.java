@@ -9,6 +9,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiLock;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,37 +76,43 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
 
   @NotNull
   public AntTarget[] getDependsTargets() {
-    if (myDependsTargets == null) {
-      final String depends = getSourceElement().getAttributeValue(AntFileImpl.DEPENDS_ATTR);
-      if (depends == null || depends.length() == 0) {
-        myDependsTargets = EMPTY_TARGETS;
-      }
-      else {
-        final AntProject project = getAntProject();
-        final List<AntTarget> targets = new ArrayList<AntTarget>();
-        for (final String name : depends.split(",")) {
-          final AntTarget antTarget = project.getTarget(name);
-          if (antTarget != null) {
-            targets.add(antTarget);
-          }
+    synchronized (PsiLock.LOCK) {
+      if (myDependsTargets == null) {
+        final String depends = getSourceElement().getAttributeValue(AntFileImpl.DEPENDS_ATTR);
+        if (depends == null || depends.length() == 0) {
+          myDependsTargets = EMPTY_TARGETS;
         }
-        myDependsTargets = targets.toArray(new AntTarget[targets.size()]);
+        else {
+          final AntProject project = getAntProject();
+          final List<AntTarget> targets = new ArrayList<AntTarget>();
+          for (final String name : depends.split(",")) {
+            final AntTarget antTarget = project.getTarget(name);
+            if (antTarget != null) {
+              targets.add(antTarget);
+            }
+          }
+          myDependsTargets = targets.toArray(new AntTarget[targets.size()]);
+        }
       }
+      return myDependsTargets;
     }
-    return myDependsTargets;
   }
 
   public void setDependsTargets(@NotNull AntTarget[] targets) {
-    myDependsTargets = targets;
+    synchronized (PsiLock.LOCK) {
+      myDependsTargets = targets;
+    }
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    myDependsTargets = null;
-    if (myPropElement != null) {
-      getAntProject().clearCaches();
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      myDependsTargets = null;
+      if (myPropElement != null) {
+        getAntProject().clearCaches();
+      }
+      setProperties();
     }
-    setProperties();
   }
 
   /**
@@ -157,25 +164,27 @@ public class AntTargetImpl extends AntStructuredElementImpl implements AntTarget
   }
 
   protected AntElement[] getChildrenInner() {
-    final AntElement[] baseChildren = super.getChildrenInner();
-    if (myPropElement == null) {
-      return baseChildren;
-    }
-    if (!myInGettingChildren) {
-      myInGettingChildren = true;
-      try {
-        final List<AntElement> children = new ArrayList<AntElement>(baseChildren.length + 1);
-        children.add(myPropElement);
-        for (final AntElement child : baseChildren) {
-          children.add(child);
+    synchronized (PsiLock.LOCK) {
+      final AntElement[] baseChildren = super.getChildrenInner();
+      if (myPropElement == null) {
+        return baseChildren;
+      }
+      if (!myInGettingChildren) {
+        myInGettingChildren = true;
+        try {
+          final List<AntElement> children = new ArrayList<AntElement>(baseChildren.length + 1);
+          children.add(myPropElement);
+          for (final AntElement child : baseChildren) {
+            children.add(child);
+          }
+          return children.toArray(new AntElement[children.size()]);
         }
-        return children.toArray(new AntElement[children.size()]);
+        finally {
+          myInGettingChildren = false;
+        }
       }
-      finally {
-        myInGettingChildren = false;
-      }
+      return AntElement.EMPTY_ARRAY;
     }
-    return AntElement.EMPTY_ARRAY;
   }
 
   private void setProperties() {

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
@@ -132,11 +133,15 @@ public class AntTargetReference extends AntGenericReference {
   }
 
   public boolean shouldBeSkippedByAnnotator() {
-    return myShouldBeSkippedByAnnotator;
+    synchronized (PsiLock.LOCK) {
+      return myShouldBeSkippedByAnnotator;
+    }
   }
 
   public void setShouldBeSkippedByAnnotator(boolean value) {
-    myShouldBeSkippedByAnnotator = value;
+    synchronized (PsiLock.LOCK) {
+      myShouldBeSkippedByAnnotator = value;
+    }
   }
 
   public Object[] getVariants() {

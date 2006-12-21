@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -110,45 +111,49 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    if (myNewDefinitions != null) {
-      final AntStructuredElement parent = getAntParent();
-      if (parent != null) {
-        for (final AntTypeDefinition def : myNewDefinitions) {
-          parent.unregisterCustomType(def);
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      if (myNewDefinitions != null) {
+        final AntStructuredElement parent = getAntParent();
+        if (parent != null) {
+          for (final AntTypeDefinition def : myNewDefinitions) {
+            parent.unregisterCustomType(def);
+          }
         }
+        myNewDefinitions = null;
+        myClassesLoaded = false;
       }
-      myNewDefinitions = null;
-      myClassesLoaded = false;
-    }
-    final AntFile file = getAntFile();
-    if (file != null) {
-      file.clearCaches();
+      final AntFile file = getAntFile();
+      if (file != null) {
+        file.clearCaches();
+      }
     }
   }
 
   @NotNull
   public AntTypeDefinition[] getDefinitions() {
-    if (myNewDefinitions == null) {
-      myNewDefinitions = AntTypeDefinition.EMPTY_ARRAY;
-      final String classname = getClassName();
-      if (classname != null) {
-        loadClass(classname, getDefinedName(), getUri());
-      }
-      else {
-        final String resource = getResource();
-        if (resource != null) {
-          loadResource(resource);
+    synchronized (PsiLock.LOCK) {
+      if (myNewDefinitions == null) {
+        myNewDefinitions = AntTypeDefinition.EMPTY_ARRAY;
+        final String classname = getClassName();
+        if (classname != null) {
+          loadClass(classname, getDefinedName(), getUri());
         }
         else {
-          final String file = getFile();
-          if (file != null) {
-            loadFile(file);
+          final String resource = getResource();
+          if (resource != null) {
+            loadResource(resource);
+          }
+          else {
+            final String file = getFile();
+            if (file != null) {
+              loadFile(file);
+            }
           }
         }
       }
+      return myNewDefinitions;
     }
-    return myNewDefinitions;
   }
 
   public boolean typesLoaded() {

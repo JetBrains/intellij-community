@@ -67,28 +67,28 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NonNls public static final String FILE_ATTR = "file";
   @NonNls public static final String PREFIX_ATTR = "prefix";
 
-  private AntProject myProject;
-  private AntElement myPrologElement;
-  private AntElement myEpilogueElement;
-  private PsiElement[] myChildren;
-  private AntClassLoader myClassLoader;
-  private Hashtable myProjectProperties;
+  private volatile AntProject myProject;
+  private volatile AntElement myPrologElement;
+  private volatile AntElement myEpilogueElement;
+  private volatile PsiElement[] myChildren;
+  private volatile AntClassLoader myClassLoader;
+  private volatile Hashtable myProjectProperties;
   /**
    * Map of propeties set outside.
    */
-  private Map<String, String> myExternalProperties;
+  private volatile Map<String, String> myExternalProperties;
   /**
    * Map of class names to task definitions.
    */
-  private Map<String, AntTypeDefinition> myTypeDefinitions;
-  private AntTypeDefinition[] myTypeDefinitionArray;
-  private AntTypeDefinition myTargetDefinition;
+  private volatile Map<String, AntTypeDefinition> myTypeDefinitions;
+  private volatile AntTypeDefinition[] myTypeDefinitionArray;
+  private volatile AntTypeDefinition myTargetDefinition;
   /**
    * Map of nested elements specially for the project element.
    * It's updated together with the set of custom definitons.
    */
-  private HashMap<AntTypeId, String> myProjectElements;
-  private long myModificationCount = 0;
+  private volatile HashMap<AntTypeId, String> myProjectElements;
+  private volatile long myModificationCount = 0;
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());

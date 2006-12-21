@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiLock;
 import com.intellij.util.containers.HashMap;
 import org.apache.tools.ant.Target;
 import org.apache.tools.ant.taskdefs.*;
@@ -122,116 +123,118 @@ public class AntElementFactory {
   }
 
   private static void instantiate() {
-    if (ourAntTypeToKnownAntElementCreatorMap == null) {
-      ourAntTypeToKnownAntElementCreatorMap = new HashMap<String, AntElementCreator>();
-      final AntElementCreator targetCreator = new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntTargetImpl(parent, tag);
-        }
-      };
-      ourAntTypeToKnownAntElementCreatorMap.put(Target.class.getName(), targetCreator);
-      ourAntTypeToKnownAntElementCreatorMap.put(Ant.TargetElement.class.getName(), targetCreator);
-
-      // properties
-      ourAntTypeToKnownAntElementCreatorMap.put(Property.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Tstamp.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Tstamp.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Checksum.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          final AntTypeDefinition checksumDef = parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName());
-          if (tag.getAttributeValue(TOTAL_PROPERTY) != null) {
-            return new AntPropertyImpl(parent, tag, checksumDef, TOTAL_PROPERTY);
+    synchronized (PsiLock.LOCK) {
+      if (ourAntTypeToKnownAntElementCreatorMap == null) {
+        ourAntTypeToKnownAntElementCreatorMap = new HashMap<String, AntElementCreator>();
+        final AntElementCreator targetCreator = new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntTargetImpl(parent, tag);
           }
-          return new AntPropertyImpl(parent, tag, checksumDef, AntFileImpl.PROPERTY);
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(ExecTask.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(ExecTask.class.getName());
-          if (tag.getAttributeValue(RESULT_PROPERTY) != null) {
+        };
+        ourAntTypeToKnownAntElementCreatorMap.put(Target.class.getName(), targetCreator);
+        ourAntTypeToKnownAntElementCreatorMap.put(Ant.TargetElement.class.getName(), targetCreator);
+
+        // properties
+        ourAntTypeToKnownAntElementCreatorMap.put(Property.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Property.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Tstamp.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntPropertyImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Tstamp.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Checksum.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            final AntTypeDefinition checksumDef = parent.getAntFile().getBaseTypeDefinition(Checksum.class.getName());
+            if (tag.getAttributeValue(TOTAL_PROPERTY) != null) {
+              return new AntPropertyImpl(parent, tag, checksumDef, TOTAL_PROPERTY);
+            }
+            return new AntPropertyImpl(parent, tag, checksumDef, AntFileImpl.PROPERTY);
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(ExecTask.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(ExecTask.class.getName());
+            if (tag.getAttributeValue(RESULT_PROPERTY) != null) {
+              return new AntPropertyImpl(parent, tag, execDef, RESULT_PROPERTY);
+            }
+            return new AntPropertyImpl(parent, tag, execDef, "outputproperty");
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Java.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(Java.class.getName());
             return new AntPropertyImpl(parent, tag, execDef, RESULT_PROPERTY);
           }
-          return new AntPropertyImpl(parent, tag, execDef, "outputproperty");
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Java.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(Java.class.getName());
-          return new AntPropertyImpl(parent, tag, execDef, RESULT_PROPERTY);
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Input.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(Input.class.getName());
-          return new AntPropertyImpl(parent, tag, execDef, "addproperty");
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Exit.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          final AntTypeDefinition failTaskDefinition = parent.getAntFile().getBaseTypeDefinition(Exit.class.getName());
-          if (tag.getAttributeValue(AntFileImpl.IF_ATTR) != null) {
-            return new AntPropertyImpl(parent, tag, failTaskDefinition, AntFileImpl.IF_ATTR);
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Input.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            final AntTypeDefinition execDef = parent.getAntFile().getBaseTypeDefinition(Input.class.getName());
+            return new AntPropertyImpl(parent, tag, execDef, "addproperty");
           }
-          return new AntPropertyImpl(parent, tag, failTaskDefinition, AntFileImpl.UNLESS_ATTR);
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Exit.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            final AntTypeDefinition failTaskDefinition = parent.getAntFile().getBaseTypeDefinition(Exit.class.getName());
+            if (tag.getAttributeValue(AntFileImpl.IF_ATTR) != null) {
+              return new AntPropertyImpl(parent, tag, failTaskDefinition, AntFileImpl.IF_ATTR);
+            }
+            return new AntPropertyImpl(parent, tag, failTaskDefinition, AntFileImpl.UNLESS_ATTR);
+          }
+        });
+        for (final String clazz : PROPERTY_CLASSES) {
+          addPropertyCreator(clazz);
         }
-      });
-      for (final String clazz : PROPERTY_CLASSES) {
-        addPropertyCreator(clazz);
-      }
 
-      // sequential and parallel tasks can contain all other tasks
-      for (final String clazz : ALL_TASKS_CONTAINER_CLASSES) {
-        addAllTasksContainerCreator(clazz);
+        // sequential and parallel tasks can contain all other tasks
+        for (final String clazz : ALL_TASKS_CONTAINER_CLASSES) {
+          addAllTasksContainerCreator(clazz);
+        }
+        ourAntTypeToKnownAntElementCreatorMap.put(CallTarget.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntCallImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(CallTarget.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Taskdef.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntTypeDefImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Taskdef.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Typedef.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntTypeDefImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Typedef.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(MacroDef.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntMacroDefImpl((AntStructuredElement)parent, tag,
+                                       parent.getAntFile().getBaseTypeDefinition(MacroDef.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(PreSetDef.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntPresetDefImpl((AntStructuredElement)parent, tag,
+                                        parent.getAntFile().getBaseTypeDefinition(PreSetDef.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(ImportTask.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntImportImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(ImportTask.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(Ant.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntAntImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Ant.class.getName()));
+          }
+        });
+        ourAntTypeToKnownAntElementCreatorMap.put(BuildNumber.class.getName(), new AntElementCreator() {
+          public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
+            return new AntBuildNumberImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(BuildNumber.class.getName()));
+          }
+        });
       }
-      ourAntTypeToKnownAntElementCreatorMap.put(CallTarget.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntCallImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(CallTarget.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Taskdef.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntTypeDefImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Taskdef.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Typedef.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntTypeDefImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Typedef.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(MacroDef.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntMacroDefImpl((AntStructuredElement)parent, tag,
-                                     parent.getAntFile().getBaseTypeDefinition(MacroDef.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(PreSetDef.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntPresetDefImpl((AntStructuredElement)parent, tag,
-                                      parent.getAntFile().getBaseTypeDefinition(PreSetDef.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(ImportTask.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntImportImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(ImportTask.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(Ant.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntAntImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(Ant.class.getName()));
-        }
-      });
-      ourAntTypeToKnownAntElementCreatorMap.put(BuildNumber.class.getName(), new AntElementCreator() {
-        public AntStructuredElement create(final AntElement parent, final XmlTag tag) {
-          return new AntBuildNumberImpl(parent, tag, parent.getAntFile().getBaseTypeDefinition(BuildNumber.class.getName()));
-        }
-      });
     }
   }
 

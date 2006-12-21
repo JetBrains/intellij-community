@@ -4,6 +4,7 @@ import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntEntityReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,24 +19,28 @@ public class AntEntityRefImpl extends AntElementImpl {
   }
 
   public void clearCaches() {
-    super.clearCaches();
-    myRefs = null;
+    synchronized (PsiLock.LOCK) {
+      super.clearCaches();
+      myRefs = null;
+    }
   }
 
   @NotNull
   public PsiReference[] getReferences() {
-    if (myRefs == null) {
-      final List<PsiReference> refList = PsiReferenceListSpinAllocator.alloc();
-      try {
-        for (final PsiReference ref : getSourceElement().getReferences()) {
-          refList.add(new AntEntityReference(this, ref));
+    synchronized (PsiLock.LOCK) {
+      if (myRefs == null) {
+        final List<PsiReference> refList = PsiReferenceListSpinAllocator.alloc();
+        try {
+          for (final PsiReference ref : getSourceElement().getReferences()) {
+            refList.add(new AntEntityReference(this, ref));
+          }
+          myRefs = refList.toArray(new PsiReference[refList.size()]);
         }
-        myRefs = refList.toArray(new PsiReference[refList.size()]);
+        finally {
+          PsiReferenceListSpinAllocator.dispose(refList);
+        }
       }
-      finally {
-        PsiReferenceListSpinAllocator.dispose(refList);
-      }
+      return myRefs;
     }
-    return myRefs;
   }
 }
