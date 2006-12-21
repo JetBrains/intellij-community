@@ -17,4 +17,11 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_ERROR = "java.lang.Error";
   @NonNls String JAVA_LANG_RUNTIME_EXCEPTION = "java.lang.RuntimeException";
   @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
+
+  @NonNls String JAVA_UTIL_MAP = "java.util.Map";
+  @NonNls String JAVA_UTIL_LIST = "java.util.List";
+  @NonNls String JAVA_UTIL_SET = "java.util.Set";
+  @NonNls String JAVA_UTIL_PROPERTIES = "java.util.Properties";
+  @NonNls String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
+
 }
