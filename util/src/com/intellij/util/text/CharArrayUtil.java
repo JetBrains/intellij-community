@@ -79,7 +79,6 @@ public class CharArrayUtil {
         */ return bufArray;
       }
 
-      new Throwable("allocating chars 1").printStackTrace();
       char[] chars = new char[seq.length()];
       buffer.position(0);
       buffer.get(chars);
@@ -88,20 +87,17 @@ public class CharArrayUtil {
     }
 
     if (seq instanceof StringBuffer) {
-      new Throwable("allocating chars 2").printStackTrace();
       char[] chars = new char[seq.length()];
       ((StringBuffer)seq).getChars(0, seq.length(), chars, 0);
       return chars;
     }
 
     if (seq instanceof String) {
-      new Throwable("allocating chars 3" + seq).printStackTrace();
       char[] chars = new char[seq.length()];
       ((String)seq).getChars(0, seq.length(), chars, 0);
       return chars;
     }
 
-    new Throwable("allocating chars 4:"+seq).printStackTrace();
     return seq.toString().toCharArray();
   }
 
