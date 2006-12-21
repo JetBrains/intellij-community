@@ -40,7 +40,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
   public InlineProgressIndicator(boolean compact, ProcessInfo processInfo) {
     myCompact = compact;
 
-    myCancelButton = new InplaceButton(IconLoader.getIcon("/actions/clean.png")) {
+    myCancelButton = new InplaceButton(IconLoader.getIcon("/actions/cleanLight.png"), IconLoader.getIcon("/actions/clean.png")) {
       protected void execute() {
         cancelRequest();
       }
