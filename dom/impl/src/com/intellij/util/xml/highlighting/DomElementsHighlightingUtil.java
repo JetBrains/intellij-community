@@ -70,6 +70,7 @@ public class DomElementsHighlightingUtil {
         final AnnotationHolderImpl holder = EMPTY_ANNOTATION_HOLDER;
         TextRange range = s.first;
         if (text == null) range = TextRange.from(range.getStartOffset(), 0);
+        range = range.shiftRight(s.second.getTextRange().getStartOffset());
         final Annotation annotation = createAnnotation(severity, holder, range, text);
         if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
           annotation.setTextAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
