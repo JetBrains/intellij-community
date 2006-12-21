@@ -6,6 +6,7 @@ package com.intellij.psi.impl.source.parsing.xml;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlElementType;
 import static com.intellij.psi.xml.XmlElementType.*;
 import static com.intellij.psi.xml.XmlTokenType.*;
 import org.jetbrains.annotations.NotNull;
@@ -17,13 +18,9 @@ import java.util.Stack;
 public class XmlParsing {
   private PsiBuilder myBuilder;
   private Stack<String> myTagNamesStack = new Stack<String>();
-  private final IElementType myTagType;
-  private final IElementType myDocumentType;
 
-  public XmlParsing(final PsiBuilder builder, final IElementType tagType, final IElementType documentType) {
+  public XmlParsing(final PsiBuilder builder) {
     myBuilder = builder;
-    myTagType = tagType;
-    myDocumentType = documentType;
   }
 
   public void parseDocument() {
@@ -71,13 +68,14 @@ public class XmlParsing {
       final PsiBuilder.Marker rootTag = mark();
       error = mark();
       error.error("Valid XML document must have a root tag");
-      rootTag.done(myTagType);
+      rootTag.done(XmlElementType.XML_TAG);
     }
 
-    document.done(myDocumentType);
+    document.done(XmlElementType.XML_DOCUMENT);
   }
 
-  private PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
+  @Nullable
+  private static PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
     if (error != null) {
       error.error("Unexpected tokens");
       error = null;
@@ -105,6 +103,48 @@ public class XmlParsing {
     assert token() == XML_START_TAG_START : "Tag start expected";
     final PsiBuilder.Marker tag = mark();
 
+    final String tagName = parseTagHeader(multipleRootTagError, tag);
+    if (tagName == null) return;
+
+    final PsiBuilder.Marker content = mark();
+    parseTagContent();
+
+    if (token() == XML_END_TAG_START) {
+      final PsiBuilder.Marker footer = mark();
+      advance();
+
+      if (token() == XML_NAME) {
+        String endName = myBuilder.getTokenText();
+        if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
+          footer.rollbackTo();
+          myTagNamesStack.pop();
+          tag.doneBefore(XmlElementType.XML_TAG, content, "Element " + tagName + " is not closed");
+          content.drop();
+          return;
+        }
+
+        advance();
+      }
+      footer.drop();
+
+      while (token() != XML_TAG_END && !eof()) {
+        error("Unexpected token");
+        advance();
+      }
+
+      if (token() == XML_TAG_END) advance();
+    }
+    else {
+      error("Unexpected end of file");
+    }
+
+    content.drop();
+    myTagNamesStack.pop();
+    tag.done(XmlElementType.XML_TAG);
+  }
+
+  @Nullable
+  private String parseTagHeader(final boolean multipleRootTagError, final PsiBuilder.Marker tag) {
     if (multipleRootTagError) {
       final PsiBuilder.Marker error = mark();
       advance();
@@ -143,8 +183,8 @@ public class XmlParsing {
     if (token() == XML_EMPTY_ELEMENT_END) {
       advance();
       myTagNamesStack.pop();
-      tag.done(myTagType);
-      return;
+      tag.done(XmlElementType.XML_TAG);
+      return null;
     }
 
     if (token() == XML_TAG_END) {
@@ -153,47 +193,10 @@ public class XmlParsing {
     else {
       error("Tag start is not closed");
       myTagNamesStack.pop();
-      tag.done(myTagType);
-      return;
+      tag.done(XmlElementType.XML_TAG);
+      return null;
     }
-
-    final PsiBuilder.Marker headerDone = mark();
-    parseTagContent();
-
-    if (token() == XML_END_TAG_START) {
-      final PsiBuilder.Marker footer = mark();
-      advance();
-
-      if (token() == XML_NAME) {
-        String endName = myBuilder.getTokenText();
-        if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
-          footer.rollbackTo();
-          myTagNamesStack.pop();
-          tag.doneBefore(myTagType, headerDone, "Element " + tagName + " is not closed");
-          headerDone.drop();
-
-          // TODO: error tag unclosed?
-          return;
-        }
-
-        advance();
-      }
-      footer.drop();
-
-      while (token() != XML_TAG_END && !eof()) {
-        error("Unexpected token");
-        advance();
-      }
-
-      if (token() == XML_TAG_END) advance();
-    }
-    else {
-      error("Unexpected end of file");
-    }
-
-    headerDone.drop();
-    myTagNamesStack.pop();
-    tag.done(myTagType);
+    return tagName;
   }
 
   public void parseTagContent() {

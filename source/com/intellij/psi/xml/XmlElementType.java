@@ -3,21 +3,16 @@ package com.intellij.psi.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.OldXmlLexer;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.parsing.tabular.ParsingException;
-import com.intellij.psi.impl.source.parsing.tabular.ParsingUtil;
-import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
-import com.intellij.psi.impl.source.parsing.tabular.grammar.GrammarUtil;
 import com.intellij.psi.impl.source.parsing.xml.DTDMarkupParser;
 import com.intellij.psi.impl.source.parsing.xml.DTDParser;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CharTableBasedLeafElementImpl;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
-import com.intellij.util.text.CharArrayUtil;
 
 
 public interface XmlElementType {
@@ -30,7 +25,7 @@ public interface XmlElementType {
   IElementType XML_TAG = new IXmlElementType("XML_TAG");
   IElementType XML_ELEMENT_DECL = new IXmlElementType("XML_ELEMENT_DECL");
   IElementType XML_CONDITIONAL_SECTION = new IXmlElementType("XML_CONDITIONAL_SECTION");
-  
+
   IElementType XML_ATTLIST_DECL = new IXmlElementType("XML_ATTLIST_DECL");
   IElementType XML_NOTATION_DECL = new IXmlElementType("XML_NOTATION_DECL");
   IElementType XML_ENTITY_DECL = new IXmlElementType("XML_ENTITY_DECL");
@@ -49,12 +44,14 @@ public interface XmlElementType {
 
 
   IFileElementType HTML_FILE = new IFileElementType(StdLanguages.HTML){
+    /*
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.HTML.getName());
       final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
       final FileViewProvider viewProvider = TreeUtil.getFileElement((TreeElement)chameleon).getPsi().getContainingFile().getViewProvider();
       return ParsingUtil.parse(grammarByName, SharedImplUtil.findCharTableByTree(chameleon), chars, viewProvider);
     }
+    */
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 

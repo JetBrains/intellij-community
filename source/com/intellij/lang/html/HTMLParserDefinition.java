@@ -47,8 +47,7 @@ public class HTMLParserDefinition implements ParserDefinition {
 
   @NotNull
   public PsiParser createParser(final Project project) {
-    return PsiUtil.NULL_PARSER;
-    // return new HTMLParser();
+    return new HTMLParser();
   }
 
   @NotNull

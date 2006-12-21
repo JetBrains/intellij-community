@@ -34,8 +34,6 @@ import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.DiffTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -198,7 +196,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private Marker preceed(final StartMarker marker) {
     int idx = myProduction.lastIndexOf(marker);
-    LOG.assertTrue(idx >= 0, "Cannot precede dropped or rolled-back marker");
+    if (idx < 0) {
+      LOG.error("Cannot precede dropped or rolled-back marker");
+    }
     StartMarker pre = new StartMarker(marker.myLexemIndex);
     myProduction.add(idx, pre);
     return pre;
@@ -381,27 +381,37 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myCurrentLexem = ((StartMarker)marker).myLexemIndex;
     myCurrentToken = null;
     int idx = myProduction.lastIndexOf(marker);
-
-    LOG.assertTrue(idx >= 0, "The marker must be added before rolled back to.");
+    if (idx < 0) {
+      LOG.error("The marker must be added before rolled back to.");
+    }
     myProduction.removeRange(idx, myProduction.size());
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   public void doneBefore(Marker marker, Marker before) {
 // TODO: there could be not done markers after 'marker' and that's normal
-//     doValidnessChecks(marker);
+    if (((StartMarker)marker).myDoneMarker != null) {
+      LOG.error("Marker already done.");
+    }
 
-    int idx = myProduction.lastIndexOf(before);
+    int idx = myProduction.lastIndexOf(marker);
+    if (idx < 0) {
+      LOG.error("Marker never been added.");
+    }
+
+    int beforeIndex = myProduction.lastIndexOf(before);
 
     DoneMarker doneMarker = new DoneMarker((StartMarker)marker, ((StartMarker)before).myLexemIndex);
     ((StartMarker)marker).myDoneMarker = doneMarker;
-    myProduction.add(idx, doneMarker);
+    myProduction.add(beforeIndex, doneMarker);
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   public void drop(Marker marker) {
     final boolean removed = myProduction.remove(myProduction.lastIndexOf(marker)) == marker;
-    LOG.assertTrue(removed, "The marker must be added before it is dropped.");
+    if (!removed) {
+      LOG.error("The marker must be added before it is dropped.");
+    }
   }
 
   public void error(Marker marker, String message) {
@@ -422,9 +432,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
   private void doValidnessChecks(final Marker marker) {
-    LOG.assertTrue(((StartMarker)marker).myDoneMarker == null, "Marker already done.");
+    final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
+    if (doneMarker != null) {
+      LOG.error("Marker already done.");
+    }
     int idx = myProduction.lastIndexOf(marker);
-    LOG.assertTrue(idx >= 0, "Marker never been added.");
+    if (idx < 0) {
+      LOG.error("Marker never been added.");
+    }
 
     for (int i = myProduction.size() - 1; i > idx; i--) {
       Object item = myProduction.get(i);
@@ -524,10 +539,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private StartMarker prepareLightTree() {
-    StartMarker rootMarker = (StartMarker)myProduction.get(0);
+    final MyList fProduction = myProduction;
+    StartMarker rootMarker = (StartMarker)fProduction.get(0);
 
-    for (int i = 1; i < myProduction.size() - 1; i++) {
-      ProductionMarker item = myProduction.get(i);
+    for (int i = 1; i < fProduction.size() - 1; i++) {
+      ProductionMarker item = fProduction.get(i);
 
       if (item instanceof StartMarker) {
         while (item.myLexemIndex < myLexems.size() && myWhitespaces.contains(myLexems.get(item.myLexemIndex).getTokenType())) {
@@ -535,7 +551,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       }
       else if (item instanceof DoneMarker || item instanceof ErrorItem) {
-        int prevProductionLexIndex = myProduction.get(i - 1).myLexemIndex;
+        int prevProductionLexIndex = fProduction.get(i - 1).myLexemIndex;
         while (item.myLexemIndex > prevProductionLexIndex && item.myLexemIndex < myLexems.size() &&
                myWhitespaces.contains(myLexems.get(item.myLexemIndex - 1).getTokenType())) {
           item.myLexemIndex--;
@@ -551,10 +567,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     Stack<StartMarker> nodes = new Stack<StartMarker>();
     nodes.push(rootMarker);
 
-    for (int i = 1; i < myProduction.size(); i++) {
-      ProductionMarker item = myProduction.get(i);
+    for (int i = 1; i < fProduction.size(); i++) {
+      ProductionMarker item = fProduction.get(i);
 
-      LOG.assertTrue(curNode != null, "Unexpected end of the production");
+      if (curNode == null) LOG.error("Unexpected end of the production");
+
       int lexIndex = item.myLexemIndex;
       if (item instanceof StartMarker) {
         StartMarker marker = (StartMarker)item;

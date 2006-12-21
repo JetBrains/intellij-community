@@ -1,25 +1,25 @@
 package com.intellij.xml.util;
 
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
+import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
-import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
-import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -90,10 +90,18 @@ public class HtmlUtil {
 
   public static final boolean isSingleHtmlTag(String tagName) {
     return EMPTY_TAGS_MAP.contains(tagName.toLowerCase());
+
+  }
+  public static final boolean isSingleHtmlTagL(String tagName) {
+    return EMPTY_TAGS_MAP.contains(tagName);
   }
 
   public static final boolean isOptionalEndForHtmlTag(String tagName) {
     return OPTIONAL_END_TAGS_MAP.contains(tagName.toLowerCase());
+  }
+
+  public static final boolean isOptionalEndForHtmlTagL(String tagName) {
+    return OPTIONAL_END_TAGS_MAP.contains(tagName);
   }
 
   public static boolean isSingleHtmlAttribute(String attrName) {
@@ -104,8 +112,16 @@ public class HtmlUtil {
     return BLOCK_TAGS_MAP.contains(tagName.toLowerCase());
   }
 
+  public static boolean isHtmlBlockTagL(String tagName) {
+    return BLOCK_TAGS_MAP.contains(tagName);
+  }
+
   public static boolean isInlineTagContainer(String tagName) {
     return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName.toLowerCase());
+  }
+
+  public static boolean isInlineTagContainerL(String tagName) {
+    return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName);
   }
 
   public static void addHtmlSpecificCompletions(final XmlElementDescriptor descriptor,
