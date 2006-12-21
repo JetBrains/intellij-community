@@ -30,6 +30,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
@@ -72,7 +73,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
   };
 
-  private final FactoryMap<Type, GenericInfoImpl> myMethodsMaps = new FactoryMap<Type, GenericInfoImpl>() {
+  private final ConcurrentFactoryMap<Type, GenericInfoImpl> myMethodsMaps = new ConcurrentFactoryMap<Type, GenericInfoImpl>() {
     @NotNull
     protected GenericInfoImpl create(final Type type) {
       final Class<?> rawType = DomReflectionUtil.getRawType(type);
