@@ -236,7 +236,7 @@ public class DefUseUtil {
 
   }
 
-  public static PsiElement[] getDefs(PsiCodeBlock body, final PsiVariable variable, PsiElement ref) {
+  public static PsiElement[] getDefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
     try {
       return new RefsDefs(body) {
 
@@ -255,19 +255,19 @@ public class DefUseUtil {
         protected void processInstruction(final Set<PsiElement> res, final Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
             WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-            if (instructionW.variable == variable) {
+            if (instructionW.variable == def) {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new PsiRecursiveElementVisitor() {
                 public void visitReferenceExpression(PsiReferenceExpression ref) {
                   if (PsiUtil.isAccessedForWriting(ref)) {
-                    if (ref.resolve() == variable) {
+                    if (ref.resolve() == def) {
                       res.add(ref);
                     }
                   }
                 }
                 public void visitVariable(PsiVariable var) {
-                  if (var == variable && (var instanceof PsiParameter || var.hasInitializer())) {
+                  if (var == def && (var instanceof PsiParameter || var.hasInitializer())) {
                     res.add(var);
                   }
                 }
@@ -275,14 +275,14 @@ public class DefUseUtil {
             }
           }
         }
-      }.get(variable, ref);
+      }.get(def, ref);
     }
     catch (AnalysisCanceledException e) {
       return null;
     }
   }
 
-  public static PsiElement[] getRefs(PsiCodeBlock body, final PsiVariable variable, PsiElement def) {
+  public static PsiElement[] getRefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
     try {
       return new RefsDefs(body) {
 
@@ -299,12 +299,12 @@ public class DefUseUtil {
         protected void processInstruction(final Set<PsiElement> res, final Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
-            if (instructionR.variable == variable) {
+            if (instructionR.variable == def) {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new PsiRecursiveElementVisitor() {
                 public void visitReferenceExpression(PsiReferenceExpression ref) {
-                  if (ref.resolve() == variable) {
+                  if (ref.resolve() == def) {
                     res.add(ref);
                   }
                 }
@@ -312,7 +312,7 @@ public class DefUseUtil {
             }
           }
         }
-      }.get(variable, def);
+      }.get(def, ref);
     }
     catch (AnalysisCanceledException e) {
       return null;
@@ -338,14 +338,14 @@ public class DefUseUtil {
     protected abstract void processInstruction(Set<PsiElement> res, final Instruction instruction, int index);
     protected abstract boolean defs ();
 
-    public PsiElement [] get (final PsiVariable def, PsiElement ref) {
+    public PsiElement [] get (final PsiVariable def, PsiElement refOrDef) {
       if (body == null) {
         return null;
       }
 
       final boolean [] visited = new boolean[instructions.size() + 1];
       visited [visited.length-1] = true; // stop on the code end
-      int elem = flow.getStartOffset(ref);
+      int elem = flow.getEndOffset(refOrDef);
 
       // hack: ControlFlow doesn't contains parameters initialization
       if (elem == -1 && def instanceof PsiParameter) {
@@ -387,13 +387,20 @@ public class DefUseUtil {
 
             final int nNext = nNext (index);
             for (int i = 0; i < nNext; i++) {
-              final int next = getNext(index, i);
-              if (!visited [next]) {
+              final int prev = getNext(index, i);
+              if (!visited [prev]) {
                 if (!defs ()) {
-                  final Instruction instruction = instructions.get(next);
-                  processInstruction(res, instruction, next);
+                  final Instruction instruction = instructions.get(prev);
+                  if (instruction instanceof WriteVariableInstruction) {
+                    WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
+                    if (instructionW.variable == def) {
+                      continue;
+                    }
+                  } else {
+                    processInstruction(res, instruction, prev);
+                  }
                 }
-                traverse (next);
+                traverse (prev);
 
               }
             }
