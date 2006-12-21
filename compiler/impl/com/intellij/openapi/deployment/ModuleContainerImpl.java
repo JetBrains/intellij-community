@@ -292,7 +292,7 @@ public class ModuleContainerImpl implements ModuleContainer {
     myContents.clear();
   }
 
-  public void copyFrom(ModuleContainer from, ModifiableRootModel rootModel) {
+  public void copyFrom(ModuleContainer from) {
     copyContainerInfoFrom((ModuleContainerImpl)from);
   }
 
@@ -313,7 +313,7 @@ public class ModuleContainerImpl implements ModuleContainer {
 
   public void startEdit(ModifiableRootModel rootModel) {
     myModifiableModel = new ModuleContainerImpl(getModule());
-    myModifiableModel.copyFrom(this, rootModel);
+    myModifiableModel.copyFrom(this);
   }
 
   public boolean isModified(ModifiableRootModel model) {

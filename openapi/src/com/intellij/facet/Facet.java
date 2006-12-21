@@ -40,7 +40,7 @@ public class Facet<C extends FacetConfiguration> implements Disposable {
   }
 
   @NotNull
-  public C getConfiguration() {
+  public final C getConfiguration() {
     return myConfiguration;
   }
 
@@ -49,11 +49,11 @@ public class Facet<C extends FacetConfiguration> implements Disposable {
     return myModule;
   }
 
-  public boolean isImplicit() {
+  public final boolean isImplicit() {
     return myImplicit;
   }
 
-  public void setImplicit(final boolean implicit) {
+  public final void setImplicit(final boolean implicit) {
     myImplicit = implicit;
   }
 

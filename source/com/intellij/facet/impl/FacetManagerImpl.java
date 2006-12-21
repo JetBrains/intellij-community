@@ -145,11 +145,20 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       Element child = new Element(FACET_ELEMENT);
       child.setAttribute(TYPE_ATTRIBUTE, facet.getType().getStringId());
       final Element config = new Element(CONFIGURATION_ELEMENT);
-      facet.getConfiguration().writeExternal(config);
+      try {
+        facet.getConfiguration().writeExternal(config);
+      }
+      catch (WriteExternalException e) {
+        continue;
+      }
       child.addContent(config);
 
       parent.addContent(child);
       elements.put(facet, child);
+    }
+
+    if (element.getContentSize() == 0) {
+      throw new WriteExternalException();
     }
   }
 
