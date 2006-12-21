@@ -33,7 +33,7 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   private final Project myProject;
 
   public SvnVersionFilterComponent(Project project) {
-    super(project);
+    super();
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(getStandardPanel(), BorderLayout.CENTER);
     myProject = project;
