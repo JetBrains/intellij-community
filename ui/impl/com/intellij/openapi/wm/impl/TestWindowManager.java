@@ -3,12 +3,13 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ex.ProcessInfo;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 
 /**
@@ -45,16 +46,6 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
 
     public final void setStatusEnabled(final boolean enabled) {}
 
-    public final void showCancelButton(final Icon icon, final ActionListener listener, final String tooltopText) {}
-
-    public final void hideCancelButton() {}
-
-    public final void addProgress() {}
-
-    public final void setProgressValue(final int progress) {}
-
-    public final void hideProgress() {}
-
     public final void setWriteStatus(final boolean locked) {}
 
     public final void clear() {}
@@ -64,6 +55,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public final void updateEditorHighlightingStatus(final boolean isClear) {}
 
     public void cleanupCustomComponents() {
+    }
+
+    public void add(ProgressIndicatorEx indicator, ProcessInfo processInfo) {
+
     }
   }
 

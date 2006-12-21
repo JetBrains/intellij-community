@@ -4,23 +4,24 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ex.ProcessInfo;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionListener;
 
-// Made non-final for Fabrique
 public class StatusBarImpl extends JPanel implements StatusBarEx {
 
-// Made protected for Fabrique
   protected final TextPanel myInfoPanel = new TextPanel(new String[]{"#"},true);
   protected final PositionPanel myPositionPanel = new PositionPanel();
   protected final ToggleReadOnlyAttributePanel myToggleReadOnlyAttributePanel = new ToggleReadOnlyAttributePanel();
@@ -35,48 +36,42 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private final Icon myUnlockedIcon = myLockedIcon != null ? new EmptyIcon(myLockedIcon.getIconWidth(), myLockedIcon.getIconHeight()) : null;
 
   protected final MyUISettingsListener myUISettingsListener;
-  protected JPanel myInfoAndButtonPanel;
-  protected TextPanel percentageLabel;
-  protected boolean progressAdded;
-  protected int lastPercentage;
-  protected JButton cancelButton;
+  protected JPanel myInfoAndProgressPanel;
+
   private UISettings myUISettings;
 
   public StatusBarImpl(UISettings uiSettings) {
-    super(new GridBagLayout());
+    super();
     myEditorHighlightingPanel = new TogglePopupHintsPanel();
     myUISettings = uiSettings;
     constructUI();
 
     myUISettingsListener=new MyUISettingsListener();
-
   }
 
-// Made protected for Fabrique
   protected void constructUI() {
+    setLayout(new BorderLayout());
+
     final Border lineBorder = new EdgeBorder(EdgeBorder.EDGE_RIGHT);
     final Border emptyBorder = BorderFactory.createEmptyBorder(3, 2, 2, 2);
     final Border compoundBorder = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
 
+    myInfoPanel.setBorder(emptyBorder);
+    myInfoPanel.setOpaque(false);
+
+    myInfoAndProgressPanel = new JPanel();
+    myInfoAndProgressPanel.setBorder(compoundBorder);
+    myInfoAndProgressPanel.setOpaque(false);
+    removeAllIndicators();
+
+    add(myInfoAndProgressPanel, BorderLayout.CENTER);
+
     final GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
-    myInfoPanel.setBorder(emptyBorder);
-    myInfoPanel.setOpaque(false);
-    percentageLabel = new TextPanel(new String[]{"###"},false);
-    percentageLabel.setBorder(emptyBorder);
-
-    myInfoAndButtonPanel = new JPanel(new BorderLayout());
-    myInfoAndButtonPanel.setBorder(compoundBorder);
-    myInfoAndButtonPanel.setOpaque(false);
-    myInfoAndButtonPanel.add(myInfoPanel, BorderLayout.CENTER);
-
-    add(myInfoAndButtonPanel, gbConstraints);
 
     final JPanel rightPanel = new JPanel(new GridBagLayout());
     rightPanel.setOpaque(false);
-    gbConstraints.weightx = 0;
-    add(rightPanel, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.VERTICAL;
     gbConstraints.weightx = 0;
@@ -113,33 +108,54 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
     rightPanel.add(myMemoryUsagePanel, gbConstraints);
+
+    add(rightPanel, BorderLayout.EAST);
   }
 
-  public final void addProgress() {
-    lastPercentage = -1;
-    progressAdded = true;
-    myInfoAndButtonPanel.add(percentageLabel, BorderLayout.WEST);
-
-    myInfoAndButtonPanel.validate();
-    repaint();
-  }
-
-  public final void setProgressValue(final int progress) {
-    if (lastPercentage!=progress) {
-      if (progressAdded) {
-        percentageLabel.setText(progress+"%");
+  public void add(final ProgressIndicatorEx indicator, ProcessInfo info) {
+    final InlineProgressIndicator inline = new InlineProgressIndicator(true, info) {
+      public void cancel() {
+        super.cancel();
+        removeAllIndicators();
       }
-      lastPercentage=progress;
-    }
+
+      protected void cancelRequest() {
+        indicator.cancel();
+      }
+
+      public void stop() {
+        super.stop();
+        queueRemoveAllIndicators();
+      }
+    };
+    myInfoAndProgressPanel.removeAll();
+    myInfoAndProgressPanel.setLayout(new GridLayout(1, 2));
+    myInfoAndProgressPanel.add(myInfoPanel);
+
+    final Wrapper inlineComponent = new Wrapper(inline.getComponent());
+    inlineComponent.setBorder(BorderFactory.createCompoundBorder(new EdgeBorder(EdgeBorder.EDGE_LEFT), new EmptyBorder(0, 2, 0, 0)));
+    myInfoAndProgressPanel.add(inlineComponent);
+
+    indicator.setStateDelegate(inline);
+    
+    myInfoPanel.revalidate();
+    myInfoPanel.repaint();
   }
 
-  public final void hideProgress() {
-    myInfoAndButtonPanel.removeAll();
-    myInfoAndButtonPanel.add(myInfoPanel, BorderLayout.CENTER);
-    myInfoAndButtonPanel.validate();
-    repaint();
+  private void queueRemoveAllIndicators() {
+    LaterInvocator.invokeLater(new Runnable() {
+      public void run() {
+        removeAllIndicators();
+      }
+    });
+  }
 
-    progressAdded = false;
+  public void removeAllIndicators() {
+    myInfoAndProgressPanel.removeAll();
+    myInfoAndProgressPanel.setLayout(new GridLayout(1, 1));
+    myInfoAndProgressPanel.add(myInfoPanel);
+    myInfoPanel.revalidate();
+    myInfoPanel.repaint();
   }
 
   protected final void paintComponent(final Graphics g) {
@@ -211,26 +227,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myStatusPanel.setEnabled(enabled);
   }
 
-  public final void showCancelButton(@NotNull final Icon icon, @NotNull final ActionListener listener, final String tooltopText) {
-    cancelButton = new JButton(icon);
-    cancelButton.addActionListener(listener);
-    cancelButton.setFocusable(false);
-
-    if (tooltopText != null) {
-      cancelButton.setToolTipText(tooltopText);
-    }
-
-    myInfoAndButtonPanel.add(cancelButton, BorderLayout.EAST);
-
-    myInfoAndButtonPanel.validate();
-    repaint();
-  }
-
-  public final void hideCancelButton() {
-    hideProgress();
-    cancelButton=null;
-  }
-
   public final void setWriteStatus(final boolean locked) {
     myToggleReadOnlyAttributePanel.setIcon(
       locked ? myLockedIcon : myUnlockedIcon
@@ -283,4 +279,5 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
       setMemoryIndicatorVisible(uiSettings.SHOW_MEMORY_INDICATOR);
     }
   }
+
 }

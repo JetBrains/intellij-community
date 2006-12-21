@@ -1,14 +1,16 @@
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ex.ProcessInfo;
+import com.intellij.util.ui.InplaceButton;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.ui.update.Update;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase {
 
@@ -17,142 +19,126 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
 
   JProgressBar myProgress = new JProgressBar(JProgressBar.HORIZONTAL, 0, 100);
 
-  JPanel myComponent = new JPanel(new BorderLayout());
-  InlineButton myCancelButton;
+  private Dimension myPreferredSize;
+
+  JPanel myComponent = new JPanel() {
+    public Dimension getPreferredSize() {
+      final Dimension size = super.getPreferredSize();
+      if (myPreferredSize != null) {
+        size.height = myPreferredSize.height;
+      }
+      return size;
+    }
+  };
+
+  InplaceButton myCancelButton;
 
   private boolean myCompact;
 
-  public InlineProgressIndicator() {
-    myComponent.add(myText, BorderLayout.WEST);
-    myCancelButton = new InlineButton(IconLoader.getIcon("/actions/clean.png"), IdeBundle.message("button.cancelProcess")) {
-      protected void onActionPerformed(final ActionEvent e) {
-        cancel();
+  private MergingUpdateQueue myQueue = new MergingUpdateQueue("InlineProcessIndicator", 100, false, myComponent);
+
+  public InlineProgressIndicator(boolean compact, ProcessInfo processInfo) {
+    myCompact = compact;
+
+    myCancelButton = new InplaceButton(IconLoader.getIcon("/actions/clean.png")) {
+      protected void execute() {
+        cancelRequest();
       }
     };
-    myComponent.add(myCancelButton, BorderLayout.EAST);
+    myCancelButton.setToolTipText(processInfo.getCancelTooltip());
+
+    if (myCompact) {
+      myComponent.setLayout(new BorderLayout(0, 0));
+      final JPanel textAndProgress = new JPanel(new BorderLayout());
+      myText.setHorizontalAlignment(JLabel.RIGHT);
+      textAndProgress.add(myText, BorderLayout.CENTER);
+      textAndProgress.add(myProgress, BorderLayout.EAST);
+      myComponent.add(textAndProgress, BorderLayout.CENTER);
+      myComponent.add(myCancelButton, BorderLayout.EAST);
+    }
+    else {
+      myComponent.setLayout(new BorderLayout());
+      myComponent.add(myCancelButton, BorderLayout.EAST);
+      myComponent.add(myText, BorderLayout.NORTH);
+      myComponent.add(myProgress, BorderLayout.CENTER);
+      myComponent.add(myText2, BorderLayout.SOUTH);
+    }
+
+    if (!myCompact) {
+      computePreferredHeight();
+    }
+
+    new UiNotifyConnector(myComponent, myQueue);
   }
 
-
-  protected void queueUpdate() {
-    boolean revalidate = updateComponent(myProgress, getFraction() > 0 || isIndeterminate(), BorderLayout.CENTER);
-    if (isIndeterminate()) {
-      myProgress.setIndeterminate(true);
-    } else {
-      myProgress.setMinimum(0);
-      myProgress.setMaximum(100);
-    }
-    if (getFraction() > 0) {
-      myProgress.setValue((int)(getFraction() * 100));
-    }
-
-    revalidate |= updateComponent(myText2, !myCompact && getText2() != null && getText2().length() > 0, BorderLayout.SOUTH);
-
-    myText.setText(getText());
-    myText2.setText(getText2());
-
-    myCancelButton.setActive(isCancelable());
-
-    if (revalidate) {
-      UIUtil.removeQuaquaVisualMarginsIn(myComponent);
-      revalidate();
-    }
-    myComponent.repaint();
+  protected void cancelRequest() {
+    cancel();
   }
 
-  protected void revalidate() {
-    myComponent.revalidate();
-  }
+  private void computePreferredHeight() {
+    UIUtil.removeQuaquaVisualMarginsIn(myComponent);
 
+    setText("XXX");
+    setText2("XXX");
+    setFraction(0.5);
+    myComponent.invalidate();
 
-  private boolean updateComponent(JComponent component, boolean holdsValue, String layoutConstraint) {
-    if (holdsValue && component.getParent() == null) {
-      myComponent.add(component, layoutConstraint);
-      return true;
-    }
-    else if (!holdsValue && component.getParent() != null) {
-      myComponent.remove(component);
-      return true;
-    }
+    myPreferredSize = myComponent.getPreferredSize();
 
-    return false;
-  }
-
-  public abstract static class InlineButton extends JButton {
-
-    private boolean myActive = true;
-
-    public InlineButton(Icon icon, String tooltip) {
-      super(icon);
-      setBorder(null);
-      addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          if (!myActive) return;
-          onActionPerformed(e);
-        }
-      });
-      setToolTipText(tooltip);
-    }
-
-    public void setActive(final boolean active) {
-      myActive = active;
-    }
-
-
-    public boolean isActive() {
-      return myActive;
-    }
-
-    protected abstract void onActionPerformed(final ActionEvent e);
-
-    protected void paintComponent(Graphics g) {
-      if (!myActive) return;
-      super.paintComponent(g);
-    }
+    setText(null);
+    setText2(null);
+    setFraction(0);
   }
 
   public void setText(String text) {
     super.setText(text);
+  }
+
+  protected void queueUpdate() {
+    myQueue.queue(new Update(this) {
+      public void run() {
+        updateComponentVisibility(myProgress, getFraction() > 0 || isIndeterminate());
+        if (isIndeterminate()) {
+          myProgress.setIndeterminate(true);
+        }
+        else {
+          myProgress.setMinimum(0);
+          myProgress.setMaximum(100);
+        }
+        if (getFraction() > 0) {
+          myProgress.setValue((int)(getFraction() * 99 + 1));
+        }
+
+        myText.setText(getText());
+        myText2.setText(getText2());
+
+        myCancelButton.setActive(isCancelable());
+
+        myComponent.repaint();
+      }
+    });
+  }
+
+  private static void updateComponentVisibility(JComponent component, boolean holdsValue) {
+    if (holdsValue && !component.isVisible()) {
+      component.setVisible(true);
+    }
+    else if (!holdsValue && component.getParent() != null) {
+      component.setVisible(false);
+    }
+  }
+
+  protected void onStateChange() {
     queueUpdate();
   }
 
-  public void setText2(String text) {
-    super.setText2(text);
-    queueUpdate();
+
+  protected void onFinished() {
+    myQueue.dispose();
   }
 
-
-  public void setFraction(double fraction) {
-    super.setFraction(fraction);
-    queueUpdate();
+  public JComponent getComponent() {
+    return myComponent;
   }
-
-
-  public void setIndeterminate(boolean indeterminate) {
-    super.setIndeterminate(indeterminate);
-    queueUpdate();
-  }
-
-
-  public void pushState() {
-    super.pushState();
-    queueUpdate();
-  }
-
-
-  public void popState() {
-    super.popState();
-    queueUpdate();
-  }
-
-  public void startNonCancelableSection() {
-    super.startNonCancelableSection();
-    queueUpdate();
-  }
-
-  public void finishNonCancelableSection() {
-    super.finishNonCancelableSection();
-    queueUpdate();
-  }
-  
 
 }
