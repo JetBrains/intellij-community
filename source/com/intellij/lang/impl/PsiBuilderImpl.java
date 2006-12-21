@@ -30,6 +30,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.DiffTreeStructure;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * Created by IntelliJ IDEA.

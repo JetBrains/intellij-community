@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharSequenceReader;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +35,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Properties;
-import java.util.Stack;
 
 /**
  * @author mike

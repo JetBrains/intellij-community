@@ -2,6 +2,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
@@ -11,7 +12,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
-import java.util.Stack;
 
 class ClassPath {
   private final Stack<URL> myUrls = new Stack<URL>();

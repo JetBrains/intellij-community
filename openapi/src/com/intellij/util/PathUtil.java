@@ -20,19 +20,18 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import org.jetbrains.annotations.NonNls;
 
 public class PathUtil {
 

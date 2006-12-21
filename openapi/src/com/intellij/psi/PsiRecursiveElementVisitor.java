@@ -16,8 +16,8 @@
 package com.intellij.psi;
 
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.util.containers.Stack;
 
-import java.util.Stack;
 
 /**
  * Represents a PSI element visitor which recursively visits the children of the element
