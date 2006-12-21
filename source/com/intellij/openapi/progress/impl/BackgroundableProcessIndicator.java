@@ -16,12 +16,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
-  protected final StatusBarEx myStatusBar;
+  private final StatusBarEx myStatusBar;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-
-  protected final String myBackgroundStopButtonTooltip;
-  private PerformInBackgroundOption myOption;
+  private final String myBackgroundStopButtonTooltip;
+  private final PerformInBackgroundOption myOption;
 
   public BackgroundableProcessIndicator(Project project,
                                         @Nls String progressTitle,
@@ -36,7 +34,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     if (option.shouldStartInBackground()) {
       doBackground();
     }
-
   }
 
 
@@ -58,7 +55,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     super.background();
   }
 
-  protected void doBackground() {
+  private void doBackground() {
     myStatusBar.add(this, new ProcessInfo(myBackgroundStopButtonTooltip));
   }
 }

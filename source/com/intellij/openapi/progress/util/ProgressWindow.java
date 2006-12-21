@@ -37,16 +37,14 @@ public class ProgressWindow extends BlockingProgressIndicator {
   private Alarm myShowWindowAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final Project myProject;
-  private final boolean myShouldShowBackground;
   private final boolean myShouldShowCancel;
   private String myCancelText;
-  private JComponent myParentComponent;
 
   private String myTitle = null;
 
   private boolean myStoppedAlready = false;
   private FocusTrackback myFocusTrackback;
-  private boolean myStared = false;
+  private boolean myStarted = false;
   private boolean myBackgrounded = false;
 
   public ProgressWindow(boolean shouldShowCancel, Project project) {
@@ -58,31 +56,20 @@ public class ProgressWindow extends BlockingProgressIndicator {
   }
 
   public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, Project project, String cancelText) {
-    myShouldShowBackground = shouldShowBackground;
-    myProject = project;
-    myShouldShowCancel = shouldShowCancel;
-    myCancelText = cancelText;
-    setModalityProgress(myShouldShowBackground ? null : this);
-    myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project));
-    if(myParentComponent != null) {
-      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myParentComponent, myCancelText);
-    } else {
-      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myProject, myCancelText);
-    }
+    this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
   public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, Project project, JComponent parentComponent, String cancelText) {
-    myShouldShowBackground = shouldShowBackground;
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
-    myParentComponent = parentComponent;
-    setModalityProgress(myShouldShowBackground ? null : this);
+    setModalityProgress(shouldShowBackground ? null : this);
     myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project));
-    if(myParentComponent != null) {
-      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myParentComponent, myCancelText);
-    } else {
-      myDialog = new MyDialog(myShouldShowCancel, myShouldShowBackground, myProject, myCancelText);
+    if (parentComponent != null) {
+      myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, parentComponent, myCancelText);
+    }
+    else {
+      myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, myProject, myCancelText);
     }
   }
 
@@ -95,7 +82,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       prepareShowDialog();
     }
 
-    myStared = true;
+    myStarted = true;
   }
 
   protected void prepareShowDialog() {
@@ -128,11 +115,11 @@ public class ProgressWindow extends BlockingProgressIndicator {
             ((KeyEvent)object).getModifiers() == 0) {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              ProgressWindow.this.cancel();
+              cancel();
             }
           });
         }
-        return myStared && !isRunning();
+        return myStarted && !isRunning();
       }
     });
 
@@ -386,7 +373,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       }
     }
 
-    protected JComponent createCenterPanel() {
+    private void createCenterPanel() {
       // Cancel button (if any)
 
       myCancelButton.setVisible(myShouldShowCancel);
@@ -407,8 +394,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
       int width = myPercentLabel.getFontMetrics(myPercentLabel.getFont()).stringWidth("1000%");
       myPercentLabel.setPreferredSize(new Dimension(width, myPercentLabel.getPreferredSize().height));
       myPercentLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-
-      return myPanel;
     }
 
     private void update() {
@@ -465,10 +450,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
       });
 
       myPopup.show();
-    }
-
-    public void setTitle(final String title) {
-
     }
 
     private class MyDialogWrapper extends DialogWrapper {
@@ -530,9 +511,5 @@ public class ProgressWindow extends BlockingProgressIndicator {
     if (wnd != null) { // Can be null if just hidden
       wnd.pack();
     }
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 }

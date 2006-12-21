@@ -73,10 +73,6 @@ public class LightVirtualFile extends VirtualFile {
     myModStamp = LocalTimeCounter.currentTime();
   }
 
-  public void setListener(VirtualFileListener listener) {
-    myListener = listener;
-  }
-
   private static class MyVirtualFileSystem extends VirtualFileSystem {
     @NonNls private final static String PROTOCOL = "mock";
 
@@ -212,5 +208,10 @@ public class LightVirtualFile extends VirtualFile {
 
   public CharSequence getContent() {
     return myContent;
+  }
+
+  @NonNls
+  public String toString() {
+    return "LightVirtualFile "+getName();
   }
 }

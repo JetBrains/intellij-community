@@ -22,11 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 4:14:03 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public abstract class UsageViewManager {
   public static UsageViewManager getInstance (Project project) {
