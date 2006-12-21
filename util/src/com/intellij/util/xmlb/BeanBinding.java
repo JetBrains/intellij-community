@@ -3,8 +3,8 @@ package com.intellij.util.xmlb;
 import com.intellij.util.DOMUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Bean;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.w3c.dom.Attr;
@@ -146,8 +146,8 @@ class BeanBinding implements Binding {
 
 
   private static String getTagName(Class<?> aClass) {
-    Bean tag = aClass.getAnnotation(Bean.class);
-    if (tag != null && tag.tagName().length() != 0) return tag.tagName();
+    Tag tag = aClass.getAnnotation(Tag.class);
+    if (tag != null && tag.name().length() != 0) return tag.name();
 
     return aClass.getSimpleName();
   }
@@ -202,15 +202,19 @@ class BeanBinding implements Binding {
 
   private static Binding _createBinding(final Accessor accessor, final XmlSerializerImpl xmlSerializer) {
     Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
+    Tag tag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Tag.class);
     Attribute attribute = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Attribute.class);
 
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute, xmlSerializer);
     }
 
-    if (property != null) {
 
-      if (property.tagName().length() > 0) return new TagBinding(accessor, property, xmlSerializer);
+    if (tag != null) {
+      if (tag.name().length() > 0) return new TagBinding(accessor, tag, xmlSerializer);
+    }
+
+    if (property != null) {
       if (!property.surroundWithTag()) {
         final Binding binding = xmlSerializer.getTypeBinding(accessor.getGenericType(), accessor);
         if (!Element.class.isAssignableFrom(binding.getBoundNodeType())) {

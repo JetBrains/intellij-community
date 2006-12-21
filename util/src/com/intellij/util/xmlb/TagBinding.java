@@ -1,7 +1,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.DOMUtil;
-import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -11,9 +11,9 @@ class TagBinding implements Binding {
   private String myTagName;
   private Binding binding;
 
-  public TagBinding(Accessor accessor, Property tagAnnotation, XmlSerializerImpl xmlSerializer) {
+  public TagBinding(Accessor accessor, Tag tagAnnotation, XmlSerializerImpl xmlSerializer) {
     this.accessor = accessor;
-    myTagName = tagAnnotation.tagName();
+    myTagName = tagAnnotation.name();
     binding = xmlSerializer.getBinding(accessor);
   }
 

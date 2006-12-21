@@ -83,7 +83,7 @@ class XmlSerializerImpl {
     if (Number.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType)originalType, this, accessor);
-    if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType)originalType, this);
+    if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType)originalType, this, accessor);
 
     return new BeanBinding(aClass, this);
   }

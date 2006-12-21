@@ -19,7 +19,7 @@ class AccessorBindingWrapper implements Binding {
 
   @Nullable
   public Object deserialize(Object context, Node... nodes) {
-    myAccessor.write(context, myBinding.deserialize(context, nodes));
+    myAccessor.write(context, myBinding.deserialize(myAccessor.read(context), nodes));
     return context;
   }
 

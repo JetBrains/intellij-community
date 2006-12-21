@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -55,7 +56,8 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @param defaultImplementationIfAbsent the default implementation
    * @return component that matches interface class or default if there is no such component
    */
-  <T> T getComponent(Class<T> interfaceClass, T defaultImplementationIfAbsent);
+  @Nullable
+    <T> T getComponent(Class<T> interfaceClass, T defaultImplementationIfAbsent);
 
   /**
    * Gets interface classes for all available components.

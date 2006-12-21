@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD})
-public @interface Property {
-  boolean surroundWithTag() default true;
+public @interface Tag {
+  String name() default "";
 }

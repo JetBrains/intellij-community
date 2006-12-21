@@ -37,6 +37,7 @@ import java.util.*;
 /**
  * @author mike
  */
+@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
@@ -165,6 +166,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsCreated = false;
   }
 
+  @Nullable
   public <T> T getComponentFromContainer(Class<T> interfaceClass) {
     synchronized (this) {
       final Object initializedComponent = myInitializedComponents.get(interfaceClass);
@@ -223,6 +225,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return getComponent(interfaceClass, null);
   }
 
+  @Nullable
   public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
     final T fromContainer = getComponentFromContainer(interfaceClass);
     if (fromContainer != null) return fromContainer;
@@ -360,6 +363,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
+  @Nullable
   protected static Element serializeComponent(BaseComponent component) {
     try {
       if (component instanceof JDOMExternalizable) {
@@ -402,8 +406,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected MutablePicoContainer createPicoContainer() {
     MutablePicoContainer result;
-    if (getParentComponentManager() != null) {
-      result = new DefaultPicoContainer(new MyComponentAdapterFactory(), getParentComponentManager().getPicoContainer());
+    final ComponentManagerImpl parentComponentManager = getParentComponentManager();
+    if (parentComponentManager != null) {
+      result = new DefaultPicoContainer(new MyComponentAdapterFactory(), parentComponentManager.getPicoContainer());
     }
     else {
       result = new DefaultPicoContainer(new MyComponentAdapterFactory());
@@ -468,6 +473,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myNameToConfiguration.keySet();
   }
 
+  @Nullable
   protected synchronized Element getConfiguration(String name) {
     if (myNameToConfiguration == null) return null;
 
@@ -610,7 +616,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private static boolean isTrue(Map options, @NonNls final String option) {
-    return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option).toString());
+    return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option).toString()).booleanValue();
   }
 
   protected void saveSettingsSavingComponents() {

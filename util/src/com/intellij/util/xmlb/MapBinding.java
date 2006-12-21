@@ -1,6 +1,8 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.util.DOMUtil;
 import static com.intellij.util.xmlb.Constants.*;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.w3c.dom.*;
 
 import java.lang.reflect.ParameterizedType;
@@ -8,17 +10,19 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 class MapBinding implements Binding {
-  private Binding keyBinding;
-  private Binding valueBinding;
+  private Binding myKeyBinding;
+  private Binding myValueBinding;
+  private MapAnnotation myMapAnnotation;
 
 
-  public MapBinding(ParameterizedType type, XmlSerializerImpl serializer) {
+  public MapBinding(ParameterizedType type, XmlSerializerImpl serializer, Accessor accessor) {
     Type[] arguments = type.getActualTypeArguments();
     Type keyType = arguments[0];
     Type valueType = arguments[1];
 
-    keyBinding = serializer.getBinding(keyType);
-    valueBinding = serializer.getBinding(valueType);
+    myKeyBinding = serializer.getBinding(keyType);
+    myValueBinding = serializer.getBinding(valueType);
+    myMapAnnotation = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), MapAnnotation.class);
   }
 
   public Node serialize(Object o, Node context) {
@@ -26,33 +30,40 @@ class MapBinding implements Binding {
 
     Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
 
-    Element m = ownerDocument.createElement(Constants.MAP);
+    Element m;
+
+    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
+      m = ownerDocument.createElement(Constants.MAP);
+    }
+    else {
+      m = (Element)context;
+    }
 
     for (Object k : map.keySet()) {
       Object v = map.get(k);
 
-      Element entry = ownerDocument.createElement(ENTRY);
+      Element entry = ownerDocument.createElement(getEntryAttributeName());
       m.appendChild(entry);
 
-      Node kNode = keyBinding.serialize(k, entry);
-      Node vNode = valueBinding.serialize(v, entry);
+      Node kNode = myKeyBinding.serialize(k, entry);
+      Node vNode = myValueBinding.serialize(v, entry);
 
       if (kNode instanceof Text) {
         Text text = (Text)kNode;
-        entry.setAttribute(KEY, text.getWholeText());
+        entry.setAttribute(getKeyAttributeValue(), text.getWholeText());
       }
       else {
-        Element key = ownerDocument.createElement(KEY);
+        Element key = ownerDocument.createElement(getKeyAttributeValue());
         entry.appendChild(key);
         key.appendChild(kNode);
       }
 
       if (vNode instanceof Text) {
         Text text = (Text)vNode;
-        entry.setAttribute(VALUE, text.getWholeText());
+        entry.setAttribute(getValueAttributeName(), text.getWholeText());
       }
       else {
-        Element value = ownerDocument.createElement(VALUE);
+        Element value = ownerDocument.createElement(getValueAttributeName());
         entry.appendChild(value);
         value.appendChild(vNode);
       }
@@ -61,36 +72,56 @@ class MapBinding implements Binding {
     return m;
   }
 
+  private String getEntryAttributeName() {
+    return myMapAnnotation == null ? ENTRY : myMapAnnotation.entryTagName();
+  }
+
+  private String getValueAttributeName() {
+    return myMapAnnotation == null ? VALUE : myMapAnnotation.valueAttributeName();
+  }
+
+  private String getKeyAttributeValue() {
+    return myMapAnnotation == null ? KEY : myMapAnnotation.keyAttributeName();
+  }
+
   public Object deserialize(Object o, Node... nodes) {
     Map map = (Map)o;
     map.clear();
 
-    assert nodes.length == 1;
-    Element m = (Element)nodes[0];
+    final Node[] childNodes;
 
-    NodeList list = m.getChildNodes();
-    for (int i = 0; i < list.getLength(); i++) {
-      Element entry = (Element)list.item(i);
+    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
+      assert nodes.length == 1;
+      Element m = (Element)nodes[0];
+      childNodes = DOMUtil.getChildNodes(m);
+    }
+    else {
+      childNodes = nodes;
+    }
+
+
+    for (Node childNode : childNodes) {
+      Element entry = (Element)childNode;
 
       Object k;
       Object v;
 
-      assert entry.getNodeName().equals(ENTRY);
+      assert entry.getNodeName().equals(getEntryAttributeName());
 
-      Attr keyAttr = entry.getAttributeNode(KEY);
+      Attr keyAttr = entry.getAttributeNode(getKeyAttributeValue());
       if (keyAttr != null) {
-        k = keyBinding.deserialize(o, keyAttr);
+        k = myKeyBinding.deserialize(o, keyAttr);
       }
       else {
-        k = keyBinding.deserialize(o, entry.getElementsByTagName(KEY).item(0));
+        k = myKeyBinding.deserialize(o, entry.getElementsByTagName(getKeyAttributeValue()).item(0));
       }
 
-      Attr valueAttr = entry.getAttributeNode(VALUE);
+      Attr valueAttr = entry.getAttributeNode(getValueAttributeName());
       if (valueAttr != null) {
-        v = keyBinding.deserialize(o, valueAttr);
+        v = myKeyBinding.deserialize(o, valueAttr);
       }
       else {
-        v = keyBinding.deserialize(o, entry.getElementsByTagName(VALUE).item(0));
+        v = myKeyBinding.deserialize(o, entry.getElementsByTagName(getValueAttributeName()).item(0));
       }
 
       //noinspection unchecked
@@ -101,11 +132,15 @@ class MapBinding implements Binding {
   }
 
   public boolean isBoundTo(Node node) {
-    throw new UnsupportedOperationException("Method isBoundTo is not supported in " + getClass());
+    if (myMapAnnotation != null && !myMapAnnotation.surroundWithTag()) {
+      return myMapAnnotation.entryTagName().equals(node.getNodeName());
+    }
+
+    return node.getNodeName().equals(Constants.MAP);
   }
 
   public Class<? extends Node> getBoundNodeType() {
-    throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
+    return Element.class;
   }
 
   public void init() {

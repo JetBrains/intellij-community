@@ -2,9 +2,9 @@ package com.intellij.openapi.actionSystem.impl.config;
 
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Bean;
+import com.intellij.util.xmlb.annotations.Tag;
 
-@Bean(tagName = ActionManagerImpl.ADD_TO_GROUP_ELEMENT_NAME)
+@Tag(name = ActionManagerImpl.ADD_TO_GROUP_ELEMENT_NAME)
 public class AddToGroupBean {
 
   @Attribute(name = ActionManagerImpl.ANCHOR_ELEMENT_NAME)

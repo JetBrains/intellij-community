@@ -1,10 +1,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.DOMUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Bean;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.*;
 import junit.framework.TestCase;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,7 +31,7 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<EmptyBean/>", new EmptyBean());
   }
 
-  @Bean(tagName = "Bean")
+  @Tag(name = "Bean")
   public static class EmptyBeanWithCustomName {
   }
 
@@ -178,6 +175,39 @@ public class XmlSerializerTest extends TestCase {
       bean);
   }
 
+
+  public static class BeanWithMapWithAnnotations {
+    @Property(surroundWithTag = false)
+    @MapAnnotation(
+      surroundWithTag = false,
+      entryTagName = "option",
+      keyAttributeName = "name",
+      valueAttributeName = "value"
+    )
+    public Map<String, String> VALUES = new HashMap<String, String>();
+
+    {
+      VALUES.put("a", "1");
+      VALUES.put("b", "2");
+      VALUES.put("c", "3");
+    }
+  }
+
+  public void testMapSerializationWithAnnotations() throws Exception {
+    BeanWithMapWithAnnotations bean = new BeanWithMapWithAnnotations();
+    doSerializerTest(
+      "<BeanWithMapWithAnnotations><option name=\"a\" value=\"1\"/><option name=\"c\" value=\"3\"/><option name=\"b\" value=\"2\"/></BeanWithMapWithAnnotations>",
+      bean);
+    bean.VALUES.clear();
+    bean.VALUES.put("1", "a");
+    bean.VALUES.put("2", "b");
+    bean.VALUES.put("3", "c");
+
+    doSerializerTest(
+      "<BeanWithMapWithAnnotations><option name=\"3\" value=\"c\"/><option name=\"2\" value=\"b\"/><option name=\"1\" value=\"a\"/></BeanWithMapWithAnnotations>",
+      bean);
+  }
+
   public static class BeanWithProperty {
     private String name = "James";
 
@@ -202,7 +232,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithFieldWithTagAnnotation {
-    @Property(tagName = "name")
+    @Tag(name = "name")
     public String STRING_V = "hello";
   }
 

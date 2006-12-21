@@ -3,10 +3,10 @@ package com.intellij.openapi.actionSystem.impl.config;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Bean;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
 
-@Bean(tagName = ActionManagerImpl.ACTION_ELEMENT_NAME)
+@Tag(name = ActionManagerImpl.ACTION_ELEMENT_NAME)
 public class ActionBean {
   @Attribute(name = ActionManagerImpl.ID_ATTR_NAME)
   public String id;
