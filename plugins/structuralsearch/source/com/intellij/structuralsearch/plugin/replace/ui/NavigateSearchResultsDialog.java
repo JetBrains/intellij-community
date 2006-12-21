@@ -10,9 +10,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
@@ -20,16 +21,15 @@ import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchingProcess;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
+import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.structuralsearch.plugin.ui.DialogBase;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
-import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,6 +60,7 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
   private StatusBarEx statusBar;
   private boolean preview;
   private boolean ok;
+  private ProgressIndicatorBase myMatchingProcess;
 
   static {
     attributes.setBackgroundColor( new Color(162,3,229,32) );
@@ -128,15 +129,13 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
     setOKActionEnabled(false);
     previousMatch.setEnabled(false);
     statusBar = (StatusBarEx)WindowManagerEx.getInstanceEx().getStatusBar(project);
-    statusBar.showCancelButton(
-      IconLoader.getIcon("/actions/suspend.png"),
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          matchingProcess.stop();
-        }
-      },
-      null
-    );
+    myMatchingProcess = new ProgressIndicatorBase() {
+      public void cancel() {
+        super.cancel();
+        matchingProcess.stop();
+      }
+    };
+    statusBar.add(myMatchingProcess, new ProcessInfo());
     init();
   }
 
@@ -274,7 +273,9 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
 
     if (processor!=null) {
       processor = null;
-      statusBar.hideCancelButton();
+      if (myMatchingProcess != null) {
+        myMatchingProcess.cancel();
+      }
     }
 
     removeHilighter();
