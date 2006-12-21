@@ -18,10 +18,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.changes.ui.CommittedChangesFilterDialog;
 import com.intellij.openapi.vcs.changes.ui.CommittedChangesPanel;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -42,10 +45,15 @@ public class BrowseChangesAction extends AnAction {
     panel.setRoot(vFile);
     panel.refreshChanges();
     final ContentFactory factory = PeerFactory.getInstance().getContentFactory();
-    final Content content = factory.createContent(panel, "Changes under " + vFile.getPresentableUrl(), false);
+    final Content content = factory.createContent(panel, VcsBundle.message("browse.changes.content.title", vFile.getPresentableUrl()), false);
     final ChangesViewContentManager contentManager = ChangesViewContentManager.getInstance(project);
     contentManager.addContent(content);
-    contentManager.setSelectedContent(content);    
+    contentManager.setSelectedContent(content);
+
+    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    if (!window.isVisible()) {
+      window.activate(null);
+    }
   }
 
   public void update(AnActionEvent e) {
