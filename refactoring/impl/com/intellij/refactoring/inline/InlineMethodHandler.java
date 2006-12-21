@@ -9,13 +9,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 
 class InlineMethodHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
-  public void invoke(final Project project, Editor editor, PsiMethod method) {
+  public static void invoke(final Project project, Editor editor, PsiMethod method) {
     method = (PsiMethod)method.getNavigationElement();
     if (method.getBody() == null){
       String message;

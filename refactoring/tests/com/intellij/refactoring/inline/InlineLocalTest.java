@@ -8,6 +8,8 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 /**
@@ -32,34 +34,43 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   public void testInference () throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testQualifier () throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testIDEADEV950 () throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testNoRedundantCasts () throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testIDEADEV9404 () throws Exception {
-    doTest();
+    doTest(false);
   }
 
   public void testIDEADEV12244 () throws Exception {
-    doTest();
+    doTest(false);
   }
 
-  private void doTest() throws Exception {
+  public void testIDEADEV10376 () throws Exception {
+    doTest(true);
+  }
+
+  private void doTest(final boolean inlineDef) throws Exception {
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";
     configureByFile(fileName);
-    performInline(getProject(), myEditor);
+    if (!inlineDef) {
+      performInline(getProject(), myEditor);
+    }
+    else {
+      performDefInline(getProject(), myEditor);
+    }
     checkResultByFile(fileName + ".after");
   }
 
@@ -68,6 +79,15 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertTrue(element instanceof PsiLocalVariable);
 
-    new InlineLocalHandler().invoke(project, editor, (PsiLocalVariable)element);
+    InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)element, null);
+  }
+
+  public static void performDefInline(Project project, Editor editor) {
+    PsiReference reference = TargetElementUtil.findReference(editor);
+    assertTrue(reference instanceof PsiReferenceExpression);
+    final PsiElement local = reference.resolve();
+    assertTrue(local instanceof PsiLocalVariable);
+
+    InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)local, (PsiReferenceExpression)reference);
   }
 }

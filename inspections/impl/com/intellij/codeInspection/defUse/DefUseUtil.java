@@ -236,7 +236,7 @@ public class DefUseUtil {
 
   }
 
-  public static PsiElement[] getDefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
+  public static PsiElement[] getDefs(PsiCodeBlock body, final PsiVariable variable, PsiElement ref) {
     try {
       return new RefsDefs(body) {
 
@@ -255,19 +255,19 @@ public class DefUseUtil {
         protected void processInstruction(final Set<PsiElement> res, final Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
             WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-            if (instructionW.variable == def) {
+            if (instructionW.variable == variable) {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new PsiRecursiveElementVisitor() {
                 public void visitReferenceExpression(PsiReferenceExpression ref) {
                   if (PsiUtil.isAccessedForWriting(ref)) {
-                    if (ref.resolve() == def) {
+                    if (ref.resolve() == variable) {
                       res.add(ref);
                     }
                   }
                 }
                 public void visitVariable(PsiVariable var) {
-                  if (var == def && (var instanceof PsiParameter || var.hasInitializer())) {
+                  if (var == variable && (var instanceof PsiParameter || var.hasInitializer())) {
                     res.add(var);
                   }
                 }
@@ -275,14 +275,14 @@ public class DefUseUtil {
             }
           }
         }
-      }.get(def, ref);
+      }.get(variable, ref);
     }
     catch (AnalysisCanceledException e) {
       return null;
     }
   }
 
-  public static PsiElement[] getRefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
+  public static PsiElement[] getRefs(PsiCodeBlock body, final PsiVariable variable, PsiElement def) {
     try {
       return new RefsDefs(body) {
 
@@ -299,12 +299,12 @@ public class DefUseUtil {
         protected void processInstruction(final Set<PsiElement> res, final Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
-            if (instructionR.variable == def) {
+            if (instructionR.variable == variable) {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new PsiRecursiveElementVisitor() {
                 public void visitReferenceExpression(PsiReferenceExpression ref) {
-                  if (ref.resolve() == def) {
+                  if (ref.resolve() == variable) {
                     res.add(ref);
                   }
                 }
@@ -312,7 +312,7 @@ public class DefUseUtil {
             }
           }
         }
-      }.get(def, ref);
+      }.get(variable, def);
     }
     catch (AnalysisCanceledException e) {
       return null;
@@ -387,20 +387,13 @@ public class DefUseUtil {
 
             final int nNext = nNext (index);
             for (int i = 0; i < nNext; i++) {
-              final int prev = getNext(index, i);
-              if (!visited [prev]) {
+              final int next = getNext(index, i);
+              if (!visited [next]) {
                 if (!defs ()) {
-                  final Instruction instruction = instructions.get(prev);
-                  if (instruction instanceof WriteVariableInstruction) {
-                    WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-                    if (instructionW.variable == def) {
-                      continue;
-                    }
-                  } else {
-                    processInstruction(res, instruction, prev);
-                  }
+                  final Instruction instruction = instructions.get(next);
+                  processInstruction(res, instruction, next);
                 }
-                traverse (prev);
+                traverse (next);
 
               }
             }

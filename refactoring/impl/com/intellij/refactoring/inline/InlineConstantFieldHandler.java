@@ -16,7 +16,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 public class InlineConstantFieldHandler {
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
 
-  public void invoke(Project project, Editor editor, PsiField field) {
+  public static void invoke(Project project, Editor editor, PsiField field) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) {

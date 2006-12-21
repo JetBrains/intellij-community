@@ -4,6 +4,7 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,11 +30,11 @@ public class InlineHandler implements RefactoringActionHandler {
     }
     final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (elements[0] instanceof PsiMethod) {
-      new InlineMethodHandler().invoke(project, editor, (PsiMethod) elements[0]);
+      InlineMethodHandler.invoke(project, editor, (PsiMethod) elements[0]);
     } else if (elements[0] instanceof  PsiField) {
-      new InlineConstantFieldHandler().invoke(project, editor, (PsiField) elements[0]);
+      InlineConstantFieldHandler.invoke(project, editor, (PsiField) elements[0]);
     } else if (elements[0] instanceof PsiLocalVariable) {
-      new InlineLocalHandler().invoke(project, editor, (PsiLocalVariable)elements[0]);
+      InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)elements[0], null);
     } else {
       LOG.error("Unknown element type to inline:" + elements[0]);
     }
@@ -43,13 +44,15 @@ public class InlineHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof PsiLocalVariable) {
-      new InlineLocalHandler().invoke(project, editor, (PsiLocalVariable) element);
+      final PsiReference psiReference = TargetElementUtil.findReference(editor);
+      final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
+      InlineLocalHandler.invoke(project, editor, (PsiLocalVariable) element, refExpr);
     } else if (element instanceof PsiMethod) {
-      new InlineMethodHandler().invoke(project, editor, (PsiMethod) element);
+      InlineMethodHandler.invoke(project, editor, (PsiMethod) element);
     } else if (element instanceof PsiField) {
-      new InlineConstantFieldHandler().invoke(project, editor, (PsiField) element);
+      InlineConstantFieldHandler.invoke(project, editor, (PsiField) element);
     } else if (PsiUtil.isInJspFile(file)) {
-      new InlineIncludeFileHandler().invoke(project, editor, PsiUtil.getJspFile(file));
+      InlineIncludeFileHandler.invoke(project, editor, PsiUtil.getJspFile(file));
     }
     else {
       String message =
