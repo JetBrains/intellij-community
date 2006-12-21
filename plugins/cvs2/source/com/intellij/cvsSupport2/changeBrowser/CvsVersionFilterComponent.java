@@ -18,7 +18,7 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent<Ch
   private JPanel myStandardPanel;
 
   public CvsVersionFilterComponent(final Project project) {
-    super(project);
+    super();
     myProject = project;
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(super.getDatePanel(), BorderLayout.CENTER);

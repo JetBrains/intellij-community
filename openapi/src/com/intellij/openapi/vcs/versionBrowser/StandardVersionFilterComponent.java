@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.intellij.openapi.project.Project;
 import com.michaelbaranov.microba.calendar.DatePicker;
 
 import javax.swing.*;
@@ -29,15 +28,11 @@ import java.text.SimpleDateFormat;
 public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSettings> implements ChangesBrowserSettingsEditor<T> {
   private JPanel myPanel;
 
-  public JPanel getVersionNumberPanel() {
-    return myVersionNumberPanel;
-  }
-
-  public JPanel getDatePanel() {
+  protected JPanel getDatePanel() {
     return myDatePanel;
   }
 
-  public Component getStandardPanel() {
+  protected Component getStandardPanel() {
     return myPanel;
   }
 
@@ -52,12 +47,9 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
   private DatePicker myDateAfter;
   private DatePicker myDateBefore;
 
-  private final Project myProject;
   private T mySettings;
 
-  public StandardVersionFilterComponent(Project project) {
-    myProject = project;
-
+  public StandardVersionFilterComponent() {
     myDateAfter.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
     myDateBefore.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
   }
@@ -142,6 +134,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
   public void setSettings(T settings) {
     mySettings = settings;
     initValues(settings);
+    updateAllEnabled(null);
   }
 }
 
