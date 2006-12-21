@@ -187,10 +187,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private void findGenericElementUsages(final PsiElement element, final ArrayList<UsageInfo> usages) {
-    PsiManager manager = element.getManager();
-
-    final PsiReference[] references = manager.getSearchHelper().findReferences(element, GlobalSearchScope.projectScope(myProject), false);
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ReferencesSearch.search(element).findAll()) {
       final PsiElement refElement = reference.getElement();
       if (!isInside(refElement, myElements)) {
         usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(refElement, element, false));
@@ -423,13 +420,11 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, Collection<UsageInfo> usages) {
+  private static void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, Collection<UsageInfo> usages) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     int index = owner.getTypeParameterList().getTypeParameterIndex(typeParameter);
 
-    PsiSearchHelper searchHelper = typeParameter.getManager().getSearchHelper();
-    PsiReference[] ownerReferences = searchHelper.findReferences(owner, typeParameter.getResolveScope(), false);
-    for (PsiReference reference : ownerReferences) {
+    for (PsiReference reference : ReferencesSearch.search(owner).findAll()) {
       if (reference instanceof PsiJavaCodeReferenceElement) {
         PsiTypeElement[] typeArgs = ((PsiJavaCodeReferenceElement)reference).getParameterList().getTypeParameterElements();
         if (typeArgs.length > index) {
@@ -453,11 +448,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private void findClassUsages(final PsiClass psiClass, ArrayList<UsageInfo> usages) {
     final boolean justPrivates = containsOnlyPrivates(psiClass);
-    PsiManager manager = psiClass.getManager();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    final PsiReference[] references = manager.getSearchHelper().findReferences(psiClass, projectScope, false);
 
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ReferencesSearch.search(psiClass).findAll()) {
       final PsiElement element = reference.getElement();
 
       if (!isInside(element, myElements)) {
@@ -505,8 +497,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private void findMethodUsages(PsiMethod psiMethod, ArrayList<UsageInfo> usages) {
     PsiManager manager = psiMethod.getManager();
     final PsiSearchHelper searchHelper = manager.getSearchHelper();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    final PsiReference[] references = searchHelper.findReferences(psiMethod, projectScope, false);
+    final Collection<PsiReference> references = ReferencesSearch.search(psiMethod).findAll();
 
     if(psiMethod.isConstructor()) {
       findConstructorUsages(psiMethod, references, usages);
@@ -526,9 +517,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
     final UsageInsideDeleted usageInsideDeleted;
     if (!anyRefs) {
-      HashMap<PsiMethod,PsiReference[]> methodToReferences = new HashMap<PsiMethod, PsiReference[]>();
+      HashMap<PsiMethod, Collection<PsiReference>> methodToReferences = new HashMap<PsiMethod, Collection<PsiReference>>();
       for (PsiMethod overridingMethod : overridingMethods) {
-        final PsiReference[] overridingReferences = searchHelper.findReferences(overridingMethod, projectScope, false);
+        final Collection<PsiReference> overridingReferences = ReferencesSearch.search(overridingMethod).findAll();
         methodToReferences.put(overridingMethod, overridingReferences);
       }
       final Set<PsiMethod> validOverriding =
@@ -564,23 +555,22 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return list.toArray(new PsiMethod[list.size()]);
   }
 
-  private void findConstructorUsages(PsiMethod constructor, PsiReference[] originalReferences, ArrayList<UsageInfo> usages) {
-    final PsiSearchHelper searchHelper = constructor.getManager().getSearchHelper();
-
-    HashMap<PsiMethod,PsiReference[]> constructorsToRefs = new HashMap<PsiMethod, PsiReference[]>();
+  private void findConstructorUsages(PsiMethod constructor, Collection<PsiReference> originalReferences, ArrayList<UsageInfo> usages) {
+    HashMap<PsiMethod, Collection<PsiReference>> constructorsToRefs = new HashMap<PsiMethod, Collection<PsiReference>>();
     HashSet<PsiMethod> newConstructors = new HashSet<PsiMethod>();
+    if (isTheOnlyEmptyDefaultConstructor(constructor)) return;
+
     newConstructors.add(constructor);
     constructorsToRefs.put(constructor, originalReferences);
     HashSet<PsiMethod> passConstructors = new HashSet<PsiMethod>();
     do {
       passConstructors.clear();
       for (PsiMethod method : newConstructors) {
-        final PsiReference[] references = constructorsToRefs.get(method);
+        final Collection<PsiReference> references = constructorsToRefs.get(method);
         for (PsiReference reference : references) {
           PsiMethod overridingConstructor = getOverridingConstructorOfSuperCall(reference.getElement());
           if (overridingConstructor != null && !constructorsToRefs.containsKey(overridingConstructor)) {
-            PsiReference[] overridingConstructorReferences =
-              searchHelper.findReferences(overridingConstructor, GlobalSearchScope.projectScope(myProject), false);
+            Collection<PsiReference> overridingConstructorReferences = ReferencesSearch.search(overridingConstructor).findAll();
             constructorsToRefs.put(overridingConstructor, overridingConstructorReferences);
             passConstructors.add(overridingConstructor);
           }
@@ -602,20 +592,28 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     });
   }
 
-  private Set<PsiMethod> validateOverridingMethods(PsiMethod originalMethod, final PsiReference[] originalReferences,
-                                                   Collection<PsiMethod> overridingMethods, HashMap<PsiMethod,PsiReference[]> methodToReferences, ArrayList<UsageInfo> usages) {
+  private static boolean isTheOnlyEmptyDefaultConstructor(final PsiMethod constructor) {
+    if (constructor.getParameterList().getParameters().length > 0) return false;
+    final PsiCodeBlock body = constructor.getBody();
+    if (body != null && body.getStatements().length > 0) return false;
+    return constructor.getContainingClass().getConstructors().length == 1;
+  }
+
+  private Set<PsiMethod> validateOverridingMethods(PsiMethod originalMethod, final Collection<PsiReference> originalReferences,
+                                                   Collection<PsiMethod> overridingMethods, HashMap<PsiMethod, Collection<PsiReference>> methodToReferences, ArrayList<UsageInfo> usages) {
     Set<PsiMethod> validOverriding = new LinkedHashSet<PsiMethod>(overridingMethods);
     boolean anyNewBadRefs;
     do {
       anyNewBadRefs = false;
       for (PsiMethod overridingMethod : overridingMethods) {
         if (validOverriding.contains(overridingMethod)) {
-          final PsiReference[] overridingReferences = methodToReferences.get(overridingMethod);
+          final Collection<PsiReference> overridingReferences = methodToReferences.get(overridingMethod);
           boolean anyOverridingRefs = false;
-          for (int j = 0; j < overridingReferences.length && !anyOverridingRefs; j++) {
-            final PsiElement element = overridingReferences[j].getElement();
+          for (final PsiReference overridingReference : overridingReferences) {
+            final PsiElement element = overridingReference.getElement();
             if (!isInside(element, myElements) && !isInside(element, validOverriding)) {
               anyOverridingRefs = true;
+              break;
             }
           }
 
@@ -675,7 +673,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return overridingConstructor;
   }
 
-  private boolean canBePrivate(PsiMethod method, PsiReference[] references, Collection<? extends PsiElement> deleted) {
+  private boolean canBePrivate(PsiMethod method, Collection<PsiReference> references, Collection<? extends PsiElement> deleted) {
     final PsiClass containingClass = method.getContainingClass();
     if(containingClass == null) {
       return false;
@@ -703,10 +701,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private void findFieldUsages(PsiField psiField, ArrayList<UsageInfo> usages) {
-    PsiManager manager = psiField.getManager();
-    final PsiReference[] references = manager.getSearchHelper().findReferences(psiField, GlobalSearchScope.projectScope(myProject), false);
-
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ReferencesSearch.search(psiField).findAll()) {
       if (!myInsideDeletedElements.isInsideDeleted(reference.getElement())) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
