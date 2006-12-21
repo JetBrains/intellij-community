@@ -78,7 +78,7 @@ public class CommittedChangesPanel extends JPanel {
       }
     }, "Loading changes", true, myProject);
     if (!refEx.isNull()) {
-      LOG.error(refEx.get());
+      LOG.info(refEx.get());
       Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(refEx.get().getMessages(), "\n"), "Committed Changes");
     }
   }
