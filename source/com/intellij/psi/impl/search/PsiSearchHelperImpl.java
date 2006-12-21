@@ -2,13 +2,17 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -22,13 +26,14 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
@@ -478,13 +483,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher);
   }
 
-  private boolean processElementsWithTextInGlobalScope(TextOccurenceProcessor processor,
+  private boolean processElementsWithTextInGlobalScope(final TextOccurenceProcessor processor,
                                                        GlobalSearchScope scope,
-                                                       StringSearcher searcher,
+                                                       final StringSearcher searcher,
                                                        short searchContext,
                                                        final boolean caseSensitively) {
 
-    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.pushState();
       progress.setText(PsiBundle.message("psi.scanning.files.progress"));
@@ -506,11 +511,91 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         if (fileSet.isEmpty()) break;
       }
-      PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
+      final PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
 
       if (progress != null) {
         progress.setText(PsiBundle.message("psi.search.for.word.progress", searcher.getPattern()));
       }
+
+
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        int poolSize = /*1;//*/Runtime.getRuntime().availableProcessors();
+        final int chunkSize = Math.max(10, files.length / poolSize / 20); // make at least 20 chunks per proc to balance load
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(poolSize, Integer.MAX_VALUE, 60,
+                                                                   TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        ArrayList<Callable<Boolean>> callables = new ArrayList<Callable<Boolean>>(files.length/chunkSize);
+        final AtomicInteger counter = new AtomicInteger(0);
+        for (int v = 0; v < files.length; v += chunkSize) {
+          final int index = v;
+          Callable<Boolean> runnable = new Callable<Boolean>() {
+            public Boolean call() throws Exception {
+              final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+              ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
+                public void run() {
+                  ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    public void run() {
+                      for (int i = index; i < index + chunkSize && i < files.length; i++) {
+                        try {
+                          ProgressManager.getInstance().checkCanceled();
+
+                          PsiFile file = files[i];
+                          PsiElement[] psiRoots = file.getPsiRoots();
+                          Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
+                          for (PsiElement psiRoot : psiRoots) {
+                            ProgressManager.getInstance().checkCanceled();
+                            if (processed.contains(psiRoot)) continue;
+                            processed.add(psiRoot);
+                            if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
+                              result.set(Boolean.FALSE);
+                              return;
+                            }
+                          }
+
+                          if (progress != null) {
+                            double fraction = (double)counter.incrementAndGet() / files.length;
+                            progress.setFraction(fraction);
+                          }
+
+                          myManager.dropResolveCaches();
+                        }
+                        catch (ProcessCanceledException e) {
+                          result.set(Boolean.FALSE);
+                          return;
+                        }
+                      }
+                    }
+                  });
+                }
+              },progress);
+              return result.get();
+            }
+          };
+          callables.add(runnable);
+        }
+        try {
+          List<Future<Boolean>> futures = executor.invokeAll(callables);
+          boolean canceled = false;
+          for (Future<Boolean> future : futures) {
+            if (canceled) {
+              future.cancel(false);
+            }
+            else {
+              canceled = !future.get();
+            }
+          }
+          return !canceled;
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+        }
+        catch (ExecutionException e) {
+          LOG.error(e.getCause());
+        }
+        finally{
+          executor.shutdownNow();
+        }
+      }
+      else {
 
       for (int i = 0; i < files.length; i++) {
         ProgressManager.getInstance().checkCanceled();
@@ -534,6 +619,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
 
         myManager.dropResolveCaches();
+      }
       }
     }
     finally {

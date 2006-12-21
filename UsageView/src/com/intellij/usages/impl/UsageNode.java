@@ -21,11 +21,7 @@ import com.intellij.usages.Usage;
 import javax.swing.tree.DefaultTreeModel;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 5:40:43 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   private final Usage myUsage;
@@ -49,7 +45,13 @@ class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   }
 
   public int compareTo(UsageNode usageNode) {
-    return 0;
+    Comparable comparable = myUsage instanceof Comparable ? (Comparable)myUsage : null;
+    Comparable otherComparable = usageNode.getUsage() instanceof Comparable ? (Comparable)usageNode.getUsage() : null;
+
+    if (comparable == null || otherComparable == null) {
+      return -1;
+    }
+    return comparable.compareTo(otherComparable);
   }
 
   public Usage getUsage() {

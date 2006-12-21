@@ -16,7 +16,7 @@
 
 package com.intellij.util;
 
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,14 +45,12 @@ public class UniqueResultsQuery<T> implements Query<T> {
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    final Set<T> processedElements = new THashSet<T>(myHashingStrategy);
+    final Set<T> processedElements = new ConcurrentHashSet<T>(myHashingStrategy);
     return myOriginal.forEach(new Processor<T>() {
       public boolean process(final T t) {
-        if (processedElements.contains(t)) return true;
-        processedElements.add(t);
-
-        if (!consumer.process(t)) return false;
-
+        if (processedElements.add(t)) {
+          if (!consumer.process(t)) return false;
+        }
         return true;
       }
     });

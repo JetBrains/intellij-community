@@ -20,14 +20,8 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 
-import java.util.Enumeration;
-
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 5:43:30 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageNodeTreeBuilder {
   private GroupNode myRoot;
@@ -54,7 +48,7 @@ public class UsageNodeTreeBuilder {
     myFilteringRules = rules;
   }
 
-  public UsageNode appendUsage(Usage usage) {
+  public synchronized UsageNode appendUsage(Usage usage) {
     for (final UsageFilteringRule rule : myFilteringRules) {
       if (!rule.isVisible(usage)) {
         return null;
@@ -69,15 +63,5 @@ public class UsageNodeTreeBuilder {
       }
     }
     return lastGroupNode.addUsage(usage);
-  }
-
-  public void removeAllChildren() {
-    Enumeration children = myRoot.children();
-    while (children.hasMoreElements()) {
-      Object child = children.nextElement();
-      if (child instanceof Node) {
-        myRoot.remove((Node)child);
-      }
-    }
   }
 }

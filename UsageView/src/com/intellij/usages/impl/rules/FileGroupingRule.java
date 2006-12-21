@@ -58,7 +58,7 @@ public class FileGroupingRule implements UsageGroupingRule {
   protected static class FileUsageGroup implements UsageGroup, DataProvider {
     private final Project myProject;
     private final VirtualFile myFile;
-    private String myPresentableName;
+    private final String myPresentableName;
     private Icon myIcon;
 
     public FileUsageGroup(Project project, VirtualFile file) {

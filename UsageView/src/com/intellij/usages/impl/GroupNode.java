@@ -27,13 +27,9 @@ import javax.swing.tree.TreeNode;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 5:41:22 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
-class GroupNode extends Node implements Navigatable {
+class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   private final static NodeComparator COMPARATOR = new NodeComparator();
   private final UsageGroup myGroup;
   private final int myRuleIndex;
@@ -55,7 +51,7 @@ class GroupNode extends Node implements Navigatable {
   public String toString() {
     String result = "";
     if (myGroup != null) result += myGroup.getText(null);
-    return children != null ? result + children.toString() : result;
+    return children == null ? result : result + children.toString();
   }
 
   public GroupNode addGroup(UsageGroup group, int ruleIndex) {
@@ -80,8 +76,7 @@ class GroupNode extends Node implements Navigatable {
   private UsageNode tryMerge(Usage usage) {
     if (!(usage instanceof MergeableUsage)) return null;
     if (!UsageViewSettings.getInstance().IS_FILTER_DUPLICATED_LINE) return null;
-    for (int i = 0; i < myUsageNodes.size(); i++) {
-      UsageNode node = myUsageNodes.get(i);
+    for (UsageNode node : myUsageNodes) {
       Usage original = node.getUsage();
       if (original instanceof MergeableUsage) {
         if (((MergeableUsage)original).merge((MergeableUsage)usage)) return node;
@@ -93,16 +88,15 @@ class GroupNode extends Node implements Navigatable {
 
   public boolean removeUsage(UsageNode usage) {
     final Collection<GroupNode> groupNodes = mySubgroupNodes.values();
-
-    for(Iterator<GroupNode> i = groupNodes.iterator();i.hasNext();) {
-      final GroupNode groupNode = i.next();
+    for(Iterator<GroupNode> iterator = groupNodes.iterator();iterator.hasNext();) {
+      final GroupNode groupNode = iterator.next();
 
       if(groupNode.removeUsage(usage)) {
         doUpdate();
 
         if (groupNode.getRecursiveUsageCount() == 0) {
           myTreeModel.removeNodeFromParent(groupNode);
-          mySubgroupNodes.remove(groupNode);
+          iterator.remove();
         }
         return true;
       }
@@ -130,7 +124,7 @@ class GroupNode extends Node implements Navigatable {
       else {
         UsageNode node = new UsageNode(usage, myTreeModel);
         myUsageNodes.add(node);
-        myTreeModel.insertNodeInto(node, this, getChildCount());
+        myTreeModel.insertNodeInto(node, this, getNodeIndex(node));
         return node;
       }
     }
@@ -138,6 +132,40 @@ class GroupNode extends Node implements Navigatable {
       incrementUsageCount();
     }
   }
+
+  private int getNodeIndex(final UsageNode node) {
+    int index = indexedBinarySearch(node);
+    return index >= 0 ? index : -index-1;
+  }
+
+  private int indexedBinarySearch(UsageNode key) {
+    int low = 0;
+    int high = getChildCount() - 1;
+
+    while (low <= high) {
+      int mid = (low + high) >> 1;
+      TreeNode treeNode = getChildAt(mid);
+      int cmp;
+      if (treeNode instanceof UsageNode) {
+        UsageNode midVal = (UsageNode)treeNode;
+        cmp = midVal.compareTo(key);
+      }
+      else {
+        cmp = -1;
+      }
+      if (cmp < 0) {
+        low = mid + 1;
+      }
+      else if (cmp > 0) {
+        high = mid - 1;
+      }
+      else {
+        return mid; // key found
+      }
+    }
+    return -(low + 1);  // key not found
+  }
+
 
   private void incrementUsageCount() {
     GroupNode groupNode = this;
@@ -253,5 +281,4 @@ class GroupNode extends Node implements Navigatable {
     }
     return true;
   }
-
 }

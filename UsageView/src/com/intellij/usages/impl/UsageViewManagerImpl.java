@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -39,13 +38,11 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 4:49:07 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
   private Project myProject;
@@ -76,7 +73,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
-  private Content addContent(UsageViewImpl usageView, UsageViewPresentation presentation) {
+  private void addContent(UsageViewImpl usageView, UsageViewPresentation presentation) {
     Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
@@ -88,7 +85,6 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     );
     usageView.setContent(content);
     content.putUserData(USAGE_VIEW_KEY, usageView);
-    return content;
   }
 
   public UsageView searchAndShowUsages(final UsageTarget[] searchFor,
@@ -96,15 +92,14 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
                                        final boolean showPanelIfOnlyOneUsage,
                                        final boolean showNotFoundMessage, final UsageViewPresentation presentation,
                                        UsageViewStateListener listener) {
-
-    final Ref<UsageViewImpl> usageView = new Ref<UsageViewImpl>();
+    final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
 
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(showNotFoundMessage);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
-
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener), getProgressTitle(presentation), true, myProject);
-
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener),
+      getProgressTitle(presentation), true, myProject);
     return usageView.get();
   }
 
@@ -114,11 +109,11 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
                                   UsageViewPresentation presentation,
                                   UsageViewManager.UsageViewStateListener listener
                                        ) {
-    final Ref<UsageViewImpl> usageView = new Ref<UsageViewImpl>();
+    final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
     final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
     final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
 
-    UsageViewImplUtil.runProcessWithProgress((progressIndicatorFactory != null)?progressIndicatorFactory.create():null,
+    UsageViewImplUtil.runProcessWithProgress(progressIndicatorFactory != null ? progressIndicatorFactory.create() : null,
       new Runnable() {
         public void run() {
           runnable.searchUsages();
@@ -157,7 +152,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     }
   }
 
-  private void appendUsages(final Usage[] foundUsages, final UsageViewImpl usageView) {
+  private static void appendUsages(final Usage[] foundUsages, final UsageViewImpl usageView) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (Usage foundUsage : foundUsages) {
@@ -168,6 +163,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   }
 
 
+  @NotNull
   public String getComponentName() {
     return "NewUsageViewManager";
   }
@@ -181,20 +177,20 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   public void projectClosed() { }
 
   private class SearchForUsagesRunnable implements Runnable {
-    private int myUsageCount = 0;
-    private Usage myFirstUsage = null;
-    private final Ref<UsageViewImpl> myUsageViewRef;
+    private final AtomicInteger myUsageCount = new AtomicInteger(0);
+    private final AtomicReference<Usage> myFirstUsage = new AtomicReference<Usage>();
+    private final AtomicReference<UsageViewImpl> myUsageViewRef;
     private final UsageViewPresentation myPresentation;
     private final UsageTarget[] mySearchFor;
     private final Factory<UsageSearcher> mySearcherFactory;
     private final FindUsagesProcessPresentation myProcessPresentation;
-    private UsageViewStateListener myListener;
+    private final UsageViewStateListener myListener;
 
-    public SearchForUsagesRunnable(final Ref<UsageViewImpl> usageView,
-                                   final UsageViewPresentation presentation,
-                                   final UsageTarget[] searchFor,
-                                   final Factory<UsageSearcher> searcherFactory,
-                                   FindUsagesProcessPresentation processPresentation,
+    public SearchForUsagesRunnable(@NotNull final AtomicReference<UsageViewImpl> usageView,
+                                   @NotNull final UsageViewPresentation presentation,
+                                   @NotNull final UsageTarget[] searchFor,
+                                   @NotNull final Factory<UsageSearcher> searcherFactory,
+                                   @NotNull FindUsagesProcessPresentation processPresentation,
                                    final UsageViewManager.UsageViewStateListener listener) {
       myUsageViewRef = usageView;
       myPresentation = presentation;
@@ -204,13 +200,25 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
       myListener = listener;
     }
 
-    private void openView() {
-      if (!myUsageViewRef.isNull()) {
-        return;
+    private UsageViewImpl getUsageView() {
+      UsageViewImpl usageView = myUsageViewRef.get();
+      if (usageView != null) return usageView;
+      int usageCount = myUsageCount.get();
+      if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
+        usageView = new UsageViewImpl(myPresentation, mySearchFor, mySearcherFactory, myProject);
+        if (myUsageViewRef.compareAndSet(null, usageView)) {
+          openView(usageView);
+          Usage firstUsage = myFirstUsage.get();
+          if (firstUsage != null) {
+            usageView.appendUsageLater(firstUsage);
+          }
+        }
+        return myUsageViewRef.get();
       }
+      return null;
+    }
 
-      final UsageViewImpl usageView = new UsageViewImpl(myPresentation, mySearchFor, mySearcherFactory, myProject);
-      myUsageViewRef.set(usageView);
+    private void openView(final UsageViewImpl usageView) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           addContent(usageView, myPresentation);
@@ -234,27 +242,20 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
       UsageSearcher usageSearcher = mySearcherFactory.create();
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
-          myUsageCount++;
-          if (myUsageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-            myFirstUsage = usage;
+          int usageCount = myUsageCount.incrementAndGet();
+          if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
+            myFirstUsage.compareAndSet(null,usage);
           }
-
-          if (myUsageCount == 2 || (myProcessPresentation.isShowPanelIfOnlyOneUsage() && myUsageCount == 1)) {
-            openView();
-            if (myFirstUsage != null) {
-              myUsageViewRef.get().appendUsageLater(myFirstUsage);
-            }
-            myUsageViewRef.get().appendUsageLater(usage);
-          }
-          else if (myUsageCount > 2) {
-            myUsageViewRef.get().appendUsageLater(usage);
+          UsageViewImpl usageView = getUsageView();
+          if (usageView != null) {
+            usageView.appendUsageLater(usage);
           }
 
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          return indicator != null ? !indicator.isCanceled() : true;
+          return indicator == null || !indicator.isCanceled();
         }
       });
-      if (!myUsageViewRef.isNull()) {
+      if (getUsageView() != null) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             showToolWindow(true);
@@ -264,7 +265,8 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     }
 
     private void endSearchForUsages() {
-      if (myUsageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
+      int usageCount = myUsageCount.get();
+      if (usageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
@@ -272,9 +274,8 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
                                                            StringUtil.decapitalize(myPresentation.getUsagesString()),
                                                            myPresentation.getScopeText());
 
-            if (notFoundActions == null || notFoundActions.size() == 0) {
-              Messages
-                .showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"), Messages.getInformationIcon());
+            if (notFoundActions == null || notFoundActions.isEmpty()) {
+              Messages.showMessageDialog(myProject, message, UsageViewBundle.message("dialog.title.information"), Messages.getInformationIcon());
             }
             else {
               List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);
@@ -296,11 +297,11 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
           }
         }, ModalityState.NON_MODAL);
       }
-      else if (myUsageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
+      else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if (myFirstUsage.canNavigate()) {
-              myFirstUsage.navigate(true);
+            if (myFirstUsage.get().canNavigate()) {
+              myFirstUsage.get().navigate(true);
             }
           }
         });
