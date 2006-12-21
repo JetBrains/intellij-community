@@ -21,6 +21,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -60,7 +62,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myShelveChangesManager = shelveChangesManager;
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        updateChangesContent();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            updateChangesContent();
+          }
+        }, ModalityState.NON_MODAL);
       }
     });
 
