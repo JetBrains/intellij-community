@@ -21,7 +21,9 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import org.jdom.*;
 import org.jdom.filter.Filter;
+import org.jdom.input.DOMBuilder;
 import org.jdom.input.SAXBuilder;
+import org.jdom.output.DOMOutputter;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
@@ -444,5 +446,21 @@ public class JDOMUtil {
   private static class ElementInfo {
     public String name = "";
     public boolean hasNullAttributes = false;
+  }
+
+  public static org.w3c.dom.Element convertToDOM(Element e) {
+    try {
+      final Document d = new Document();
+      d.addContent(e);
+
+      return new DOMOutputter().output(d).getDocumentElement();
+    }
+    catch (JDOMException e1) {
+      throw new RuntimeException(e1);
+    }
+  }
+
+  public static Element convertFromDOM(org.w3c.dom.Element e) {
+    return new DOMBuilder().build(e);
   }
 }
