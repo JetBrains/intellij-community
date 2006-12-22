@@ -62,7 +62,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * Returns the file type for the specified file name.
    *
    * @param fileName The file name for which the type is requested.
-   * @return The file type instance.
+   * @return The file type instance, or {@link StdFileTypes#UNKNOWN} if not found.
    */
   public abstract
   @NotNull
