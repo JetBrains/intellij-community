@@ -23,10 +23,15 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 public interface ChangesBrowserSettingsEditor<T extends ChangeBrowserSettings> {
   JComponent getComponent();
   T getSettings();
   void setSettings(T settings);
+
+  @Nullable
+  String validateInput(); 
 }

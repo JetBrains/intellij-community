@@ -4,14 +4,15 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ChangeListColumn;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -121,6 +122,15 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         //noinspection unchecked
         myEditors.get(vcs).setSettings(mySettings.get(vcs));
       }
+    }
+
+    @Nullable
+    public String validateInput() {
+      for(ChangesBrowserSettingsEditor editor: myEditors.values()) {
+        String result = editor.validateInput();
+        if (result != null) return result;
+      }
+      return null;
     }
   }
 }

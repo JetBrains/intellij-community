@@ -15,14 +15,25 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class CommittedChangesFilterDialog extends DialogWrapper {
   private final ChangesBrowserSettingsEditor myPanel;
   private ChangeBrowserSettings mySettings;
+  private JLabel myErrorLabel = new JLabel();
+  private Alarm myValidateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private Runnable myValidateRunnable = new Runnable() {
+    public void run() {
+      validateInput();
+      myValidateAlarm.addRequest(myValidateRunnable, 500, ModalityState.stateForComponent(myPanel.getComponent()));
+    }
+  };
 
   public CommittedChangesFilterDialog(Project project, ChangesBrowserSettingsEditor panel, ChangeBrowserSettings settings) {
     super(project, false);
@@ -31,17 +42,33 @@ public class CommittedChangesFilterDialog extends DialogWrapper {
     myPanel.setSettings(settings);
     setTitle(VcsBundle.message("browse.changes.filter.title"));
     init();
+    myErrorLabel.setForeground(Color.red);
+    validateInput();
+    myValidateAlarm.addRequest(myValidateRunnable, 500, ModalityState.stateForComponent(myPanel.getComponent()));
   }
 
   @Nullable
   protected JComponent createCenterPanel() {
-    return myPanel.getComponent();
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(myPanel.getComponent(), BorderLayout.CENTER);
+    panel.add(myErrorLabel, BorderLayout.SOUTH);
+    return panel;
+  }
+
+  private void validateInput() {
+    String error = myPanel.validateInput();
+    setOKActionEnabled(error == null);
+    myErrorLabel.setText(error == null ? " " : error);
   }
 
   @Override
   protected void doOKAction() {
-    mySettings = myPanel.getSettings();
-    super.doOKAction();
+    validateInput();
+    if (isOKActionEnabled()) {
+      myValidateAlarm.cancelAllRequests();
+      mySettings = myPanel.getSettings();
+      super.doOKAction();
+    }
   }
 
   public ChangeBrowserSettings getSettings() {

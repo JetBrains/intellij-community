@@ -52,7 +52,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   public boolean USE_USER_FILTER = false;
   public String USER = "";
 
-  private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.LONG,
+  public static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.LONG,
                                                                                                             SimpleDateFormat.LONG));
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -63,7 +63,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  private Date parseDate(final String dateStr) {
+  private static Date parseDate(final String dateStr) {
     if (dateStr == null) return null;
     try {
       return DATE_FORMAT.parse(dateStr);

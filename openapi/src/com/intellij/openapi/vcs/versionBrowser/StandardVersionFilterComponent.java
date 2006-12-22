@@ -136,6 +136,32 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     initValues(settings);
     updateAllEnabled(null);
   }
+
+  public String validateInput() {
+    if (myUseNumAfterFilter.isSelected()) {
+      try {
+        Long.parseLong(myNumAfter.getText());
+      }
+      catch(NumberFormatException ex) {
+        return "Change From must be a valid number";
+      }
+    }
+    if (myUseNumBeforeFilter.isSelected()) {
+      try {
+        Long.parseLong(myNumBefore.getText());
+      }
+      catch(NumberFormatException ex) {
+        return "Change To must be a valid number";
+      }
+    }
+    if (myUseDateAfterFilter.isSelected() && myDateAfter.getDate() == null) {
+      return "Date After must be a valid date";
+    }
+    if (myUseDateBeforeFilter.isSelected() && myDateBefore.getDate() == null) {
+      return "Date Before must be a valid date";
+    }
+    return null;
+  }
 }
 
   
