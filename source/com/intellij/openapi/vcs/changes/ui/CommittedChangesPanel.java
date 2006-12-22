@@ -37,6 +37,7 @@ public class CommittedChangesPanel extends JPanel {
   private CommittedChangesProvider myProvider;
   private ChangeBrowserSettings mySettings;
   private VirtualFile myRoot;
+  private int myMaxCount = 0;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings) {
     super(new BorderLayout());
@@ -58,6 +59,10 @@ public class CommittedChangesPanel extends JPanel {
     myRoot = root;
   }
 
+  public void setMaxCount(final int maxCount) {
+    myMaxCount = maxCount;
+  }
+
   public void refreshChanges() {
     final Ref<VcsException> refEx = new Ref<VcsException>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -68,7 +73,7 @@ public class CommittedChangesPanel extends JPanel {
             list = myProvider.getAllCommittedChanges(mySettings, 50);
           }
           else {
-            list = myProvider.getCommittedChanges(mySettings, myRoot);
+            list = myProvider.getCommittedChanges(mySettings, myRoot, myMaxCount);
           }
           myBrowser.setModel(new CommittedChangesTableModel(list, myProvider.getColumns()));
         }

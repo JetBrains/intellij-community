@@ -34,6 +34,6 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   U createDefaultSettings();
   ChangesBrowserSettingsEditor<U> createFilterUI();
   List<T> getAllCommittedChanges(U settings, final int maxCount) throws VcsException;
-  List<T> getCommittedChanges(U settings, VirtualFile root) throws VcsException;
+  List<T> getCommittedChanges(U settings, VirtualFile root, final int maxCount) throws VcsException;
   ChangeListColumn[] getColumns();
 }

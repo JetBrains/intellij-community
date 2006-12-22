@@ -2,33 +2,32 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 05.12.2006
- * Time: 18:55:09
- */
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.CommittedChangesFilterDialog;
 import com.intellij.openapi.vcs.changes.ui.CommittedChangesPanel;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.CommonBundle;
 
+/**
+ * @author yole
+ */
 public class BrowseChangesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
@@ -41,8 +40,26 @@ public class BrowseChangesAction extends AnAction {
     CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(project, provider.createFilterUI(), settings);
     dlg.show();
     if (!dlg.isOK()) return;
+
+    int maxCount = 0;
+    if (!settings.isAnyFilterSpecified()) {
+      int rc = Messages.showDialog(project, VcsBundle.message("browse.changes.no.filter.prompt"), VcsBundle.message("browse.changes.title"),
+                                   new String[] {
+                                     VcsBundle.message("browse.changes.show.all.button"),
+                                     VcsBundle.message("browse.changes.show.recent.button"),
+                                     CommonBundle.getCancelButtonText()
+                                   }, 1, Messages.getQuestionIcon());
+      if (rc == 2) {
+        return;
+      }
+      if (rc == 1) {
+        maxCount = 50;
+      }
+    }
+
     CommittedChangesPanel panel = new CommittedChangesPanel(project, provider, settings);
     panel.setRoot(vFile);
+    panel.setMaxCount(maxCount);
     panel.refreshChanges();
     final ContentFactory factory = PeerFactory.getInstance().getContentFactory();
     final Content content = factory.createContent(panel, VcsBundle.message("browse.changes.content.title", vFile.getPresentableUrl()), false);

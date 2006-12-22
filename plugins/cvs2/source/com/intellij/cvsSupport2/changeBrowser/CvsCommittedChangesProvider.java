@@ -57,7 +57,7 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     List<CvsChangeList> result = new ArrayList<CvsChangeList>();
     final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(CvsVcs2.getInstance(myProject));
     for(VirtualFile file: files) {
-      result.addAll(getCommittedChanges(settings, file));
+      result.addAll(getCommittedChanges(settings, file, 0));
     }
     return result;
   }
@@ -66,7 +66,7 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION };
   }
 
-  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root) throws VcsException {
+  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root, final int maxCount) throws VcsException {
     final String module = CvsUtil.getModuleName(root);
     if (module != null) {
       CvsHistoryCache cache = CvsHistoryCache.create();

@@ -2,12 +2,6 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 13.12.2006
- * Time: 14:57:07
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.CommittedChangesProvider;
@@ -22,6 +16,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import javax.swing.*;
 import java.util.*;
 
+/**
+ * @author yole
+ */
 public class CompositeCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> {
   private List<AbstractVcs> myBaseVcss = new ArrayList<AbstractVcs>();
 
@@ -55,7 +52,8 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return result;
   }
 
-  public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings, VirtualFile root) throws VcsException {
+  public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
+                                                       VirtualFile root, final int maxCount) throws VcsException {
     throw new UnsupportedOperationException();
   }
 

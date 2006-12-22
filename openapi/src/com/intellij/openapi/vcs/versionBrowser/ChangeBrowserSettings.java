@@ -216,5 +216,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     }
   }
 
-
+  public boolean isAnyFilterSpecified() {
+    return USE_USER_FILTER || USE_CHANGE_AFTER_FILTER || USE_CHANGE_BEFORE_FILTER || USE_DATE_AFTER_FILTER || USE_DATE_BEFORE_FILTER;
+  }
 }

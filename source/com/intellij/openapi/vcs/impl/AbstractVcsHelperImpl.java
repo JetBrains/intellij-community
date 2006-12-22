@@ -434,7 +434,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
       final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
-            versions.addAll(provider.getCommittedChanges(settings1, root));
+            versions.addAll(provider.getCommittedChanges(settings1, root, 0));
           }
           catch (VcsException e) {
             exceptions.add(e);
@@ -465,7 +465,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider) {
     final List<T> changes;
     try {
-      changes = provider.getCommittedChanges(provider.createDefaultSettings(), myProject.getProjectFile().getParent());
+      changes = provider.getCommittedChanges(provider.createDefaultSettings(), myProject.getProjectFile().getParent(), 0);
     }
     catch (VcsException e) {
       return null;
