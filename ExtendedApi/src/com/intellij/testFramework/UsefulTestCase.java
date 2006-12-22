@@ -43,6 +43,11 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public static <T> void assertOrderedCollection(T[] collection, Consumer<T>... checkers) {
+    assertNotNull(collection);
+    assertOrderedCollection(Arrays.asList(collection), checkers);
+  }
+  
   public static <T> void assertOrderedCollection(Collection<T> collection, Consumer<T>... checkers) {
     assertNotNull(collection);
     if (collection.size() != checkers.length) {
