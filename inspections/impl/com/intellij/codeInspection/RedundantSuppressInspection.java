@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +59,18 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
         if (!globalContext.shouldCheck(refClass, RedundantSuppressInspection.this)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext.getProject());
         if (descriptors != null) {
-          problemDescriptionsProcessor.addProblemElement(refClass, descriptors);
+          for (CommonProblemDescriptor descriptor : descriptors) {
+            if (descriptor instanceof ProblemDescriptor) {
+              final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+              final PsiMember member = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class);
+              final RefElement refElement = globalContext.getRefManager().getReference(member);
+              if (refElement != null) {
+                problemDescriptionsProcessor.addProblemElement(refElement, descriptor);
+                continue;
+              }
+            }
+            problemDescriptionsProcessor.addProblemElement(refClass, descriptor);
+          }
         }
       }
     });
