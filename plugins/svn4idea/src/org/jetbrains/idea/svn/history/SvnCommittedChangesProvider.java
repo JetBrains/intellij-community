@@ -86,14 +86,14 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
     return result;
   }
 
-  public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root) throws VcsException {
+  public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root, final int maxCount) throws VcsException {
     if (myLocation != null) {
-      return getCommittedChanges(myLocation, 0, settings);
+      return getCommittedChanges(myLocation, maxCount, settings);
     }
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     String[] urls = SvnUtil.getLocationsForModule(SvnVcs.getInstance(myProject), new File(root.getPath()), progress);
     if (urls.length == 1) {
-      return getCommittedChanges(urls [0], 0, settings);
+      return getCommittedChanges(urls [0], maxCount, settings);
     }
     return Collections.emptyList();
   }
