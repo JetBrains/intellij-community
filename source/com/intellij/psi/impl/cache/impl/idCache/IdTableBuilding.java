@@ -49,20 +49,29 @@ public class IdTableBuilding {
   private IdTableBuilding() {
   }
 
-  public static void processPossibleComplexFileName(CharSequence chars, int startOffset, int endOffset, TIntIntHashMap table) {
-    int offset = findCharsWithinRange(chars, startOffset, endOffset, "/\\");
+  public static void processPossibleComplexFileName(CharSequence chars, char[] charArray, int startOffset, int endOffset, TIntIntHashMap table) {
+    int offset = findCharsWithinRange(chars, charArray,startOffset, endOffset, "/\\");
     offset = Math.min(offset, endOffset);
     int start = startOffset;
+
     while(start < endOffset) {
-      IdCacheUtil.addOccurrence(table, chars, start, offset,UsageSearchContext.IN_FOREIGN_LANGUAGES);
+      if (start != offset) {
+        if (charArray != null) {
+          IdCacheUtil.addOccurrence(table, charArray, start, offset,UsageSearchContext.IN_FOREIGN_LANGUAGES);
+        } else {
+          IdCacheUtil.addOccurrence(table, chars, start, offset,UsageSearchContext.IN_FOREIGN_LANGUAGES);
+        }
+      }
       start = offset + 1;
-      offset = Math.min(endOffset, findCharsWithinRange(chars, start, endOffset, "/\\"));
+      offset = Math.min(endOffset, findCharsWithinRange(chars, charArray, start, endOffset, "/\\"));
     }
   }
 
-  private static int findCharsWithinRange(CharSequence chars, int startOffset, int endOffset, String charsToFind) {
+  private static int findCharsWithinRange(final CharSequence chars, final char[] charArray, int startOffset, int endOffset, String charsToFind) {
     while(startOffset < endOffset) {
-      if (charsToFind.indexOf(chars.charAt(startOffset)) != -1) return startOffset;
+      if (charsToFind.indexOf(charArray != null ? charArray[startOffset]:chars.charAt(startOffset)) != -1) {
+        return startOffset;
+      }
       ++startOffset;
     }
 
@@ -87,7 +96,7 @@ public class IdTableBuilding {
   }
 
   public interface ScanWordProcessor {
-    void run (CharSequence chars, int start, int end);
+    void run (CharSequence chars, int start, int end, @Nullable char[] charArray);
   }
 
   static class TextIdCacheBuilder implements IdCacheBuilder {
@@ -270,9 +279,15 @@ public class IdTableBuilding {
                       final IndexPattern[] todoPatterns,
                       final int[] todoCounts,
                       final PsiManager manager) {
+      final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
+
       myScanner.processWords(chars, new Processor<WordOccurrence>() {
         public boolean process(final WordOccurrence t) {
-          IdCacheUtil.addOccurrence(wordsTable, t.getBaseText(), t.getStart(),t.getEnd(),convertToMask(t.getKind()));
+          if(charsArray != null) {
+            IdCacheUtil.addOccurrence(wordsTable, charsArray, t.getStart(),t.getEnd(),convertToMask(t.getKind()));
+          } else {
+            IdCacheUtil.addOccurrence(wordsTable, t.getBaseText(), t.getStart(),t.getEnd(),convertToMask(t.getKind()));
+          }
           return true;
         }
 
@@ -361,12 +376,18 @@ public class IdTableBuilding {
   };
 
   public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {
+    scanWords(processor, chars, CharArrayUtil.fromSequenceWithoutCopying(chars), startOffset, endOffset);
+  }
+
+  public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final @Nullable char[] charArray, final int startOffset, final int endOffset) {
     int index = startOffset;
+    final boolean hasArray = charArray != null;
+
     ScanWordsLoop:
       while(true){
         while(true){
           if (index == endOffset) break ScanWordsLoop;
-          final char c = chars.charAt(index);
+          final char c = hasArray ? charArray[index]:chars.charAt(index);
           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (Character.isJavaIdentifierStart(c) && c != '$')) break;
           index++;
         }
@@ -374,13 +395,13 @@ public class IdTableBuilding {
         while(true){
           index++;
           if (index == endOffset) break;
-          final char c = chars.charAt(index);
+          final char c = hasArray ? charArray[index]:chars.charAt(index);
           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
           if (!Character.isJavaIdentifierPart(c) || c == '$') break;
         }
         if (index - index1 > 100) continue; // Strange limit but we should have some!
 
-        processor.run(chars, index1, index);
+        processor.run(chars, index1, index, charArray);
       }
   }
 
@@ -390,17 +411,13 @@ public class IdTableBuilding {
                                final int end,
                                final int occurrenceMask) {
     scanWords(new ScanWordProcessor(){
-      public void run(final CharSequence chars, final int start, final int end) {
-        registerOccurence(chars, start, end, table, occurrenceMask);
+      public void run(final CharSequence chars, final int start, final int end, char[] charsArray) {
+        if (charsArray != null) {
+          IdCacheUtil.addOccurrence(table, charsArray, start, end, occurrenceMask);
+        } else {
+          IdCacheUtil.addOccurrence(table, chars, start, end, occurrenceMask);
+        }
       }
     }, chars, start, end);
-  }
-
-  private static void registerOccurence(final CharSequence chars,
-                                        final int start,
-                                        final int end,
-                                        final TIntIntHashMap table,
-                                        final int occurrenceMask) {
-    IdCacheUtil.addOccurrence(table, chars, start, end, occurrenceMask);
   }
 }

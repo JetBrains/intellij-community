@@ -5,6 +5,7 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
@@ -174,6 +175,7 @@ abstract class BaseHtmlLexer extends LexerBase {
     int lastStart = 0;
 
     final CharSequence buf = baseLexer.getBufferSequence();
+    final char[] bufArray = CharArrayUtil.fromSequenceWithoutCopying(buf);
 
     if (seenTag) {
       FoundEnd:
@@ -185,7 +187,9 @@ abstract class BaseHtmlLexer extends LexerBase {
             final int end = baseLexer.getTokenEnd();
 
             for(int i = baseLexer.getTokenStart(); i < end; ++i) {
-              if (buf.charAt(i) == '<' && i + 1 < end && buf.charAt(i+1) == '/') {
+              if ((bufArray != null ? bufArray[i ]:buf.charAt(i)) == '<' &&
+                  i + 1 < end &&
+                  (bufArray != null ? bufArray[i+1]:buf.charAt(i+1)) == '/') {
                 myTokenEnd = i;
                 lastStart = i - 1;
                 lastState = 0;

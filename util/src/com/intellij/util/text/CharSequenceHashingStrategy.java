@@ -22,6 +22,8 @@ import gnu.trove.TObjectHashingStrategy;
  * @author max
  */
 public final class CharSequenceHashingStrategy implements TObjectHashingStrategy<CharSequence> {
+  private static final int COMPARISON_THRESHOLD = 5;
+
   public int computeHashCode(final CharSequence chars) {
     return StringUtil.stringHashCode(chars);
   }
@@ -31,6 +33,11 @@ public final class CharSequenceHashingStrategy implements TObjectHashingStrategy
     if(s1 == s2) return true;
     if (s1.length() != s2.length()) return false;
     int len = s1.length();
+
+    if (len > COMPARISON_THRESHOLD && s1 instanceof String && s2 instanceof String) {
+      return s1.equals(s2);
+    }
+
     for (int i = 0; i < len; i++) {
       if (s1.charAt(i) != s2.charAt(i)) return false;
     }

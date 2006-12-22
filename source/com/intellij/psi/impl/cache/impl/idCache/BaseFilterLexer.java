@@ -3,8 +3,10 @@ package com.intellij.psi.impl.cache.impl.idCache;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharSequenceSubSequence;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 
 import java.util.regex.Matcher;
@@ -18,6 +20,7 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   private int myTodoScannedBound = 0;
   private int myOccurenceMask;
   protected CharSequence myBuffer;
+  protected char[] myBufferArray;
 
   protected BaseFilterLexer(Lexer originalLexer, TIntIntHashMap table, int[] todoCounts) {
     myOriginalLexer = originalLexer;
@@ -43,6 +46,7 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
 
   public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     myBuffer = buffer;
+    myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(myBuffer);
     myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
   }
 
@@ -99,12 +103,30 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
     }
   }
 
-  public void run(CharSequence chars, int start, int end) {
-    IdCacheUtil.addOccurrence(myTable, chars, start, end, myOccurenceMask);
+  public final void run(CharSequence chars, int start, int end, char[] charArray) {
+    if (charArray != null) {
+      IdCacheUtil.addOccurrence(myTable, charArray, start, end, myOccurenceMask);
+    } else {
+      IdCacheUtil.addOccurrence(myTable, chars, start, end, myOccurenceMask);
+    }
   }
 
-  protected final void scanWordsInToken(final int occurrenceMask) {
+  protected final void addOccurrenceInToken(final int occurrenceMask) {
+    if (myBufferArray != null) {
+      IdCacheUtil.addOccurrence(myTable, myBufferArray, getTokenStart(), getTokenEnd(), occurrenceMask);
+    } else {
+      IdCacheUtil.addOccurrence(myTable, myBuffer, getTokenStart(), getTokenEnd(), occurrenceMask);
+    }
+  }
+
+  protected final void scanWordsInToken(final int occurrenceMask, boolean mayHaveFileRefs) {
     myOccurenceMask = occurrenceMask;
-    IdTableBuilding.scanWords(this, getBufferSequence(), getTokenStart(), getTokenEnd());
+    final int start = getTokenStart();
+    final int end = getTokenEnd();
+    IdTableBuilding.scanWords(this, myBuffer, myBufferArray, start, end);
+
+    if (mayHaveFileRefs) {
+      IdTableBuilding.processPossibleComplexFileName(myBuffer, myBufferArray, start, end, myTable);
+    }
   }
 }

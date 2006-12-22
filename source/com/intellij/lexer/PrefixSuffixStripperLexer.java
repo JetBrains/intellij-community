@@ -9,6 +9,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 
 class PrefixSuffixStripperLexer extends LexerBase {
   private CharSequence myBuffer;
+  private char[] myBufferArray;
   private int myTokenStart;
   private int myTokenEnd;
   private IElementType myTokenType;
@@ -38,6 +39,7 @@ class PrefixSuffixStripperLexer extends LexerBase {
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
+    myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
     myTokenStart = startOffset;
     myTokenEnd = startOffset;
     myTokenType = null;
@@ -102,7 +104,9 @@ class PrefixSuffixStripperLexer extends LexerBase {
       myTokenStart = myTokenEnd;
       final int suffixStart = myBufferEnd - mySuffix.length();
       myTokenType = myMiddleTokenType;
-      if (CharArrayUtil.regionMatches(myBuffer, suffixStart, myBufferEnd, mySuffix)) {
+      if ( (myBufferArray != null && CharArrayUtil.regionMatches(myBufferArray, suffixStart, myBufferEnd, mySuffix)) ||
+           (myBufferArray == null && CharArrayUtil.regionMatches(myBuffer, suffixStart, myBufferEnd, mySuffix))
+         ) {
         myTokenEnd = suffixStart;
         if (myTokenStart < myTokenEnd) {
           myState = 2;

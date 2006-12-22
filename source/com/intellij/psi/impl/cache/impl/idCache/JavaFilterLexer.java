@@ -21,22 +21,18 @@ public class JavaFilterLexer extends BaseFilterLexer {
         || tokenType == JavaTokenType.LONG_LITERAL 
         || tokenType == JavaTokenType.INTEGER_LITERAL
         || tokenType == JavaTokenType.CHARACTER_LITERAL) {
-      int start = getTokenStart();
-      int end = getTokenEnd();
-      IdCacheUtil.addOccurrence(myTable, myBuffer, start, end, UsageSearchContext.IN_CODE);
+      addOccurrenceInToken(UsageSearchContext.IN_CODE);
     }
     else if (tokenType == JavaTokenType.STRING_LITERAL) {
-      scanWordsInToken(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES);
+      scanWordsInToken(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES, false);
     }
     else if (tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT ||
              tokenType == JavaTokenType.DOC_COMMENT) {
-      scanWordsInToken(UsageSearchContext.IN_COMMENTS);
+      scanWordsInToken(UsageSearchContext.IN_COMMENTS, false);
       advanceTodoItemCountsInToken();
     }
     else if (JavaTokenType.KEYWORD_BIT_SET.contains(tokenType)) {
-      int start = getTokenStart();
-      int end = getTokenEnd();
-      IdCacheUtil.addOccurrence(myTable, myBuffer, start, end, UsageSearchContext.IN_PLAIN_TEXT);
+      addOccurrenceInToken(UsageSearchContext.IN_PLAIN_TEXT);
     }
 
     myOriginalLexer.advance();

@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CharArrayUtil {
+  private static final int REGION_MATCHES_THRESHOLD = 50;
+
   public static void getChars(CharSequence src, char[] dst, int dstOffset) {
     if (src instanceof CharSequenceBackedByArray) {
       ((CharSequenceBackedByArray)src).getChars(dst, dstOffset);
@@ -210,6 +212,11 @@ public class CharArrayUtil {
     final int len = s.length();
     if (offset + len > bufferEnd) return false;
     if (offset < 0) return false;
+    
+    //if (buffer instanceof String && s instanceof String) {
+    //  return ((String)buffer).regionMatches(offset, (String)s, 0, len);
+    //}
+    
     for (int i = 0; i < len; i++) {
       if (buffer.charAt(offset + i) != s.charAt(i)) return false;
     }

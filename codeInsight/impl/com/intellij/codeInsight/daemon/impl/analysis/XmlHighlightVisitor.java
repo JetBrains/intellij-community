@@ -1133,7 +1133,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           final XmlFile tldFileByUri = instance.getTldFileByUri(uri, jspFile);
           final boolean[] wordFound = new boolean[1];
           IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
-            public void run(final CharSequence chars, int start, int end) {
+            public void run(final CharSequence chars, int start, int end, char[] charArray) {
               if (end - start != localName.length() || wordFound[0]) return;
               for(int i = 0; i < localName.length(); ++i) {
                 if (chars.charAt(start + i) != localName.charAt(i)) return;

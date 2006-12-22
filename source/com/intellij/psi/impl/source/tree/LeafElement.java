@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
   private volatile int myState = 0; // 16 bit for type, 15 bit for state and 1 bit for parentFlag
+  private static final int TEXT_MATCHES_THRESHOLD = 40;
 
   public abstract char charAt(int position);
 
@@ -42,6 +43,11 @@ public abstract class LeafElement extends TreeElement {
 
     if (end - start != len) return false;
     if (buf == text) return true;
+
+    if (len > TEXT_MATCHES_THRESHOLD && text instanceof String && buf instanceof String) {
+      return ((String)text).regionMatches(0,(String)buf,start,len);
+    }
+
     for (int i = 0; i < len; i++) {
       if (text.charAt(i) != buf.charAt(start + i)) return false;
     }
@@ -111,10 +117,21 @@ public abstract class LeafElement extends TreeElement {
 
   public int hc() {
     final CharSequence text = getInternedText();
-
+    final int len = text.length();
     int hc = 0;
-    for (int i = 0; i < text.length(); i++) {
-      hc += text.charAt(i);
+
+    if (len > TEXT_MATCHES_THRESHOLD && text instanceof String) {
+      final String str=(String)text;
+
+      for (int i = 0; i < len; i++) {
+        hc += str.charAt(i);
+      }
+
+      return hc;
+    } else {
+      for (int i = 0; i < len; i++) {
+        hc += text.charAt(i);
+      }
     }
 
     return hc;

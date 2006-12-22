@@ -15,16 +15,17 @@ public class PropertiesFilterLexer extends BaseFilterLexer {
   }
 
   public void advance() {
-    IElementType tokenType = myOriginalLexer.getTokenType();
+    final IElementType tokenType = myOriginalLexer.getTokenType();
+
     if (tokenType == PropertiesTokenTypes.KEY_CHARACTERS) {
-      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT);
+      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT, false);
     }
     else if (PropertiesTokenTypes.COMMENTS.contains(tokenType)) {
-      scanWordsInToken(UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_PLAIN_TEXT);
+      scanWordsInToken(UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_PLAIN_TEXT, false);
       advanceTodoItemCountsInToken();
     }
     else {
-      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT);
+      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT, false);
     }
 
     myOriginalLexer.advance();

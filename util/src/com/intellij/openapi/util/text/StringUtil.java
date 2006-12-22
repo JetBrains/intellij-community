@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.nio.CharBuffer;
 
 public class StringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
@@ -544,6 +545,7 @@ public class StringUtil {
     if (chars instanceof String) return chars.hashCode();
     if (chars instanceof CharSequenceWithStringHash) return chars.hashCode();
     if (chars instanceof CharArrayCharSequence) return chars.hashCode();
+
     int h = 0;
     int to = chars.length();
     for (int off = 0; off < to; off++) {
@@ -560,18 +562,16 @@ public class StringUtil {
     return h;
   }
 
-  public static int stringHashCode(char[] chars, int from, int len) {
+  public static int stringHashCode(char[] chars, int from, int to) {
     int h = 0;
-    int to = from + len;
     for (int off = from; off < to; off++) {
       h = 31 * h + chars[off];
     }
     return h;
   }
 
-  public static int stringHashCodeInsensitive(char[] chars, int from, int len) {
+  public static int stringHashCodeInsensitive(char[] chars, int from, int to) {
     int h = 0;
-    int to = from + len;
     for (int off = from; off < to; off++) {
       h = 31 * h + Character.toLowerCase(chars[off]);
     }
