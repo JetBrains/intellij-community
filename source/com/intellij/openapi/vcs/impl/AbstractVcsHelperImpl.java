@@ -52,7 +52,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.ui.ErrorTreeView;
-import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -393,12 +392,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(new CommittedChangesTableModel(changelists), null, title, false);
+    showChangesBrowser(new CommittedChangesTableModel(changelists), title, false);
   }
 
-  private void showChangesBrowser(ListTableModel<CommittedChangeList> changelists, CommittedChangesProvider provider, String title, boolean showSearchAgain) {
+  private void showChangesBrowser(CommittedChangesTableModel changelists, String title, boolean showSearchAgain) {
     final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple);
-    dlg.setCommittedChangesProvider(provider);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -459,7 +457,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         return;
       }
 
-      showChangesBrowser(tableModelRef.get(), provider, title, filterUI != null);
+      showChangesBrowser(tableModelRef.get(), title, filterUI != null);
     }
   }
 

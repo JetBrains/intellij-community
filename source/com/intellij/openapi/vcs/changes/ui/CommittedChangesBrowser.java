@@ -5,18 +5,20 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,16 +27,16 @@ import java.util.List;
 public class CommittedChangesBrowser extends JPanel {
   private final TableView myChangeListsView;
   private final ChangesBrowser myChangesView;
-  private ListTableModel<CommittedChangeList> myTableModel;
+  private CommittedChangesTableModel myTableModel;
   private final JTextArea myCommitMessageArea;
   private CommittedChangeList mySelectedChangeList;
   private JPanel myLeftPanel;
 
-  public CommittedChangesBrowser(final Project project, final ListTableModel<CommittedChangeList> tableModel) {
+  public CommittedChangesBrowser(final Project project, final CommittedChangesTableModel tableModel) {
     super(new BorderLayout());
 
     myTableModel = tableModel;
-    myTableModel.sortByColumn(0);    // switch to reverse sort
+    myTableModel.sortByChangesColumn(ChangeListColumn.DATE, SortableColumnModel.SORT_DESCENDING);
     myChangeListsView = new TableView(myTableModel);
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -59,10 +61,15 @@ public class CommittedChangesBrowser extends JPanel {
 
     myLeftPanel = new JPanel(new BorderLayout());
     myLeftPanel.add(new JScrollPane(myChangeListsView), BorderLayout.CENTER);
-    myLeftPanel.add(commitPanel, BorderLayout.SOUTH);
+    
+    JSplitPane leftSplitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+    leftSplitter.setTopComponent(myLeftPanel);
+    leftSplitter.setBottomComponent(commitPanel);
+    leftSplitter.setDividerLocation(0.6);
+    leftSplitter.setResizeWeight(0.5);
 
     JSplitPane splitter = new JSplitPane();
-    splitter.setLeftComponent(myLeftPanel);
+    splitter.setLeftComponent(leftSplitter);
     splitter.setRightComponent(myChangesView);
 
     add(splitter, BorderLayout.CENTER);
@@ -78,9 +85,13 @@ public class CommittedChangesBrowser extends JPanel {
     myChangesView.dispose();
   }
 
-  public void setModel(ListTableModel<CommittedChangeList> tableModel) {
+  public void setModel(CommittedChangesTableModel tableModel) {
+    ChangeListColumn sortColumn = myTableModel.getSortColumn();
+    int sortingType = myTableModel.getSortingType();
     myTableModel = tableModel;
+    myTableModel.sortByChangesColumn(sortColumn, sortingType);
     myChangeListsView.setModel(tableModel);
+    tableModel.fireTableStructureChanged();
   }
 
   private void updateBySelectionChange() {

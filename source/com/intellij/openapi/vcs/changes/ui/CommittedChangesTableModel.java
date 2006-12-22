@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
@@ -28,6 +29,27 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
 
   public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, final ChangeListColumn[] columns) {
     super(buildColumnInfos(columns), changeLists, 0);
+  }
+
+  public void sortByChangesColumn(final ChangeListColumn column, int sortingType) {
+    if (column == null) {
+      return;
+    }
+    final ColumnInfo[] columnInfos = getColumnInfos();
+    for(int i=0; i<columnInfos.length; i++) {
+      ColumnInfoAdapter adapter = (ColumnInfoAdapter) columnInfos [i];
+      if (adapter.getColumn() == column) {
+        sortByColumn(i, sortingType);
+        break;
+      }
+    }
+  }
+
+  @Nullable
+  public ChangeListColumn getSortColumn() {
+    int index = getSortedColumnIndex();
+    if (index < 0) return null;
+    return ((ColumnInfoAdapter) getColumnInfos() [index]).getColumn();
   }
 
   private static ColumnInfo[] buildColumnInfos(final ChangeListColumn[] columns) {
@@ -54,6 +76,10 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
     @Override
     public Comparator getComparator() {
       return myColumn.getComparator();
+    }
+
+    public ChangeListColumn getColumn() {
+      return myColumn;
     }
   }
 }
