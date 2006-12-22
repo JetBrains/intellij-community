@@ -10,8 +10,6 @@ import com.intellij.util.diff.ShallowNodeComparator;
  */
 public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTNode> {
   public ThreeState deepEqual(final ASTNode oldNode, final ASTNode newNode) {
-    if (!typesEqual(oldNode, newNode)) return ThreeState.NO;
-
     return textMatches(oldNode, newNode);
   }
 

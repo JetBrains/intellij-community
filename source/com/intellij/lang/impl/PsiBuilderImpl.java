@@ -208,14 +208,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private IElementType myTokenType;
     private int myTokenStart;
     private int myTokenEnd;
-    private int myState;
     private int myHC = -1;
 
     public Token() {
       myTokenType = myLexer.getTokenType();
       myTokenStart = myLexer.getTokenStart();
       myTokenEnd = myLexer.getTokenEnd();
-      //myState = myLexer.getState();
     }
 
     public int hc() {
@@ -432,6 +430,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
   private void doValidnessChecks(final Marker marker) {
+    /*
     final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
     if (doneMarker != null) {
       LOG.error("Marker already done.");
@@ -456,6 +455,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       }
     }
+    */
   }
 
   public void error(String messageText) {
@@ -644,8 +644,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private class MyComparator implements ShallowNodeComparator<ASTNode, Node> {
     public ThreeState deepEqual(final ASTNode oldNode, final Node newNode) {
-      if (!typesEqual(oldNode, newNode)) return ThreeState.NO;
-
       return textMatches(oldNode, newNode);
     }
 
@@ -724,20 +722,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myRoot;
     }
 
-    public List<Node> getChildren(final Node item) {
-      if (item instanceof Token || item instanceof ErrorItem) return EMPTY;
+    public void getChildren(final Node item, final List<Node> into) {
+      if (item instanceof Token || item instanceof ErrorItem) return;
       StartMarker marker = (StartMarker)item;
 
       Node child = marker.firstChild;
-      if (child == null) return EMPTY;
-
-      List<Node> list = new ArrayList<Node>(5);
       while (child != null) {
-        list.add(child);
+        into.add(child);
         child = child.next;
       }
-
-      return list;
     }
   }
 
@@ -785,18 +778,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private LeafElement createLeaf(final Token lexem) {
     final IElementType type = lexem.getTokenType();
     if (myWhitespaces.contains(type)) {
-      return new PsiWhiteSpaceImpl(myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+      return new PsiWhiteSpaceImpl(myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, -1, myCharTable);
     }
     else if (myComments.contains(type)) {
-      return new PsiCommentImpl(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+      return new PsiCommentImpl(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, -1, myCharTable);
     }
     else if (type instanceof IChameleonElementType) {
-      return new ChameleonElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+      return new ChameleonElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, -1, myCharTable);
     }
     else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) {
-      return Factory.createLeafElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+      return Factory.createLeafElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, -1, myCharTable);
     }
-    return new LeafPsiElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+    return new LeafPsiElement(type, myLexer.getBufferSequence(), lexem.myTokenStart, lexem.myTokenEnd, -1, myCharTable);
   }
 
   /**

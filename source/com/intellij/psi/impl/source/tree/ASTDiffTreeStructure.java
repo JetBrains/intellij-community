@@ -4,16 +4,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.util.diff.DiffTreeStructure;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author max
  */
 public class ASTDiffTreeStructure implements DiffTreeStructure<ASTNode> {
-  private static List<ASTNode> EMPTY = Collections.emptyList();
-
   private ASTNode myRoot;
 
   public ASTDiffTreeStructure(final ASTNode root) {
@@ -32,15 +28,12 @@ public class ASTDiffTreeStructure implements DiffTreeStructure<ASTNode> {
     return myRoot;
   }
 
-  public List<ASTNode> getChildren(ASTNode astNode) {
+  public void getChildren(final ASTNode astNode, final List<ASTNode> into) {
     ASTNode child = astNode.getFirstChildNode();
-    if (child == null) return EMPTY;
-    List<ASTNode> children = new ArrayList<ASTNode>();
+    if (child == null) return;
     while (child != null) {
-      children.add(child);
+      into.add(child);
       child = child.getTreeNext();
     }
-
-    return children;
   }
 }

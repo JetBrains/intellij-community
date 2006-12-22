@@ -60,8 +60,8 @@ public class DiffTreeTest extends TestCase {
       return myRoot;
     }
 
-    public List<Node> getChildren(final Node node) {
-      return Arrays.asList(node.getChildren());
+    public void getChildren(final Node node, final List<Node> into) {
+      into.addAll(Arrays.asList(node.getChildren()));
     }
   }
 

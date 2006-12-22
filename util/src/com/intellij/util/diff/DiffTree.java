@@ -1,5 +1,6 @@
 package com.intellij.util.diff;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -12,6 +13,8 @@ public class DiffTree<OT, NT> {
   private final DiffTreeStructure<NT> myNewTree;
   private final ShallowNodeComparator<OT, NT> myComparator;
   private final DiffTreeChangeBuilder<OT, NT> myConsumer;
+  private final List<List<OT>> myOldChildrenLists = new ArrayList<List<OT>>();
+  private final List<List<NT>> myNewChildrenLists = new ArrayList<List<NT>>();
 
   public DiffTree(final DiffTreeStructure<OT> oldTree,
                   final DiffTreeStructure<NT> newTree,
@@ -25,15 +28,25 @@ public class DiffTree<OT, NT> {
   }
 
   public static <OT, NT> void diff(DiffTreeStructure<OT> oldTree, DiffTreeStructure<NT> newTree, ShallowNodeComparator<OT, NT> comparator, DiffTreeChangeBuilder<OT, NT> consumer) {
-    new DiffTree<OT, NT>(oldTree, newTree, comparator, consumer).build(oldTree.getRoot(), newTree.getRoot());
+    new DiffTree<OT, NT>(oldTree, newTree, comparator, consumer).build(oldTree.getRoot(), newTree.getRoot(), 0);
   }
 
-  private void build(OT oldN, NT newN) {
+  private void build(OT oldN, NT newN, int level) {
     OT oldNode = myOldTree.prepareForGetChildren(oldN);
     NT newNode = myNewTree.prepareForGetChildren(newN);
 
-    final List<OT> oldChildren = myOldTree.getChildren(oldNode);
-    final List<NT> newChildren = myNewTree.getChildren(newNode);
+    if (level >= myNewChildrenLists.size()) {
+      myNewChildrenLists.add(new ArrayList<NT>());
+      myOldChildrenLists.add(new ArrayList<OT>());
+    }
+
+    final List<OT> oldChildren = myOldChildrenLists.get(level);
+    oldChildren.clear();
+    myOldTree.getChildren(oldNode, oldChildren);
+
+    final List<NT> newChildren = myNewChildrenLists.get(level);
+    newChildren.clear();
+    myNewTree.getChildren(newNode, newChildren);
 
     final int oldSize = oldChildren.size();
     final int newSize = newChildren.size();
@@ -43,8 +56,9 @@ public class DiffTree<OT, NT> {
       return;
     }
 
+    final ShallowNodeComparator<OT, NT> comparator = myComparator;
     if (oldSize == 0 && newSize == 0) {
-      if (!myComparator.hashcodesEqual(oldNode, newNode) || !myComparator.typesEqual(oldNode, newNode)) {
+      if (!comparator.hashcodesEqual(oldNode, newNode) || !comparator.typesEqual(oldNode, newNode)) {
         myConsumer.nodeReplaced(oldNode, newNode);
       }
       return;
@@ -52,13 +66,19 @@ public class DiffTree<OT, NT> {
 
     boolean walkedDeep = false;
 
+    ShallowNodeComparator.ThreeState[] deeps = oldSize == newSize ? new ShallowNodeComparator.ThreeState[oldSize] : null;
+
     int start = 0;
     while (start < oldSize && start < newSize) {
       OT oldChild = oldChildren.get(start);
       NT newChild = newChildren.get(start);
-      if (!myComparator.typesEqual(oldChild, newChild) || !myComparator.hashcodesEqual(oldChild, newChild)) break;
-      if (myComparator.deepEqual(oldChild, newChild) != ShallowNodeComparator.ThreeState.YES) {
-        build(oldChild, newChild);
+      if (!comparator.typesEqual(oldChild, newChild)) break;
+      final ShallowNodeComparator.ThreeState dp = comparator.deepEqual(oldChild, newChild);
+      if (deeps != null) deeps[start] = dp;
+
+      if (dp != ShallowNodeComparator.ThreeState.YES) {
+        if (!comparator.hashcodesEqual(oldChild, newChild)) break;
+        build(oldChild, newChild, level + 1);
         walkedDeep = true;
       }
 
@@ -73,9 +93,12 @@ public class DiffTree<OT, NT> {
     while (oldEnd >= start && newEnd >= start) {
       OT oldChild = oldChildren.get(oldEnd);
       NT newChild = newChildren.get(newEnd);
-      if (!myComparator.typesEqual(oldChild, newChild) || !myComparator.hashcodesEqual(oldChild, newChild)) break;
-      if (myComparator.deepEqual(oldChild, newChild) != ShallowNodeComparator.ThreeState.YES) {
-        build(oldChild, newChild);
+      if (!comparator.typesEqual(oldChild, newChild)) break;
+      final ShallowNodeComparator.ThreeState dp = comparator.deepEqual(oldChild, newChild);
+      if (deeps != null) deeps[oldEnd] = dp;
+      if (dp != ShallowNodeComparator.ThreeState.YES) {
+        if (!comparator.hashcodesEqual(oldChild, newChild)) break;
+        build(oldChild, newChild, level + 1);
         walkedDeep = true;
       }
 
@@ -88,12 +111,12 @@ public class DiffTree<OT, NT> {
         final OT oldChild = oldChildren.get(i);
         final NT newChild = newChildren.get(i);
 
-        if (myComparator.typesEqual(oldChild, newChild)) {
-          final ShallowNodeComparator.ThreeState de = myComparator.deepEqual(oldChild, newChild);
+        if (comparator.typesEqual(oldChild, newChild)) {
+          final ShallowNodeComparator.ThreeState de = deeps[i];
           if (de == ShallowNodeComparator.ThreeState.UNSURE) {
-            build(oldChild, newChild);
+            build(oldChild, newChild, level + 1);
           }
-          else if (de == ShallowNodeComparator.ThreeState.NO) {
+          else if (de == ShallowNodeComparator.ThreeState.NO || de == null) {
             myConsumer.nodeReplaced(oldChild, newChild);
           }
         }

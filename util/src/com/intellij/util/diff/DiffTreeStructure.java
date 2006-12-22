@@ -8,5 +8,5 @@ import java.util.List;
 public interface DiffTreeStructure<T> {
   T prepareForGetChildren(T node);
   T getRoot();
-  List<T> getChildren(T parent);
+  void getChildren(T parent, List<T> into);
 }
