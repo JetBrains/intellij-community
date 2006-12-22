@@ -49,6 +49,7 @@ public abstract class PsiType {
    */
   public abstract String getPresentableText();
 
+  @NonNls
   public abstract String getCanonicalText();
 
   public abstract String getInternalCanonicalText();

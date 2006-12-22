@@ -65,5 +65,5 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaBaseOwne
    * the element and the element has no default value.
    */
   @Nullable
-  PsiAnnotationMemberValue findAttributeValue(String attributeName);
+  PsiAnnotationMemberValue findAttributeValue(@NonNls String attributeName);
 }
