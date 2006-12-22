@@ -69,19 +69,7 @@ public class ChunkBuildPluginExtension extends ChunkBuildExtension {
                                                        DevKitBundle.message("ant.build.description", chunk.getName()), new Function<Module, String>() {
         @Nullable
         public String fun(final Module module) {
-          final Set<Module> modules = new HashSet<Module>();
-          PluginBuildUtil.getDependencies(module, modules);
-          if (modules.isEmpty()) return null;
-          final StringBuffer buf = new StringBuffer();
-          for (Module m : modules) {
-            if (m != modules) {
-              if (buf.length() > 0) {
-                buf.append(", ");
-              }
-              buf.append(BuildProperties.getCompileTargetName(m.getName()));
-            }
-          }
-          return buf.toString();
+          return BuildProperties.getCompileTargetName(module.getName());
         }
 
       }, jarPath));
