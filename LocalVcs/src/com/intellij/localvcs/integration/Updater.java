@@ -4,6 +4,7 @@ import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -105,7 +106,7 @@ public class Updater {
           createNewFiles(f);
         }
         else {
-          myVcs.createFile(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());
+          myVcs.createFile(f.getPath(), physicalContentOf(f), f.getTimeStamp());
         }
       }
     }
@@ -118,10 +119,14 @@ public class Updater {
         // todo we should update directory and root timestamps too
         // todo should we treat external file change as deletion and creation new one?
         if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
-          myVcs.changeFileContent(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());
+          myVcs.changeFileContent(f.getPath(), physicalContentOf(f), f.getTimeStamp());
         }
       }
     }
+  }
+
+  private byte[] physicalContentOf(VirtualFile f) throws IOException {
+    return LocalFileSystem.getInstance().physicalContentsToByteArray(f);
   }
 
   private boolean areOfTheSameKind(Entry e, VirtualFile f) {

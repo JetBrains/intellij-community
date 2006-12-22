@@ -16,6 +16,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
+// todo it seems that this class spreads memory leaks
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
   protected Project myProject;
   protected Splitter mySplitter;

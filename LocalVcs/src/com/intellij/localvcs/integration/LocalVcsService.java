@@ -3,12 +3,15 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Path;
-import com.intellij.openapi.Disposable;
+import com.intellij.localvcs.Paths;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.FileContentProvider;
+import com.intellij.openapi.vfs.ex.ProvidedContent;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,23 +27,25 @@ public class LocalVcsService {
   private LocalVcs myVcs;
   private StartupManager myStartupManager;
   private ProjectRootManagerEx myRootManager;
-  private VirtualFileManager myFileManager;
+  private VirtualFileManagerEx myFileManager;
   private FileFilter myFileFilter;
-  private VirtualFileAdapter myFileListener;
-  private LocalVcsService.CacheUpdaterAdaptor myCacheUpdater;
+  private VirtualFileListener myFileListener;
+  private CacheUpdater myCacheUpdater;
+  private FileContentProvider myFileContentProvider;
 
-  public LocalVcsService(LocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManager fm, FileFilter ff) {
+  public LocalVcsService(LocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, FileFilter ff) {
     myVcs = vcs;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
     myFileFilter = ff;
 
+    // todo review startup order
     registerStartupActivity();
   }
 
   public void shutdown() {
-    myFileManager.removeVirtualFileListener(myFileListener);
+    myFileManager.unregisterFileContentProvider(myFileContentProvider);
     myRootManager.unregisterChangeUpdater(myCacheUpdater);
   }
 
@@ -50,7 +55,7 @@ public class LocalVcsService {
       public void updatingDone() {
         updateRoots();
         subscribeForRootChanges();
-        subscribeForFileChanges();
+        registerFileContentProvider();
       }
     });
   }
@@ -64,8 +69,29 @@ public class LocalVcsService {
     myRootManager.registerChangeUpdater(myCacheUpdater);
   }
 
-  private void subscribeForFileChanges() {
-    myFileListener = new VirtualFileAdapter() {
+  private void registerFileContentProvider() {
+    myFileListener = createFileListener();
+
+    myFileContentProvider = new FileContentProvider() {
+      public VirtualFile[] getCoveredDirectories() {
+        return myRootManager.getContentRoots();
+      }
+
+      @Nullable
+      public ProvidedContent getProvidedContent(VirtualFile f) {
+        Entry e = myVcs.findEntry(f.getPath());
+        return e == null ? null : new EntryContent(e);
+      }
+
+      public VirtualFileListener getVirtualFileListener() {
+        return myFileListener;
+      }
+    };
+    myFileManager.registerFileContentProvider(myFileContentProvider);
+  }
+
+  private VirtualFileListener createFileListener() {
+    return new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent e) {
         if (notInteresting(e)) return;
@@ -123,7 +149,6 @@ public class LocalVcsService {
         return !myFileFilter.isUnderContentRoots(e.getNewParent());
       }
     };
-    myFileManager.addVirtualFileListener(myFileListener);
   }
 
   private void updateRoots() {
@@ -145,7 +170,7 @@ public class LocalVcsService {
         }
       }
       else {
-        myVcs.createFile(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());
+        myVcs.createFile(f.getPath(), physicalContentOf(f), f.getTimeStamp());
       }
       myVcs.apply();
     }
@@ -156,12 +181,16 @@ public class LocalVcsService {
 
   private void changeFileContent(VirtualFile f) {
     try {
-      myVcs.changeFileContent(f.getPath(), f.contentsToByteArray(), f.getTimeStamp());
+      myVcs.changeFileContent(f.getPath(), physicalContentOf(f), f.getTimeStamp());
       myVcs.apply();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private byte[] physicalContentOf(final VirtualFile f) throws IOException {
+    return LocalFileSystem.getInstance().physicalContentsToByteArray(f);
   }
 
   private void rename(VirtualFile f, String newName) {
@@ -201,7 +230,7 @@ public class LocalVcsService {
     }
 
     public String getPath() {
-      return Path.appended(myParent.getPath(), myChild.getName());
+      return Paths.appended(myParent.getPath(), myChild.getName());
     }
 
     @NotNull
@@ -260,4 +289,5 @@ public class LocalVcsService {
       throw new UnsupportedOperationException();
     }
   }
+
 }

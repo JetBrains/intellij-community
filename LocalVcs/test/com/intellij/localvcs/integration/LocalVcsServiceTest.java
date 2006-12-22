@@ -4,14 +4,15 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestCase;
 import com.intellij.localvcs.TestStorage;
 import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
-import com.intellij.localvcs.integration.stubs.StubVirtualFileManager;
+import com.intellij.localvcs.integration.stubs.StubVirtualFileManagerEx;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.*;
-import org.easymock.EasyMock;
+import com.intellij.openapi.vfs.ex.FileContentProvider;
+import com.intellij.openapi.vfs.ex.ProvidedContent;
+import static org.easymock.classextension.EasyMock.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,24 +20,31 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LocalVcsServiceTest extends TestCase {
-  // todo can root changes and  FS changes arrive for the same directory?
-  // todo for example when we create new folder and then add it to roots 
+public class LocalVcsServiceTest extends MockedLocalFileSystemTestCase {
+  // todo 1 What about roots in jars (non-local file system)?
+  // todo 2 test broken storage
+  // todo 3 take a look at the old-lvcs tests
+  // todo 4 extract inner classes
+
   private LocalVcs vcs;
   private LocalVcsService service;
   private List<VirtualFile> roots = new ArrayList<VirtualFile>();
   private MyStartupManager startupManager;
   private MyProjectRootManagerEx rootManager;
-  private MyVirtualFileManager fileManager;
+  private MyVirtualFileManagerEx fileManager;
   private TestFileFilter fileFilter;
 
   @Before
   public void setUp() {
-    initAndStartup(new LocalVcs(new TestStorage()));
+    initAndStartup(createLocalVcs());
   }
 
   private void initAndStartup(LocalVcs v) {
     initWithoutStartup(v);
+    startupService();
+  }
+
+  private void startupService() {
     startupManager.synchronizeFileSystem();
   }
 
@@ -44,7 +52,7 @@ public class LocalVcsServiceTest extends TestCase {
     vcs = v;
     startupManager = new MyStartupManager();
     rootManager = new MyProjectRootManagerEx();
-    fileManager = new MyVirtualFileManager();
+    fileManager = new MyVirtualFileManagerEx();
     fileFilter = new TestFileFilter();
 
     service = new LocalVcsService(vcs, startupManager, rootManager, fileManager, fileFilter);
@@ -52,25 +60,29 @@ public class LocalVcsServiceTest extends TestCase {
 
   @Test
   public void testUpdatingRootsOnStartup() {
-    initWithoutStartup(new LocalVcs(new TestStorage()));
+    initWithoutStartup(createLocalVcs());
 
     roots.add(new TestVirtualFile("c:/root", null));
-    startupManager.synchronizeFileSystem();
+    startupService();
 
     assertTrue(vcs.hasEntry("c:/root"));
+  }
+
+  private LocalVcs createLocalVcs() {
+    return new LocalVcs(new TestStorage());
   }
 
   @Test
   public void testDoesNotUpdateRootsOnBeforeStartupActivity() {
     roots.add(new TestVirtualFile("c:/root", null));
-    initWithoutStartup(new LocalVcs(new TestStorage()));
+    initWithoutStartup(createLocalVcs());
 
     assertFalse(vcs.hasEntry("c:/root"));
   }
 
   @Test
-  public void testDoesNotTrackChangesBeforeStartupActivityHasRun() {
-    initWithoutStartup(new LocalVcs(new TestStorage()));
+  public void testDoesNotTrackChangesBeforeStartup() {
+    initWithoutStartup(createLocalVcs());
 
     roots.add(new TestVirtualFile("c:/root", null));
     rootManager.updateRoots();
@@ -106,7 +118,7 @@ public class LocalVcsServiceTest extends TestCase {
     assertTrue(vcs.hasEntry("c:/root"));
     assertFalse(vcs.hasEntry("c:/root/file"));
   }
-  
+
   @Test
   public void testRenamingContentRoot() {
     TestVirtualFile root = new TestVirtualFile("c:/dir/rootName", null);
@@ -147,6 +159,16 @@ public class LocalVcsServiceTest extends TestCase {
   }
 
   @Test
+  public void testTakingPhysicalFileContentOnCreation() {
+    configureLocalFileSystemToReturnPhysicalContent("physical");
+
+    VirtualFile f = new TestVirtualFile("f", "memory", null);
+    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
+
+    assertEquals(c("physical"), vcs.getEntry("f").getContent());
+  }
+
+  @Test
   public void testCreatingDirectories() {
     VirtualFile f = new TestVirtualFile("dir", 345L);
     fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
@@ -184,6 +206,19 @@ public class LocalVcsServiceTest extends TestCase {
     Entry e = vcs.getEntry("file");
     assertEquals(c("new content"), e.getContent());
     assertEquals(505L, e.getTimestamp());
+  }
+
+  @Test
+  public void testTakingPhysicalFileContentOnContentChange() {
+    configureLocalFileSystemToReturnPhysicalContent("physical");
+
+    vcs.createFile("f", b("content"), null);
+    vcs.apply();
+
+    VirtualFile f = new TestVirtualFile("f", "memory", null);
+    fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
+
+    assertEquals(c("physical"), vcs.getEntry("f").getContent());
   }
 
   @Test
@@ -349,6 +384,59 @@ public class LocalVcsServiceTest extends TestCase {
     assertFalse(vcs.hasEntry("file"));
   }
 
+  @Test
+  public void testRegisteringAndUnregisteringContentProvider() {
+    initWithoutStartup(createLocalVcs());
+    assertFalse(fileManager.hasFileContentProvider());
+
+    startupService();
+    assertTrue(fileManager.hasFileContentProvider());
+
+    service.shutdown();
+    assertFalse(fileManager.hasFileContentProvider());
+  }
+
+  @Test
+  public void testContentProviderRoots() {
+    roots.add(new TestVirtualFile("root", null));
+    rootManager.updateRoots();
+
+    FileContentProvider p = fileManager.getFileContentProvider();
+    VirtualFile[] result = p.getCoveredDirectories();
+
+    assertEquals(1, result.length);
+    assertEquals("root", result[0].getName());
+  }
+
+  @Test
+  public void testContentProviderFileListener() {
+    FileContentProvider p = fileManager.getFileContentProvider();
+
+    TestVirtualFile f = new TestVirtualFile("f", null);
+    p.getVirtualFileListener().fileCreated(new VirtualFileEvent(null, f, null, null));
+
+    assertTrue(vcs.hasEntry("f"));
+  }
+
+  //todo what if file content will be requested before startupActivity?
+
+  @Test
+  public void testContentProviding() {
+    vcs.createFile("f", b("content"), null);
+    vcs.apply();
+
+    FileContentProvider p = fileManager.getFileContentProvider();
+    ProvidedContent c = p.getProvidedContent(new TestVirtualFile("f", null, null));
+
+    assertEquals(b("content").length, c.getLength());
+  }
+
+  @Test
+  public void testContentForNonExistedFileIsNull() {
+    FileContentProvider p = fileManager.getFileContentProvider();
+    assertNull(p.getProvidedContent(new TestVirtualFile("f", null, null)));
+  }
+
   private class MyStartupManager extends StubStartupManagerEx {
     private CacheUpdater myUpdater;
 
@@ -372,14 +460,14 @@ public class LocalVcsServiceTest extends TestCase {
     private CacheUpdater myUpdater;
 
     public MyProjectRootManagerEx() {
-      myFileIndex = EasyMock.createMock(ProjectFileIndex.class);
+      myFileIndex = createMock(ProjectFileIndex.class);
       setFileIsInContent(true);
     }
 
     public void setFileIsInContent(boolean result) {
-      EasyMock.reset(myFileIndex);
-      EasyMock.expect(myFileIndex.isInContent((VirtualFile)EasyMock.anyObject())).andStubReturn(result);
-      EasyMock.replay(myFileIndex);
+      reset(myFileIndex);
+      expect(myFileIndex.isInContent((VirtualFile)anyObject())).andStubReturn(result);
+      replay(myFileIndex);
     }
 
     @Override
@@ -410,35 +498,49 @@ public class LocalVcsServiceTest extends TestCase {
     }
   }
 
-  private class MyVirtualFileManager extends StubVirtualFileManager {
-    private VirtualFileListener myListener;
-
-    public void addVirtualFileListener(@NotNull VirtualFileListener l) {
-      myListener = l;
-    }
-
-    public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
-      if (listener == myListener) myListener = null;
-    }
+  private class MyVirtualFileManagerEx extends StubVirtualFileManagerEx {
+    private FileContentProvider myProvider;
 
     public void fireFileCreated(VirtualFileEvent e) {
-      if (myListener != null) myListener.fileCreated(e);
+      if (getListener() != null) getListener().fileCreated(e);
     }
 
     public void fireContentChanged(VirtualFileEvent e) {
-      if (myListener != null) myListener.contentsChanged(e);
+      if (getListener() != null) getListener().contentsChanged(e);
     }
 
     public void fireBeforeFileDeletion(VirtualFileEvent e) {
-      if (myListener != null) myListener.beforeFileDeletion(e);
+      if (getListener() != null) getListener().beforeFileDeletion(e);
     }
 
     public void fireBeforePropertyChange(VirtualFilePropertyEvent e) {
-      if (myListener != null) myListener.beforePropertyChange(e);
+      if (getListener() != null) getListener().beforePropertyChange(e);
     }
 
     public void fireFileMoved(VirtualFileMoveEvent e) {
-      if (myListener != null) myListener.fileMoved(e);
+      if (getListener() != null) getListener().fileMoved(e);
+    }
+
+    private VirtualFileListener getListener() {
+      return myProvider == null ? null : myProvider.getVirtualFileListener();
+    }
+
+    @Override
+    public void registerFileContentProvider(FileContentProvider p) {
+      myProvider = p;
+    }
+
+    @Override
+    public void unregisterFileContentProvider(FileContentProvider p) {
+      if (myProvider == p) myProvider = null;
+    }
+
+    public boolean hasFileContentProvider() {
+      return myProvider != null;
+    }
+
+    public FileContentProvider getFileContentProvider() {
+      return myProvider;
     }
   }
 

@@ -31,7 +31,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   }
 
   @Test
-  public void testLoadingOnStartup() {
+  public void testLoadingOnPreStartupActivity() {
     initComponent();
 
     Storage s = new Storage(c.getStorageDir());

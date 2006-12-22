@@ -10,7 +10,7 @@ import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   private Project myProject;
   private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
-  private VirtualFileManager myFileManager;
+  private VirtualFileManagerEx myFileManager;
   private FileTypeManager myTypeManager;
   private Storage myStorage;
   private LocalVcs myVcs;
@@ -30,7 +30,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
     return p.getComponent(LocalVcsComponent.class).getLocalVcs();
   }
 
-  public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManager fm, FileTypeManager tm) {
+  public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, FileTypeManager tm) {
     myProject = p;
     myStartupManager = sm;
     myRootManager = rm;
@@ -41,6 +41,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   public void initComponent() {
     if (isDisabled()) return;
 
+    // todo review startup order
     myStartupManager.registerPreStartupActivity(new Runnable() {
       public void run() {
         initVcs();
@@ -91,6 +92,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   protected boolean isDisabled() {
+    // todo dont forget to chenge CommonLvcs too
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     if (System.getProperty("localvcs.enabled") != null) return false;
     return true;

@@ -37,15 +37,15 @@ public class RootEntry extends DirectoryEntry {
   }
 
   public void createFile(Integer id, String path, Content content, Long timestamp) {
-    FileEntry e = new FileEntry(id, Path.getNameOf(path), content, timestamp);
-    addEntry(Path.getParentOf(path), e);
+    FileEntry e = new FileEntry(id, Paths.getNameOf(path), content, timestamp);
+    addEntry(Paths.getParentOf(path), e);
   }
 
   public void createDirectory(Integer id, String path, Long timestamp) {
     // todo messsssss!!!! should we introduce createRoot method instead?
     // todo and simplify addEntry method too? 
-    String name = Path.getNameOf(path);
-    String parentPath = Path.getParentOf(path);
+    String name = Paths.getNameOf(path);
+    String parentPath = Paths.getParentOf(path);
 
     if (parentPath == null || !hasEntry(parentPath)) { // is it suppose to be a root?
       parentPath = null;
@@ -65,7 +65,7 @@ public class RootEntry extends DirectoryEntry {
     // todo one more hack to support roots...
     // todo i defitilety have to do something with it...
     Entry e = getEntry(path);
-    e.changeName(Path.renamed(e.getName(), newName));
+    e.changeName(Paths.renamed(e.getName(), newName));
   }
 
   public void move(String path, String newParentPath) {

@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 
-public class Path {
+public class Paths {
   public static final char DELIM = '/';
   private static boolean myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
 

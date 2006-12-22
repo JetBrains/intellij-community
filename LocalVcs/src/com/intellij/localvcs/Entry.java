@@ -100,7 +100,7 @@ public abstract class Entry {
     path = path.substring(name.length());
     if (path.length() == 0) return this;
 
-    if (path.charAt(0) != Path.DELIM) return null;
+    if (path.charAt(0) != Paths.DELIM) return null;
     path = path.substring(1);
 
     return searchInChildren(path);

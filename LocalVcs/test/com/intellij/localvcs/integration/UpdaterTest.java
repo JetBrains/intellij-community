@@ -5,14 +5,14 @@ import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.TestCase;
 import com.intellij.localvcs.TestStorage;
 import com.intellij.openapi.vfs.VirtualFile;
+import static org.easymock.classextension.EasyMock.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.easymock.classextension.EasyMock;
-import static org.easymock.classextension.EasyMock.*;
 
 import java.io.IOException;
 
-public class UpdaterTest extends TestCase {
+public class UpdaterTest extends MockedLocalFileSystemTestCase {
   private LocalVcs vcs;
   private TestVirtualFile root;
   private FileFilter filter;
@@ -89,6 +89,16 @@ public class UpdaterTest extends TestCase {
     Entry e = vcs.getEntry("root/dir/file");
     assertEquals(c("content"), e.getContent());
     assertEquals(2L, e.getTimestamp());
+  }
+
+  @Test
+  public void testTakingPhysicalFileContentOnAddition() {
+    configureLocalFileSystemToReturnPhysicalContent("physical");
+
+    root.addChild(new TestVirtualFile("f", "memoty", null));
+    update();
+
+    assertEquals(c("physical"), vcs.getEntry("root/f").getContent());
   }
 
   @Test
@@ -175,6 +185,19 @@ public class UpdaterTest extends TestCase {
 
     assertEquals(c("new content"), e.getContent());
     assertEquals(222L, e.getTimestamp());
+  }
+
+  @Test
+  public void testTakingPhysicalFileContentOnUpdate() {
+    configureLocalFileSystemToReturnPhysicalContent("physical");
+
+    vcs.createFile("root/f", b("content"), 111L);
+    vcs.apply();
+
+    root.addChild(new TestVirtualFile("f", "memoty", 222L));
+    update();
+
+    assertEquals(c("physical"), vcs.getEntry("root/f").getContent());
   }
 
   @Test

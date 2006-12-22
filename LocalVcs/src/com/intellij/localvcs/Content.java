@@ -1,6 +1,8 @@
 package com.intellij.localvcs;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class Content {
   private Storage myStorage;
@@ -22,6 +24,22 @@ public class Content {
 
   public byte[] getData() {
     return myStorage.loadContent(myId);
+  }
+
+  public int getLength() {
+    // todo make it faster!!!
+    return getData().length;
+  }
+
+  public InputStream getInputStream() {
+    // todo make it faster!!!
+    return new ByteArrayInputStream(getData());
+  }
+
+
+  @Override
+  public String toString() {
+    return new String(getData());
   }
 
   @Override

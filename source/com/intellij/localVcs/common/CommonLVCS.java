@@ -266,14 +266,9 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return myImplementation.getRootPaths();
   }
 
-  public synchronized VirtualFile[] getCoveredDirectories() {
-    //TODO: filter out roots from JarFilesystem.
-    if (myRoots == null) refreshRoots();
-    return myRoots;
-  }
 
   public synchronized boolean isUnderVcs(VirtualFile file) {
-    if (!(file.getFileSystem()instanceof LocalFileSystem)) {
+    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
       return false;
     }
     if (!myFileIndex.isInContent(file)) return false;
@@ -330,6 +325,22 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
   private boolean myCanProvideContents = false;
   private DelayedSyncOperation myRefreshRootsOperation;
+
+  public synchronized VirtualFile[] getRoots() {
+    if (myRoots == null) refreshRoots();
+    return myRoots;
+  }
+
+  public synchronized VirtualFile[] getCoveredDirectories() {
+    //TODO: filter out roots from JarFilesystem.
+    if (ApplicationManager.getApplication().isUnitTestMode()
+      || System.getProperty("localvcs.enabled") != null) {
+      return new VirtualFile[0];
+    }
+    else {
+      return getRoots();
+    }
+  }
 
   @Nullable
   public synchronized ProvidedContent getProvidedContent(VirtualFile file) {
@@ -554,7 +565,9 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
 
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
-      public void beforeFileTypesChanged(FileTypeEvent event) {}
+      public void beforeFileTypesChanged(FileTypeEvent event) {
+      }
+
       public void fileTypesChanged(FileTypeEvent event) {
         resynchronizeRoots();
       }

@@ -1,8 +1,6 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 public class MoveChange extends Change {
   private String myNewParentPath;
@@ -36,10 +34,10 @@ public class MoveChange extends Change {
 
   @Override
   public void _revertOn(RootEntry root) {
-    root.move(getNewPath(), Path.getParentOf(myPath));
+    root.move(getNewPath(), Paths.getParentOf(myPath));
   }
 
   private String getNewPath() {
-    return Path.appended(myNewParentPath, Path.getNameOf(myPath));
+    return Paths.appended(myNewParentPath, Paths.getNameOf(myPath));
   }
 }
