@@ -457,23 +457,25 @@ public class XmlUtil {
                                             final XmlEntityRef entityRef) {
     if (!cacheValue) return entityDecl.parse(targetFile, type, entityRef);
 
-    CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
-//    return entityDecl.parse(targetFile, type);
+    synchronized(PsiLock.LOCK) { // we depend on targetFile and entityRef
+      CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
+  //    return entityDecl.parse(targetFile, type);
 
-    if (value == null) {
-      value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiElement>() {
-        public CachedValueProvider.Result<PsiElement> compute() {
-          final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
-          if (res == null) return new Result<PsiElement>(res, targetFile);
-          if (!entityDecl.isInternalReference()) XmlEntityRefImpl.copyEntityCaches(res.getContainingFile(), targetFile);
-          return new CachedValueProvider.Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile,
-                                                            entityRef);
-        }
-      }, false);
-      entityRef.putUserData(PARSED_DECL_KEY, value);
+      if (value == null) {
+        value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiElement>() {
+          public CachedValueProvider.Result<PsiElement> compute() {
+            final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
+            if (res == null) return new Result<PsiElement>(res, targetFile);
+            if (!entityDecl.isInternalReference()) XmlEntityRefImpl.copyEntityCaches(res.getContainingFile(), targetFile);
+            return new CachedValueProvider.Result<PsiElement>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile,
+                                                              entityRef);
+          }
+        }, false);
+        entityRef.putUserData(PARSED_DECL_KEY, value);
+      }
+
+      return value.getValue();
     }
-
-    return value.getValue();
   }
 
   /**
