@@ -173,7 +173,10 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
     for (M model: models) {
       final Set<XmlFile> files = model.getConfigFiles();
       for (XmlFile file: files) {
-        list.add(getDom(file));
+        final T t = getDom(file);
+        if (t != null) {
+          list.add(t);
+        }
       }
       configFiles.addAll(files);
     }
