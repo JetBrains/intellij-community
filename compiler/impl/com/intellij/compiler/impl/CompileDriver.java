@@ -254,7 +254,7 @@ public class CompileDriver {
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make"));
     WindowManager.getInstance().getStatusBar(myProject).setInfo("");
 
-    final DependencyCache dependencyCache = new DependencyCache(myCachesDirectoryPath, myProject);
+    final DependencyCache dependencyCache = new DependencyCache(myCachesDirectoryPath);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, dependencyCache, this, !isRebuild && !forceCompile);
     compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
     for (Pair<Compiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {

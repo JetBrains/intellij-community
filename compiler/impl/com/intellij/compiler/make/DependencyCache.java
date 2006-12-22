@@ -24,6 +24,8 @@ import java.rmi.Remote;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 
 public class DependencyCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.DependencyCache");
@@ -43,12 +45,10 @@ public class DependencyCache {
   private SymbolTable mySymbolTable;
   private final String mySymbolTableFilePath;
   private final String myStoreDirectoryPath;
-  //private final Project myProject;
   private static final @NonNls String SYMBOLTABLE_FILE_NAME = "symboltable.dat";
 
-  public DependencyCache(String storeDirectoryPath, final Project project) {
+  public DependencyCache(String storeDirectoryPath) {
     myStoreDirectoryPath = storeDirectoryPath;
-    //myProject = project;
     LOG.assertTrue(myStoreDirectoryPath != null);
 
     mySymbolTableFilePath = myStoreDirectoryPath + "/" + SYMBOLTABLE_FILE_NAME;
@@ -179,40 +179,102 @@ public class DependencyCache {
     // build forward-dependencies for the new infos, all new class infos must be already in the main cache!
 
     final SymbolTable symbolTable = getSymbolTable();
-    for (final int qName : namesToUpdate) {
-      final int newClassId = getNewClassesCache().getClassId(qName);
-      if (newClassId == Cache.UNKNOWN) {
-        continue;
-      }
-      buildForwardDependencies(qName, getNewClassesCache().getReferences(newClassId));
-
-      boolean isRemote = false;
-      final int classId = cache.getClassId(qName);
-      // "remote objects" are classes that _directly_ implement remote interfaces
-      final int[] superInterfaces = cache.getSuperInterfaces(classId);
-      if (superInterfaces.length > 0) {
-        final int remoteInterfaceName = symbolTable.getId(REMOTE_INTERFACE_NAME);
-        for (int superInterface : superInterfaces) {
-          if (isRemoteInterface(cache, superInterface, remoteInterfaceName)) {
-            isRemote = true;
-            break;
-          }
+    
+    final WorkerArray workers = new WorkerArray(3);
+    try {
+      final CountDownLatch forwardDependenciesBuildtask = new CountDownLatch(namesToUpdate.length);
+      final CacheCorruptedException[] exception = new CacheCorruptedException[] {null};
+      for (final int qName : namesToUpdate) {
+        final int newClassId = getNewClassesCache().getClassId(qName);
+        if (newClassId == Cache.UNKNOWN) {
+          forwardDependenciesBuildtask.countDown();
+          continue;
         }
+        workers.submit(new Runnable() {
+          public void run() {
+            try {
+              if (exception[0] != null) {
+                return;
+              }
+              buildForwardDependencies(qName, getNewClassesCache().getReferences(newClassId));
+              boolean isRemote = false;
+              final int classId = cache.getClassId(qName);
+              // "remote objects" are classes that _directly_ implement remote interfaces
+              final int[] superInterfaces = cache.getSuperInterfaces(classId);
+              if (superInterfaces.length > 0) {
+                final int remoteInterfaceName = symbolTable.getId(REMOTE_INTERFACE_NAME);
+                for (int superInterface : superInterfaces) {
+                  if (isRemoteInterface(cache, superInterface, remoteInterfaceName)) {
+                    isRemote = true;
+                    break;
+                  }
+                }
+              }
+              final boolean wasRemote = cache.isRemote(classId);
+              if (wasRemote && !isRemote) {
+                synchronized (myPreviouslyRemoteClasses) {
+                  myPreviouslyRemoteClasses.add(qName);
+                }
+              }
+              cache.setRemote(classId, isRemote);
+            }
+            catch (CacheCorruptedException e) {
+              if (exception[0] == null) {
+                exception[0] = e;
+              }
+            }
+            finally {
+              forwardDependenciesBuildtask.countDown();
+            }
+          }
+        });
       }
-      final boolean wasRemote = cache.isRemote(classId);
-      if (wasRemote && !isRemote) {
-        myPreviouslyRemoteClasses.add(qName);
+      try {
+        forwardDependenciesBuildtask.await();
       }
-      cache.setRemote(classId, isRemote);
+      catch (InterruptedException e) {
+      }
+      if (exception[0] != null) {
+        throw exception[0];
+      }
+      // building subclass dependencies
+      final CountDownLatch subclassDependenciesBuildtask = new CountDownLatch(namesToUpdate.length);
+      for (final int qName : namesToUpdate) {
+        final int classId = cache.getClassId(qName);
+        workers.submit(new Runnable() {
+          public void run() {
+            try {
+              if (exception[0] != null) {
+                return;
+              }
+              buildSubclassDependencies(qName, classId);
+            }
+            catch (CacheCorruptedException e) {
+              if (exception[0] == null) {
+                exception[0] = e;
+              }
+            }
+            finally {
+              subclassDependenciesBuildtask.countDown();
+            }
+          }
+        });
+      }
+
+      try {
+        subclassDependenciesBuildtask.await();
+      }
+      catch (InterruptedException ignored) {
+      }
+      if (exception[0] != null) {
+        throw exception[0];
+      }
+    }
+    finally {
+      workers.stop();
     }
 
-    // build back-dependencies
-
-    for (final int qName : namesToUpdate) {
-      final int classId = cache.getClassId(qName);
-      buildSubclassDependencies(qName, classId);
-    }
-
+    
     final int[] classesToRemove = myClassesWithSourceRemoved.toArray();
     for (final int qName : classesToRemove) {
       cache.removeClass(qName);
@@ -651,11 +713,6 @@ public class DependencyCache {
     return myClassesWithSuperlistChanged.toArray();
   }
 
-  /*
-  public int[] getPreviouslyRemoteClasses() {
-    return myPreviouslyRemoteClasses.toArray();
-  }
-  */
   public boolean wasRemote(int qName) {
     return myPreviouslyRemoteClasses.contains(qName);
   }
@@ -694,7 +751,45 @@ public class DependencyCache {
       }
       return true;
     }
-
   }
 
+  private static class WorkerArray {
+    private volatile boolean myIsCancelled = false;
+    private final ConcurrentLinkedQueue<Runnable> myQueue;
+
+    public WorkerArray(int workerCount) {
+      myQueue = new ConcurrentLinkedQueue<Runnable>();
+      for (int idx = 0; idx < workerCount; idx++) {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          public void run() {
+            while (true) {
+              final Runnable task = myQueue.poll();
+              if (task != null) {
+                task.run();
+              }
+              else {
+                if (myIsCancelled) {
+                  return;
+                }
+              }
+              try {
+                Thread.sleep(5);
+              }
+              catch (InterruptedException ignored) {
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    public void submit(Runnable task) {
+      myQueue.add(task);
+    }
+    
+    public void stop() {
+      myIsCancelled = true;
+    }
+  }
+  
 }
