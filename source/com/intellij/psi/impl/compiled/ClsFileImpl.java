@@ -244,6 +244,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  public boolean isDirectory() {
+    return false;
+  }
+
   public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
     buffer.append(PsiBundle.message("psi.decompiled.text.header"));
     goNextLine(indentLevel, buffer);

@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +59,7 @@ public abstract class VirtualFileSystem {
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
    */
   @Nullable
-  public abstract VirtualFile findFileByPath(String path);
+  public abstract VirtualFile findFileByPath(@NonNls String path);
 
   /**
    * Fetches presentable URL of file with the given path in this file system.

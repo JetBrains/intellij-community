@@ -10,6 +10,10 @@ public abstract class LightPsiFileBase extends LightPsiFileImpl {
     super(provider, language);
   }
 
+  public boolean isDirectory() {
+    return false;
+  }
+
   public void accept(PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }

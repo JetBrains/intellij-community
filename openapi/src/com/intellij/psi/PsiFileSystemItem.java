@@ -32,4 +32,6 @@ public interface PsiFileSystemItem extends PsiNamedElement, NavigationItem {
    * @throws IncorrectOperationException if the rename is not supported or not possible for some reason.
    */
   void checkSetName(String name) throws IncorrectOperationException;
+
+  boolean isDirectory();
 }

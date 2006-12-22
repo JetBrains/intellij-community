@@ -61,6 +61,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     PsiFileImplUtil.checkSetName(this, name);
   }
 
+  public boolean isDirectory() {
+    return false;
+  }
+
   public PsiDirectory getContainingDirectory() {
     VirtualFile parentFile = getVirtualFile().getParent();
     if (parentFile == null) return null;

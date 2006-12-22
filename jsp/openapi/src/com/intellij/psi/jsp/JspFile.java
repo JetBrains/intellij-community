@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 public interface JspFile extends XmlFile {
   JspFile[] EMPTY_ARRAY = new JspFile[0];
 
-  WebDirectoryElement getParentWebDirectory();
-  String getWebPath();
-
   PsiElement[] getContentsElements();
 
   boolean isErrorPage();

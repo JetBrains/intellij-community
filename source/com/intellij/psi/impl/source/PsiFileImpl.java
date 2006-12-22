@@ -93,6 +93,10 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return id;
   }
 
+  public boolean isDirectory() {
+    return false;
+  }
+
   public boolean isRepositoryIdInitialized() {
     return super.getRepositoryId() != -2;
   }

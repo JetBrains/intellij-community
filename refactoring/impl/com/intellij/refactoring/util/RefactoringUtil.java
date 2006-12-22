@@ -172,9 +172,6 @@ public class RefactoringUtil {
     if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
       return newName.indexOf(File.separatorChar) < 0 && newName.indexOf('/') < 0;
     }
-    if (psiElement instanceof WebDirectoryElement) {
-      return newName.indexOf('/') < 0;
-    }
     if (psiElement instanceof XmlTag ||
         psiElement instanceof XmlAttribute ||
         psiElement instanceof XmlElementDecl

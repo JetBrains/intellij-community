@@ -71,6 +71,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     myFile = file;
   }
 
+  public boolean isDirectory() {
+    return true;
+  }
+
   public boolean isValid() {
     return myFile.isValid();
   }

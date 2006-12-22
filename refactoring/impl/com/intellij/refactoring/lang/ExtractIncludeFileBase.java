@@ -22,9 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelperRegistrar;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -35,6 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +66,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
 
   protected abstract boolean verifyChildRange (final XmlTagChild first, final XmlTagChild last);
 
-  protected void replaceDuplicates(final String includePath,
+  private void replaceDuplicates(final String includePath,
                                    final List<Pair<PsiElement, PsiElement>> duplicates,
                                    final Editor editor,
                                    final Project project) {
@@ -123,6 +127,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
   @NotNull
   protected abstract Language getLanguageForExtract(PsiElement firstExtracted);
 
+  @Nullable
   private static FileType getFileType(final Language language) {
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
@@ -216,8 +221,18 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     final String includePath = doExtract(targetDirectory, targetfileName, firstToExtract, lastToExtract,
                                          srcFile.getLanguage());
 
-    LOG.assertTrue(includePath != null);
     doReplaceRange(includePath, firstToExtract, lastToExtract);
     return includePath;
+  }
+
+  @Nullable
+  protected static String getRelativePath(final Project project, final VirtualFile srcVFile, final VirtualFile dstVFile) {
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      final String relativePath = helper.getRelativePath(project, srcVFile, dstVFile);
+      if (relativePath != null) {
+        return relativePath;
+      }
+    }
+    return null;
   }
 }
