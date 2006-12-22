@@ -297,20 +297,15 @@ class TemplateListPanel extends JPanel {
   private void removeRow() {
     int selected = myTreeTable.getSelectedRow();
     if (selected < 0) return;
+    TemplateKey templateKey = getTemplateKey(selected);
+    if (templateKey == null) return;
+
     int result = Messages.showOkCancelDialog(this, CodeInsightBundle.message("template.delete.confirmation.text"),
                                              CodeInsightBundle.message("template.delete.confirmation.title"),
                                              Messages.getQuestionIcon());
     if (result != DialogWrapper.OK_EXIT_CODE) return;
 
     removeTemplateAt(selected);
-    /*AbstractTableModel model = (AbstractTableModel)myTreeTable.getModel();
-    model.fireTableRowsDeleted(selected, selected);
-    if (selected >= myTreeTable.getRowCount()) {
-      selected = myTreeTable.getRowCount() - 1;
-    }
-    if (selected >= 0) {
-      myTreeTable.setRowSelectionInterval(selected, selected);
-    }*/
     isModified = true;
   }
 
