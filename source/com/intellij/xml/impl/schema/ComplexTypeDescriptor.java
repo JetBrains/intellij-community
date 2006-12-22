@@ -19,7 +19,7 @@ import java.util.*;
 public class ComplexTypeDescriptor extends TypeDescriptor {
   private XmlNSDescriptorImpl myDocumentDescriptor;
   private XmlTag myTag;
-  private XmlElementDescriptor[] myElementDescriptors = null;
+  private volatile XmlElementDescriptor[] myElementDescriptors = null;
   @NonNls
   public static final String PROHIBITED_ATTR_VALUE = "prohibited";
   @NonNls
@@ -41,13 +41,17 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   public XmlElementDescriptor[] getElements() {
     if(myElementDescriptors != null) return myElementDescriptors;
-    Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
-    collectElements(map, myTag, new HashSet<XmlTag>());
-    addSubstitutionGroups(map);
-    filterAbstractElements(map);
-    return myElementDescriptors = map.values().toArray(
-      new XmlElementDescriptor[map.values().size()]
-    );
+
+    synchronized(this) {
+      if(myElementDescriptors != null) return myElementDescriptors;
+      Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
+      collectElements(map, myTag, new HashSet<XmlTag>());
+      addSubstitutionGroups(map);
+      filterAbstractElements(map);
+      return myElementDescriptors = map.values().toArray(
+        new XmlElementDescriptor[map.values().size()]
+      );
+    }
   }
 
   private void addSubstitutionGroups(Map<String, XmlElementDescriptor> result) {
@@ -111,7 +115,13 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
                                    myDocumentDescriptor.getDefaultNamespace() :
                                    tag.getNamespaceByPrefix(namespacePrefix);
 
-          final XmlElementDescriptor element = myDocumentDescriptor.getElementDescriptor(
+          XmlNSDescriptorImpl nsDescriptor = myDocumentDescriptor;
+          if (!namespace.equals(myDocumentDescriptor.getDefaultNamespace())) {
+            final XmlNSDescriptor namespaceDescriptor = tag.getNSDescriptor(namespace, true);
+            if (namespaceDescriptor instanceof XmlNSDescriptorImpl) nsDescriptor = (XmlNSDescriptorImpl)namespaceDescriptor; 
+          }
+
+          final XmlElementDescriptor element = nsDescriptor.getElementDescriptor(
             local,
             namespace,
             new HashSet<XmlNSDescriptorImpl>(),
