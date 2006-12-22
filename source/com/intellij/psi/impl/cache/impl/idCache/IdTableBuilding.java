@@ -273,7 +273,7 @@ public class IdTableBuilding {
       myFile = file;
     }
 
-    public void build(CharSequence chars,
+    public void build(final CharSequence chars,
                       int length,
                       final TIntIntHashMap wordsTable,
                       final IndexPattern[] todoPatterns,
@@ -283,7 +283,7 @@ public class IdTableBuilding {
 
       myScanner.processWords(chars, new Processor<WordOccurrence>() {
         public boolean process(final WordOccurrence t) {
-          if(charsArray != null) {
+          if(charsArray != null && t.getBaseText() == chars) {
             IdCacheUtil.addOccurrence(wordsTable, charsArray, t.getStart(),t.getEnd(),convertToMask(t.getKind()));
           } else {
             IdCacheUtil.addOccurrence(wordsTable, t.getBaseText(), t.getStart(),t.getEnd(),convertToMask(t.getKind()));
