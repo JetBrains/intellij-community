@@ -32,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.HttpURLConnection;
 import java.util.*;
 
 /**
@@ -502,8 +503,8 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
     try {
       URL url = new URL(dtdUrl);
-      URLConnection urlConnection = url.openConnection();
-
+      HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+      urlConnection.addRequestProperty("accept","text/xml,application/xml,text/html,*/*");
       int contentLength = urlConnection.getContentLength();
       int bytesRead = 0;
 
