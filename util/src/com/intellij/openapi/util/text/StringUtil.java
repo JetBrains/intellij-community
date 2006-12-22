@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
-import java.nio.CharBuffer;
 
 public class StringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
@@ -154,7 +153,17 @@ public class StringUtil {
   }
 
   public static boolean charsEqualIgnoreCase(char a, char b) {
-    return a == b || Character.toUpperCase(a) == Character.toUpperCase(b);
+    return a == b || toUpperCase(a) == toUpperCase(b);
+  }
+
+  public static char toUpperCase(char a) {
+    if (a < 'a') {
+      return a;
+    }
+    if (a >= 'a' && a <= 'z') {
+      return (char)(a + ('A' - 'a'));
+    }
+    return Character.toUpperCase(a);
   }
 
   @NotNull public static String getShortName(@NotNull String fqName, char separator) {
