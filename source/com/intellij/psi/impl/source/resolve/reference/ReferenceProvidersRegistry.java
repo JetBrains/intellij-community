@@ -83,17 +83,6 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, new PropertiesReferenceProvider(false));
 
     PsiReferenceProvider propertiesReferenceProvider = getProviderByType(PROPERTIES_FILE_KEY_PROVIDER);
-    registerXmlAttributeValueReferenceProvider(
-      new String[]{"altKey","titleKey","pageKey","srcKey"},
-      new ScopeFilter(
-        new ParentElementFilter(
-          new AndFilter(
-            new NamespaceFilter(XmlUtil.STRUTS_HTML_URI),
-            new ClassFilter(XmlTag.class)
-          ), 2
-        )
-      ), propertiesReferenceProvider
-    );
 
     registerXmlAttributeValueReferenceProvider(
       new String[]{"code"},
