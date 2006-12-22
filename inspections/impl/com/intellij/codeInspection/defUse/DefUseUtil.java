@@ -345,7 +345,7 @@ public class DefUseUtil {
 
       final boolean [] visited = new boolean[instructions.size() + 1];
       visited [visited.length-1] = true; // stop on the code end
-      int elem = flow.getEndOffset(refOrDef);
+      int elem = defs() ? flow.getStartOffset(refOrDef) : flow.getEndOffset(refOrDef);
 
       // hack: ControlFlow doesn't contains parameters initialization
       if (elem == -1 && def instanceof PsiParameter) {
