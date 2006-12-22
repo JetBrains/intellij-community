@@ -9,10 +9,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.DoubleArrayList;
+import com.intellij.util.containers.Stack;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 
 public class ProgressIndicatorBase implements ProgressIndicatorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
@@ -26,9 +26,9 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
   private volatile boolean myIndeterminate;
 
-  private final ArrayList<String> myTextStack = new ArrayList<String>();
+  private final Stack<String> myTextStack = new Stack<String>();
   private final DoubleArrayList myFractionStack = new DoubleArrayList();
-  private final ArrayList<String> myText2Stack = new ArrayList<String>();
+  private final Stack<String> myText2Stack = new Stack<String>();
   private volatile int myNonCancelableCount = 0;
 
   private ProgressIndicator myModalityProgress = null;
@@ -185,9 +185,9 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
   public void pushState(){
     synchronized(this){
-      myTextStack.add(myText);
+      myTextStack.push(myText);
       myFractionStack.add(myFraction);
-      myText2Stack.add(myText2);
+      myText2Stack.push(myText2);
       setText("");
       setFraction(0);
       setText2("");
@@ -202,9 +202,9 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   public void popState(){
     synchronized(this){
       LOG.assertTrue(!myTextStack.isEmpty());
-      setText(myTextStack.remove(myTextStack.size() - 1));
+      setText(myTextStack.pop());
       setFraction(myFractionStack.remove(myFractionStack.size() - 1));
-      setText2(myText2Stack.remove(myText2Stack.size() - 1));
+      setText2(myText2Stack.pop());
 
       if (myStateDelegate != null) {
         myStateDelegate.popState();
@@ -275,6 +275,13 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     myStateDelegate = delegate;
     if (isRunning()) {
       delegate.start();
+      for (int i = 0; i < myTextStack.size(); i++) {
+        delegate.setText(myTextStack.get(i));
+        delegate.setText2(myText2Stack.get(i));
+        delegate.setFraction(myFractionStack.get(i));
+
+        delegate.pushState();
+      }
       delegate.setText(getText());
       delegate.setText2(getText2());
       delegate.setFraction(getFraction());
