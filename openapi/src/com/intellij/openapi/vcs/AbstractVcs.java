@@ -21,6 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -225,6 +226,10 @@ public abstract class AbstractVcs {
   }
 
   public void rollbackIfUnchanged(VirtualFile file) {
+  }
+
+  public ContentRevision createUpToDateRevision(final VirtualFile file) {
+    return null;
   }
 }
 

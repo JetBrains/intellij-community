@@ -9,8 +9,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -303,6 +302,20 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     for (TreePath path : paths) {
       ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       changes.addAll(node.getAllChangesUnder());
+    }
+
+    if (changes.size() == 0) {
+      final List<VirtualFile> selectedModifiedWithoutEditing = getSelectedModifiedWithoutEditing();
+      if (selectedModifiedWithoutEditing != null && selectedModifiedWithoutEditing.size() > 0) {
+        for(VirtualFile file: selectedModifiedWithoutEditing) {
+          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+          ContentRevision beforeRevision = vcs.createUpToDateRevision(file);
+          if (beforeRevision != null) {
+            ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
+            changes.add(new Change(beforeRevision, afterRevision));
+          }
+        }
+      }
     }
 
     return changes.toArray(new Change[changes.size()]);
