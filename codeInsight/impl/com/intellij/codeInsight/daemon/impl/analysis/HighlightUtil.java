@@ -753,10 +753,9 @@ public class HighlightUtil {
     final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
     if (incompatibleModifierMap == null) return null;
     Set<String> incompatibles = incompatibleModifierMap.get(modifier);
-    boolean isAllowed = true;
     PsiElement modifierOwnerParent = modifierOwner instanceof PsiMember ? ((PsiMember)modifierOwner).getContainingClass() : modifierOwner.getParent();
     if (modifierOwnerParent == null) modifierOwnerParent = modifierOwner.getParent();
-
+    boolean isAllowed = true;
     if (modifierOwner instanceof PsiClass) {
       PsiClass aClass = (PsiClass)modifierOwner;
       if (aClass.isInterface()) {
@@ -1466,16 +1465,17 @@ public class HighlightUtil {
     return element != null;
   }
 
-  public static boolean isSuperOrThisMethodCall(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) return false;
+  private static String getMethodExpressionName(PsiElement element) {
+    if (!(element instanceof PsiMethodCallExpression)) return null;
     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
-    String name = methodExpression.getReferenceName();
+    return methodExpression.getReferenceName();
+  }
+  public static boolean isSuperOrThisMethodCall(PsiElement element) {
+    String name = getMethodExpressionName(element);
     return PsiKeyword.SUPER.equals(name) || PsiKeyword.THIS.equals(name);
   }
   public static boolean isSuperMethodCall(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) return false;
-    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
-    String name = methodExpression.getReferenceName();
+    String name = getMethodExpressionName(element);
     return PsiKeyword.SUPER.equals(name);
   }
 
@@ -1945,11 +1945,7 @@ public class HighlightUtil {
     if ((fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile)) && !fileIndex.isInContent(virtualFile)) {
       return false;
     }
-    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(project);
-    if (component == null) return true;
-
-    final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
-    return settingForRoot != FileHighlighingSetting.SKIP_INSPECTION;
+    return true;
   }
 
   public static void forceRootInspection(final PsiElement root, final boolean inspectionFlag) {
@@ -1993,12 +1989,6 @@ public class HighlightUtil {
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
-    if (type == ProblemHighlightType.J2EE_PROBLEM) {
-      return annotation.getSeverity() == HighlightSeverity.ERROR
-             ? HighlightInfoType.ERROR
-             : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
-               : annotation.getSeverity() == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
-    }
     return annotation.getSeverity() == HighlightSeverity.ERROR
            ? HighlightInfoType.ERROR
            : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING

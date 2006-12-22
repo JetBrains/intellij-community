@@ -174,8 +174,7 @@ public class HighlightMethodUtil {
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       // strange things happen when super method is from Object and method from interface
-      if (superMethod != null
-          && superMethod.hasModifierProperty(PsiModifier.FINAL)) {
+      if (superMethod.hasModifierProperty(PsiModifier.FINAL)) {
         String message = JavaErrorMessages.message("final.method.override",
                                                    HighlightUtil.formatMethod(method),
                                                    HighlightUtil.formatMethod(superMethod),
