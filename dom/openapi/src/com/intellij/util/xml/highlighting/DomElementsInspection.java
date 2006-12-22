@@ -66,7 +66,9 @@ public abstract class DomElementsInspection<T extends DomElement> extends LocalI
   }
 
   /**
-   * not intended to be overriden or called by implementors
+   * Not intended to be overriden or called by implementors.
+   * Override {@link #checkFileElement(com.intellij.util.xml.DomFileElement, DomElementAnnotationHolder)} (which is preferred) or
+   * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
    */
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
