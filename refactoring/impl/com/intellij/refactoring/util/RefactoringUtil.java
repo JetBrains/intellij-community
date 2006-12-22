@@ -1,12 +1,10 @@
 package com.intellij.refactoring.util;
 
-import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,9 +45,7 @@ import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
-import com.intellij.refactoring.ui.InfoDialog;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -1434,10 +1430,10 @@ public class RefactoringUtil {
           final GlobalSearchScope resolveScope1 = element.getResolveScope();
           if (!resolveScope1.isSearchInModuleContent(targetModule)) {
             final PsiFile file = element.getContainingFile();
-            final PsiElement container;
+            PsiElement container;
             if (file instanceof PsiJavaFile) {
               container = ConflictsUtil.getContainer(element);
-              LOG.assertTrue(container != null);
+              if (container == null) container = file;
             }
             else {
               container = file;
