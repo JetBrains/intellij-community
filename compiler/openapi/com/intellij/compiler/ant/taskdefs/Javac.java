@@ -4,6 +4,8 @@ import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.GenerationOptions;
 import com.intellij.compiler.ant.Tag;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,11 +37,11 @@ public class Javac extends Tag {
     return pairs.toArray(new Pair[pairs.size()]);
   }
 
-  private static String getExecutable(String moduleName) {
+  @Nullable
+  @NonNls private static String getExecutable(String moduleName) {
     if (moduleName == null) {
       return null;
     }
-    //noinspection HardCodedStringLiteral
     return BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkBinProperty(moduleName)) + "/javac";
   }
 }

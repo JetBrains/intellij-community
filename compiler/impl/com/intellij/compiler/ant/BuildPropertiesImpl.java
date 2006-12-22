@@ -126,7 +126,12 @@ public class BuildPropertiesImpl extends BuildProperties {
         }
 
         final File binPath = toCanonicalFile(new File(jdk.getBinPath()));
-        add(new Property(BuildProperties.getJdkBinProperty(jdkName), propertyRef(jdkHomeProperty) + "/" + FileUtil.getRelativePath(homeDir, binPath).replace(File.separatorChar, '/')), 1);
+        final String relativePath = FileUtil.getRelativePath(homeDir, binPath);
+        if (relativePath != null) {
+          add(new Property(BuildProperties.getJdkBinProperty(jdkName), propertyRef(jdkHomeProperty) + "/" + FileUtil.toSystemIndependentName(relativePath)), 1);
+        } else {
+          add(new Property(BuildProperties.getJdkBinProperty(jdkName), FileUtil.toSystemIndependentName(binPath.getPath())), 1);
+        }
 
         final Path jdkPath = new Path(getJdkPathId(jdkName));
         jdkPath.add(fileSet);
