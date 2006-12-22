@@ -35,6 +35,7 @@ public class IdeaApplication {
   private static IdeaApplication ourInstance;
   private ApplicationStarter myStarter;
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  @NonNls public static final String COMMANDLINE_IDEA_TEST_MODE = "commandline.idea.test.mode";
   @NonNls public static final String IPR_SUFFIX = ".ipr";
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -44,7 +45,8 @@ public class IdeaApplication {
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
     if (Main.isHeadless(args)) {
-      new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
+      System.setProperty("java.awt.headless", Boolean.TRUE.toString());
+      new CommandLineApplication(isInternal, Boolean.valueOf(System.getProperty(COMMANDLINE_IDEA_TEST_MODE)).booleanValue(), "componentSets/IdeaComponents");
     } else {
       ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, "idea");
     }
