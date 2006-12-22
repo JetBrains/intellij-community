@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -195,14 +196,28 @@ public class RedundantThrows extends GlobalInspectionTool {
 
     private static void removeExcessiveThrows(RefMethod refMethod, final PsiModifierListOwner element, final ProblemDescriptor[] problems) {
       try {
-        Project project = element.getProject();
-        PsiManager psiManager = PsiManager.getInstance(project);
-        List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();
+        final Project project = element.getProject();
+        final PsiMethod psiMethod = (PsiMethod)element;
+        final PsiManager psiManager = PsiManager.getInstance(project);
+        final List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();
         for (ProblemDescriptor problem : problems) {
-          PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)problem.getPsiElement();
-          if (classRef == null) continue;
-          PsiType psiType = psiManager.getElementFactory().createType(classRef);
-          removeException(refMethod, psiType, refsToDelete, (PsiMethod)problem.getPsiElement());
+          final PsiElement psiElement = problem.getPsiElement();
+          if (psiElement instanceof PsiJavaCodeReferenceElement) {
+            final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)psiElement;
+            final PsiType psiType = psiManager.getElementFactory().createType(classRef);
+            removeException(refMethod, psiType, refsToDelete, psiMethod);
+          } else { //try to find reference by name
+            final String[] descriptionWords = problem.getDescriptionTemplate().split("[ ']");
+            final PsiReferenceList throwsList = psiMethod.getThrowsList();
+            final PsiClassType[] classTypes = throwsList.getReferencedTypes();
+            for (PsiClassType classType : classTypes) {
+              final String text = classType.getClassName();
+              if (ArrayUtil.find(descriptionWords, text) != -1) {
+                removeException(refMethod, classType, refsToDelete, psiMethod);
+                break;
+              }
+            }
+          }
         }
 
         for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
@@ -214,7 +229,7 @@ public class RedundantThrows extends GlobalInspectionTool {
       }
     }
 
-    private static void removeException(RefMethod refMethod,
+    private static void removeException(final RefMethod refMethod,
                                         final PsiType exceptionType,
                                         final List<PsiJavaCodeReferenceElement> refsToDelete,
                                         final PsiMethod psiMethod) {

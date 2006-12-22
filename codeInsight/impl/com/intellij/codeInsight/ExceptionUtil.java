@@ -7,6 +7,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -160,20 +161,28 @@ public class ExceptionUtil {
     array.add(exception);
   }
 
+  @NotNull
   public static PsiClassType[] collectUnhandledExceptions(PsiElement element, PsiElement topElement) {
-    final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null);
+    final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null, true);
     return set == null ? PsiClassType.EMPTY_ARRAY : set.toArray(new PsiClassType[set.size()]);
   }
 
-  private static Set<PsiClassType> collectUnhandledExceptions(PsiElement element, PsiElement topElement, Set<PsiClassType> foundExceptions) {
+  @NotNull
+  public static PsiClassType[] collectUnhandledExceptions(PsiElement element, PsiElement topElement, boolean checkThrowsClause) {
+    final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null, checkThrowsClause);
+    return set == null ? PsiClassType.EMPTY_ARRAY : set.toArray(new PsiClassType[set.size()]);
+  }
+
+  private static Set<PsiClassType> collectUnhandledExceptions(PsiElement element, PsiElement topElement, Set<PsiClassType> foundExceptions,
+                                                              boolean checkThrowsClause) {
     PsiClassType[] unhandledExceptions = null;
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
-      unhandledExceptions = getUnhandledExceptions(expression, topElement);
+      unhandledExceptions = getUnhandledExceptions(expression, topElement, checkThrowsClause);
     }
     else if (element instanceof PsiThrowStatement) {
       PsiThrowStatement statement = (PsiThrowStatement)element;
-      unhandledExceptions = getUnhandledExceptions(statement, topElement);
+      unhandledExceptions = getUnhandledExceptions(statement, topElement, checkThrowsClause);
     }
     else if (element instanceof PsiCodeBlock
              && element.getParent() instanceof PsiMethod
@@ -189,7 +198,7 @@ public class ExceptionUtil {
         if (!superConstructor.hasModifierProperty(PsiModifier.PRIVATE) && superConstructor.getParameterList().getParametersCount() == 0) {
           final PsiClassType[] exceptionTypes = superConstructor.getThrowsList().getReferencedTypes();
           for (PsiClassType exceptionType : exceptionTypes) {
-            if (!isUncheckedException(exceptionType) && !isHandled(element, exceptionType, topElement)) {
+            if (!isUncheckedException(exceptionType) && !isHandled(element, exceptionType, topElement, checkThrowsClause)) {
               unhandled.add(exceptionType);
             }
           }
@@ -204,9 +213,9 @@ public class ExceptionUtil {
         for (PsiClassInitializer initializer : initializers) {
           if (initializer.hasModifierProperty(PsiModifier.STATIC)) continue;
           thrownByInitializer.clear();
-          collectUnhandledExceptions(initializer.getBody(), initializer, thrownByInitializer);
+          collectUnhandledExceptions(initializer.getBody(), initializer, thrownByInitializer, true);
           for (PsiClassType thrown : thrownByInitializer) {
-            if (!isHandled(constructor.getBody(), thrown, topElement)) {
+            if (!isHandled(constructor.getBody(), thrown, topElement, checkThrowsClause)) {
               unhandled.add(thrown);
             }
           }
@@ -225,7 +234,7 @@ public class ExceptionUtil {
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      foundExceptions = collectUnhandledExceptions(child, topElement, foundExceptions);
+      foundExceptions = collectUnhandledExceptions(child, topElement, foundExceptions, true);
     }
 
     return foundExceptions;
@@ -245,15 +254,19 @@ public class ExceptionUtil {
   }
 
   public static PsiClassType[] getUnhandledExceptions(PsiElement[] elements) {
+    return getUnhandledExceptions(elements, true);
+  }
+
+  public static PsiClassType[] getUnhandledExceptions(PsiElement[] elements, final boolean checkThrowsClause) {
     final List<PsiClassType> array = new ArrayList<PsiClassType>();
     PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitCallExpression(PsiCallExpression expression) {
-        addExceptions(array, getUnhandledExceptions(expression, null));
+        addExceptions(array, getUnhandledExceptions(expression, null, checkThrowsClause));
         visitElement(expression);
       }
 
       public void visitThrowStatement(PsiThrowStatement statement) {
-        addExceptions(array, getUnhandledExceptions(statement, null));
+        addExceptions(array, getUnhandledExceptions(statement, null, checkThrowsClause));
         visitElement(statement);
       }
     };
@@ -266,31 +279,44 @@ public class ExceptionUtil {
   }
 
   public static PsiClassType[] getUnhandledExceptions(PsiElement element) {
+    return getUnhandledExceptions(element, true);
+  }
+
+  public static PsiClassType[] getUnhandledExceptions(PsiElement element, boolean checkThrowsClause) {
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
-      return getUnhandledExceptions(expression, null);
+      return getUnhandledExceptions(expression, null, checkThrowsClause);
     }
     else if (element instanceof PsiThrowStatement) {
       PsiThrowStatement throwStatement = (PsiThrowStatement)element;
-      return getUnhandledExceptions(throwStatement, null);
+      return getUnhandledExceptions(throwStatement, null, checkThrowsClause);
     }
 
     return PsiClassType.EMPTY_ARRAY;
   }
 
   public static PsiClassType[] getUnhandledExceptions(PsiCallExpression methodCall, PsiElement topElement) {
-    final JavaResolveResult result = methodCall.resolveMethodGenerics();
-    PsiMethod method = (PsiMethod)result.getElement();
-    return getUnhandledExceptions(method, methodCall, topElement, result.getSubstitutor());
+    return getUnhandledExceptions(methodCall, topElement, true);
   }
 
-  public static PsiClassType[] getUnhandledExceptions(PsiThrowStatement throwStatement, PsiElement topElement) {
+  public static PsiClassType[] getUnhandledExceptions(PsiCallExpression methodCall, PsiElement topElement, boolean checkThrowsClause) {
+    final JavaResolveResult result = methodCall.resolveMethodGenerics();
+    PsiMethod method = (PsiMethod)result.getElement();
+    return getUnhandledExceptions(method, methodCall, topElement, result.getSubstitutor(), checkThrowsClause);
+  }
+
+  public static PsiClassType[] getUnhandledExceptions(PsiThrowStatement throwStatement, PsiElement topElement){
+    return getUnhandledExceptions(throwStatement, topElement, true);
+  }
+
+  public static PsiClassType[] getUnhandledExceptions(PsiThrowStatement throwStatement, PsiElement topElement,
+                                                      boolean checkThrowsClause) {
     final PsiExpression exception = throwStatement.getException();
     if (exception != null) {
       final PsiType type = exception.getType();
       if (type instanceof PsiClassType) {
         PsiClassType classType = (PsiClassType)type;
-        if (!isUncheckedException(classType) && !isHandled(throwStatement, classType, topElement)) {
+        if (!isUncheckedException(classType) && !isHandled(throwStatement, classType, topElement, checkThrowsClause)) {
           return new PsiClassType[]{classType};
         }
       }
@@ -302,7 +328,8 @@ public class ExceptionUtil {
   private static PsiClassType[] getUnhandledExceptions(PsiMethod method,
                                                        PsiElement element,
                                                        PsiElement topElement,
-                                                       PsiSubstitutor substitutor) {
+                                                       PsiSubstitutor substitutor,
+                                                       boolean checkThrowsClause) {
     if (method == null || isArrayClone(method, element)) {
       return PsiClassType.EMPTY_ARRAY;
     }
@@ -318,7 +345,7 @@ public class ExceptionUtil {
         if (exceptionClass == null) continue;
 
         if (isUncheckedException(classType)) continue;
-        if (isHandled(element, classType, topElement)) continue;
+        if (isHandled(element, classType, topElement, checkThrowsClause)) continue;
 
         result.add((PsiClassType)type);
       }
@@ -368,23 +395,27 @@ public class ExceptionUtil {
            isUncheckedException(type);
   }
 
-  public static boolean isHandled(PsiClassType exceptionType, PsiElement throwPlace) {
-    return isHandled(throwPlace, exceptionType, throwPlace.getContainingFile());
+  public static boolean isHandled(PsiClassType exceptionType, PsiElement throwPlace, boolean checkThrowsClause) {
+    return isHandled(throwPlace, exceptionType, throwPlace.getContainingFile(), checkThrowsClause);
   }
 
-  private static boolean isHandled(PsiElement element, PsiClassType exceptionType, PsiElement topElement) {
+  public static boolean isHandled(PsiClassType exceptionType, PsiElement throwPlace) {
+    return isHandled(throwPlace, exceptionType, throwPlace.getContainingFile(), true);
+  }
+
+  private static boolean isHandled(PsiElement element, PsiClassType exceptionType, PsiElement topElement, final boolean checkThrowsClause) {
     if (element == null || element.getParent() == topElement || element.getParent() == null) return false;
 
     final PsiElement parent = element.getParent();
 
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
-      return isHandledByMethodThrowsClause(method, exceptionType);
+      return isHandledByMethodThrowsClause(method, exceptionType, checkThrowsClause);
     }
     else if (parent instanceof PsiClass) {
       // arguments to anon class constructor should be handled higher
       // like in void f() throws XXX { new AA(methodThrowingXXX()) { ... }; }
-      return parent instanceof PsiAnonymousClass && isHandled(parent, exceptionType, topElement);
+      return parent instanceof PsiAnonymousClass && isHandled(parent, exceptionType, topElement, checkThrowsClause);
     }
     else if (parent instanceof PsiClassInitializer) {
       if (((PsiClassInitializer)parent).hasModifierProperty(PsiModifier.STATIC)) return false;
@@ -393,12 +424,12 @@ public class ExceptionUtil {
         // exception thrown from within class instance initializer must be handled in every class constructor
         // check each constructor throws exception or superclass (there must be at least one)
         final PsiClass aClass = ((PsiClassInitializer)parent).getContainingClass();
-        return isAllConstructorsThrow(aClass, exceptionType);
+        return isAllConstructorsThrow(aClass, exceptionType, checkThrowsClause);
       }
     }
     else if (parent instanceof PsiTryStatement) {
       PsiTryStatement tryStatement = (PsiTryStatement)parent;
-      if (tryStatement.getTryBlock() == element && isCatched(tryStatement, exceptionType)) {
+      if (tryStatement.getTryBlock() == element && isCatched(tryStatement, exceptionType, checkThrowsClause)) {
         return true;
       }
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
@@ -422,18 +453,18 @@ public class ExceptionUtil {
       final PsiClass aClass = ((PsiField)parent).getContainingClass();
       if (aClass != null && !(aClass instanceof PsiAnonymousClass) && !((PsiField)parent).hasModifierProperty(PsiModifier.STATIC)) {
         // exceptions thrown in field initalizers should be thrown in all class constructors
-        return isAllConstructorsThrow(aClass, exceptionType);
+        return isAllConstructorsThrow(aClass, exceptionType, checkThrowsClause);
       }
     }
-    return isHandled(parent, exceptionType, topElement);
+    return isHandled(parent, exceptionType, topElement, checkThrowsClause);
   }
 
-  private static boolean isAllConstructorsThrow(final PsiClass aClass, PsiClassType exceptionType) {
+  private static boolean isAllConstructorsThrow(final PsiClass aClass, PsiClassType exceptionType, boolean checkThrowsClause) {
     if (aClass == null) return false;
     final PsiMethod[] constructors = aClass.getConstructors();
     boolean thrown = constructors.length != 0;
     for (PsiMethod constructor : constructors) {
-      if (!isHandledByMethodThrowsClause(constructor, exceptionType)) {
+      if (!isHandledByMethodThrowsClause(constructor, exceptionType, checkThrowsClause)) {
         thrown = false;
         break;
       }
@@ -441,10 +472,10 @@ public class ExceptionUtil {
     return thrown;
   }
 
-  private static boolean isCatched(PsiTryStatement tryStatement, PsiClassType exceptionType) {
+  private static boolean isCatched(PsiTryStatement tryStatement, PsiClassType exceptionType, boolean checkThrowsClause) {
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
-      PsiClassType[] exceptions = getUnhandledExceptions(finallyBlock);
+      PsiClassType[] exceptions = getUnhandledExceptions(finallyBlock, checkThrowsClause);
       List<PsiClassType> unhandledFinallyExceptions = Arrays.asList(exceptions);
       if (unhandledFinallyExceptions.contains(exceptionType)) return false;
       // if finally block completes normally, exception not catched
@@ -473,7 +504,7 @@ public class ExceptionUtil {
     return false;
   }
 
-  public static boolean isHandledByMethodThrowsClause(PsiMethod method, PsiClassType exceptionType) {
+  private static boolean isHandledByMethodThrowsClause(PsiMethod method, PsiClassType exceptionType, boolean checkThrowsClause) {
     final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
     return isHandledBy(exceptionType, referencedTypes);
   }

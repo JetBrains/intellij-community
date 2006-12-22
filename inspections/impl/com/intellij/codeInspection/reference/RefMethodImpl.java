@@ -292,14 +292,12 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       }
     }
 
-    PsiCodeBlock body = method.getBody();
+    final PsiCodeBlock body = method.getBody();
     if (body == null) return;
 
-    PsiClassType[] exceptionTypes = ExceptionUtil.collectUnhandledExceptions(method, body);
-    if (exceptionTypes != null) {
-      for (final PsiClassType exceptionType : exceptionTypes) {
-        updateThrowsList(exceptionType);
-      }
+    final PsiClassType[] exceptionTypes = ExceptionUtil.collectUnhandledExceptions(method, body, false);
+    for (final PsiClassType exceptionType : exceptionTypes) {
+      updateThrowsList(exceptionType);
     }
   }
 
@@ -566,7 +564,8 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       PsiClass[] arrayed = myUnThrownExceptions.toArray(new PsiClass[myUnThrownExceptions.size()]);
       for (int i = arrayed.length - 1; i >= 0; i--) {
         PsiClass classType = arrayed[i];
-        if (InheritanceUtil.isInheritorOrSelf(classType, exceptionType.resolve(), true)) {
+        if (InheritanceUtil.isInheritorOrSelf(exceptionType.resolve(), classType, true) ||
+            InheritanceUtil.isInheritorOrSelf(classType, exceptionType.resolve(), true)) {
           myUnThrownExceptions.remove(i);
         }
       }

@@ -27,4 +27,8 @@ public class RedundantThrowTest extends InspectionTestCase {
     final RedundantThrows tool = new RedundantThrows();
     doTest("redundantThrow/" + getTestName(false), tool, false, true);
   }
+
+  public void testInherited() throws Exception {
+    doTest();
+  }
 }
