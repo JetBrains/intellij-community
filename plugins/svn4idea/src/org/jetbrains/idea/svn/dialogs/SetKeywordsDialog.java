@@ -81,7 +81,7 @@ public class SetKeywordsDialog extends DialogWrapper {
   }
 
   private void initValues() {
-    Map keywords = SVNTranslator.computeKeywords(myPropValue, "u", "a", "d", "r");
+    Map keywords = SVNTranslator.computeKeywords(myPropValue, "u", "a", "d", "r", null);
     myLastChangedDateCheckbox.setSelected(keywords.containsKey("LastChangedDate"));
     myLastChangedByCheckbox.setSelected(keywords.containsKey("LastChangedBy"));
     myLastChangedRevisionCheckbox.setSelected(keywords.containsKey("LastChangedRevision"));
