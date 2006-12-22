@@ -3,6 +3,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -27,6 +28,7 @@ public abstract class AbstractUrl {
     element.setAttribute("type", myType);
   }
 
+  @Nullable
   public abstract Object[] createPath(Project project);
 
   // return null if cannot recognize the element
