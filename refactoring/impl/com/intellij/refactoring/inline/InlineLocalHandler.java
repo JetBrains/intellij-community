@@ -47,7 +47,8 @@ class InlineLocalHandler {
     LOG.assertTrue(containerBlock != null);
     final PsiExpression defToInline = getDefToInline(local, refExpr, containerBlock);
     if (defToInline == null){
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.has.no.initializer", localName));
+      final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
     }
@@ -70,7 +71,8 @@ class InlineLocalHandler {
 
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (refExpr != null && PsiUtil.isAccessedForReading(refExpr) && ArrayUtil.find(refsToInline, refExpr) <0) {
+    final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+    if (refExpr != null && PsiUtil.isAccessedForReading(refExpr) && ArrayUtil.find(refsToInline, refExpr) < 0) {
       final PsiElement[] defs = DefUseUtil.getDefs(containerBlock, local, refExpr);
       LOG.assertTrue(defs.length > 0);
       highlightManager.addOccurrenceHighlights(editor, defs, attributes, true, null);
@@ -92,8 +94,9 @@ class InlineLocalHandler {
 
     for (final PsiElement ref : refsToInline) {
       final PsiElement[] defs = DefUseUtil.getDefs(containerBlock, local, ref);
-      if (defs.length != 1 || !isSameDefinition(defs[0], defToInline)) {
-        highlightManager.addOccurrenceHighlights(editor, defs, attributes, true, null);
+      if (defs.length > 1 || !isSameDefinition(defs[0], defToInline)) {
+        highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
+        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
         String message =
           RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
         CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
@@ -188,6 +191,7 @@ class InlineLocalHandler {
         if (defs.length == 1) {
           def = defs[0];
         }
+        else return null;
       }
       
       if (def instanceof PsiReferenceExpression && def.getParent() instanceof PsiAssignmentExpression) {
