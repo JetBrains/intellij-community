@@ -63,6 +63,9 @@ public class DiffTreeTest extends TestCase {
     public void getChildren(final Node node, final List<Node> into) {
       into.addAll(Arrays.asList(node.getChildren()));
     }
+
+    public void disposeChildren(final List<Node> nodes) {
+    }
   }
 
   private static class NodeComparator implements ShallowNodeComparator<Node, Node> {

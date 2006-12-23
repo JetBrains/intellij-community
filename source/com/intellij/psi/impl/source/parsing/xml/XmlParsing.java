@@ -9,10 +9,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import static com.intellij.psi.xml.XmlElementType.*;
 import static com.intellij.psi.xml.XmlTokenType.*;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Stack;
 
 
 public class XmlParsing {

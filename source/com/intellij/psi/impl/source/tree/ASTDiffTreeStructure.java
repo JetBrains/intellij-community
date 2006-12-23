@@ -36,4 +36,7 @@ public class ASTDiffTreeStructure implements DiffTreeStructure<ASTNode> {
       child = child.getTreeNext();
     }
   }
+
+  public void disposeChildren(final List<ASTNode> nodes) {
+  }
 }

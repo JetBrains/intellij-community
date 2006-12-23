@@ -9,4 +9,5 @@ public interface DiffTreeStructure<T> {
   T prepareForGetChildren(T node);
   T getRoot();
   void getChildren(T parent, List<T> into);
+  void disposeChildren(List<T> nodes);
 }

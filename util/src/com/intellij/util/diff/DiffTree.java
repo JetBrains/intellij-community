@@ -41,10 +41,12 @@ public class DiffTree<OT, NT> {
     }
 
     final List<OT> oldChildren = myOldChildrenLists.get(level);
+    myOldTree.disposeChildren(oldChildren);
     oldChildren.clear();
     myOldTree.getChildren(oldNode, oldChildren);
 
     final List<NT> newChildren = myNewChildrenLists.get(level);
+    myNewTree.disposeChildren(newChildren);
     newChildren.clear();
     myNewTree.getChildren(newNode, newChildren);
 
