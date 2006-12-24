@@ -42,7 +42,6 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
 
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
         super.visitReferenceElement(reference);
-
         final PsiElement resolvedElement = reference.resolve();
         if(!(resolvedElement instanceof PsiClass)){
             return;
@@ -68,10 +67,11 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         }
         final PsiElement element = expression.resolve();
         if(element instanceof PsiMember){
-            if (isMemberStaticallyAccessible((PsiMember) element)){
+            final PsiMember member = (PsiMember)element;
+            if (isMemberStaticallyAccessible(member)){
                 return;
             }
-        } else {
+        } else if(element != null) {
             return;
         }
         m_referencesStaticallyAccessible = false;
@@ -82,16 +82,16 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         m_referencesStaticallyAccessible = false;
     }
 
-  private boolean isMemberStaticallyAccessible(PsiMember member){
-      if(m_method.equals(member)){
-          return true;
-      }
-      if(member.hasModifierProperty(PsiModifier.STATIC)){
-          return true;
-      }
-      final PsiClass referenceContainingClass = m_method.getContainingClass();
-      final PsiClass containingClass = member.getContainingClass();
-      return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
-                                                containingClass, true);
-  }
+    private boolean isMemberStaticallyAccessible(PsiMember member){
+        if(m_method.equals(member)){
+            return true;
+        }
+        if(member.hasModifierProperty(PsiModifier.STATIC)){
+            return true;
+        }
+        final PsiClass referenceContainingClass = m_method.getContainingClass();
+        final PsiClass containingClass = member.getContainingClass();
+        return !InheritanceUtil.isCorrectDescendant(referenceContainingClass,
+                containingClass, true);
+    }
 }

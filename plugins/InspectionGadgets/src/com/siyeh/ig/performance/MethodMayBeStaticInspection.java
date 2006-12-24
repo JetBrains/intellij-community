@@ -18,6 +18,8 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -121,9 +123,16 @@ public class MethodMayBeStaticInspection extends MethodInspection{
             if(containingClass == null){
                 return;
             }
-            final Object[] addins = Extensions.getRootArea().getExtensionPoint("com.intellij.cantBeStatic").getExtensions();
+            final ExtensionsArea rootArea = Extensions.getRootArea();
+            final ExtensionPoint extensionPoint = rootArea.getExtensionPoint(
+                    "com.intellij.cantBeStatic");
+            final Object[] addins = extensionPoint.getExtensions();
             for (Object addin : addins) {
-              if (((Condition<PsiMember>)addin).value(method)) return;
+                final Condition<PsiMember> condition =
+                        (Condition<PsiMember>)addin;
+                if (condition.value(method)) {
+                    return;
+                }
             }            
             final PsiElement scope = containingClass.getScope();
             if(!(scope instanceof PsiJavaFile) &&
