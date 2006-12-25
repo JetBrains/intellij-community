@@ -15,18 +15,18 @@ public class ConcurrencyUtil {
    * invokes and waits all tasks using threadPool, avoiding thread starvation on the way
    * @lookat http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
    */
-  public static void invokeAll(@NotNull Collection<Runnable> tasks, ExecutorService executorService) throws Throwable {
+  public static <T> List<Future<T>> invokeAll(@NotNull Collection<Callable<T>> tasks, ExecutorService executorService) throws Throwable {
     if (executorService == null) { 
-      for (Runnable task : tasks) {
-        task.run();
+      for (Callable<T> task : tasks) {
+        task.call();
       }
-      return;
+      return null;
     }
-    List<Future> futures = new ArrayList<Future>(tasks.size());
+    List<Future<T>> futures = new ArrayList<Future<T>>(tasks.size());
     boolean done = false;
     try {
-      for (Runnable t : tasks) {
-        Future future = executorService.submit(t);
+      for (Callable<T> t : tasks) {
+        Future<T> future = executorService.submit(t);
         futures.add(future);
       }
       // force unstarted futures to execute using the current thread
@@ -53,5 +53,6 @@ public class ConcurrencyUtil {
         }
       }
     }
+    return futures;
   }
 }

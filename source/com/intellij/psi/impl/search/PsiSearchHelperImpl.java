@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -26,6 +27,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private final PsiManagerImpl myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
+  private static final int POOL_SIZE = 1;//Runtime.getRuntime().availableProcessors();
+  private final ThreadPoolExecutor myThreadPoolExecutor = new ThreadPoolExecutor(POOL_SIZE, Integer.MAX_VALUE, 60,
+                                                             TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+    public Thread newThread(final Runnable r) {
+      Thread thread = new Thread(r,"Find usages");
+      thread.setPriority(Thread.MIN_PRIORITY);
+      return thread;
+    }
+  });
 
   static {
     ReferencesSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
@@ -484,9 +495,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private boolean processElementsWithTextInGlobalScope(final TextOccurenceProcessor processor,
-                                                       GlobalSearchScope scope,
+                                                       final GlobalSearchScope scope,
                                                        final StringSearcher searcher,
-                                                       short searchContext,
+                                                       final short searchContext,
                                                        final boolean caseSensitively) {
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -501,8 +512,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if(words.length == 0) return true;
 
       Set<PsiFile> fileSet = new THashSet<PsiFile>();
-      for (String word : words) {
-        List<PsiFile> psiFiles = Arrays.asList(myManager.getCacheManager().getFilesWithWord(word, searchContext, scope, caseSensitively));
+      for (final String word : words) {
+        List<PsiFile> psiFiles = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
+          public List<PsiFile> compute() {
+            return Arrays.asList(myManager.getCacheManager().getFilesWithWord(word, searchContext, scope, caseSensitively));
+          }
+        });
         if (fileSet.isEmpty()) {
           fileSet.addAll(psiFiles);
         }
@@ -517,12 +532,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         progress.setText(PsiBundle.message("psi.search.for.word.progress", searcher.getPattern()));
       }
 
-
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        int poolSize = /*1;//*/Runtime.getRuntime().availableProcessors();
-        final int chunkSize = Math.max(10, files.length / poolSize / 20); // make at least 20 chunks per proc to balance load
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(poolSize, Integer.MAX_VALUE, 60,
-                                                                   TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        final int chunkSize = Math.max(10, files.length / POOL_SIZE / 20); // make at least 20 chunks per proc to balance load
         ArrayList<Callable<Boolean>> callables = new ArrayList<Callable<Boolean>>(files.length/chunkSize);
         final AtomicInteger counter = new AtomicInteger(0);
         for (int v = 0; v < files.length; v += chunkSize) {
@@ -530,50 +541,46 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           Callable<Boolean> runnable = new Callable<Boolean>() {
             public Boolean call() throws Exception {
               final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
-              ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
+              ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
                 public void run() {
-                  ApplicationManager.getApplication().runReadAction(new Runnable() {
-                    public void run() {
-                      for (int i = index; i < index + chunkSize && i < files.length; i++) {
+                  for (int i = index; i < index + chunkSize && i < files.length; i++) {
+                    final PsiFile file = files[i];
+                    ApplicationManager.getApplication().runReadAction(new Runnable() {
+                      public void run() {
                         try {
                           ProgressManager.getInstance().checkCanceled();
-
-                          PsiFile file = files[i];
                           PsiElement[] psiRoots = file.getPsiRoots();
                           Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
                           for (PsiElement psiRoot : psiRoots) {
                             ProgressManager.getInstance().checkCanceled();
-                            if (processed.contains(psiRoot)) continue;
-                            processed.add(psiRoot);
+                            if (!processed.add(psiRoot)) continue;
                             if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
                               result.set(Boolean.FALSE);
                               return;
                             }
                           }
-
                           if (progress != null) {
                             double fraction = (double)counter.incrementAndGet() / files.length;
                             progress.setFraction(fraction);
                           }
-
                           myManager.dropResolveCaches();
                         }
                         catch (ProcessCanceledException e) {
                           result.set(Boolean.FALSE);
-                          return;
                         }
                       }
-                    }
-                  });
+                    });
+                    if (!result.get()) return;
+                  }
                 }
-              },progress);
+              }, progress);
               return result.get();
             }
           };
           callables.add(runnable);
         }
         try {
-          List<Future<Boolean>> futures = executor.invokeAll(callables);
+          List<Future<Boolean>> futures = ConcurrencyUtil.invokeAll(callables, myThreadPoolExecutor);
           boolean canceled = false;
           for (Future<Boolean> future : futures) {
             if (canceled) {
@@ -585,41 +592,29 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
           return !canceled;
         }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-        catch (ExecutionException e) {
-          LOG.error(e.getCause());
-        }
-        finally{
-          executor.shutdownNow();
+        catch (Throwable throwable) {
+          LOG.error(throwable);
         }
       }
       else {
-
-      for (int i = 0; i < files.length; i++) {
-        ProgressManager.getInstance().checkCanceled();
-
-        PsiFile file = files[i];
-        files[i] = null; // prevent strong ref
-
-        PsiElement[] psiRoots = file.getPsiRoots();
-        Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
-        for (PsiElement psiRoot : psiRoots) {
-          if(processed.contains(psiRoot)) continue;
-          processed.add(psiRoot);
-          if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
-            return false;
+        for (int i = 0; i < files.length; i++) {
+          ProgressManager.getInstance().checkCanceled();
+          PsiFile file = files[i];
+          files[i] = null; // prevent strong ref
+          PsiElement[] psiRoots = file.getPsiRoots();
+          Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
+          for (PsiElement psiRoot : psiRoots) {
+            if (!processed.add(psiRoot)) continue;
+            if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
+              return false;
+            }
           }
+          if (progress != null) {
+            double fraction = (double)i / files.length;
+            progress.setFraction(fraction);
+          }
+          myManager.dropResolveCaches();
         }
-
-        if (progress != null) {
-          double fraction = (double)i / files.length;
-          progress.setFraction(fraction);
-        }
-
-        myManager.dropResolveCaches();
-      }
       }
     }
     finally {
@@ -748,4 +743,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
+  public void dispose() {
+    myThreadPoolExecutor.shutdownNow();
+  }
 }

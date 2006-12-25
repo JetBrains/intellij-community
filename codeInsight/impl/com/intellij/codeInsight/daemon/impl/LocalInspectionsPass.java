@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Callable;
 
 /**
  * @author max
@@ -98,14 +99,14 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
     final int chunkSize = Math.max(10, tools.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some inspections are faster than others
-    List<Runnable> inspectionChunks = new ArrayList<Runnable>();
+    List<Callable<Boolean>> inspectionChunks = new ArrayList<Callable<Boolean>>();
 
     for (int v = 0; v < tools.length; v+=chunkSize) {
       final int index = v;
-      Runnable chunk = new Runnable() {
-        public void run() {
+      Callable<Boolean> chunk = new Callable<Boolean>() {
+        public Boolean call() throws Exception {
           if (progress != null) {
-            if (progress.isCanceled()) return;
+            if (progress.isCanceled()) return false;
           }
           final ProgressManager progressManager = ProgressManager.getInstance();
           ((ProgressManagerImpl)progressManager).executeProcessUnderProgress(new Runnable(){
@@ -137,6 +138,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
               PassExecutorService.info(progress, "Finished ", name);
             }
           },progress);
+          return true;
         }
       };
       inspectionChunks.add(chunk);
