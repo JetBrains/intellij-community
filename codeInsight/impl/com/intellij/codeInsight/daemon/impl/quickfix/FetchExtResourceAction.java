@@ -4,8 +4,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -25,6 +25,8 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
@@ -44,7 +46,6 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   private static final @NonNls String HTTP_PROTOCOL = "http://";
   private static final @NonNls String HTTPS_PROTOCOL = "https://";
   private static final @NonNls String FTP_PROTOCOL = "ftp://";
-  private static final @NonNls String FETCHING_THREAD_ID = "Fetching Thread";
   private static final @NonNls String EXT_RESOURCES_FOLDER = "extResources";
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -64,6 +65,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return true;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fetch.external.resource");
   }
@@ -100,6 +102,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return uri;
   }
 
+  @Nullable
   public static String findUri(PsiFile file, int offset) {
     PsiElement currentElement = file.findElementAt(offset);
     PsiElement element = PsiTreeUtil.getParentOfType(currentElement, XmlDoctype.class);
@@ -357,7 +360,8 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     }
   }
 
-  private String fetchOneFile(final ProgressIndicator indicator,
+  @Nullable
+  private static String fetchOneFile(final ProgressIndicator indicator,
                               final String resourceUrl,
                               final Project project,
                               String extResourcesPath,
@@ -418,7 +422,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return resPath;
   }
 
-  public static List<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context) {
+  private static List<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context) {
     final List<String> result = new LinkedList<String>();
     if (context != null) {
       XmlEntityRefImpl.copyEntityCaches(file, context);
@@ -499,6 +503,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     String contentType;
   }
 
+  @Nullable
   private static FetchResult fetchData(final Project project, final String dtdUrl, ProgressIndicator indicator) throws IOException {
 
     try {
