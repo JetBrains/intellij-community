@@ -31,10 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.HttpURLConnection;
 import java.util.*;
 
 /**
@@ -138,7 +137,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
           if (index <= offsetInAttr && index + url.length() >= offsetInAttr ) {
             return url;
           }
-        }
+        }                           
       }
     }
 
