@@ -1,5 +1,6 @@
 package com.intellij.util.diff;
 
+import com.intellij.openapi.util.Ref;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -60,11 +61,12 @@ public class DiffTreeTest extends TestCase {
       return myRoot;
     }
 
-    public void getChildren(final Node node, final List<Node> into) {
-      into.addAll(Arrays.asList(node.getChildren()));
+    public void disposeChildren(final Node[] nodes, final int count) {
     }
 
-    public void disposeChildren(final List<Node> nodes) {
+    public int getChildren(final Node node, final Ref<Node[]> into) {
+      into.set(node.getChildren());
+      return into.get().length;
     }
   }
 

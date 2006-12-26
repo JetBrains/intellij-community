@@ -1,10 +1,9 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.util.diff.DiffTreeStructure;
-
-import java.util.List;
 
 /**
  * @author max
@@ -28,15 +27,31 @@ public class ASTDiffTreeStructure implements DiffTreeStructure<ASTNode> {
     return myRoot;
   }
 
-  public void getChildren(final ASTNode astNode, final List<ASTNode> into) {
-    ASTNode child = astNode.getFirstChildNode();
-    if (child == null) return;
-    while (child != null) {
-      into.add(child);
-      child = child.getTreeNext();
-    }
+  public void disposeChildren(final ASTNode[] nodes, final int count) {
   }
 
-  public void disposeChildren(final List<ASTNode> nodes) {
+  public int getChildren(final ASTNode astNode, final Ref<ASTNode[]> into) {
+    ASTNode child = astNode.getFirstChildNode();
+    if (child == null) return 0;
+
+    ASTNode[] store = into.get();
+    if (store == null) {
+      store = new ASTNode[10];
+      into.set(store);
+    }
+
+    int count = 0;
+    while (child != null) {
+      if (count >= store.length) {
+        ASTNode[] newStore = new ASTNode[(count * 3) / 2];
+        System.arraycopy(store, 0, newStore, 0, count);
+        into.set(newStore);
+        store = newStore;
+      }
+      store[count++] = child;
+      child = child.getTreeNext();
+    }
+
+    return count;
   }
 }
