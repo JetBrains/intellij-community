@@ -14,11 +14,14 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
+import org.jetbrains.annotations.NonNls;
+
 public class RunDialog extends DialogWrapper {
   private final RunnerInfo myRunnerInfo;
   private final Project myProject;
   private RunConfigurable myConfigurable;
   private JComponent myCenterPanel;
+  @NonNls public static String HELP_ID = "project.propRunDebug";
 
   public RunDialog(final Project project, final RunnerInfo runnerInfo) {
     super(project, true);
@@ -41,7 +44,7 @@ public class RunDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myRunnerInfo.getHelpId());
+    HelpManager.getInstance().invokeHelp(HELP_ID);
   }
 
   protected String getDimensionServiceKey(){
