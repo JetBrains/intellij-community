@@ -700,18 +700,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void addButtonToLowerPane(Runnable runnable, String text) {
-    addButtonToLowerPane(runnable, text, (char)-1);
-  }
-
-  public void addButtonToLowerPane(final Runnable runnable, String text, char mnemonic) {
     int index = myButtonPanel.getComponentCount();
 
     if (index > 0 && myPresentation.isShowCancelButton()) index--;
 
-    JButton button = myButtonPanel.add(index, runnable, text);
-    if (mnemonic != -1) {
-      button.setMnemonic(mnemonic);
-    }
+    myButtonPanel.add(index, runnable, text);
+  }
+
+  public void addButtonToLowerPane(final Runnable runnable, String text, char mnemonic) {
+    // implemented method is deprecated, so, it just calls non-deprecated overloading one 
+    addButtonToLowerPane(runnable, text);
   }
 
   public void addPerformOperationAction(final Runnable processRunnable,
