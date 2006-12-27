@@ -6,7 +6,9 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.reference.*;
@@ -56,6 +58,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
@@ -543,6 +546,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return getElementMemberSuppressedIn(owner, inspectionToolID) == null;
   }
 
+  @Nullable
   public static PsiElement getElementMemberSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
     if (element != null) return element;
@@ -571,17 +575,19 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return !((RefElementImpl)owner).isSuppressed(tool.getShortName());
   }
 
+  @Nullable
   public static PsiElement getAnnotationMemberSuppressedIn(final PsiModifierListOwner owner, final String inspectionToolID) {
     PsiModifierList modifierList = owner.getModifierList();
     Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
     for (String ids : suppressedIds) {
       if (isInspectionToolIdMentioned(ids, inspectionToolID)) {
-        return modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+        return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
       }
     }
     return null;
   }
 
+  @Nullable
   private static PsiElement getDocCommentToolSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
@@ -869,17 +875,20 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(LOCAL_ANALYSIS, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
           }
           final Set<InspectionTool> tools = localTools.get(profile.getName());
-          for (InspectionTool tool : tools) {
-            try {
-              ((LocalInspectionToolWrapper)tool).processFile(file, true, manager);
-            }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Exception e) {
-              //LOG.error("Problem file: " + file.getVirtualFile().getPresentableUrl());
-              LOG.error(e);
-            }
+          final LocalInspectionsPass pass =
+            new LocalInspectionsPass(file,
+                                     psiManager.findViewProvider(virtualFile).getDocument(),
+                                     0,
+                                     file.getTextLength(),
+                                     DaemonCodeAnalyzer.getInstance(myProject).getDaemonExecutorService());
+          try {
+            pass.doInspectInBatch(((InspectionManagerEx)manager), tools.toArray(new InspectionTool[tools.size()]), myProgressIndicator);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            LOG.error(e);
           }
           psiManager.dropResolveCaches();
         }

@@ -38,8 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author max
@@ -79,10 +79,14 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     inspect(tools, progress, iManager);
   }
 
-  public void inspect(final InspectionManagerEx iManager, LocalInspectionToolWrapper[] toolWrappers, final ProgressIndicator progress) {
+  public void doInspectInBatch(final InspectionManagerEx iManager, InspectionTool[] toolWrappers, final ProgressIndicator progress) {
+    myDescriptors = new ArrayList<ProblemDescriptor>();
+    myLevels = new ArrayList<HighlightInfoType>();
+    myTools = new ArrayList<LocalInspectionTool>();
+
     Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper = new THashMap<LocalInspectionTool, LocalInspectionToolWrapper>(toolWrappers.length);
-    for (LocalInspectionToolWrapper toolWrapper : toolWrappers) {
-      tool2Wrapper.put(toolWrapper.getTool(), toolWrapper);
+    for (InspectionTool toolWrapper : toolWrappers) {
+      tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), ((LocalInspectionToolWrapper)toolWrapper));
     }
     LocalInspectionTool[] tools = tool2Wrapper.keySet().toArray(new LocalInspectionTool[tool2Wrapper.size()]);
     inspect(tools, progress, iManager);
