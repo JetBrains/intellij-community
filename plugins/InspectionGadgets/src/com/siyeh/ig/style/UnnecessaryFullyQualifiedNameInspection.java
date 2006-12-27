@@ -17,8 +17,8 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -105,7 +105,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             }
             @NonNls final String packageName =
                     ClassUtil.extractPackageName(qualifiedName);
-            if (packageName.equals("java.lang")) {
+            final String filePackageName = file.getPackageName();
+            if (packageName.equals("java.lang") ||
+                    packageName.equals(filePackageName)) {
                 if (ImportUtils.hasOnDemandImportConflict(qualifiedName,
                         file)) {
                     addImport(importList, aClass);
@@ -118,7 +120,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             }
             final String fullyQualifiedText = referenceElement.getText();
             file.accept(new QualificationRemover(fullyQualifiedText));
-
         }
 
         private static void addImport(PsiImportList importList, PsiClass aClass)
