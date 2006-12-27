@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
+ *
+ * @see FacetType
  */
 public class Facet<C extends FacetConfiguration> implements Disposable {
   public static final Facet[] EMPTY_ARRAY = new Facet[0];

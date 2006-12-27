@@ -14,6 +14,8 @@ import javax.swing.*;
 
 /**
  * @author nik
+ *
+ * @see com.intellij.facet.FacetTypeRegistry#registerFacetType(FacetType) 
  */
 public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   private @NotNull FacetTypeId<F> myId;
