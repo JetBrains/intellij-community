@@ -8,8 +8,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 public class ConcurrentHashSet<K> implements Set<K> {
-  private ConcurrentMap<K, Boolean> map;
+  private final ConcurrentMap<K, Boolean> map;
 
+  public ConcurrentHashSet(int initialCapacity) {
+    map = new ConcurrentHashMap<K, Boolean>(initialCapacity);
+  }
   public ConcurrentHashSet() {
     map = new ConcurrentHashMap<K, Boolean>();
   }

@@ -20,6 +20,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -27,6 +28,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -38,9 +40,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author max
@@ -78,28 +79,26 @@ public class IntentionHintComponent extends JPanel {
   private ListPopup myPopup;
 
   private class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching> {
-    private Set<IntentionActionWithTextCaching> myActions;
-    private IntentionManagerSettings mySettings;
-    private Set<IntentionAction> myQuickFixes;
+    private final Set<IntentionActionWithTextCaching> myActions;
+    private final IntentionManagerSettings mySettings;
+    private final Set<IntentionAction> myQuickFixes = new ConcurrentHashSet<IntentionAction>();
 
     public IntentionListStep(List<HighlightInfo.IntentionActionDescriptor> quickFixes,
                              List<HighlightInfo.IntentionActionDescriptor> intentions) {
       mySettings = IntentionManagerSettings.getInstance();
       Set<HighlightInfo.IntentionActionDescriptor> allActions = new THashSet<HighlightInfo.IntentionActionDescriptor>(quickFixes);
       allActions.addAll(intentions);
-      Set<IntentionAction> actions = new THashSet<IntentionAction>();
       for (HighlightInfo.IntentionActionDescriptor pair : quickFixes) {
-        actions.add(pair.getAction());
+        myQuickFixes.add(pair.getAction());
         if (pair.getOptions() != null) {
-          actions.addAll(pair.getOptions());
+          myQuickFixes.addAll(pair.getOptions());
         }
       }
-      myQuickFixes = actions;
       myActions = wrapActions(allActions);
     }
 
     private Set<IntentionActionWithTextCaching> wrapActions(Set<HighlightInfo.IntentionActionDescriptor> actions) {
-      Set<IntentionActionWithTextCaching> compositeActions = new THashSet<IntentionActionWithTextCaching>(actions.size());
+      Set<IntentionActionWithTextCaching> compositeActions = new ConcurrentHashSet<IntentionActionWithTextCaching>(actions.size());
       for (HighlightInfo.IntentionActionDescriptor pair : actions) {
         if (pair.getAction() != null) {
           IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.getAction(), pair.getDisplayName());
@@ -160,7 +159,13 @@ public class IntentionHintComponent extends JPanel {
 
     @NotNull
     public List<IntentionActionWithTextCaching> getValues() {
-      return new ArrayList<IntentionActionWithTextCaching>(myActions);
+      ArrayList<IntentionActionWithTextCaching> result = new ArrayList<IntentionActionWithTextCaching>(myActions);
+      Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
+        public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
+          return Comparing.compare(o1.getText(), o2.getText());
+        }
+      });
+      return result;
     }
 
     @NotNull
