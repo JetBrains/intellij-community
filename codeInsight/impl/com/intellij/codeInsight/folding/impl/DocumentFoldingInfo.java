@@ -12,7 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +31,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   private final Project myProject;
   private final VirtualFile myFile;
 
-  private ArrayList<Object> mySmartPointersOrRangeMarkers = new ArrayList<Object>();
+  private ArrayList<Object> myPsiElementsOrRangeMarkers = new ArrayList<Object>();
   private ArrayList<Boolean> myExpandedStates = new ArrayList<Boolean>();
   private Map<RangeMarker, String> myPlaceholderTexts = new HashMap<RangeMarker,String>();
   private static final String DEFAULT_PLACEHOLDER = "...";
@@ -57,11 +60,10 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
       boolean collapseByDefault = element != null && FoldingPolicy.isCollapseByDefault(element);
       if (collapseByDefault != !expanded || element == null) {
         if (element != null) {
-          SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
-          mySmartPointersOrRangeMarkers.add(pointer);
+          myPsiElementsOrRangeMarkers.add(element);
         }
         else if (region.isValid()) {
-          mySmartPointersOrRangeMarkers.add(region);
+          myPsiElementsOrRangeMarkers.add(region);
           String placeholderText = region.getPlaceholderText();
           if (placeholderText == null) placeholderText = DEFAULT_PLACEHOLDER;
           myPlaceholderTexts.put(region, placeholderText);
@@ -75,12 +77,11 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     if (PsiManager.getInstance(myProject).isDisposed()) return;
 
-    for(int i = 0; i < mySmartPointersOrRangeMarkers.size(); i++){
-      Object o = mySmartPointersOrRangeMarkers.get(i);
-      if (o instanceof SmartPsiElementPointer){
-        SmartPsiElementPointer pointer = (SmartPsiElementPointer)o;
-        PsiElement element = pointer.getElement();
-        if (element == null) continue;
+    for(int i = 0; i < myPsiElementsOrRangeMarkers.size(); i++){
+      Object o = myPsiElementsOrRangeMarkers.get(i);
+      if (o instanceof PsiElement){
+        PsiElement element = (PsiElement)o;
+        if (!element.isValid()) continue;
         FoldRegion region = FoldingUtil.findFoldRegion(editor, element);
         if (region != null){
           boolean state = myExpandedStates.get(i).booleanValue();
@@ -108,7 +109,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   }
 
   public void clear() {
-    mySmartPointersOrRangeMarkers.clear();
+    myPsiElementsOrRangeMarkers.clear();
     myExpandedStates.clear();
     myPlaceholderTexts.clear();
   }
@@ -116,18 +117,17 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   public void writeExternal(Element element) throws WriteExternalException {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    if (mySmartPointersOrRangeMarkers.size() == 0){
+    if (myPsiElementsOrRangeMarkers.size() == 0){
       throw new WriteExternalException();
     }
 
     String date = null;
-    for(int i = 0; i < mySmartPointersOrRangeMarkers.size(); i++){
-      Object o = mySmartPointersOrRangeMarkers.get(i);
+    for(int i = 0; i < myPsiElementsOrRangeMarkers.size(); i++){
+      Object o = myPsiElementsOrRangeMarkers.get(i);
       Boolean state = myExpandedStates.get(i);
-      if (o instanceof SmartPsiElementPointer){
-        SmartPsiElementPointer pointer = (SmartPsiElementPointer)o;
-        PsiElement psiElement = pointer.getElement();
-        if (psiElement == null) continue;
+      if (o instanceof PsiElement){
+        PsiElement psiElement = (PsiElement)o;
+        if (!psiElement.isValid()) continue;
         String signature = FoldingPolicy.getSignature(psiElement);
         if (signature == null) continue;
 
@@ -161,7 +161,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   }
 
   public void readExternal(Element element) {
-    mySmartPointersOrRangeMarkers.clear();
+    myPsiElementsOrRangeMarkers.clear();
     myExpandedStates.clear();
 
     if (!myFile.isValid()) return;
@@ -182,7 +182,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         }
         PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
         if (restoredElement != null) {
-          mySmartPointersOrRangeMarkers.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
+          myPsiElementsOrRangeMarkers.add(restoredElement);
           myExpandedStates.add(Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT)));
         }
       }
@@ -199,7 +199,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
           int end = Integer.valueOf(tokenizer.nextToken()).intValue();
           if (start < 0 || end >= document.getTextLength() || start > end) continue;
           RangeMarker marker = document.createRangeMarker(start, end);
-          mySmartPointersOrRangeMarkers.add(marker);
+          myPsiElementsOrRangeMarkers.add(marker);
           myExpandedStates.add(Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT)));
           String placeHolderText = e.getAttributeValue(PLACEHOLDER_ATT);
           if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;

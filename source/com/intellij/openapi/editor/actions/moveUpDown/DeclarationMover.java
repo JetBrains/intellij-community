@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateDeclaration;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -233,7 +233,7 @@ class DeclarationMover extends LineMover {
              ? new LineRange(aClass.getFirstChild(), aClass.isEnum() ? afterEnumConstantsPosition(aClass) : aClass.getLBrace(), editor.getDocument())
              : new LineRange(aClass.getRBrace(), aClass.getRBrace(), editor.getDocument());
     }
-    if (sibling instanceof JspTemplateDeclaration) {
+    if (sibling instanceof JspClassLevelDeclarationStatement) {
       // there should be another scriptlet/decl to move
       if (firstNonWhiteElement(this.isDown ? sibling.getNextSibling() : sibling.getPrevSibling(), this.isDown) == null) throw new IllegalMoveException();
     }

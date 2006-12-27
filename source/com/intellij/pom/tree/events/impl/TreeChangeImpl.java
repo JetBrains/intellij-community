@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.ReplaceChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
-import com.intellij.psi.CompositeLanguageFileViewProvider;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -360,27 +359,10 @@ public class TreeChangeImpl implements TreeChange {
       if(current == null) break;
 
       if(!counted){
-        if (current.getUserData(CompositeLanguageFileViewProvider.OUTER_LANGUAGE_MERGE_POINT) != null) {
-          final int textLength;
-          if (!inMergedOLE) {
-            textLength = current.getUserData(CompositeLanguageFileViewProvider.OUTER_LANGUAGE_MERGE_POINT);
-            inMergedOLE = true;
-          }
-          else {
-            textLength = current.getTextLength() - current.getUserData(CompositeLanguageFileViewProvider.OUTER_LANGUAGE_MERGE_POINT);
-            inMergedOLE = false;
-            current = current.getTreeNext();
-          }
-
-          currentOldOffset += textLength;
-          currentOffsetInNewTree += textLength;
-        }
-        else {
-          final int textLength = current.getTextLength();
-          currentOldOffset += textLength;
-          current = current.getTreeNext();
-          currentOffsetInNewTree += textLength;
-        }
+        final int textLength = current.getTextLength();
+        currentOldOffset += textLength;
+        current = current.getTreeNext();
+        currentOffsetInNewTree += textLength;
       }
     }
     

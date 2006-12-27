@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -24,8 +23,6 @@ import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.parsing.tabular.ParsingUtil;
-import com.intellij.psi.impl.source.parsing.tabular.grammar.Grammar;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.text.BlockSupport;
@@ -34,7 +31,6 @@ import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.diff.DiffTree;
-import com.intellij.util.text.CharArrayCharSequence;
 
 public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
@@ -197,17 +193,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
 
         // file reparse
 
-        Language lang = file.getLanguage();
-
-        // TODO: incremental reparse switched off!!!
-        final Grammar grammarByFileType = null; // GrammarUtil.getGrammarByName(lang.getID());
-        if (lang == baseLanguage /*TODO: reparse HTML in JSP */ && grammarByFileType != null && file.getLanguage() != StdLanguages.JSP && file.getLanguage() != StdLanguages.JSPX ) {
-          ParsingUtil.reparse(grammarByFileType, treeFileElement.getCharTable(), treeFileElement, newFileText, startOffset, endOffset,
-                              lengthShift, file.getViewProvider());
-        }
-        else {
-          makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
-        }
+        makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
       }
     }
     finally {
@@ -225,7 +211,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   }
 
   private static boolean optimizeLeafChange(final FileElement treeFileElement,
-                                            final char[] newFileText,
+                                            final CharSequence newFileText,
                                             int startOffset,
                                             final int endOffset,
                                             final int lengthDiff,

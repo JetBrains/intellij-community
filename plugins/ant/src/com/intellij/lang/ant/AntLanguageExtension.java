@@ -45,8 +45,7 @@ public class AntLanguageExtension implements LanguageExtension {
     return AntSupport.getLanguage();
   }
 
-  public boolean isAffectedByChange(final XmlChange xmlChange) {
+  public void updateByChange(final XmlChange xmlChange) {
     xmlChange.accept(AntSupport.getChangeVisitor());
-    return false;
   }
 }
