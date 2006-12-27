@@ -406,4 +406,16 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public void initComponent() {}
 
   public void disposeComponent() {}
+
+  @Nullable
+  public static ProjectJdk findIdeaJdk(@Nullable ProjectJdk jdk) {
+    if (jdk == null) return null;
+
+    while(true) {
+      if (jdk.getSdkType() instanceof IdeaJdk) return jdk;
+      final Sdk encapsulated = jdk.getSdkType().getEncapsulatedSdk(jdk);
+      if (!(encapsulated instanceof ProjectJdk)) return null;
+      jdk = (ProjectJdk)encapsulated;
+    }
+  }
 }

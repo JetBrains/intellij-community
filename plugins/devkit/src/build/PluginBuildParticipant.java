@@ -9,11 +9,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.BuildParticipantBase;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
-import com.intellij.openapi.deployment.DeploymentItem;
-import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.LibraryLink;
-import com.intellij.openapi.deployment.ModuleLink;
-import com.intellij.openapi.deployment.PackagingMethod;
+import com.intellij.openapi.deployment.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -49,8 +45,8 @@ class PluginBuildParticipant extends BuildParticipantBase {
 
     super.registerBuildInstructions(instructions, context);
 
-    final ProjectJdk jdk = ModuleRootManager.getInstance(myModule).getJdk();
-    if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
+    final ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(myModule).getJdk());
+    if (jdk == null) {
       context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("jdk.type.incorrect", myModule.getName()), null, -1, -1);
       return;
     }

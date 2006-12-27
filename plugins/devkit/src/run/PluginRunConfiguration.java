@@ -28,6 +28,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
@@ -79,10 +80,12 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     if (jdk == null) {
       throw CantRunException.noJdkForModule(getModule());
     }
-    if (!(jdk.getSdkType() instanceof IdeaJdk)) {
+
+    final ProjectJdk ideaJdk = IdeaJdk.findIdeaJdk(jdk);
+    if (ideaJdk == null) {
       throw new ExecutionException(DevKitBundle.message("jdk.type.incorrect.common"));
     }
-    String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+    String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
 
     if (sandboxHome == null){
       throw new ExecutionException(DevKitBundle.message("sandbox.no.configured"));
@@ -97,7 +100,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     final String canonicalSandbox = sandboxHome;
 
     //copy license from running instance of idea
-    IdeaLicenseHelper.copyIDEALicencse(sandboxHome, jdk);
+    IdeaLicenseHelper.copyIDEALicencse(sandboxHome, ideaJdk);
 
     final JavaCommandLineState state = new JavaCommandLineState(runnerSettings, configurationSettings) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -109,7 +112,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         fillParameterList(vm, VM_PARAMETERS);
         fillParameterList(params.getProgramParametersList(), PROGRAM_PARAMETERS);
 
-        @NonNls String libPath = jdk.getHomePath() + File.separator + "lib";
+        @NonNls String libPath = ideaJdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
 
         vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
@@ -121,16 +124,28 @@ public class PluginRunConfiguration extends RunConfigurationBase {
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
         }
 
-        params.setWorkingDirectory(jdk.getHomePath() + File.separator + "bin" + File.separator);
+        params.setWorkingDirectory(ideaJdk.getHomePath() + File.separator + "bin" + File.separator);
 
-        params.setJdk(jdk);
+        params.setJdk(ideaJdk);
 
         params.getClassPath().addFirst(libPath + File.separator + "log4j.jar");
         params.getClassPath().addFirst(libPath + File.separator + "jdom.jar");
         params.getClassPath().addFirst(libPath + File.separator + "openapi.jar");
         params.getClassPath().addFirst(libPath + File.separator + "extensions.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
-        params.getClassPath().addFirst(jdk.getToolsPath());
+        params.getClassPath().addFirst(ideaJdk.getToolsPath());
+
+        Sdk run = jdk;
+        while(ideaJdk != run) {
+          assert run != null;
+          if (run instanceof ProjectJdk) {
+            final String rtLibPath = ((ProjectJdk)run).getRtLibraryPath();
+            if (rtLibPath != null) {
+              params.getClassPath().addFirst(rtLibPath);
+            }
+          }
+          run = run.getSdkType().getEncapsulatedSdk(run);
+        }
         
         params.setMainClass("com.intellij.idea.Main");
 
@@ -169,7 +184,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     if (jdk == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("jdk.no.specified", moduleName));
     }
-    if (!(jdk.getSdkType() instanceof IdeaJdk)) {
+    if (IdeaJdk.findIdeaJdk(jdk) == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("jdk.type.incorrect", moduleName));
     }
   }

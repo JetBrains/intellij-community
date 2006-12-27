@@ -67,8 +67,9 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
       public void actionPerformed(ActionEvent e) {
         if (myModules.getSelectedItem() != null){
           prc.removeAllLogFiles();
-          final ProjectJdk jdk = ModuleRootManager.getInstance((Module)myModules.getSelectedItem()).getJdk();
-          if (jdk != null && jdk.getSdkType() instanceof IdeaJdk){
+          ProjectJdk jdk = ModuleRootManager.getInstance((Module)myModules.getSelectedItem()).getJdk();
+          jdk = IdeaJdk.findIdeaJdk(jdk);
+          if (jdk != null) {
             final String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
             if (sandboxHome == null){
               return;

@@ -15,11 +15,15 @@
  */
 package org.jetbrains.idea.devkit.build;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.make.BuildParticipant;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.deployment.DeploymentDescriptorFactory;
 import com.intellij.openapi.deployment.DeploymentItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -32,17 +36,13 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.compiler.make.BuildParticipant;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 import java.io.File;
 
@@ -100,8 +100,9 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   @Nullable
   public BuildParticipant getBuildParticipant() {
-    final ProjectJdk jdk = ModuleRootManager.getInstance(myModule).getJdk();
-    if (jdk != null && jdk.getSdkType() instanceof IdeaJdk && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
+    ProjectJdk jdk = ModuleRootManager.getInstance(myModule).getJdk();
+    jdk = IdeaJdk.findIdeaJdk(jdk);
+    if (jdk != null && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
       return null;
     }
     return new PluginBuildParticipant(myModule);

@@ -18,8 +18,8 @@ package org.jetbrains.idea.devkit.module;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -35,8 +35,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
 import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
@@ -81,7 +81,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     steps.add(stepFactory.createProjectJdkStep(wizardContext, ApplicationManager.getApplication().getComponent(IdeaJdk.class), moduleBuilder, new Computable<Boolean>() {
       public Boolean compute() {
         final ProjectJdk projectJdk = wizardContext.getProjectJdk();
-        return projectJdk == null || ! (projectJdk.getSdkType() instanceof IdeaJdk) ? Boolean.TRUE : Boolean.FALSE;
+        return IdeaJdk.findIdeaJdk(projectJdk) == null ? Boolean.TRUE : Boolean.FALSE;
       }
     }, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
     steps.add(stepFactory.createSourcePathsStep(nameAndLocationStep, moduleBuilder, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
@@ -134,8 +134,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
     final ProjectJdk jdk = manager.getJdk();
     // don't allow modules that don't use an IDEA-JDK
-    if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
-      //noinspection unchecked
+    if (IdeaJdk.findIdeaJdk(jdk) == null) {
       return Collections.emptyList();
     }
 

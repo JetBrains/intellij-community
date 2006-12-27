@@ -26,8 +26,8 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
@@ -42,8 +42,8 @@ import java.util.Set;
  */
 public class PluginBuildUtil {
   @NonNls @Nullable public static String getPluginExPath(Module module) {
-    final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
-    if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
+    final ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getJdk());
+    if (jdk == null) {
       return null;
     }
     String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();

@@ -17,11 +17,11 @@ package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.module.Module;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 import java.io.File;
 
@@ -32,10 +32,10 @@ import java.io.File;
 public class JUnitDevKitPatcher extends JUnitPatcher{
 
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
-    final ProjectJdk jdk = javaParameters.getJdk();
-    if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
-      return;
-    }
+    ProjectJdk jdk = javaParameters.getJdk();
+    jdk = IdeaJdk.findIdeaJdk(jdk);
+    if (jdk == null) return;
+
     @NonNls String libPath = jdk.getHomePath() + File.separator + "lib";
     javaParameters.getVMParametersList().add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
