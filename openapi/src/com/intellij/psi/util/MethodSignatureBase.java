@@ -17,16 +17,15 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class MethodSignatureBase implements MethodSignature {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureBase");
 
   private final PsiSubstitutor mySubstitutor;
-  protected final PsiType[] myParameterTypes;
+  private final PsiType[] myParameterTypes;
   protected final PsiTypeParameter[] myTypeParameters;
 
   protected MethodSignatureBase(PsiSubstitutor substitutor, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters) {

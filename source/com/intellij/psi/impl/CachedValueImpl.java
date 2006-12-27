@@ -34,9 +34,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   
   private final PsiManager myManager;
   private final CachedValueProvider<T> myProvider;
-  private boolean myComputed = false;
-  private boolean myTrackValue = true;
-  private SoftReference<T> myValue = null;
+  private volatile boolean myComputed = false;
+  private final boolean myTrackValue;
+  private volatile SoftReference<T> myValue = null;
   private Object[] myDependencies = null;
   private long[] myTimeStamps;
   private long myLastPsiTimeStamp = -1;
@@ -71,8 +71,8 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
   @Nullable
   private T getUpToDateOrNull() {
-    T value = myValue == null ? null : myValue.get();
     if (myComputed) {
+      T value = myValue == null ? null : myValue.get();
       if (isUpToDate()) {
         return value;
       }

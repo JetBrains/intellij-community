@@ -23,7 +23,7 @@ import java.util.Iterator;
 public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private final PsiMethod myMethod;
   private final boolean myIsRaw;
-  private boolean myIsInGenericContext;
+  private final boolean myIsInGenericContext;
 
   protected MethodSignatureBackedByPsiMethod(@NotNull PsiMethod method,
                                              PsiSubstitutor substitutor,
