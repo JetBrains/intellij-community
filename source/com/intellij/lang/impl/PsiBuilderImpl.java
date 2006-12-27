@@ -30,6 +30,7 @@ import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTree;
@@ -66,7 +67,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private CharTable myCharTable;
   private int myCurrentLexem;
   private Token myCurrentToken = null;
-  private CharSequence myText;
+  private final CharSequence myText;
+  private final char[] myTextArray;
   private boolean myDebugMode = false;
   private ASTNode myOriginalTree = null;
   private Stack<StartMarker> myMarkerPool = new Stack<StartMarker>();
@@ -76,6 +78,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
+    myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     ParserDefinition parserDefinition = lang.getParserDefinition();
     assert parserDefinition != null;
     myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
@@ -106,6 +109,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexer = lexer;
     myComments = comments;
     myText = text;
+    myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     myCharTable = charTable;
 
     myFileLevelParsing = myCharTable == null;
@@ -145,12 +149,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (myHC == -1) {
         int hc = 0;
         final CharSequence buf = myText;
+        final char[] bufArray = myTextArray;
         ProductionMarker child = firstChild;
         int lexIdx = myLexemIndex;
+
         while (child != null) {
           int lastLeaf = child.myLexemIndex;
           for (int i = myLexStarts[lexIdx]; i < myLexStarts[lastLeaf]; i++) {
-            hc += buf.charAt(i);
+            hc += bufArray != null ? bufArray[i] : buf.charAt(i);
           }
           lexIdx = lastLeaf;
           hc += child.hc();
@@ -161,7 +167,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
 
         for (int i = myLexStarts[lexIdx]; i < myLexStarts[myDoneMarker.myLexemIndex]; i++) {
-          hc += buf.charAt(i);
+          hc += bufArray != null ? bufArray[i]:buf.charAt(i);
         }
 
         myHC = hc;
@@ -247,8 +253,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         final int start = myTokenStart;
         final int end = myTokenEnd;
         final CharSequence buf = myText;
+        final char[] bufArray = myTextArray;
+
         for (int i = start; i < end; i++) {
-          hc += buf.charAt(i);
+          hc += bufArray != null ? bufArray[i] : buf.charAt(i);
         }
 
         myHC = hc;
