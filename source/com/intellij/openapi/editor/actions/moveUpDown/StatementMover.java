@@ -11,7 +11,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -92,7 +93,7 @@ class StatementMover extends LineMover {
         if (!element.getTextRange().grown(-1).shiftRight(1).contains(offset)) {
           PsiElement elementToSurround = null;
           boolean found = false;
-          if ((element instanceof PsiStatement || element instanceof PsiComment || element instanceof OuterLanguageElement)
+          if ((element instanceof PsiStatement || element instanceof PsiComment || element instanceof JspTemplateStatement)
               && statementCanBePlacedAlong(element)) {
             found = true;
             if (!(element.getParent() instanceof PsiCodeBlock)) {
@@ -104,12 +105,6 @@ class StatementMover extends LineMover {
                    && element.getParent() instanceof PsiCodeBlock) {
             // before code block closing brace
             found = true;
-          }
-          else if (element instanceof PsiMember) {
-            PsiClass containingClass = ((PsiMember)element).getContainingClass();
-            if (!(containingClass instanceof PsiAnonymousClass) || PsiTreeUtil.isAncestor(containingClass, range.firstElement, false)) {
-              found = true;
-            }
           }
           if (found) {
             statementToSurroundWithCodeBlock = elementToSurround;
@@ -133,9 +128,15 @@ class StatementMover extends LineMover {
     }
   }
 
-  private static boolean statementCanBePlacedAlong(final PsiElement element) {
+  private boolean statementCanBePlacedAlong(final PsiElement element) {
+    if (element instanceof JspTemplateStatement) {
+      PsiElement neighbour = element.getPrevSibling();
+      // we can place statement inside scriptlet only
+      return neighbour != null && !(neighbour instanceof JspTemplateStatement);
+    }
     if (element instanceof PsiBlockStatement) return false;
     final PsiElement parent = element.getParent();
+    if (parent instanceof JspClassLevelDeclarationStatement) return false;
     if (parent instanceof PsiCodeBlock) return true;
     if (parent instanceof PsiIfStatement &&
         (element == ((PsiIfStatement)parent).getThenBranch() || element == ((PsiIfStatement)parent).getElseBranch())) {

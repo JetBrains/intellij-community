@@ -78,7 +78,7 @@ abstract class Mover {
     document.deleteString(range2.getStartOffset()+textToInsert.length(), range2.getEndOffset());
 
     final Project project = file.getProject();
-    PsiDocumentManager.getInstance(project).commitDocument(document);
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     if (hasSelection) {
       restoreSelection(editor, selectionStart, selectionEnd, start, range2.getStartOffset());
