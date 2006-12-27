@@ -1,8 +1,7 @@
 package com.intellij.xml.util.documentation;
 
-import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.openapi.project.Project;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
@@ -16,6 +15,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.ColorSampleLookupValue;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,22 +24,22 @@ import org.jetbrains.annotations.NonNls;
  * Time: 23:55:08
  * To change this template use File | Settings | File Templates.
  */
-public class HtmlDocumentationProvider implements JavaDocManager.DocumentationProvider {
+public class HtmlDocumentationProvider implements DocumentationProvider {
   private static String ourBaseHtmlExtDocUrl;
-  private JavaDocManager.DocumentationProvider ourStyleProvider;
-  private JavaDocManager.DocumentationProvider ourScriptProvider;
-  
-  protected Project myProject;
+  private static DocumentationProvider ourStyleProvider;
+  private static DocumentationProvider ourScriptProvider;
+
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
   @NonNls public static final String NBSP = ":&nbsp;";
   @NonNls public static final String BR = "<br>";
 
-  public HtmlDocumentationProvider(Project project) {
-    myProject = project;
+  public static void registerStyleDocumentationProvider(DocumentationProvider documentationProvider) {
+    ourStyleProvider = documentationProvider;
   }
 
-  public void registerStyleDocumentationProvider(JavaDocManager.DocumentationProvider documentationProvider) {
-    ourStyleProvider = documentationProvider;
+  @Nullable
+  public String getQuickNavigateInfo(PsiElement element) {
+    return null; 
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
@@ -207,38 +207,37 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
     return buf.toString();
   }
 
-  public PsiElement getDocumentationElementForLookupItem(Object object, PsiElement element) {
-    PsiElement result = createNavigationElementHTML(object.toString(),element);
+  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+    PsiElement result = createNavigationElementHTML(psiManager, object.toString(),element);
 
     if (result== null && ourStyleProvider !=null) {
-      result = ourStyleProvider.getDocumentationElementForLookupItem(object, element);
+      result = ourStyleProvider.getDocumentationElementForLookupItem(psiManager, object, element);
     }
     if (result== null && ourScriptProvider !=null) {
-      result = ourScriptProvider.getDocumentationElementForLookupItem(object, element);
+      result = ourScriptProvider.getDocumentationElementForLookupItem(psiManager, object, element);
     }
     return result;
   }
 
-  public PsiElement getDocumentationElementForLink(String link, PsiElement context) {
-    PsiElement result = createNavigationElementHTML(link, context);
+  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+    PsiElement result = createNavigationElementHTML(psiManager, link, context);
 
     if (result== null && ourStyleProvider !=null) {
-      result = ourStyleProvider.getDocumentationElementForLink(link,context);
+      result = ourStyleProvider.getDocumentationElementForLink(psiManager, link,context);
     }
     if (result== null && ourScriptProvider !=null) {
-      result = ourScriptProvider.getDocumentationElementForLink(link,context);
+      result = ourScriptProvider.getDocumentationElementForLink(psiManager, link,context);
     }
     return result;
   }
 
-  public PsiElement createNavigationElementHTML(String text, PsiElement context) {
+  public PsiElement createNavigationElementHTML(PsiManager psiManager, String text, PsiElement context) {
     String key = text.toLowerCase();
     final HtmlTagDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(key);
 
     if (descriptor != null && !isAttributeContext(context) ) {
-      PsiManager manager = PsiManager.getInstance(myProject);
       try {
-        final XmlTag tagFromText = manager.getElementFactory().createTagFromText("<"+ key + " xmlns=\"" + XmlUtil.XHTML_URI + "\"/>");
+        final XmlTag tagFromText = psiManager.getElementFactory().createTagFromText("<"+ key + " xmlns=\"" + XmlUtil.XHTML_URI + "\"/>");
         final XmlElementDescriptor tagDescriptor = tagFromText.getDescriptor();
         return tagDescriptor != null ? tagDescriptor.getDeclaration() : null;
       }
@@ -284,7 +283,7 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
     HtmlDocumentationProvider.ourBaseHtmlExtDocUrl = baseHtmlExtDocUrl;
   }
 
-  public void registerScriptDocumentationProvider(final JavaDocManager.DocumentationProvider provider) {
+  public static void registerScriptDocumentationProvider(final DocumentationProvider provider) {
     ourScriptProvider = provider;
   }
 }

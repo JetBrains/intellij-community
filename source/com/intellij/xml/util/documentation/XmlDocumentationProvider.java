@@ -1,11 +1,13 @@
 package com.intellij.xml.util.documentation;
 
-import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -23,6 +25,7 @@ import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,10 +34,17 @@ import org.jetbrains.annotations.NonNls;
  * Time: 0:00:05
  * To change this template use File | Settings | File Templates.
  */
-public class XmlDocumentationProvider implements JavaDocManager.DocumentationProvider {
+public class XmlDocumentationProvider implements DocumentationProvider {
   private static final Key<XmlElementDescriptor> DESCRIPTOR_KEY = Key.create("Original element");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.documentation.XmlDocumentationProvider");
+
+  private final DocumentationProvider myDocumentationProvider = new MetaDataDocumentationProvider();
+
+  @Nullable
+  public String getQuickNavigateInfo(PsiElement element) {
+    return myDocumentationProvider.getQuickNavigateInfo(element);
+  }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
     if (element instanceof XmlTag) {
@@ -131,7 +141,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
       append(HtmlDocumentationProvider.NBSP).append(str).toString();
   }
 
-  public PsiElement getDocumentationElementForLookupItem(Object object, PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
     element = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
 
     if (element instanceof XmlTag) {
@@ -189,7 +199,7 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
     return null;
   }
 
-  public PsiElement getDocumentationElementForLink(String link, PsiElement context) {
+  public PsiElement getDocumentationElementForLink(final PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
 

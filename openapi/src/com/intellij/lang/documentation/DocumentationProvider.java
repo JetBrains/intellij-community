@@ -18,10 +18,19 @@
 package com.intellij.lang.documentation;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
 public interface DocumentationProvider {
 
   @Nullable
   String getQuickNavigateInfo(PsiElement element);
+
+  String getUrlFor(PsiElement element, PsiElement originalElement);
+
+  String generateDoc(PsiElement element, PsiElement originalElement);
+
+  PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element);
+
+  PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context);
 }

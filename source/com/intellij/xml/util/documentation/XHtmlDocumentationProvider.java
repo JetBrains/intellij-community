@@ -1,6 +1,5 @@
 package com.intellij.xml.util.documentation;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.xml.XmlTag;
@@ -14,9 +13,6 @@ import com.intellij.psi.xml.XmlText;
  * To change this template use File | Settings | File Templates.
  */
 public class XHtmlDocumentationProvider extends HtmlDocumentationProvider {
-  public XHtmlDocumentationProvider(Project project) {
-    super(project);
-  }
 
   protected String generateDocForHtml(PsiElement element, boolean ommitHtmlSpecifics, XmlTag context, PsiElement originalElement) {
     return super.generateDocForHtml(element, true, context, originalElement);

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectRootType;
@@ -97,9 +98,9 @@ public class JavaDocUtil {
       if (aClass != null) return aClass.getNavigationElement();
       PsiPackage aPackage = manager.findPackage(refText);
       if (aPackage!=null) return aPackage;
-      JavaDocManager.DocumentationProvider provider = JavaDocManager.getInstance(manager.getProject()).getProviderFromElement(context);
+      DocumentationProvider provider = JavaDocManager.getProviderFromElement(context);
       if (provider!=null) {
-        return provider.getDocumentationElementForLink(refText,context);
+        return provider.getDocumentationElementForLink(manager, refText,context);
       }
       return null;
     }

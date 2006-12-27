@@ -10,7 +10,6 @@ import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.*;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
@@ -36,6 +35,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.util.documentation.XmlDocumentationProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,6 @@ public class XMLLanguage extends CompositeLanguage {
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
   private final FormattingModelBuilder myFormattingModelBuilder;
   private XmlFindUsagesProvider myXmlFindUsagesProvider;
-  private final DocumentationProvider myDocumentationProvider = new MetaDataDocumentationProvider();
 
   public XMLLanguage() {
     this("XML", "text/xml");
@@ -155,7 +154,6 @@ public class XMLLanguage extends CompositeLanguage {
   }
 
   public DocumentationProvider getDocumentationProvider() {
-    return myDocumentationProvider;
+    return new XmlDocumentationProvider();
   }
-
 }

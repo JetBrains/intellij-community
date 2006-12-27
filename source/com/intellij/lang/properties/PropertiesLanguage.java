@@ -6,8 +6,9 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
@@ -24,16 +25,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
  */
 public class PropertiesLanguage extends Language {
   private static final Annotator ANNOTATOR = new PropertiesAnnotator();
-  private final DocumentationProvider myDocumentationProvider = new DocumentationProvider() {
+  private final DocumentationProvider myDocumentationProvider = new QuickDocumentationProvider() {
 
     @Nullable
     public String getQuickNavigateInfo(PsiElement element) {

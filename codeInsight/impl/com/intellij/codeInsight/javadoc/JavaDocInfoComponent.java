@@ -3,15 +3,15 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.*;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.util.containers.HashMap;
@@ -129,7 +129,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
 
       final FocusAdapter focusAdapter = new FocusAdapter() {
         public void focusLost(FocusEvent e) {
-          Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject());
+          Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject(getElement()));
 
           if (!(previouslyFocused == myEditorPane)) {
             myHint.cancel();

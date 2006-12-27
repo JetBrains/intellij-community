@@ -2,6 +2,7 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -39,7 +40,7 @@ class JavaDocInfoGenerator {
 
   private Project myProject;
   private PsiElement myElement;
-  private JavaDocManager.DocumentationProvider myProvider;
+  private DocumentationProvider myProvider;
   private static final @NonNls String THROWS_KEYWORD = "throws";
   private static final @NonNls String BR_TAG = "<br>";
   private static final @NonNls String LINK_TAG = "link";
@@ -156,7 +157,7 @@ class JavaDocInfoGenerator {
   }
 
   public JavaDocInfoGenerator(Project project, PsiElement element,
-                              JavaDocManager.DocumentationProvider _provider) {
+                              DocumentationProvider _provider) {
     myProject = project;
     myElement = element;
     myProvider = _provider;

@@ -4,13 +4,13 @@
 
 package com.intellij.lang.java;
 
-import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.LangBundle;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.lang.LangBundle;
+import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
  * Time: 7:45:12 PM
  * To change this template use File | Settings | File Templates.
  */
-public class JavaDocumentationProvider implements DocumentationProvider {
+public class JavaDocumentationProvider extends QuickDocumentationProvider {
   public String getQuickNavigateInfo(PsiElement element) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass) element);

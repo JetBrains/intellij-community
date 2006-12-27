@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 
 public class ExternalJavaDocAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -54,7 +53,7 @@ public class ExternalJavaDocAction extends AnAction {
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       boolean enabled = file instanceof PsiJavaFile || PsiUtil.isInJspFile(file) ||
-                        file!=null && JavaDocManager.getInstance(project).getProvider(file.getFileType())!=null;
+                        file!=null && JavaDocManager.getProviderFromElement(file)!=null;
       presentation.setEnabled(enabled);
       presentation.setVisible(enabled);
     }

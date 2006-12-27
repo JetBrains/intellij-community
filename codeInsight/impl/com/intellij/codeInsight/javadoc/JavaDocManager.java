@@ -11,6 +11,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -19,8 +20,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -32,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -40,9 +38,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.util.Alarm;
-import com.intellij.xml.util.documentation.HtmlDocumentationProvider;
-import com.intellij.xml.util.documentation.XHtmlDocumentationProvider;
-import com.intellij.xml.util.documentation.XmlDocumentationProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +45,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
 import java.util.List;
 
 public class JavaDocManager implements ProjectComponent {
@@ -61,7 +55,6 @@ public class JavaDocManager implements ProjectComponent {
   private Alarm myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
-  private HashMap<FileType,DocumentationProvider> documentationProviders = new HashMap<FileType, DocumentationProvider>();
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
   public static final @NonNls String HTML_EXTENSION = ".html";
   public static final @NonNls String PACKAGE_SUMMARY_FILE = "package-summary.html";
@@ -91,24 +84,6 @@ public class JavaDocManager implements ProjectComponent {
     }
   };
 
-  public DocumentationProvider getProvider(FileType fileType) {
-    return documentationProviders.get(fileType);
-  }
-
-  public interface DocumentationProvider {
-    String getUrlFor(PsiElement element, PsiElement originalElement);
-
-    String generateDoc(PsiElement element, PsiElement originalElement);
-
-    PsiElement getDocumentationElementForLookupItem(Object object, PsiElement element);
-
-    PsiElement getDocumentationElementForLink(String link, PsiElement context);
-  }
-
-  public void registerDocumentationProvider(FileType fileType,DocumentationProvider provider) {
-    documentationProviders.put(fileType, provider);
-  }
-
   public static JavaDocManager getInstance(Project project) {
     return project.getComponent(JavaDocManager.class);
   }
@@ -116,14 +91,6 @@ public class JavaDocManager implements ProjectComponent {
   public JavaDocManager(Project project, ActionManagerEx managerEx) {
     myProject = project;
     myActionManagerEx = managerEx;
-
-    registerDocumentationProvider(StdFileTypes.HTML, new HtmlDocumentationProvider(project));
-    registerDocumentationProvider(StdFileTypes.XHTML, new XHtmlDocumentationProvider(project));
-    final JspImplUtil.JspDocumentationProvider provider = new JspImplUtil.JspDocumentationProvider(project);
-    registerDocumentationProvider(StdFileTypes.JSP,provider);
-    registerDocumentationProvider(StdFileTypes.JSPX, provider);
-
-    registerDocumentationProvider(StdFileTypes.XML, new XmlDocumentationProvider());
   }
 
   @NotNull
@@ -143,7 +110,6 @@ public class JavaDocManager implements ProjectComponent {
 
   public void projectClosed() {
     myActionManagerEx.removeAnActionListener(myActionListener);
-    documentationProviders.clear();
   }
 
   public JBPopup showJavaDocInfo(@NotNull PsiElement element) {
@@ -152,13 +118,13 @@ public class JavaDocManager implements ProjectComponent {
 
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setRequestFocusIfNotLookupOrSearch(myProject)
+      .setRequestFocusIfNotLookupOrSearch(getProject(element))
       .setLookupAndSearchUpdater(new Condition<PsiElement>() {
         public boolean value(final PsiElement element) {
           showJavaDocInfo(element);
           return false;
         }
-      }, myProject)
+      }, getProject(element))
       .setForceHeavyweight(true)
       .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE)
       .setResizable(true)
@@ -197,7 +163,7 @@ public class JavaDocManager implements ProjectComponent {
 
     myDocInfoHintRef = new WeakReference<JBPopup>(hint);
 
-    myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+    myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(getProject(element));
 
     if (fromQuickSearch()) {
       ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
@@ -208,7 +174,8 @@ public class JavaDocManager implements ProjectComponent {
 
   public JBPopup showJavaDocInfo(final Editor editor, PsiFile file, boolean requestFocus) {
     myEditor = editor;
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    final Project project = getProject(file);
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final PsiExpressionList list =
       ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
@@ -237,18 +204,18 @@ public class JavaDocManager implements ProjectComponent {
         }
       }
 
-      Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
+      Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
 
       if (activeLookup != null) {
         LookupItem item = activeLookup.getCurrentItem();
         if (item == null) return null;
 
         if (file!=null) {
-          DocumentationProvider documentationProvider = documentationProviders.get(file.getFileType());
+          DocumentationProvider documentationProvider = getProviderFromElement(file);
           if (documentationProvider!=null) {
 
             if (ref!=null) originalElement = ref.getElement();
-            element = documentationProvider.getDocumentationElementForLookupItem(item.getObject(), originalElement);
+            element = documentationProvider.getDocumentationElementForLookupItem(file.getManager(), item.getObject(), originalElement);
           }
         } else {
           return null;
@@ -294,7 +261,7 @@ public class JavaDocManager implements ProjectComponent {
     try {
       element.putUserData(
         ORIGINAL_ELEMENT_KEY,
-        SmartPointerManager.getInstance(originalElement.getProject()).createSmartPsiElementPointer(originalElement)
+        SmartPointerManager.getInstance(project).createSmartPsiElementPointer(originalElement)
       );
     } catch (RuntimeException ex) {
       // PsiPackage does not allow putUserData
@@ -302,7 +269,7 @@ public class JavaDocManager implements ProjectComponent {
 
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setRequestFocusIfNotLookupOrSearch(myProject)
+      .setRequestFocusIfNotLookupOrSearch(project)
       .setLookupAndSearchUpdater(new Condition<PsiElement>() {
         public boolean value(final PsiElement element) {
           if (myEditor != null){
@@ -317,7 +284,7 @@ public class JavaDocManager implements ProjectComponent {
           }
           return false;
         }
-      }, myProject)
+      }, project)
       .setForceHeavyweight(false)
       .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE)
       .setResizable(true)
@@ -344,7 +311,7 @@ public class JavaDocManager implements ProjectComponent {
     fetchDocInfo(getDefaultProvider(element), component);
 
     myDocInfoHintRef = new WeakReference<JBPopup>(hint);
-    myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+    myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
 
     return hint;
   }
@@ -436,7 +403,7 @@ public class JavaDocManager implements ProjectComponent {
       if (docInfoHint != null && docInfoHint.isVisible()){
         docInfoHint.cancel();
       }
-      Messages.showMessageDialog(myProject,
+      Messages.showMessageDialog(getProject(element),
                                  CodeInsightBundle.message("javadoc.documentation.not.found.message"),
                                  CodeInsightBundle.message("javadoc.documentation.not.found.title"),
                                  Messages.getErrorIcon());
@@ -473,11 +440,11 @@ public class JavaDocManager implements ProjectComponent {
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
 
-    return findUrlForVirtualFile(virtualFile, relPath);
+    return findUrlForVirtualFile(getProject(containingFile), virtualFile, relPath);
   }
 
-  private String findUrlForVirtualFile(final VirtualFile virtualFile, final String relPath) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+  private String findUrlForVirtualFile(final Project project, final VirtualFile virtualFile, final String relPath) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(virtualFile);
 
     if (module != null) {
@@ -513,7 +480,7 @@ public class JavaDocManager implements ProjectComponent {
     String qName = aPackage.getQualifiedName();
     qName = qName.replace('.', '/') +  '/' + PACKAGE_SUMMARY_FILE;
     for(PsiDirectory directory: aPackage.getDirectories()) {
-      String url = findUrlForVirtualFile(directory.getVirtualFile(), qName);
+      String url = findUrlForVirtualFile(getProject(aPackage),directory.getVirtualFile(), qName);
       if (url != null) {
         return url;
       }
@@ -531,7 +498,7 @@ public class JavaDocManager implements ProjectComponent {
 
     String qName = basePackage.getQualifiedName();
     qName = qName.replace('.', File.separatorChar);
-    String[] docPaths = JavaDocUtil.getDocPaths(myProject);
+    String[] docPaths = JavaDocUtil.getDocPaths(getProject(basePackage));
     for (String docPath : docPaths) {
       String url = docPath + File.separator + qName + File.separatorChar + link;
       File file = new File(url);
@@ -589,7 +556,7 @@ public class JavaDocManager implements ProjectComponent {
                 }
 
                 Dimension dimension = component.getPreferredSize();
-                final Dimension storedSize = DimensionService.getInstance().getSize(JAVADOC_LOCATION_AND_SIZE, myProject);
+                final Dimension storedSize = DimensionService.getInstance().getSize(JAVADOC_LOCATION_AND_SIZE, getProject(provider.getElement()));
                 if (storedSize != null) {
                   dimension = storedSize;
                 }
@@ -617,7 +584,7 @@ public class JavaDocManager implements ProjectComponent {
     else {
       final DocumentationProvider provider = getProviderFromElement(element);
       final JavaDocInfoGenerator javaDocInfoGenerator =
-        new JavaDocInfoGenerator(myProject, element, provider);
+        new JavaDocInfoGenerator(getProject(element), element, provider);
 
       if (myParameterInfoController != null) {
         final Object[] objects = myParameterInfoController.getSelectedElements();
@@ -630,7 +597,7 @@ public class JavaDocManager implements ProjectComponent {
 
             if (parameter != null) {
               if (sb == null) sb = new StringBuffer();
-              final String str2 = new JavaDocInfoGenerator(myProject, parameter, provider).generateDocInfo();
+              final String str2 = new JavaDocInfoGenerator(getProject(element), parameter, provider).generateDocInfo();
               sb.append(str2);
               sb.append("<br>");
             } else {
@@ -643,7 +610,7 @@ public class JavaDocManager implements ProjectComponent {
         }
       }
 
-      JavaDocExternalFilter docFilter = new JavaDocExternalFilter(myProject);
+      JavaDocExternalFilter docFilter = new JavaDocExternalFilter(getProject(element));
       String docURL = getExternalJavaDocUrl(element);
 
       if (element instanceof PsiCompiledElement) {
@@ -659,13 +626,12 @@ public class JavaDocManager implements ProjectComponent {
     }
   }
 
-  public DocumentationProvider getProviderFromElement(final PsiElement element) {
+  public static DocumentationProvider getProviderFromElement(final PsiElement element) {
     SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
     PsiElement originalElement = originalElementPointer != null ? originalElementPointer.getElement() : null;
     PsiFile containingFile = (originalElement!=null)?originalElement.getContainingFile() : (element!=null)?element.getContainingFile():null;
-    VirtualFile vfile = (containingFile!=null)?containingFile.getVirtualFile() : null;
 
-    return (vfile!=null)?getProvider(vfile.getFileType()):null;
+    return containingFile.getLanguage().getDocumentationProvider();
   }
 
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
@@ -697,7 +663,7 @@ public class JavaDocManager implements ProjectComponent {
 
   private void createElementLink(final @NonNls StringBuffer sb, final PsiElement element, final String str,final String str2) {
     sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
-    sb.append(JavaDocUtil.getReferenceText(myProject, element));
+    sb.append(JavaDocUtil.getReferenceText(getProject(element), element));
     sb.append("\">");
     sb.append(str);
     sb.append("</a>");
@@ -707,7 +673,7 @@ public class JavaDocManager implements ProjectComponent {
 
   void navigateByLink(final JavaDocInfoComponent component, String url) {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-    final PsiManager manager = PsiManager.getInstance(myProject);
+    final PsiManager manager = PsiManager.getInstance(getProject(component.getElement()));
     if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
       final String refText = url.substring(PSI_ELEMENT_PROTOCOL.length());
       final PsiElement targetElement = JavaDocUtil.findReferenceTarget(manager, refText, component.getElement());
@@ -730,7 +696,7 @@ public class JavaDocManager implements ProjectComponent {
           public String getJavaDoc() throws Exception {
             String url = getElementLocator(docUrl);
             if (url != null && JavaDocExternalFilter.isJavaDocURL(url)) {
-              String text = new JavaDocExternalFilter(myProject).getExternalDocInfo(url);
+              String text = new JavaDocExternalFilter(getProject(component.getElement())).getExternalDocInfo(url);
 
               if (text != null) {
                 return text;
@@ -795,7 +761,8 @@ public class JavaDocManager implements ProjectComponent {
     }
   }
 
-  public Project getProject() {
-    return myProject;
+  public Project getProject(final PsiElement element) {
+    assert myProject == element.getProject();
+    return element.getProject();
   }
 }

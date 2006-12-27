@@ -4,6 +4,7 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,7 @@ import com.intellij.psi.formatter.xml.HtmlPolicy;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
+import com.intellij.xml.util.documentation.XHtmlDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -61,5 +63,9 @@ public class XHTMLLanguage extends XMLLanguage {
 
   public FormattingModelBuilder getFormattingModelBuilder() {
     return myFormattingModelBuilder;
+  }
+
+  public DocumentationProvider getDocumentationProvider() {
+    return new XHtmlDocumentationProvider();
   }
 }
