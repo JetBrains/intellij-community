@@ -63,7 +63,7 @@ public class InspectionApplication {
       InspectionMain.printHelp();
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
         try {
