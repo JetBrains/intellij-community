@@ -137,11 +137,12 @@ public abstract class OrderEntryFix implements IntentionAction {
         if (orderEntry instanceof LibraryOrderEntry) {
           final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)orderEntry;
           final Library library = libraryEntry.getLibrary();
+          if (library == null) continue;
           VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
           if (files.length == 0) continue;
           final VirtualFile jar = files[0];
 
-          if (jar == null || !librariesToAdd.add(jar)) continue;
+          if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar)) continue;
           QuickFixAction.registerQuickFixAction(info, new OrderEntryFix(){
             @NotNull
             public String getText() {
@@ -158,7 +159,7 @@ public abstract class OrderEntryFix implements IntentionAction {
             }
 
             public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-              addJarToRoots(jar, currentModule);
+              addLibraryToRoots(libraryEntry, currentModule);
               new AddImportAction(project, reference, editor, aClass).execute();
             }
           });
@@ -167,7 +168,28 @@ public abstract class OrderEntryFix implements IntentionAction {
     }
   }
 
-  protected static void addJarToRoots(final VirtualFile jarFile, final Module module) {
+  private static void addLibraryToRoots(final LibraryOrderEntry libraryOrderEntry, final Module module) {
+    Library library = libraryOrderEntry.getLibrary();
+    if (library == null) return;
+    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+    final ModifiableRootModel rootModel = manager.getModifiableModel();
+
+    if (libraryOrderEntry.isModuleLevel()) {
+      final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
+      final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
+      VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+      for (VirtualFile jarFile : files) {
+        libraryModel.addRoot(jarFile, OrderRootType.CLASSES);
+      }
+      libraryModel.commit();
+    }
+    else {
+      rootModel.addLibraryEntry(library);
+    }
+    rootModel.commit();
+  }
+
+  private static void addJarToRoots(VirtualFile jarFile, final Module module) {
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = manager.getModifiableModel();
     final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
