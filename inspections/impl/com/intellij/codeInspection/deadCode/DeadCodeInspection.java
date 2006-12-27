@@ -11,12 +11,12 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -58,6 +58,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean ADD_APPLET_TO_ENTRIES = true;
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
+
+  public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
 
   private HashSet<RefElement> myProcessedSuspicious = null;
   private int myPhase;
@@ -162,8 +164,13 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       });
 
       gc.gridy++;
-      gc.weighty = 1;
       add(myNonJavaCheckbox, gc);
+
+      final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(ADDITIONAL_ANNOTATIONS, InspectionsBundle.message(
+        "inspections.dead.code.entry.points.annotations.list.title"));
+      gc.gridy++;
+      gc.weighty = 1;
+      add(listPanel, gc);
     }
   }
 
@@ -288,11 +295,21 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           if (getContext().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
           if (!refElement.isSuspicious()) return;
           refElement.accept(new RefVisitor() {
+            public void visitElement(final RefEntity elem) {
+              if (elem instanceof RefElement) {
+                final RefElement element = (RefElement)elem;
+                if (isEntryPoint(element)) {
+                  getEntryPointsManager().addEntryPoint(element, false);
+                }
+              }
+            }
+
             public void visitMethod(RefMethod method) {
               if (isAddMainsEnabled() && method.isAppMain()) {
                 getEntryPointsManager().addEntryPoint(method, false);
+              } else {
+                super.visitMethod(method);
               }
-              checkExtensions(method);              
             }
 
             public void visitClass(RefClass aClass) {
@@ -302,11 +319,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               }
               else if (
                 isAddAppletEnabled() && aClass.isApplet() ||
-                isAddServletEnabled() && aClass.isServlet() ||
-                RefUtil.isEntryPoint(aClass)) {
+                isAddServletEnabled() && aClass.isServlet()) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
               } else {
-                checkExtensions(aClass);
+                super.visitClass(aClass);
               }
             }
           });
@@ -356,13 +372,19 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     myPhase = 1;
   }
 
-  private void checkExtensions(final RefElement refElement) {
+  private boolean isEntryPoint(final RefElement owner) {
+    if (RefUtil.isEntryPoint(owner)) return true;
+    final PsiElement element = owner.getElement();
+    if (element instanceof PsiModifierListOwner
+        && SpecialAnnotationsUtil.isSpecialAnnotationPresent((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
+      return true;
+    }
     for (DeadCodeExtension extension : myExtensions) {
-      if (extension.isEntryPoint(refElement)) {
-        getEntryPointsManager().addEntryPoint(refElement, false);
-        break;
+      if (extension.isEntryPoint(owner)) {
+        return true;
       }
     }
+    return false;
   }
 
   private void addTestcaseEntries(PsiClass testClass) {
@@ -410,8 +432,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this) : new RefUnreachableFilter(this);
     final boolean[] requestAdded = new boolean[]{false};
 
-    final ImplicitUsageProvider[] implicitUsageProviders = ApplicationManager.getApplication().getComponents(ImplicitUsageProvider.class);
-
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
@@ -424,16 +444,16 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               PsiField psiField = refField.getElement();
               if (isSerializationImplicitlyUsedField(psiField)) {
                 getEntryPointsManager().addEntryPoint(refField, false);
-                return;
               }
-
-              getContext().enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
-                public boolean process(PsiReference psiReference) {
-                  getEntryPointsManager().addEntryPoint(refField, false);
-                  return false;
-                }
-              });
-              requestAdded[0] = true;
+              else {
+                getContext().enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
+                  public boolean process(PsiReference psiReference) {
+                    getEntryPointsManager().addEntryPoint(refField, false);
+                    return false;
+                  }
+                });
+                requestAdded[0] = true;
+              }
             }
 
             public void visitMethod(final RefMethod refMethod) {
@@ -445,16 +465,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                 PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
                 if (isSerializablePatternMethod(psiMethod)) {
                   getEntryPointsManager().addEntryPoint(refMethod, false);
-                  return;
                 }
-                for(ImplicitUsageProvider provider: implicitUsageProviders) {
-                  if (provider.isImplicitUsage(psiMethod)) {
-                    getEntryPointsManager().addEntryPoint(refMethod, false);
-                    return;
-                  }
-                }
-
-                if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
+                else if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
                   for (final RefMethod derivedMethod : refMethod.getDerivedMethods()) {
                     myProcessedSuspicious.add(derivedMethod);
                   }
@@ -467,10 +479,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
             public void visitClass(final RefClass refClass) {
               myProcessedSuspicious.add(refClass);
-              if (RefUtil.isEntryPoint(refClass)) {
-                getEntryPointsManager().addEntryPoint(refClass, false);
-              }
-              else if (!refClass.isAnonymous()) {
+              if (!refClass.isAnonymous()) {
                 getContext().enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
@@ -809,8 +818,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               }
               else if (
                 isAddAppletEnabled() && aClass.isApplet() ||
-                isAddServletEnabled() && aClass.isServlet() ||
-                RefUtil.isEntryPoint(aClass)) {
+                isAddServletEnabled() && aClass.isServlet()) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
               }
             }

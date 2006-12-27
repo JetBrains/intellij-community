@@ -39,7 +39,7 @@ import java.util.Set;
 
 public abstract class InspectionTool extends InspectionProfileEntry {
   private GlobalInspectionContextImpl myContext;
-  public static String ourOutputPath;
+  protected static String ourOutputPath;
 
   public void initialize(GlobalInspectionContextImpl context) {
     myContext = context;
@@ -222,6 +222,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     ourOutputPath = output;
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
   @Nullable
   public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
     return null;

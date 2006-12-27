@@ -18,10 +18,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ import java.util.List;
 public class RedundantThrows extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
-  private MyQuickFix myQuickFix;
+  private final BidirectionalMap<String, QuickFix> myQuickFixes = new BidirectionalMap<String, QuickFix>();
   @NonNls private static final String SHORT_NAME = "RedundantThrows";
 
   public boolean isGraphNeeded() {
@@ -65,8 +65,9 @@ public class RedundantThrows extends GlobalInspectionTool {
       ArrayList<ProblemDescriptor> problems = null;
 
       for (int i = 0; i < throwsList.length; i++) {
-        PsiClassType throwsType = throwsList[i];
-        PsiJavaCodeReferenceElement throwsRef = throwsRefs[i];
+        final PsiClassType throwsType = throwsList[i];
+        final String throwsClassName = throwsType.getClassName();
+        final PsiJavaCodeReferenceElement throwsRef = throwsRefs[i];
         if (ExceptionUtil.isUncheckedException(throwsType)) continue;
         if (declaredInRemotableMethod(psiMethod, throwsType)) continue;
 
@@ -77,15 +78,15 @@ public class RedundantThrows extends GlobalInspectionTool {
 
             if (refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(processor), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+                "inspection.redundant.throws.problem.descriptor", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
             }
             else if (!refMethod.getDerivedMethods().isEmpty()) {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(processor), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+                "inspection.redundant.throws.problem.descriptor1", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
             }
             else {
               problems.add(manager.createProblemDescriptor(throwsRef, InspectionsBundle.message(
-                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(processor), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+                "inspection.redundant.throws.problem.descriptor2", "<code>#ref</code>"), getFix(processor, throwsClassName), ProblemHighlightType.LIKE_UNUSED_SYMBOL));
             }
           }
         }
@@ -146,24 +147,35 @@ public class RedundantThrows extends GlobalInspectionTool {
     return SHORT_NAME;
   }
 
-  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor) {
-    if (myQuickFix == null) {
-      myQuickFix = new MyQuickFix(processor);
+  private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final String hint) {
+    QuickFix fix = myQuickFixes.get(hint);
+    if (fix == null) {
+      fix = new MyQuickFix(processor, hint);
+      myQuickFixes.put(hint, fix);
     }
-    return myQuickFix;
+    return (LocalQuickFix)fix;
   }
 
 
   @Nullable
   public QuickFix getQuickFix(String hint) {
-    return getFix(null);
+    return getFix(null, hint);
+  }
+
+  @Nullable
+  public String getHint(final QuickFix fix) {
+    final List<String> hints = myQuickFixes.getKeysByValue(fix);
+    LOG.assertTrue(hints != null && hints.size() == 1);
+    return hints.get(0);
   }
 
   private static class MyQuickFix implements LocalQuickFix {
     private ProblemDescriptionsProcessor myProcessor;
+    private String myHint;
 
-    public MyQuickFix(final ProblemDescriptionsProcessor processor) {
+    public MyQuickFix(final ProblemDescriptionsProcessor processor, final String hint) {
       myProcessor = processor;
+      myHint = hint;
     }
 
     @NotNull
@@ -194,7 +206,7 @@ public class RedundantThrows extends GlobalInspectionTool {
       return getName();
     }
 
-    private static void removeExcessiveThrows(RefMethod refMethod, final PsiModifierListOwner element, final ProblemDescriptor[] problems) {
+    private void removeExcessiveThrows(RefMethod refMethod, final PsiModifierListOwner element, final ProblemDescriptor[] problems) {
       try {
         final Project project = element.getProject();
         final PsiMethod psiMethod = (PsiMethod)element;
@@ -206,13 +218,12 @@ public class RedundantThrows extends GlobalInspectionTool {
             final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)psiElement;
             final PsiType psiType = psiManager.getElementFactory().createType(classRef);
             removeException(refMethod, psiType, refsToDelete, psiMethod);
-          } else { //try to find reference by name
-            final String[] descriptionWords = problem.getDescriptionTemplate().split("[ ']");
+          } else {
             final PsiReferenceList throwsList = psiMethod.getThrowsList();
             final PsiClassType[] classTypes = throwsList.getReferencedTypes();
             for (PsiClassType classType : classTypes) {
               final String text = classType.getClassName();
-              if (ArrayUtil.find(descriptionWords, text) != -1) {
+              if (Comparing.strEqual(myHint, text)) {
                 removeException(refMethod, classType, refsToDelete, psiMethod);
                 break;
               }

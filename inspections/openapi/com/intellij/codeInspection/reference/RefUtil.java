@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.Extensions;
@@ -34,7 +35,7 @@ import java.util.List;
  * @since 6.0
  */
 public abstract class RefUtil implements ApplicationComponent {
-  public static RefUtil getInstance(){
+  public static RefUtil getInstance() {
     return ApplicationManager.getApplication().getComponent(RefUtil.class);
   }
 
@@ -52,9 +53,11 @@ public abstract class RefUtil implements ApplicationComponent {
 
   public abstract String getAccessModifier(PsiModifierListOwner psiElement);
 
-  public abstract @Nullable RefClass getOwnerClass(RefManager refManager, PsiElement psiElement);
+  @Nullable
+  public abstract RefClass getOwnerClass(RefManager refManager, PsiElement psiElement);
 
-  public abstract @Nullable RefClass getOwnerClass(RefElement refElement);
+  @Nullable
+  public abstract RefClass getOwnerClass(RefElement refElement);
 
   public abstract int compareAccess(String a1, String a2);
 
@@ -75,6 +78,11 @@ public abstract class RefUtil implements ApplicationComponent {
       if (((EntryPoint)entryPoint).accept(refElement)) {
         return true;
       }
+    }
+    final PsiElement element = refElement.getElement();
+    final ImplicitUsageProvider[] implicitUsageProviders = ApplicationManager.getApplication().getComponents(ImplicitUsageProvider.class);
+    for (ImplicitUsageProvider provider : implicitUsageProviders) {
+      if (provider.isImplicitUsage(element)) return true;
     }
     return false;
   }
