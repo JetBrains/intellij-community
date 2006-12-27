@@ -16,6 +16,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -469,7 +470,8 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public void readExternal(final Element parentNode) throws InvalidDataException {
-    if (SwingUtilities.isEventDispatchThread()) {
+    final Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode() && !application.isHeadlessEnvironment()) {
       myStartupManager.registerPostStartupActivity(new Runnable() {
         @SuppressWarnings({"HardCodedStringLiteral"}) public void run() {
           PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
