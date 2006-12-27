@@ -25,22 +25,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CharArrayUtil {
-  private static final int REGION_MATCHES_THRESHOLD = 50;
+  private static final int GET_CHARS_THRESHOLD = 10;
 
   public static void getChars(CharSequence src, char[] dst, int dstOffset) {
-    if (src instanceof CharSequenceBackedByArray) {
-      ((CharSequenceBackedByArray)src).getChars(dst, dstOffset);
-    }
-    else if (src instanceof StringBuffer) {
-      ((StringBuffer)src).getChars(0, src.length(), dst, dstOffset);
-    }
-    else if (src instanceof String) {
-      ((String)src).getChars(0, src.length(), dst, dstOffset);
-    }
-    else {
-      for (int i = 0; i < src.length(); i++) {
-        dst[i + dstOffset] = src.charAt(i);
+    final int len = src.length();
+
+    if (len >= GET_CHARS_THRESHOLD) {
+      if (src instanceof String) {
+        ((String)src).getChars(0, len, dst, dstOffset);
+        return;
+      } else if (src instanceof CharBuffer) {
+        final CharBuffer buffer = ((CharBuffer)src);
+        final int i = buffer.position();
+        buffer.get(dst, dstOffset, len);
+        buffer.position(i);
+        return;
+      } else
+      if (src instanceof CharSequenceBackedByArray) {
+        ((CharSequenceBackedByArray)src).getChars(dst, dstOffset);
+        return;
       }
+      else if (src instanceof StringBuffer) {
+        ((StringBuffer)src).getChars(0, len, dst, dstOffset);
+        return;
+      } else {
+        int a = 1;
+      }
+    }
+
+    for (int i = 0; i < len; i++) {
+      dst[i + dstOffset] = src.charAt(i);
     }
   }
 

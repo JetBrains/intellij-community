@@ -7,13 +7,12 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
   private volatile int myState = 0; // 16 bit for type, 15 bit for state and 1 bit for parentFlag
-  private static final int TEXT_MATCHES_THRESHOLD = 40;
+  private static final int TEXT_MATCHES_THRESHOLD = 5;
 
   public abstract char charAt(int position);
 

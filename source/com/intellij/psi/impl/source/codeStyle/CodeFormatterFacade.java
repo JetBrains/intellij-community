@@ -12,9 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
@@ -46,19 +44,31 @@ public class CodeFormatterFacade implements Constants {
     myCommentFormatter = new CommentFormatter(helper.getProject());
   }
 
-  private TextRange formatComments(ASTNode element, int startOffset, int endOffset) {
-    TextRange range = element.getTextRange();
-    TextRange result = new TextRange(startOffset, endOffset);
-    if (range.getStartOffset() >= startOffset && range.getEndOffset() <= endOffset) {
-      myCommentFormatter.process(element);
-      final TextRange newRange = element.getTextRange();
-      result = new TextRange(startOffset, endOffset + newRange.getLength() - range.getLength());
+  private TextRange formatComments(ASTNode element, final TextRange range) {
+    if (!mySettings.ENABLE_JAVADOC_FORMATTING || element.getPsi().getContainingFile().getLanguage() != StdLanguages.JAVA) {
+      return range;
+    }
+    return formatCommentsInner(element, range);
+  }
+
+  private TextRange formatCommentsInner(ASTNode element, final TextRange range) {
+    TextRange result = range;
+
+    final PsiElement psi = element.getPsi();
+    if (psi instanceof PsiDocCommentOwner) {
+      final TextRange elementRange = element.getTextRange();
+
+      if (range.contains(elementRange)) {
+        myCommentFormatter.process(element);
+        final TextRange newRange = element.getTextRange();
+        result = new TextRange(range.getStartOffset(), range.getEndOffset() + newRange.getLength() - elementRange.getLength());
+      }
     }
 
     if (element instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(element);
       for (ASTNode elem = element.getFirstChildNode(); elem != null; elem = elem.getTreeNext()) {
-        result = formatComments(elem, result.getStartOffset(), result.getEndOffset());
+        result = formatCommentsInner(elem, result);
       }
     }
     return result;
@@ -132,7 +142,7 @@ public class CodeFormatterFacade implements Constants {
     final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
 
     if (builder != null) {
-      TextRange range = formatComments(element, startOffset, endOffset);
+      TextRange range = formatComments(element, new TextRange(startOffset, endOffset));
       //final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
       final PsiFile containingFile = psiElement.getContainingFile();
       final FormattingModel model = builder.createModel(psiElement, mySettings);
@@ -167,7 +177,7 @@ public class CodeFormatterFacade implements Constants {
     if (builder != null) {
       if (file.getTextLength() > 0) {
         try {
-          TextRange range = formatComments(file.getNode(), startOffset, endOffset);
+          TextRange range = formatComments(file.getNode(), new TextRange(startOffset, endOffset));
           final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
           component.doPostponedFormatting(file.getViewProvider());
           FormattingModel originalModel = builder.createModel(file, mySettings);
@@ -194,7 +204,7 @@ public class CodeFormatterFacade implements Constants {
     if (builder != null) {
       if (file.getTextLength() > 0) {
         try {
-          TextRange range = formatComments(file.getNode(), startOffset, endOffset);
+          TextRange range = formatComments(file.getNode(), new TextRange(startOffset, endOffset));
           FormattingModel originalModel = builder.createModel(file, mySettings);
           Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),

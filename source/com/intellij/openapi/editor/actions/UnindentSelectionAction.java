@@ -65,8 +65,6 @@ public class UnindentSelectionAction extends EditorAction {
     final FileType fileType = vFile == null ? null : FileTypeManager.getInstance().getFileTypeByFile(vFile);
 
     int blockIndent = CodeStyleSettingsManager.getSettings(project).getIndentSize(fileType);
-    for(int i=startIndex; i<=endIndex; i++) {
-      EditorActionUtil.indentLine(project, editor, i, -blockIndent);
-    }
+    IndentSelectionAction.doIndent(endIndex, startIndex, document, project, editor, -blockIndent);
   }
 }

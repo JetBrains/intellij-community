@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -59,11 +60,30 @@ public class IndentSelectionAction extends EditorAction {
     if(endIndex == -1) {
       endIndex = document.getLineCount() - 1;
     }
+    
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
     final FileType fileType = vFile == null ? null : FileTypeManager.getInstance().getFileTypeByFile(vFile);
     int blockIndent = CodeStyleSettingsManager.getSettings(project).getIndentSize(fileType);
-    for(int i=startIndex; i<=endIndex; i++) {
-      EditorActionUtil.indentLine(project, editor, i, blockIndent);
+    doIndent(endIndex, startIndex, document, project, editor, blockIndent);
+  }
+
+  static void doIndent(final int endIndex, final int startIndex, final Document document, final Project project, final Editor editor,
+                               final int blockIndent) {
+    boolean bulkMode = endIndex - startIndex > 50;
+    if (bulkMode) ((DocumentEx)document).setInBulkUpdate(true);
+
+    try {
+      for(int i=startIndex; i<=endIndex; i++) {
+        EditorActionUtil.indentLine(project, editor, i, blockIndent);
+
+        if (i == endIndex && bulkMode) {
+          ((DocumentEx)document).setInBulkUpdate(false);
+          bulkMode = false;
+        }
+      }
+    }
+    finally {
+      if (bulkMode) ((DocumentEx)document).setInBulkUpdate(false);
     }
   }
 }

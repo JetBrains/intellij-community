@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
@@ -14,7 +15,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ArrayUtil;
 
 import java.util.HashMap;
@@ -71,6 +71,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public HighlighterIterator createIterator(int startOffset) {
+    final Document document = getDocument();
+    assert !(document instanceof DocumentEx) || !((DocumentEx)document).isInBulkUpdate();
     return new HighlighterIteratorImpl(mySegments, startOffset);
   }
 
@@ -88,7 +90,12 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public synchronized void documentChanged(DocumentEvent e) {
-    Document document = e.getDocument();
+    final Document document = e.getDocument();
+
+    if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
+      mySegments.removeAll();
+      return;
+    }
 
     if(mySegments.getSegmentCount() == 0) {
       setText(document.getCharsSequence());

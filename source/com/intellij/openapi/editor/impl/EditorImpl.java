@@ -76,6 +76,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private EditorComponentImpl myEditorComponent;
   private EditorGutterComponentImpl myGutterComponent;
 
+  static {
+    ComplementaryFontsRegistry registry; // load costly font info 
+  }
 
   private CommandProcessor myCommandProcessor;
   private MyScrollBar myVerticalScrollBar;
@@ -850,7 +853,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void repaint(int startOffset, int endOffset) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myScrollPane == null) {
+    if (myScrollPane == null || myDocument.isInBulkUpdate()) {
       return;
     }
     if (endOffset > myDocument.getTextLength()) {
@@ -888,9 +891,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void beforeChangedUpdate(DocumentEvent e) {
-    Rectangle viewRect = getScrollingModel().getVisibleArea();
-    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-    myCaretUpdateVShift = pos.y - viewRect.y;
+    if (!myDocument.isInBulkUpdate()) {
+      Rectangle viewRect = getScrollingModel().getVisibleArea();
+      Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
+      myCaretUpdateVShift = pos.y - viewRect.y;
+    }
     mySizeContainer.beforeChange(e);
   }
 
@@ -926,9 +931,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
-    Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
-    int scrollOffset = caretLocation.y - myCaretUpdateVShift;
-    getScrollingModel().scrollVertically(scrollOffset);
+    if (!myDocument.isInBulkUpdate()) {
+      Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
+      int scrollOffset = caretLocation.y - myCaretUpdateVShift;
+      getScrollingModel().scrollVertically(scrollOffset);
+    }
   }
 
   private static int countLineFeeds(CharSequence c) {
@@ -1608,7 +1615,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int drawTabbedString(Graphics g, char[] text, int start, int end, int x, int y, Color effectColor,
                                EffectType effectType, int fontType, Color fontColor, final Rectangle clip) {
     int xStart = x;
-    CharSequence original = new CharArrayCharSequence(text, start, end); // TODO optimize getTextSegmentWidth parameter type to char[].
 
     for (int i = start; i < end; i++) {
       if (text[i] != '\t') continue;
@@ -1624,7 +1630,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     x = drawTablessString(text, start, end, g, x, y, fontType, fontColor, clip);
 
     if (effectColor != null) {
-      Color savedColor = g.getColor();
+      final CharSequence original = new CharArrayCharSequence(text, start, end); // TODO optimize getTextSegmentWidth parameter type to char[].
+      final Color savedColor = g.getColor();
 
       int w = getTextSegmentWidth(original, xStart, fontType);
 //      myBorderEffect.flushIfCantProlong(g, this, effectType, effectColor);
@@ -3838,8 +3845,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public void changedUpdate(DocumentEvent e) {
-      int startLine = offsetToVisualPosition(e.getOffset()).line;
-      int newEndLine = offsetToVisualPosition(e.getOffset() + e.getNewLength()).line;
+      int startLine = e.getOldLength() == 0 ? myOldEndLine:offsetToVisualPosition(e.getOffset()).line;
+      int newEndLine = e.getNewLength() == 0 ? startLine:offsetToVisualPosition(e.getOffset() + e.getNewLength()).line;
       int oldEndLine = myOldEndLine;
 
       if (myLineWidths.size() == 0) {
