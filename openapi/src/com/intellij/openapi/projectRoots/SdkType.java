@@ -17,8 +17,8 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -58,6 +58,12 @@ public abstract class SdkType {
 
   @Nullable
   public abstract String getRtLibraryPath(Sdk sdk);
+
+  @SuppressWarnings({"MethodMayBeStatic"})
+  @Nullable
+  public Sdk getEncapsulatedSdk(Sdk sdk) {
+    return null;
+  }
 
   public abstract void saveAdditionalData(SdkAdditionalData additionalData, Element additional);
 
