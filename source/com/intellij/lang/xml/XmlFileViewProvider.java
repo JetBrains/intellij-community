@@ -26,7 +26,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
 
   public Set<Language> getRelevantLanguages() {
     if (myRelevantLanguages != null) return myRelevantLanguages;
-    List<Language> relevantLanguages = new ArrayList<Language>();
+    List<Language> relevantLanguages = new ArrayList<Language>(1);
     relevantLanguages.add(myLanguage);
     relevantLanguages.addAll(Arrays.asList(myLanguage.getLanguageExtensionsForFile(getPsi(myLanguage))));
     return myRelevantLanguages = new LinkedHashSet<Language>(relevantLanguages);
