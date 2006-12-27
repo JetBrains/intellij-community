@@ -4,9 +4,6 @@
 
 package com.intellij.facet;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
-
 /**
  * @author nik
  */
