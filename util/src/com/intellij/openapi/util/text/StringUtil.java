@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,31 +53,33 @@ public class StringUtil {
     }
   }
 
-  public static String replace(@NotNull String text, @NotNull String oldS, @Nullable String newS, boolean ignoreCase) {
+  public static String replace(final @NotNull String text, final @NotNull String oldS, final @Nullable String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 
-    String text1 = ignoreCase ? text.toLowerCase() : text;
-    String oldS1 = ignoreCase ? oldS.toLowerCase() : oldS;
-    StringBuffer newText = null;
-    int i = 0;
-    while (i < text1.length()) {
-      int i1 = text1.indexOf(oldS1, i);
-      if (i1 < 0) {
-        if (i == 0) return text;
-        newText.append(text, i, text.length());
-        break;
-      }
-      else {
-        if (newS == null) return null;
-        if (newText == null) {
-          newText = new StringBuffer();
+    final String text1 = ignoreCase ? text.toLowerCase() : text;
+    final String oldS1 = ignoreCase ? oldS.toLowerCase() : oldS;
+    final StringBuilder newText = StringBuilderSpinAllocator.alloc();
+    try {
+      int i = 0;
+      while (i < text1.length()) {
+        int i1 = text1.indexOf(oldS1, i);
+        if (i1 < 0) {
+          if (i == 0) return text;
+          newText.append(text, i, text.length());
+          break;
         }
-        newText.append(text, i, i1);
-        newText.append(newS);
-        i = i1 + oldS.length();
+        else {
+          if (newS == null) return null;
+          newText.append(text, i, i1);
+          newText.append(newS);
+          i = i1 + oldS.length();
+        }
       }
+      return newText.toString();
     }
-    return newText != null ? newText.toString() : "";
+    finally {
+      StringBuilderSpinAllocator.dispose(newText);
+    }
   }
 
   @NotNull public static String getShortName(@NotNull String fqName) {
