@@ -3,8 +3,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Template;
@@ -719,7 +719,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
     if (existingRParenthOffset >= 0){
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      TextRange range = getRangeToCheckParensBalance(myFile, myStartOffset);
+      TextRange range = getRangeToCheckParensBalance(myFile, myDocument, myStartOffset);
       int balance = calcParensBalance(myDocument, highlighter, range.getStartOffset(), range.getEndOffset());
       if (balance > 0){
         existingRParenthOffset = -1;
@@ -805,43 +805,17 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     return caretOffset;
   }
 
-  private static TextRange getRangeToCheckParensBalance(PsiFile file, int startOffset){
+  private static TextRange getRangeToCheckParensBalance(PsiFile file, final Document document, int startOffset){
     PsiElement element = file.findElementAt(startOffset);
-    PsiElement prevElement = element;
-    element = element.getParent();
-    while(true){
-      if (!(element instanceof PsiExpression) &&
-          !(element instanceof PsiExpressionList) &&
-          !(element instanceof PsiJavaCodeReferenceElement) &&
-          !(element instanceof PsiTypeElement)
-      ){
-        if (element instanceof PsiIfStatement){
-          PsiIfStatement ifStatement = (PsiIfStatement)element;
-          int start = ifStatement.getTextRange().getStartOffset();
-          PsiStatement then = ifStatement.getThenBranch();
-          int end = then != null ? then.getTextRange().getStartOffset() : ifStatement.getTextRange().getEndOffset();
-          return new TextRange(start, end);
-        }
-        else { //TODO: other statements with '()'
-          break;
-        }
-      }
+    while(element != null){
+      if (element instanceof PsiStatement) break;
 
-      prevElement = element;
       element = element.getParent();
     }
-    final int start = prevElement.getTextRange().getStartOffset();
-    int end = prevElement.getTextRange().getEndOffset();
-    PsiElement errorElement = prevElement.getNextSibling();
 
-    while(errorElement instanceof PsiErrorElement){
-      end += errorElement.getTextLength();
-      while(errorElement.getNextSibling() == null && errorElement.getParent() != null)
-        errorElement = errorElement.getParent();
+    if (element == null) return new TextRange(0, document.getTextLength());
 
-      errorElement = errorElement.getNextSibling();
-    }
-    return new TextRange(start, end);
+    return element.getTextRange();
   }
 
   private static int calcParensBalance(Document document, EditorHighlighter highlighter, int rangeStart, int rangeEnd){
