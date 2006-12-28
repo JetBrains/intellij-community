@@ -960,7 +960,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     if (!processFile(file, processor)) return false;
 
     if (file.isDirectory()) {
-      for (final VirtualFileImpl unaccounted : myUnaccountedFiles.values()) {
+      final Collection<VirtualFile> unaccountedFiles = new HashSet<VirtualFile>(myUnaccountedFiles.values());
+      for (final VirtualFile unaccounted : unaccountedFiles) {
         if (unaccounted != null && VfsUtil.isAncestor(file, unaccounted, true)) {
           if (!processFile(unaccounted, processor)) return false;
         }
