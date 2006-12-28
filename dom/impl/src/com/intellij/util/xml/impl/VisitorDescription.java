@@ -4,7 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.ReflectionCache;
-import com.intellij.util.containers.ClassMap;
+import com.intellij.util.containers.ConcurrentClassMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomReflectionUtil;
@@ -17,7 +17,7 @@ import java.lang.reflect.Method;
  */
 public class VisitorDescription {
   private final Class<? extends DomElementVisitor> myVisitorClass;
-  private final ClassMap<Method> myMethods = new ClassMap<Method>();
+  private final ConcurrentClassMap<Method> myMethods = new ConcurrentClassMap<Method>();
   @NonNls private static final String VISIT = "visit";
 
   public VisitorDescription(final Class<? extends DomElementVisitor> visitorClass) {
