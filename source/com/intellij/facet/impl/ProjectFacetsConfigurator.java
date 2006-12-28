@@ -57,7 +57,10 @@ public class ProjectFacetsConfigurator {
   public void addFacetInfos(final Module module) {
     final Facet[] facets = getFacetModel(module).getSortedFacets();
     for (Facet facet : facets) {
-      addFacetInfo(facet);
+      //todo[nik] remove later
+      if (FacetTypeRegistry.getInstance().findFacetType(facet.getTypeId()) != null) {
+        addFacetInfo(facet);
+      }
     }
   }
 

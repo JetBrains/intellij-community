@@ -33,7 +33,10 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
 
     final FacetModel facetModel = getFacetConfigurator().getFacetModel(module);
     for (Facet facet : facetModel.getSortedFacets()) {
-      addFacetNode(facet, moduleNode);
+      //todo[nik] remove later
+      if (FacetTypeRegistry.getInstance().findFacetType(facet.getTypeId()) != null) {
+        addFacetNode(facet, moduleNode);
+      }
     }
   }
 
