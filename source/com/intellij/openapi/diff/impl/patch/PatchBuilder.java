@@ -19,9 +19,10 @@ import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.VcsException;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -32,11 +33,18 @@ import java.util.List;
 public class PatchBuilder {
   private static final int CONTEXT_LINES = 3;
 
+  private PatchBuilder() {
+  }
+
   public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath) throws VcsException {
     List<FilePatch> result = new ArrayList<FilePatch>();
     for(Change c: changes) {
       final ContentRevision beforeRevision = c.getBeforeRevision();
       final ContentRevision afterRevision = c.getAfterRevision();
+      if (beforeRevision instanceof BinaryContentRevision || afterRevision instanceof BinaryContentRevision) {
+        continue;
+      }
+
       if (beforeRevision != null && beforeRevision.getFile().isDirectory()) {
         continue;
       }

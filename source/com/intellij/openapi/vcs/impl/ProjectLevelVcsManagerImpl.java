@@ -56,9 +56,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler;
@@ -318,6 +316,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     final Change change = ChangeListManager.getInstance(myProject).getChange(file);
     if (change != null) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision instanceof BinaryContentRevision) {
+        return null;
+      }
       if (beforeRevision != null) {
         String content;
         try {

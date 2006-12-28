@@ -20,10 +20,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -54,6 +51,9 @@ public class ShowDiffAction extends AnAction {
     int index = 0;
     if (changes.length == 1) {
       final Change selectedChange = changes[0];
+      if (checkNotifyBinaryDiff(selectedChange)) {
+        return;
+      }
       ChangeList changeList = ChangeListManager.getInstance(project).getChangeList(selectedChange);
       if (changeList != null) {
         final ArrayList<Change> changesInList = new ArrayList<Change>(changeList.getChanges());
@@ -179,7 +179,7 @@ public class ShowDiffAction extends AnAction {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        diffReq.setContents(createContent(project, bRev), createContent(project, aRev));
+        diffReq.setContents(createContent(project, (ContentRevision) bRev), createContent(project, (ContentRevision) aRev));
       }
     }, "Getting revisions content", false, project);
 
@@ -277,5 +277,27 @@ public class ShowDiffAction extends AnAction {
                             : new SimpleContent(revisionContent, revision.getFile().getFileType());
     content.setReadOnly(true);
     return content;
+  }
+
+  private static boolean checkNotifyBinaryDiff(final Change selectedChange) {
+    final ContentRevision beforeRevision = selectedChange.getBeforeRevision();
+    final ContentRevision afterRevision = selectedChange.getAfterRevision();
+    if (beforeRevision instanceof BinaryContentRevision &&
+        afterRevision instanceof BinaryContentRevision) {
+      try {
+        byte[] beforeContent = ((BinaryContentRevision)beforeRevision).getBinaryContent();
+        byte[] afterContent = ((BinaryContentRevision)afterRevision).getBinaryContent();
+        if (Arrays.equals(beforeContent, afterContent)) {
+          Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.are.identical"), VcsBundle.message("message.title.diff"));
+        } else {
+          Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.are.different"), VcsBundle.message("message.title.diff"));
+        }
+      }
+      catch (VcsException e) {
+        Messages.showInfoMessage(e.getMessage(), VcsBundle.message("message.title.diff"));
+      }
+      return true;
+    }
+    return false;
   }
 }

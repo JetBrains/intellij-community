@@ -42,4 +42,11 @@ public class CurrentContentRevision implements ContentRevision {
   public VcsRevisionNumber getRevisionNumber() {
     return VcsRevisionNumber.NULL;
   }
+
+  public static ContentRevision create(FilePath file) {
+    if (file.getFileType().isBinary()) {
+      return new CurrentBinaryContentRevision(file);
+    }
+    return new CurrentContentRevision(file);
+  }
 }
