@@ -250,7 +250,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     @Nullable
-    public String getContent() {
+    public String getContent() throws VcsException {
       if (myContent == null) {
         try {
           VirtualFile virtualFile = myPath.getVirtualFile();
@@ -271,7 +271,10 @@ public class CvsChangeProvider implements ChangeProvider {
             myContent = fileBytes == null ? null : new String(fileBytes, myPath.getCharset().name());
           }
         }
-        catch (Exception e) {
+        catch (CannotFindCvsRootException e) {
+          myContent = null;
+        }
+        catch (UnsupportedEncodingException e) {
           myContent = null;
         }
       }

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -96,7 +97,7 @@ public class ShelvedChange {
     }
 
     @Nullable
-    public String getContent() {
+    public String getContent() throws VcsException {
       try {
         List<FilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
         for(FilePatch patch: filePatches) {
@@ -114,7 +115,7 @@ public class ShelvedChange {
         }
       }
       catch (Exception e) {
-        return null;
+        throw new VcsException(e);
       }
 
       return null;

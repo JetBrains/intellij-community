@@ -52,14 +52,9 @@ public class CvsContentRevision implements ContentRevision {
   }
 
   @Nullable
-  public String getContent() {
+  public String getContent() throws VcsException {
     if (myContent == null) {
-      try {
-        myContent = loadContent();
-      }
-      catch(VcsException ex) {
-        myContent = null;
-      }
+      myContent = loadContent();
     }
     return myContent;
   }

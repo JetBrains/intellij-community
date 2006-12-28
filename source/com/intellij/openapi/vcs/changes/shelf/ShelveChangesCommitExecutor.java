@@ -79,7 +79,7 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
       try {
         ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage);
       }
-      catch (final IOException ex) {
+      catch (final Exception ex) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());

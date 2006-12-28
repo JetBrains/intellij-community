@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -100,7 +101,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return Collections.unmodifiableList(myShelvedChangeListDatas);
   }
 
-  public void shelveChanges(final Collection<Change> changes, final String commitMessage) throws IOException {
+  public void shelveChanges(final Collection<Change> changes, final String commitMessage) throws IOException, VcsException {
     File patchPath = getPatchPath(commitMessage);
     Writer writer;
     try {

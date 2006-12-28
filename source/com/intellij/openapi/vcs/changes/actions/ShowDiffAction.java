@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -263,7 +264,14 @@ public class ShowDiffAction extends AnAction {
       return vFile != null ? new FileContent(project, vFile) : new SimpleContent("");
     }
 
-    final String revisionContent = revision.getContent();
+    String revisionContent;
+    try {
+      revisionContent = revision.getContent();
+    }
+    catch(VcsException ex) {
+      // TODO: correct exception handling
+      revisionContent = null;           
+    }
     SimpleContent content = revisionContent == null
                             ? new SimpleContent("")
                             : new SimpleContent(revisionContent, revision.getFile().getFileType());

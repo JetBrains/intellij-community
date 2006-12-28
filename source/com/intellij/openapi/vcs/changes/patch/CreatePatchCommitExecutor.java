@@ -142,7 +142,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
           }
         });
       }
-      catch (final IOException ex) {
+      catch (final Exception ex) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());

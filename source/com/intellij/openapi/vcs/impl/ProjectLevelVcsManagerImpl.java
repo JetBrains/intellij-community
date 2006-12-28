@@ -319,7 +319,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (change != null) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
       if (beforeRevision != null) {
-        final String content = beforeRevision.getContent();
+        String content;
+        try {
+          content = beforeRevision.getContent();
+        }
+        catch(VcsException ex) {
+          content = null;
+        }
         if (content == null) myHaveEmptyContentRevisions = true;
         return content;
       }

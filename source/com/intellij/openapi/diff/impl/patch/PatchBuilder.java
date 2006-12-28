@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.VcsException;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ import java.util.List;
 public class PatchBuilder {
   private static final int CONTEXT_LINES = 3;
 
-  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath) {
+  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath) throws VcsException {
     List<FilePatch> result = new ArrayList<FilePatch>();
     for(Change c: changes) {
       final ContentRevision beforeRevision = c.getBeforeRevision();
@@ -114,7 +115,7 @@ public class PatchBuilder {
     hunk.addLine(patchLine);
   }
 
-  private static FilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) {
+  private static FilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) throws VcsException {
     String[] lines = DiffUtil.convertToLines(afterRevision.getContent());
     FilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
@@ -125,7 +126,7 @@ public class PatchBuilder {
     return result;
   }
 
-  private static FilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision) {
+  private static FilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision) throws VcsException {
     String[] lines = DiffUtil.convertToLines(beforeRevision.getContent());
     FilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
