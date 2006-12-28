@@ -28,6 +28,7 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -211,13 +212,13 @@ public class PackageUtil {
             }
           });
         }
+        catch(IncorrectOperationException e) {
+          throw e;
+        }
+        catch(IOException e) {
+          throw new IncorrectOperationException(e.toString(), e);
+        }
         catch (Exception e) {
-          if (e instanceof IncorrectOperationException) {
-            throw (IncorrectOperationException)e;
-          }
-          if (e instanceof RuntimeException) {
-            throw (RuntimeException)e;
-          }
           LOG.error(e);
         }
       }
