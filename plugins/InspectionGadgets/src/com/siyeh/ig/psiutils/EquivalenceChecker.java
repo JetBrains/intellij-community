@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -727,6 +728,25 @@ public class EquivalenceChecker{
     private static boolean referenceExpressionsAreEquivalent(
             PsiReferenceExpression referenceExpression1,
             PsiReferenceExpression referenceExpression2) {
+        final PsiElement element1 = referenceExpression1.resolve();
+        final PsiElement element2 = referenceExpression2.resolve();
+        if (element1 != null) {
+            if (!element1.equals(element2)) {
+                return false;
+            }
+        } else {
+            return element2 == null;
+        }
+        if (element1 instanceof PsiMember ) {
+            final PsiMember member1 = (PsiMember)element1;
+            if (member1.hasModifierProperty(PsiModifier.STATIC)) {
+                return true;
+            } else if (member1 instanceof PsiClass) {
+                return true;
+            }
+        } else {
+            return true;
+        }
         final PsiExpression qualifier1 =
                 referenceExpression1.getQualifierExpression();
         final PsiExpression qualifier2 =
@@ -745,36 +765,6 @@ public class EquivalenceChecker{
                             qualifier2 instanceof PsiSuperExpression)) {
                 return false;
             }
-        }
-        final PsiElement element1 = referenceExpression1.resolve();
-        final PsiElement element2 = referenceExpression2.resolve();
-        if (element1 instanceof PsiField) {
-            if (!(element2 instanceof PsiField)) {
-                return false;
-            }
-            final PsiField field1 = (PsiField)element1;
-            final PsiField field2 = (PsiField)element2;
-            final String name1 = field1.getName();
-            final String name2 = field2.getName();
-            if (name1 == null) {
-                if (name2 != null) {
-                    return false;
-                }
-            } else if (name2 == null) {
-                return false;
-            } else if (!name1.equals(name2)) {
-                return false;
-            }
-            final PsiClass containingClass1 = field1.getContainingClass();
-            final PsiClass containingClass2 = field2.getContainingClass();
-            final String qualifiedName1 = containingClass1.getQualifiedName();
-            final String qualifiedName2 = containingClass2.getQualifiedName();
-            if (qualifiedName1 == null) {
-                return qualifiedName2 == null;
-            } else if (qualifiedName2 == null) {
-                return false;
-            }
-            return qualifiedName1.equals(qualifiedName2);
         }
         final String text1 = referenceExpression1.getText();
         final String text2 = referenceExpression2.getText();

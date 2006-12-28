@@ -28,8 +28,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public class MissingOverrideAnnotationInspection extends MethodInspection {
 
     public String getID() {
