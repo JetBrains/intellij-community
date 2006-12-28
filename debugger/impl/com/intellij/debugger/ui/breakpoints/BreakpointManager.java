@@ -471,7 +471,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
   public void readExternal(final Element parentNode) throws InvalidDataException {
     final Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode() && !application.isHeadlessEnvironment()) {
+    if (application.isUnitTestMode() || !application.isHeadlessEnvironment()) {
       myStartupManager.registerPostStartupActivity(new Runnable() {
         @SuppressWarnings({"HardCodedStringLiteral"}) public void run() {
           PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
