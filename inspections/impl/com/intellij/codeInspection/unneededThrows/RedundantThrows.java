@@ -151,7 +151,9 @@ public class RedundantThrows extends GlobalInspectionTool {
     QuickFix fix = myQuickFixes.get(hint);
     if (fix == null) {
       fix = new MyQuickFix(processor, hint);
-      myQuickFixes.put(hint, fix);
+      if (hint != null) { 
+        myQuickFixes.put(hint, fix);
+      }
     }
     return (LocalQuickFix)fix;
   }
