@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -45,32 +46,27 @@ public class PassExecutorService {
 
   private final Map<ScheduledPass, Future<?>> mySubmittedPasses = new ConcurrentHashMap<ScheduledPass, Future<?>>();
   private final Project myProject;
-  private final AtomicInteger myThreadsToExecuteCountdown = new AtomicInteger();
-  private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
+  private final AtomicInteger myThreadsToStartCountdown = new AtomicInteger();
 
-  public PassExecutorService(DaemonCodeAnalyzerImpl daemonCodeAnalyzer, Project project) {
-    myDaemonCodeAnalyzer = daemonCodeAnalyzer;
+  public PassExecutorService(Project project) {
     myProject = project;
   }
+
   public void dispose() {
     cancelAll();
     myExecutorService.shutdownNow();
   }
+
   public void cancelAll() {
     for (Future<?> submittedPass : mySubmittedPasses.values()) {
       submittedPass.cancel(false);
     }
     mySubmittedPasses.clear();
+    myThreadsToStartCountdown.set(0);
   }
 
-  public void submitPasses(final FileEditor fileEditor, final HighlightingPass[] passes) {
-    cancelAll();
-    final ProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
-    if (updateProgress instanceof DaemonProgressIndicator) {
-      ((DaemonProgressIndicator)updateProgress).restart();
-    }
-
-    myThreadsToExecuteCountdown.set(passes.length);
+  public void submitPasses(final FileEditor fileEditor, final HighlightingPass[] passes, final ProgressIndicator updateProgress) {
+    myThreadsToStartCountdown.addAndGet(passes.length);
 
     final TextEditorHighlightingPass[] textEditorHighlightingPasses;
     if (passes instanceof TextEditorHighlightingPass[]) {
@@ -183,8 +179,7 @@ public class PassExecutorService {
     }
   }
   private void submit(ScheduledPass pass) {
-    if (!myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) {
-      //LOG.debug(pass.myPass + " submitted at " + System.currentTimeMillis());
+    if (!pass.myUpdateProgress.isCanceled()) {
       Future<?> future = myExecutorService.submit(pass);
       mySubmittedPasses.put(pass, future);
     }
@@ -252,14 +247,15 @@ public class PassExecutorService {
 
       mySubmittedPasses.remove(this);
       // check that it is not remnant from the previous attempt, canceled long ago
-      if (myUpdateProgress == myDaemonCodeAnalyzer.getUpdateProgress()) {
-        int toexec = myThreadsToExecuteCountdown.decrementAndGet();
+      if (!myUpdateProgress.isCanceled()) {
+        int toexec = myThreadsToStartCountdown.decrementAndGet();
+        LOG.assertTrue(toexec >= 0);
         if (toexec == 0) {
-          LOG.debug("Stopping");
+          info(myUpdateProgress, "Stopping ", myPass);
           myUpdateProgress.stop();
         }
         else {
-          //LOG.debug("Pass "+ myPass +" finished but there is the pass in the queue: "+mySubmittedPasses.keySet().iterator().next().myPass+"; toexec="+toexec);
+          info(myUpdateProgress, "Pass ", myPass ," finished but there are",toexec," passes in the queue");
         }
       }
       info(myUpdateProgress, "Finished " , myPass);
@@ -289,20 +285,25 @@ public class PassExecutorService {
   }
 
 
-  //private static final ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
-  //private static int getThreadNum() {
-  //  int size = threads.size();
-  //  Integer number = threads.putIfAbsent(Thread.currentThread(), size);
-  //  if (number == null) number = size;
-  //  return number;
-  //}
+  private static final ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
+  private static int getThreadNum() {
+    int size = threads.size();
+    Integer number = threads.putIfAbsent(Thread.currentThread(), size);
+    if (number == null) number = size;
+    return number;
+  }
 
   public static void info(ProgressIndicator progressIndicator, @NonNls Object... info) {
-    //synchronized (PassExecutorService.class) {
-    //  LOG.debug(StringUtil.repeatSymbol(' ', getThreadNum() * 4) + info
-    //            + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
-    //            + "; canceled=" + (progressIndicator != null && progressIndicator.isCanceled())
-    //  );
-    //}
+    synchronized (PassExecutorService.class) {
+      StringBuffer s = new StringBuffer();
+      for (Object o : info) {
+        s.append(o.toString());
+      }
+      LOG.debug(StringUtil.repeatSymbol(' ', getThreadNum() * 4) + s
+                + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
+                + "; canceled=" + (progressIndicator != null && progressIndicator.isCanceled())
+                + "; running=" + (progressIndicator != null && progressIndicator.isRunning())
+      );
+    }
   }
 }

@@ -276,7 +276,6 @@ public class DaemonListeners {
   
   private class MyApplicationListener extends ApplicationAdapter {
     public void beforeWriteActionStart(Object action) {
-      if (!myDaemonCodeAnalyzer.getUpdateProgress().isRunning()) return;
       if (myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) return;
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by write action:" + action);
@@ -296,7 +295,6 @@ public class DaemonListeners {
 
     public void commandStarted(CommandEvent event) {
       cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
-      if (!myDaemonCodeAnalyzer.getUpdateProgress().isRunning()) return;
       if (myDaemonCodeAnalyzer.getUpdateProgress().isCanceled()) return;
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by command:" + event.getCommand());

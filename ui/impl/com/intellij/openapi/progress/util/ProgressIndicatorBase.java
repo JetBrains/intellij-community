@@ -38,8 +38,8 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   private ProgressIndicatorEx myStateDelegate;
 
   public void start(){
-    LOG.assertTrue(!isRunning());
     synchronized(this){
+      LOG.assertTrue(!isRunning());
       myText = "";
       myFraction = 0;
       myText2 = "";
@@ -183,34 +183,30 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     onStateChange();
   }
 
-  public void pushState(){
-    synchronized(this){
-      myTextStack.push(myText);
-      myFractionStack.add(myFraction);
-      myText2Stack.push(myText2);
-      setText("");
-      setFraction(0);
-      setText2("");
+  public synchronized void pushState(){
+    myTextStack.push(myText);
+    myFractionStack.add(myFraction);
+    myText2Stack.push(myText2);
+    setText("");
+    setFraction(0);
+    setText2("");
 
-      if (myStateDelegate != null) {
-        myStateDelegate.pushState();
-      }
-      onStateChange();
+    if (myStateDelegate != null) {
+      myStateDelegate.pushState();
     }
+    onStateChange();
   }
 
-  public void popState(){
-    synchronized(this){
-      LOG.assertTrue(!myTextStack.isEmpty());
-      setText(myTextStack.pop());
-      setFraction(myFractionStack.remove(myFractionStack.size() - 1));
-      setText2(myText2Stack.pop());
+  public synchronized void popState(){
+    LOG.assertTrue(!myTextStack.isEmpty());
+    setText(myTextStack.pop());
+    setFraction(myFractionStack.remove(myFractionStack.size() - 1));
+    setText2(myText2Stack.pop());
 
-      if (myStateDelegate != null) {
-        myStateDelegate.popState();
-      }
-      onStateChange();
+    if (myStateDelegate != null) {
+      myStateDelegate.popState();
     }
+    onStateChange();
   }
 
   public void startNonCancelableSection(){
@@ -263,7 +259,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     onStateChange();
   }
 
-  public void restart() {
+  public synchronized void restart() {
     if (myRunning) {
       myRunning = false;
       exitModality();

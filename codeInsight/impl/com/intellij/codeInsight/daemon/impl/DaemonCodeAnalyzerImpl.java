@@ -76,7 +76,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NonNls private static final String URL_ATT = "url";
   private DaemonListeners myDaemonListeners;
   private StatusBarUpdater myStatusBarUpdater;
-  private PassExecutorService myPassExecutorService;
+  private final PassExecutorService myPassExecutorService;
 
   protected DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings) {
     myProject = project;
@@ -85,7 +85,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myLastSettings = (DaemonCodeAnalyzerSettings)mySettings.clone();
 
     myFileStatusMap = new FileStatusMap(myProject);
-    myPassExecutorService = new PassExecutorService(this, myProject);
+    myPassExecutorService = new PassExecutorService(myProject);
   }
 
   @NotNull
@@ -127,7 +127,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     reloadScopes();
     createProgressIndicatorForTests(stoppedNotify);
 
-    myPassExecutorService = new PassExecutorService(this, myProject);
     myInitialized = true;
     myDisposed = false;
 
@@ -136,7 +135,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
   }
 
-  public void createProgressIndicatorForTests(final Object stoppedNotify) {
+  private void createProgressIndicatorForTests(final Object stoppedNotify) {
     myUpdateProgress = new MyMockProgressIndicator(stoppedNotify);
   }
 
@@ -222,7 +221,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (highlighter == null) return;
     HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
     setLastIntentionHint(null);
-    myPassExecutorService.submitPasses(textEditor, highlightingPasses);
+
+    renewUpdateProgress();
+    myPassExecutorService.submitPasses(textEditor, highlightingPasses,myUpdateProgress);
   }
 
   public void setUpdateByTimerEnabled(boolean value) {
@@ -315,11 +316,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
-  private void renewUpdateProgress() {
+  private synchronized void renewUpdateProgress() {
     myUpdateProgress.cancel();
+    myPassExecutorService.cancelAll();
     myUpdateProgress = myUpdateProgress instanceof MyMockProgressIndicator ?
                        new MyMockProgressIndicator(((MyMockProgressIndicator)myUpdateProgress).myStoppedNotify) :
                        new DaemonProgressIndicator();
+    if (myUpdateProgress instanceof DaemonProgressIndicator) {
+      ((DaemonProgressIndicator)myUpdateProgress).restart();
+    }
   }
 
   @Nullable
@@ -512,7 +517,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
           if (highlighter != null) {
             HighlightingPass[] highlightingPasses = highlighter.createPassesForEditor();
-            myPassExecutorService.submitPasses(fileEditor, highlightingPasses);
+            myPassExecutorService.submitPasses(fileEditor, highlightingPasses, myUpdateProgress);
           }
         }
       }
