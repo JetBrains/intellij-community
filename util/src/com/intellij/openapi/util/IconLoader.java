@@ -18,11 +18,11 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakHashMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
@@ -36,7 +36,7 @@ public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
   private static final Color ourTransparentColor = new Color(0, 0, 0, 0);
 
-  private static final Map<URL, Icon> ourIconsCache = new THashMap<URL, Icon>(100, 0.9f);
+  private static final ConcurrentHashMap<URL, Icon> ourIconsCache = new ConcurrentHashMap<URL, Icon>(100, 0.9f,2);
 
 
   /**
@@ -119,13 +119,12 @@ public final class IconLoader {
   @Nullable
   private static Icon findIcon(URL url) {
     if (url == null) return null;
-
-    Icon icon = ourIconsCache.get(url);
-    if (icon == null) {
-      icon = new CachedImageIcon(url);
-      ourIconsCache.put(url, icon);
-    }
-    return icon;
+      Icon icon = ourIconsCache.get(url);
+      if (icon == null) {
+        icon = new CachedImageIcon(url);
+        icon = ourIconsCache.cacheOrGet(url, icon);
+      }
+      return icon;
   }
 
   @Nullable

@@ -20,11 +20,11 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
@@ -46,8 +46,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
   }
 
   @NotNull public static TextAttributesKey find(@NotNull @NonNls String externalName) {
-    ourRegistry.putIfAbsent(externalName, new TextAttributesKey(externalName));
-    return ourRegistry.get(externalName);
+    return ourRegistry.cacheOrGet(externalName, new TextAttributesKey(externalName));
   }
 
   public String toString() {

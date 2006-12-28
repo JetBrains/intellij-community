@@ -2,13 +2,13 @@ package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.io.Serializable;
-import java.io.IOException;
 
-// added hashing strategy argument
+// added hashing strategy argument and cacheOrGet convenience method
 public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Serializable, TObjectHashingStrategy<K> {
     private static final long serialVersionUID = 7249069246763182397L;
 
@@ -92,7 +92,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         return segments[(hash >>> segmentShift) & segmentMask];
     }
 
-    /* ---------------- Inner Classes -------------- */
+  /* ---------------- Inner Classes -------------- */
 
     /**
      * ConcurrentHashMap list entry. Note that this is never exported
@@ -1360,5 +1360,13 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
 
   public boolean equals(final K o1, final K o2) {
     return o1.equals(o2);
+  }
+
+  /**
+   * @return value if there is no entry in the map, or corresponding value if entry already exists
+   */
+  public V cacheOrGet(final K key, final V value) {
+    V prev = putIfAbsent(key, value);
+    return prev == null ? value : prev;
   }
 }
