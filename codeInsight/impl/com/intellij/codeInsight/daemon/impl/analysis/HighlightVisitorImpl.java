@@ -554,6 +554,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         myHolder.add(HighlightMethodUtil.checkConstructorName(method));
       }
     }
+    super.visitIdentifier(identifier);
   }
 
   public void visitImportStatement(PsiImportStatement statement) {
