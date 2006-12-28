@@ -107,7 +107,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     private boolean isVcsInitialized;
 
     public MyLocalVcsComponent(String systemPath, Project p, MyStartupManager sm) {
-      super(p, sm, null, null, null);
+      super(p, sm, null, null, null, null);
       mySystemPath = systemPath;
     }
 

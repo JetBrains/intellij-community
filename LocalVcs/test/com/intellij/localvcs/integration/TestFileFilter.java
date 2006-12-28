@@ -19,8 +19,8 @@ public class TestFileFilter extends FileFilter {
     return !contains(myFilesNotUnderContentRoot, f);
   }
 
-  public void setAllAreUnallowed(boolean b) {
-    myAreAllFilesUnderContentRoots = b;
+  public void dontAllowAnyFile() {
+    myAreAllFilesUnderContentRoots = false;
   }
 
   public void setFilesNotUnderContentRoot(VirtualFile... f) {

@@ -5,14 +5,16 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -39,7 +41,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
   }
 
   public void testComponentInitialitation() {
-    assertNotNull(getComponent());
+    assertNotNull(getVcsComponent());
   }
 
   public void testUpdatingOnRootsChanges() {
@@ -56,7 +58,8 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertNotNull(getVcs().findEntry(root.getPath() + "/file.java"));
   }
 
-  public void cantCreateTestUpdatingOnStartup() throws Exception {
+  public void ignoreTestUpdatingOnStartup() throws Exception {
+    // todo cant make idea do that i want...
     File dir = createTempDirectory();
     File projectFile = new File(dir, "project.ipr");
     Project p = ProjectManagerEx.getInstanceEx().newProject(projectFile.getPath(), false, false);
@@ -101,7 +104,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     VirtualFile f = root.createChildData(null, "file.java");
     myProject.save();
 
-    Storage s = new Storage(getComponent().getStorageDir());
+    Storage s = new Storage(getVcsComponent().getStorageDir());
     LocalVcs vcs = new LocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry(f.getPath()));
@@ -118,11 +121,38 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertEquals(2, f.contentsToByteArray()[0]);
   }
 
+  public void testActions() throws Exception {
+    VirtualFile f = root.createChildData(null, "file.java");
+
+    f.setBinaryContent(new byte[]{0});
+    setDocumentTextFor(f, new byte[]{1});
+
+    assertEquals(0, getVcsContentOf(f)[0]);
+
+    LocalVcsAction a = getVcsComponent().startAction();
+    assertEquals(1, getVcsContentOf(f)[0]);
+
+    setDocumentTextFor(f, new byte[]{2});
+
+    a.finish();
+    assertEquals(2, getVcsContentOf(f)[0]);
+  }
+
+  private void setDocumentTextFor(VirtualFile f, byte[] bytes) {
+    Document d = FileDocumentManager.getInstance().getDocument(f);
+    String t = new String(bytes);
+    d.setText(t);
+  }
+
+  private byte[] getVcsContentOf(VirtualFile f) {
+    return getVcs().getEntry(f.getPath()).getContent().getData();
+  }
+
   private LocalVcs getVcs() {
     return LocalVcsComponent.getLocalVcsFor(getProject());
   }
 
-  private LocalVcsComponent getComponent() {
+  private LocalVcsComponent getVcsComponent() {
     return getProject().getComponent(LocalVcsComponent.class);
   }
 

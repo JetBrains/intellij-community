@@ -2,11 +2,9 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestCase;
 import com.intellij.localvcs.TestStorage;
 import com.intellij.openapi.vfs.VirtualFile;
 import static org.easymock.classextension.EasyMock.*;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 

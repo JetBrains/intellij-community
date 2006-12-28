@@ -55,6 +55,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     HistoryDialog.MyTableModel m = new HistoryDialog.MyTableModel();
 
     JTable t = new JTable(m);
+
     final ListSelectionModel selectionModel = t.getSelectionModel();
     selectionModel.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -65,7 +66,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
         updateDiffs();
       }
     });
-    return t;
+
+    return new JScrollPane(t);
   }
 
   protected abstract void updateDiffs();

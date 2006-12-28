@@ -7,7 +7,7 @@ import static com.intellij.localvcs.Difference.Kind.MODIFIED;
 import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
 import org.junit.Test;
 
-public class LocalVcsDifferencesTest extends TestCase {
+public class LocalVcsHistoryTest extends TestCase {
   // todo difference on root does not work!!!
   private LocalVcs vcs = new LocalVcs(new TestStorage());
 
@@ -144,7 +144,6 @@ public class LocalVcsDifferencesTest extends TestCase {
     Label recent = labels.get(0);
     Label prev = labels.get(1);
 
-    // todo can we calculate diffs by timestamp? it seems that we can
     Difference d = prev.getDifferenceWith(recent);
     assertEquals(MODIFIED, d.getKind());
     assertEquals(c("content"), d.getLeft().getContent());
