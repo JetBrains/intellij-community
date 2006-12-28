@@ -6,25 +6,25 @@
  */
 package org.jetbrains.idea.svn.status;
 
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.util.containers.HashMap;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.Map;
-
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.util.containers.HashMap;
 
 public class SvnDiffEditor implements ISVNEditor {
 
@@ -133,7 +133,7 @@ public class SvnDiffEditor implements ISVNEditor {
     }
 
     @Nullable
-    public String getContent() {
+    public String getContent() throws VcsException {
       if (myIsEmpty) {
         return "";
       }
@@ -142,9 +142,7 @@ public class SvnDiffEditor implements ISVNEditor {
         try {
           myRepository.getFile(myPath, -1, null, bos);
         } catch (SVNException e) {
-          //
-          e.printStackTrace();
-          return null;
+          throw new VcsException(e);
         }
         myContents = new String(bos.toByteArray());
       }

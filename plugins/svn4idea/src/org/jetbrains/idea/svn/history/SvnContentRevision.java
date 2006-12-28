@@ -24,6 +24,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -55,7 +56,7 @@ public class SvnContentRevision implements ContentRevision {
   }
 
   @Nullable
-  public String getContent() {
+  public String getContent() throws VcsException {
     if (myContent == null) {
       final String path = myLogEntryPath.getPath();
       final OutputStream buffer = new ByteArrayOutputStream();
@@ -67,9 +68,11 @@ public class SvnContentRevision implements ContentRevision {
       else {
         loader.run();
       }
-      if (loader.getException() == null) {
-        myContent = buffer.toString();
+      final SVNException exception = loader.getException();
+      if (exception != null) {
+        throw new VcsException(exception);
       }
+      myContent = buffer.toString();
     }
     return myContent;
   }

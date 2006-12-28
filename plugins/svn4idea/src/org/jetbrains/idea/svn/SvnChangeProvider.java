@@ -142,7 +142,7 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private static String getLastUpToDateContentFor(final File file, final String charset) {
+  private static String getLastUpToDateContentFor(final File file, final String charset) throws SVNException, IOException {
     SVNWCClient wcClient = new SVNWCClient(null, null);
     try {
       File lock = new File(file.getParentFile(), SvnUtil.PATH_TO_LOCK_FILE);
@@ -154,13 +154,7 @@ public class SvnChangeProvider implements ChangeProvider {
       buffer.close();
       return new String(buffer.toByteArray(), charset);
     }
-    catch (SVNException e) {
-      return null;
-    }
     catch (UnsupportedEncodingException e) {
-      return null;
-    }
-    catch (IOException e) {
       return null;
     }
   }
@@ -280,9 +274,14 @@ public class SvnChangeProvider implements ChangeProvider {
     }
 
     @Nullable
-    public String getContent() {
+    public String getContent() throws VcsException {
       if (myContent == null) {
-        myContent = getLastUpToDateContentFor(myFile.getIOFile(), myFile.getCharset().name());
+        try {
+          myContent = getLastUpToDateContentFor(myFile.getIOFile(), myFile.getCharset().name());
+        }
+        catch(Exception ex) {
+          throw new VcsException(ex);
+        }
       }
       return myContent;
     }
