@@ -35,6 +35,12 @@ public class UnnecessaryLabelOnContinueStatementInspection
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.label.on.continue.statement.display.name");
+    }
+
     public boolean isEnabledByDefault() {
         return true;
     }
@@ -63,8 +69,12 @@ public class UnnecessaryLabelOnContinueStatementInspection
                     descriptor.getPsiElement();
             final PsiContinueStatement continueStatement =
                     (PsiContinueStatement)continueKeywordElement.getParent();
-            replaceStatement(continueStatement,
-                    PsiKeyword.CONTINUE);
+            final PsiIdentifier labelIdentifier =
+                    continueStatement.getLabelIdentifier();
+            if (labelIdentifier == null) {
+                return;
+            }
+            labelIdentifier.delete();
         }
     }
 
@@ -99,9 +109,10 @@ public class UnnecessaryLabelOnContinueStatementInspection
             if (labelEnabledParent == null) {
                 return;
             }
-            if (exitedStatement.equals(labelEnabledParent)) {
-                registerStatementError(statement);
+            if (!exitedStatement.equals(labelEnabledParent)) {
+                return;
             }
+            registerStatementError(statement);
         }
     }
 }
