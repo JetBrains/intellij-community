@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
@@ -85,7 +86,9 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     assert container != null;
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
-    if (status.hasReadonlyFiles()) return;
+    if (status.hasReadonlyFiles()) {
+      throw new ProcessCanceledException();
+    }
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = myContext.getManager();
     if (docComment == null) {
