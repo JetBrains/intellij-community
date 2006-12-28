@@ -29,6 +29,7 @@ public interface VcsHistoryProvider {
 
   AnAction[] getAdditionalActions(final FileHistoryPanel panel);
 
+  @Nullable
   @NonNls String getHelpId();
 
   VcsHistorySession createSessionFor(FilePath filePath) throws VcsException;
