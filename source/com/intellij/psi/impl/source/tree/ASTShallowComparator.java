@@ -37,10 +37,6 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   }
 
   public boolean typesEqual(final ASTNode n1, final ASTNode n2) {
-    if (n1 instanceof LeafPsiElement && n2 instanceof LeafPsiElement) {
-      return ((LeafPsiElement)n1).getTypeIndex() == ((LeafPsiElement)n2).getTypeIndex(); // Optimization
-    }
-
     return n1.getElementType() == n2.getElementType();
   }
 

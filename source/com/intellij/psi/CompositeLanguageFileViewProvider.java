@@ -11,11 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.LightPsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NonNls;
@@ -62,22 +59,17 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     psiFile.setTreeElementPointer(treeClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
     treeClone.setPsiElement(psiFile);
 
-    final XmlText[] xmlTexts = JspImplUtil.gatherTexts((XmlFile)psiFile);
     for (Map.Entry<Language, PsiFile> entry : myRoots.entrySet()) {
       final PsiFile root = entry.getValue();
-      if (root != psiFile) {
-        if (root instanceof PsiFileImpl) {
-          final PsiFileImpl copy = (PsiFileImpl)viewProvider.getPsi(entry.getKey());
-          if (copy == null) continue; // Unreleivant language due to partial parsing.
-          JspImplUtil.copyRoot((PsiFileImpl)root, xmlTexts, copy);
+      if (root != psiFile && root != null) {
+        if (root instanceof LightPsiFileImpl) {
+          final LightPsiFileImpl lightFile = (LightPsiFileImpl)root;
+          final LightPsiFileImpl clone = lightFile.copyLight(viewProvider);
+          clone.setOriginalFile(root);
+          viewProvider.myRoots.put(entry.getKey(), clone);
         }
         else {
-          if (root instanceof LightPsiFileImpl) {
-            final LightPsiFileImpl lightFile = (LightPsiFileImpl)root;
-            final LightPsiFileImpl clone = lightFile.copyLight(viewProvider);
-            clone.setOriginalFile(root);
-            viewProvider.myRoots.put(entry.getKey(), clone);
-          }
+          LOG.error("Only light files supported for language extensions");
         }
       }
     }

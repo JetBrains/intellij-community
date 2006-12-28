@@ -4,11 +4,10 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 
 /**
  *  @author dsl
@@ -110,8 +109,6 @@ class GTTokens implements JavaTokenType {
       lexer.advance();
     }
     final int tokenEnd = lexer.getTokenEnd();
-    final LeafElement leafElement = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), tokenStart, tokenEnd, lexer.getState(), table);
-    leafElement.setState(lexer.getState());
-    return leafElement;
+    return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), tokenStart, tokenEnd, lexer.getState(), table);
   }
 }

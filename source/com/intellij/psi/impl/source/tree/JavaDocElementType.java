@@ -11,7 +11,6 @@ import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.util.CharTable;
-import com.intellij.util.text.CharArrayUtil;
 
 public interface JavaDocElementType {
   //chameleon
@@ -29,7 +28,7 @@ public interface JavaDocElementType {
       //no language features from higher java language versions are present in javadoc
       JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
       return context.getJavadocParsing().parseJavaDocReference(chars, table, new JavaLexer(LanguageLevel.JDK_1_3),
-                                                  ((LeafElement)chameleon).getState(), false, manager);
+                                                  0, false, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
@@ -42,7 +41,7 @@ public interface JavaDocElementType {
       //no language features from higher java language versions are present in javadoc
       JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
       return context.getJavadocParsing().parseJavaDocReference(chars, table, new JavaLexer(LanguageLevel.JDK_1_3),
-                                                  ((LeafElement)chameleon).getState(), true, manager);
+                                                  0, true, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };

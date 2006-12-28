@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
-  private volatile int myState = 0; // 16 bit for type, 15 bit for state and 1 bit for parentFlag
+  private final IElementType myType;
   private static final int TEXT_MATCHES_THRESHOLD = 5;
 
   public abstract char charAt(int position);
@@ -21,7 +21,7 @@ public abstract class LeafElement extends TreeElement {
   public abstract int copyTo(char[] buffer, int start);
 
   protected LeafElement(IElementType type) {
-    myState = type != null ? type.getIndex() : 0;
+    myType = type;
   }
 
   public final LeafElement findLeafElementAt(int offset) {
@@ -56,46 +56,12 @@ public abstract class LeafElement extends TreeElement {
 
   public void registerInCharTable(CharTable table) { }
 
-  //boolean isLast = false;
-  public synchronized void setState(int state) {
-    myState = myState & 0x8000FFFF | (((state + 1) & 0x7FFF) << 16);
-  }
-
   public IElementType getElementType() {
-    short sh = 0;
-    sh |= (short)(myState & 0xFFFF);
-    return IElementType.find(sh);
-  }
-
-  public short getTypeIndex() {
-    return (short)(myState & 0xFFFF);
-  }
-
-  public int getState() {
-    return ((myState >> 16) & 0x7FFF) - 1;
-  }
-
-  private boolean isLast() {
-    return (myState & 0x80000000) != 0;
-  }
-
-  private void setLast(boolean last) {
-    if (last) {
-      myState |= 0x80000000;
-    }
-    else {
-      myState &= 0x7FFFFFFF;
-    }
+    return myType;
   }
 
   public void acceptTree(TreeElementVisitor visitor) {
     visitor.visitLeaf(this);
-  }
-
-  public Object clone() {
-    LeafElement clone = (LeafElement)super.clone();
-    clone.setState(-1);
-    return clone;
   }
 
   public abstract CharSequence getInternedText();

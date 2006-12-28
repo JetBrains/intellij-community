@@ -120,12 +120,10 @@ public class JavadocParsing extends Parsing {
                                                          lexer.getBufferSequence(),
                                                          lexer.getTokenStart(),
                                                          lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
-      justABrace.setState(lexer.getState());
       CompositeElement tag = Factory.createCompositeElement(DOC_INLINE_TAG);
       final LeafElement leafElement = Factory.createLeafElement(JavaDocTokenType.DOC_INLINE_TAG_START, lexer.getBufferSequence(),
                                                                 lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(),
                                                                 myContext.getCharTable());
-      leafElement.setState(lexer.getState());
       TreeUtil.addChildren(tag, leafElement);
 
       lexer.advance();
@@ -174,7 +172,6 @@ public class JavadocParsing extends Parsing {
       else if (!isInlineItem && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
         final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
                                                          lexer.getState());
-        element.setState(lexer.getState());
         lexer.advance();
         final CompositeElement tagValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
         TreeUtil.addChildren(tagValue, element);
@@ -246,7 +243,6 @@ public class JavadocParsing extends Parsing {
         if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
           final LeafElement reference = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), true,
                                                              lexer.getState());
-          reference.setState(lexer.getState());
           lexer.advance();
           TreeUtil.addChildren(subValue, reference);
 
@@ -283,7 +279,6 @@ public class JavadocParsing extends Parsing {
     else if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
       final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
                                                        lexer.getState());
-      element.setState(lexer.getState());
       lexer.advance();
 
       if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
@@ -318,10 +313,8 @@ public class JavadocParsing extends Parsing {
       tokenType = JavaDocTokenType.DOC_COMMENT_DATA;
     }
 
-    final LeafElement leafElement = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
+    return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
                                                               lexer.getState(), myContext.getCharTable());
-    leafElement.setState(lexer.getState());
-    return leafElement;
   }
 
   private static class TokenProcessor implements ParseUtil.TokenProcessor {

@@ -44,10 +44,7 @@ public class ParseUtil implements Constants {
       return chameleon;
     }
     else {
-      final LeafElement leafElement =
-        Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), table);
-      leafElement.setState(lexer.getState());
-      return leafElement;
+      return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), table);
     }
   }
 

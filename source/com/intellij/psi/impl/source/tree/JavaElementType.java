@@ -18,7 +18,6 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
-import com.intellij.util.text.CharArrayUtil;
 
 public interface JavaElementType {
   //chameleons
@@ -119,7 +118,7 @@ public interface JavaElementType {
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), languageLevel);
       return context.getImportsTextParsing().parseImportsText(manager, new JavaLexer(languageLevel),
-                                                              seq, 0, seq.length(), ((LeafElement)chameleon).getState());
+                                                              seq, 0, seq.length(), 0);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
@@ -132,7 +131,7 @@ public interface JavaElementType {
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       JavaParsingContext context = new JavaParsingContext(table, languageLevel);
       return context.getStatementParsing().parseCodeBlockText(manager, new JavaLexer(languageLevel),
-                                                              seq, 0, seq.length(), ((LeafElement)chameleon).getState()).getFirstChildNode();
+                                                              seq, 0, seq.length(), 0).getFirstChildNode();
     }
     public int getErrorsCount(CharSequence seq, Project project) {
       final Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
@@ -164,7 +163,7 @@ public interface JavaElementType {
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), languageLevel);
-      return context.getExpressionParsing().parseExpressionTextFragment(manager, chars, 0, chars.length(), ((LeafElement)chameleon).getState());
+      return context.getExpressionParsing().parseExpressionTextFragment(manager, chars, 0, chars.length(), 0);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
@@ -177,7 +176,7 @@ public interface JavaElementType {
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       JavaParsingContext context = new JavaParsingContext(table, languageLevel);
-      return context.getStatementParsing().parseStatements(manager, null, chars, 0, chars.length(), ((LeafElement)chameleon).getState());
+      return context.getStatementParsing().parseStatements(manager, null, chars, 0, chars.length(), 0);
     }
 
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
@@ -189,7 +188,7 @@ public interface JavaElementType {
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(TreeUtil.getFileElement((LeafElement)chameleon).getPsi());
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), languageLevel);
-      return context.getExpressionParsing().parseExpressionTextFragment(manager, chars, 0, chars.length(), ((LeafElement)chameleon).getState());
+      return context.getExpressionParsing().parseExpressionTextFragment(manager, chars, 0, chars.length(), 0);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };

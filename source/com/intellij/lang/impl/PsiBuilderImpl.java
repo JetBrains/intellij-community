@@ -30,13 +30,13 @@ import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.DiffTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -366,7 +366,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public Token getCurrentToken() {
     if (myCurrentToken == null) {
       while (true) {
-        if (!getTokenOrWhitespace()) return null;
+        if (getTokenOrWhitespace()) return null;
 
         if (whitespaceOrComment(myLexTypes[myCurrentLexem])) {
           myCurrentLexem++;
@@ -387,7 +387,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private boolean getTokenOrWhitespace() {
     while (myCurrentLexem >= myLexemCount) {
-      if (myLexer.getTokenType() == null) return false;
+      final IElementType type = myLexer.getTokenType();
+      if (type == null) return true;
 
       if (myLexemCount + 1 >= myLexStarts.length) {
         int newSize = myLexemCount * 3 / 2;
@@ -405,14 +406,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         myLexTypes = newTypes;
       }
 
-      myLexTypes[myLexemCount] = myLexer.getTokenType();
+      myLexTypes[myLexemCount] = type;
       myLexStarts[myLexemCount] = myLexer.getTokenStart();
       myLexEnds[myLexemCount] = myLexer.getTokenEnd();
 
       myLexer.advance();
       myLexemCount++;
     }
-    return true;
+    return false;
   }
 
   private boolean whitespaceOrComment(IElementType token) {
@@ -740,7 +741,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private class MyComparator implements ShallowNodeComparator<ASTNode, Node> {
     public ThreeState deepEqual(final ASTNode oldNode, final Node newNode) {
-      return textMatches(oldNode, newNode);
+      if (newNode instanceof Token) {
+        if (oldNode instanceof LeafElement) {
+          return ((LeafElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd) ? ThreeState.YES : ThreeState.NO;
+        }
+
+        if (oldNode.getElementType() instanceof IChameleonElementType && newNode.getTokenType() instanceof IChameleonElementType) {
+          return ((TreeElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd) ? ThreeState.YES : ThreeState.NO;
+        }
+      }
+
+      return ThreeState.UNSURE;
     }
 
     private String getErrorMessage(Node node) {
@@ -755,31 +766,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return null;
     }
 
-    private ThreeState textMatches(final ASTNode oldNode, final Node newNode) {
-      if (oldNode instanceof ChameleonElement || newNode.getTokenType() instanceof IChameleonElementType) {
-        return ((TreeElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
-      }
-
-      if (oldNode.getElementType() instanceof IChameleonElementType && newNode.getTokenType() instanceof IChameleonElementType) {
-        return ((TreeElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
-      }
-
-      if (oldNode instanceof LeafElement) {
-        if (newNode instanceof Token) {
-          return ((LeafElement)oldNode).textMatches(myText, ((Token)newNode).myTokenStart, ((Token)newNode).myTokenEnd) ? ThreeState.YES : ThreeState.NO;
-        }
-        return ((LeafElement)oldNode).textMatches(newNode.getText()) ? ThreeState.YES : ThreeState.NO;
-      }
-
-      if (oldNode instanceof PsiErrorElement && newNode.getTokenType() == ElementType.ERROR_ELEMENT) {
-        final String m1 = ((PsiErrorElement)oldNode).getErrorDescription();
-        final String m2 = getErrorMessage(newNode);
-        if (!Comparing.equal(m1, m2)) return ThreeState.NO;
-      }
-
-      return ThreeState.UNSURE;
-    }
-
     public boolean typesEqual(final ASTNode n1, final Node n2) {
       if (n1 instanceof PsiWhiteSpaceImpl) {
         return n2.getTokenType() == XmlTokenType.XML_REAL_WHITE_SPACE || myWhitespaces.contains(n2.getTokenType());
@@ -790,7 +776,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public boolean hashcodesEqual(final ASTNode n1, final Node n2) {
       if (n1 instanceof LeafElement && n2 instanceof Token) {
-        return textMatches(n1, n2) == ThreeState.YES;
+        return ((LeafElement)n1).textMatches(myText, ((Token)n2).myTokenStart, ((Token)n2).myTokenEnd);
       }
 
       if (n1 instanceof PsiErrorElement && n2.getTokenType() == ElementType.ERROR_ELEMENT) {

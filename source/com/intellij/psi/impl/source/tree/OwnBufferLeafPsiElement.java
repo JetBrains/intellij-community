@@ -23,7 +23,6 @@ public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl imple
 
   public OwnBufferLeafPsiElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
     super(type, buffer, startOffset, endOffset, table);
-    setState(lexerState);
   }
 
   @NotNull
