@@ -69,6 +69,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
@@ -77,10 +78,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   private final FileManager myFileManager;
   private final PsiElementFactory myElementFactory;
-  private final PsiSearchHelper mySearchHelper;
+  private final PsiSearchHelperImpl mySearchHelper;
   private PsiShortNamesCache myShortNamesCache;
   private final PsiResolveHelper myResolveHelper;
-  //private MemoryManager myMemoryManager;
   private final CacheManager myCacheManager;
   private final RepositoryManager myRepositoryManager;
   private final RepositoryElementsManager myRepositoryElementsManager;
@@ -92,11 +92,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final Map<String, PsiPackage> myPackageCache = new HashMap<String, PsiPackage>();
 
-  private final ArrayList<PsiTreeChangeListener> myTreeChangeListeners = new ArrayList<PsiTreeChangeListener>();
-  private PsiTreeChangeListener[] myCachedTreeChangeListeners = null;
+  private final List<PsiTreeChangeListener> myTreeChangeListeners = new CopyOnWriteArrayList<PsiTreeChangeListener>();
   private boolean myTreeChangeEventIsFiring = false;
-
-  private final HashMap myUserMap = new HashMap();
 
   private final ArrayList<Runnable> myRunnablesOnChange = new ArrayList<Runnable>();
   private final ArrayList<WeakReference<Runnable>> myWeakRunnablesOnChange = new ArrayList<WeakReference<Runnable>>();
@@ -156,7 +153,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     myElementFactory = new PsiElementFactoryImpl(this);
     mySearchHelper = new PsiSearchHelperImpl(this);
     myResolveHelper = new PsiResolveHelperImpl(this);
-    //myMemoryManager = new MemoryManager();
     final CompositeCacheManager cacheManager = new CompositeCacheManager();
     if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
       myShortNamesCache = new PsiShortNamesCacheImpl(this, projectRootManagerEx);
@@ -234,6 +230,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     if (externalResourceManager != null) {
       externalResourceManager.removeExternalResourceListener(myExternalResourceListener);
     }
+    mySearchHelper.dispose();
     myIsDisposed = true;
   }
 
@@ -395,11 +392,11 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   public void projectOpened() {
   }
 
-  public void runStartupActivity() {
+  private void runStartupActivity() {
     myShortNamesCache.runStartupActivity();
   }
 
-  public void runPreStartupActivity() {
+  private void runPreStartupActivity() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("PsiManager.runPreStartupActivity()");
     }
@@ -600,7 +597,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public PsiFile findFile(@NotNull VirtualFile file) {
     return myFileManager.findFile(file);
-  }
+    }
 
   @Nullable
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
@@ -670,7 +667,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
     myTreeChangeListeners.add(listener);
-    myCachedTreeChangeListeners = null;
   }
 
   public void addPsiTreeChangeListener(@NotNull final PsiTreeChangeListener listener, Disposable parentDisposable) {
@@ -684,7 +680,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
     myTreeChangeListeners.remove(listener);
-    myCachedTreeChangeListeners = null;
   }
 
   public void beforeChildAddition(PsiTreeChangeEventImpl event) {
@@ -845,13 +840,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     try {
       myModificationTracker.treeChanged(event);
 
-      if (myCachedTreeChangeListeners == null) {
-        myCachedTreeChangeListeners = myTreeChangeListeners.toArray(
-          new PsiTreeChangeListener[myTreeChangeListeners.size()]
-        );
-      }
-      PsiTreeChangeListener[] listeners = myCachedTreeChangeListeners;
-      for (PsiTreeChangeListener listener : listeners) {
+      for (PsiTreeChangeListener listener : myTreeChangeListeners) {
         try {
           switch (event.getCode()) {
             case BEFORE_CHILD_ADDITION:
@@ -1102,34 +1091,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return myBatchFilesProcessingModeCount > 0;
   }
 
-  @SuppressWarnings({"unchecked"})
-  public <T> T getUserData(Key<T> key) {
-    synchronized (myUserMap) {
-      return (T)myUserMap.get(key);
-    }
-  }
-
-  @SuppressWarnings({"unchecked"})
-  public <T> void putUserData(Key<T> key, T value) {
-    synchronized (myUserMap) {
-      if (value != null) {
-        myUserMap.put(key, value);
-      }
-      else {
-        myUserMap.remove(key);
-      }
-    }
-  }
-
   @NotNull
   public String getComponentName() {
     return "PsiManager";
-  }
-
-  public void physicalChange() {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(),
-                   "DO NOT use this function in live code!!!");
-    onChange(true);
   }
 
   public void migrationModified(boolean terminated) {

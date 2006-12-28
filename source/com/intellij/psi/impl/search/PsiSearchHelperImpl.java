@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -42,7 +43,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private final PsiManagerImpl myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
-  private static final int POOL_SIZE = 1;//Runtime.getRuntime().availableProcessors();
+  private static final int POOL_SIZE = Runtime.getRuntime().availableProcessors();
   private final ThreadPoolExecutor myThreadPoolExecutor = new ThreadPoolExecutor(POOL_SIZE, Integer.MAX_VALUE, 60,
                                                              TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
     public Thread newThread(final Runnable r) {
@@ -512,8 +513,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if(words.length == 0) return true;
 
       Set<PsiFile> fileSet = new THashSet<PsiFile>();
+      final Application application = ApplicationManager.getApplication();
       for (final String word : words) {
-        List<PsiFile> psiFiles = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
+        List<PsiFile> psiFiles = application.runReadAction(new Computable<List<PsiFile>>() {
           public List<PsiFile> compute() {
             return Arrays.asList(myManager.getCacheManager().getFilesWithWord(word, searchContext, scope, caseSensitively));
           }
@@ -532,7 +534,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         progress.setText(PsiBundle.message("psi.search.for.word.progress", searcher.getPattern()));
       }
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      // if we are under write action, additional threads will never get read action
+      if (!application.isUnitTestMode() && !application.isWriteAccessAllowed()) {
         final int chunkSize = Math.max(10, files.length / POOL_SIZE / 20); // make at least 20 chunks per proc to balance load
         ArrayList<Callable<Boolean>> callables = new ArrayList<Callable<Boolean>>(files.length/chunkSize);
         final AtomicInteger counter = new AtomicInteger(0);
@@ -545,7 +548,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                 public void run() {
                   for (int i = index; i < index + chunkSize && i < files.length; i++) {
                     final PsiFile file = files[i];
-                    ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    application.runReadAction(new Runnable() {
                       public void run() {
                         try {
                           ProgressManager.getInstance().checkCanceled();
