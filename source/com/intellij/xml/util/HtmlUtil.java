@@ -2,7 +2,8 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.htmlInspections.HtmlStyleLocalInspection;
+import com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection;
+import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -237,16 +238,31 @@ public class HtmlUtil {
   String getEntitiesString(XmlElement context, int type) {
     if (context == null) return null;
     PsiFile containingFile = context.getContainingFile();
-    if (containingFile.getOriginalFile() != null) containingFile = containingFile.getOriginalFile();
+    if (containingFile.getOriginalFile() != null) {
+      containingFile = containingFile.getOriginalFile();
+    }
+
+    assert containingFile != null;
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile(containingFile);
-    LocalInspectionToolWrapper localInspectionToolWrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlStyleLocalInspection.SHORT_NAME);
-    HtmlStyleLocalInspection inspection = localInspectionToolWrapper != null ?
-      (HtmlStyleLocalInspection) localInspectionToolWrapper.getTool(): null;
 
-    if (inspection != null) {
-      return inspection.getAdditionalEntries(type);
+    switch(type) {
+      case XmlEntitiesInspection.UNKNOWN_TAG:
+        LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlUnknownTagInspection.TAG_SHORT_NAME);
+        HtmlUnknownTagInspection unknownTagInspection = wrapper != null ? (HtmlUnknownTagInspection) wrapper.getTool() : null;
+        if (unknownTagInspection != null) {
+          return unknownTagInspection.getAdditionalEntries();
+        }
+        break;
+      case XmlEntitiesInspection.UNKNOWN_ATTRIBUTE:
+        LocalInspectionToolWrapper wrapper1 = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlUnknownAttributeInspection.ATTRIBUTE_SHORT_NAME);
+        HtmlUnknownAttributeInspection unknownAttributeInspection = wrapper1 != null ? (HtmlUnknownAttributeInspection) wrapper1.getTool() : null;
+        if (unknownAttributeInspection != null) {
+          return unknownAttributeInspection.getAdditionalEntries();
+        }
+        break;
     }
+
     return null;
   }
 

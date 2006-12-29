@@ -111,7 +111,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       SillyAssignmentInspection.class,
       RedundantThrowsDeclaration.class,
       AccessStaticViaInstance.class,
-      HtmlStyleLocalInspection.class,
+      //HtmlStyleLocalInspection.class,
       RequiredAttributesInspection.class,
       DefaultFileTemplateUsageInspection.class,
       UnnecessaryModuleDependencyInspection.class,
@@ -127,6 +127,8 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       HtmlExtraClosingTagInspection.class,
       HtmlWrongClosingTagNameInspection.class,
       HtmlWrongRootElementInspection.class,
+      HtmlUnknownTagInspection.class,
+      HtmlUnknownAttributeInspection.class
     };
   }
 }

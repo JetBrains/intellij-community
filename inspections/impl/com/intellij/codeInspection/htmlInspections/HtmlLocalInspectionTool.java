@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,10 @@ public abstract class HtmlLocalInspectionTool extends LocalInspectionTool {
     // should be overriden
   }
 
+  protected void checkAttribute(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    // should be overriden
+  }
+
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
@@ -57,6 +62,10 @@ public abstract class HtmlLocalInspectionTool extends LocalInspectionTool {
             }
           }
         }
+      }
+
+      public void visitXmlAttribute(final XmlAttribute attribute) {
+        checkAttribute(attribute, holder, isOnTheFly);
       }
 
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
