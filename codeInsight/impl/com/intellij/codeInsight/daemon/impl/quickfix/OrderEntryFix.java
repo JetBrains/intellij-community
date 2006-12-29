@@ -89,7 +89,7 @@ public abstract class OrderEntryFix implements IntentionAction {
       return;
     }
 
-    Set<VirtualFile> librariesToAdd = new THashSet<VirtualFile>();
+    Set<Object> librariesToAdd = new THashSet<Object>();
     PsiClass[] classes = reference.getManager().getShortNamesCache().getClassesByName(referenceName, GlobalSearchScope.allScope(project));
     for (final PsiClass aClass : classes) {
       if (!aClass.getManager().getResolveHelper().isAccessible(aClass, reference, aClass)) continue;
@@ -142,7 +142,7 @@ public abstract class OrderEntryFix implements IntentionAction {
           if (files.length == 0) continue;
           final VirtualFile jar = files[0];
 
-          if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar)) continue;
+          if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar) || !librariesToAdd.add(library)) continue;
           QuickFixAction.registerQuickFixAction(info, new OrderEntryFix(){
             @NotNull
             public String getText() {
