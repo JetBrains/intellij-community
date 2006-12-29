@@ -18,7 +18,7 @@ public class CharTableImpl implements CharTable {
   private final MyTHashSet entries = new MyTHashSet();
 
   public CharSequence intern(final CharSequence text) {
-    if (text.length() > INTERN_THRESHOLD) return text.toString();
+    if (text.length() > INTERN_THRESHOLD) return createSequence(text);
     int idx;
 
     synchronized(staticEntries) {
@@ -37,14 +37,18 @@ public class CharTableImpl implements CharTable {
       }
 
       // We need to create separate string just to prevent referencing all character data when original is string or char sequence over string
-      final char[] buf = new char[text.length()];
-      CharArrayUtil.getChars(text, buf, 0);
-      final CharSequence entry = new String(buf);
+      final CharSequence entry = createSequence(text);
       boolean added = entries.add(entry);
       assert added;
 
       return entry;
     }
+  }
+
+  private static CharSequence createSequence(final CharSequence text) {
+    final char[] buf = new char[text.length()];
+    CharArrayUtil.getChars(text, buf, 0);
+    return new String(buf);
   }
 
   public static void staticIntern(final String text) {
