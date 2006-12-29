@@ -7,12 +7,12 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.xml.ElementPresentationManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -61,9 +61,6 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof PsiDirectory) {
       return LangBundle.message("terms.directory");
     }
-    if (element instanceof WebDirectoryElement) {
-      return LangBundle.message("terms.web.directory");
-    }
     if (element instanceof PsiFile) {
       return LangBundle.message("terms.file");
     }
@@ -104,6 +101,11 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       else {
         return LangBundle.message("java.terms.method");
       }
+    }
+
+    final String name = ElementPresentationManager.getTypeName(element.getClass());
+    if (name != null) {
+      return name;
     }
     return "";
   }
