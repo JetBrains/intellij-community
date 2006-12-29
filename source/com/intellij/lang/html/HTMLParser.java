@@ -14,7 +14,7 @@ public class HTMLParser implements PsiParser {
 
   @NotNull
   public ASTNode parse(final IElementType root, final PsiBuilder builder) {
-    builder.enforeCommentTokens(TokenSet.EMPTY);
+    builder.enforceCommentTokens(TokenSet.EMPTY);
     final PsiBuilder.Marker file = builder.mark();
     new HtmlParsing(builder).parseDocument();
     file.done(root);

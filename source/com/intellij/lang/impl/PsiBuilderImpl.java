@@ -120,7 +120,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexTypes = new IElementType[5];
   }
 
-  public void enforeCommentTokens(TokenSet tokens) {
+  public void enforceCommentTokens(TokenSet tokens) {
     myComments = tokens;
   }
 
@@ -393,17 +393,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (myLexemCount + 1 >= myLexStarts.length) {
         int newSize = myLexemCount * 3 / 2;
 
-        int[] newStarts = new int[newSize];
-        System.arraycopy(myLexStarts, 0, newStarts, 0, myLexemCount);
-        myLexStarts = newStarts;
-
-        int[] newEnds = new int[newSize];
-        System.arraycopy(myLexEnds, 0, newEnds, 0, myLexemCount);
-        myLexEnds = newEnds;
-
-        IElementType[] newTypes = new IElementType[newSize];
-        System.arraycopy(myLexTypes, 0, newTypes, 0, myLexemCount);
-        myLexTypes = newTypes;
+        resizeLexems(newSize);
       }
 
       myLexTypes[myLexemCount] = type;
@@ -414,6 +404,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myLexemCount++;
     }
     return false;
+  }
+
+  private void resizeLexems(final int newSize) {
+    int[] newStarts = new int[newSize];
+    System.arraycopy(myLexStarts, 0, newStarts, 0, myLexemCount);
+    myLexStarts = newStarts;
+
+    int[] newEnds = new int[newSize];
+    System.arraycopy(myLexEnds, 0, newEnds, 0, myLexemCount);
+    myLexEnds = newEnds;
+
+    IElementType[] newTypes = new IElementType[newSize];
+    System.arraycopy(myLexTypes, 0, newTypes, 0, myLexemCount);
+    myLexTypes = newTypes;
   }
 
   private boolean whitespaceOrComment(IElementType token) {
@@ -506,32 +510,32 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
   private void doValidnessChecks(final Marker marker) {
-    /*
-    final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
-    if (doneMarker != null) {
-      LOG.error("Marker already done.");
-    }
-    int idx = myProduction.lastIndexOf(marker);
-    if (idx < 0) {
-      LOG.error("Marker never been added.");
-    }
+    if (myDebugMode) {
+      final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
+      if (doneMarker != null) {
+        LOG.error("Marker already done.");
+      }
+      int idx = myProduction.lastIndexOf(marker);
+      if (idx < 0) {
+        LOG.error("Marker never been added.");
+      }
 
-    for (int i = myProduction.size() - 1; i > idx; i--) {
-      Object item = myProduction.get(i);
-      if (item instanceof Marker) {
-        StartMarker otherMarker = (StartMarker)item;
-        if (otherMarker.myDoneMarker == null) {
-          final Throwable debugAllocOther = otherMarker.myDebugAllocationPosition;
-          final Throwable debugAllocThis = ((StartMarker)marker).myDebugAllocationPosition;
-          if (debugAllocOther != null) {
-            debugAllocThis.printStackTrace(System.err);
-            debugAllocOther.printStackTrace(System.err);
+      for (int i = myProduction.size() - 1; i > idx; i--) {
+        Object item = myProduction.get(i);
+        if (item instanceof Marker) {
+          StartMarker otherMarker = (StartMarker)item;
+          if (otherMarker.myDoneMarker == null) {
+            final Throwable debugAllocOther = otherMarker.myDebugAllocationPosition;
+            final Throwable debugAllocThis = ((StartMarker)marker).myDebugAllocationPosition;
+            if (debugAllocOther != null) {
+              debugAllocThis.printStackTrace(System.err);
+              debugAllocOther.printStackTrace(System.err);
+            }
+            LOG.error("Another not done marker added after this one. Must be done before this.");
           }
-          LOG.error("Another not done marker added after this one. Must be done before this.");
         }
       }
     }
-    */
   }
 
   public void error(String messageText) {
@@ -671,7 +675,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
     */
 
-    myLexStarts[myCurrentLexem] = myLexer.getTokenStart(); // $ terminating token.
+    if (myLexStarts.length <= myCurrentLexem) {
+      resizeLexems(myCurrentLexem + 1);
+    }
+
+    myLexStarts[myCurrentLexem] = myLexer.getTokenStart(); // $ terminating token.;
     myLexEnds[myCurrentLexem] = 0;
     myLexTypes[myCurrentLexem] = null;
 

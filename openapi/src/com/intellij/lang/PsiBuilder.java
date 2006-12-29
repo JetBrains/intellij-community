@@ -158,5 +158,5 @@ public interface PsiBuilder extends UserDataHolder {
    */
   void setDebugMode(boolean dbgMode);
 
-  void enforeCommentTokens(TokenSet tokens);
+  void enforceCommentTokens(TokenSet tokens);
 }
