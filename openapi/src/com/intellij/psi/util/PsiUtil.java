@@ -989,7 +989,7 @@ public final class PsiUtil {
   }
 
   @Nullable
-  public static VirtualFile getVirtualFile(PsiElement element) {
+  public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
