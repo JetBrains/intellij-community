@@ -5,12 +5,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,52 +28,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
   }
 
   public PsiType getType() {
-    PsiReferenceExpression methodExpression = getMethodExpression();
-    final JavaResolveResult result = methodExpression.advancedResolve(false);
-    final PsiMethod method = (PsiMethod)result.getElement();
-    if (method == null) return null;
-
-    PsiManager manager = getManager();
-    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(this);
-    if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
-      //JLS3 15.8.2
-      if (GET_CLASS_METHOD.equals(method.getName()) && "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
-        PsiExpression qualifier = methodExpression.getQualifierExpression();
-        PsiType qualifierType = null;
-        if (qualifier != null) {
-          qualifierType = TypeConversionUtil.erasure(qualifier.getType());
-        } else {
-          ASTNode parent = getTreeParent();
-          while(parent != null && parent.getElementType() != CLASS) parent = parent.getTreeParent();
-          if (parent != null) {
-            qualifierType = getManager().getElementFactory().createType((PsiClass)parent.getPsi());
-          }
-        }
-        if (qualifierType != null) {
-          PsiClass javaLangClass = manager.findClass("java.lang.Class", getResolveScope());
-          if (javaLangClass != null && javaLangClass.getTypeParameters().length == 1) {
-            Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
-            map.put(javaLangClass.getTypeParameters()[0],
-                    PsiWildcardType.createExtends(manager, qualifierType));
-            PsiSubstitutor substitutor = manager.getElementFactory().createSubstitutor(map);
-            return manager.getElementFactory().createType(javaLangClass, substitutor, languageLevel);
-          }
-        }
-      }
-    }
-
-    PsiType ret = method.getReturnType();
-    if (ret == null) return null;
-    if (ret instanceof PsiClassType) {
-      ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
-    }
-    if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
-      final PsiSubstitutor substitutor = result.getSubstitutor();
-      if (PsiUtil.isRawSubstitutor(method, substitutor)) return TypeConversionUtil.erasure(ret);
-      PsiType substitutedReturnType = substitutor.substituteAndCapture(ret);
-      return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, this);
-    }
-    return TypeConversionUtil.erasure(ret);
+    return ((PsiManagerImpl)getManager()).getResolveCache().getType(this, ourTypeEvaluator);
   }
 
   public PsiMethod resolveMethod() {
@@ -105,7 +62,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
 
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
+    switch (role) {
       default:
         return null;
 
@@ -137,6 +94,59 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
 
   public String toString() {
     return "PsiMethodCallExpression:" + getText();
+  }
+
+  private TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
+
+  private static class TypeEvaluator implements Function<PsiExpression, PsiType> {
+    public PsiType fun(final PsiExpression call) {
+      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
+      final JavaResolveResult result = methodExpression.advancedResolve(false);
+      final PsiMethod method = (PsiMethod)result.getElement();
+      if (method == null) return null;
+      PsiManager manager = call.getManager();
+
+      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
+        //JLS3 15.8.2
+        if (GET_CLASS_METHOD.equals(method.getName()) && "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
+          PsiExpression qualifier = methodExpression.getQualifierExpression();
+          PsiType qualifierType = null;
+          if (qualifier != null) {
+            qualifierType = TypeConversionUtil.erasure(qualifier.getType());
+          }
+          else {
+            ASTNode parent = call.getNode().getTreeParent();
+            while (parent != null && parent.getElementType() != CLASS) parent = parent.getTreeParent();
+            if (parent != null) {
+              qualifierType = manager.getElementFactory().createType((PsiClass)parent.getPsi());
+            }
+          }
+          if (qualifierType != null) {
+            PsiClass javaLangClass = manager.findClass("java.lang.Class", call.getResolveScope());
+            if (javaLangClass != null && javaLangClass.getTypeParameters().length == 1) {
+              Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
+              map.put(javaLangClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, qualifierType));
+              PsiSubstitutor substitutor = manager.getElementFactory().createSubstitutor(map);
+              return manager.getElementFactory().createType(javaLangClass, substitutor, languageLevel);
+            }
+          }
+        }
+      }
+
+      PsiType ret = method.getReturnType();
+      if (ret == null) return null;
+      if (ret instanceof PsiClassType) {
+        ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
+      }
+      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
+        final PsiSubstitutor substitutor = result.getSubstitutor();
+        if (PsiUtil.isRawSubstitutor(method, substitutor)) return TypeConversionUtil.erasure(ret);
+        PsiType substitutedReturnType = substitutor.substituteAndCapture(ret);
+        return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
+      }
+      return TypeConversionUtil.erasure(ret);
+    }
   }
 }
 

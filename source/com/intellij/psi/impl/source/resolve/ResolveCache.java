@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
 
 import java.lang.ref.Reference;
@@ -17,6 +18,9 @@ public class ResolveCache {
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.RESOLVE_MAP_INCOMPLETE");
   private static final Key<List<Thread>> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
   private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
+
+  //store types for method call expressions, NB: this caching is semantical, without this captured wildcards won't work
+  private Map<PsiExpression, PsiType> myCaclulatedlTypes;
 
   private static final Object NULL = Key.create("NULL");
 
@@ -54,6 +58,34 @@ public class ResolveCache {
 
     myResolveMaps[2] = getOrCreateWeakMap(myManager, RESOLVE_MAP, false);
     myResolveMaps[3] = getOrCreateWeakMap(myManager, RESOLVE_MAP_INCOMPLETE, false);
+
+    myCaclulatedlTypes = new WeakHashMap<PsiExpression, PsiType>();
+    myManager.registerRunnableToRunOnAnyChange(new Runnable() {
+      public void run() {
+        synchronized (PsiLock.LOCK) {
+          myCaclulatedlTypes.clear();
+        }
+      }
+    });
+  }
+
+  public PsiType getType(PsiExpression call, Function<PsiExpression, PsiType> f) {
+    PsiType type;
+    boolean isNewCall;
+    synchronized (PsiLock.LOCK) {
+      isNewCall = !myCaclulatedlTypes.containsKey(call);
+    }
+    if (isNewCall) {
+      type = f.fun(call);
+      synchronized (PsiLock.LOCK) {
+        myCaclulatedlTypes.put(call, type);
+      }
+    } else {
+      synchronized (PsiLock.LOCK) {
+        type = myCaclulatedlTypes.get(call);
+      }
+    }
+    return type;
   }
 
   public void clearCache() {

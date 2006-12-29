@@ -575,10 +575,18 @@ public class GenericsHighlightUtil {
   private static boolean isUncheckedTypeArgumentConversion (PsiType lTypeArg, PsiType rTypeArg) {
     if (lTypeArg instanceof PsiPrimitiveType || rTypeArg instanceof PsiPrimitiveType) return false;
     if (lTypeArg.equals(rTypeArg)) return false;
+    if (lTypeArg instanceof PsiCapturedWildcardType) {
+      //ignore capture conversion
+      return isUncheckedTypeArgumentConversion(((PsiCapturedWildcardType)lTypeArg).getWildcard(), rTypeArg);
+    }
+    if (rTypeArg instanceof PsiCapturedWildcardType) {
+      //ignore capture conversion
+      return isUncheckedTypeArgumentConversion(lTypeArg, ((PsiCapturedWildcardType)rTypeArg).getWildcard());
+    }
+
     if (lTypeArg instanceof PsiWildcardType || rTypeArg instanceof PsiWildcardType) {
       return !lTypeArg.isAssignableFrom(rTypeArg);
     }
-    if (lTypeArg instanceof PsiCapturedWildcardType || rTypeArg instanceof PsiCapturedWildcardType) return true;
 
     if (lTypeArg instanceof PsiArrayType && rTypeArg instanceof PsiArrayType) {
       return isUncheckedTypeArgumentConversion(((PsiArrayType)rTypeArg).getComponentType(), ((PsiArrayType)lTypeArg).getComponentType());
