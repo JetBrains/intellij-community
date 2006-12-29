@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -95,15 +96,27 @@ public class FileReference
     final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
 
     for (final PsiFileSystemItem context : contexts) {
-      if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast()) {
+      if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast() || ".".equals(text) || "/".equals(text)) {
         result.add(new PsiElementResolveResult(context));
-      }
-      else {
+      } else {
         final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(context);
         if (helper != null) {
-          PsiFileSystemItem resolved = helper.innerResolve(context, text, myEqualsToCondition);
-          if (resolved != null) {
-            result.add(new PsiElementResolveResult(resolved));
+          if ("..".equals(text)) {
+            final PsiFileSystemItem resolved = helper.getParentDirectory(getElement().getProject(), context);
+            if (resolved != null) {
+              result.add(new PsiElementResolveResult(resolved));
+            }
+          } else {
+            helper.processVariants(context, new BaseScopeProcessor() {
+              public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
+                PsiFileSystemItem item = (PsiFileSystemItem)element;
+                if (equalsTo(item.getName())) {
+                  result.add(new PsiElementResolveResult(item));
+                  return false;
+                }
+                return true;
+              }
+            });
           }
         }
       }

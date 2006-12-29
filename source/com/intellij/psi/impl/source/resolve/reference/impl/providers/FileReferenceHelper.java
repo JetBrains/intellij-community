@@ -5,12 +5,11 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.codeInspection.LocalQuickFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +45,12 @@ public interface FileReferenceHelper<T extends PsiFileSystemItem> {
   @Nullable
   PsiReference createDynamicReference(PsiElement element, String str);
 
-  @Nullable
-  PsiFileSystemItem innerResolve(T element, String text, final Condition<String> equalsTo);
-
   boolean processVariants(T element, PsiScopeProcessor processor);
 
   @Nullable
   List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference);
+
+  @Nullable
+  PsiFileSystemItem getParentDirectory(final Project project, T element);
 
 }

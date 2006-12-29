@@ -6,23 +6,15 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.impl.file.PsiDirectoryImpl;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.codeInspection.LocalQuickFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +55,10 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
     return FileReferenceQuickFixProvider.registerQuickFix(info, reference);
   }
 
+  public PsiDirectory getParentDirectory(final Project project, final PsiDirectory element) {
+    return element.getParentDirectory();
+  }
+
   @Nullable
   public PsiDirectory getAbsoluteTopLevelDirLocation(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -91,28 +87,6 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
   @Nullable
   public PsiReference createDynamicReference(PsiElement element, String str) {
     return null;
-  }
-
-  public PsiFileSystemItem innerResolve(PsiDirectory element, String text, final Condition<String> equalsTo) {
-    if (".".equals(text) || "/".equals(text)) {
-      return element;
-    }
-    if ("..".equals(text)) {
-      return element.getParentDirectory();
-    }
-    final PsiFileSystemItem[] processingChildrenResult = new PsiFileSystemItem[1];
-
-    ((PsiDirectoryImpl)element).processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
-      public boolean execute(final PsiFileSystemItem element) {
-        if (equalsTo.value(element.getName())) {
-          processingChildrenResult[0] = element;
-          return false;
-        }
-
-        return true;
-      }
-    });
-    return processingChildrenResult[0];
   }
 
   public boolean processVariants(PsiDirectory element, PsiScopeProcessor processor) {
