@@ -222,7 +222,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
     setLastIntentionHint(null);
 
-    renewUpdateProgress();
+    renewUpdateProgress(true);
     myPassExecutorService.submitPasses(textEditor, highlightingPasses,myUpdateProgress);
   }
 
@@ -307,22 +307,26 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public synchronized void stopProcess(boolean toRestartAlarm) {
-    renewUpdateProgress();
+    renewUpdateProgress(toRestartAlarm);
     myAlarm.cancelAllRequests();
     myPassExecutorService.cancelAll();
-    if (toRestartAlarm && !myDisposed && myInitialized && myDaemonListeners.myIsFrameFocused) {
+    boolean restart = toRestartAlarm && !myDisposed && myInitialized && myDaemonListeners.myIsFrameFocused;
+    if (restart) {
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
       //LOG.debug("restarted ",new Throwable());
     }
+    else {
+      int i = 0;        
+    }
   }
 
-  private synchronized void renewUpdateProgress() {
+  private synchronized void renewUpdateProgress(final boolean start) {
     myUpdateProgress.cancel();
     myPassExecutorService.cancelAll();
     myUpdateProgress = myUpdateProgress instanceof MyMockProgressIndicator ?
                        new MyMockProgressIndicator(((MyMockProgressIndicator)myUpdateProgress).myStoppedNotify) :
                        new DaemonProgressIndicator();
-    if (myUpdateProgress instanceof DaemonProgressIndicator) {
+    if (start && myUpdateProgress instanceof DaemonProgressIndicator) {
       ((DaemonProgressIndicator)myUpdateProgress).restart();
     }
   }
@@ -510,7 +514,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         }
         if (!myUpdateByTimerEnabled) return;
         if (myDisposed) return;
-        renewUpdateProgress();
+        renewUpdateProgress(true);
         final FileEditor[] activeEditors = myDaemonListeners.getSelectedEditors();
         setLastIntentionHint(null);
         for (FileEditor fileEditor : activeEditors) {

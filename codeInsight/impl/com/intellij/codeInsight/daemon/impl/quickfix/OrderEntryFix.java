@@ -141,7 +141,7 @@ public abstract class OrderEntryFix implements IntentionAction {
           VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
           if (files.length == 0) continue;
           final VirtualFile jar = files[0];
-
+          
           if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar) || !librariesToAdd.add(library)) continue;
           QuickFixAction.registerQuickFixAction(info, new OrderEntryFix(){
             @NotNull
