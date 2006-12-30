@@ -32,8 +32,8 @@ public class XmlTagBlock extends AbstractXmlBlock{
     final Wrap tagBeginWrap = createTagBeginWrapping(getTag());
     final Alignment attrAlignment = Alignment.createAlignment();
     final Alignment textAlignment = Alignment.createAlignment();
-    final ArrayList<Block> result = new ArrayList<Block>();
-    ArrayList<Block> localResult = new ArrayList<Block>();
+    final ArrayList<Block> result = new ArrayList<Block>(3);
+    ArrayList<Block> localResult = new ArrayList<Block>(1);
 
     boolean insideTag = true;
 
@@ -46,7 +46,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
         if (child.getElementType() == ElementType.XML_TAG_END) {
           child = processChild(localResult,child, wrap, alignment, null);
           result.add(createTagDescriptionNode(localResult));
-          localResult = new ArrayList<Block>();
+          localResult = new ArrayList<Block>(1);
           insideTag = true;
         }
         else if (child.getElementType() == ElementType.XML_START_TAG_START) {
@@ -54,20 +54,20 @@ public class XmlTagBlock extends AbstractXmlBlock{
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
           }
-          localResult = new ArrayList<Block>();
+          localResult = new ArrayList<Block>(1);
           child = processChild(localResult,child, wrap, alignment, null);
         }
         else if (child.getElementType() == ElementType.XML_END_TAG_START) {
           insideTag = false;
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
-            localResult = new ArrayList<Block>();
+            localResult = new ArrayList<Block>(1);
           }
           child = processChild(localResult,child, wrap, alignment, null);
         } else if (child.getElementType() == ElementType.XML_EMPTY_ELEMENT_END) {
           child = processChild(localResult,child, wrap, alignment, null);
           result.add(createTagDescriptionNode(localResult));
-          localResult = new ArrayList<Block>();
+          localResult = new ArrayList<Block>(1);
         }
         else if (isJspxJavaContainingNode(child)) {
           createJspTextNode(localResult, child, getChildIndent());

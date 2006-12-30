@@ -292,31 +292,32 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       childIndent = Indent.getNormalIndent();
     }
     result.add(createAnotherTreeTagBlock(tag, childIndent));
-    ASTNode currentChild = findChildAfter(child, tag.getTextRange().getEndOffset());
+    TextRange tagRange = tag.getTextRange();
+    ASTNode currentChild = findChildAfter(child, tagRange.getEndOffset());
+    TextRange childRange = currentChild != null ? currentChild.getTextRange():null;
 
-    while (currentChild != null && currentChild.getTextRange().getEndOffset() > tag.getTextRange().getEndOffset()) {
-      PsiElement psiElement = JspTextBlock.findXmlTagAt(currentChild, tag.getTextRange().getEndOffset());
+    while (currentChild != null && childRange.getEndOffset() > tagRange.getEndOffset()) {
+      PsiElement psiElement = JspTextBlock.findXmlTagAt(currentChild, tagRange.getEndOffset());
       if (psiElement != null) {
         if (psiElement instanceof XmlTag &&
-            psiElement.getTextRange().getStartOffset() >= currentChild.getTextRange().getStartOffset() &&
+            psiElement.getTextRange().getStartOffset() >= childRange.getStartOffset() &&
             containsTag(psiElement) && doesNotIntersectSubTagsWith(psiElement)) {
           result.add(createAnotherTreeTagBlock(psiElement, childIndent));
           currentChild = findChildAfter(currentChild, psiElement.getTextRange().getEndOffset());
-          tag = psiElement;
+          childRange = currentChild != null ? currentChild.getTextRange():null;
+          tagRange = psiElement.getTextRange();
         }
         else {
           result
-            .add(new XmlBlock(currentChild, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(tag.getTextRange().getEndOffset(),
-                                                                                                          currentChild
-                                                                                                            .getTextRange().getEndOffset())));
+            .add(new XmlBlock(currentChild, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(tagRange.getEndOffset(),
+                                                                                                          childRange.getEndOffset())));
           return currentChild;
         }
       }
       else {
         result
-          .add(new XmlBlock(currentChild, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(tag.getTextRange().getEndOffset(),
-                                                                                                        currentChild
-                                                                                                          .getTextRange().getEndOffset())));
+          .add(new XmlBlock(currentChild, wrap, alignment, myXmlFormattingPolicy, indent, new TextRange(tagRange.getEndOffset(),
+                                                                                                        childRange.getEndOffset())));
         return currentChild;
       }
     }

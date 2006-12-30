@@ -24,7 +24,13 @@ public class FormatterImpl extends FormatterEx
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
 
   private int myIsDisabledCount = 0;
-  private static final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false);
+  private final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false);
+  private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(IndentImpl.Type.NONE, true);
+  private final IndentImpl myLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, false);
+  private final IndentImpl myContinuationIndent = new IndentImpl(IndentImpl.Type.CONTINUATION, false);
+  private final IndentImpl myContinutationWithoutFirstIndent = new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false);
+  private final IndentImpl myAbsoluteLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, true);
+  private final IndentImpl myNormalIndent = new IndentImpl(IndentImpl.Type.NORMAL, false);
 
   public FormatterImpl() {
     Indent.setFactory(this);
@@ -39,7 +45,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   public Indent getNormalIndent() {
-    return new IndentImpl(IndentImpl.Type.NORMAL, false);
+    return myNormalIndent;
   }
 
   public Indent getNoneIndent() {
@@ -443,7 +449,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   public Indent getAbsoluteLabelIndent() {
-    return new IndentImpl(IndentImpl.Type.LABEL, true);
+    return myAbsoluteLabelIndent;
   }
 
   public Spacing createSafeSpacing(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
@@ -471,20 +477,20 @@ public class FormatterImpl extends FormatterEx
   }
 
   public Indent getAbsoluteNoneIndent() {
-    return new IndentImpl(IndentImpl.Type.NONE, true);
+    return myAbsoluteNoneIndent;
   }
 
   public Indent getLabelIndent() {
-    return new IndentImpl(IndentImpl.Type.LABEL, false);
+    return myLabelIndent;
   }
 
   public Indent getContinuationIndent() {
-    return new IndentImpl(IndentImpl.Type.CONTINUATION, false);
+    return myContinuationIndent;
   }
 
   public Indent getContinuationWithoutFirstIndent()//is default
   {
-    return new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false);
+    return myContinutationWithoutFirstIndent;
   }
 
   public static int getLineFeedsToModified(final FormattingDocumentModel model, final int offset, final int startOffset) {

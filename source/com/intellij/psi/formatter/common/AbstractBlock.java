@@ -9,15 +9,16 @@ import com.intellij.psi.impl.source.codeStyle.Helper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 public abstract class AbstractBlock implements Block {
+  protected static final List<Block> EMPTY = Collections.unmodifiableList(new ArrayList<Block>(0));
   protected final ASTNode myNode;
   private List<Block> mySubBlocks;
   protected Wrap myWrap;
   protected Alignment myAlignment;
-
-  private boolean myIsInsideBuilding = false;
 
   protected AbstractBlock(final ASTNode node, final Wrap wrap, final Alignment alignment) {
     myNode = node;
@@ -35,14 +36,9 @@ public abstract class AbstractBlock implements Block {
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      LOG.assertTrue(!myIsInsideBuilding);
-      myIsInsideBuilding = true;
-      try {
-        mySubBlocks = buildChildren();
-      }
-      finally {
-        myIsInsideBuilding = false;
-      }
+
+      final List<Block> list = buildChildren();
+      mySubBlocks = list.size() > 0 ? list:EMPTY;
     }
     return mySubBlocks;
   }

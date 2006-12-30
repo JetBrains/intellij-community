@@ -3,7 +3,6 @@ package com.intellij.formatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -30,8 +29,8 @@ class FormatProcessor {
 
   private final Collection<AlignmentImpl> myAlignedAlignments = new HashSet<AlignmentImpl>();
 
-  LeafBlockWrapper myWrapCandidate = null;
-  LeafBlockWrapper myFirstWrappedBlockOnLine = null;
+  private LeafBlockWrapper myWrapCandidate = null;
+  private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
 
   private final LeafBlockWrapper myFirstTokenBlock;
   private final LeafBlockWrapper myLastTokenBlock;

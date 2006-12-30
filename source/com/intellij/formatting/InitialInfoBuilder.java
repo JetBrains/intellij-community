@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.impl.DebugUtil;
+import gnu.trove.THashMap;
 
 import java.util.*;
 
@@ -16,7 +17,7 @@ class InitialInfoBuilder {
   private final FormattingDocumentModel myModel;
   private TextRange myAffectedRange;
   private boolean myProcessHeadingWhitespace;
-  private final Map<Block, AbstractBlockWrapper> myResult = new LinkedHashMap<Block, AbstractBlockWrapper>();
+  private final Map<Block, AbstractBlockWrapper> myResult = new THashMap<Block, AbstractBlockWrapper>();
   private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myFirstTokenBlock;
   private LeafBlockWrapper myLastTokenBlock;
@@ -110,7 +111,7 @@ class InitialInfoBuilder {
     myResult.put(rootBlock, info);
 
     Block previous = null;
-    List<AbstractBlockWrapper> list = new ArrayList<AbstractBlockWrapper>();
+    List<AbstractBlockWrapper> list = new ArrayList<AbstractBlockWrapper>(subBlocks.size());
     for (int i = 0; i < subBlocks.size(); i++) {
       final Block block = subBlocks.get(i);
       if (previous != null) {
@@ -200,7 +201,7 @@ class InitialInfoBuilder {
 
   private boolean isReadOnly(final TextRange textRange, final Block rootBlock) {
     if (myAffectedRange == null) return false;
-    if (myRightBlocks.contains(rootBlock) && myAffectedRange.getStartOffset() >= textRange.getEndOffset()) {
+    if (myAffectedRange.getStartOffset() >= textRange.getEndOffset() && myRightBlocks.contains(rootBlock)) {
       return false;
     }
     if (textRange.getStartOffset() > myAffectedRange.getEndOffset()) return true;

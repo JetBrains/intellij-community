@@ -17,8 +17,9 @@ public class AbstractBlockWrapper {
   protected final WhiteSpace myWhiteSpace;
   protected final AbstractBlockWrapper myParent;
   protected TextRange myTextRange;
-  protected boolean myCanUseFirstChildIndentAsBlockIndent = true;
-  
+  protected int myFlags;
+
+  static int CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT = 1;
   
   protected IndentInfo myIndentFromParent = null;
   private IndentImpl myIndent = null;
@@ -28,6 +29,7 @@ public class AbstractBlockWrapper {
     myWhiteSpace = whiteSpace;
     myParent = parent;
     myTextRange = textRange;
+    myFlags = CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
   }
 
   public WhiteSpace getWhiteSpace() {
@@ -82,7 +84,7 @@ public class AbstractBlockWrapper {
   }
 
   public void reset() {
-    myCanUseFirstChildIndentAsBlockIndent = true;
+    myFlags |= CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
     final AlignmentImpl alignment = ((AlignmentImpl)getBlock().getAlignment());
     if (alignment != null) alignment.reset();
     final WrapImpl wrap = ((WrapImpl)getBlock().getWrap());
@@ -119,19 +121,19 @@ public class AbstractBlockWrapper {
     IndentData childIndent = childOnNewLine /*|| getWhiteSpace().containsLineFeeds()*/ ? getIndent(options, child, tokenBlockStartOffset) : new IndentData(0);
 
     if (childOnNewLine && child.getIndent().isAbsolute()) {
-      myCanUseFirstChildIndentAsBlockIndent = false;
+      myFlags &= ~CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
       AbstractBlockWrapper current = this;
       while (current != null && current.getStartOffset() == getStartOffset()) {
-        current.myCanUseFirstChildIndentAsBlockIndent = false;
+        current.myFlags &= ~CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
         current = current.myParent;
       }
       return childIndent;
     }
 
     if (child.getStartOffset() == getStartOffset()) {
-      myCanUseFirstChildIndentAsBlockIndent = myCanUseFirstChildIndentAsBlockIndent &&
-                                              child.myCanUseFirstChildIndentAsBlockIndent &&
-                                              childIndent.isEmpty();
+      final boolean newValue = (myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 &&
+                               (child.myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && childIndent.isEmpty();
+      setCanUseFirstChildIndentAsBlockIndent(newValue);
     }
 
     if (getStartOffset() == tokenBlockStartOffset) {
@@ -146,13 +148,18 @@ public class AbstractBlockWrapper {
     } else {
       if (myParent == null) return  childIndent.add(getWhiteSpace());
       if (getIndent().isAbsolute()) return childIndent.add(myParent.myParent.getChildOffset(myParent, options, tokenBlockStartOffset));
-      if (myCanUseFirstChildIndentAsBlockIndent) {
+      if ((myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0) {
         return childIndent.add(getWhiteSpace());
       }
       else {
         return childIndent.add(myParent.getChildOffset(this, options, tokenBlockStartOffset));
       }
     }
+  }
+
+  protected final void setCanUseFirstChildIndentAsBlockIndent(final boolean newValue) {
+    if (newValue) myFlags |= CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
+    else myFlags &= ~CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
   }
 
   public void arrangeParentTextRange() {
@@ -169,7 +176,7 @@ public class AbstractBlockWrapper {
     IndentData indent = getIndent(indentOption, index, childIndent);
     if (myParent == null) {
       return indent.add(getWhiteSpace());
-    } else if (myCanUseFirstChildIndentAsBlockIndent && getWhiteSpace().containsLineFeeds()) {
+    } else if ((myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {
       return indent.add(getWhiteSpace());
     }
     else {

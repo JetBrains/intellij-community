@@ -50,27 +50,26 @@ public class XmlBlock extends AbstractXmlBlock {
 
   protected List<Block> buildChildren() {
 
-    final ArrayList<Block> result = new ArrayList<Block>();
-
     if (myNode.getElementType() == ElementType.XML_ATTRIBUTE_VALUE || myNode.getElementType() == ElementType.XML_COMMENT) {
-      return result;
+      return EMPTY;
     }
 
     if (myNode.getElementType() == ElementType.XML_TEXT) {
       if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
-        return result;
+        return EMPTY;
       }
 
       final ASTNode treeParent = myNode.getTreeParent();
       final XmlTag tag = getTag(treeParent);
       if (tag != null) {
         if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(tag)) {
-          return result;
+          return EMPTY;
         }
       }
     }
 
     if (myNode instanceof CompositeElement) {
+      final ArrayList<Block> result = new ArrayList<Block>(5);
       ChameleonTransforming.transformChildren(myNode);
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
@@ -82,8 +81,10 @@ public class XmlBlock extends AbstractXmlBlock {
           child = child.getTreeNext();
         }
       }
+      return result;
+    } else {
+      return EMPTY;
     }
-    return result;
   }
 
   @Nullable

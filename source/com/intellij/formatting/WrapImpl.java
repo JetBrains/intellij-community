@@ -11,8 +11,8 @@ class WrapImpl extends Wrap {
   private int myFirstPosition = -1;
   private boolean myIsActive = false;
   private final boolean myWrapFirstElement;
-  private final long myId;
-  private static long ourId = 0;
+  private final int myId;
+  private static int ourId = 0;
 
   private final Set<WrapImpl> myParents = new HashSet<WrapImpl>();
   private boolean myIgnoreParentWraps = false;

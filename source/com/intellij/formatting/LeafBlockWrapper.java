@@ -7,16 +7,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 class LeafBlockWrapper extends AbstractBlockWrapper {
+  private static final ArrayList<Block> EMPTY = new ArrayList<Block>(0);
 
-  private static final ArrayList<Block> EMPTY = new ArrayList<Block>();
+  private static int CONTAIN_LINE_FEEDS = 2;
+  private static int READ_ONLY = 4;
+  private static int LEAF = 8;
 
-  private final boolean myContainsLineFeeds;
   private final int mySymbolsAtTheLastLine;
   private final LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myNextBlock;
-  private final boolean myIsReadOnly;
   private SpacingImpl mySpaceProperty;
-  private final boolean myIsLeaf;
   private final IndentInside myLastLineIndent;
 
   public LeafBlockWrapper(final Block block,
@@ -29,19 +29,26 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     super(block, whiteSpaceBefore, parent, textRange);
     myPreviousBlock = previousTokenBlock;
     final int lastLineNumber = model.getLineNumber(textRange.getEndOffset());
-    myContainsLineFeeds = model.getLineNumber(textRange.getStartOffset()) != lastLineNumber;
-    mySymbolsAtTheLastLine = myContainsLineFeeds ? textRange.getEndOffset() - model.getLineStartOffset(lastLineNumber) : textRange.getLength();
-    myIsReadOnly = isReadOnly;
-    myIsLeaf = block.isLeaf();
-    if (myIsLeaf && myContainsLineFeeds) {
+
+    int flagsValue = myFlags;
+    final boolean containsLineFeeds = model.getLineNumber(textRange.getStartOffset()) != lastLineNumber;
+    flagsValue |= containsLineFeeds ? CONTAIN_LINE_FEEDS:0;
+    mySymbolsAtTheLastLine = containsLineFeeds ? textRange.getEndOffset() - model.getLineStartOffset(lastLineNumber) : textRange.getLength();
+    flagsValue |= isReadOnly ? READ_ONLY:0;
+    final boolean isLeaf = block.isLeaf();
+    flagsValue |= isLeaf ? LEAF : 0;
+
+    if (isLeaf && containsLineFeeds) {
       myLastLineIndent = IndentInside.getLastLineIndent(model.getText(textRange).toString());
     } else {
       myLastLineIndent = null;
     }
+
+    myFlags = flagsValue;
   }
 
-  public boolean containsLineFeeds() {
-    return myContainsLineFeeds;
+  public final boolean containsLineFeeds() {
+    return (myFlags & CONTAIN_LINE_FEEDS) != 0;
   }
 
   public int getSymbolsAtTheLastLine() {
@@ -64,7 +71,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return mySpaceProperty;
   }
   public List<Block> getSubBlocks(){
-    if (myIsReadOnly) {
+    if ((myFlags & READ_ONLY) != 0) {
       return EMPTY;
     } else {
       return getBlock().getSubBlocks();
@@ -86,10 +93,10 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     
     if (myParent == null) return new IndentData(0);
     if (getIndent().isAbsolute()) {
-      myCanUseFirstChildIndentAsBlockIndent = false;
+      setCanUseFirstChildIndentAsBlockIndent(false);
       AbstractBlockWrapper current = this;
       while (current != null && current.getStartOffset() == getStartOffset()) {
-        current.myCanUseFirstChildIndentAsBlockIndent = false;
+        current.setCanUseFirstChildIndentAsBlockIndent(false);
         current = current.myParent;
       }
     }
@@ -114,12 +121,8 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     }
   }
 
-  public IndentInfo getIndentFromParent() {
-    return myIndentFromParent;
-  }
-
-  public boolean isLeaf() {
-    return myIsLeaf;
+  public final boolean isLeaf() {
+    return (myFlags & LEAF) != 0;
   }
 
   public IndentInside getLastLineIndent() {
