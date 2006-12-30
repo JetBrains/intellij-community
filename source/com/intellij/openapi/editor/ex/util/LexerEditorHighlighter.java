@@ -73,6 +73,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public HighlighterIterator createIterator(int startOffset) {
     final Document document = getDocument();
     assert !(document instanceof DocumentEx) || !((DocumentEx)document).isInBulkUpdate();
+    if (mySegments.getSegmentCount() == 0 && document != null && document.getTextLength() > 0) {
+      // bulk mode was reset
+      doSetText(document.getCharsSequence());
+    }
     return new HighlighterIteratorImpl(mySegments, startOffset);
   }
 
@@ -275,6 +279,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public void setText(CharSequence text) {
+    doSetText(text);
+  }
+
+  private void doSetText(final CharSequence text) {
     myLexer.start(text, 0, text.length(),myInitialState);
     mySegments.removeAll();
     int i = 0;

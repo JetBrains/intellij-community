@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -273,6 +274,7 @@ public class UpdateHighlightersUtil {
 
   public static void updateHighlightersByTyping(Project project, DocumentEvent e) {
     Document document = e.getDocument();
+    if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
 
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(document, project);
 

@@ -1868,9 +1868,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (ApplicationManager.getApplication().isUnitTestMode() && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return new Dimension(1,1);
     }
-    Dimension draft = getSizeWithoutCaret();
-    int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
-    draft.width = Math.max(caretX, draft.width) + mySettings.getAdditionalColumnsCount() * getSpaceWidth(Font.PLAIN);
+
+    final Dimension draft = getSizeWithoutCaret();
+    final int additionalSpace = mySettings.getAdditionalColumnsCount() * getSpaceWidth(Font.PLAIN);
+    
+    if (!myDocument.isInBulkUpdate()) {
+      int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
+      draft.width = Math.max(caretX, draft.width) + additionalSpace;
+    } else {
+      draft.width += additionalSpace;
+    }
     return draft;
   }
 
