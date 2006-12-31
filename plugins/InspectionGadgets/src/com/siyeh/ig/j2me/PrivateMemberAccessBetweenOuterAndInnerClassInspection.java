@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,15 +78,20 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
-                final PsiReferenceExpression reference =
-                        (PsiReferenceExpression) descriptor.getPsiElement();
-                final PsiModifierListOwner member =
-                        (PsiModifierListOwner) reference.resolve();
-                assert member != null;
-                final PsiModifierList modifiers = member.getModifierList();
-                modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
-                modifiers.setModifierProperty(PsiModifier.PROTECTED, false);
-                modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
+            final PsiReferenceExpression reference =
+                    (PsiReferenceExpression) descriptor.getPsiElement();
+            final PsiModifierListOwner member =
+                    (PsiModifierListOwner) reference.resolve();
+            if (member == null) {
+                return;
+            }
+            final PsiModifierList modifiers = member.getModifierList();
+            if (modifiers == null) {
+                return;
+            }
+            modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
+            modifiers.setModifierProperty(PsiModifier.PROTECTED, false);
+            modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
         }
     }
 
@@ -98,6 +104,10 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
         public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression){
+            if (PsiUtil.isInJspFile(expression)) {
+                // disable for jsp files IDEADEV-12957
+                return;
+            }
             super.visitReferenceExpression(expression);
             final PsiElement containingClass =
                     getContainingContextClass(expression);
