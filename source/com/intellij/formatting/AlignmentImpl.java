@@ -8,31 +8,28 @@ import java.util.Collections;
 class AlignmentImpl extends Alignment {
   private static final List<LeafBlockWrapper> EMPTY = Collections.unmodifiableList(new ArrayList<LeafBlockWrapper>(0));
   private List<LeafBlockWrapper> myOffsetRespBlocks = EMPTY;
-  private final int myId;
+  private final int myFlags;
   private static int ourId = 0;
+  private static final int ID_SHIFT = 1;
 
   public String getId() {
-    return String.valueOf(myId);
+    return String.valueOf(myFlags >>> ID_SHIFT);
   }
 
   public void reset() {
     if (myOffsetRespBlocks != EMPTY) myOffsetRespBlocks.clear();
   }
 
-  static class Type{
-    public static final Type FULL = new Type();
-    public static final Type NORMAL = new Type();
+  static enum Type{
+    FULL,NORMAL
   }
-
-  private final Type myType;
 
   public AlignmentImpl(final Type type) {
-    myType = type;
-    myId = ourId++;
+    myFlags = ((ourId++) >> ID_SHIFT) | type.ordinal();
   }
 
-  Type getType() {
-    return myType;
+  final Type getType() {
+    return Type.values()[myFlags & 1];
   }
 
   LeafBlockWrapper getOffsetRespBlockBefore(final LeafBlockWrapper blockAfter) {

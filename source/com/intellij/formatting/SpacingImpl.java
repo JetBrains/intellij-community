@@ -1,34 +1,48 @@
 package com.intellij.formatting;
 
 class SpacingImpl extends Spacing {
-  private final int myMinSpaces;
+  private int myMinSpaces;
   private int myKeepBlankLines;
-  private final int myMaxSpaces;
-  private final int myMinLineFeeds;
-  private final boolean myIsReadOnly;
-  private final boolean myIsSafe;
-  private boolean myShouldKeepLineBreaks;
-  private boolean myKeepFirstColumn;
+  private int myMaxSpaces;
+  private int myMinLineFeeds;
+  protected int myFlags;
+
+  private static int READ_ONLY_MASK = 1;
+  private static int SAFE_MASK = 2;
+  private static int SHOULD_KEEP_LINEBEAKS_MASK = 4;
+  private static int SHOULD_KEEP_FIRST_COLUMN_MASK = 8;
 
   public SpacingImpl(final int minSpaces,
                      final int maxSpaces,
                      final int minLineFeeds,
-                     boolean isReadOnly,
+                     final boolean isReadOnly,
                      final boolean safe,
                      final boolean shouldKeepLineBreaks,
-                     final int keepBlankLines) {
+                     final int keepBlankLines,
+                     final boolean keepFirstColumn) {
+    init(minSpaces, maxSpaces, minLineFeeds, isReadOnly, safe, shouldKeepLineBreaks, keepBlankLines, keepFirstColumn);
+  }
+
+  void init(final int minSpaces,
+                    final int maxSpaces,
+                    final int minLineFeeds,
+                    final boolean isReadOnly,
+                    final boolean safe,
+                    final boolean shouldKeepLineBreaks,
+                    final int keepBlankLines,
+                    final boolean keepFirstColumn) {
     myMinSpaces = minSpaces;
-    myKeepBlankLines = keepBlankLines;
+
     myMaxSpaces = Math.max(minSpaces, maxSpaces);
     myMinLineFeeds = minLineFeeds;
     if (minLineFeeds > 1 && (minLineFeeds - 1) > keepBlankLines) {
       myKeepBlankLines = minLineFeeds - 1;
+    } else {
+      myKeepBlankLines = keepBlankLines;
     }
-    myIsReadOnly = isReadOnly;
-    myIsSafe = safe;
-    myShouldKeepLineBreaks = shouldKeepLineBreaks;
+    myFlags = (isReadOnly ? READ_ONLY_MASK:0) | (safe ? SAFE_MASK:0) | (shouldKeepLineBreaks ? SHOULD_KEEP_LINEBEAKS_MASK:0) |
+      (keepFirstColumn ? SHOULD_KEEP_FIRST_COLUMN_MASK:0);
   }
-
 
   int getMinSpaces() {
     return myMinSpaces;
@@ -42,42 +56,44 @@ class SpacingImpl extends Spacing {
     return myMinLineFeeds;
   }
 
-  boolean isReadOnly(){
-    return myIsReadOnly;
+  final boolean isReadOnly(){
+    return (myFlags & READ_ONLY_MASK) != 0;
   }
 
-  boolean containsLineFeeds() {
+  final boolean containsLineFeeds() {
     return myMinLineFeeds > 0;
   }
 
-  public boolean isSafe() {
-    return myIsSafe;
+  public final boolean isSafe() {
+    return (myFlags & SAFE_MASK) != 0;
   }
 
   public void refresh(FormatProcessor formatter) {
   }
 
-  public boolean shouldKeepLineFeeds() {
-    return myShouldKeepLineBreaks;
+  public final boolean shouldKeepLineFeeds() {
+    return (myFlags & SHOULD_KEEP_LINEBEAKS_MASK) != 0;
   }
 
   public int getKeepBlankLines() {
     return myKeepBlankLines;
   }
 
-  public boolean shouldKeepFirstColumn() {
-    return myKeepFirstColumn;
+  public final boolean shouldKeepFirstColumn() {
+    return (myFlags & SHOULD_KEEP_FIRST_COLUMN_MASK) != 0;
   }
 
-  public void setKeepFirstColumn(final boolean keepFirstColumn) {
-    myKeepFirstColumn = keepFirstColumn;
+  public boolean equals(Object o) {
+    if (!(o instanceof SpacingImpl)) return false;
+    final SpacingImpl spacing = (SpacingImpl)o;
+    return myFlags == spacing.myFlags &&
+           myMinSpaces == spacing.getMinSpaces() &&
+           myMaxSpaces == spacing.getMaxSpaces() &&
+           myMinLineFeeds == spacing.getMinLineFeeds() &&
+           myKeepBlankLines == spacing.getKeepBlankLines();
   }
 
-  public void setKeepLineBreaks(final int i) {
-    myKeepBlankLines=i;
-  }
-
-  public void setKeepLineBreaks(final boolean value) {
-    myShouldKeepLineBreaks = value;
+  public int hashCode() {
+    return myMinSpaces + myMaxSpaces * 29 + myMinLineFeeds * 11 + myFlags + myKeepBlankLines;
   }
 }

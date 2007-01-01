@@ -1,5 +1,6 @@
 package com.intellij.formatting;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -10,8 +11,11 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class FormatterImpl extends FormatterEx
   implements ApplicationComponent,
@@ -31,6 +35,7 @@ public class FormatterImpl extends FormatterEx
   private final IndentImpl myContinutationWithoutFirstIndent = new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false);
   private final IndentImpl myAbsoluteLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, true);
   private final IndentImpl myNormalIndent = new IndentImpl(IndentImpl.Type.NORMAL, false);
+  private final SpacingImpl myReadOnlySpacing = new SpacingImpl(0, 0, 0, true, false, true, 0, false);
 
   public FormatterImpl() {
     Indent.setFactory(this);
@@ -67,11 +72,11 @@ public class FormatterImpl extends FormatterEx
                                int minLineFeeds,
                                final boolean keepLineBreaks,
                                final int keepBlankLines) {
-    return new SpacingImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines);
+    return getSpacingImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines,false);
   }
 
   public Spacing getReadOnlySpacing() {
-    return new SpacingImpl(0, 0, 0, true, false, true, 0);
+    return myReadOnlySpacing;
   }
 
   public Spacing createDependentLFSpacing(int minOffset, int maxOffset, TextRange dependence, boolean keepLineBreaks,
@@ -373,11 +378,27 @@ public class FormatterImpl extends FormatterEx
               }
               final SpacingImpl spaceProperty = current.getSpaceProperty();
               if (spaceProperty != null) {
+                boolean needChange = false;
+                int newKeepLineBreaks = spaceProperty.getKeepBlankLines();
+                boolean newKeepLineBreaksFlag = spaceProperty.shouldKeepLineFeeds();
+
                 if (!keepLineBreaks) {
-                  spaceProperty.setKeepLineBreaks(false);
+                  needChange = true;
+                  newKeepLineBreaksFlag = false;
                 }
                 if (!keepBlankLines) {
-                  spaceProperty.setKeepLineBreaks(0);
+                  needChange = true;
+                  newKeepLineBreaks = 0;
+                }
+
+                if (needChange) {
+                  assert !(spaceProperty instanceof DependantSpacingImpl);
+                  current.setSpaceProperty(
+                    getSpacingImpl(
+                      spaceProperty.getMinSpaces(), spaceProperty.getMaxSpaces(), spaceProperty.getMinLineFeeds(), spaceProperty.isReadOnly(),
+                      spaceProperty.isSafe(), newKeepLineBreaksFlag, newKeepLineBreaks, false
+                    )
+                  );
                 }
               }
             }
@@ -453,16 +474,33 @@ public class FormatterImpl extends FormatterEx
   }
 
   public Spacing createSafeSpacing(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
-    return new SpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines);
+    return getSpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines, false);
   }
 
   public Spacing createKeepingFirstColumnSpacing(final int minSpace,
                                                  final int maxSpace,
                                                  final boolean keepLineBreaks,
                                                  final int keepBlankLines) {
-    final SpacingImpl result = new SpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines);
-    result.setKeepFirstColumn(true);
-    return result;
+    return getSpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines, true);
+  }
+
+  private Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<SpacingImpl,SpacingImpl>();
+  private SpacingImpl ourSharedSpacing = new SpacingImpl(-1,-1,-1,false,false,false,-1,false);
+
+  private SpacingImpl getSpacingImpl(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean readOnly, final boolean safe,
+                                     final boolean keepLineBreaksFlag,
+                                     final int keepLineBreaks,
+                                     final boolean keepFirstColumn) {
+    synchronized(this) {
+      ourSharedSpacing.init(minSpaces, maxSpaces, minLineFeeds, readOnly, safe, keepLineBreaksFlag, keepLineBreaks, keepFirstColumn);
+      SpacingImpl spacing = ourSharedProperties.get(ourSharedSpacing);
+
+      if (spacing == null) {
+        spacing = new SpacingImpl(minSpaces, maxSpaces, minLineFeeds, readOnly, safe, keepLineBreaksFlag, keepLineBreaks, keepFirstColumn);
+        ourSharedProperties.put(spacing, spacing);
+      }
+      return spacing;
+    }
   }
 
   @NotNull

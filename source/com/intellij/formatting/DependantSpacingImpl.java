@@ -4,20 +4,20 @@ import com.intellij.openapi.util.TextRange;
 
 public class DependantSpacingImpl extends SpacingImpl {
   private final TextRange myDependance;
-  private boolean myDependanceContainsLF;
-  private boolean myLineFeedWasUsed = false;
+  private static int DEPENDENCE_CONTAINS_LF_MASK = 0x10;
+  private static int LF_WAS_USED_MASK = 0x20;
 
   public DependantSpacingImpl(final int minSpaces,
                               final int maxSpaces,
                               TextRange dependance,
                               final boolean keepLineBreaks,
                               final int keepBlankLines) {
-    super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines);
+    super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines, false);
     myDependance = dependance;
   }
 
   int getMinLineFeeds() {
-    if (myDependanceContainsLF) {
+    if ((myFlags & DEPENDENCE_CONTAINS_LF_MASK) != 0) {
       return 1;
     }
     else {
@@ -30,18 +30,21 @@ public class DependantSpacingImpl extends SpacingImpl {
   }
 
   public void refresh(FormatProcessor formatter) {
-    myDependanceContainsLF = myLineFeedWasUsed || formatter.containsLineFeeds(myDependance);
+    final boolean value = wasLFUsed() || formatter.containsLineFeeds(myDependance);
+    if (value) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
+    else myFlags &= ~DEPENDENCE_CONTAINS_LF_MASK;
   }
 
   public TextRange getDependancy() {
     return myDependance;
   }
 
-  public void setLFWasUsed(final boolean value) {
-    myLineFeedWasUsed = value;
+  public final void setLFWasUsed(final boolean value) {
+    if (value) myFlags |= LF_WAS_USED_MASK;
+    else myFlags &=~ LF_WAS_USED_MASK;
   }
 
-  public boolean wasLFUsed() {
-    return myLineFeedWasUsed;
+  public final boolean wasLFUsed() {
+    return (myFlags & LF_WAS_USED_MASK) != 0;
   }
 }

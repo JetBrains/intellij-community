@@ -1,25 +1,30 @@
 package com.intellij.formatting;
 
-import org.jetbrains.annotations.NonNls;
-
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 class WrapImpl extends Wrap {
   private LeafBlockWrapper myFirstEntry = null;
   private int myFirstPosition = -1;
-  private boolean myIsActive = false;
-  private final boolean myWrapFirstElement;
-  private final int myId;
+  private int myFlags;
   private static int ourId = 0;
 
-  private final Set<WrapImpl> myParents = new HashSet<WrapImpl>();
-  private boolean myIgnoreParentWraps = false;
+  private static final Set<WrapImpl> emptyParentsSet = Collections.emptySet();
+  private Set<WrapImpl> myParents = emptyParentsSet;
   private Collection<WrapImpl> myIgnoredWraps;
 
+  private static final int IGNORE_PARENT_WRAPS_MASK = 1;
+  private static final int ACTIVE_MASK = 2;
+  private static final int WRAP_FIRST_ELEMENT_MASK = 4;
+  private static final int TYPE_MASK = 0x18;
+  private static final int TYPE_SHIFT = 3;
+  private static final int ID_SHIFT = 5;
+  private static final int ID_MAX = 1 << 26;
+
   public boolean isChildOf(final WrapImpl wrap) {
-    if (myIgnoreParentWraps) return false;
+    if ((myFlags & IGNORE_PARENT_WRAPS_MASK) != 0) return false;
     if (myIgnoredWraps != null && myIgnoredWraps.contains(wrap)) return false;
     for (WrapImpl parent : myParents) {
       if (parent == wrap) return true;
@@ -32,40 +37,29 @@ class WrapImpl extends Wrap {
     if (parent == this) return;
     if (parent == null) return;
     if (parent.isChildOf(this)) return;
-    myParents.add(parent);  }
+    if (myParents == emptyParentsSet) myParents = new HashSet<WrapImpl>(5);
+    myParents.add(parent);
+  }
 
   public void reset() {
     myFirstEntry = null;
     myFirstPosition = -1;
-    myIsActive = false;
+    myFlags &=~ ACTIVE_MASK;
   }
 
-  public boolean getIgnoreParentWraps() {
-    return myIgnoreParentWraps;
+  public final boolean getIgnoreParentWraps() {
+    return (myFlags & IGNORE_PARENT_WRAPS_MASK) != 0;
   }
 
   public void ignoreParentWrap(final WrapImpl wrap) {
     if (myIgnoredWraps == null) {
-      myIgnoredWraps = new HashSet<WrapImpl>();
+      myIgnoredWraps = new HashSet<WrapImpl>(5);
     }
     myIgnoredWraps.add(wrap);
   }
 
-  static class Type{
-    private final String myName;
-
-    private Type(@NonNls final String name) {
-      myName = name;
-    }
-
-    public static final Type DO_NOT_WRAP = new Type("NONE");
-    public static final Type WRAP_AS_NEEDED = new Type("NORMAL");
-    public static final Type CHOP_IF_NEEDED = new Type("CHOP");
-    public static final Type WRAP_ALWAYS = new Type("ALWAYS");
-
-    public String toString() {
-      return myName;
-    }
+  static enum Type{
+    DO_NOT_WRAP, WRAP_AS_NEEDED, CHOP_IF_NEEDED, WRAP_ALWAYS
   }
 
   LeafBlockWrapper getFirstEntry() {
@@ -74,7 +68,7 @@ class WrapImpl extends Wrap {
 
   void markAsUsed() {
     myFirstEntry = null;
-    myIsActive = true;
+    myFlags |= ACTIVE_MASK;
   }
 
   void processNextEntry(final int startOffset) {
@@ -87,9 +81,9 @@ class WrapImpl extends Wrap {
     return myFirstPosition;
   }
 
-  private final Type myType;
-
   public WrapImpl(WrapType type, boolean wrapFirstElement) {
+    Type myType;
+
     switch(type) {
         case NORMAL: myType = Type.WRAP_AS_NEEDED;break;
         case NONE: myType= Type.DO_NOT_WRAP;break;
@@ -97,17 +91,17 @@ class WrapImpl extends Wrap {
         default: myType = Type.CHOP_IF_NEEDED;
     }
 
-    myWrapFirstElement = wrapFirstElement;
-    myId = ourId++;
-
+    int myId = ourId++;
+    assert myId < ID_MAX;
+    myFlags |= (wrapFirstElement ? WRAP_FIRST_ELEMENT_MASK:0) | (myType.ordinal() << TYPE_SHIFT) | (myId << ID_SHIFT);
   }
 
-  Type getType() {
-    return myType;
+  final Type getType() {
+    return Type.values()[(myFlags & TYPE_MASK) >>> TYPE_SHIFT];
   }
 
-  boolean isWrapFirstElement() {
-    return myWrapFirstElement;
+  final boolean isWrapFirstElement() {
+    return (myFlags & WRAP_FIRST_ELEMENT_MASK) != 0;
   }
 
   void saveFirstEntry(LeafBlockWrapper current) {
@@ -116,19 +110,19 @@ class WrapImpl extends Wrap {
     }
   }
 
-  boolean isIsActive() {
-    return myIsActive;
+  final boolean isIsActive() {
+    return (myFlags & ACTIVE_MASK) != 0;
   }
 
   public String toString() {
-    return myType.toString();
+    return getType().toString();
   }
 
   public String getId() {
-    return String.valueOf(myId);
+    return String.valueOf(myFlags >>> ID_SHIFT);
   }
 
   public void ignoreParentWraps() {
-    myIgnoreParentWraps = true;
+    myFlags |= IGNORE_PARENT_WRAPS_MASK;
   }
 }
