@@ -32,10 +32,6 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return type;
   }
 
-  public PsiType substituteAndFullCapture(PsiType type) {
-    return type;
-  }
-
   public PsiType substituteInternal(PsiType type) {
     return substitute(type);
   }

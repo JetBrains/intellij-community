@@ -21,8 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectIntHashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -569,7 +569,7 @@ public class TypeConversionUtil {
     }
 
     if (left instanceof PsiCapturedWildcardType) {
-      return isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, allowUncheckedConversion);
+      return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, allowUncheckedConversion);
     } else if (right instanceof PsiCapturedWildcardType) {
       return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(), allowUncheckedConversion);
     }

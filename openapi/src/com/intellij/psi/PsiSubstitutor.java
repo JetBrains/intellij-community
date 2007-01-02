@@ -15,8 +15,8 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -63,16 +63,6 @@ public interface PsiSubstitutor {
    * @return the result of the substitution.
    */
   PsiType substituteAndCapture(PsiType type);
-
-  /**
-   * Substitutes type parameters occuring in <code>type</code> with their values.
-   * If value for type parameter is <code>null<code>, appropriate erasure is returned.
-   * If value of a type parameter is a wildcard type, captures it in {@link PsiCapturedWildcardType}
-   *
-   * @param type the type to substitute the type parameters for.
-   * @return the result of the substitution.
-   */
-  PsiType substituteAndFullCapture(PsiType type);
 
   PsiType substituteWithoutBoundsPromotion(PsiType type);
 
