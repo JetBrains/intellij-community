@@ -493,7 +493,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public void error(Marker marker, String message) {
-    doValidnessChecks(marker);
+    doValidityChecks(marker);
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexem, message);
     ((StartMarker)marker).myDoneMarker = doneMarker;
@@ -501,7 +501,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public void done(Marker marker) {
-    doValidnessChecks(marker);
+    doValidityChecks(marker);
 
     DoneMarker doneMarker = new DoneMarker((StartMarker)marker, myCurrentLexem);
     ((StartMarker)marker).myDoneMarker = doneMarker;
@@ -509,7 +509,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
-  private void doValidnessChecks(final Marker marker) {
+  private void doValidityChecks(final Marker marker) {
     if (myDebugMode) {
       final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
       if (doneMarker != null) {
