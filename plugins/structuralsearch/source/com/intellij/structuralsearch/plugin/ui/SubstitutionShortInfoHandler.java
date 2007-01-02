@@ -43,7 +43,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   private void handleInputFocusMovement(LogicalPosition position) {
-    checkModelValidness();
+    checkModelValidity();
     String text = "";
     final int offset = editor.logicalPositionToOffset(position);
     final int length = editor.getDocument().getTextLength();
@@ -81,7 +81,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
   }
 
-  private void checkModelValidness() {
+  private void checkModelValidity() {
     if (modificationTimeStamp != editor.getDocument().getModificationStamp()) {
       reparse(editor);
       modificationTimeStamp = editor.getDocument().getModificationStamp();
@@ -106,7 +106,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   public ArrayList<Variable> getVariables() {
-    checkModelValidness();
+    checkModelValidity();
     return variables;
   }
 }
