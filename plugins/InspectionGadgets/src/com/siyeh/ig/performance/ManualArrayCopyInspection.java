@@ -96,7 +96,8 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return null;
             }
             final PsiExpression limit;
-            if (binaryExpression.getOperationTokenType() == JavaTokenType.LT)  {
+            if (JavaTokenType.LT.equals(
+                    binaryExpression.getOperationTokenType()))  {
                 limit = binaryExpression.getROperand();
             } else {
                 limit = binaryExpression.getLOperand();
@@ -143,11 +144,15 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             final PsiExpression rArray = rhs.getArrayExpression();
             final String fromArrayText = rArray.getText();
             final PsiExpression rhsIndexExpression = rhs.getIndexExpression();
+            final PsiExpression strippedRhsIndexExpression =
+                    PsiUtil.deparenthesizeExpression(rhsIndexExpression);
             final String fromOffsetText =
-                    getOffsetText(rhsIndexExpression, variable);
+                    getOffsetText(strippedRhsIndexExpression, variable);
             final PsiExpression lhsIndexExpression = lhs.getIndexExpression();
+            final PsiExpression strippedLhsIndexExpression =
+                    PsiUtil.deparenthesizeExpression(lhsIndexExpression);
             final String toOffsetText =
-                    getOffsetText(lhsIndexExpression, variable);
+                    getOffsetText(strippedLhsIndexExpression, variable);
             @NonNls final StringBuilder buffer = new StringBuilder(60);
             buffer.append("System.arraycopy(");
             buffer.append(fromArrayText);
@@ -186,8 +191,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
         private static String getOffsetText(PsiExpression expression,
                                             PsiLocalVariable variable)
                 throws IncorrectOperationException {
-            expression =
-                    PsiUtil.deparenthesizeExpression(expression);
             if (expression == null) {
                 return null;
             }
@@ -204,18 +207,18 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 final PsiBinaryExpression binaryExpression =
                         (PsiBinaryExpression)expression;
                 final PsiExpression lhs = binaryExpression.getLOperand();
+                final String lhsText = getOffsetText(lhs, variable);
                 final PsiExpression rhs = binaryExpression.getROperand();
                 final String rhsText = getOffsetText(rhs, variable);
                 final PsiJavaToken sign = binaryExpression.getOperationSign();
                 final IElementType tokenType = sign.getTokenType();
-                if (ExpressionUtils.isZero(lhs)) {
+                if (lhsText == null || lhsText.equals("0")) {
                     if (tokenType.equals(JavaTokenType.MINUS)) {
                         return '-' + rhsText;
                     }
                     return rhsText;
                 }
-                final String lhsText = getOffsetText(lhs, variable);
-                if (ExpressionUtils.isZero(rhs)) {
+                if (rhsText == null || rhsText.equals("0")) {
                     return lhsText;
                 }
                 return collapseConstant(lhsText + sign.getText() + rhsText,
