@@ -1,6 +1,7 @@
 package com.intellij.util.diff;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ThreeState;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;

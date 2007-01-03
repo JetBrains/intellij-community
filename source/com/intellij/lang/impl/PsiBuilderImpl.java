@@ -30,6 +30,7 @@ import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTree;
