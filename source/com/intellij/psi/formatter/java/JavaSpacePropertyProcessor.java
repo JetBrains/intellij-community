@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
+import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -193,7 +194,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   }
 
   private void processClassBody() {
-    if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == ElementType.METHOD || myRole2 == ChildRole.CLASS_INITIALIZER) {
+    if (myChild1 instanceof JspJavaComment || myChild2 instanceof JspJavaComment) {
+      myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
+    }
+    else if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == ElementType.METHOD || myRole2 == ChildRole.CLASS_INITIALIZER) {
       if (myRole1 == ChildRole.LBRACE) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
       }
@@ -257,7 +261,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
         if (lastChildNode != null && lastChildNode.getElementType() == ElementType.SEMICOLON) {
           myResult = Spacing
             .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
-        } else {
+        }
+        else {
           createSpaceProperty(false, false, 0);
         }
       }
