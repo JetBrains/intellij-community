@@ -9,6 +9,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
 
 import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class ResolveCache {
@@ -20,7 +21,7 @@ public class ResolveCache {
   private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
 
   //store types for method call expressions, NB: this caching is semantical, without this captured wildcards won't work
-  private Map<PsiExpression, PsiType> myCaclulatedlTypes;
+  private Map<PsiExpression, WeakReference<PsiType>> myCaclulatedlTypes;
 
   private static final Object NULL = Key.create("NULL");
 
@@ -59,7 +60,7 @@ public class ResolveCache {
     myResolveMaps[2] = getOrCreateWeakMap(myManager, RESOLVE_MAP, false);
     myResolveMaps[3] = getOrCreateWeakMap(myManager, RESOLVE_MAP_INCOMPLETE, false);
 
-    myCaclulatedlTypes = new WeakHashMap<PsiExpression, PsiType>();
+    myCaclulatedlTypes = new WeakHashMap<PsiExpression, WeakReference<PsiType>>();
     myManager.registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
         synchronized (PsiLock.LOCK) {
@@ -69,22 +70,19 @@ public class ResolveCache {
     });
   }
 
-  public PsiType getType(PsiExpression call, Function<PsiExpression, PsiType> f) {
-    PsiType type;
-    boolean isNewCall;
+  public PsiType getType(PsiExpression expr, Function<PsiExpression, PsiType> f) {
+    WeakReference<PsiType> ref;
     synchronized (PsiLock.LOCK) {
-      isNewCall = !myCaclulatedlTypes.containsKey(call);
+      ref = myCaclulatedlTypes.get(expr);
     }
-    if (isNewCall) {
-      type = f.fun(call);
+    PsiType type = ref == null ? null : ref.get();
+    if (type == null) {
+      type = f.fun(expr);
       synchronized (PsiLock.LOCK) {
-        myCaclulatedlTypes.put(call, type);
-      }
-    } else {
-      synchronized (PsiLock.LOCK) {
-        type = myCaclulatedlTypes.get(call);
+        myCaclulatedlTypes.put(expr, new WeakReference<PsiType>(type));
       }
     }
+
     return type;
   }
 
