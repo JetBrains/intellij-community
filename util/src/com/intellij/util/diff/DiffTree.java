@@ -99,8 +99,10 @@ public class DiffTree<OT, NT> {
 
       if (dp != ThreeState.YES) {
         if (!comparator.hashcodesEqual(oldChild, newChild)) break;
-        build(oldChild, newChild, level + 1);
-        walkedDeep = true;
+        if (dp == ThreeState.UNSURE) {
+          build(oldChild, newChild, level + 1);
+          walkedDeep = true;
+        }
       }
 
       start++;
@@ -122,8 +124,10 @@ public class DiffTree<OT, NT> {
       if (deeps != null) deeps[oldEnd] = dp;
       if (dp != ThreeState.YES) {
         if (!comparator.hashcodesEqual(oldChild, newChild)) break;
-        build(oldChild, newChild, level + 1);
-        walkedDeep = true;
+        if (dp == ThreeState.UNSURE) {
+          build(oldChild, newChild, level + 1);
+          walkedDeep = true;
+        }
       }
 
       oldEnd--;
