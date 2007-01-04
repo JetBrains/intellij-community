@@ -313,14 +313,29 @@ public class DeadCodeInspection extends FilteringInspectionTool {
             }
 
             public void visitClass(RefClass aClass) {
+              final PsiClass psiClass = aClass.getElement();
               if (isAddJUnitEnabled() && aClass.isTestCase()) {
-                PsiClass psiClass = aClass.getElement();
-                addTestcaseEntries(psiClass);
+                getEntryPointsManager().addEntryPoint(aClass, false);
+                final PsiMethod[] testMethods = psiClass.getMethods();
+                for (PsiMethod psiMethod : testMethods) {
+                  @NonNls final String name = psiMethod.getName();
+                  if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
+                      !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                      name.startsWith("test") || "suite".equals(name)) {
+                    getEntryPointsManager().addEntryPoint(getRefManager().getReference(psiMethod), false);
+                  }
+                }
               }
               else if (
                 isAddAppletEnabled() && aClass.isApplet() ||
                 isAddServletEnabled() && aClass.isServlet()) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
+              } else if (psiClass.isAnnotationType()){
+                getEntryPointsManager().addEntryPoint(aClass, false);
+                final PsiMethod[] psiMethods = psiClass.getMethods();
+                for (PsiMethod psiMethod : psiMethods) {
+                  getEntryPointsManager().addEntryPoint(getRefManager().getReference(psiMethod), false);
+                }
               } else {
                 super.visitClass(aClass);
               }
@@ -385,21 +400,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       }
     }
     return false;
-  }
-
-  private void addTestcaseEntries(PsiClass testClass) {
-    RefClass refClass = (RefClass)getRefManager().getReference(testClass);
-    getEntryPointsManager().addEntryPoint(refClass, false);
-    PsiMethod[] testMethods = testClass.getMethods();
-    for (PsiMethod psiMethod : testMethods) {
-      @NonNls final String name = psiMethod.getName();
-      if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
-          !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-          name.startsWith("test") || "suite".equals(name)) {
-        RefMethod refMethod = (RefMethod)getRefManager().getReference(psiMethod);
-        getEntryPointsManager().addEntryPoint(refMethod, false);
-      }
-    }
   }
 
   private static class StrictUnreferencedFilter extends RefFilter {
