@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class NotNullVerifyingInstrumenter extends ClassAdapter {
 
   private boolean myIsModification = false;
+  private boolean myIsNotStaticInner = false;
   private String myClassName;
 
   public NotNullVerifyingInstrumenter(final ClassVisitor classVisitor) {
@@ -31,6 +32,13 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
     myClassName = name;
   }
 
+  public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
+    super.visitInnerClass(name, outerName, innerName, access);
+    if (myClassName.equals(name)) {
+      myIsNotStaticInner = (access & Opcodes.ACC_STATIC) == 0;
+    }
+  }
+
   public MethodVisitor visitMethod(
     final int access,
     final String name,
@@ -39,6 +47,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
     final String[] exceptions) {
     final Type[] args = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
+    final int startParameter = "<init>".equals(name) && myIsNotStaticInner ? 1 : 0;
     MethodVisitor v = cv.visitMethod(access,
                                      name,
                                      desc,
@@ -80,7 +89,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
         for (int p = 0; p < myNotNullParams.size(); ++p) {
           int var = ((access & Opcodes.ACC_STATIC) == 0) ? 1 : 0;
           int param = ((Integer)myNotNullParams.get(p)).intValue();
-          for (int i = 0; i < param; ++i) {
+          for (int i = 0; i < param + startParameter; ++i) {
             var += args[i].getSize();
           }
           mv.visitVarInsn(Opcodes.ALOAD, var);
@@ -133,7 +142,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
     };
   }
 
-  private boolean isReferenceType(final Type type) {
+  private static boolean isReferenceType(final Type type) {
     return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
   }
 }
