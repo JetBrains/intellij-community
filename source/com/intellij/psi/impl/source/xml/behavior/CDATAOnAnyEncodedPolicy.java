@@ -2,12 +2,12 @@ package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
@@ -37,22 +37,19 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
       Factory.createLeafElement(
         XmlTokenType.XML_CDATA_START,
         "<![CDATA[",
-        0, 9, -1,
-        dummyParent.getCharTable()));
+        0, 9, dummyParent.getCharTable()));
     TreeUtil.addChildren(
       cdata,
       Factory.createLeafElement(
         XmlTokenType.XML_DATA_CHARACTERS,
         displayText,
-        0, displayText.length(), -1,
-        dummyParent.getCharTable()));
+        0, displayText.length(), dummyParent.getCharTable()));
     TreeUtil.addChildren(
       cdata,
       Factory.createLeafElement(
         XmlTokenType.XML_CDATA_END,
         "]]>",
-        0, 3, -1,
-        dummyParent.getCharTable()));
+        0, 3, dummyParent.getCharTable()));
     dummyParent.acceptTree(new GeneratedMarkerVisitor());
     return dummyParent;
   }

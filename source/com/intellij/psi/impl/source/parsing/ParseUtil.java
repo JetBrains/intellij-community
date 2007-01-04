@@ -40,11 +40,11 @@ public class ParseUtil implements Constants {
     if (tokenType == null) return null;
     if (tokenType == JavaTokenType.DOC_COMMENT) {
       LeafElement chameleon = Factory.createLeafElement(JavaDocElementType.DOC_COMMENT, lexer.getBufferSequence(), lexer.getTokenStart(),
-                                                        lexer.getTokenEnd(), lexer.getState(), table);
+                                                        lexer.getTokenEnd(), table);
       return chameleon;
     }
     else {
-      return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), table);
+      return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
     }
   }
 

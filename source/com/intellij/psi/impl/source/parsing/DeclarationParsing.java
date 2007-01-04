@@ -84,7 +84,8 @@ public class DeclarationParsing extends Parsing {
       if (context == FILE_CONTEXT) return null;
     }
     else if (tokenType instanceof IChameleonElementType) {
-      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
+      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
+                                                          myContext.getCharTable());
       lexer.advance();
       return declaration;
     }

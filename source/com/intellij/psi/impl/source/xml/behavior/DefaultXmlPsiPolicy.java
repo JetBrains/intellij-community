@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
-import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
@@ -42,14 +42,14 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
           XmlTokenType.XML_WHITE_SPACE,
           chars,
           startOffset,
-          endOffset, -1, dummyParent.getCharTable());
+          endOffset, dummyParent.getCharTable());
       }
       else{
         return Factory.createLeafElement(
           XmlTokenType.XML_DATA_CHARACTERS,
           chars,
           startOffset,
-          endOffset, -1, dummyParent.getCharTable());
+          endOffset, dummyParent.getCharTable());
       }
     }
     return null;

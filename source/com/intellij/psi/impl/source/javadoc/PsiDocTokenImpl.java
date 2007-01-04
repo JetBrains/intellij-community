@@ -5,17 +5,18 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
-  public PsiDocTokenImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
-    super(type, buffer, startOffset, endOffset, lexerState, table);
+  public PsiDocTokenImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
+    super(type, buffer, startOffset, endOffset, table);
   }
 
   public IElementType getTokenType() {
     return getElementType();
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitDocToken(this);
   }
 

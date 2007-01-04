@@ -126,11 +126,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static abstract class Node {
-    ProductionMarker next;
-
     public abstract IElementType getTokenType();
-    public abstract CharSequence getText();
-
     public abstract int hc();
   }
 
@@ -175,10 +171,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
 
       return myHC;
-    }
-
-    public CharSequence getText() {
-      return myText.subSequence(myLexStarts[myLexemIndex], myLexEnds[myDoneMarker.myLexemIndex]);
     }
 
     public void addChild(ProductionMarker node) {
@@ -245,9 +237,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public int myTokenEnd;
     public int myHC = -1;
 
-    public Token() {
-    }
-
     public int hc() {
       if (myHC == -1) {
         int hc = 0;
@@ -277,6 +266,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private abstract static class ProductionMarker extends Node {
     public int myLexemIndex;
+    ProductionMarker next;
 
     public ProductionMarker(final int lexemIndex) {
       myLexemIndex = lexemIndex;
@@ -296,11 +286,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public IElementType getTokenType() {
-      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
-    }
-
-
-    public CharSequence getText() {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
   }
@@ -324,10 +309,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public int hc() {
       return 0;
-    }
-
-    public CharSequence getText() {
-      return "";
     }
 
     public IElementType getTokenType() {
@@ -693,7 +674,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private int bind(CompositeElement ast, StartMarker marker, int lexIndex) {
-    Node child = marker.firstChild;
+    ProductionMarker child = marker.firstChild;
     while (child != null) {
       if (child instanceof StartMarker) {
         final StartMarker childMarker = (StartMarker)child;
@@ -920,18 +901,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @NotNull
   private LeafElement createLeaf(final IElementType type, final int start, final int end) {
     if (myWhitespaces.contains(type)) {
-      return new PsiWhiteSpaceImpl(myText, start, end, -1, myCharTable);
+      return new PsiWhiteSpaceImpl(myText, start, end, myCharTable);
     }
     else if (myComments.contains(type)) {
-      return new PsiCommentImpl(type, myText, start, end, -1, myCharTable);
+      return new PsiCommentImpl(type, myText, start, end, myCharTable);
     }
     else if (type instanceof IChameleonElementType) {
-      return new ChameleonElement(type, myText, start, end, -1, myCharTable);
+      return new ChameleonElement(type, myText, start, end, myCharTable);
     }
     else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) {
-      return Factory.createLeafElement(type, myText, start, end, -1, myCharTable);
+      return Factory.createLeafElement(type, myText, start, end, myCharTable);
     }
-    return new LeafPsiElement(type, myText, start, end, -1, myCharTable);
+    return new LeafPsiElement(type, myText, start, end, myCharTable);
   }
 
   /**

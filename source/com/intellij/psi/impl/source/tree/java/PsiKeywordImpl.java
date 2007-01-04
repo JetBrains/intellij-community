@@ -1,38 +1,23 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.util.IncorrectOperationException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.lang.reflect.Field;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiKeywordImpl extends LeafPsiElement implements PsiKeyword, PsiJavaToken {
-  public PsiElement[] create(Class parentClass, PsiElementFactory factory, String prefix)
-  throws IncorrectOperationException{
-    List<PsiKeyword> ret = new ArrayList<PsiKeyword>();
-    if(parentClass.isAssignableFrom(PsiClass.class)){
-      if(PsiKeyword.CLASS.startsWith(prefix)){
-        ret.add(factory.createKeyword(PsiKeyword.CLASS));
-      }
-    }
-
-    return (PsiElement[])ret.toArray(new PsiElement[ret.size()]);
-  }
-
-  public PsiKeywordImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
-    super(type, buffer, startOffset, endOffset, lexerState, table);
+  public PsiKeywordImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
+    super(type, buffer, startOffset, endOffset, table);
   }
 
   public IElementType getTokenType(){
     return getElementType();
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitKeyword(this);
   }
 

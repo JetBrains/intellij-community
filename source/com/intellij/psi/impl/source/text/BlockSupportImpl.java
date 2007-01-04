@@ -168,12 +168,12 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
         final TextRange textRange = treeElement.getTextRange();
         final ChameleonElement chameleon = (ChameleonElement)Factory.createLeafElement(bestReparseable.getElementType(), newFileText,
                                                                                        textRange.getStartOffset(),
-                                                                                       textRange.getEndOffset() + lengthShift, -1,
+                                                                                       textRange.getEndOffset() + lengthShift,
                                                                                        treeFileElement.getCharTable());
         chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
         chameleon.setTreeParent((CompositeElement)parent);
         treeElement.replaceAllChildrenToChildrenOf(
-          chameleon.transform(treeFileElement.getCharTable(), fileImpl.createLexer(), project).getTreeParent());
+          chameleon.transform(treeFileElement.getCharTable()).getTreeParent());
       }
       else {
         //boolean leafChangeOptimized = false;
@@ -227,7 +227,7 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
     TextRange leafRangeToChange = leafElementToChange.getTextRange();
     LeafElement newElement = Factory.createLeafElement(leafElementToChange.getElementType(), newFileText,
                                                        leafRangeToChange.getStartOffset(), leafRangeToChange.getEndOffset() + lengthDiff,
-                                                       -1, treeFileElement.getCharTable());
+                                                       treeFileElement.getCharTable());
     newElement.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
     ChangeUtil.replaceChild(leafElementToChange.getTreeParent(), leafElementToChange, newElement);
     return true;

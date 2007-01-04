@@ -32,7 +32,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -615,9 +614,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       TokenType.WHITE_SPACE,
       text,
       0,
-      text.length(),
-      -1,
-      holderElement.getCharTable()
+      text.length(), holderElement.getCharTable()
     );
     TreeUtil.addChildren(holderElement, newElement);
     holderElement.acceptTree(new GeneratedMarkerVisitor());

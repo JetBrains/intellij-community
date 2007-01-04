@@ -119,11 +119,10 @@ public class JavadocParsing extends Parsing {
       LeafElement justABrace = Factory.createLeafElement(JavaDocTokenType.DOC_COMMENT_DATA,
                                                          lexer.getBufferSequence(),
                                                          lexer.getTokenStart(),
-                                                         lexer.getTokenEnd(), lexer.getState(), myContext.getCharTable());
+                                                         lexer.getTokenEnd(), myContext.getCharTable());
       CompositeElement tag = Factory.createCompositeElement(DOC_INLINE_TAG);
       final LeafElement leafElement = Factory.createLeafElement(JavaDocTokenType.DOC_INLINE_TAG_START, lexer.getBufferSequence(),
-                                                                lexer.getTokenStart(), lexer.getTokenEnd(), lexer.getState(),
-                                                                myContext.getCharTable());
+                                                                lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
       TreeUtil.addChildren(tag, leafElement);
 
       lexer.advance();
@@ -301,7 +300,7 @@ public class JavadocParsing extends Parsing {
 
   private LeafElement parseReferenceOrType(CharSequence buffer, int startOffset, int endOffset, boolean isType, int lexerState) {
     return Factory.createLeafElement(isType ? JavaDocElementType.DOC_TYPE_HOLDER : JavaDocElementType.DOC_REFERENCE_HOLDER, buffer, startOffset,
-                                     endOffset, lexerState, myContext.getCharTable());
+                                     endOffset, myContext.getCharTable());
   }
 
   private LeafElement createTokenElement(Lexer lexer) {
@@ -313,8 +312,7 @@ public class JavadocParsing extends Parsing {
       tokenType = JavaDocTokenType.DOC_COMMENT_DATA;
     }
 
-    return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
-                                                              lexer.getState(), myContext.getCharTable());
+    return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
   }
 
   private static class TokenProcessor implements ParseUtil.TokenProcessor {

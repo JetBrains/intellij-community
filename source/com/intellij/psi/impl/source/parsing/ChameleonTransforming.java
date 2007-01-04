@@ -6,7 +6,6 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 
 /**
@@ -28,7 +27,7 @@ public class ChameleonTransforming implements Constants {
       PsiFileImpl file = (PsiFileImpl)TreeUtil.getFileElement((TreeElement)parent).getPsi();
       if (file == null) return null;
 
-      TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable(), file.createLexer(), file.getProject());
+      TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable());
       //LOG.assertTrue(newElement.getTreeParent().getTextLength() == chameleon.getTextLength());
       final TreeElement treeNext = chameleon.getTreeNext();
       TreeUtil.replaceWithList(chameleon, newElement);

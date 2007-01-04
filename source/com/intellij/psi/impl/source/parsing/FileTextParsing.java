@@ -94,7 +94,7 @@ public class FileTextParsing extends Parsing {
         lastPos = lexer.getTokenEnd();
         lexer.advance();
       }
-      return Factory.createLeafElement(IMPORT_LIST, lexer.getBufferSequence(), startPos, lastPos, lexer.getState(), myContext.getCharTable());
+      return Factory.createLeafElement(IMPORT_LIST, lexer.getBufferSequence(), startPos, lastPos, myContext.getCharTable());
     }
 
     return importList;

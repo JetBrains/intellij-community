@@ -54,7 +54,7 @@ public class Factory implements Constants {
     dummyHolder.setOriginalFile(originalFile);
     dummyHolder.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, PsiUtil.getLanguageLevel(originalFile));
     final FileElement holderElement = dummyHolder.getTreeElement();
-    newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
+    newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
     CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;
@@ -68,7 +68,7 @@ public class Factory implements Constants {
   public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
     final LeafElement newElement;
     final FileElement holderElement = new DummyHolder(manager, table, type.getLanguage()).getTreeElement();
-    newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, -1, holderElement.getCharTable());
+    newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
     if(generatedFlag) CodeEditUtil.setNodeGenerated(newElement, true);
     return newElement;
@@ -79,60 +79,60 @@ public class Factory implements Constants {
   }
 
   @Deprecated
-  public static LeafElement createLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
-    return createLeafElement(type, new CharArrayCharSequence(buffer), startOffset, endOffset, lexerState, table);
+  public static LeafElement createLeafElement(IElementType type, char[] buffer, int startOffset, int endOffset, CharTable table) {
+    return createLeafElement(type, new CharArrayCharSequence(buffer), startOffset, endOffset, table);
   }
 
-  public static LeafElement createLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, int lexerState, CharTable table) {
+  public static LeafElement createLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     LeafElement element = null;
     if (type instanceof IChameleonElementType) {
-      element = new ChameleonElement(type, buffer, startOffset, endOffset, lexerState, table);
+      element = new ChameleonElement(type, buffer, startOffset, endOffset, table);
     }
     else if (type instanceof IXmlLeafElementType) {
       if (type == XmlTokenType.XML_REAL_WHITE_SPACE) {
-        return new PsiWhiteSpaceImpl(buffer, startOffset, endOffset, lexerState, table);
+        return new PsiWhiteSpaceImpl(buffer, startOffset, endOffset, table);
       }
-      element = new XmlTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
+      element = new XmlTokenImpl(type, buffer, startOffset, endOffset, table);
     }
     else if (type == PLAIN_TEXT) {
-      element = new PsiPlainTextImpl(buffer, startOffset, endOffset, lexerState, table);
+      element = new PsiPlainTextImpl(buffer, startOffset, endOffset, table);
     }
     else if (type == WHITE_SPACE) {
-      element = new PsiWhiteSpaceImpl(buffer, startOffset, endOffset, lexerState, table);
+      element = new PsiWhiteSpaceImpl(buffer, startOffset, endOffset, table);
     }
     else if (type == C_STYLE_COMMENT || type == END_OF_LINE_COMMENT) {
-      element = new PsiCommentImpl(type, buffer, startOffset, endOffset, lexerState, table);
+      element = new PsiCommentImpl(type, buffer, startOffset, endOffset, table);
     }
     else if (type == IDENTIFIER) {
-      element = new PsiIdentifierImpl(buffer, startOffset, endOffset, lexerState, table);
+      element = new PsiIdentifierImpl(buffer, startOffset, endOffset, table);
     }
     else if (type == JspTokenType.JSP_COMMENT) {
-      element = new JspCommentImpl(buffer, startOffset, endOffset, lexerState, table);
+      element = new JspCommentImpl(buffer, startOffset, endOffset, table);
     }
     else {
       if (KEYWORD_BIT_SET.contains(type)) {
-        element = new PsiKeywordImpl(type, buffer, startOffset, endOffset, lexerState, table);
+        element = new PsiKeywordImpl(type, buffer, startOffset, endOffset, table);
       }
       else if (type instanceof IJavaElementType) {
-        element = new PsiJavaTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
+        element = new PsiJavaTokenImpl(type, buffer, startOffset, endOffset, table);
       }
       else if (type instanceof IJspElementType) {
-        element = new XmlTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
+        element = new XmlTokenImpl(type, buffer, startOffset, endOffset, table);
       }
       else if (type instanceof IJavaDocElementType) {
-        element = new PsiDocTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
+        element = new PsiDocTokenImpl(type, buffer, startOffset, endOffset, table);
       }
       else {
         for (int size = ourElementFactories.size(), i = 0; i < size; i++) {
           TreeElementFactory elementFactory = ourElementFactories.get(i);
           if (elementFactory.isMyElementType(type)) {
-            element = elementFactory.createLeafElement(type, buffer, startOffset, endOffset, lexerState, table);
+            element = elementFactory.createLeafElement(type, buffer, startOffset, endOffset, table);
           }
         }
         //LOG.error("Unknown leaf:" + type);
         //return null;
         if (element == null) {
-          element = new LeafPsiElement(type, buffer, startOffset, endOffset, lexerState, table);
+          element = new LeafPsiElement(type, buffer, startOffset, endOffset, table);
         }
       }
     }
@@ -516,8 +516,5 @@ public class Factory implements Constants {
     final CompositeElement composite = createCompositeElement(type);
     TreeUtil.addChildren(treeElement, composite);
     return composite;
-  }
-
-  public static void createSingleLeafElement() {
   }
 }

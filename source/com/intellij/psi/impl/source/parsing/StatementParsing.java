@@ -127,7 +127,7 @@ public class StatementParsing extends Parsing {
         }
         lexer.advance();
       }
-      final TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK, lexer.getBufferSequence(), start, end, lexer.getState(), myContext.getCharTable());
+      final TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK, lexer.getBufferSequence(), start, end, myContext.getCharTable());
       if (braceCount != 0){
         chameleon.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
       }
@@ -286,7 +286,7 @@ public class StatementParsing extends Parsing {
     }
     else if (tokenType instanceof IChameleonElementType) {
       LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
-                                                          lexer.getState(), myContext.getCharTable());
+                                                          myContext.getCharTable());
       lexer.advance();
       return declaration;
     }

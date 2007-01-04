@@ -57,9 +57,9 @@ public class SourceUtil implements Constants {
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(newChild);
     new DummyHolder(manager, parenthExpr, null, charTableByTree);
     parenthExpr.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, -1, charTableByTree));
+    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, charTableByTree));
     TreeUtil.addChildren(parenthExpr, dummyExpr);
-    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, -1, charTableByTree));
+    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, charTableByTree));
 
     try {
       CodeStyleManager codeStyleManager = manager.getCodeStyleManager();

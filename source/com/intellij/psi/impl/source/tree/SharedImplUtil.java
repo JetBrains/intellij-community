@@ -188,8 +188,8 @@ public class SharedImplUtil {
         CompositeElement newType1 = Factory.createCompositeElement(ElementType.TYPE);
         TreeUtil.addChildren(newType1, newType);
 
-        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.LBRACKET, "[", 0, 1, -1, treeCharTable));
-        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.RBRACKET, "]", 0, 1, -1, treeCharTable));
+        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.LBRACKET, "[", 0, 1, treeCharTable));
+        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.RBRACKET, "]", 0, 1, treeCharTable));
         newType = newType1;
         newType.acceptTree(new GeneratedMarkerVisitor());
       }

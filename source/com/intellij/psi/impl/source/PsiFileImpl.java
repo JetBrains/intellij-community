@@ -21,8 +21,8 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +75,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public TreeElement createContentLeafElement(final CharSequence text, final int startOffset, final int endOffset, final CharTable table) {
-    return Factory.createLeafElement(myContentElementType, text, startOffset, endOffset, -1, table);
+    return Factory.createLeafElement(myContentElementType, text, startOffset, endOffset, table);
   }
 
   public long getRepositoryId() {

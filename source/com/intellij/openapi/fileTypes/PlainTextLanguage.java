@@ -5,18 +5,21 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.lexer.EmptyLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
+import com.intellij.psi.impl.source.tree.CharTableBasedLeafElementImpl;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +61,7 @@ public class PlainTextLanguage extends Language {
           return new IFileElementType(PlainTextLanguage.this) {
             public ASTNode parseContents(ASTNode chameleon) {
               final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
-              return Factory.createLeafElement(ElementType.PLAIN_TEXT, chars,0,chars.length(),0, SharedImplUtil.findCharTableByTree(chameleon));
+              return Factory.createLeafElement(ElementType.PLAIN_TEXT, chars,0,chars.length(), SharedImplUtil.findCharTableByTree(chameleon));
             }
           };
         }
