@@ -346,7 +346,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
 
       myBaseIterator.retreat();
-      initLayer(myBaseIterator.atEnd() ? 0 : myBaseIterator.getEnd() - myBaseIterator.getStart());
+      initLayer(myBaseIterator.atEnd() ? 0 : myBaseIterator.getEnd() - myBaseIterator.getStart() - 1);
     }
 
     public boolean atEnd() {

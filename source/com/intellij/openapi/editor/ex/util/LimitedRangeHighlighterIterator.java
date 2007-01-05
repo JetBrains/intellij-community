@@ -44,6 +44,6 @@ public class LimitedRangeHighlighterIterator implements HighlighterIterator {
   }
 
   public boolean atEnd() {
-    return myOriginal.atEnd() || myOriginal.getStart() > myEndOffset || myOriginal.getEnd() <= myStartOffset;
+    return myOriginal.atEnd() || myOriginal.getStart() >= myEndOffset || myOriginal.getEnd() <= myStartOffset;
   }
 }
