@@ -38,6 +38,8 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.DiffTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import javolution.context.ObjectFactory;
+import javolution.context.PoolContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,10 +74,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final char[] myTextArray;
   private boolean myDebugMode = false;
   private ASTNode myOriginalTree = null;
-  private Stack<StartMarker> myMarkerPool = new Stack<StartMarker>();
-
   private final Token myMutableToken = new Token();
   private int myLexemCount = 0;
+
+  private final static ObjectFactory<StartMarker> START_MARKERS = new ObjectFactory<StartMarker>() {
+    protected StartMarker create() {
+      return new StartMarker(0);
+    }
+  };
+
+  private final static ObjectFactory<DoneMarker> DONE_MARKERS = new ObjectFactory<DoneMarker>() {
+    protected DoneMarker create() {
+      return new DoneMarker(null, 0);
+    }
+  };
 
   public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
@@ -100,6 +112,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexStarts = new int[approxLexCount];
     myLexEnds = new int[approxLexCount];
     myLexTypes = new IElementType[approxLexCount];
+
+    PoolContext.enter();
   }
 
   /**
@@ -119,6 +133,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexStarts = new int[5];
     myLexEnds = new int[5];
     myLexTypes = new IElementType[5];
+
+    PoolContext.enter();
   }
 
   public void enforceCommentTokens(TokenSet tokens) {
@@ -130,10 +146,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public abstract int hc();
   }
 
-  private class StartMarker extends ProductionMarker implements Marker {
+  private static class StartMarker extends ProductionMarker implements Marker {
+    public PsiBuilderImpl myBuilder;
     public IElementType myType;
-    public DoneMarker myDoneMarker = null;
-    public Throwable myDebugAllocationPosition = null;
+    public DoneMarker myDoneMarker;
+    public Throwable myDebugAllocationPosition;
     public ProductionMarker firstChild;
     public ProductionMarker lastChild;
     private int myHC = -1;
@@ -142,17 +159,29 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       super(idx);
     }
 
+    public void clean() {
+      super.clean();
+      myBuilder = null;
+      myType = null;
+      myDoneMarker = null;
+      myDebugAllocationPosition = null;
+      firstChild = null;
+      lastChild = null;
+      myHC = -1;
+    }
+
     public int hc() {
       if (myHC == -1) {
+        PsiBuilderImpl builder = myBuilder;
         int hc = 0;
-        final CharSequence buf = myText;
-        final char[] bufArray = myTextArray;
+        final CharSequence buf = builder.myText;
+        final char[] bufArray = builder.myTextArray;
         ProductionMarker child = firstChild;
         int lexIdx = myLexemIndex;
 
         while (child != null) {
           int lastLeaf = child.myLexemIndex;
-          for (int i = myLexStarts[lexIdx]; i < myLexStarts[lastLeaf]; i++) {
+          for (int i = builder.myLexStarts[lexIdx]; i < builder.myLexStarts[lastLeaf]; i++) {
             hc += bufArray != null ? bufArray[i] : buf.charAt(i);
           }
           lexIdx = lastLeaf;
@@ -163,7 +192,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           child = child.next;
         }
 
-        for (int i = myLexStarts[lexIdx]; i < myLexStarts[myDoneMarker.myLexemIndex]; i++) {
+        for (int i = builder.myLexStarts[lexIdx]; i < builder.myLexStarts[myDoneMarker.myLexemIndex]; i++) {
           hc += bufArray != null ? bufArray[i]:buf.charAt(i);
         }
 
@@ -185,35 +214,35 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public Marker precede() {
-      return PsiBuilderImpl.this.preceed(this);
+      return myBuilder.preceed(this);
     }
 
     public void drop() {
-      PsiBuilderImpl.this.drop(this);
+      myBuilder.drop(this);
     }
 
     public void rollbackTo() {
-      PsiBuilderImpl.this.rollbackTo(this);
+      myBuilder.rollbackTo(this);
     }
 
     public void done(IElementType type) {
       myType = type;
-      PsiBuilderImpl.this.done(this);
+      myBuilder.done(this);
     }
 
     public void doneBefore(IElementType type, Marker before) {
       myType = type;
-      PsiBuilderImpl.this.doneBefore(this, before);
+      myBuilder.doneBefore(this, before);
     }
 
     public void doneBefore(final IElementType type, final Marker before, final String errorMessage) {
-      myProduction.add(myProduction.lastIndexOf(before), new ErrorItem(errorMessage, ((StartMarker)before).myLexemIndex));
+      myBuilder.myProduction.add(myBuilder.myProduction.lastIndexOf(before), new ErrorItem(errorMessage, ((StartMarker)before).myLexemIndex));
       doneBefore(type, before);
     }
 
     public void error(String message) {
       myType = ElementType.ERROR_ELEMENT;
-      PsiBuilderImpl.this.error(this, message);
+      myBuilder.error(this, message);
     }
 
     public IElementType getTokenType() {
@@ -271,10 +300,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public ProductionMarker(final int lexemIndex) {
       myLexemIndex = lexemIndex;
     }
+
+    public void clean() {
+      myLexemIndex = 0;
+      next = null;
+    }
   }
 
   private static class DoneMarker extends ProductionMarker {
-    public final StartMarker myStart;
+    public StartMarker myStart;
 
     public DoneMarker(final StartMarker marker, int currentLexem) {
       super(currentLexem);
@@ -288,14 +322,24 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public IElementType getTokenType() {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
+
+    public void clean() {
+      super.clean();
+      myStart = null;
+    }
   }
 
   private static class DoneWithErrorMarker extends DoneMarker {
-    public final String myMessage;
+    public String myMessage;
 
     public DoneWithErrorMarker(final StartMarker marker, int currentLexem, String message) {
       super(marker, currentLexem);
       myMessage = message;
+    }
+
+    public void clean() {
+      super.clean();
+      myMessage = null;
     }
   }
 
@@ -313,6 +357,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public IElementType getTokenType() {
       return ElementType.ERROR_ELEMENT;
+    }
+
+    public void clean() {
+      super.clean();
+      myMessage = null;
     }
   }
 
@@ -415,13 +464,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private StartMarker createMarker(final int lexemIndex) {
     StartMarker marker;
-    if (myMarkerPool.isEmpty()) {
-      marker = new StartMarker(lexemIndex);
-    }
-    else {
-      marker = myMarkerPool.pop();
-      marker.myLexemIndex = lexemIndex;
-    }
+    marker = START_MARKERS.object();
+    marker.clean();
+    marker.myLexemIndex = lexemIndex;
+    marker.myBuilder = this;
 
     if (myDebugMode) {
       marker.myDebugAllocationPosition = new Throwable("Created at the following trace.");
@@ -443,7 +489,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       LOG.error("The marker must be added before rolled back to.");
     }
     myProduction.removeRange(idx, myProduction.size());
-    myMarkerPool.push((StartMarker)marker);
+    START_MARKERS.recycle((StartMarker)marker);
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
@@ -460,7 +506,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     int beforeIndex = myProduction.lastIndexOf(before);
 
-    DoneMarker doneMarker = new DoneMarker((StartMarker)marker, ((StartMarker)before).myLexemIndex);
+    DoneMarker doneMarker = DONE_MARKERS.object();
+    doneMarker.clean();
+    doneMarker.myLexemIndex = ((StartMarker)before).myLexemIndex;
+    doneMarker.myStart = (StartMarker)marker;
+
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
   }
@@ -471,7 +521,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     if (!removed) {
       LOG.error("The marker must be added before it is dropped.");
     }
-    myMarkerPool.push((StartMarker)marker);
+    START_MARKERS.recycle((StartMarker)marker);
   }
 
   public void error(Marker marker, String message) {
@@ -485,7 +535,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public void done(Marker marker) {
     doValidityChecks(marker);
 
-    DoneMarker doneMarker = new DoneMarker((StartMarker)marker, myCurrentLexem);
+
+    DoneMarker doneMarker = DONE_MARKERS.object();
+    doneMarker.myStart = (StartMarker)marker;
+    doneMarker.myLexemIndex = myCurrentLexem;
+
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
   }
@@ -526,18 +580,23 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public ASTNode getTreeBuilt() {
-    StartMarker rootMarker = prepareLightTree();
+    try {
+      StartMarker rootMarker = prepareLightTree();
 
-    if (myOriginalTree != null) {
-      merge(myOriginalTree, rootMarker);
-      throw new BlockSupport.ReparsedSuccessfullyException();
+      if (myOriginalTree != null) {
+        merge(myOriginalTree, rootMarker);
+        throw new BlockSupport.ReparsedSuccessfullyException();
+      }
+      else {
+        final ASTNode rootNode = createRootAST(rootMarker);
+
+        bind((CompositeElement)rootNode, rootMarker);
+
+        return rootNode;
+      }
     }
-    else {
-      final ASTNode rootNode = createRootAST(rootMarker);
-
-      bind((CompositeElement)rootNode, rootMarker);
-
-      return rootNode;
+    finally {
+      PoolContext.exit();
     }
   }
 
