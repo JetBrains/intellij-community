@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import static com.intellij.psi.xml.XmlElementType.*;
+import com.intellij.psi.xml.XmlTokenType;
 import static com.intellij.psi.xml.XmlTokenType.*;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +127,7 @@ public class XmlParsing {
       }
       footer.drop();
 
-      while (token() != XML_TAG_END && !eof()) {
+      while (token() != XmlTokenType.XML_TAG_END && token() != XmlTokenType.XML_START_TAG_START && token() != XmlTokenType.XML_END_TAG_START && !eof()) {
         error("Unexpected token");
         advance();
       }
