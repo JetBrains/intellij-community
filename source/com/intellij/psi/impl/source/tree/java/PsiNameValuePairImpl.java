@@ -1,19 +1,23 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ven
@@ -176,7 +180,18 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
       public Object[] getVariants() {
         PsiClass aClass = getReferencedClass();
         if (aClass != null) {
-          return aClass.getMethods();
+          PsiAnnotationParameterList parent = (PsiAnnotationParameterList)getParent();
+          final PsiNameValuePair[] existingPairs = parent.getAttributes();
+          List<PsiMethod> result = new ArrayList<PsiMethod>();
+methods:
+          for (PsiMethod method : aClass.getMethods()) {
+            for (PsiNameValuePair pair : existingPairs) {
+              if (Comparing.equal(pair.getName(), method.getName())) continue methods;
+            }
+            result.add(method);
+          }
+
+          return result.toArray(new Object[result.size()]);
         } else {
           return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
