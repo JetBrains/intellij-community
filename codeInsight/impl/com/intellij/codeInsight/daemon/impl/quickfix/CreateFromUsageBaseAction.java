@@ -237,14 +237,10 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     boolean allowOuterClasses = false;
     if (element instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)element;
-      qualifier = newExpression.getQualifier();
-
-      if (qualifier == null) {
-        PsiJavaCodeReferenceElement ref = newExpression.getClassReference();
-        if (ref != null) {
-          PsiElement refElement = ref.resolve();
-          if (refElement instanceof PsiClass) psiClass = (PsiClass) refElement;
-        }
+      PsiJavaCodeReferenceElement ref = newExpression.getClassReference();
+      if (ref != null) {
+        PsiElement refElement = ref.resolve();
+        if (refElement instanceof PsiClass) psiClass = (PsiClass)refElement;
       }
     } else if (element instanceof PsiReferenceExpression) {
       qualifier = ((PsiReferenceExpression) element).getQualifierExpression();
