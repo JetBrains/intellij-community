@@ -217,6 +217,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     }
     else if (i == JavaTokenType.CHARACTER_LITERAL) {
       if (value == null) {
+        if (!StringUtil.startsWithChar(text, '\'')) return null;
         if (StringUtil.endsWithChar(text, '\'')) {
           if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.character.literal");
           text = text.substring(1, text.length() - 1);
@@ -234,6 +235,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     }
     else if (i == JavaTokenType.STRING_LITERAL) {
       if (value == null) {
+        if (!StringUtil.startsWithChar(text, '\"')) return null;
         if (StringUtil.endsWithChar(text, '\"')) {
           if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.string.literal");
           text = text.substring(1, text.length() - 1);
