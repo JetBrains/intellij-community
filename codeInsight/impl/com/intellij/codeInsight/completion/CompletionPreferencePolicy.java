@@ -187,25 +187,35 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     }
     else
       return 0;
-    name = truncDigits(name);
 
-    String[] words = NameUtil.nameToWords(name);
-    int max = 0;
+    int max = calcMatch(NameUtil.nameToWords(name), 0);
+    max = calcMatch(NameUtil.nameToWords(truncDigits(name)), max);
+    return max;
+  }
+
+  private int calcMatch(final String[] words, int max) {
     for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
       String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName;
       if (expectedName == null) continue;
-      expectedName = truncDigits(expectedName);
-      String[] expectedWords = NameUtil.nameToWords(expectedName);
-      int limit = Math.min(words.length, expectedWords.length);
-      for (int i = 0; i < limit; i++) {
-        String word = words[words.length - i - 1];
-        String expectedWord = expectedWords[expectedWords.length - i - 1];
-        if (word.equalsIgnoreCase(expectedWord)) {
-          max = Math.max(max, i + 1);
-        }
-        else {
-          break;
-        }
+      max = calcMatch(expectedName, words, max);
+      max = calcMatch(truncDigits(expectedName), words, max);
+    }
+    return max;
+  }
+
+  private static int calcMatch(final String expectedName, final String[] words, int max) {
+    if (expectedName == null) return max;
+
+    String[] expectedWords = NameUtil.nameToWords(expectedName);
+    int limit = Math.min(words.length, expectedWords.length);
+    for (int i = 0; i < limit; i++) {
+      String word = words[words.length - i - 1];
+      String expectedWord = expectedWords[expectedWords.length - i - 1];
+      if (word.equalsIgnoreCase(expectedWord)) {
+        max = Math.max(max, i + 1);
+      }
+      else {
+        break;
       }
     }
     return max;
