@@ -7,12 +7,12 @@ import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -317,6 +317,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     private int myGroupIdx;
     private int myRowIdx;
     private int myColumnIdx;
+    private boolean myIsMouseInside = false;
     private Icon myIcon;
     private KeyStroke myShortcut;
 
@@ -364,7 +365,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     }
 
     public int getPopState() {
-      if (myKeypressedConfigurable == myConfigurable) return ActionButtonComponent.PUSHED;
+      if (myKeypressedConfigurable == myConfigurable) return myIsMouseInside ? ActionButtonComponent.PUSHED : ActionButtonComponent.POPPED;
       if (myKeypressedConfigurable != null) return ActionButtonComponent.NORMAL;
       Configurable selectedConfigurable = getSelectedConfigurable();
       if (selectedConfigurable == myConfigurable) return ActionButtonComponent.POPPED;
@@ -374,12 +375,13 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     private void setupListeners() {
       final MouseAdapter mouseAdapter = new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
+          myIsMouseInside = true;
           myKeypressedConfigurable = myConfigurable;
           myPanel.repaint();
         }
 
         public void mouseReleased(MouseEvent e) {
-          if (myKeypressedConfigurable == myConfigurable) {
+          if (myKeypressedConfigurable == myConfigurable && myIsMouseInside) {
             myKeypressedConfigurable = null;
             editConfigurable(myConfigurable);
           }
@@ -387,9 +389,22 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
             myKeypressedConfigurable = null;
           }
 
+          myIsMouseInside = false;
+          myPanel.repaint();
+        }
+
+
+        public void mouseEntered(final MouseEvent e) {
+          myIsMouseInside = true;
+          myPanel.repaint();
+        }
+
+        public void mouseExited(final MouseEvent e) {
+          myIsMouseInside = false;
           myPanel.repaint();
         }
       };
+
       addMouseListener(mouseAdapter);
       Disposer.register(myDisposable, new Disposable() {
         public void dispose() {
@@ -409,6 +424,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
           myPanel.repaint();
         }
       };
+
       addMouseMotionListener(motionListener);
       Disposer.register(myDisposable, new Disposable() {
         public void dispose() {
