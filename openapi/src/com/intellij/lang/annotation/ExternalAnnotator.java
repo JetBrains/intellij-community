@@ -17,8 +17,8 @@ package com.intellij.lang.annotation;
 
 import com.intellij.psi.PsiFile;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Implemented by a custom language plugin to process the files in a language by an
@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * @author ven
  */
 public interface ExternalAnnotator {
-  List<ExternalAnnotator> EMPTY_LIST = new ArrayList<ExternalAnnotator>();
+  List<ExternalAnnotator> EMPTY_LIST = Collections.unmodifiableList(Collections.<ExternalAnnotator>emptyList());
 
   /**
    * Annotates the specified file.
