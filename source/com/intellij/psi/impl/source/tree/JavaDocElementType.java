@@ -27,8 +27,7 @@ public interface JavaDocElementType {
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       //no language features from higher java language versions are present in javadoc
       JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
-      return context.getJavadocParsing().parseJavaDocReference(chars, table, new JavaLexer(LanguageLevel.JDK_1_3),
-                                                  0, false, manager);
+      return context.getJavadocParsing().parseJavaDocReference(chars, new JavaLexer(LanguageLevel.JDK_1_3), false, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };
@@ -40,8 +39,7 @@ public interface JavaDocElementType {
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       //no language features from higher java language versions are present in javadoc
       JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
-      return context.getJavadocParsing().parseJavaDocReference(chars, table, new JavaLexer(LanguageLevel.JDK_1_3),
-                                                  0, true, manager);
+      return context.getJavadocParsing().parseJavaDocReference(chars, new JavaLexer(LanguageLevel.JDK_1_3), true, manager);
     }
     public boolean isParsable(CharSequence buffer, final Project project) {return false;}
   };

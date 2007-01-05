@@ -13,7 +13,6 @@ import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NonNls;
 
 public class JavadocParsing extends Parsing {
@@ -44,14 +43,9 @@ public class JavadocParsing extends Parsing {
     super(context);
   }
 
-  public TreeElement parseJavaDocReference(CharSequence myBuffer,
-                                           CharTable charTable,
-                                           Lexer originalLexer,
-                                           int state,
-                                           boolean isType,
-                                           PsiManager manager) {
+  public TreeElement parseJavaDocReference(CharSequence myBuffer, Lexer originalLexer, boolean isType, PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(myBuffer, 0, myBuffer.length(), state);
+    lexer.start(myBuffer, 0, myBuffer.length(), 0);
 
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     final CompositeElement element;
@@ -71,7 +65,7 @@ public class JavadocParsing extends Parsing {
       lexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length(), state, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length(), 0, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return dummyRoot.getFirstChildNode();
   }
 
@@ -169,8 +163,7 @@ public class JavadocParsing extends Parsing {
         return parseSeeTagValue(lexer);
       }
       else if (!isInlineItem && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
-        final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
-                                                         lexer.getState());
+        final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false);
         lexer.advance();
         final CompositeElement tagValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
         TreeUtil.addChildren(tagValue, element);
@@ -240,8 +233,7 @@ public class JavadocParsing extends Parsing {
 
       while (TAG_VALUE.contains(lexer.getTokenType())) {
         if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
-          final LeafElement reference = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), true,
-                                                             lexer.getState());
+          final LeafElement reference = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), true);
           lexer.advance();
           TreeUtil.addChildren(subValue, reference);
 
@@ -276,8 +268,7 @@ public class JavadocParsing extends Parsing {
       return (TreeElement)parseMethodRef(lexer);
     }
     else if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
-      final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
-                                                       lexer.getState());
+      final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false);
       lexer.advance();
 
       if (lexer.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
@@ -298,7 +289,7 @@ public class JavadocParsing extends Parsing {
     }
   }
 
-  private LeafElement parseReferenceOrType(CharSequence buffer, int startOffset, int endOffset, boolean isType, int lexerState) {
+  private LeafElement parseReferenceOrType(CharSequence buffer, int startOffset, int endOffset, boolean isType) {
     return Factory.createLeafElement(isType ? JavaDocElementType.DOC_TYPE_HOLDER : JavaDocElementType.DOC_REFERENCE_HOLDER, buffer, startOffset,
                                      endOffset, myContext.getCharTable());
   }
