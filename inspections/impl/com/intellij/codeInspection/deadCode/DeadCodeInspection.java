@@ -321,7 +321,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                   @NonNls final String name = psiMethod.getName();
                   if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
                       !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                      name.startsWith("test") || "suite".equals(name)) {
+                      name.startsWith("test") || "suite".equals(name)
+                                              || "setUp".equals(name)
+                                              || "tearDown".equals(name)) {
                     getEntryPointsManager().addEntryPoint(getRefManager().getReference(psiMethod), false);
                   }
                 }
@@ -802,27 +804,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
           if (getContext().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
           refElement.setReachable(false);
-          refElement.accept(new RefVisitor() {
-            public void visitMethod(RefMethod method) {
-              if (isAddMainsEnabled() && method.isAppMain()) {
-                getEntryPointsManager().addEntryPoint(method, false);
-              }
-              if (isAddJUnitEnabled() && method.isTestMethod()){
-                getEntryPointsManager().addEntryPoint(method, false);
-              }
-            }
-
-            public void visitClass(RefClass aClass) {
-              if (isAddJUnitEnabled() && aClass.isTestCase()) {
-                getEntryPointsManager().addEntryPoint(aClass, false);
-              }
-              else if (
-                isAddAppletEnabled() && aClass.isApplet() ||
-                isAddServletEnabled() && aClass.isServlet()) {
-                getEntryPointsManager().addEntryPoint(aClass, false);
-              }
-            }
-          });
         }
       }
     });
