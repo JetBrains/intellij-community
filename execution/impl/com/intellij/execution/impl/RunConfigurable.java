@@ -330,7 +330,7 @@ class RunConfigurable extends BaseConfigurable {
     myPanel.setFirstComponent(createLeftPanel());
     myPanel.setSecondComponent(myRightPanel);
     myWholePanel.add(myPanel, BorderLayout.CENTER);
-    final JPanel bottomPanel = new JPanel(new GridLayout(1, 2, 5, 0));
+    final JPanel bottomPanel = new JPanel(new GridLayout(2, 1, 5, 0));
     myCbShowSettingsBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.display.settings.checkbox"));
     bottomPanel.add(myCbShowSettingsBeforeRunning);
 
