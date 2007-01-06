@@ -79,13 +79,21 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private final static ObjectFactory<StartMarker> START_MARKERS = new ObjectFactory<StartMarker>() {
     protected StartMarker create() {
-      return new StartMarker(0);
+      return new StartMarker();
+    }
+
+    protected void cleanup(final StartMarker marker) {
+      marker.clean();
     }
   };
 
   private final static ObjectFactory<DoneMarker> DONE_MARKERS = new ObjectFactory<DoneMarker>() {
     protected DoneMarker create() {
       return new DoneMarker(null, 0);
+    }
+
+    protected void cleanup(final DoneMarker marker) {
+      marker.clean();
     }
   };
 
@@ -154,10 +162,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public ProductionMarker firstChild;
     public ProductionMarker lastChild;
     private int myHC = -1;
-
-    public StartMarker(int idx) {
-      super(idx);
-    }
 
     public void clean() {
       super.clean();
@@ -297,10 +301,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public int myLexemIndex;
     ProductionMarker next;
 
-    public ProductionMarker(final int lexemIndex) {
-      myLexemIndex = lexemIndex;
-    }
-
     public void clean() {
       myLexemIndex = 0;
       next = null;
@@ -310,8 +310,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static class DoneMarker extends ProductionMarker {
     public StartMarker myStart;
 
+    public DoneMarker() {}
+
     public DoneMarker(final StartMarker marker, int currentLexem) {
-      super(currentLexem);
+      myLexemIndex = currentLexem;
       myStart = marker;
     }
 
@@ -347,7 +349,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     String myMessage;
 
     public ErrorItem(final String message, int idx) {
-      super(idx);
+      myLexemIndex = idx;
       myMessage = message;
     }
 
@@ -465,7 +467,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private StartMarker createMarker(final int lexemIndex) {
     StartMarker marker;
     marker = START_MARKERS.object();
-    marker.clean();
     marker.myLexemIndex = lexemIndex;
     marker.myBuilder = this;
 
@@ -507,7 +508,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     int beforeIndex = myProduction.lastIndexOf(before);
 
     DoneMarker doneMarker = DONE_MARKERS.object();
-    doneMarker.clean();
     doneMarker.myLexemIndex = ((StartMarker)before).myLexemIndex;
     doneMarker.myStart = (StartMarker)marker;
 
