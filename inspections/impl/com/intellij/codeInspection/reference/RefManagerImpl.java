@@ -252,8 +252,10 @@ public class RefManagerImpl extends RefManager {
     final Object[] graphAnnotators = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR).getExtensions();
     for (Object annotator : graphAnnotators) {
       registerGraphAnnotator((RefGraphAnnotator)annotator);
-      if (annotator instanceof RefGraphAnnotatorEx) {
-        ((RefGraphAnnotatorEx)annotator).initialize(this);
+    }
+    for (RefGraphAnnotator graphAnnotator: myGraphAnnotators) {
+      if (graphAnnotator instanceof RefGraphAnnotatorEx) {
+        ((RefGraphAnnotatorEx)graphAnnotator).initialize(this);
       }
     }
   }

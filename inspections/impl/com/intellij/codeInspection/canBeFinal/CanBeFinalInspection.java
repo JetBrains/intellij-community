@@ -10,24 +10,15 @@ package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.util.RefFilter;
-import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,22 +28,15 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
-public class CanBeFinalInspection extends FilteringInspectionTool {
+public class CanBeFinalInspection extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.canBeFinal.CanBeFinalInspection");
 
   public boolean REPORT_CLASSES = false;
   public boolean REPORT_METHODS = false;
   public boolean REPORT_FIELDS = true;
-  private QuickFixAction[] myQuickFixActions;
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.can.be.final.display.name");
   @NonNls public static final String SHORT_NAME = "CanBeFinal";
-  private CanBeFinalFilter myFilter;
-  private CanBeFinalComposer myComposer;
   @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
-
-  public CanBeFinalInspection() {
-    myQuickFixActions = new QuickFixAction[]{new AcceptSuggested()};
-  }
 
   private class OptionsPanel extends JPanel {
     private final JCheckBox myReportClassesCheckbox;
@@ -119,115 +103,116 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     return new OptionsPanel();
   }
 
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
+  @Nullable
+  public RefGraphAnnotator getAnnotator(final RefManager refManager) {
+    return new CanBeFinalAnnotator(refManager);
   }
 
-  public void initialize(GlobalInspectionContextImpl context) {
-    super.initialize(context);
-    final RefManagerImpl refManager = (RefManagerImpl)getRefManager();
-    final CanBeFinalAnnotator annotator = new CanBeFinalAnnotator(refManager);
-    annotator.initialize(refManager);
-    refManager.registerGraphAnnotator(annotator);
+
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
+                                                final AnalysisScope scope,
+                                                final InspectionManager manager,
+                                                final GlobalInspectionContext globalContext,
+                                                final ProblemDescriptionsProcessor processor) {
+    if (refEntity instanceof RefElement) {
+      final RefElement refElement = (RefElement)refEntity;
+      if (refElement instanceof RefParameter) return null;
+      if (!refElement.isReferenced()) return null;
+      if (refElement.isSyntheticJSP()) return null;
+      if (refElement.isFinal()) return null;
+      if (!((RefElementImpl)refElement).checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) return null;
+
+      PsiIdentifier psiIdentifier = null;
+      if (refElement instanceof RefClass) {
+        RefClass refClass = (RefClass)refElement;
+        if (refClass.isInterface() || refClass.isAnonymous() || refClass.isAbstract()) return null;
+        if (!isReportClasses()) return null;
+        psiIdentifier = refClass.getElement().getNameIdentifier();
+      }
+      else if (refElement instanceof RefMethod) {
+        RefMethod refMethod = (RefMethod)refElement;
+        if (refMethod.getOwnerClass().isFinal()) return null;
+        if (!isReportMethods()) return null;
+        psiIdentifier = ((PsiMethod)refMethod.getElement()).getNameIdentifier();
+      }
+      else if (refElement instanceof RefField) {
+        if (!isReportFields()) return null;
+        psiIdentifier = ((RefField)refElement).getElement().getNameIdentifier();
+      }
+
+
+      if (psiIdentifier != null) {
+        return new ProblemDescriptor[]{manager.createProblemDescriptor(psiIdentifier, InspectionsBundle.message(
+          "inspection.export.results.can.be.final.description"), new AcceptSuggested(globalContext.getRefManager()),
+                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      }
+    }
+    return null;
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
-    final CanBeFinalFilter filter = new CanBeFinalFilter(this);
-    getRefManager().iterate(new RefVisitor() {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager,
+                                             final GlobalInspectionContext globalContext,
+                                             final ProblemDescriptionsProcessor problemsProcessor) {
+    globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
-        if (!(refEntity instanceof RefElement)) return;
-        if (filter.accepts((RefElement)refEntity)) {
-          refEntity.accept(new RefVisitor() {
-            public void visitMethod(final RefMethod refMethod) {
-              if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
-                  !(refMethod instanceof RefImplicitConstructor)) {
-                getContext().enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
-                  public boolean process(PsiMethod derivedMethod) {
-                    ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                    return false;
-                  }
-                });
-              }
-            }
-
-            public void visitClass(final RefClass refClass) {
-              if (!refClass.isAnonymous()) {
-                getContext().enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
-                  public boolean process(PsiClass inheritor) {
-                    ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                    return false;
-                  }
-                });
-              }
-            }
-
-            public void visitField(final RefField refField) {
-              getContext().enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
-                public boolean process(PsiReference psiReference) {
-                  PsiElement expression = psiReference.getElement();
-                  if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
-                    ((RefFieldImpl)refField).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                    return false;
-                  }
-                  return true;
+        if (problemsProcessor.getDescriptions(refEntity) == null) return;
+        refEntity.accept(new RefVisitor() {
+          public void visitMethod(final RefMethod refMethod) {
+            if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
+                !(refMethod instanceof RefImplicitConstructor)) {
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
+                public boolean process(PsiMethod derivedMethod) {
+                  ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+                  problemsProcessor.ignoreElement(refMethod);
+                  return false;
                 }
               });
             }
-          });
-        }
+          }
+
+          public void visitClass(final RefClass refClass) {
+            if (!refClass.isAnonymous()) {
+              globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
+                public boolean process(PsiClass inheritor) {
+                  ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+                  problemsProcessor.ignoreElement(refClass);
+                  return false;
+                }
+              });
+            }
+          }
+
+          public void visitField(final RefField refField) {
+            globalContext.enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
+              public boolean process(PsiReference psiReference) {
+                PsiElement expression = psiReference.getElement();
+                if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
+                  ((RefFieldImpl)refField).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+                  problemsProcessor.ignoreElement(refField);
+                  return false;
+                }
+                return true;
+              }
+            });
+          }
+        });
+
       }
     });
 
     return false;
   }
 
-  public RefFilter getFilter() {
-    if (myFilter == null) {
-      myFilter = new CanBeFinalFilter(this);
-    }
-    return myFilter;
+
+  public boolean isGraphNeeded() {
+    return true;
   }
 
-  public HTMLComposer getComposer() {
-    if (myComposer == null) {
-      myComposer = new CanBeFinalComposer(this);
-    }
-    return myComposer;
-  }
 
-  public void exportResults(final Element parentNode) {
-    final CanBeFinalFilter filter = new CanBeFinalFilter(this);
-
-    getRefManager().iterate(new RefVisitor() {
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public void visitElement(RefEntity refEntity) {
-        if (!(refEntity instanceof RefElement)) return;
-        if (filter.accepts((RefElement)refEntity)) {
-          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1, null);
-          Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
-
-          final HighlightSeverity severity = getCurrentSeverity((RefElement)refEntity);
-          final String attributeKey = getTextAttributeKey(severity, null);
-          problemClassElement.setAttribute("severity", severity.myName);
-          problemClassElement.setAttribute("attribute_key", attributeKey);
-
-          problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.can.be.final"));
-          element.addContent(problemClassElement);
-
-          Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
-          descriptionElement.addContent(InspectionsBundle.message("inspection.export.results.can.be.final.description"));
-          element.addContent(descriptionElement);
-        }
-      }
-    });
-  }
-
-  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
-    return myQuickFixActions;
-  }
-
-  @NotNull
-  public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
+  @Nullable
+  public QuickFix getQuickFix(final String hint) {
+    return new AcceptSuggested(null);
   }
 
   @NotNull
@@ -245,72 +230,44 @@ public class CanBeFinalInspection extends FilteringInspectionTool {
     return SHORT_NAME;
   }
 
-  private static void makeFinal(PsiModifierListOwner psiElement, @Nullable RefElement refElement) {
-    try {
-      if (psiElement instanceof PsiVariable) {
-        ((PsiVariable)psiElement).normalizeDeclaration();
-      }
-      final PsiModifierList modifierList = psiElement.getModifierList();
-      LOG.assertTrue(modifierList != null);
-      modifierList.setModifierProperty(PsiModifier.FINAL, true);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+  private static class AcceptSuggested implements LocalQuickFix {
+    private RefManager myManager;
+
+    public AcceptSuggested(final RefManager manager) {
+      myManager = manager;
     }
 
-    if (refElement != null) {
-      RefUtil.getInstance().setIsFinal(refElement, true);
+    @NotNull
+    public String getName() {
+      return QUICK_FIX_NAME;
     }
-  }
 
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
-  @Nullable
-  public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
-    return new IntentionAction() {
-      @NotNull
-      public String getText() {
-        return QUICK_FIX_NAME;
-      }
-
-      @NotNull
-      public String getFamilyName() {
-        return getText();
-      }
-
-      public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-        return true;
-      }
-
-      public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        if (descriptor instanceof ProblemDescriptor) {
-          final PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(((ProblemDescriptor)descriptor).getPsiElement(), PsiModifierListOwner.class);
-          if (modifierListOwner != null) {
-            makeFinal(modifierListOwner, null);
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiModifierListOwner psiElement = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
+      if (psiElement != null) {
+        RefElement refElement = myManager != null ? myManager.getReference(psiElement) : null;
+        try {
+          if (psiElement instanceof PsiVariable) {
+            ((PsiVariable)psiElement).normalizeDeclaration();
           }
+          final PsiModifierList modifierList = psiElement.getModifierList();
+          LOG.assertTrue(modifierList != null);
+          modifierList.setModifierProperty(PsiModifier.FINAL, true);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+
+        if (refElement != null) {
+          RefUtil.getInstance().setIsFinal(refElement, true);
         }
       }
-
-      public boolean startInWriteAction() {
-        return true;
-      }
-    };
-  }
-
-  private class AcceptSuggested extends QuickFixAction {
-    private AcceptSuggested() {
-      super(QUICK_FIX_NAME, CanBeFinalInspection.this);
-    }
-
-    protected boolean applyFix(RefElement[] refElements) {
-      for (RefElement refElement : refElements) {
-        if (!((RefElementImpl)refElement).checkFlag(CanBeFinalAnnotator.CAN_BE_FINAL_MASK)) continue;
-        PsiModifierListOwner psiElement = (PsiModifierListOwner)refElement.getElement();
-
-        if (psiElement == null) continue;
-        makeFinal(psiElement, refElement);
-      }
-
-      return true;
     }
   }
 

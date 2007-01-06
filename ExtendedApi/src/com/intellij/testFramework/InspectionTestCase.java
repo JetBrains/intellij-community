@@ -124,6 +124,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
                               final GlobalInspectionContextImpl globalContext,
                               final InspectionManagerEx inspectionManager) {
     tool.initialize(globalContext);
+    ((RefManagerImpl)globalContext.getRefManager()).initializeAnnotators();
     if (tool.isGraphNeeded()){
       ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
     }

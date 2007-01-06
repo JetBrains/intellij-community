@@ -3,7 +3,7 @@
   <problem>
     <file>Foo.java</file>
     <line>1</line>
-    <description>declaration can have final modifier</description>
+    <description>Declaration can have final modifier</description>
   </problem>
 </problems>
 

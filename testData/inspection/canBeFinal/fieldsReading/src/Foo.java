@@ -1,5 +1,5 @@
 public final class Foo {
-   private Object f1 = new Object(); // Can be final
+   private Object f1 = new Object(); // Can be final but unused
    private Object f2;  // Can be final
    private Object f3;  // Cannot be final
    private Object f4;  // cannot
