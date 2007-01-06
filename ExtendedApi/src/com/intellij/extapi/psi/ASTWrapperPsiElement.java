@@ -9,8 +9,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,24 +40,34 @@ public class ASTWrapperPsiElement extends PsiElementBase {
     if (psiChild == null) return EMPTY_ARRAY;
 
     List<PsiElement> result = new ArrayList<PsiElement>();
-    ASTNode child = psiChild.getNode();
-    while (child != null) {
-      if (child instanceof CompositeElement) {
-        result.add(child.getPsi());
+    ASTNode childNode = psiChild.getNode();
+    while (childNode != null) {
+      if (childNode instanceof ChameleonElement) {
+        childNode = ((TreeElement)childNode).getTransformedFirstOrSelf();
+        if (childNode == null) break;
       }
-      child = child.getTreeNext();
+
+      if (childNode instanceof CompositeElement) {
+        result.add(childNode.getPsi());
+      }
+      childNode = childNode.getTreeNext();
     }
     return result.toArray(new PsiElement[result.size()]);
   }
 
-  public void acceptChildren(PsiElementVisitor visitor) {
+  public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     final PsiElement psiChild = getFirstChild();
     if (psiChild == null) return;
 
-    ASTNode child = psiChild.getNode();
-    while (child != null) {
-      child.getPsi().accept(visitor);
-      child = child.getTreeNext();
+    ASTNode childNode = psiChild.getNode();
+    while (childNode != null) {
+      if (childNode instanceof ChameleonElement) {
+        childNode = ((TreeElement)childNode).getTransformedFirstOrSelf();
+        if (childNode == null) break;
+      }
+
+      childNode.getPsi().accept(visitor);
+      childNode = childNode.getTreeNext();
     }
   }
 
