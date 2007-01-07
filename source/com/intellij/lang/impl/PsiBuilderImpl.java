@@ -32,14 +32,13 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.DiffTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
-import javolution.context.ObjectFactory;
-import javolution.context.PoolContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,25 +76,25 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final Token myMutableToken = new Token();
   private int myLexemCount = 0;
 
-  private final static ObjectFactory<StartMarker> START_MARKERS = new ObjectFactory<StartMarker>() {
-    protected StartMarker create() {
+  private final static LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
+    public StartMarker create() {
       return new StartMarker();
     }
 
-    protected void cleanup(final StartMarker marker) {
-      marker.clean();
+    public void cleanup(final StartMarker startMarker) {
+      startMarker.clean();
     }
-  };
+  });
 
-  private final static ObjectFactory<DoneMarker> DONE_MARKERS = new ObjectFactory<DoneMarker>() {
-    protected DoneMarker create() {
-      return new DoneMarker(null, 0);
+  private final static LimitedPool<DoneMarker> DONE_MARKERS = new LimitedPool<DoneMarker>(2000, new LimitedPool.ObjectFactory<DoneMarker>() {
+    public DoneMarker create() {
+      return new DoneMarker();
     }
 
-    protected void cleanup(final DoneMarker marker) {
-      marker.clean();
+    public void cleanup(final DoneMarker doneMarker) {
+      doneMarker.clean();
     }
-  };
+  });
 
   public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
@@ -120,8 +119,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexStarts = new int[approxLexCount];
     myLexEnds = new int[approxLexCount];
     myLexTypes = new IElementType[approxLexCount];
-
-    PoolContext.enter();
   }
 
   /**
@@ -141,8 +138,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexStarts = new int[5];
     myLexEnds = new int[5];
     myLexTypes = new IElementType[5];
-
-    PoolContext.enter();
   }
 
   public void enforceCommentTokens(TokenSet tokens) {
@@ -466,7 +461,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private StartMarker createMarker(final int lexemIndex) {
     StartMarker marker;
-    marker = START_MARKERS.object();
+    marker = START_MARKERS.alloc();
     marker.myLexemIndex = lexemIndex;
     marker.myBuilder = this;
 
@@ -477,8 +472,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   public boolean eof() {
-    if (myCurrentLexem + 1 < myLexemCount) return false;
-    return getCurrentToken() == null;
+    return myCurrentLexem + 1 >= myLexemCount && getCurrentToken() == null;
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
@@ -507,7 +501,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     int beforeIndex = myProduction.lastIndexOf(before);
 
-    DoneMarker doneMarker = DONE_MARKERS.object();
+    DoneMarker doneMarker = DONE_MARKERS.alloc();
     doneMarker.myLexemIndex = ((StartMarker)before).myLexemIndex;
     doneMarker.myStart = (StartMarker)marker;
 
@@ -536,7 +530,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doValidityChecks(marker);
 
 
-    DoneMarker doneMarker = DONE_MARKERS.object();
+    DoneMarker doneMarker = DONE_MARKERS.alloc();
     doneMarker.myStart = (StartMarker)marker;
     doneMarker.myLexemIndex = myCurrentLexem;
 
@@ -596,7 +590,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
     finally {
-      PoolContext.exit();
+      for (ProductionMarker marker : myProduction) {
+        if (marker instanceof StartMarker) {
+          START_MARKERS.recycle((StartMarker)marker);
+        }
+        else if (marker instanceof DoneMarker) {
+          DONE_MARKERS.recycle((DoneMarker)marker);
+        }
+      }
     }
   }
 
@@ -773,7 +774,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return curToken;
   }
 
-  private CompositeElement createComposite(final StartMarker marker) {
+  private static CompositeElement createComposite(final StartMarker marker) {
     final IElementType type = marker.myType;
     if (type == ElementType.ERROR_ELEMENT) {
       CompositeElement childNode = new PsiErrorElementImpl();
@@ -803,6 +804,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return ThreeState.UNSURE;
     }
 
+    @Nullable
     private String getErrorMessage(Node node) {
       if (node instanceof ErrorItem) return ((ErrorItem)node).myMessage;
       if (node instanceof StartMarker) {
@@ -838,7 +840,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private class MyTreeStructure implements DiffTreeStructure<Node> {
-    private Stack<Token> myPool = new Stack<Token>();
+    private LimitedPool<Token> myPool = new LimitedPool<Token>(1000, new LimitedPool.ObjectFactory<Token>() {
+      public void cleanup(final Token token) {
+        token.myHC = -1;
+      }
+
+      public Token create() {
+        return new Token();
+      }
+    });
+
     private final StartMarker myRoot;
 
     public MyTreeStructure(final StartMarker root) {
@@ -857,9 +868,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       for (int i = 0; i < count; i++) {
         Node node = nodes[i];
         if (node instanceof Token) {
-          final Token token = (Token)node;
-          token.myHC = -1;
-          myPool.push(token);
+          myPool.recycle((Token)node);
         }
       }
     }
@@ -907,13 +916,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         final int start = myLexStarts[curToken];
         final int end = myLexEnds[curToken];
         if (start < end) { // Empty token. Most probably a parser directive like indent/dedent in phyton
-          Token lexem;
-          if (myPool.empty()) {
-            lexem = new Token();
-          }
-          else {
-            lexem = myPool.pop();
-          }
+          Token lexem = myPool.alloc();
 
           lexem.myTokenType = myLexTypes[curToken];
           lexem.myTokenStart = start;
