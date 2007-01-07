@@ -29,7 +29,6 @@ import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,6 +193,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           myUncommittedDocuments.remove(document);
           if (hasCommits) {
             InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
+            viewProvider.contentsSynchronized();
           }
         }
       }
@@ -220,6 +220,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
                 
                 myUncommittedDocuments.remove(document);
                 if (hasCommits) {
+                  viewProvider.contentsSynchronized();
                   InjectedLanguageUtil.commitAllInjectedDocuments(document, myProject);
                 }
               }
@@ -416,9 +417,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (provider == null) return;
 
     final List<PsiFile> files = provider.getAllFiles();
+    boolean hasLockedBlocks = false;
     for (PsiFile file : files) {
       final TextBlock textBlock = getTextBlock(document, file);
-      if (textBlock.isLocked()) continue;
+      if (textBlock.isLocked()) {
+        hasLockedBlocks = true;
+        continue;
+      }
 
       if (file instanceof PsiFileImpl){
         myIsCommitInProgress = true;
@@ -426,7 +431,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           PsiFileImpl psiFile = (PsiFileImpl)file;
           // tree should be initialized and be kept until commit
           document.putUserData(TEMP_TREE_IN_DOCUMENT_KEY, psiFile.calcTreeElement());
-    //      ((SingleRootFileViewProvider)psiFile.getViewProvider()).beforeDocumentChanged();
         }
         finally{
           myIsCommitInProgress = false;
@@ -438,6 +442,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           SmartPointerManagerImpl.fastenBelts(file);
         }
       }
+    }
+
+    if (!hasLockedBlocks) {
+      ((SingleRootFileViewProvider)provider).beforeDocumentChanged();
     }
   }
 

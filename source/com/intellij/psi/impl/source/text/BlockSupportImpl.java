@@ -90,114 +90,109 @@ public class BlockSupportImpl extends BlockSupport implements ProjectComponent {
   }
 
   private static void reparseRangeInternal(PsiFile file, int startOffset, int endOffset, int lengthShift, CharSequence newFileText) {
-    try {
-      file.getViewProvider().beforeContentsSynchronized();
-      final PsiFileImpl fileImpl = (PsiFileImpl)file;
-      Project project = fileImpl.getProject();
-      final CharTable charTable = fileImpl.getTreeElement().getCharTable();
-      // hack
-      final int textLength = file.getTextLength() + lengthShift;
+    file.getViewProvider().beforeContentsSynchronized();
+    final PsiFileImpl fileImpl = (PsiFileImpl)file;
+    Project project = fileImpl.getProject();
+    final CharTable charTable = fileImpl.getTreeElement().getCharTable();
+    // hack
+    final int textLength = file.getTextLength() + lengthShift;
 
-      final FileElement treeFileElement = fileImpl.getTreeElement();
+    final FileElement treeFileElement = fileImpl.getTreeElement();
 
-      FileType fileType = file.getFileType();
-      if (file instanceof PsiPlainTextFile) {
-        fileType = StdFileTypes.PLAIN_TEXT;
-      }
+    FileType fileType = file.getFileType();
+    if (file instanceof PsiPlainTextFile) {
+      fileType = StdFileTypes.PLAIN_TEXT;
+    }
 
-      if (treeFileElement.getElementType() == JspElementType.JSP_TEMPLATE ||
-          treeFileElement.getFirstChildNode() instanceof ChameleonElement
-        ) { // Not able to perform incremental reparse for template data in JSP
-        makeFullParse(treeFileElement, newFileText, textLength, fileImpl, fileType);
-        return;
-      }
+    if (treeFileElement.getElementType() == JspElementType.JSP_TEMPLATE ||
+        treeFileElement.getFirstChildNode() instanceof ChameleonElement
+      ) { // Not able to perform incremental reparse for template data in JSP
+      makeFullParse(treeFileElement, newFileText, textLength, fileImpl, fileType);
+      return;
+    }
 
-      final ASTNode leafAtStart = treeFileElement.findLeafElementAt(startOffset);
-      final ASTNode leafAtEnd = treeFileElement.findLeafElementAt(endOffset);
-      ASTNode parent = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
-      Language baseLanguage = file.getViewProvider().getBaseLanguage();
+    final ASTNode leafAtStart = treeFileElement.findLeafElementAt(startOffset);
+    final ASTNode leafAtEnd = treeFileElement.findLeafElementAt(endOffset);
+    ASTNode parent = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : treeFileElement;
+    Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
-      int minErrorLevel = Integer.MAX_VALUE;
-      ASTNode bestReparseable = null;
-      ASTNode prevReparseable = null;
-      boolean theOnlyReparseable = false;
+    int minErrorLevel = Integer.MAX_VALUE;
+    ASTNode bestReparseable = null;
+    ASTNode prevReparseable = null;
+    boolean theOnlyReparseable = false;
 
-      while (parent != null && !(parent instanceof FileElement)) {
-        if (parent.getElementType()instanceof IChameleonElementType) {
-          final TextRange textRange = parent.getTextRange();
-          final IChameleonElementType reparseable = (IChameleonElementType)parent.getElementType();
+    while (parent != null && !(parent instanceof FileElement)) {
+      if (parent.getElementType()instanceof IChameleonElementType) {
+        final TextRange textRange = parent.getTextRange();
+        final IChameleonElementType reparseable = (IChameleonElementType)parent.getElementType();
 
-          if (reparseable.getLanguage() == baseLanguage) {
-            boolean languageChanged = false;
-            if (prevReparseable != null) {
-              languageChanged = prevReparseable.getElementType().getLanguage() != reparseable.getLanguage();
-            }
-
-            final String newTextStr = newFileText.subSequence(textRange.getStartOffset(), textRange.getStartOffset() + textRange.getLength() + lengthShift).toString();
-            if (reparseable.isParsable(newTextStr, project)) {
-              final ChameleonElement chameleon = (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText,
-                                                                                                   textRange.getStartOffset(),
-                                                                                                   textRange.getEndOffset() + lengthShift,
-                                                                                                   charTable, file.getManager(), fileImpl);
-              mergeTrees(fileImpl, parent, reparseable.parseContents(chameleon).getTreeParent());
-              //ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
-              return;
-            }
-            else if (reparseable instanceof IErrorCounterChameleonElementType) {
-              int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr, project);
-              if (currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR) {
-                prevReparseable = parent;
-              }
-              else if (Math.abs(currentErrorLevel) < Math.abs(minErrorLevel)) {
-                theOnlyReparseable = bestReparseable == null;
-                bestReparseable = parent;
-                minErrorLevel = currentErrorLevel;
-                if (languageChanged) break;
-              }
-            }
+        if (reparseable.getLanguage() == baseLanguage) {
+          boolean languageChanged = false;
+          if (prevReparseable != null) {
+            languageChanged = prevReparseable.getElementType().getLanguage() != reparseable.getLanguage();
           }
 
-          // invalid content;
+          final String newTextStr = newFileText.subSequence(textRange.getStartOffset(), textRange.getStartOffset() + textRange.getLength() + lengthShift).toString();
+          if (reparseable.isParsable(newTextStr, project)) {
+            final ChameleonElement chameleon = (ChameleonElement)Factory.createSingleLeafElement(reparseable, newFileText,
+                                                                                                 textRange.getStartOffset(),
+                                                                                                 textRange.getEndOffset() + lengthShift,
+                                                                                                 charTable, file.getManager(), fileImpl);
+            mergeTrees(fileImpl, parent, reparseable.parseContents(chameleon).getTreeParent());
+            //ChangeUtil.replaceAllChildren((CompositeElement)parent, reparseable.parseContents(chameleon).getTreeParent());
+            return;
+          }
+          else if (reparseable instanceof IErrorCounterChameleonElementType) {
+            int currentErrorLevel = ((IErrorCounterChameleonElementType)reparseable).getErrorsCount(newTextStr, project);
+            if (currentErrorLevel == IErrorCounterChameleonElementType.FATAL_ERROR) {
+              prevReparseable = parent;
+            }
+            else if (Math.abs(currentErrorLevel) < Math.abs(minErrorLevel)) {
+              theOnlyReparseable = bestReparseable == null;
+              bestReparseable = parent;
+              minErrorLevel = currentErrorLevel;
+              if (languageChanged) break;
+            }
+          }
         }
-        parent = parent.getTreeParent();
-      }
 
-      if (bestReparseable != null && !theOnlyReparseable) {
-        // best reparseable available
-        final ASTNode treeElement = bestReparseable;
-        final TextRange textRange = treeElement.getTextRange();
-        final ChameleonElement chameleon = (ChameleonElement)Factory.createLeafElement(bestReparseable.getElementType(), newFileText,
-                                                                                       textRange.getStartOffset(),
-                                                                                       textRange.getEndOffset() + lengthShift,
-                                                                                       treeFileElement.getCharTable());
-        chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
-        chameleon.setTreeParent((CompositeElement)parent);
-        treeElement.replaceAllChildrenToChildrenOf(
-          chameleon.transform(treeFileElement.getCharTable()).getTreeParent());
+        // invalid content;
       }
-      else {
-        //boolean leafChangeOptimized = false;
-        //Document document = PsiDocumentManager.getInstance(project).getDocument(fileImpl);
-        //if (document != null) {
-        //  int changedOffset;
-        //  synchronized (document) {
-        //    Integer offset = document.getUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET);
-        //    changedOffset = offset == null ? -1 : offset.intValue();
-        //    document.putUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET, null);
-        //  }
-        //  leafChangeOptimized = changedOffset != -1 && optimizeLeafChange(treeFileElement, newFileText, startOffset, endOffset, lengthShift, changedOffset);
-        //}
-        //if (leafChangeOptimized) {
-        //  return;
-        //}
-
-        // file reparse
-
-        makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
-      }
+      parent = parent.getTreeParent();
     }
-    finally {
-      file.getViewProvider().contentsSynchronized();
+
+    if (bestReparseable != null && !theOnlyReparseable) {
+      // best reparseable available
+      final ASTNode treeElement = bestReparseable;
+      final TextRange textRange = treeElement.getTextRange();
+      final ChameleonElement chameleon = (ChameleonElement)Factory.createLeafElement(bestReparseable.getElementType(), newFileText,
+                                                                                     textRange.getStartOffset(),
+                                                                                     textRange.getEndOffset() + lengthShift,
+                                                                                     treeFileElement.getCharTable());
+      chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
+      chameleon.setTreeParent((CompositeElement)parent);
+      treeElement.replaceAllChildrenToChildrenOf(
+        chameleon.transform(treeFileElement.getCharTable()).getTreeParent());
+    }
+    else {
+      //boolean leafChangeOptimized = false;
+      //Document document = PsiDocumentManager.getInstance(project).getDocument(fileImpl);
+      //if (document != null) {
+      //  int changedOffset;
+      //  synchronized (document) {
+      //    Integer offset = document.getUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET);
+      //    changedOffset = offset == null ? -1 : offset.intValue();
+      //    document.putUserData(LexerEditorHighlighter.CHANGED_TOKEN_START_OFFSET, null);
+      //  }
+      //  leafChangeOptimized = changedOffset != -1 && optimizeLeafChange(treeFileElement, newFileText, startOffset, endOffset, lengthShift, changedOffset);
+      //}
+      //if (leafChangeOptimized) {
+      //  return;
+      //}
+
+      // file reparse
+
+      makeFullParse(parent, newFileText, textLength, fileImpl, fileType);
     }
   }
 
